@@ -136,7 +136,7 @@ typedef attr_list (*CMTransport_listen_func)(CManager cm,
 typedef void *(*CMTransport_read_block_func)(CMtrans_services svc,
 					     void *conn_data,
 					     ssize_t *actual, ssize_t *offset);
-typedef int (*CMTransport_read_to_buffer_func)(CMtrans_services svc,
+typedef ssize_t (*CMTransport_read_to_buffer_func)(CMtrans_services svc,
 					       void *conn_data,
 					       void *buffer,
 					       ssize_t len, int block_flag);

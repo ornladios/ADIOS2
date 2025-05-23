@@ -26,10 +26,19 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_INDEX, {"INDEX", false}},
     {ExpressionOperator::OP_ADD, {"ADD", true}},
     {ExpressionOperator::OP_SUBTRACT, {"SUBTRACT", true}},
+    {ExpressionOperator::OP_MULT, {"MULT", false}},
+    {ExpressionOperator::OP_DIV, {"DIV", false}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
-    {ExpressionOperator::OP_CURL, {"CURL", false}},
-    {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}}};
+    {ExpressionOperator::OP_SIN, {"SIN", false}},
+    {ExpressionOperator::OP_COS, {"COS", false}},
+    {ExpressionOperator::OP_TAN, {"TAN", false}},
+    {ExpressionOperator::OP_ASIN, {"ASIN", false}},
+    {ExpressionOperator::OP_ACOS, {"ACOS", false}},
+    {ExpressionOperator::OP_ATAN, {"ATAN", false}},
+    {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}},
+    {ExpressionOperator::OP_CROSS, {"CROSS", false}},
+    {ExpressionOperator::OP_CURL, {"CURL", false}}};
 
 const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
@@ -38,10 +47,17 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
     {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
     {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"/", ExpressionOperator::OP_DIV},          {"divide", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},     {"*", ExpressionOperator::OP_MULT},
+    {"multiply", ExpressionOperator::OP_MULT},  {"MULTIPLY", ExpressionOperator::OP_MULT},
     {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
-    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
-    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
+    {"pow", ExpressionOperator::OP_POW},        {"POW", ExpressionOperator::OP_POW},
+    {"sin", ExpressionOperator::OP_SIN},        {"cos", ExpressionOperator::OP_COS},
+    {"tan", ExpressionOperator::OP_TAN},        {"asin", ExpressionOperator::OP_ASIN},
+    {"acos", ExpressionOperator::OP_ACOS},      {"atan", ExpressionOperator::OP_ATAN},
+    {"^", ExpressionOperator::OP_POW},          {"magnitude", ExpressionOperator::OP_MAGN},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"cross", ExpressionOperator::OP_CROSS},
+    {"curl", ExpressionOperator::OP_CURL},      {"CURL", ExpressionOperator::OP_CURL}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
@@ -119,15 +135,27 @@ namespace derived
 struct OperatorFunctions
 {
     std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
-    std::function<Dims(std::vector<Dims>)> DimsFct;
+    std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>)> DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsWithAgrFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
+    {adios2::detail::ExpressionOperator::OP_MULT, {MultFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_POW, {PowFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SQRT, {SqrtFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN,
+     {MagnitudeFunc, SameDimsWithAgrFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_CROSS, {Cross3DFunc, Cross3DDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
@@ -146,18 +174,18 @@ Dims Expression::GetCount() { return m_Count; }
 
 std::string Expression::toStringExpr() { return m_Expr.toStringExpr(); }
 
+std::tuple<Dims, Dims, Dims>
+Expression::GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
+{
+    return m_Expr.GetDims(NameToDims);
+}
+
 void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
-    std::map<std::string, Dims> NameToCount, NameToStart, NameToShape;
-    for (const auto &it : NameToDims)
-    {
-        NameToStart[it.first] = std::get<0>(it.second);
-        NameToCount[it.first] = std::get<1>(it.second);
-        NameToShape[it.first] = std::get<2>(it.second);
-    }
-    m_Count = m_Expr.GetDims(NameToCount);
-    m_Start = m_Expr.GetDims(NameToStart);
-    m_Shape = m_Expr.GetDims(NameToShape);
+    auto outDims = m_Expr.GetDims(NameToDims);
+    m_Count = std::get<1>(outDims);
+    m_Start = std::get<0>(outDims);
+    m_Shape = std::get<2>(outDims);
 }
 
 DataType Expression::GetType(std::map<std::string, DataType> NameToType)
@@ -166,10 +194,10 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
 }
 
 std::vector<DerivedData>
-Expression::ApplyExpression(DataType type, size_t numBlocks,
+Expression::ApplyExpression(const size_t numBlocks,
                             std::map<std::string, std::vector<DerivedData>> nameToData)
 {
-    return m_Expr.ApplyExpression(type, numBlocks, nameToData);
+    return m_Expr.ApplyExpression(numBlocks, nameToData);
 }
 
 void ExpressionTree::set_base(double c) { detail.constant = c; }
@@ -261,9 +289,10 @@ std::string ExpressionTree::toStringExpr()
     return result;
 }
 
-Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
+std::tuple<Dims, Dims, Dims>
+ExpressionTree::GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
-    std::vector<Dims> exprDims;
+    std::vector<std::tuple<Dims, Dims, Dims>> exprDims;
     for (auto subexp : sub_exprs)
     {
         // if the sub_expression is a leaf, we get the shape from the input std::map
@@ -278,7 +307,7 @@ Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
     }
     // get the output dimensions after applying the operator
     auto op_fct = OpFunctions.at(detail.operation);
-    Dims opDims = op_fct.DimsFct(exprDims);
+    auto opDims = op_fct.DimsFct(exprDims);
     return opDims;
 }
 
@@ -311,28 +340,31 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
 }
 
 std::vector<DerivedData>
-ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
+ExpressionTree::ApplyExpression(const size_t numBlocks,
                                 std::map<std::string, std::vector<DerivedData>> nameToData)
 {
     // create operands for the computation function
     // exprData[0] = list of void* data for block 0 for each variable
     std::vector<std::vector<DerivedData>> exprData(numBlocks);
-    std::vector<bool> dealocate;
+    std::vector<bool> deallocate;
     for (auto subexp : sub_exprs)
     {
+        // leafs
         if (!std::get<2>(subexp))
         {
-            // do not dealocate leafs (this is user data)
-            dealocate.push_back(false);
+            // do not deallocate leafs (this is user data)
+            deallocate.push_back(false);
+            // get the operands data for each block
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(nameToData[std::get<1>(subexp)][blk]);
             }
         }
-        else
+        else // there is a sub-expression
         {
-            dealocate.push_back(true);
-            auto subexpData = std::get<0>(subexp).ApplyExpression(type, numBlocks, nameToData);
+            deallocate.push_back(true);
+            // get the operands data for each block
+            auto subexpData = std::get<0>(subexp).ApplyExpression(numBlocks, nameToData);
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(subexpData[blk]);
@@ -342,16 +374,36 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     // apply the computation operator on all blocks
     std::vector<DerivedData> outputData(numBlocks);
     auto op_fct = OpFunctions.at(detail.operation);
+    // get the type of the output data
+    std::vector<DataType> exprType;
+    for (auto op : exprData[0])
+        exprType.push_back(op.Type);
+    DataType outType = op_fct.TypeFct(exprType[0]);
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        // get the output dimension for each block
+        std::vector<std::tuple<Dims, Dims, Dims>> exprDims;
+        for (auto op : exprData[blk])
+        {
+            auto start = op.Start;
+            auto count = op.Count;
+            exprDims.push_back({start, count, count});
+        }
+        auto outDims = op_fct.DimsFct(exprDims);
+
+        // apply function over the operands
+        outputData[blk] = op_fct.ComputeFct(exprData[blk], outType);
+        // set the dimension and type of the output data
+        outputData[blk].Type = outType;
+        outputData[blk].Start = std::get<0>(outDims);
+        outputData[blk].Count = std::get<1>(outDims);
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
         for (size_t i = 0; i < exprData[blk].size(); i++)
         {
-            if (dealocate[i] == false)
+            if (deallocate[i] == false)
                 continue;
             free(exprData[blk][i].Data);
         }

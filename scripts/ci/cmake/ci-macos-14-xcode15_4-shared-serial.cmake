@@ -1,7 +1,7 @@
 # Client maintainer: vicente.bolea@kitware.com
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
-set(ENV{FC}  gfortran-11)
+set(ENV{FC}  gfortran-12)
 
 set(dashboard_cache "
 BUILD_TESTING:BOOL=ON

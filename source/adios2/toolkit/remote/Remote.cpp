@@ -35,8 +35,8 @@ void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
     ThrowUp("RemoteSimpleOpen");
 };
 
-Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
-                              void *dest)
+Remote::GetHandle Remote::Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
+                              Dims &Count, Dims &Start, Accuracy &accuracy, void *dest)
 {
     ThrowUp("RemoteGet");
     return (Remote::GetHandle)(intptr_t)0;
@@ -142,6 +142,62 @@ int Remote::LaunchRemoteServerViaConnectionManager(const std::string remoteHost)
 
     socket.Close();
     return serverPort;
+}
+
+std::string Remote::GetKeyFromConnectionManager(const std::string keyID)
+{
+    helper::NetworkSocket socket;
+    socket.Connect("localhost", 30000);
+    std::string request = "/get_key?id=" + keyID;
+
+    char response[2048];
+    socket.RequestResponse(request, response, 2048);
+
+    // responses:
+    //   "port:-1,msg:incomplete_service_definition
+    //   "key:0,msg:missing_key_id_in_request"
+    //   "key:0,msg:cannot_find_key_id"
+    //   "key:5980a49cb5e0c4a6042f73f7ce0277d3a577e1af9cfc530e4f5683a615815d6a,msg:no_error"
+
+    char *token;
+    char *rest = response;
+
+    std::string keyhex;
+
+    // std::cout << "Response from Connection manager = \"" << response << "\"" << std::endl;
+    while ((token = strtok_r(rest, ",", &rest)))
+    {
+        char *key;
+        char *value = token;
+        key = strtok_r(value, ":", &value);
+        if (!strncmp(key, "port", 4))
+        {
+            ; // we don't care about port, msg will throw the error message
+        }
+        else if (!strncmp(key, "key", 3))
+        {
+            keyhex = std::string(value);
+        }
+        else if (!strncmp(key, "msg", 3))
+        {
+            if (strcmp(value, "no_error") && strcmp(value, "cannot_find_key_id"))
+            {
+                helper::Throw<std::invalid_argument>("Toolkit", "Remote", "GetKey",
+                                                     "Error response from connection manager: " +
+                                                         std::string(value));
+            }
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "Remote", "EstablishConnection",
+                "Invalid response from connection manager. Do not understand key " +
+                    std::string(key));
+        }
+    }
+
+    socket.Close();
+    return keyhex;
 }
 
 } // end namespace adios2

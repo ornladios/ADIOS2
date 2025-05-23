@@ -20,7 +20,8 @@
 #include <vector>
 
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
-#include <cstring>                        // strlen
+
+#include <cstring> // strlen
 
 namespace adios2
 {
@@ -166,6 +167,33 @@ void HDF5Common::ParseParameters(core::IO &io)
     }
 
     m_OrderByC = (io.m_ArrayOrder == ArrayOrdering::RowMajor);
+
+    // process the rest of supported parameters
+    for (auto &it : io.m_Parameters)
+    {
+        if (it.first == "RemoteDataPath")
+        {
+            m_RemoteDataPath = it.second;
+            m_dataIsRemote = true;
+            continue;
+        }
+        if (it.first == "RemoteHost")
+        {
+            m_RemoteHost = it.second;
+            continue;
+        }
+        if (it.first == "UUID")
+        {
+            m_UUID = it.second;
+            continue;
+        }
+    }
+
+    // environment options to turn on remote data access
+    if (getenv("DoRemote") || getenv("DoXRootD"))
+    {
+        m_dataIsRemote = true;
+    }
 }
 
 void HDF5Common::Append(const std::string &name, helper::Comm const &comm)

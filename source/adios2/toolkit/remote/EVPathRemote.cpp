@@ -3,12 +3,18 @@
  * accompanying file Copyright.txt for details.
  *
  */
+#include <chrono>
+#include <thread>
+
 #include "EVPathRemote.h"
 #include "Remote.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/core/Operator.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
+#include "adios2/operator/OperatorFactory.h"
+
 #ifdef _MSC_VER
 #define strdup(x) _strdup(x)
 #endif
@@ -60,7 +66,32 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
 {
     EVPathRemoteCommon::ReadResponseMsg read_response_msg =
         static_cast<EVPathRemoteCommon::ReadResponseMsg>(vevent);
-    memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
+
+    switch (read_response_msg->OperatorType)
+    {
+    case adios2::core::Operator::OperatorType::COMPRESS_MGARD: {
+        auto op = adios2::core::MakeOperator("mgard", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_ZFP: {
+        auto op = adios2::core::MakeOperator("zfp", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_NULL:
+        memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>("Remote", "EVPathRemote", "ReadResponseHandler",
+                                             "Invalid operator type " +
+                                                 std::to_string(read_response_msg->OperatorType) +
+                                                 " received in response");
+    }
     CMCondition_signal(cm, read_response_msg->ReadResponseCondition);
     return;
 };
@@ -104,6 +135,12 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+    {
+        // if we didn't find a server, but we're in testing, wait briefly and try again
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    }
     free_attr_list(contact_list);
     if (!m_conn)
         return;
@@ -156,8 +193,9 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     m_Active = true;
 }
 
-EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
-                                          Dims &Start, void *dest)
+EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size_t StepCount,
+                                          size_t BlockID, Dims &Count, Dims &Start,
+                                          Accuracy &accuracy, void *dest)
 {
     EVPathRemoteCommon::_GetRequestMsg GetMsg;
     memset(&GetMsg, 0, sizeof(GetMsg));
@@ -165,10 +203,14 @@ EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t Blo
     GetMsg.FileHandle = m_ID;
     GetMsg.VarName = VarName;
     GetMsg.Step = Step;
+    GetMsg.StepCount = StepCount;
     GetMsg.BlockID = BlockID;
     GetMsg.DimCount = (int)Count.size();
     GetMsg.Count = Count.data();
     GetMsg.Start = Start.data();
+    GetMsg.Error = accuracy.error;
+    GetMsg.Norm = accuracy.norm;
+    GetMsg.Relative = accuracy.relative;
     GetMsg.Dest = dest;
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
     return (Remote::GetHandle)(intptr_t)GetMsg.GetResponseCondition;
@@ -190,7 +232,9 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
 
 bool EVPathRemote::WaitForGet(GetHandle handle)
 {
-    return CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+    int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+
+    return result;
 }
 #else
 

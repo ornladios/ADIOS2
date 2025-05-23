@@ -290,5 +290,20 @@ std::string OpenModeToString(const Mode openMode, const bool oneLetter) noexcept
     return openModeString;
 }
 
+adios2::Dims DimsWithStep(size_t firstElement, adios2::Dims &dimsWithoutSteps) noexcept
+{
+    // Start/Count in cache includes steps as first dimension
+    adios2::Dims d = {firstElement};
+    d.insert(d.end(), dimsWithoutSteps.begin(), dimsWithoutSteps.end());
+    return d;
+}
+
+std::tuple<size_t, adios2::Dims> DimsWithoutStep(adios2::Dims &dimsWithSteps) noexcept
+{
+    size_t step = dimsWithSteps[0];
+    adios2::Dims d = {dimsWithSteps.begin() + 1, dimsWithSteps.end()};
+    return std::tuple<size_t, adios2::Dims>(step, d);
+}
+
 } // end namespace helper
 } // end namespace adios2

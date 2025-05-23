@@ -27,12 +27,39 @@
 #endif
 #else
 #include <io.h>
+#include <iostream>
+#include <windows.h>
 #define close _close
 #define open _open
 #define lseek(a, b, c) _lseek(a, (long)b, c)
 #define write(a, b, c) _write(a, b, (unsigned int)c)
 #define read(a, b, c) _read(a, b, (unsigned int)c)
 #define ftruncate _chsize
+
+static int64_t pread(int fd, void *buffer, size_t size, uint64_t start)
+{
+    long unsigned int read_bytes = 0;
+
+    OVERLAPPED overlapped;
+    memset(&overlapped, 0, sizeof(OVERLAPPED));
+
+    overlapped.OffsetHigh = (uint32_t)((start & 0xFFFFFFFF00000000LL) >> 32);
+    overlapped.Offset = (uint32_t)(start & 0xFFFFFFFFLL);
+
+    HANDLE file = (HANDLE)_get_osfhandle(fd);
+    SetLastError(0);
+    bool RF = ReadFile(file, buffer, (DWORD)size, &read_bytes, &overlapped);
+
+    if ((RF == 0) && GetLastError() != ERROR_HANDLE_EOF)
+    {
+        DWORD dwError = GetLastError();
+        errno = EINVAL; // arbitrary
+        return -1;
+    }
+
+    return read_bytes;
+}
+
 #endif
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -412,13 +439,13 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
-    auto lf_Read = [&](char *buffer, size_t size) {
+    auto lf_PRead = [&](char *buffer, size_t size, size_t start) {
         size_t backoff_ns = 20;
         while (size > 0)
         {
             ProfilerStart("read");
             errno = 0;
-            const auto readSize = read(m_FileDescriptor, buffer, size);
+            const auto readSize = pread(m_FileDescriptor, buffer, size, start);
             m_Errno = errno;
             ProfilerStop("read");
 
@@ -463,26 +490,16 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                 }
             }
 
+            start += readSize;
             buffer += readSize;
             size -= readSize;
         }
     };
 
-    WaitForOpen();
-
-    if (start != MaxSizeT)
+    if (start == MaxSizeT)
     {
-        errno = 0;
-        const auto newPosition = lseek(m_FileDescriptor, start, SEEK_SET);
-        m_Errno = errno;
-
-        if (static_cast<size_t>(newPosition) != start)
-        {
-            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Read",
-                                                  "couldn't move to start position " +
-                                                      std::to_string(start) + " in file " + m_Name +
-                                                      " " + SysErrMsg());
-        }
+        throw std::ios_base::failure("ERROR: couldn't read from file " + m_Name +
+                                     ", in call to POSIX IO read\n");
     }
 
     if (size > DefaultMaxFileBatchSize)
@@ -493,14 +510,15 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-            lf_Read(&buffer[position], DefaultMaxFileBatchSize);
+            lf_PRead(&buffer[position], DefaultMaxFileBatchSize, start);
             position += DefaultMaxFileBatchSize;
+            start += DefaultMaxFileBatchSize;
         }
-        lf_Read(&buffer[position], remainder);
+        lf_PRead(&buffer[position], remainder, position);
     }
     else
     {
-        lf_Read(buffer, size);
+        lf_PRead(buffer, size, start);
     }
 }
 
@@ -623,6 +641,8 @@ void FilePOSIX::Seek(const size_t start)
         SeekToEnd();
     }
 }
+
+size_t FilePOSIX::CurrentPos() { return static_cast<size_t>(lseek(m_FileDescriptor, 0, SEEK_CUR)); }
 
 void FilePOSIX::Truncate(const size_t length)
 {

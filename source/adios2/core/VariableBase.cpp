@@ -42,6 +42,8 @@ VariableBase::VariableBase(const std::string &name, const DataType type, const s
 
 size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_Count); }
 
+void VariableBase::StoreStatsOnly(const bool mode) { m_WriteData = !(mode); }
+
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
 
@@ -55,6 +57,8 @@ void VariableBase::SetArrayLayout(const ArrayOrdering layout)
         UpdateLayout(m_Shape);
         UpdateLayout(m_Count);
         UpdateLayout(m_Start);
+        UpdateLayout(m_MemoryStart);
+        UpdateLayout(m_MemoryCount);
         return;
     }
     if (m_ArrayLayout != layout)
@@ -101,6 +105,9 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 
 void VariableBase::SetMemorySpace(const MemorySpace mem)
 {
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    ArrayOrdering layout = m_BaseLayout;
+#endif
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (m_MemSpace != MemorySpace::Detect && m_MemSpace != mem)
     {
@@ -115,6 +122,14 @@ void VariableBase::SetMemorySpace(const MemorySpace mem)
                                                  ExistingMemSpace + " and cannot received a " +
                                                  NewMemSpace + " buffer");
     }
+    if (mem == MemorySpace::GPU)
+        layout = ArrayOrdering::ColumnMajor;
+#endif
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    // set the layout based on the buffer memory space
+    // skipping throwing an exception for a mismatch
+    if (m_ArrayLayout == ArrayOrdering::Auto)
+        SetArrayLayout(layout);
 #endif
     m_MemSpace = mem;
 }
@@ -151,6 +166,12 @@ void VariableBase::SetShape(const adios2::Dims &shape)
                                                  m_Name + ", in call to SetShape");
     }
 
+    if (m_Shape.size() != shape.size())
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
+                                             "can't assign change dimension count on variable " +
+                                                 m_Name + ", in call to SetShape");
+    }
     m_Shape = shape;
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_Shape);

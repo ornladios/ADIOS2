@@ -17,6 +17,10 @@ class VariableDerived : public VariableBase
     DerivedVarType m_DerivedType;
     std::map<std::string, DataType> m_NameToType;
 
+    std::vector<std::tuple<void *, Dims, Dims>>
+    CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo,
+                    size_t numBlocks);
+
 public:
     adios2::derived::Expression m_Expr;
     VariableDerived(const std::string &name, adios2::derived::Expression expr,
@@ -28,11 +32,8 @@ public:
     std::vector<std::string> VariableNameList();
     void UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
 
-    std::vector<void *>
-    ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
-                    std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::tuple<void *, Dims, Dims>>
-    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi);
+    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true);
 };
 
 } // end namespace core

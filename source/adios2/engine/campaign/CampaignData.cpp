@@ -13,11 +13,18 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <zlib.h>
+
+#ifdef ADIOS2_HAVE_SODIUM
+#include <sodium.h>
+#include <string.h>
+#endif
 
 namespace adios2
 {
@@ -33,7 +40,30 @@ namespace engine
 static int sqlcb_info(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    cdp->version = std::string(argv[0]);
+    cdp->version.versionStr = std::string(argv[0]);
+
+    char rest[32];
+    std::sscanf(cdp->version.versionStr.c_str(), "%d.%d%s", &cdp->version.major,
+                &cdp->version.minor, rest);
+    if (rest[0])
+    {
+        sscanf(rest, ".%d%*s", &cdp->version.micro);
+    }
+    cdp->version.version = double(cdp->version.major);
+    if (cdp->version.minor < 10)
+        cdp->version.version += double(cdp->version.minor) / 10.0;
+    else if (cdp->version.minor < 100)
+        cdp->version.version += double(cdp->version.minor) / 100.0;
+
+    return 0;
+};
+
+static int sqlcb_key(void *p, int argc, char **argv, char **azColName)
+{
+    CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
+    CampaignKey ck;
+    ck.id = std::string(argv[0]);
+    cdp->keys.push_back(ck);
     return 0;
 };
 
@@ -66,26 +96,48 @@ static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
     return 0;
 };
 
-static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
+static int sqlcb_dataset(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    CampaignBPDataset cds;
+    CampaignDataset cds;
     size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
     size_t hostid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
     size_t dirid = helper::StringToSizeT(std::string(argv[2]), "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
     cds.name = argv[3];
-    cdp->bpdatasets[dsid] = cds;
+
+    cds.hasKey = false;
+    cds.keyIdx = 0;
+    if (cdp->version.version >= 0.2)
+    {
+        size_t keyid =
+            helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
+        cds.hasKey = (keyid); // keyid == 0 means there is no key used
+        cds.keyIdx = size_t(keyid - 1);
+    }
+    if (cdp->version.version >= 0.3)
+    {
+        cds.uuid = std::string(argv[5]);
+    }
+    if (cdp->version.version >= 0.4)
+    {
+        cds.format = FileFormat(std::string(argv[6]));
+    }
+    else
+    {
+        cds.format = FileFormat::ADIOS;
+    }
+    cdp->datasets[dsid] = cds;
     return 0;
 };
 
-static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
+static int sqlcb_file(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    CampaignBPFile cf;
+    CampaignFile cf;
     size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    cf.bpDatasetIdx = dsid;
+    cf.datasetIdx = dsid;
     cf.name = std::string(argv[1]);
     int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
     cf.compressed = (bool)comp;
@@ -95,7 +147,7 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
         helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
     cf.ctime = helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int");
 
-    CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
+    CampaignDataset &cds = cdp->datasets[cf.datasetIdx];
     cds.files.push_back(cf);
     return 0;
 };
@@ -115,6 +167,20 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
                                              "SQL error on reading info records:" + m);
         sqlite3_free(zErrMsg);
+    }
+
+    if (cd.version.version >= 0.2)
+    {
+        sqlcmd = "SELECT keyid FROM key";
+        rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_key, &cd, &zErrMsg);
+        if (rc != SQLITE_OK)
+        {
+            std::cout << "SQL error: " << zErrMsg << std::endl;
+            std::string m(zErrMsg);
+            helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                                 "SQL error on reading key records:" + m);
+            sqlite3_free(zErrMsg);
+        }
     }
 
     sqlcmd = "SELECT hostname, longhostname FROM host";
@@ -139,20 +205,43 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
-    rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpdataset, &cd, &zErrMsg);
+    if (cd.version.version >= 0.4)
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name, keyid, uuid, fileformat FROM dataset";
+    }
+    else if (cd.version.version >= 0.3)
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name, keyid, uuid FROM bpdataset";
+    }
+    else if (cd.version.version >= 0.2)
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name, keyid FROM bpdataset";
+    }
+    else
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
+    }
+    rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_dataset, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
-                                             "SQL error on reading bpdataset records:" + m);
+                                             "SQL error on reading dataset records:" + m);
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT bpdatasetid, name, compression, lenorig, lencompressed, ctime "
-             "FROM bpfile";
-    rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpfile, &cd, &zErrMsg);
+    if (cd.version.version >= 0.4)
+    {
+        sqlcmd = "SELECT datasetid, name, compression, lenorig, lencompressed, ctime "
+                 "FROM file";
+    }
+    else
+    {
+        sqlcmd = "SELECT bpdatasetid, name, compression, lenorig, lencompressed, ctime "
+                 "FROM bpfile";
+    }
+    rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_file, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
@@ -170,7 +259,8 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
    the version of the library linked do not match, or Z_ERRNO if there
    is an error reading or writing the files.
    http://www.zlib.net/zlib_how.html */
-int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstream *dest)
+int inflateToFileOrMemory(const unsigned char *source, const size_t blobsize,
+                          std::ofstream *destFile, char *destData = nullptr)
 {
     constexpr size_t CHUNK = 16777216;
     int ret;
@@ -216,11 +306,19 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
                 return ret;
             }
             have = CHUNK - strm.avail_out;
-            dest->write(reinterpret_cast<char *>(out.data()), have);
-            if (dest->bad())
+            if (destData)
             {
-                helper::Throw<std::runtime_error>("Core", "Campaign", "Inflate",
-                                                  "error writing file ");
+                memcpy(destData, out.data(), have);
+                destData += have;
+            }
+            else
+            {
+                destFile->write(reinterpret_cast<char *>(out.data()), have);
+                if (destFile->bad())
+                {
+                    helper::Throw<std::runtime_error>("Core", "Campaign", "Inflate",
+                                                      "error writing file ");
+                }
             }
 
         } while (strm.avail_out == 0);
@@ -282,30 +380,88 @@ static bool isFileNewer(const std::string path, int64_t ctime)
     return (ctSec > ctimeSec);
 }
 
-void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile)
+#ifdef ADIOS2_HAVE_SODIUM
+void DecryptData(const unsigned char *encryptedData, size_t lenEncrypted, size_t lenDecrypted,
+                 const CampaignFile &bpfile, std::string keystr, unsigned char *decryptedData)
 {
-    if (isFileNewer(path, bpfile.ctime))
+    if (sodium_init() < 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "libsodium could not be initialized");
+    }
+    unsigned char key[crypto_secretbox_KEYBYTES];
+
+    size_t bin_len;
+    sodium_hex2bin(key, crypto_secretbox_KEYBYTES, keystr.c_str(), keystr.size(), nullptr, &bin_len,
+                   nullptr);
+
+    if (bin_len != crypto_secretbox_KEYBYTES)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "Decoding hex key string " + keystr + " failed");
+    }
+
+    // grab the nonce ptr
+    size_t offset = 0;
+    const unsigned char *nonce = reinterpret_cast<const unsigned char *>(encryptedData + offset);
+    offset += crypto_secretbox_NONCEBYTES;
+
+    // grab the cipher text ptr
+    size_t cipherTextSize = lenDecrypted + crypto_secretbox_MACBYTES;
+    const unsigned char *cipherText =
+        reinterpret_cast<const unsigned char *>(encryptedData + offset);
+    offset += cipherTextSize;
+
+    if (offset != lenEncrypted)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "CampaignReader", "InitTransports",
+            "Encrypted data size for file " + bpfile.name +
+                " in the campaign database does not match expectations");
+    }
+
+    // decrypt directly into dataOut buffer
+    if (crypto_secretbox_open_easy(decryptedData, cipherText, cipherTextSize, nonce, key) != 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "Encrypted data of file " + bpfile.name +
+                                              " in the campaign database could not be decrypted");
+    }
+}
+#endif
+
+void DumpToFileOrMemory(sqlite3 *db, const CampaignFile &file, std::string &keyHex,
+                        const std::string &path, char *data, const CampaignData &cd)
+{
+    if (!path.empty() && isFileNewer(path, file.ctime))
     {
         return;
     }
 
     int rc;
-    char *zErrMsg = 0;
     std::string sqlcmd;
-    std::string id = std::to_string(bpfile.bpDatasetIdx);
+    std::string id = std::to_string(file.datasetIdx);
 
     sqlite3_stmt *statement;
-    sqlcmd =
-        "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + bpfile.name + "'";
+    if (cd.version.version >= 0.4)
+    {
+        sqlcmd =
+            "SELECT data FROM file WHERE datasetid = " + id + " AND name = '" + file.name + "'";
+    }
+    else
+    {
+        sqlcmd =
+            "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + file.name + "'";
+    }
     // std::cout << "SQL statement: " << sqlcmd << "\n";
     rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), static_cast<int>(sqlcmd.size()), &statement, NULL);
     if (rc != SQLITE_OK)
     {
+        const char *zErrMsg = sqlite3_errmsg(db);
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "SaveToFIle",
                                              "SQL error on reading info records:" + m);
-        sqlite3_free(zErrMsg);
     }
 
     int result = 0;
@@ -313,31 +469,116 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     if (result != SQLITE_ROW)
     {
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "SaveToFIle",
-                                             "Did not find record for :" + bpfile.name);
+                                             "Did not find record for :" + file.name);
     }
 
     int iBlobsize = sqlite3_column_bytes(statement, 0);
-    const void *p = sqlite3_column_blob(statement, 0);
+    const void *blob = sqlite3_column_blob(statement, 0);
 
-    /*std::cout << "-- Retrieved from DB data of " << bpfile.name << " size = " << iBlobsize
-              << " compressed = " << bpfile.compressed
-              << " compressed size = " << bpfile.lengthCompressed
-              << " original size = " << bpfile.lengthOriginal << " blob = " << p << "\n";*/
+    /*
+    std::cout << "-- Retrieved from DB data of " << file.name << " size = " << iBlobsize
+              << " compressed = " << file.compressed << " encryption key = " << keyHex
+              << " compressed size = " << file.lengthCompressed
+              << " original size = " << file.lengthOriginal << " blob = " << blob << "\n";
+    */
 
     size_t blobsize = static_cast<size_t>(iBlobsize);
-    std::ofstream f;
-    f.rdbuf()->pubsetbuf(0, 0);
-    f.open(path, std::ios::out | std::ios::binary);
-    if (bpfile.compressed)
+    void *q = const_cast<void *>(blob);
+    bool free_q = false;
+
+#ifdef ADIOS2_HAVE_SODIUM
+    if (!keyHex.empty())
     {
-        const unsigned char *ptr = static_cast<const unsigned char *>(p);
-        inflateToFile(ptr, blobsize, &f);
+        size_t decryptedSize = (file.compressed ? file.lengthCompressed : file.lengthOriginal);
+        q = malloc(decryptedSize);
+        free_q = true;
+        DecryptData(static_cast<const unsigned char *>(blob), blobsize, decryptedSize, file, keyHex,
+                    static_cast<unsigned char *>(q));
+    }
+#endif
+
+    if (path.empty())
+    {
+        // read into memory
+        if (file.compressed)
+        {
+            const unsigned char *ptr = static_cast<const unsigned char *>(q);
+            inflateToFileOrMemory(ptr, blobsize, nullptr, data);
+        }
+        else
+        {
+            memcpy(data, q, blobsize);
+        }
     }
     else
     {
-        f.write(static_cast<const char *>(p), blobsize);
+        // Save to File
+        std::ofstream f;
+        f.rdbuf()->pubsetbuf(0, 0);
+        f.open(path, std::ios::out | std::ios::binary);
+        if (file.compressed)
+        {
+            const unsigned char *ptr = static_cast<const unsigned char *>(q);
+            inflateToFileOrMemory(ptr, blobsize, &f, nullptr);
+        }
+        else
+        {
+            f.write(static_cast<const char *>(q), blobsize);
+        }
+        f.close();
     }
-    f.close();
+
+    if (free_q)
+    {
+        free(q);
+    }
+}
+
+void SaveToFile(sqlite3 *db, const std::string &path, const CampaignFile &file, std::string &keyHex,
+                const CampaignData &cd)
+{
+    DumpToFileOrMemory(db, file, keyHex, path, nullptr, cd);
+}
+
+void ReadToMemory(sqlite3 *db, char *data, const CampaignFile &file, std::string &keyHex,
+                  const CampaignData &cd)
+{
+    DumpToFileOrMemory(db, file, keyHex, "", data, cd);
+}
+
+std::string FileFormat::ToString()
+{
+    switch (value)
+    {
+    case FileFormat::ADIOS:
+        return "ADIOS";
+    case FileFormat::HDF5:
+        return "HDF5";
+    case FileFormat::TEXT:
+        return "TEXT";
+    default:
+        return "Unknown";
+    }
+};
+
+FileFormat::FileFormat(const std::string &fmtstr)
+{
+    if (fmtstr == "ADIOS")
+    {
+        value = FileFormat::ADIOS;
+    }
+    else if (fmtstr == "HDF5")
+    {
+        value = FileFormat::HDF5;
+    }
+    else if (fmtstr == "TEXT")
+    {
+        value = FileFormat::TEXT;
+    }
+    else
+    {
+        value = FileFormat::Unknown;
+    }
 }
 
 } // end namespace engine

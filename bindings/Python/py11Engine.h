@@ -53,6 +53,8 @@ public:
              const Mode launch = Mode::Deferred);
     void Put(Variable variable, const std::vector<double> &doubles,
              const Mode launch = Mode::Deferred);
+    // function for cupy, numpy and Tensor pointers
+    void Put(Variable variable, std::uintptr_t array, const Mode launch);
     void Put(Variable variable, const std::vector<std::complex<double>> &complexes,
              const Mode launch = Mode::Deferred);
     void Put(Variable variable, const std::string &string);
@@ -60,6 +62,8 @@ public:
     void PerformDataWrite();
 
     void Get(Variable variable, pybind11::array &array, const Mode launch = Mode::Deferred);
+    // function for cupy, numpy and Tensor pointers
+    void Get(Variable variable, std::uintptr_t array, const Mode launch);
     std::string Get(Variable variable, const Mode launch = Mode::Deferred);
 
     void PerformGets();

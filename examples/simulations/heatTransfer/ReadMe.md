@@ -43,9 +43,7 @@ Writer usage:  heatTransfer  config output  N  M   nx  ny   steps iterations
   iterations: one step consist of this many iterations
 ```
 
-The ADIOS2 executable needs an XML config file to select the Engine used for the output. The engines are: File, BP4 and
-HDF5, the corresponding XML config files are in the examples/simulations/heatTransfer/ directory. The "File" engine will
-be BP4 or HDF5 depending on the extension of the file name.
+The ADIOS2 executable needs an XML config file to select the ADIOS Engine and associated parameters that are to be used for the output. The *.xml config files examples/simulations/heatTransfer/ directory are provided as example configurations. 
 
 The adios1, ph5 and hdf5 versions of the example do not use XML config files, so just type "none" for the config
 argument.

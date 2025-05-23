@@ -20,7 +20,7 @@ adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
 #endif()
 
 if(ADIOS2_USE_Fortran_flag_argument_mismatch)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch -w")
 endif()
 
 add_library(adios2_fortran

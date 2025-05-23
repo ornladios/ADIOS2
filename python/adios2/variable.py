@@ -3,6 +3,8 @@
   accompanying file Copyright.txt for details.
 """
 
+from adios2 import bindings
+
 
 class Variable:
     """High level representation of the Variable class in the adios2.bindings"""
@@ -87,6 +89,18 @@ class Variable:
             step_selection (list): On the form of [start, count].
         """
         self.impl.SetStepSelection(step_selection)
+
+    def set_accuracy(self, error, norm, relative):
+        """
+        Set Accuracy for (remote) reading for this variable
+
+        Args:
+            error: floating point value
+            norm:  floating point value
+            relative: True or False
+        """
+        acc = bindings.Accuracy(error, norm, relative)
+        self.impl.SetAccuracy(acc)
 
     def shape(self, step=None):
         """
@@ -177,6 +191,15 @@ class Variable:
         """
         return self.impl.Name()
 
+    def get_accuracy(self):
+        """
+        Get the accuracy of the variable (of its last read)
+
+        Returns:
+            adios2.bindings.Accuracy struct (with error, norm and relative fields).
+        """
+        return self.impl.GetAccuracy()
+
     def add_operation_string(self, name, params={}):
         """
         Add an operation (operator) as a string
@@ -211,3 +234,9 @@ class Variable:
         Remove operations (operators) assigned to this Variable.
         """
         self.impl.RemoveOperations()
+
+    def store_stats_only(self, mode):
+        """
+        Select writing mode for variable (write data or just stats)
+        """
+        self.impl.StoreStatsOnly(mode)

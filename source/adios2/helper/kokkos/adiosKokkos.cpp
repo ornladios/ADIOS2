@@ -13,16 +13,6 @@
 
 namespace
 {
-void KokkosDeepCopy(const char *src, char *dst, size_t byteCount)
-{
-    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-    Kokkos::View<const char *, mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
-        src, byteCount);
-    Kokkos::View<char *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>> dstView(
-        dst, byteCount);
-    Kokkos::deep_copy(dstView, srcView);
-}
-
 template <class T>
 void KokkosMinMaxImpl(const T *data, const size_t size, T &min, T &max)
 {
@@ -63,12 +53,22 @@ namespace helper
 {
 void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 {
-    KokkosDeepCopy(GPUbuffer, dst, byteCount);
+    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<const char *, mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
+        GPUbuffer, byteCount);
+    Kokkos::View<char *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>> dstView(
+        dst, byteCount);
+    Kokkos::deep_copy(dstView, srcView);
 }
 
 void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
 {
-    KokkosDeepCopy(src, GPUbuffer, byteCount);
+    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<const char *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
+        src, byteCount);
+    Kokkos::View<char *, mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> dstView(GPUbuffer,
+                                                                                     byteCount);
+    Kokkos::deep_copy(dstView, srcView);
 }
 
 bool IsGPUbuffer(const void *ptr)

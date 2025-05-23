@@ -229,6 +229,12 @@ public:
         herr_t (*set_dxpl_mpio)(hid_t dxpl_id, H5FD_mpio_xfer_t xfer_mode);
     };
 
+    // Variables for Remote data access
+    std::string m_RemoteDataPath;
+    std::string m_RemoteHost;
+    std::string m_UUID;
+    bool m_dataIsRemote = false;
+
 private:
     void ReadInStringAttr(core::IO &io, const std::string &attrName, hid_t attrId, hid_t h5Type,
                           hid_t sid);

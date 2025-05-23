@@ -251,7 +251,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const CoreDims &outStart, const CoreDims &outCount, const bool outIsRowMajor,
            const bool outIsLittleEndian, const int typeSize, const CoreDims &inMemStart,
            const CoreDims &inMemCount, const CoreDims &outMemStart, const CoreDims &outMemCount,
-           const bool safeMode, MemorySpace MemSpace)
+           const bool safeMode, const MemorySpace MemSpace, const bool duringWrite)
 
 {
 
@@ -439,7 +439,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
             if (MemSpace == MemorySpace::GPU)
             {
                 helper::NdCopyGPU(inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize, ovlpCount,
-                                  minContDim, blockSize, MemSpace);
+                                  minContDim, blockSize, MemSpace, duringWrite);
                 return 0;
             }
 #endif
@@ -666,17 +666,6 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount, const
                         destMemStart, destMemCount, srcMemStart, srcMemCount, endianReverse,
                         destType);
     }
-}
-
-size_t PaddingToAlignPointer(const void *ptr)
-{
-    auto memLocation = reinterpret_cast<std::uintptr_t>(ptr);
-    size_t padSize = sizeof(max_align_t) - (memLocation % sizeof(max_align_t));
-    if (padSize == sizeof(max_align_t))
-    {
-        padSize = 0;
-    }
-    return padSize;
 }
 
 uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)

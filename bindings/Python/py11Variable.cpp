@@ -27,6 +27,12 @@ void Variable::SetShape(const Dims &shape)
     m_VariableBase->SetShape(shape);
 }
 
+void Variable::StoreStatsOnly(const bool mode)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::StoreStatsOnly");
+    m_VariableBase->StoreStatsOnly(mode);
+}
+
 void Variable::SetBlockSelection(const size_t blockID)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetBlockSelection");
@@ -67,6 +73,24 @@ size_t Variable::SelectionSize() const
 #undef declare_template_instantiation
 
     return size;
+}
+
+void Variable::SetAccuracy(const adios2::Accuracy &a)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetAccuracy");
+    m_VariableBase->SetAccuracy(a);
+}
+
+adios2::Accuracy Variable::GetAccuracy() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::GetAccuracy");
+    return m_VariableBase->GetAccuracy();
+}
+
+adios2::Accuracy Variable::GetAccuracyRequested() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::GetAccuracyRequested");
+    return m_VariableBase->GetAccuracyRequested();
 }
 
 size_t Variable::AddOperation(const Operator op, const Params &parameters)
@@ -149,6 +173,37 @@ Dims Variable::Shape(const size_t step) const
     return shape;
 }
 
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+void Variable::SetMemorySpace(const MemorySpace memSpace)
+{
+    m_VariableBase->SetMemorySpace(memSpace);
+}
+
+Dims Variable::Shape(const MemorySpace memSpace, const size_t step) const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
+
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
+    Dims shape;
+
+    if (typeCpp == adios2::DataType::Struct)
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);                       \
+        shape = variable->Shape(step, memSpace);                                                   \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return shape;
+}
+
+#endif
 Dims Variable::Start() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Start");

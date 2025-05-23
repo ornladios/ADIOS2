@@ -40,7 +40,8 @@ TEST(FileTransport, FailOnEOF)
         w->Close();
     }
     {
-        std::vector<uint8_t> b(256);
+        // 2x the size of data which was written
+        std::vector<uint8_t> b(512);
         helper::Comm comm = helper::CommDummy();
         std::unique_ptr<transport::FilePOSIX> r =
             std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
@@ -48,7 +49,7 @@ TEST(FileTransport, FailOnEOF)
         r->Open("FailOnEOF", Mode::Read);
         Params p = {{"FailOnEOF", "true"}};
         r->SetParameters(p);
-        EXPECT_THROW(r->Read((char *)b.data(), b.size() * 2), std::ios_base::failure);
+        EXPECT_THROW(r->Read((char *)b.data(), b.size()), std::ios_base::failure);
         r->Close();
     }
 }
@@ -61,7 +62,7 @@ TEST(FileTransport, WaitForData)
     std::unique_ptr<transport::FilePOSIX> w =
         std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
 
-    w->Open("FailOnEOF", Mode::Write);
+    w->Open("FailOnEOF2", Mode::Write);
     w->Write((char *)b.data(), b.size());
     {
         auto lf_WriteMore = [&](const transport::FilePOSIX *) {
@@ -79,8 +80,8 @@ TEST(FileTransport, WaitForData)
         std::unique_ptr<transport::FilePOSIX> r =
             std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
 
-        r->Open("FailOnEOF", Mode::Read);
-        r->Read((char *)b.data(), size * 2);
+        r->Open("FailOnEOF2", Mode::Read);
+        r->Read((char *)b.data(), size * 2, 0);
         ASSERT_EQ(b[0], 0xef);
         ASSERT_EQ(b[size], 0xfe);
         r->Close();

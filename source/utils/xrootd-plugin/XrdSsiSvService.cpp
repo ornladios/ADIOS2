@@ -64,13 +64,6 @@ using namespace std;
 
 namespace
 {
-void *SvWecho(void *svP)
-{
-    XrdSsiSvService *sessP = (XrdSsiSvService *)svP;
-    sessP->doWecho();
-    return 0;
-}
-
 void *SvAdiosGet(void *svP)
 {
     XrdSsiSvService *sessP = (XrdSsiSvService *)svP;
@@ -431,7 +424,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         std::string Filename;
         std::string VarName;
         adios2::Dims Start, Count;
-        size_t BlockID, DimCount, Step;
+        size_t BlockID, DimCount, StepStart;
+        size_t StepCount = 1;
         bool ArrayOrder;
         std::vector<std::string> requestParams = split(reqArgs, '&');
         for (auto &param : requestParams)
@@ -460,11 +454,17 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 std::stringstream sstream(param.substr(pos));
                 sstream >> DimCount;
             }
-            else if (HasPrefix(param, "Step="))
+            else if (HasPrefix(param, "StepCount="))
             {
                 std::size_t pos = param.find("=") + 1;
                 std::stringstream sstream(param.substr(pos));
-                sstream >> Step;
+                sstream >> StepCount;
+            }
+            else if (HasPrefix(param, "StepStart="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> StepStart;
             }
             else if (HasPrefix(param, "Block="))
             {
@@ -501,7 +501,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         pthread_t tid;
         auto engine = poolEntry->m_engine;
         auto io = poolEntry->m_io;
-        auto var = io.InquireVariable(VarName);
         adios2::Box<adios2::Dims> varSel(Start, Count);
         adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
         try
@@ -515,7 +514,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
         if (BlockID != (size_t)-1)                                                                 \
             var.SetBlockSelection(BlockID);                                                        \
-        var.SetStepSelection({Step, 1});                                                           \
+        var.SetStepSelection({StepStart, StepCount});                                              \
         if (Start.size())                                                                          \
             var.SetSelection(varSel);                                                              \
         m_responseBufferSize = var.SelectionSize() * sizeof(T);                                    \
@@ -569,11 +568,9 @@ int XrdSsiSvService::Copy2Buff(char *dest, int dsz, const char *src, int ssz)
 
 void XrdSsiSvService::Respond(const char *rData, const char *mData)
 {
-    XrdSsiResponder::Status rc;
-    int rLen;
-
     throw std::logic_error("Respond shouldn't be called");
 }
+
 void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
 {
     XrdSsiResponder::Status rc;

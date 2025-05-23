@@ -170,6 +170,13 @@ private:
 
     uint64_t WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
                            const std::vector<core::iovec> &AttributeBlocks);
+    uint64_t WriteMetadata(const std::vector<char> &ContigMetaData,
+                           const std::vector<size_t> &SizeVector,
+                           const std::vector<core::iovec> &AttributeBlocks);
+
+    void SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo TSInfo);
+    void TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo TSInfo);
+    void SimpleAggregationMetadata(format::BP5Serializer::TimestepInfo TSInfo);
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
@@ -203,6 +210,11 @@ private:
     helper::Comm *DataWritingComm; // processes that write the same data file
     // aggregators only (valid if m_Aggregator->m_Comm.Rank() == 0)
     helper::Comm m_CommAggregators;
+
+    /* two-level metadata aggregation */
+    aggregator::MPIChain m_AggregatorMetadata; // first level
+    helper::Comm m_CommMetadataAggregators;    // second level
+
     adios2::profiling::JSONProfiler m_Profiler;
 
 protected:

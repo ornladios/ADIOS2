@@ -33,8 +33,10 @@
 #include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
+#include "adios2/engine/timeseries/TimeSeriesReader.h"
 
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 #include "adios2/helper/adiosString.h"
 #include <adios2sys/SystemTools.hxx> // FileIsDirectory()
@@ -70,7 +72,15 @@ namespace
 std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     {"bp3", {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
     {"bp4", {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
-    {"bp5", {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}},
+    {"bp5",
+#ifdef ADIOS2_HAVE_BP5
+     {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>,
+      IO::MakeEngineWithMD<engine::BP5Reader>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "BP5 library, can't use BP5 engine\n")
+#endif
+    },
     {"dataman",
 #ifdef ADIOS2_HAVE_DATAMAN
      {IO::MakeEngine<engine::DataManReader>, IO::MakeEngine<engine::DataManWriter>}
@@ -130,6 +140,9 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
     {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
+    {"timeseries",
+     {IO::MakeEngine<engine::TimeSeriesReader>,
+      IO::NoEngine("ERROR: campaign engine does not support write mode")}},
 
     {"campaign",
 #ifdef ADIOS2_HAVE_CAMPAIGN
@@ -147,7 +160,7 @@ const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
     {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", false},
     {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", true},
     {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
-    {"campaign", true},
+    {"campaign", true}, {"timeseries", true},
 };
 
 // Synchronize access to the factory in case one thread is
@@ -520,7 +533,8 @@ void IO::AddOperation(const std::string &variable, const std::string &operatorTy
     m_VarOpsPlaceholder[variable].push_back({operatorType, parameters});
 }
 
-Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
+Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, const char *md,
+                 const size_t mdsize)
 {
     PERFSTUBS_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
@@ -576,6 +590,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             engineTypeLC = "campaign";
         }
+        else if (helper::EndsWith(name, ".ats", false))
+        {
+            engineTypeLC = "timeseries";
+        }
         else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
@@ -622,9 +640,16 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
        falls back to default (BP4) */
     if (engineTypeLC == "filestream")
     {
-        char v = helper::BPVersion(name, comm, m_TransportsParameters);
-        engineTypeLC = "bp";
-        engineTypeLC.push_back(v);
+        if (helper::EndsWith(name, ".ats", false))
+        {
+            engineTypeLC = "timeseries";
+        }
+        else
+        {
+            char v = helper::BPVersion(name, comm, m_TransportsParameters);
+            engineTypeLC = "bp";
+            engineTypeLC.push_back(v);
+        }
         // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
         //          << std::endl;
     }
@@ -687,7 +712,12 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {
-        if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
+        if (md && mode_to_use == Mode::ReadRandomAccess)
+        {
+            engine =
+                f->second.MakeReaderWithMD(*this, name, mode_to_use, std::move(comm), md, mdsize);
+        }
+        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
             engine = f->second.MakeReader(*this, name, mode_to_use, std::move(comm));
         }
@@ -717,6 +747,15 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 {
     return Open(name, mode, m_ADIOS.GetComm().Duplicate());
 }
+
+Engine &IO::Open(const std::string &name, const char *md, const size_t mdsize)
+{
+    const Mode mode = Mode::ReadRandomAccess;
+    // helper::Comm comm;
+    // std::cout << "Open comm rank = " << comm.Rank();
+    return Open(name, mode, helper::CommDummy(), md, mdsize);
+}
+
 Group &IO::CreateGroup(char delimiter)
 {
     m_Gr = std::make_shared<Group>("", delimiter, *this);

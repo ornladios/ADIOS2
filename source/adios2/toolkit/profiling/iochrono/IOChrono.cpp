@@ -20,7 +20,16 @@ void IOChrono::Start(const std::string process) noexcept
 {
     if (m_IsActive)
     {
-        m_Timers.at(process).Resume();
+        try
+        {
+            m_Timers.at(process).Resume();
+        }
+        catch (...)
+        {
+            std::cout << "Adding timer \"" << process << "\" didn't exist." << std::endl;
+            m_Timers.emplace(process, profiling::Timer(process, DefaultTimeUnitEnum, false));
+            m_Timers.at(process).Resume();
+        }
     }
 }
 
@@ -28,7 +37,14 @@ void IOChrono::Stop(const std::string process)
 {
     if (m_IsActive)
     {
-        m_Timers.at(process).Pause();
+        try
+        {
+            m_Timers.at(process).Pause();
+        }
+        catch (...)
+        {
+            std::cout << "Timer \"" << process << "\" doesn't exist." << std::endl;
+        }
     }
 }
 
@@ -44,9 +60,21 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("PP");
     AddTimerWatch("ES_meta1_gather", false);
     AddTimerWatch("ES_meta2_gather", false);
+    AddTimerWatch("ES_write_metadata", false);
+    AddTimerWatch("MetadataBlockWrite", false);
+    AddTimerWatch("ES_AGG1", false);
+    AddTimerWatch("ES_GatherMetadataBlocks", false);
+    AddTimerWatch("ES_simple_meta", false);
+    AddTimerWatch("ES_simple_gather", false);
 
     AddTimerWatch("ES_meta1");
     AddTimerWatch("ES_meta2");
+
+    AddTimerWatch("ES_aggregate_info", false);
+    AddTimerWatch("ES_gather_write_meta", false);
+    AddTimerWatch("FixedMetaInfoGather", false);
+    AddTimerWatch("MetaInfoBcast", false);
+    AddTimerWatch("SelectMetaInfoGather", false);
 
     AddTimerWatch("ES_close");
     AddTimerWatch("ES_AWD");

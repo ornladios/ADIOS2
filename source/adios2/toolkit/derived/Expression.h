@@ -18,9 +18,18 @@ enum ExpressionOperator
     OP_INDEX,
     OP_ADD,
     OP_SUBTRACT,
+    OP_MULT,
+    OP_DIV,
     OP_SQRT,
     OP_POW,
+    OP_SIN,
+    OP_COS,
+    OP_TAN,
+    OP_ASIN,
+    OP_ACOS,
+    OP_ATAN,
     OP_MAGN,
+    OP_CROSS,
     OP_CURL
 };
 }
@@ -65,10 +74,11 @@ public:
     void add_child(std::string var);
 
     std::vector<std::string> VariableNameList();
-    Dims GetDims(std::map<std::string, Dims> NameToDims);
+    std::tuple<Dims, Dims, Dims>
+    GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::vector<DerivedData>
-    ApplyExpression(DataType type, size_t numBlocks,
+    ApplyExpression(const size_t numBlocks,
                     std::map<std::string, std::vector<DerivedData>> nameToData);
     void print();
     std::string toStringExpr();
@@ -93,10 +103,12 @@ public:
     Dims GetCount();
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::string toStringExpr();
+    std::tuple<Dims, Dims, Dims>
+    GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     void SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::string> VariableNameList();
     std::vector<DerivedData>
-    ApplyExpression(DataType type, size_t numBlocks,
+    ApplyExpression(const size_t numBlocks,
                     std::map<std::string, std::vector<DerivedData>> nameToData);
 };
 

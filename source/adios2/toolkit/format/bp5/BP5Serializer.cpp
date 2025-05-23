@@ -6,6 +6,7 @@
  *
  */
 
+#include "BP5Helper.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
@@ -591,9 +592,12 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
         const char *ExprString = NULL;
+        bool NeverMinMax = false;
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
         if (VD && (VD->GetDerivedType() != DerivedVarType::StoreData))
             ExprString = VD->m_Expr.ExprString.c_str();
+        if (VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString))
+            NeverMinMax = true;
 #endif
         char *LongName =
             BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID, ExprString);
@@ -605,7 +609,7 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
             ArrayTypeName = "MetaArrayOp";
             FieldSize = sizeof(MetaArrayRecOperator);
         }
-        if (m_StatsLevel > 0)
+        if ((m_StatsLevel > 0) && !NeverMinMax)
         {
             char MMArrayName[40] = {0};
             strcat(MMArrayName, ArrayTypeName);
@@ -748,14 +752,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     core::VariableDerived *VD = dynamic_cast<core::VariableDerived *>(VB);
 #endif
 
-    bool WriteData = true;
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    if (VD)
-    {
-        // All other types of Derived types we don't write data
-        WriteData = (VD->GetDerivedType() == DerivedVarType::StoreData);
-    }
-#endif
+    bool WriteData = VB->m_WriteData;
     BP5MetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);
@@ -812,6 +809,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     else
     {
         MemorySpace MemSpace = VB->GetMemorySpace(Data);
+        MemorySpace spanMemSpace = MemSpace;
         MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);
         size_t DataOffset = 0;
@@ -881,6 +879,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         {
             *Span = CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
             DataOffset = m_PriorDataBufferSizeTotal + Span->globalPos;
+            spanMemSpace = MemorySpace::Host;
         }
 
         if (!AlreadyWritten)
@@ -916,7 +915,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, spanMemSpace,
                                        Rec->MetaOffset, Rec->MinMaxOffset, 0 /*BlockNum*/);
                 }
             }
@@ -960,7 +959,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, spanMemSpace,
                                        Rec->MetaOffset, Rec->MinMaxOffset,
                                        MetaEntry->BlockCount - 1 /*BlockNum*/);
                 }
@@ -1476,6 +1475,8 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const uint64_t ABCount = AttributeEncodeBuffers.size();
     const uint64_t DSCount = DataSizes.size();
     const uint64_t WDPCount = WriterDataPositions.size();
+    std::set<BP5Helper::digest> AttrSet;
+    std::vector<bool> NeedThisAttr(AttributeEncodeBuffers.size());
 
     // count sizes
     RetSize += sizeof(NMMBCount); // NMMB count
@@ -1492,11 +1493,28 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         RetSize += AlignedSize;
     }
     RetSize += sizeof(ABCount); // Number of attr blocks
+    size_t attrnum = 0;
+    for (auto &a : AttributeEncodeBuffers)
+    {
+        if (a.iov_base && (a.iov_len > 0))
+        {
+            auto thisAttrHash = BP5Helper::HashOfBlock(a.iov_base, a.iov_len);
+            NeedThisAttr[attrnum] = (AttrSet.count(thisAttrHash) == 0);
+            if (NeedThisAttr[attrnum])
+            {
+                AttrSet.insert(thisAttrHash);
+            }
+        }
+        attrnum++;
+    }
+    attrnum = 0;
     for (auto &a : AttributeEncodeBuffers)
     {
         RetSize += sizeof(uint64_t); // AttrEncodeLen
         size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
-        RetSize += AlignedSize;
+        if (NeedThisAttr[attrnum])
+            RetSize += AlignedSize;
+        attrnum++;
     }
     RetSize += sizeof(DSCount);
     RetSize += DataSizes.size() * sizeof(uint64_t);
@@ -1530,9 +1548,10 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     }
 
     helper::CopyToBuffer(Ret, Position, &ABCount);
+    attrnum = 0;
     for (auto &a : AttributeEncodeBuffers)
     {
-        if (a.iov_base)
+        if (a.iov_base && NeedThisAttr[attrnum])
         {
             size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
             helper::CopyToBuffer(Ret, Position, &AlignedSize);
@@ -1548,6 +1567,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
             size_t ZeroSize = 0;
             helper::CopyToBuffer(Ret, Position, &ZeroSize);
         }
+        attrnum++;
     }
 
     helper::CopyToBuffer(Ret, Position, &DSCount);

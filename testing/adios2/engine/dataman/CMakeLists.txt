@@ -17,6 +17,14 @@ foreach(tst IN ITEMS
   )
 endforeach()
 
+set_property(TEST Engine.DataMan.DataManEngineTest.1D.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.2D_MemSelect.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.3D_MemSelect.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.WriterSingleBuffer.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.WriterDoubleBuffer.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.ReaderSingleBuffer.Serial PROPERTY TIMEOUT 300)
+set_property(TEST Engine.DataMan.DataManEngineTest.ReaderDoubleBuffer.Serial  PROPERTY TIMEOUT 300)
+
 if (ADIOS2_HAVE_Python)
     python_add_test(NAME Test.Engine.DataMan1D.Serial SCRIPT TestDataMan1D.py)
     python_add_test(NAME Test.Engine.DataMan1xN.Serial SCRIPT TestDataMan1xN.py)

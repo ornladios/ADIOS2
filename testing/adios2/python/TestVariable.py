@@ -1,5 +1,5 @@
 from adios2 import Stream, Adios
-from adios2.bindings import DerivedVarType
+from adios2.bindings import DerivedVarType, Linf_norm, L2_norm
 import unittest
 import numpy as np
 
@@ -46,6 +46,29 @@ class TestVariable(unittest.TestCase):
             for _ in f.steps():
                 temps = f.inquire_variable("temps")
                 temps.add_operation(op2)
+
+    def test_04_accuracy(self):
+        with Stream("pythontestvariableaccuracy.bp", "w") as f:
+            temps = f.io.define_variable("temps", self.TEMP, self.TEMP.shape, [0], self.TEMP.shape)
+            temps.set_accuracy(0.1, Linf_norm, True)
+            acc = temps.get_accuracy()
+            self.assertAlmostEqual(acc.error, 0.0, 10)
+            self.assertAlmostEqual(acc.norm, Linf_norm, 10)
+            self.assertEqual(acc.relative, True)
+            f.write(temps, self.TEMP)
+
+        with Stream("pythontestvariableoperators.bp", "r") as f:
+            for _ in f.steps():
+                temps = f.inquire_variable("temps")
+                temps.set_accuracy(0.1, Linf_norm, True)
+                data = f.read(temps)
+                self.assertEqual(data[0], self.TEMP[0])
+                acc = temps.get_accuracy()
+                # accuracy must be the default accuracy set in VariableBase
+                # since we have no accuracy reading at the moment
+                self.assertAlmostEqual(acc.error, L2_norm, 10)
+                self.assertAlmostEqual(acc.norm, 0.0, 10)
+                self.assertEqual(acc.relative, False)
 
 
 if __name__ == "__main__":

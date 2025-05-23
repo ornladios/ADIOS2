@@ -71,6 +71,14 @@ public:
      */
     Mode OpenMode() const;
 
+    /** Serialize all metadata right after engine is created, which can be
+     * delivered to other processes to open the same file for reading without
+     * opening and reading in metadata again.
+     * @return metadata (pointer to allocated memory) and size of metadata
+     * the pointer must be deallocated by user using free()
+     */
+    void GetMetadata(char **md, size_t *size) const;
+
     /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
      * and mode = Read
@@ -210,9 +218,7 @@ public:
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
         auto bufferMem = bufferView.memory_space();
-        auto bufferLayout = bufferView.layout();
         variable.SetMemorySpace(bufferMem);
-        variable.SetArrayLayout(bufferLayout);
 #endif
         Put(variable, bufferView.data(), launch);
     }
@@ -416,9 +422,7 @@ public:
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
         auto bufferMem = bufferView.memory_space();
-        auto bufferLayout = bufferView.layout();
         variable.SetMemorySpace(bufferMem);
-        variable.SetArrayLayout(bufferLayout);
 #endif
         Get(variable, bufferView.data(), launch);
     }

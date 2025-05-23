@@ -3,7 +3,12 @@
 set -ex
 
 # Build the base image
-docker build --progress=plain --build-arg EXTRA_VARIANTS="+blosc+ssc ^mgard@2023-01-10" --rm -f ./Dockerfile.ci-spack-ubuntu20.04-base -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base .
+docker build --progress=plain \
+  --build-arg EXTRA_VARIANTS="+blosc+ssc ^mgard@2023-01-10" \
+  --build-arg PATCH_VARIANT_XROOTD=ON \
+  --rm -f ./Dockerfile.ci-spack-ubuntu20.04-base \
+  -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base \
+  .
 
 # Build the gcc8, gcc9, and gcc10 images
 docker build --rm --build-arg GCC_VERSION=8 -f ./Dockerfile.ci-spack-ubuntu20.04-gcc -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc8 .

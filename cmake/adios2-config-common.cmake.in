@@ -12,6 +12,7 @@ endif()
 
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
+set(ADIOS2_HAVE_SST @ADIOS2_HAVE_SST@)
 set(ADIOS2_HAVE_CUDA @ADIOS2_HAVE_CUDA@)
 set(ADIOS2_HAVE_Kokkos @ADIOS2_HAVE_Kokkos@)
 set(ADIOS2_HAVE_Kokkos_CUDA @ADIOS2_HAVE_Kokkos_CUDA@)
@@ -84,6 +85,11 @@ if(NOT @BUILD_SHARED_LIBS@)
   set(ADIOS2_HAVE_Blosc2 @ADIOS2_HAVE_Blosc2@)
   if(ADIOS2_HAVE_Blosc2)
     find_dependency(Blosc2 2.10.1)
+  endif()
+
+  set(ADIOS2_HAVE_BigWhoop @ADIOS2_HAVE_BigWhoop@)
+  if(ADIOS2_HAVE_BigWhoop)
+    find_dependency(BigWhoop)
   endif()
 
   set(ADIOS2_HAVE_BZip2 @ADIOS2_HAVE_BZip2@)
@@ -189,7 +195,6 @@ if(NOT @BUILD_SHARED_LIBS@)
     INTERFACE_LINK_LIBRARIES ffs::ffs
   )
 
-  set(ADIOS2_HAVE_SST @ADIOS2_HAVE_SST@)
   if(ADIOS2_HAVE_SST)
     set(ADIOS2_SST_HAVE_LIBFABRIC @ADIOS2_SST_HAVE_LIBFABRIC@)
     if(ADIOS2_SST_HAVE_LIBFABRIC)

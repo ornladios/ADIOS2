@@ -35,7 +35,6 @@ Params AttributeBase::GetInfo() const noexcept
     info["Type"] = ToString(m_Type);
     info["Elements"] = std::to_string(m_Elements);
     info["Value"] = this->DoGetInfoValue();
-    info["Modifiable"] = std::to_string(m_AllowModification);
     return info;
 }
 

@@ -186,6 +186,24 @@ adios2_error adios2_engine_openmode(adios2_mode *mode, const adios2_engine *engi
     }
 }
 
+adios2_error adios2_engine_get_metadata(adios2_engine *engine, char **md, size_t *size)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(engine,
+                                        "for const adios2_engine, in call to adios2_get_metadata");
+
+        adios2::core::Engine *engineCpp = reinterpret_cast<adios2::core::Engine *>(engine);
+
+        engineCpp->GetMetadata(md, size);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_get_metadata"));
+    }
+}
+
 adios2_error adios2_begin_step(adios2_engine *engine, const adios2_step_mode mode,
                                const float timeout_seconds, adios2_step_status *status)
 {

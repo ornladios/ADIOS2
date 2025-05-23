@@ -26,7 +26,7 @@ class TestDerivedVariable(unittest.TestCase):
             self.assertEqual(temps.shape(), [4])
             self.assertEqual(temps.sizeof(), 8)
             self.assertEqual(dmo.name(), "derived/metadataonly")
-            self.assertEqual(dmo.type(), DerivedVarType.MetadataOnly)
+            self.assertEqual(dmo.type(), DerivedVarType.StatsOnly)
             self.assertEqual(ds.name(), "derived/storedata")
             self.assertEqual(ds.type(), DerivedVarType.StoreData)
             self.assertEqual(de.name(), "derived/expressionstring")
@@ -38,6 +38,7 @@ class TestDerivedVariable(unittest.TestCase):
                 temps = f.inquire_variable("temps")
                 temps_ds = f.inquire_variable("derived/storedata")
                 temps_dm = f.inquire_variable("derived/metadataonly")
+                temps_de = f.inquire_variable("derived/expressionstring")
 
                 self.assertEqual(temps.name(), "temps")
                 self.assertEqual(temps.block_id(), 0)
@@ -60,6 +61,13 @@ class TestDerivedVariable(unittest.TestCase):
                 self.assertEqual(temps_dm.steps(), 1)
                 self.assertEqual(temps_dm.steps_start(), 0)
 
+                self.assertEqual(temps_de.name(), "derived/expressionstring")
+                self.assertEqual(temps_de.block_id(), 0)
+                self.assertEqual(temps_de.count(), [4])
+                self.assertEqual(temps_de.sizeof(), 8)
+                self.assertEqual(temps_de.steps(), 1)
+                self.assertEqual(temps_de.steps_start(), 0)
+
                 t = f.read("temps", start=[0], count=temps.count())
                 if not (t == self.TEMP).all():
                     raise ValueError(
@@ -68,6 +76,20 @@ class TestDerivedVariable(unittest.TestCase):
                     )
 
                 ts = f.read("derived/storedata", start=[0], count=temps_ds.count())
+                if not (ts == 2 * self.TEMP).all():
+                    raise ValueError(
+                        "ERROR: Reading 'derived/storedata' failed. "
+                        f"Data does not match expected values. data = {ts}"
+                    )
+
+                ts = f.read("derived/metadataonly", start=[0], count=temps_ds.count())
+                if not (ts == 2 * self.TEMP).all():
+                    raise ValueError(
+                        "ERROR: Reading 'derived/metadataonly' failed. "
+                        f"Data does not match expected values. data = {ts}"
+                    )
+
+                ts = f.read("derived/expressionstring", start=[0], count=temps_ds.count())
                 if not (ts == 2 * self.TEMP).all():
                     raise ValueError(
                         "ERROR: Reading 'derived/storedata' failed. "

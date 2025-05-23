@@ -24,22 +24,13 @@
 #include "adios2/toolkit/shm/Spinlock.h"
 #include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
+#include <caliper/cali-manager.h>
+#include <caliper/cali.h>
 #include <daos.h>
 #include <daos_obj.h>
-#include <mpi.h>
 
-#define FAIL(fmt, ...)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
-        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
-    } while (0)
-#define ASSERT(cond, ...)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if (!(cond))                                                                               \
-            FAIL(__VA_ARGS__);                                                                     \
-    } while (0)
+#define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
+#define chunk_size_1mb 1048576
 
 namespace adios2
 {
@@ -88,9 +79,7 @@ private:
 
     /* DAOS declarations */
 
-    uuid_t pool_uuid, cont_uuid;
-    char *pool_label = "pool_ranjansv";
-    char *cont_label = "adios-daos-engine-cont";
+    char m_pool_label[100], m_cont_label[100];
 
     /* Declare variables for pool and container handles */
     daos_handle_t poh, coh;
@@ -102,8 +91,43 @@ private:
     };
 
     /* Declare variables for the KV object */
-    daos_handle_t oh;
-    daos_obj_id_t oid;
+    daos_handle_t oh, mdsize_oh;
+    daos_obj_id_t oid, mdsize_oid;
+    daos_array_iod_t iod;
+    daos_range_t rg;
+    d_sg_list_t sgl;
+    d_iov_t iov;
+
+    enum class DaosEngine
+    {
+        DAOS_ARRAY,
+        DAOS_ARRAY_1MB_ALIGNED,
+        DAOS_KV,
+        UNKNOWN
+    };
+
+    DaosEngine daosEngine;
+    void SetDaosEngine();
+    void SetPoolAndContName();
+
+    enum class DataFlag
+    {
+        ON,
+        OFF
+    };
+    DataFlag m_DataFlag = DataFlag::ON;
+    void SetDataFlag();
+
+    size_t m_step_offset = 0;
+
+    // Declare WriteMetadata function
+    void WriteMetadata(format::BP5Serializer::TimestepInfo &);
+    void DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &);
+    void DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &);
+    void CreateDaosArrayObject();
+    void CreateDaosKVObject();
+    void OpenDaosObjAndShare();
+    void WriteObjectIDsToFile();
 
     char node[128] = "unknown";
 
@@ -134,6 +158,7 @@ private:
     std::vector<std::string> m_MetadataIndexFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
+    std::string m_OIDFileName;
 
     bool m_BetweenStepPairs = false;
 
@@ -147,6 +172,7 @@ private:
     void InitTransports() final;
     /** DAOS pool connection and container opening */
     void InitDAOS();
+    void array_oh_share(daos_handle_t *);
     /** Allocates memory and starts a PG group */
     void InitBPBuffer();
     void NotifyEngineAttribute(std::string name, DataType type) noexcept;
@@ -203,8 +229,7 @@ private:
 
     void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize);
 
-    uint64_t WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
-                           const std::vector<core::iovec> &AttributeBlocks);
+    uint64_t WriteAttributes(const std::vector<core::iovec> &AttributeBlocks);
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);

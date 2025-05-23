@@ -1,0 +1,143 @@
+#  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
+default:
+  interruptible: true
+  tags:
+    - hpsf-gpu
+    - linux-5.15
+
+#  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
+.common-sanitizer:
+  image:
+    name: ubuntu
+    pull_policy: always
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      when: on_success
+    - when: never
+  variables:
+    GITLAB_SITE: "UO CI (gitlab.spack.io)"
+    CI_BIN_DIR:  "$CI_PROJECT_DIR/build"
+
+.common-build:
+  extends:
+    - .common-sanitizer
+  stage: build
+  script:
+    - bash scripts/ci/gitlab-ci/run.sh update
+    - bash scripts/ci/gitlab-ci/run.sh configure
+    - bash scripts/ci/gitlab-ci/run.sh build
+  artifacts:
+    expire_in: 1 hours
+    when: always
+    paths:
+      - $CI_BIN_DIR/bin/
+      - $CI_BIN_DIR/lib/
+      - $CI_BIN_DIR/lib64/
+      - $CI_BIN_DIR/thirdparty/**/lib64/
+      - $CI_BIN_DIR/testing/
+      - $CI_BIN_DIR/source/**/*.h
+      - $CI_BIN_DIR/source/**/*.in
+      - $CI_BIN_DIR/adios2_reorganize_wrapper
+
+      # CTest and CMake install files.
+      - $CI_BIN_DIR/CMakeCache.txt
+      - $CI_BIN_DIR/**/*.cmake
+      - $CI_BIN_DIR/Testing/
+
+      # CDash files.
+      - $CI_BIN_DIR/DartConfiguration.tcl
+
+.common-test:
+  extends:
+    - .common-sanitizer
+  stage: test
+  script:
+    - bash scripts/ci/gitlab-ci/run.sh memcheck
+
+#===============================================================================
+
+build:uo-sanitizer-asan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+  extends: [.common-build]
+
+build:uo-sanitizer-msan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+  extends: [.common-build]
+
+build:uo-sanitizer-tsan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+  extends: [.common-build]
+
+build:uo-sanitizer-ubsan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+  extends: [.common-build]
+
+test:uo-sanitizer-asan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+  extends: [.common-test]
+  needs: [build:uo-sanitizer-asan]
+
+test:uo-sanitizer-msan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+  extends: [.common-test]
+  needs: [build:uo-sanitizer-msan]
+
+test:uo-sanitizer-tsan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+  extends: [.common-test]
+  needs: [build:uo-sanitizer-tsan]
+
+test:uo-sanitizer-ubsan:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+  extends: [.common-test]
+  needs: [build:uo-sanitizer-ubsan]
+
+deploy:sync-ornl:
+  environment: ornl
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: never
+  image:
+    name: ornladios/adios2:sync-20241206-b
+    pull_policy: always
+  script: >
+    .gitlab/config/SpackCIBridge.py
+    ornladios/ADIOS2
+    git@code.ornl.gov:ecpcitest/adios2.git
+    https://code.ornl.gov/
+    ecpcitest/adios2
+    --prereq-check=format
+    --prereq-check=git_checks
+    --disable-status-post
+  dependencies: []
+  needs: []
+
+deploy:sync-spack:
+  environment: spackio
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: never
+  image:
+    name: ornladios/adios2:sync-20241206-b
+    pull_policy: always
+  script: >
+    .gitlab/config/SpackCIBridge.py
+    ornladios/ADIOS2
+    git@ssh.gitlab.spack.io:adios2/adios2.git
+    https://gitlab.spack.io/
+    adios2/ADIOS2
+    --prereq-check=format
+    --prereq-check=git_checks
+    --status-context="Frank CI (sanitizers)"
+  dependencies: []
+  needs: []

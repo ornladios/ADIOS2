@@ -48,12 +48,19 @@ template <class T>
 void SkeletonReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // returns immediately
-    if (m_Verbosity == 5)
+    if ((variable.m_ShapeID == ShapeID::GlobalValue) || (variable.m_ShapeID == ShapeID::LocalValue))
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetDeferred(" << variable.m_Name
-                  << ")\n";
+        GetSyncCommon(variable, data);
     }
-    m_NeedPerformGets = true;
+    else
+    {
+        if (m_Verbosity == 5)
+        {
+            std::cout << "Skeleton Reader " << m_ReaderRank << "     GetDeferred("
+                      << variable.m_Name << ")\n";
+        }
+        m_NeedPerformGets = true;
+    }
 }
 
 } // end namespace engine

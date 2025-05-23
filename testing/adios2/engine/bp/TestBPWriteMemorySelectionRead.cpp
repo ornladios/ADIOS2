@@ -15,6 +15,7 @@
 #include "../SmallTestData.h"
 
 std::string engineName; // comes from command line
+std::string UniqName;   // comes from command line
 bool DoWrite = true;
 bool DoRead = true;
 
@@ -185,9 +186,9 @@ void BPSteps1D(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + "_MPI");
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + UniqName + "_MPI");
 #else
-    const std::string fname("BPSteps1D_" + std::to_string(ghostCells));
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + UniqName);
 #endif
 
 #if ADIOS2_USE_MPI
@@ -403,9 +404,9 @@ void BPSteps2D4x2(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) + "_MPI");
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) + UniqName + "_MPI");
 #else
-    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells));
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) + UniqName);
 #endif
 
 #if ADIOS2_USE_MPI
@@ -633,9 +634,9 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) + "_MPI");
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) + UniqName + "_MPI");
 #else
-    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells));
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) + UniqName);
 #endif
 
 #if ADIOS2_USE_MPI
@@ -920,8 +921,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            std::string fname;
-            std::string engineParams;
+            //  std::string engineParams;
             if (bare_arg == 0)
             {
                 /* first arg without -- is engine */
@@ -931,7 +931,7 @@ int main(int argc, char **argv)
             else if (bare_arg == 1)
             {
                 /* second arg without -- is filename */
-                //                fname = std::string(argv[1]);
+                UniqName = std::string(argv[2]);
                 bare_arg++;
             }
             else if (bare_arg == 2)

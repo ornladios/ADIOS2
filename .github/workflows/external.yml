@@ -1,0 +1,15 @@
+name: external
+on:
+  push:
+  pull_request_target:
+
+permissions: write-all
+
+jobs:
+  generate_statuses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Kitware/cdash-status@release
+        with:
+          project: Adios

@@ -45,8 +45,12 @@ public:
      */
     BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
+    BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm, const char *md,
+              const size_t mdsize);
+
     ~BP5Reader();
 
+    void GetMetadata(char **md, size_t *size) final;
     StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
@@ -104,6 +108,7 @@ private:
 
     /* KVCache for remote data */
     kvcache::KVCacheCommon m_KVCache;
+    std::unordered_map<std::string, MinVarInfo *> MinBlocksInfoMap;
 
     /* Fingerprint to verify local validity against remote data */
     std::string m_Fingerprint = "";
@@ -125,10 +130,12 @@ private:
     Minifooter m_Minifooter;
 
     bool m_InitialWriterActiveCheckDone = false;
+    bool m_ReadMetadataFromFile = true;
 
     void Init();
     void InitParameters();
     void InitTransports();
+    void ProcessMetadataFromMemory(const char *md);
 
     /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
      * Return true if slept

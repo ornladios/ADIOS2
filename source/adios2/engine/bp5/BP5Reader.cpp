@@ -45,6 +45,20 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
     m_IsOpen = true;
 }
 
+BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
+                     const char *md, const size_t mdsize)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
+  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
+  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(),
+  m_JSONProfiler(m_Comm)
+{
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
+    m_ReadMetadataFromFile = false;
+    Init();
+    ProcessMetadataFromMemory(md);
+    m_IsOpen = true;
+}
+
 BP5Reader::~BP5Reader()
 {
     if (m_BP5Deserializer)
@@ -61,6 +75,96 @@ void BP5Reader::DestructorClose(bool Verbose) noexcept
     // Nothing special needs to be done to "close" a BP5 reader during shutdown
     // if it hasn't already been Closed
     m_IsOpen = false;
+}
+
+void BP5Reader::GetMetadata(char **md, size_t *size)
+{
+    uint64_t sizes[3] = {m_Metadata.Size(), m_MetaMetadata.m_Buffer.size(),
+                         m_MetadataIndex.m_Buffer.size()};
+
+    /* BP5 modifies the metadata block in memory during processing
+       so we have to read it from file again
+    */
+    auto currentPos = m_MDFileManager.CurrentPos(0);
+    std::vector<char> mdbuf(sizes[0]);
+    m_MDFileManager.ReadFile(mdbuf.data(), sizes[0], 0);
+    m_MDFileManager.SeekTo(currentPos, 0);
+
+    size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
+    *md = (char *)malloc(mdsize);
+    *size = mdsize;
+    char *p = *md;
+    memcpy(p, sizes, sizeof(sizes));
+    p += sizeof(sizes);
+    memcpy(p, mdbuf.data(), sizes[0]);
+    p += sizes[0];
+    memcpy(p, m_MetaMetadata.m_Buffer.data(), sizes[1]);
+    p += sizes[1];
+    memcpy(p, m_MetadataIndex.m_Buffer.data(), sizes[2]);
+    p += sizes[2];
+}
+
+void BP5Reader::ProcessMetadataFromMemory(const char *md)
+{
+    uint64_t size_mdidx, size_md, size_mmd;
+    const char *p = md;
+    memcpy(&size_md, p, sizeof(uint64_t));
+    p = p + sizeof(uint64_t);
+    memcpy(&size_mmd, p, sizeof(uint64_t));
+    p = p + sizeof(uint64_t);
+    memcpy(&size_mdidx, p, sizeof(uint64_t));
+    p = p + sizeof(uint64_t);
+
+    std::string hint("when processing metadata from memory");
+
+    m_Metadata.Resize(size_md, hint);
+    std::memcpy(m_Metadata.Data(), p, size_md);
+    p = p + size_md;
+
+    size_t pos = 0;
+    m_MetaMetadata.Resize(size_mmd, hint);
+    helper::CopyToBuffer(m_MetaMetadata.m_Buffer, pos, p, size_mmd);
+    p = p + size_mmd;
+
+    pos = 0;
+    m_MetadataIndex.Resize(size_mdidx, hint);
+    helper::CopyToBuffer(m_MetadataIndex.m_Buffer, pos, p, size_mdidx);
+    p = p + size_mdidx;
+
+    size_t parsedIdxSize = 0;
+    const auto stepsBefore = m_StepsCount;
+
+    parsedIdxSize = ParseMetadataIndex(m_MetadataIndex, 0, true);
+
+    // cut down the index buffer by throwing away the read but unprocessed
+    // steps
+    m_MetadataIndex.m_Buffer.resize(parsedIdxSize);
+    // next time read index file from this position
+    m_MDIndexFileAlreadyReadSize += parsedIdxSize;
+
+    // At this point first in time we learned the writer's major and we can
+    // create the serializer object
+    if (!m_BP5Deserializer)
+    {
+        m_BP5Deserializer = new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
+                                                        (m_OpenMode == Mode::ReadRandomAccess));
+        m_BP5Deserializer->m_Engine = this;
+    }
+
+    if (m_StepsCount > stepsBefore)
+    {
+        InstallMetaMetaData(m_MetaMetadata);
+
+        if (m_OpenMode == Mode::ReadRandomAccess)
+        {
+            for (size_t Step = 0; Step < m_MetadataIndexTable.size(); Step++)
+            {
+                m_BP5Deserializer->SetupForStep(Step,
+                                                m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
+                InstallMetadataForTimestep(Step);
+            }
+        }
+    }
 }
 
 void BP5Reader::InstallMetadataForTimestep(size_t Step)
@@ -200,6 +304,11 @@ void BP5Reader::EndStep()
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
     PerformGets();
+    for (auto &item : MinBlocksInfoMap)
+    {
+        delete item.second;
+    }
+    MinBlocksInfoMap.clear();
 }
 
 std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
@@ -316,10 +425,12 @@ void BP5Reader::PerformGets()
         if (getenv("useKVCache"))
         {
             m_KVCache.OpenConnection();
+            m_Fingerprint = m_Parameters.UUID;
             if (m_Fingerprint.empty())
             {
                 m_KVCache.RemotePathHashMd5(RemoteName, m_Fingerprint);
             }
+            m_KVCache.SetLocalCacheFile(m_Name + PathSeparator + "data");
         }
 #endif
         if (m_Remote == nullptr)
@@ -329,7 +440,7 @@ void BP5Reader::PerformGets()
                 "Remote file " + m_Name +
                     " cannot be opened. Possible server or file specification error.");
         }
-        if (!m_Remote)
+        if (!(*m_Remote)) // evaluate validity of object, not just that the pointer is non-NULL
         {
             helper::Throw<std::ios_base::failure>(
                 "Engine", "BP5Reader", "OpenFiles",
@@ -385,15 +496,48 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
 
     for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
-        const auto &Req = GetRequests[req_seq];
+        auto &Req = GetRequests[req_seq];
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
 
-        RequestInfo ReqInfo(Req.Count.size());
+        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + "|";
+        if (Req.BlockID != std::numeric_limits<std::size_t>::max())
+        {
+            MinVarInfo *minBlocksInfo = nullptr;
+            if (MinBlocksInfoMap.find(keyPrefix) == MinBlocksInfoMap.end())
+            {
+                minBlocksInfo = MinBlocksInfo(*VB, Req.RelStep);
+                MinBlocksInfoMap[keyPrefix] = minBlocksInfo;
+            }
+            else
+            {
+                minBlocksInfo = MinBlocksInfoMap[keyPrefix];
+            }
+            Req.Start.resize(minBlocksInfo->Dims);
+            Req.Count.resize(minBlocksInfo->Dims);
+            for (auto &blockInfo : minBlocksInfo->BlocksInfo)
+            {
+                if (Req.BlockID == blockInfo.BlockID)
+                {
+                    for (int i = 0; i < minBlocksInfo->Dims; i++)
+                    {
+                        Req.Start[i] = blockInfo.Start[i];
+                        Req.Count[i] = blockInfo.Count[i];
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Start/Count in cache includes steps as first dimension
+        adios2::Dims cacheStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+        adios2::Dims cacheCount = helper::DimsWithStep(Req.StepCount, Req.Count);
+
+        RequestInfo ReqInfo(cacheCount.size());
         ReqInfo.ReqSeq = req_seq;
         ReqInfo.TypeSize = helper::GetDataTypeSize(varType);
 
-        kvcache::QueryBox targetBox(Req.Start, Req.Count);
-        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
+        kvcache::QueryBox targetBox(cacheStart, cacheCount);
         std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists
@@ -404,7 +548,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             ReqInfo.ReqSize = targetBox.size();
             cachedRequestsInfo.push_back(ReqInfo);
 
-            std::cout << "Found " << targetKey << " in cache" << std::endl;
+            // std::cout << "Found " << targetKey << " in cache" << std::endl;
         }
         else
         {
@@ -429,9 +573,9 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 regularBoxes.push_back(targetBox);
             }
 
-            std::cout << "Going to retrieve " << regularBoxes.size()
+            /*std::cout << "Going to retrieve " << regularBoxes.size()
                       << " boxes from remote server, and " << cachedBoxes.size()
-                      << " boxes from cache" << std::endl;
+                      << " boxes from cache" << std::endl;*/
 
             // Get data from remote server
             for (auto &box : regularBoxes)
@@ -443,10 +587,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 ReqInfo.Data = malloc(ReqInfo.ReqSize * ReqInfo.TypeSize);
                 std::vector<size_t> start;
                 std::vector<size_t> count;
-                box.StartToVector(start);
-                box.CountToVector(count);
-                auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, count, start,
-                                            ReqInfo.Data);
+                box.StartToVector(start, 1); // start without step
+                box.CountToVector(count, 1); // count without step
+                size_t stepStart = box.Start[0];
+                size_t stepCount = box.Count[0];
+                auto handle = m_Remote->Get(Req.VarName, stepStart, stepCount, Req.BlockID, count,
+                                            start, VB->m_AccuracyRequested, ReqInfo.Data);
                 handles.push_back(handle);
                 remoteRequestsInfo.push_back(ReqInfo);
             }
@@ -463,9 +609,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     }
 
     // Get data from cache server
+    std::cout << "RemoteGet " << GetRequests.size() << " requests, fileID " << m_Fingerprint
+              << " cached " << cachedRequestsInfo.size() << " remote " << handles.size() << " items"
+              << std::endl;
     for (auto &ReqInfo : cachedRequestsInfo)
     {
-        m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
+        m_KVCache.AppendGetCommandInBatch(ReqInfo.CacheKey.c_str());
     }
 
     for (auto &ReqInfo : cachedRequestsInfo)
@@ -473,33 +622,40 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         auto &Req = GetRequests[ReqInfo.ReqSeq];
         if (ReqInfo.DirectCopy)
         {
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqSize * ReqInfo.TypeSize,
-                                   Req.Data);
+            m_KVCache.ExecuteGetBatch(ReqInfo.CacheKey.c_str(), ReqInfo.ReqSize * ReqInfo.TypeSize,
+                                      Req.Data);
         }
         else
         {
             void *data = malloc(ReqInfo.ReqBox.size() * ReqInfo.TypeSize);
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
-                                   ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
+            m_KVCache.ExecuteGetBatch(ReqInfo.CacheKey.c_str(),
+                                      ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
+            // cache result includes steps, need to adjust output Start/Count for N+1 dim copy
+            adios2::Dims outStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+            adios2::Dims outCount = helper::DimsWithStep(Req.StepCount, Req.Count);
             helper::NdCopy(reinterpret_cast<char *>(data), ReqInfo.ReqBox.Start,
                            ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                           Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
+                           outStart, outCount, true, false, static_cast<int>(ReqInfo.TypeSize));
             free(data);
         }
     }
 
+    // Get data from remote and cache it
     for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
         auto handle = handles[handle_seq];
         m_Remote->WaitForGet(handle);
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
         auto &Req = GetRequests[ReqInfo.ReqSeq];
+        // cache result includes steps, need to adjust output Start/Count for N+1 dim copy
+        adios2::Dims outStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+        adios2::Dims outCount = helper::DimsWithStep(Req.StepCount, Req.Count);
         helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.ReqBox.Start,
                        ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                       Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
+                       outStart, outCount, true, false, static_cast<int>(ReqInfo.TypeSize));
 
-        m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
-                                       ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
+        m_KVCache.AppendSetCommandInBatch(ReqInfo.CacheKey.c_str(),
+                                          ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
         free(ReqInfo.Data);
     }
 
@@ -507,7 +663,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
-        m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
+        m_KVCache.ExecuteSetBatch(ReqInfo.CacheKey.c_str());
     }
 }
 
@@ -518,13 +674,72 @@ void BP5Reader::PerformRemoteGets()
     std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
-        auto handle =
-            m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+        auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.StepCount, Req.BlockID, Req.Count,
+                                    Req.Start, VB->m_AccuracyRequested, Req.Data);
         handles.push_back(handle);
     }
-    for (auto &handle : handles)
+
+    size_t nHandles = handles.size();
+    // TP endGenerate = NOW();
+    // double generateTime = DURATION(startGenerate, endGenerate);
+
+    size_t nextHandle = 0;
+    std::mutex mutexReadRequests;
+
+    auto lf_GetNextHandle = [&]() -> size_t {
+        std::lock_guard<std::mutex> lockGuard(mutexReadRequests);
+        size_t reqidx = MaxSizeT;
+        if (nextHandle < nHandles)
+        {
+            reqidx = nextHandle;
+            ++nextHandle;
+        }
+        return reqidx;
+    };
+
+    auto lf_WaitForGet = [&](const size_t threadID) -> bool {
+        while (true)
+        {
+            const auto reqidx = lf_GetNextHandle();
+            if (reqidx > nHandles)
+            {
+                break;
+            }
+            m_Remote->WaitForGet(handles[reqidx]);
+            // std::cout << "BP5Reader::PerformRemoteGets: thread " << threadID
+            //           << " done with response " << reqidx << std::endl;
+        }
+        return true;
+    };
+
+    if (m_Threads > 1 && nHandles > 1)
     {
-        m_Remote->WaitForGet(handle);
+        size_t nThreads = (m_Threads < nHandles ? m_Threads : nHandles);
+        std::vector<std::future<bool>> futures(nThreads - 1);
+
+        // launch Threads-1 threads to process subsets of handles,
+        // then main thread process the last subset
+        for (size_t tid = 0; tid < nThreads - 1; ++tid)
+        {
+            futures[tid] = std::async(std::launch::async, lf_WaitForGet, tid + 1);
+        }
+
+        // main thread runs last subset of reads
+        lf_WaitForGet(0);
+
+        // wait for all async threads
+        for (auto &f : futures)
+        {
+            f.get();
+        }
+    }
+    else
+    {
+        for (auto &handle : handles)
+        {
+            m_Remote->WaitForGet(handle);
+        }
     }
 }
 
@@ -695,25 +910,28 @@ void BP5Reader::Init()
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
     }
 
-    /* Do a collective wait for the file(s) to appear within timeout.
-       Make sure every process comes to the same conclusion */
-    const Seconds timeoutSeconds = Seconds(m_Parameters.OpenTimeoutSecs);
-
-    Seconds pollSeconds = Seconds(m_Parameters.BeginStepPollingFrequencySecs);
-    if (pollSeconds > timeoutSeconds)
+    if (m_ReadMetadataFromFile)
     {
-        pollSeconds = timeoutSeconds;
+        /* Do a collective wait for the file(s) to appear within timeout.
+           Make sure every process comes to the same conclusion */
+        const Seconds timeoutSeconds = Seconds(m_Parameters.OpenTimeoutSecs);
+
+        Seconds pollSeconds = Seconds(m_Parameters.BeginStepPollingFrequencySecs);
+        if (pollSeconds > timeoutSeconds)
+        {
+            pollSeconds = timeoutSeconds;
+        }
+
+        TimePoint timeoutInstant = Now() + timeoutSeconds;
+        OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
+        UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+
+        // Don't try to open the remote file when we open local metadata.  Do that on demand.
+        if (!m_Parameters.RemoteDataPath.empty())
+            m_dataIsRemote = true;
+        if (getenv("DoRemote") || getenv("DoXRootD"))
+            m_dataIsRemote = true;
     }
-
-    TimePoint timeoutInstant = Now() + timeoutSeconds;
-    OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
-    UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
-
-    // Don't try to open the remote file when we open local metadata.  Do that on demand.
-    if (!m_Parameters.RemoteDataPath.empty())
-        m_dataIsRemote = true;
-    if (getenv("DoRemote") || getenv("DoXRootD"))
-        m_dataIsRemote = true;
 }
 
 void BP5Reader::InitParameters()
@@ -1367,20 +1585,27 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
 
 bool BP5Reader::CheckWriterActive()
 {
-    size_t flag = 1;
-    if (m_Comm.Rank() == 0)
+    if (m_ReadMetadataFromFile)
     {
-        auto fsize = m_MDIndexFileManager.GetFileSize(0);
-        if (fsize >= m_IndexHeaderSize)
+        size_t flag = 1;
+        if (m_Comm.Rank() == 0)
         {
-            std::vector<char> header(m_IndexHeaderSize, '\0');
-            m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
-            bool active = ReadActiveFlag(header);
-            flag = (active ? 1 : 0);
+            auto fsize = m_MDIndexFileManager.GetFileSize(0);
+            if (fsize >= m_IndexHeaderSize)
+            {
+                std::vector<char> header(m_IndexHeaderSize, '\0');
+                m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
+                bool active = ReadActiveFlag(header);
+                flag = (active ? 1 : 0);
+            }
         }
+        flag = m_Comm.BroadcastValue(flag, 0);
+        m_WriterIsActive = (flag > 0);
     }
-    flag = m_Comm.BroadcastValue(flag, 0);
-    m_WriterIsActive = (flag > 0);
+    else
+    {
+        m_WriterIsActive = false;
+    }
     return m_WriterIsActive;
 }
 

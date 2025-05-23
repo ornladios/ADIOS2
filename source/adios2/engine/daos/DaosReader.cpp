@@ -16,11 +16,30 @@
 #include <errno.h>
 #include <iomanip>
 #include <mutex>
+#include <stdbool.h>
+#include <sys/stat.h>
 #include <thread>
+#include <unistd.h>
 
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
 #define DURATION(T1, T2) static_cast<double>((T2 - T1).count()) / 1000000000.0;
+
+#define DEBUG_BADALLOC
+#undef DEBUG_BADALLOC
+
+#define FAIL(fmt, ...)                                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
+        exit(1);                                                                                   \
+    } while (0)
+#define ASSERT(cond, ...)                                                                          \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(cond))                                                                               \
+            FAIL(__VA_ARGS__);                                                                     \
+    } while (0)
 
 namespace adios2
 {
@@ -57,77 +76,373 @@ void DaosReader::DestructorClose(bool Verbose) noexcept
     m_IsOpen = false;
 }
 
-void DaosReader::InstallMetadataForTimestep(size_t Step)
+void DaosReader::ReadMetadata(size_t Step)
 {
     size_t pgstart = m_MetadataIndexTable[Step][0];
-    size_t Position = pgstart + sizeof(uint64_t); // skip total data size
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
+    int rc;
+
+    m_Metadata.Reset(true, false);
+
+    // Reader rank 0 - reads all metadata
+    if (m_Comm.Rank() == 0)
+    {
+        switch (daosEngine)
+        {
+        case DaosEngine::DAOS_ARRAY:
+        case DaosEngine::DAOS_ARRAY_1MB_ALIGNED:
+            DaosArrayReadMetadata(Step, WriterCount);
+            break;
+        case DaosEngine::DAOS_KV:
+            DaosKVReadMetadata(Step, WriterCount);
+            break;
+        // Add other cases here if needed
+        default:
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadMetadata",
+                                              "Unsupported DAOS interface");
+        }
+    }
+
+    m_Comm.Barrier();
+
+    // broadcast buffer to all ranks from zero
+    CALI_MARK_BEGIN("DaosReader::broadcast_metadata");
+    m_Comm.BroadcastVector(m_Metadata.m_Buffer);
+    CALI_MARK_END("DaosReader::broadcast_metadata");
+}
+
+void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
+{
+    std::vector<size_t> list_writer_mdsize;
+    list_writer_mdsize.reserve(WriterCount);
+    char key[1000];
+    int rc;
+    size_t total_mdsize = 0;
+    size_t buffer_size = 0;
+
+    CALI_MARK_BEGIN("DaosReader::loop-getsize");
+
+    // Async Get Size
+    size_t WriterRank = 0;
+    total_mdsize = 0;
+    while (WriterRank < WriterCount)
+    {
+        int batchLimit = 0;
+
+        // Start batch
+        while (WriterRank < WriterCount && batchLimit < MAX_KV_GET_REQS)
+        {
+            sprintf(key, "step%zu-rank%zu", Step, WriterRank);
+            CALI_MARK_BEGIN("DaosReader::daos_kv_get_size");
+            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &list_writer_mdsize[WriterRank], NULL,
+                             &ev[batchLimit]);
+            ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+            CALI_MARK_END("DaosReader::daos_kv_get_size");
+
+            WriterRank++;
+            batchLimit++;
+        }
+
+        int i = 0;
+        while (1)
+        {
+            CALI_MARK_BEGIN("DaosReader::daos_eq_poll_getsize");
+            rc = daos_eq_poll(eq, 1, DAOS_EQ_WAIT, batchLimit, evp);
+            ASSERT(rc > 0, "daos_eq_poll() failed with %d", rc);
+            CALI_MARK_END("DaosReader::daos_eq_poll_getsize");
+
+            // If no events are processed, sleep for a short duration before polling again
+            if (rc <= 0)
+            {
+                usleep(10000); // sleep for 10 milliseconds
+                continue;
+            }
+
+            i += rc;
+            if (i >= batchLimit)
+                break;
+        }
+    }
+    CALI_MARK_END("DaosReader::loop-getsize");
+
+    for (int j = 0; j < WriterCount; j++)
+        total_mdsize += list_writer_mdsize[j];
+
+    // Reading total size of attribute includes vector of sizes of attributes and also the attribute
+    // buffers
+    size_t total_attr_size = 0;
+    size_t off_attr = m_MetadataIndexTable[Step][4];
+    m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+    off_attr = off_attr + sizeof(size_t);
+
+    // std::cout << "Total attribute size: " << total_attr_size << std::endl;
+
+    // Allocate memory for m_Metadata
+    buffer_size = sizeof(uint64_t) * (WriterCount + 1) + total_mdsize + total_attr_size;
+    m_Metadata.Resize(buffer_size, "allocating metadata buffer, in call to DaosReader Open");
+
+    uint64_t *ptr = (uint64_t *)m_Metadata.m_Buffer.data();
+
+    // The Metadata buffer is constructed like in WriteMetadata()
+    ptr[0] = total_mdsize;
+    int index = 1;
+    for (WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        ptr[index] = list_writer_mdsize[WriterRank];
+        index++;
+    }
+    m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+    off_attr = off_attr + sizeof(uint64_t) * WriterCount;
+
+    /*
+    for (WriterRank = 0; WriterRank < WriterCount; WriterRank++) {
+       // std::cout << "Attributesize for writer " << WriterRank << " is " << ptr[index] <<
+    std::endl; index++;
+    }*/
+    // Skip over the already read attribute sizes
+    index += WriterCount;
+
+    char *meta_buff = (char *)&ptr[index];
+    index = 0;
+
+    // Now read in the actual metadata for each writer
+    WriterRank = 0;
+
+    CALI_MARK_BEGIN("DaosReader::loop-get");
+    while (WriterRank < WriterCount)
+    {
+        size_t ThisMDSize;
+        int batchLimit = 0;
+
+        // Start batch
+        while (WriterRank < WriterCount && batchLimit < MAX_KV_GET_REQS)
+        {
+            ThisMDSize = list_writer_mdsize[WriterRank];
+
+            sprintf(key, "step%zu-rank%zu", Step, WriterRank);
+            CALI_MARK_BEGIN("DaosReader::daos_kv_get");
+            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &ThisMDSize, &meta_buff[index],
+                             &ev[batchLimit]);
+            ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+            CALI_MARK_END("DaosReader::daos_kv_get");
+
+            index += ThisMDSize;
+
+            WriterRank++;
+            batchLimit++;
+        }
+
+        // Wait for all DaosKVOperations();
+        int i = 0;
+        while (1)
+        {
+            CALI_MARK_BEGIN("DaosReader::daos_eq_poll");
+            rc = daos_eq_poll(eq, 1, DAOS_EQ_WAIT, batchLimit, evp);
+            ASSERT(rc > 0, "daos_eq_poll() failed with %d", rc);
+            CALI_MARK_END("DaosReader::daos_eq_poll");
+
+            // If no events are processed, sleep for a short duration before polling again
+            if (rc <= 0)
+            {
+                usleep(10000); // sleep for 10 milliseconds
+                continue;
+            }
+
+            i += rc;
+            if (i >= batchLimit)
+                break;
+        }
+
+#ifdef DEBUG_BADALLOC
+        // Print metadata block for the last writer in the batch
+        printf("DaosReader::ReadMetadata MetadataBlock\n");
+        char *tmp_ptr = &meta_buff[index - ThisMDSize];
+        for (int i = 0; i < 20; i++)
+            printf("%02x ", tmp_ptr[i]);
+        printf("\n");
+#endif
+    }
+    CALI_MARK_END("DaosReader::loop-get");
+
+    // Read in attributes
+    size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
+    m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+}
+
+void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
+{
+    size_t total_mdsize = 0;
+    size_t buffer_size = 0;
+    size_t sizeof_list_writer_mdsize;
+    uint64_t *list_writer_mdsize = (uint64_t *)malloc(sizeof(uint64_t) * WriterCount);
+    daos_range_t *list_rg = NULL;
+
+    // Get list of Metadata sizes for all writers
+    char key[1000];
+
+    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    {
+        list_rg = (daos_range_t *)malloc(WriterCount * sizeof(daos_range_t));
+    }
+
+    sprintf(key, "step%zu", Step);
+    sizeof_list_writer_mdsize = sizeof(uint64_t) * WriterCount;
+
+    CALI_MARK_BEGIN("DaosReader::daos_kv_get_list_of_mdsize");
+    int rc = daos_kv_get(mdsize_oh, DAOS_TX_NONE, 0, key, &sizeof_list_writer_mdsize,
+                         list_writer_mdsize, NULL);
+    ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+    CALI_MARK_END("DaosReader::daos_kv_get_list_of_mdsize");
+
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        total_mdsize += list_writer_mdsize[WriterRank];
+    }
+
+#ifdef DEBUG_BADALLOC
+    std::cout << "ReadMetadata() - Step: " << Step << ", WriterCount: " << WriterCount
+              << ", total_mdsize: " << total_mdsize << std::endl;
+#endif
+
+    // Reading total size of attribute includes vector of sizes of attributes and also the attribute
+    // buffers
+    size_t total_attr_size = 0;
+    size_t off_attr = m_MetadataIndexTable[Step][4];
+    m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+    off_attr = off_attr + sizeof(size_t);
+
+    // Allocate memory for m_Metadata
+    buffer_size = sizeof(uint64_t) * (WriterCount + 1) + total_mdsize + total_attr_size;
+    m_Metadata.Resize(buffer_size, "allocating metadata buffer, "
+                                   "in call to DaosReader Open");
+
+    uint64_t *ptr = (uint64_t *)m_Metadata.m_Buffer.data();
+
+    // The Metadata buffer is constructed like in WriteMetadata()
+    ptr[0] = buffer_size;
+    int index = 1;
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        ptr[index] = list_writer_mdsize[WriterRank];
+        if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+        {
+            list_rg[WriterRank].rg_len = list_writer_mdsize[WriterRank];
+            list_rg[WriterRank].rg_idx = m_step_offset + WriterRank * chunk_size_1mb;
+        }
+        index++;
+    }
+
+    m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+    off_attr = off_attr + sizeof(uint64_t) * WriterCount;
+
+    index += WriterCount;
+
+    char *meta_buff = (char *)&ptr[index];
+    index = 0;
+
+    // Now read in the actual metadata for each writer
+    // Setup I/O Descriptor
+    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    {
+        iod.arr_nr = WriterCount;
+        iod.arr_rgs = list_rg;
+    }
+    else if (daosEngine == DaosEngine::DAOS_ARRAY)
+    {
+        iod.arr_nr = 1;
+        rg.rg_len = total_mdsize;
+        rg.rg_idx = m_step_offset;
+        iod.arr_rgs = &rg;
+    }
+
+    /** set memory location */
+    sgl.sg_nr = 1;
+    d_iov_set(&iov, &meta_buff[index], total_mdsize);
+    sgl.sg_iovs = &iov;
+
+    // Write Metadata
+    CALI_MARK_BEGIN("DaosReader::daos_array_read");
+    rc = daos_array_read(oh, DAOS_TX_NONE, &iod, &sgl, NULL);
+    ASSERT(rc == 0, "daos_array_read() failed to read metadata with %d", rc);
+    CALI_MARK_END("DaosReader::daos_array_read");
+
+    m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
+#ifdef DEBUG_BADALLOC
+    size_t offset = 0;
+    for (int j = 0; j < WriterCount; j++)
+    {
+        printf("ReadMetadata() Metadatablock, step = %lu, WriterRank = %d\n", Step, j);
+        offset += list_writer_mdsize[j];
+        for (int i = 0; i < 12; i++)
+            printf("%02x ", meta_buff[offset + i]);
+        printf("\n");
+    }
+#endif
+    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+        free(list_rg);
+
+    index += total_mdsize;
+
+    // Read in attributes
+    size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
+    m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+    free(list_writer_mdsize);
+}
+
+void DaosReader::InstallMetadataForTimestep(size_t Step)
+{
+    // size_t pgstart = m_MetadataIndexTable[Step][0];
+    size_t pgstart = m_MetadataIndexTable[0][0];
+    size_t Position = pgstart + sizeof(uint64_t); // skip total data size
+    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[0]].WriterCount;
+    // m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
     size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         // variable metadata for timestep
-        // size_t ThisMDSize = helper::ReadValue<uint64_t>(
-        //    m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-        // char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
-        size_t ThisMDSize;
-        char *ThisMD;
-
-        // DAOS temporary declarations
-        char key[1000];
-        int rc;
-
-        // Query size of a writer rank's metadata
-        sprintf(key, "step%d-rank%d", Step, WriterRank);
-        std::cout << __FILE__ << "::" << __func__ << "(), step: " << Step << std::endl;
-        std::cout << "key = " << key << std::endl;
-        rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &ThisMDSize, NULL, NULL);
-        ASSERT(rc == 0, "daos_kv_get() failed to get size with %d", rc);
-        std::cout << "WriterRank = " << WriterRank << ", ThisMDSize = " << ThisMDSize << std::endl;
-
-        // Allocate memory
-        ThisMD = new char[ThisMDSize];
-
-        // Read writer's metadata
-        rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &ThisMDSize, ThisMD, NULL);
-        ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
-
-        std::cout << "Printing the first 10 bytes of Metadata" << std::endl;
-        char *data = reinterpret_cast<char *>(ThisMD);
-        for (int i = 0; i < 10; i++)
-        {
-            // std::cout << std::hex << std::setw(2) << std::setfill('0') <<
-            // static_cast<int>(data[i]) << " ";
-            std::cout << static_cast<int>(data[i]) << " ";
-        }
-        std::cout << std::endl;
-
+        size_t ThisMDSize =
+            helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
+        char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
         if (m_OpenMode == Mode::ReadRandomAccess)
         {
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
         }
         else
         {
+            CALI_MARK_BEGIN("DaosReader::InstallMetaData");
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank);
+            CALI_MARK_END("DaosReader::InstallMetaData");
         }
-        // MDPosition += ThisMDSize;
-
-        // delete[] ThisMD;
+        MDPosition += ThisMDSize;
     }
-    // for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
-    //{
-    //    // attribute metadata for timestep
-    //    size_t ThisADSize = helper::ReadValue<uint64_t>(
-    //        m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-    //    char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
-    //    if (ThisADSize > 0)
-    //        m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
-    //    MDPosition += ThisADSize;
-    //}
+
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        // attribute metadata for timestep
+        size_t ThisADSize =
+            helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
+        char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
+        if (ThisADSize > 0)
+            m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+        MDPosition += ThisADSize;
+    }
 }
 
 StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("DaosReader::BeginStep");
+
+    // const char* fileName = "/home/hpcvenk1/benchmarks/wait-for-gdb.txt";
+    // struct stat buffer;
+
+    // if (m_Comm.Rank() == 0) {
+    //     while (stat(fileName, &buffer) != 0) {
+    //         sleep(1);  // Sleep for 1 second before checking again
+    //     }
+    //
+    //     printf("File '%s' has been created!\n", fileName);
+    // }
+    // MPI_Barrier(MPI_COMM_WORLD);
 
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
@@ -198,8 +513,13 @@ StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
         /* Remove all existing variables from previous steps
            It seems easier than trying to update them */
         // m_IO.RemoveAllVariables();
+        CALI_MARK_BEGIN("DaosReader::metadata-acquisition");
+        ReadMetadata(m_CurrentStep);
+        CALI_MARK_END("DaosReader::metadata-acquisition");
 
+        CALI_MARK_BEGIN("DaosReader::InstallMetadataForTimestep");
         InstallMetadataForTimestep(m_CurrentStep);
+        CALI_MARK_END("DaosReader::InstallMetadataForTimestep");
         m_IO.ResetVariablesStepSelection(false, "in call to BP5 Reader BeginStep");
 
         // caches attributes for each step
@@ -227,7 +547,17 @@ void DaosReader::EndStep()
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("DaosReader::EndStep");
-    PerformGets();
+
+    if (m_DataFlag == DataFlag::ON)
+    {
+        CALI_MARK_BEGIN("DaosReader::PerformGets");
+        PerformGets();
+        CALI_MARK_END("DaosReader::PerformGets");
+    }
+    else
+    {
+        // Skip reading data
+    }
 }
 
 std::pair<double, double> DaosReader::ReadData(adios2::transportman::TransportMan &FileManager,
@@ -450,7 +780,7 @@ void DaosReader::Init()
     if ((m_OpenMode != Mode::Read) && (m_OpenMode != Mode::ReadRandomAccess))
     {
         helper::Throw<std::invalid_argument>("Engine", "DaosReader", "Init",
-                                             "BPFileReader only supports OpenMode::Read or "
+                                             "DAOSReader only supports OpenMode::Read or "
                                              "OpenMode::ReadRandomAccess from" +
                                                  m_Name);
     }
@@ -460,7 +790,9 @@ void DaosReader::Init()
     m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
     InitParameters();
     InitTransports();
+    CALI_MARK_BEGIN("DaosReader::InitDAOS");
     InitDAOS();
+    CALI_MARK_END("DaosReader::InitDAOS");
     if (!m_Parameters.SelectSteps.empty())
     {
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
@@ -703,63 +1035,245 @@ void DaosReader::InitTransports()
     }
 }
 
-void DaosReader::InitDAOS()
+void DaosReader::array_oh_share(daos_handle_t *oh)
 {
-    // Rank 0 - Connect to DAOS pool, and open container
+    d_iov_t ghdl = {NULL, 0, 0};
     int rc;
-    rc = daos_init();
-    ASSERT(rc == 0, "daos_init failed with %d", rc);
 
-    std::cout << __func__ << std::endl;
-
-    rc = gethostname(node, sizeof(node));
-    ASSERT(rc == 0, "buffer for hostname too small");
     if (m_Comm.Rank() == 0)
     {
-        /** connect to the just created DAOS pool */
-        rc = daos_pool_connect(pool_label, DSS_PSETID,
-                               // DAOS_PC_EX ,
-                               DAOS_PC_RW /* read write access */, &poh /* returned pool handle */,
-                               NULL /* returned pool info */, NULL /* event */);
-        ASSERT(rc == 0, "pool connect failed with %d", rc);
+        /** fetch size of global handle */
+        rc = daos_array_local2global(*oh, &ghdl);
+        ASSERT(rc == 0, "local2global failed with %d", rc);
     }
 
-    /** share pool handle with peer tasks */
-    daos_handle_share(&poh, DaosReader::HANDLE_POOL);
+    /** broadcast size of global handle to all peers */
+    m_Comm.Bcast((uint64_t *)&ghdl.iov_buf_len, 1, 0);
+
+    /** allocate buffer for global pool handle */
+    ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    ghdl.iov_len = ghdl.iov_buf_len;
 
     if (m_Comm.Rank() == 0)
     {
-        /** open container */
-        rc = daos_cont_open(poh, cont_label, DAOS_COO_RW, &coh, NULL, NULL);
-        ASSERT(rc == 0, "container open failed with %d", rc);
+        /** generate actual global handle to share with peer tasks */
+        rc = daos_array_local2global(*oh, &ghdl);
+        ASSERT(rc == 0, "local2global failed with %d", rc);
     }
 
-    /** share container handle with peer tasks */
-    daos_handle_share(&coh, HANDLE_CO);
+    /** broadcast global handle to all peers */
+    m_Comm.Bcast((char *)ghdl.iov_buf, ghdl.iov_len, 0);
 
-    if (m_Comm.Rank() == 0)
+    if (m_Comm.Rank() != 0)
     {
-        FILE *fp = fopen("./share/oid.txt", "r");
-        if (fp == NULL)
-        {
-            perror("fopen");
-            exit(1);
-        }
+        /** unpack global handle */
+        rc = daos_array_global2local(coh, ghdl, 0, oh);
+        ASSERT(rc == 0, "global2local failed with %d", rc);
+    }
+
+    free(ghdl.iov_buf);
+
+    m_Comm.Barrier();
+}
+
+void DaosReader::SetDataFlag()
+{
+    // Read environment variable DATA_STATE and set m_datastate accordingly
+    const char *datastate = std::getenv("DATA_FLAG");
+    if (!datastate)
+    {
+        // By default, set m_DataFlag to ON
+        return;
+    }
+
+    // Set m_DataFlag based on the environment variable value
+    m_DataFlag = (std::string(datastate) == "OFF") ? DataFlag::OFF : DataFlag::ON;
+}
+
+// Function to set DAOS interface from the environment variable
+void DaosReader::SetDaosEngine()
+{
+    const char *env = std::getenv("DAOS_ENGINE");
+    if (!env)
+    {
+        daosEngine = DaosEngine::UNKNOWN;
+        return;
+    }
+
+    std::string interfaceStr(env);
+    std::transform(interfaceStr.begin(), interfaceStr.end(), interfaceStr.begin(), ::tolower);
+    if (interfaceStr == "daos-array")
+    {
+        daosEngine = DaosEngine::DAOS_ARRAY;
+    }
+    else if (interfaceStr == "daos-array-1mb-aligned")
+    {
+        daosEngine = DaosEngine::DAOS_ARRAY_1MB_ALIGNED;
+    }
+    else if (interfaceStr == "daos-kv")
+    {
+        daosEngine = DaosEngine::DAOS_KV;
+    }
+    else
+    {
+        daosEngine = DaosEngine::UNKNOWN;
+    }
+}
+
+// Set m_PoolName and m_ContName from the environment variables DAOS_POOL and DAOS_CONT
+void DaosReader::SetPoolAndContName()
+{
+    const char *pool = std::getenv("DAOS_POOL");
+    const char *cont = std::getenv("DAOS_CONT");
+    if (!pool || !cont)
+    {
+        std::cout << "DAOS_POOL or DAOS_CONT not set" << std::endl;
+        exit(1);
+    }
+
+    strncpy(m_pool_label, pool, sizeof(m_pool_label) - 1);
+    m_pool_label[sizeof(m_pool_label) - 1] = '\0';
+    strncpy(m_cont_label, cont, sizeof(m_cont_label) - 1);
+    m_cont_label[sizeof(m_cont_label) - 1] = '\0';
+}
+
+void DaosReader::ReadObjectIDsFromFile()
+{
+    std::string OIDFileName = GetOIDFileName(m_Name);
+    FILE *fp = fopen(OIDFileName.c_str(), "r");
+    if (fp == NULL)
+    {
+        perror("fopen");
+        exit(1);
+    }
+    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    {
         if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &oid.hi, &oid.lo) != 2)
         {
             fprintf(stderr, "Error reading OID from file\n");
             exit(1);
         }
-        fclose(fp);
+        if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &mdsize_oid.hi, &mdsize_oid.lo) != 2)
+        {
+            fprintf(stderr, "Error reading OID from file\n");
+            exit(1);
+        }
+    }
+    else if (daosEngine == DaosEngine::DAOS_KV)
+    {
+        if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &oid.hi, &oid.lo) != 2)
+        {
+            fprintf(stderr, "Error reading OID from file\n");
+            exit(1);
+        }
+    }
+    fclose(fp);
+}
+
+void DaosReader::OpenDAOSObjects()
+{
+    int rc;
+    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    {
+        daos_size_t cell_size = 1;
+        daos_size_t chunk_size = 1048576;
+        rc =
+            daos_array_open(coh, oid, DAOS_TX_NONE, DAOS_OO_RO, &cell_size, &chunk_size, &oh, NULL);
+        ASSERT(rc == 0, "daos_array_open failed with %d", rc);
+
+        rc = daos_kv_open(coh, mdsize_oid, DAOS_OO_RO, &mdsize_oh, NULL);
+        ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+    }
+    else if (daosEngine == DaosEngine::DAOS_KV)
+    {
+        // Open KV object
+        CALI_MARK_BEGIN("DaosReader::daos_kv_open");
+        rc = daos_kv_open(coh, oid, DAOS_OO_RO, &oh, NULL);
+        ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+        CALI_MARK_END("DaosReader::daos_kv_open");
+
+        // Create event queue;
+        CALI_MARK_BEGIN("DaosReader::EventQueueCreation");
+        rc = daos_eq_create(&eq);
+        CALI_MARK_END("DaosReader::EventQueueCreation");
+        ASSERT(rc == 0, "daos_eq_create() failed with %d", rc);
+
+        // Init events
+        for (int i = 0; i < MAX_KV_GET_REQS; i++)
+        {
+            CALI_MARK_BEGIN("DaosReader::EventInitialization");
+            rc = daos_event_init(&ev[i], eq, NULL);
+            CALI_MARK_END("DaosReader::EventInitialization");
+            ASSERT(rc == 0, "event init failed with %d", rc);
+        }
+    }
+}
+
+void DaosReader::InitDAOS()
+{
+    // Rank 0 - Connect to DAOS pool, and open container
+    int rc;
+    CALI_MARK_BEGIN("DaosReader::daos_init");
+    rc = daos_init();
+    ASSERT(rc == 0, "daos_init failed with %d", rc);
+    CALI_MARK_END("DaosReader::daos_init");
+
+    rc = gethostname(node, sizeof(node));
+    ASSERT(rc == 0, "buffer for hostname too small");
+
+    SetDaosEngine();
+    SetPoolAndContName();
+    SetDataFlag();
+
+    CALI_MARK_BEGIN("DaosReader::daos_pool_connect");
+    if (m_Comm.Rank() == 0)
+    {
+        /** connect to the just created DAOS pool */
+        rc = daos_pool_connect(m_pool_label, DSS_PSETID,
+                               // DAOS_PC_EX ,
+                               DAOS_PC_RO /* read only access */, &poh /* returned pool handle */,
+                               NULL /* returned pool info */, NULL /* event */);
+        ASSERT(rc == 0, "pool connect failed with %d", rc);
     }
 
-    // Rank 0 will broadcast the DAOS KV OID
-    MPI_Bcast(&oid.hi, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&oid.lo, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    CALI_MARK_END("DaosReader::daos_pool_connect");
 
-    // Open KV object
-    rc = daos_kv_open(coh, oid, 0, &oh, NULL);
-    ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+    /** share pool handle with peer tasks */
+    CALI_MARK_BEGIN("DaosReader::daos_handle_share_pool");
+    if (m_Comm.Size() > 1)
+        daos_handle_share(&poh, DaosReader::HANDLE_POOL);
+    CALI_MARK_END("DaosReader::daos_handle_share_pool");
+
+    CALI_MARK_BEGIN("DaosReader::daos_cont_open");
+
+    if (m_Comm.Rank() == 0)
+    {
+        /** open container */
+        rc = daos_cont_open(poh, m_cont_label, DAOS_COO_RO, &coh, NULL, NULL);
+        ASSERT(rc == 0, "container open failed with %d", rc);
+    }
+    CALI_MARK_END("DaosReader::daos_cont_open");
+
+    /** share container handle with peer tasks */
+    CALI_MARK_BEGIN("DaosReader::daos_handle_share_cont");
+    if (m_Comm.Size() > 1)
+        daos_handle_share(&coh, HANDLE_CO);
+    CALI_MARK_END("DaosReader::daos_handle_share_cont");
+
+    CALI_MARK_BEGIN("DaosReader::fscanf-oid-n-broadcast");
+    if (m_Comm.Rank() == 0)
+    {
+        ReadObjectIDsFromFile();
+        OpenDAOSObjects();
+    }
+    CALI_MARK_END("DaosReader::fscanf-oid-n-broadcast");
+
+    /*
+      CALI_MARK_BEGIN("DaosReader::array_oh_share");
+      if (m_Comm.Size() > 1)
+      array_oh_share(&oh);
+      CALI_MARK_END("DaosReader::array_oh_share");
+    */
 }
 
 void DaosReader::InstallMetaMetaData(format::BufferSTL buffer)
@@ -836,65 +1350,56 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
 
     if (m_StepsCount > stepsBefore)
     {
-        m_Metadata.Reset(true, false);
+        // m_Metadata.Reset(true, false);
         m_MetaMetadata.Reset(true, false);
         if (m_Comm.Rank() == 0)
         {
-            //            // How much metadata do we need to read?
-            //            size_t fileFilteredSize = 0;
-            //            for (auto p : m_FilteredMetadataInfo)
-            //            {
-            //                fileFilteredSize += p.second;
-            //            }
+            //      // How much metadata do we need to read?
+            //      size_t fileFilteredSize = 0;
+            //      for (auto p : m_FilteredMetadataInfo) {
+            //        fileFilteredSize += p.second;
+            //      }
             //
-            //            /* Read metadata file into memory but first make sure
-            //             * it has the content that the index table refers to
-            //             */
-            //            auto p = m_FilteredMetadataInfo.back();
-            //            uint64_t expectedMinFileSize = p.first + p.second;
-            //            size_t actualFileSize = 0;
-            //            do
-            //            {
-            //                actualFileSize = m_MDFileManager.GetFileSize(0);
-            //                if (actualFileSize >= expectedMinFileSize)
-            //                {
-            //                    break;
-            //                }
-            //            } while (SleepOrQuit(timeoutInstant, pollSeconds));
+            //      /* Read metadata file into memory but first make sure
+            //       * it has the content that the index table refers to
+            //       */
+            //      auto p = m_FilteredMetadataInfo.back();
+            //      uint64_t expectedMinFileSize = p.first + p.second;
+            //      size_t actualFileSize = 0;
+            //      do {
+            //        actualFileSize = m_MDFileManager.GetFileSize(0);
+            //        if (actualFileSize >= expectedMinFileSize) {
+            //          break;
+            //        }
+            //      } while (SleepOrQuit(timeoutInstant, pollSeconds));
             //
-            //            if (actualFileSize >= expectedMinFileSize)
-            //            {
-            //                m_Metadata.Resize(fileFilteredSize,
-            //                                  "allocating metadata buffer, "
-            //                                  "in call to DaosReader Open");
-            //                size_t mempos = 0;
-            //                for (auto p : m_FilteredMetadataInfo)
-            //                {
-            //                    m_MDFileManager.ReadFile(
-            //                        m_Metadata.m_Buffer.data() + mempos,
-            //                        p.second, p.first);
-            //                    mempos += p.second;
-            //                }
-            //                m_MDFileAlreadyReadSize = expectedMinFileSize;
-            //            }
-            //            else
-            //            {
-            //                helper::Throw<std::ios_base::failure>(
-            //                    "Engine", "DaosReader", "UpdateBuffer",
-            //                    "File " + m_Name +
-            //                        " was found with an index file but md.0 "
-            //                        "has not contained enough data within "
-            //                        "the specified timeout of " +
-            //                        std::to_string(timeoutSeconds.count()) +
-            //                        " seconds. index size = " +
-            //                        std::to_string(newIdxSize) + " metadata
-            //                        size = " + std::to_string(actualFileSize)
-            //                        + " expected size = " +
-            //                        std::to_string(expectedMinFileSize) +
-            //                        ". One reason could be if the reader finds
-            //                        old " "data " "while " "the writer is
-            //                        creating the new files.");
-            //            }
+            //      if (actualFileSize >= expectedMinFileSize) {
+            //        m_Metadata.Resize(fileFilteredSize, "allocating metadata buffer, "
+            //                                            "in call to DaosReader Open");
+            //        size_t mempos = 0;
+            //        for (auto p : m_FilteredMetadataInfo) {
+            //          m_MDFileManager.ReadFile(m_Metadata.m_Buffer.data() + mempos,
+            //                                   p.second, p.first);
+            //          mempos += p.second;
+            //        }
+            //        m_MDFileAlreadyReadSize = expectedMinFileSize;
+            //      } else {
+            //                            helper::Throw<std::ios_base::failure>(
+            //                                "Engine", "DaosReader", "UpdateBuffer",
+            //                                "File " + m_Name +
+            //                                    " was found with an index file but md.0 "
+            //                                    "has not contained enough data within "
+            //                                    "the specified timeout of " +
+            //                                    std::to_string(timeoutSeconds.count()) +
+            //                                    " seconds. index size = " +
+            //                                    std::to_string(newIdxSize) + " metadata
+            //                                    size = " + std::to_string(actualFileSize)
+            //                                    + " expected size = " +
+            //                                    std::to_string(expectedMinFileSize) +
+            //                                    ". One reason could be if the reader finds
+            //                                    old " "data " "while " "the writer is
+            //                                    creating the new files.");
+            //      }
 
             /* Read new meta-meta-data into memory and append to existing one in
              * memory */
@@ -1017,7 +1522,7 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
     int n = 0;    // a loop counter for current run4
     int nrec = 0; // number of records in current run
 
-    while (position < buffer.size() && metadataSizeToRead < maxMetadataSizeInMemory)
+    while (position < buffer.size())
     {
 
         const unsigned char recordID =
@@ -1123,9 +1628,7 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 "Engine", "DaosReader", "ParseMetadataIndex",
                 "Record " + std::to_string(nrec) + " (id = " + std::to_string(recordID) +
                     ") has invalid length " + std::to_string(recordLength) + ". We parsed " +
-                    std::to_string(position - dbgRecordStartPosition) + " bytes for this record"
-
-            );
+                    std::to_string(position - dbgRecordStartPosition) + " bytes for this record");
         }
         ++nrec;
     }
@@ -1310,6 +1813,7 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     d_iov_t ghdl = {NULL, 0, 0};
     int rc;
 
+    CALI_MARK_BEGIN("DaosReader::local2global+broadcast_sizeofhandle");
     if (m_Comm.Rank() == 0)
     {
         /** fetch size of global handle */
@@ -1321,12 +1825,14 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     }
 
     /** broadcast size of global handle to all peers */
-    MPI_Bcast(&ghdl.iov_buf_len, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    m_Comm.Bcast((uint64_t *)&ghdl.iov_buf_len, 1, 0);
+    CALI_MARK_END("DaosReader::local2global+broadcast_sizeofhandle");
 
     /** allocate buffer for global pool handle */
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
     ghdl.iov_len = ghdl.iov_buf_len;
 
+    CALI_MARK_BEGIN("DaosReader::local2global+broadcast_handle");
     if (m_Comm.Rank() == 0)
     {
         /** generate actual global handle to share with peer tasks */
@@ -1338,8 +1844,10 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     }
 
     /** broadcast global handle to all peers */
-    MPI_Bcast(ghdl.iov_buf, ghdl.iov_len, MPI_BYTE, 0, MPI_COMM_WORLD);
+    m_Comm.Bcast((char *)ghdl.iov_buf, ghdl.iov_len, 0);
+    CALI_MARK_END("DaosReader::local2global+broadcast_handle");
 
+    CALI_MARK_BEGIN("DaosReader::global2local+barrier");
     if (m_Comm.Rank() != 0)
     {
         /** unpack global handle */
@@ -1357,7 +1865,8 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
 
     free(ghdl.iov_buf);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    m_Comm.Barrier();
+    CALI_MARK_END("DaosReader::global2local+barrier");
 }
 
 } // end namespace engine

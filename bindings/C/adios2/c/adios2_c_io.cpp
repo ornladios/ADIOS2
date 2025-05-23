@@ -161,11 +161,11 @@ adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const cha
     {
         adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_define_variable");
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        adios2::DerivedVarType typeCpp = adios2::DerivedVarType::MetadataOnly;
+        adios2::DerivedVarType typeCpp = adios2::DerivedVarType::StatsOnly;
         switch (type)
         {
         case adios2_derived_var_type_metadata_only:
-            typeCpp = adios2::DerivedVarType::MetadataOnly;
+            typeCpp = adios2::DerivedVarType::StatsOnly;
             break;
         case adios2_derived_var_type_expression_string:
             typeCpp = adios2::DerivedVarType::ExpressionString;
@@ -909,6 +909,23 @@ adios2_engine *adios2_open(adios2_io *io, const char *name, const adios2_mode mo
     catch (...)
     {
         adios2::helper::ExceptionToError("adios2_open");
+    }
+    return engine;
+}
+
+adios2_engine *adios2_open_with_metadata(adios2_io *io, const char *name, const char *md,
+                                         const size_t mdsize)
+{
+    adios2_engine *engine = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_open_with_metadata");
+        engine = reinterpret_cast<adios2_engine *>(
+            &reinterpret_cast<adios2::core::IO *>(io)->Open(name, md, mdsize));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_open_with_metadata");
     }
     return engine;
 }

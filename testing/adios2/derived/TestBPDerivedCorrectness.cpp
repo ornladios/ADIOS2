@@ -25,201 +25,99 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
-TEST_P(DerivedCorrectnessP, AddCorrectnessTest)
+TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
 {
-    const size_t Nx = 10, Ny = 3, Nz = 6;
-    const size_t steps = 2;
-    // Application variable
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
     adios2::DerivedVarType mode = GetParam();
-    std::cout << "Mode is " << mode << std::endl;
-
-    std::vector<float> simArray1(Nx * Ny * Nz);
-    std::vector<float> simArray2(Nx * Ny * Nz);
-    std::vector<float> simArray3(Nx * Ny * Nz);
-    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
-    {
-        simArray1[i] = distribution(generator);
-        simArray2[i] = distribution(generator);
-        simArray3[i] = distribution(generator);
-    }
-
     adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPNoData");
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
+                 std::invalid_argument);
 
-    adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
-
-    std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
-    std::string derivedname = "derived/addU";
-
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x+y+z",
-                                mode);
-    // clang-format on
-    std::string filename = "expAdd.bp";
-    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
-
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileWriter.BeginStep();
-        bpFileWriter.Put(Ux, simArray1.data());
-        bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.Put(Uz, simArray3.data());
-        bpFileWriter.EndStep();
-    }
-    bpFileWriter.Close();
-
-    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
-
-    std::vector<float> readUx;
-    std::vector<float> readUy;
-    std::vector<float> readUz;
-    std::vector<float> readAdd;
-
-    float calcA;
-    float epsilon = (float)0.01;
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileReader.BeginStep();
-        bpFileReader.Get(varname[0], readUx);
-        bpFileReader.Get(varname[1], readUy);
-        bpFileReader.Get(varname[2], readUz);
-        bpFileReader.Get(derivedname, readAdd);
-        bpFileReader.EndStep();
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcA = readUx[ind] + readUy[ind] + readUz[ind];
-            EXPECT_TRUE(fabs(calcA - readAdd[ind]) < epsilon);
-        }
-    }
-    bpFileReader.Close();
-}
-
-TEST_P(DerivedCorrectnessP, SubtractCorrectnessTest)
-{
-    const size_t Nx = 10, Ny = 3, Nz = 6;
-    const size_t steps = 2;
-    /** Application variable */
+    const size_t N = 10;
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
-    std::vector<float> simArray1(Nx * Ny * Nz);
-    std::vector<float> simArray2(Nx * Ny * Nz);
-    std::vector<float> simArray3(Nx * Ny * Nz);
-    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
-    {
+    std::vector<float> simArray1(N);
+    std::vector<float> simArray2(N);
+    for (size_t i = 0; i < N; ++i)
         simArray1[i] = distribution(generator);
-        simArray2[i] = distribution(generator);
-        simArray3[i] = distribution(generator);
-    }
 
-    adios2::ADIOS adios;
+    auto U = bpOut.DefineVariable<float>("var1", {N}, {0}, {N});
+    EXPECT_TRUE(U); // needed to not have a warning for not using U
+    auto V = bpOut.DefineVariable<float>("var2", {N}, {0}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode);
+    adios2::Engine bpFileWriter = bpOut.Open("BPNoData.bp", adios2::Mode::Write);
 
-    adios2::IO bpOut = adios.DeclareIO("BPWriteSubtractExpression");
-
-    std::vector<std::string> varname = {"sim4/Ux", "sim4/Uy", "sim4/Uz"};
-    std::string derivedname = "derived/subtractU";
-
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x-y-z",
-                                adios2::DerivedVarType::StoreData);
-    // clang-format on
-    std::string filename = "expSubtract.bp";
-    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
-
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileWriter.BeginStep();
-        bpFileWriter.Put(Ux, simArray1.data());
-        bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.Put(Uz, simArray3.data());
-        bpFileWriter.EndStep();
-    }
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(V, simArray1.data());
+    bpFileWriter.EndStep();
     bpFileWriter.Close();
 
+    // check that no derived data was written
     adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
-
-    std::vector<float> readUx;
-    std::vector<float> readUy;
-    std::vector<float> readUz;
-    std::vector<float> readSubtract;
-
-    float calcS;
-    float epsilon = (float)0.01;
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileReader.BeginStep();
-        bpFileReader.Get(varname[0], readUx);
-        bpFileReader.Get(varname[1], readUy);
-        bpFileReader.Get(varname[2], readUz);
-        bpFileReader.Get(derivedname, readSubtract);
-        bpFileReader.EndStep();
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcS = readUx[ind] - readUy[ind] - readUz[ind];
-            EXPECT_TRUE(fabs(calcS - readSubtract[ind]) < epsilon);
-        }
-    }
+    adios2::Engine bpFileReader = bpIn.Open("BPNoData.bp", adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<float>("derived");
+    EXPECT_FALSE(derVar);
+    bpFileReader.EndStep();
     bpFileReader.Close();
 }
 
-TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
+TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
 {
     const size_t Nx = 2, Ny = 3, Nz = 10;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
     adios2::DerivedVarType mode = GetParam();
-    std::cout << "Mode is " << mode << std::endl;
 
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
     std::vector<float> simArray3(Nx * Ny * Nz);
+    std::vector<float> simArray4(Nx * Ny * Nz);
+    std::vector<float> simArray5(Nx * Ny * Nz);
+    std::vector<float> simArray6(Nx * Ny * Nz);
     for (size_t i = 0; i < Nx * Ny * Nz; ++i)
     {
         simArray1[i] = distribution(generator);
         simArray2[i] = distribution(generator);
         simArray3[i] = distribution(generator);
+        simArray4[i] = distribution(generator);
+        simArray5[i] = distribution(generator);
+        simArray6[i] = distribution(generator);
     }
 
     adios2::ADIOS adios;
     adios2::IO bpOut = adios.DeclareIO("BPWriteExpression");
-    std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz"};
-    std::string derivedname = "derived/magU";
+    std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz",
+                                        "sim2/Vx", "sim2/Vy", "sim2/Vz"};
+    const std::string derMagName = "derived/magU";
+    const std::string derCrossName = "derived/crossU";
 
     auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vx = bpOut.DefineVariable<float>(varname[3], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vy = bpOut.DefineVariable<float>(varname[4], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vz = bpOut.DefineVariable<float>(varname[5], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
+    bpOut.DefineDerivedVariable(derMagName,
                                 "x =" + varname[0] + " \n"
                                 "y =" + varname[1] + " \n"
                                 "z =" + varname[2] + " \n"
                                 "magnitude(x,y,z)",
                                 mode);
+    bpOut.DefineDerivedVariable(derCrossName,
+                                "Ux =" + varname[0] + " \n"
+                                "Uy =" + varname[1] + " \n"
+                                "Uz =" + varname[2] + " \n"
+                                "Vx =" + varname[3] + " \n"
+                                "Vy =" + varname[4] + " \n"
+                                "Vz =" + varname[5] + " \n"
+                                "cross(Ux, Uy, Uz, Vx, Vy, Vz)",
+                                mode);
     // clang-format on
-    std::string filename = "expMagnitude.bp";
+    std::string filename = "ADIOS2BPWriteDerivedVector.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     for (size_t i = 0; i < steps; i++)
@@ -228,6 +126,9 @@ TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
         bpFileWriter.Put(Ux, simArray1.data());
         bpFileWriter.Put(Uy, simArray2.data());
         bpFileWriter.Put(Uz, simArray3.data());
+        bpFileWriter.Put(Vx, simArray4.data());
+        bpFileWriter.Put(Vy, simArray5.data());
+        bpFileWriter.Put(Vz, simArray6.data());
         bpFileWriter.EndStep();
     }
     bpFileWriter.Close();
@@ -238,28 +139,52 @@ TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
     std::vector<float> readUx;
     std::vector<float> readUy;
     std::vector<float> readUz;
+    std::vector<float> readVx;
+    std::vector<float> readVy;
+    std::vector<float> readVz;
     std::vector<float> readMag;
+    std::vector<float> readCross;
 
-    float calcM;
+    float calcDerived;
     float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
-        auto varx = bpIn.InquireVariable<float>(varname[0]);
-        auto vary = bpIn.InquireVariable<float>(varname[1]);
-        auto varz = bpIn.InquireVariable<float>(varname[2]);
-        auto varmag = bpIn.InquireVariable<float>(derivedname);
+        auto varUx = bpIn.InquireVariable<float>(varname[0]);
+        auto varUy = bpIn.InquireVariable<float>(varname[1]);
+        auto varUz = bpIn.InquireVariable<float>(varname[2]);
+        auto varVx = bpIn.InquireVariable<float>(varname[3]);
+        auto varVy = bpIn.InquireVariable<float>(varname[4]);
+        auto varVz = bpIn.InquireVariable<float>(varname[5]);
+        auto varmag = bpIn.InquireVariable<float>(derMagName);
+        auto varcross = bpIn.InquireVariable<float>(derCrossName);
 
-        bpFileReader.Get(varx, readUx);
-        bpFileReader.Get(vary, readUy);
-        bpFileReader.Get(varz, readUz);
+        bpFileReader.Get(varUx, readUx);
+        bpFileReader.Get(varUy, readUy);
+        bpFileReader.Get(varUz, readUz);
+        bpFileReader.Get(varVx, readVx);
+        bpFileReader.Get(varVy, readVy);
+        bpFileReader.Get(varVz, readVz);
         bpFileReader.Get(varmag, readMag);
+        bpFileReader.Get(varcross, readCross);
         bpFileReader.EndStep();
 
+        // Magnitude
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcM = (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
-            EXPECT_TRUE(fabs(calcM - readMag[ind]) < epsilon);
+            calcDerived =
+                (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
+            EXPECT_TRUE(fabs(calcDerived - readMag[ind]) < epsilon);
+        }
+        // Cross Product
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcDerived = (readUy[ind] * readVz[ind]) - (readUz[ind] * readVy[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind]) < epsilon);
+            calcDerived = (readUx[ind] * readVz[ind]) - (readUz[ind] * readVx[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind + 1]) < epsilon);
+            calcDerived = (readUx[ind] * readVy[ind]) - (readUy[ind] * readVx[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind + 2]) < epsilon);
         }
     }
     bpFileReader.Close();
@@ -321,7 +246,7 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                                 "curl(Vx,Vy,Vz)",
                                 mode);
     // clang-format on
-    std::string filename = "expCurl.bp";
+    std::string filename = "ADIOS2BPWriteDerivedCurl.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     bpFileWriter.BeginStep();
@@ -337,7 +262,6 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
     std::vector<float> readVX;
     std::vector<float> readVY;
     std::vector<float> readVZ;
-    // TODO/DEBUG - VERIFY DATATYPE
     std::vector<float> readCurl;
 
     std::vector<std::vector<float>> calcCurl;
@@ -419,10 +343,103 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
     EXPECT_LT(sum_z / (Nx * Ny * Nz), error_limit);
 }
 
-INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
-                         ::testing::Values(adios2::DerivedVarType::MetadataOnly,
-                                           adios2::DerivedVarType::StoreData));
+TEST_P(DerivedCorrectnessP, MagCurlCorrectnessTest)
+{
+    const size_t Nx = 2, Ny = 3, Nz = 10;
+    float error_limit = 0.0000001f;
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
 
+    std::vector<float> simArray1(Nx * Ny * Nz);
+    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<float> simArray3(Nx * Ny * Nz);
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                simArray1[idx] = (6 * x * y) + (7 * z);
+                simArray2[idx] = (4 * x * z) + powf(y, 2);
+                simArray3[idx] = sqrtf(z) + (2 * x * y);
+            }
+        }
+    }
+
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPWriteExpr");
+    std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz"};
+    std::string derivedname = "derived/magCurlU";
+
+    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derivedname,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "magnitude(curl(x,y,z))",
+                                mode);
+    // clang-format on
+    std::string filename = "ADIOS2BPWriteDerivedMagCurl.bp";
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(Ux, simArray1.data());
+    bpFileWriter.Put(Uy, simArray2.data());
+    bpFileWriter.Put(Uz, simArray3.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    adios2::IO bpIn = adios.DeclareIO("BPReadMagCurlExpr");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+
+    std::vector<float> readMag;
+    bpFileReader.BeginStep();
+    auto varmag = bpIn.InquireVariable<float>(derivedname);
+    bpFileReader.Get(varmag, readMag);
+    bpFileReader.EndStep();
+
+    float curl_x, curl_y, curl_z;
+    double err;
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                curl_x = -(2 * x);
+                curl_y = 7 - (2 * y);
+                curl_z = (4 * z) - (6 * x);
+                auto mag_curl = sqrt(pow(curl_x, 2) + pow(curl_y, 2) + pow(curl_z, 2));
+                if (fabs(mag_curl) < 1)
+                {
+                    err = fabs(mag_curl - readMag[idx]) / (1 + fabs(mag_curl));
+                }
+                else
+                {
+                    err = fabs(mag_curl - readMag[idx]) / fabs(mag_curl);
+                }
+            }
+        }
+    }
+    bpFileReader.Close();
+    EXPECT_LT(err / (Nx * Ny * Nz), error_limit);
+}
+
+INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
+                         ::testing::Values(adios2::DerivedVarType::StatsOnly,
+                                           adios2::DerivedVarType::ExpressionString,
+                                           adios2::DerivedVarType::StoreData));
 int main(int argc, char **argv)
 {
     int result;

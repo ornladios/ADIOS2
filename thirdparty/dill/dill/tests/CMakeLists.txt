@@ -8,20 +8,34 @@ include_directories(BEFORE
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/regress.c
-  COMMAND ${PERL_EXECUTABLE} -w
-    ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
-    ${TEST_PERL_FLAGS} > regress.c
-  MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
-)
+if (PERL_FOUND)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/regress.c
+    COMMAND ${PERL_EXECUTABLE} -w
+      ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
+      ${TEST_PERL_FLAGS} > regress.c
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
+  )
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
-  COMMAND ${PERL_EXECUTABLE} -w
-    ${CMAKE_CURRENT_SOURCE_DIR}/call-gen ${TEST_PERL_FLAGS} > call-test.c
-  MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/call-gen 
-)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
+    COMMAND ${PERL_EXECUTABLE} -w
+      ${CMAKE_CURRENT_SOURCE_DIR}/call-gen ${TEST_PERL_FLAGS} > call-test.c
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/call-gen 
+  )
+else()
+  string(MAKE_C_IDENTIFIER "${TEST_PERL_FLAGS}" FLAGS_STR)
+  add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/regress.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/tests/regress${FLAGS_STR}.c  ${CMAKE_CURRENT_BINARY_DIR}/regress.c
+                   COMMENT "Copying pregen regress.c to build area")
+
+  add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/tests/call-test${FLAGS_STR}.c  ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
+                   COMMENT "Copying pregen call-test.c to build area")
+endif()
+
 foreach(TEST ${TESTS})
   add_executable(dill_${TEST} ${TEST}.c)
   target_link_libraries(dill_${TEST} dill ${DIS_LIBS})

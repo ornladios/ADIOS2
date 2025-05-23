@@ -39,12 +39,11 @@ public:
 
 #define BASE_FIELDS                                                                                \
     size_t Dims;               /* How many dimensions does this array have */                      \
-    size_t BlockCount;         /* How many blocks are written	*/                                   \
-    size_t DBCount;            /* Dimens * BlockCount	*/                                           \
-    size_t *Shape;             /* Global dimensionality  [Dims]	NULL for local */                  \
-    size_t *Count;             /* Per-block Counts	  [DBCount] */                                  \
-    size_t *Offsets;           /* Per-block Offsets	  [DBCount]	NULL for local                     \
-                                */                                                                 \
+    size_t BlockCount;         /* How many blocks are written   */                                 \
+    size_t DBCount;            /* Dimens * BlockCount   */                                         \
+    size_t *Shape;             /* Global dimensionality  [Dims] NULL for local */                  \
+    size_t *Count;             /* Per-block Counts    [DBCount] */                                 \
+    size_t *Offsets;           /* Per-block Offsets   [DBCount] NULL for local */                  \
     size_t *DataBlockLocation; /* Per-block Offset in PG [BlockCount] */
 
     typedef struct _MetaArrayRec

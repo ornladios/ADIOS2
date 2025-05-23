@@ -15,7 +15,7 @@ then
   exit 2
 fi
 sudo xcode-select --switch "/Applications/Xcode_${XCODE_VER}.app"
-sudo ln -v -s "$(which gfortran-11)" /usr/local/bin/gfortran
+sudo ln -v -s "$(which gfortran-12)" /usr/local/bin/gfortran
 
 echo "Installing Miniconda"
 
@@ -42,9 +42,10 @@ source "/Users/runner/miniconda3/bin/activate"
 
 # Canonical installation of Miniconda
 conda init --all
-conda update --all -y
+conda config --remove channels defaults
 conda config --add channels conda-forge
 conda config --set channel_priority strict
+conda update --all -y
 
 conda env create --verbose -f "gha/scripts/ci/gh-actions/conda-env-macos.yml"
 

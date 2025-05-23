@@ -146,7 +146,7 @@ public:
 class DimsArray : public CoreDims
 {
 private:
-    size_t Dimensions[MAX_DIMS];
+    size_t Dimensions[MAX_DIMS]{0};
 
 public:
     //  constructor with no init of values
@@ -186,6 +186,19 @@ public:
         std::copy(d1.begin(), d1.end(), &Dimensions[0]);
     }
 };
+
+/**
+ * Make an adios2::Dims vector from steps + another Dims vector
+ * @return adios2::Dims vector, first element is 'firstElement', rest is input vector
+ */
+adios2::Dims DimsWithStep(size_t firstElement, adios2::Dims &dimsWithoutSteps) noexcept;
+
+/**
+ * Separate adios2::Dims vector with step
+ * @return tuple of first element, and an adios2::Dims vector without first element of input
+ * vector.
+ */
+std::tuple<size_t, adios2::Dims> DimsWithoutStep(adios2::Dims &dimsWithSteps) noexcept;
 
 /**
  * Gets type from template parameter T

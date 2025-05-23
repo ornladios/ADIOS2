@@ -36,7 +36,7 @@ namespace adios2
 /** Type of derived variables */
 enum class DerivedVarType
 {
-    MetadataOnly,     ///< Store only the metadata (default)
+    StatsOnly,        ///< Store only the metadata (default)
     ExpressionString, ///< Store only the expression string
     StoreData         ///< Store data and metadata
 };
@@ -216,8 +216,8 @@ struct MinBlockInfo
 {
     int WriterID = 0;
     size_t BlockID = 0;
-    size_t *Start;
-    size_t *Count;
+    const size_t *Start;
+    const size_t *Count;
     MinMaxStruct MinMax;
     void *BufferP = NULL;
 };
@@ -437,6 +437,18 @@ std::ostream &operator<<(std::ostream &os, const T &value);
 
 namespace ops
 {
+
+// BWC PARAMETERS
+#ifdef ADIOS2_HAVE_BIGWHOOP
+constexpr char LossyBWC[] = "bigwhoop";
+namespace bigwhoop
+{
+namespace key
+{
+constexpr char rate[] = "rate";
+}
+}
+#endif
 
 // SZ PARAMETERS
 #ifdef ADIOS2_HAVE_SZ

@@ -111,9 +111,14 @@ void Engine::Get(const std::string &variableName, T *data, const Mode launch)
 }
 
 template <class T>
-void Engine::Get(Variable<T> &variable, T &datum, const Mode /*launch*/)
+void Engine::Get(Variable<T> &variable, T &datum, const Mode launch)
 {
-    Get(variable, &datum, Mode::Sync);
+    if ((variable.m_ShapeID != ShapeID::GlobalValue) && (variable.m_ShapeID != ShapeID::LocalValue))
+    {
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "Single-valued Get() used on array variable.");
+    }
+    Get(variable, &datum, launch);
 }
 
 template <class T>

@@ -39,6 +39,8 @@ public:
 
     void SetShape(const Dims &shape);
 
+    void StoreStatsOnly(const bool mode);
+
     void SetBlockSelection(const size_t blockID);
 
     void SetSelection(const Box<Dims> &selection);
@@ -46,6 +48,10 @@ public:
     void SetStepSelection(const Box<size_t> &stepSelection);
 
     size_t SelectionSize() const;
+
+    void SetAccuracy(const adios2::Accuracy &a);
+    adios2::Accuracy GetAccuracy() const;
+    adios2::Accuracy GetAccuracyRequested() const;
 
     std::string Name() const;
 
@@ -68,6 +74,11 @@ public:
      * @return shape vector
      */
     Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    Dims Shape(const MemorySpace memSpace, const size_t step = adios2::EngineCurrentStep) const;
+
+    void SetMemorySpace(const MemorySpace memSpace);
+#endif
 
     /**
      * Inspects current start point

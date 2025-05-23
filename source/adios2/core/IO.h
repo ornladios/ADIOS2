@@ -40,7 +40,8 @@ namespace core
 {
 
 using VarMap = std::unordered_map<std::string, std::unique_ptr<VariableBase>>;
-using AttrMap = std::unordered_map<std::string, std::unique_ptr<AttributeBase>>;
+// Note: AttrMap should stay an ordered map to preserve output consistency
+using AttrMap = std::map<std::string, std::unique_ptr<AttributeBase>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -185,7 +186,7 @@ public:
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VariableDerived &
     DefineDerivedVariable(const std::string &name, const std::string &expression,
-                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
+                          const DerivedVarType varType = DerivedVarType::StatsOnly);
 #endif
     VariableStruct &DefineStructVariable(const std::string &name, StructDefinition &def,
                                          const Dims &shape = Dims(), const Dims &start = Dims(),
@@ -405,7 +406,8 @@ public:
      * @exception std::invalid_argument if Engine with unique name is already
      * created with another Open
      */
-    Engine &Open(const std::string &name, const Mode mode, helper::Comm comm);
+    Engine &Open(const std::string &name, const Mode mode, helper::Comm comm,
+                 const char *md = nullptr, const size_t mdsize = 0);
 
     /**
      * Overloaded version that reuses the MPI_Comm object passed
@@ -418,6 +420,21 @@ public:
      * created with another Open
      */
     Engine &Open(const std::string &name, const Mode mode);
+
+    /**
+     * Overloaded version that is specifically for a serial program
+     * opening a file (not stream) with ReadRandomAccess mode and
+     * supplying the metadata already in memory. The metadata
+     * should be retrieved by another program calling engine.GetMetadata()
+     * after opening the file.
+     * @param name unique engine identifier within IO object
+     * (file name in case of File transports)
+     * @param md file metadata residing in memory
+     * @return a reference to a derived object of the Engine class
+     * @exception std::invalid_argument if Engine with unique name is already
+     * created with another Open
+     */
+    Engine &Open(const std::string &name, const char *md, const size_t mdsize);
 
     /**
      * Retrieve an engine by name
@@ -464,10 +481,13 @@ public:
 
     using MakeEngineFunc =
         std::function<std::shared_ptr<Engine>(IO &, const std::string &, const Mode, helper::Comm)>;
+    using MakeEngineWithMDFunc = std::function<std::shared_ptr<Engine>(
+        IO &, const std::string &, const Mode, helper::Comm, const char *, const size_t)>;
     struct EngineFactoryEntry
     {
         MakeEngineFunc MakeReader;
         MakeEngineFunc MakeWriter;
+        MakeEngineWithMDFunc MakeReaderWithMD;
     };
 
     /**
@@ -493,6 +513,18 @@ public:
                                               helper::Comm comm)
     {
         return std::make_shared<T>(io, name, mode, std::move(comm));
+    }
+
+    /**
+     * Create an engine of type T.  This is intended to be used when
+     * creating instances of EngineFactoryEntry for RegisterEngine.
+     */
+    template <typename T>
+    static std::shared_ptr<Engine> MakeEngineWithMD(IO &io, const std::string &name,
+                                                    const Mode mode, helper::Comm comm,
+                                                    const char *md, const size_t mdsize)
+    {
+        return std::make_shared<T>(io, name, mode, std::move(comm), md, mdsize);
     }
 
     /**

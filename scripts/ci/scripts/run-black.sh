@@ -11,4 +11,4 @@ then
   cd "${SOURCE_DIR}" || exit
 fi
 
-exec black --check .
+exec black --check --diff .

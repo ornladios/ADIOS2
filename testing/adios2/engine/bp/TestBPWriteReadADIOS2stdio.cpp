@@ -15,6 +15,7 @@
 #include "../SmallTestData.h"
 
 std::string engineName; // comes from command line
+std::string UniqName;   // comes from command line
 
 class BPWriteReadTestADIOS2stdio : public ::testing::Test
 {
@@ -44,9 +45,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead1D8stdio_MPI.bp");
+    const std::string fname("ADIOS2BPWriteRead1D8stdio_MPI" + UniqName);
 #else
-    const std::string fname("ADIOS2BPWriteRead1D8stdio.bp");
+    const std::string fname("ADIOS2BPWriteRead1D8stdio" + UniqName);
 #endif
 
     // Write test data using BP
@@ -385,9 +386,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio_MPI.bp");
+    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio_MPI" + UniqName);
 #else
-    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio.bp");
+    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio" + UniqName);
 #endif
 
     // Write test data using ADIOS2
@@ -727,9 +728,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio_MPI.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio_MPI" + UniqName);
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio" + UniqName);
 #endif
 
     // Write test data using ADIOS2
@@ -1056,9 +1057,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio_MPI.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio_MPI" + UniqName);
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio" + UniqName);
 #endif
 
     // Write test data using ADIOS2
@@ -1385,9 +1386,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio_MPI.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio_MPI" + UniqName);
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio" + UniqName);
 #endif
 
     // Write test data using ADIOS2
@@ -1601,7 +1602,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, OpenEngineTwice)
     }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **envp)
 {
 #if ADIOS2_USE_MPI
     int provided;
@@ -1615,6 +1616,10 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+    if (argc > 2)
+    {
+        UniqName = std::string(argv[2]);
     }
     result = RUN_ALL_TESTS();
 

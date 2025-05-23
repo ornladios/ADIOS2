@@ -112,7 +112,7 @@ jobs:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
       options: --shm-size=1g
@@ -180,9 +180,9 @@ jobs:
         id: restore-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
           restore-keys: |
-            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}
       - name: Configure cache
         run: ccache -z
       - name: Setup
@@ -201,7 +201,7 @@ jobs:
         id: save-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
       - name: Test
         if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
@@ -323,9 +323,9 @@ jobs:
         id: restore-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
           restore-keys: |
-            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}
       - name: Configure cache
         run: ccache -z
       - name: Update
@@ -342,7 +342,7 @@ jobs:
         id: save-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
@@ -560,15 +560,19 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
+    - uses: actions/cache/restore@v4
+      id: restore-cache
+      with:
+        path: .ccache
+        key: ccache-codeql-${{ github.sha }}
+        restore-keys: |
+          ccache-codeql
+    - run: ccache -z
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        config: |
-          paths:
-            - source
-          paths-ignore:
-            - source/thirdparty
+        source-root: source
     - name: Setup
       run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
@@ -581,6 +585,34 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+        output: sarif-results
+        upload: failure-only
+        checkout_path: "${{ github.workflow }}/source"
+    - name: filter-sarif
+      uses: advanced-security/filter-sarif@v1
+      with:
+        patterns: |
+          -thirdparty/**/*
+          -examples/**/*
+        input: sarif-results/cpp.sarif
+        output: sarif-results/cpp.sarif
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: sarif-results/cpp.sarif
+    - name: Upload loc as a Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sarif-results
+        path: sarif-results
+        retention-days: 1
+    - run: ccache -s | tee "${GITHUB_STEP_SUMMARY}"
+    - uses: actions/cache/save@v4
+      if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
+      id: save-cache
+      with:
+        path: .ccache
+        key: ccache-codeql-${{ github.sha }}
 
 #######################################
 # Workaround for skipping matrix jobs

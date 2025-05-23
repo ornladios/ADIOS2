@@ -3,18 +3,22 @@ plugins/ @caitlinross
 
 # Vicente's stuff
 *.bash @vicentebolea
-*.cmake @vicentebolea
-*.in @vicentebolea
 *.json @vicentebolea
+*.toml @vicentebolea
 *.sh @vicentebolea
 *.yaml @vicentebolea
 *.yml @vicentebolea
-cmake/ @vicentebolea
-scripts/ @vicentebolea
-python/ @vicentebolea
+
+.gitlab/ @vicentebolea
 .github/ @vicentebolea
 .circleci/ @vicentebolea
+.shellcheck_exclude_paths @vicentebolea
+
+cmake/ @vicentebolea
+python/ @vicentebolea
+scripts/ @vicentebolea
 source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
+thirdparty/ @vicentebolea
 
 # GPU-aware specific files
 source/adios2/helper/kokkos/ @anagainaru

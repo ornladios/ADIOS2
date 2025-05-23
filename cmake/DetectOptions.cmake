@@ -70,6 +70,16 @@ endfunction()
 # Multithreading
 find_package(Threads REQUIRED)
 
+# BigWhoop
+if(ADIOS2_USE_BigWhoop STREQUAL AUTO)
+ find_package(BWC CONFIG)
+elseif(ADIOS2_USE_BigWhoop)
+  find_package(BWC REQUIRED CONFIG)
+endif()
+if(BWC_FOUND)
+  set(ADIOS2_HAVE_BigWhoop TRUE)
+endif()
+
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   find_package(Blosc2 2.10.1 QUIET)
@@ -77,6 +87,10 @@ elseif(ADIOS2_USE_Blosc2)
   find_package(Blosc2 2.10.1)
 endif()
 if(Blosc2_FOUND)
+  if (CMAKE_VERSION VERSION_LESS 3.18)
+    message(FATAL_ERROR "Blosc2 dependency requires CMake>=3.18.")
+  endif()
+
   set(ADIOS2_HAVE_Blosc2 TRUE)
   if(TARGET Blosc2::blosc2_shared)
     set(blosc2_shlib_available ON)
@@ -460,14 +474,14 @@ if(ADIOS2_USE_SST AND NOT WIN32)
         "-DLINK_DIRECTORIES=${LIBFABRIC_LIBRARIES}")
     message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
-  if(ADIOS2_HAVE_MPI AND NOT "${ADIOS2_SST_HAVE_MPI_DP}")
+  if (ADIOS2_HAVE_MPI)
     set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_CXX;Threads::Threads")
     include(CheckCXXSourceRuns)
     check_cxx_source_runs([=[
         #include <chrono>
         #include <future>
         #include <mpi.h>
-	#include <thread>
+        #include <thread>
         #include <stdlib.h>
 
         #if !defined(MPICH)
@@ -489,16 +503,10 @@ if(ADIOS2_USE_SST AND NOT WIN32)
           MPI_Finalize();
           exit(EXIT_SUCCESS);
         }]=]
-    ADIOS2_HAVE_MPI_CLIENT_SERVER)
+    ADIOS2_SST_HAVE_MPI_DP_HEURISTICS_PASSED)
     unset(CMAKE_REQUIRED_LIBRARIES)
-    if (ADIOS2_HAVE_MPI_CLIENT_SERVER)
-      set(ADIOS2_SST_HAVE_MPI_DP TRUE)
-    else()
-      if ("${ADIOS2_SST_EXPECT_MPI_DP}") 
-          message(FATAL_ERROR "Expected MPI to support Client-server connection model, but test failed.")
-      endif()
-    endif()
   endif()
+
   # UCX
   if(ADIOS2_USE_UCX STREQUAL AUTO)
     find_package(UCX 1.9.0)
@@ -515,6 +523,12 @@ endif()
 find_package(DAOS)
 if(DAOS_FOUND)
   set(ADIOS2_HAVE_DAOS TRUE)
+
+  # Caliper  (currently on needed by DAOS code)
+  find_package(Caliper REQUIRED)
+  if(Caliper_FOUND)
+     set(ADIOS2_HAVE_Caliper TRUE)
+  endif()
 endif()
 
 #SysV IPC
@@ -583,6 +597,15 @@ elseif(ADIOS2_USE_XRootD)
 endif()
 if(XRootD_FOUND)
   set(ADIOS2_HAVE_XRootD TRUE)
+  find_program(XROOTD_SERVER_BINARY xrootd
+               HINTS
+               ${XROOTD_DIR}
+               $ENV{XROOTD_DIR}
+               /usr
+               /opt/xrootd
+               PATH_SUFFIXES bin
+  )
+
 endif()
 
 # Campaign Management
@@ -652,5 +675,5 @@ if(ADIOS2_HAVE_Fortran)
   #check_float_type_representation("real(kind=16)" REAL16_TYPE_Fortran LANGUAGE Fortran)
 
   include(CheckFortranCompilerFlag)
-  check_fortran_compiler_flag("-fallow-argument-mismatch" ADIOS2_USE_Fortran_flag_argument_mismatch)
+  check_fortran_compiler_flag("-fallow-argument-mismatch -w" ADIOS2_USE_Fortran_flag_argument_mismatch)
 endif()

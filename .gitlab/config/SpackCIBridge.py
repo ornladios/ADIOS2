@@ -19,7 +19,7 @@ import urllib.request
 class SpackCIBridge(object):
 
     def __init__(self, gitlab_repo="", gitlab_host="", gitlab_project="", github_project="",
-                 disable_status_post=True, sync_draft_prs=False,
+                 disable_status_post=True, status_context="", sync_draft_prs=False,
                  main_branch=None, prereq_checks=[]):
         self.gitlab_repo = gitlab_repo
         self.github_project = github_project
@@ -27,6 +27,7 @@ class SpackCIBridge(object):
         self.github_repo = "https://{0}@github.com/{1}.git".format(github_token, self.github_project)
         self.py_github = Github(github_token)
         self.py_gh_repo = self.py_github.get_repo(self.github_project, lazy=True)
+        self.status_context = status_context
 
         self.merge_msg_regex = re.compile(r"Merge\s+([^\s]+)\s+into\s+([^\s]+)")
         self.unmergeable_shas = []
@@ -561,7 +562,7 @@ class SpackCIBridge(object):
         print("Rate limit at the end of post_pipeline_status(): {}".format(self.py_github.rate_limiting[0]))
 
     def create_status_for_commit(self, sha, branch, state, target_url, description):
-        context = "OLCF Ascent (Summit)"
+        context = self.status_context
         commit = self.get_commit(sha)
         existing_statuses = commit.get_combined_status()
         for status in existing_statuses.statuses:
@@ -659,6 +660,8 @@ if __name__ == "__main__":
     parser.add_argument("gitlab_project", help="GitLab project (org/repo or user/repo)")
     parser.add_argument("--disable-status-post", action="store_true", default=False,
                         help="Do not post pipeline status to each GitHub PR")
+    parser.add_argument("--status-context", type=str, default="External Gitlab pipeline",
+                        help="The name of the status in the github status check")
     parser.add_argument("--sync-draft-prs", action="store_true", default=False,
                         help="Copy draft PRs from GitHub to GitLab")
     parser.add_argument("--pr-mirror-bucket", default=None,
@@ -685,6 +688,7 @@ on a commit of the main branch that is newer than the latest commit tested by Gi
                            gitlab_project=args.gitlab_project,
                            github_project=args.github_project,
                            disable_status_post=args.disable_status_post,
+                           status_context=args.status_context,
                            sync_draft_prs=args.sync_draft_prs,
                            main_branch=args.main_branch,
                            prereq_checks=args.prereq_check)

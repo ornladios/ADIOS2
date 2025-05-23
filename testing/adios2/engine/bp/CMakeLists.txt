@@ -7,10 +7,18 @@ include(ADIOSFunctions)
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)
+set(DAOS_DIR ${CMAKE_CURRENT_BINARY_DIR}/daos)
+set(REMOTE_DIR ${CMAKE_CURRENT_BINARY_DIR}/remote)
+set(XROOTD_DIR ${CMAKE_CURRENT_BINARY_DIR}/xrootd)
+set(KVCACHE_DIR ${CMAKE_CURRENT_BINARY_DIR}/kvcache)
 set(FS_DIR ${CMAKE_CURRENT_BINARY_DIR}/filestream)
 file(MAKE_DIRECTORY ${BP3_DIR})
 file(MAKE_DIRECTORY ${BP4_DIR})
 file(MAKE_DIRECTORY ${BP5_DIR})
+file(MAKE_DIRECTORY ${DAOS_DIR})
+file(MAKE_DIRECTORY ${REMOTE_DIR})
+file(MAKE_DIRECTORY ${XROOTD_DIR})
+file(MAKE_DIRECTORY ${KVCACHE_DIR})
 file(MAKE_DIRECTORY ${FS_DIR})
 
 set(BP5_ASYNC_DIR ${BP5_DIR}/async)
@@ -18,6 +26,12 @@ file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
+
+macro(bp5_gtest_add_tests_helper testname mpi)
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
+endmacro()
 
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP3
@@ -105,6 +119,7 @@ bp_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
+bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
@@ -113,31 +128,32 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    # (we don't really use SST here, just EVPath, but ADIOS2_HAVE_SST is the most relevant conditional)
 
    macro(add_get_remote_tests_helper testname)
-      add_test(NAME "Remote.BP${testname}.GetRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
-      set_tests_properties(Remote.BP${testname}.GetRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
+      add_test(NAME "Remote.BP${testname}.GetRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5 RemoteGet)
+      set_tests_properties(Remote.BP${testname}.GetRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1"  WORKING_DIRECTORY ${REMOTE_DIR})
    endmacro()
 
    macro(add_file_remote_tests_helper testname)
-      add_test(NAME "Remote.BP${testname}.FileRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
-      set_tests_properties(Remote.BP${testname}.FileRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoFileRemote=1")
+      add_test(NAME "Remote.BP${testname}.FileRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5 RemoteFile)
+      set_tests_properties(Remote.BP${testname}.FileRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoFileRemote=1" WORKING_DIRECTORY ${REMOTE_DIR})
    endmacro()
 
    add_test(NAME remoteServerSetup   COMMAND adios2_remote_server -background)
-   set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server)
+   set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server WORKING_DIRECTORY ${REMOTE_DIR})
 
    add_test(NAME remoteServerCleanup COMMAND adios2_remote_server -kill_server)
-   set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+   set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server WORKING_DIRECTORY ${REMOTE_DIR})
 
   if (ADIOS2_HAVE_KVCACHE)
     add_test(NAME redisServerSetup COMMAND ${REDIS_SERVER_BINARY} --daemonize yes)
-    set_tests_properties(redisServerSetup PROPERTIES FIXTURES_SETUP RedisServer)
+    set_tests_properties(redisServerSetup PROPERTIES FIXTURES_SETUP RedisServer WORKING_DIRECTORY ${KVCACHE_DIR})
 
     add_test(NAME redisServerCleanup COMMAND ${REDIS_CLI_BINARY} shutdown)
-    set_tests_properties(redisServerCleanup PROPERTIES FIXTURES_CLEANUP RedisServer)
+    set_tests_properties(redisServerCleanup PROPERTIES FIXTURES_CLEANUP RedisServer WORKING_DIRECTORY ${KVCACHE_DIR})
 
     macro(add_get_kvcache_tests_helper testname)
       add_test(NAME "Remote.BP${testname}.GetKVCache" COMMAND Test.Engine.BP.${testname}.Serial bp5)
-      set_tests_properties(Remote.BP${testname}.GetKVCache PROPERTIES FIXTURES_REQUIRED "Server;RedisServer" ENVIRONMENT "DoRemote=1;useKVCache=1")
+      set_tests_properties(Remote.BP${testname}.GetKVCache PROPERTIES FIXTURES_REQUIRED "Server;RedisServer" ENVIRONMENT "DoRemote=1;useKVCache=1" WORKING_DIRECTORY ${KVCACHE_DIR})
+
     endmacro()
 
     add_get_kvcache_tests_helper(WriteReadADIOS2stdio)
@@ -148,6 +164,26 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_get_remote_tests_helper(WriteReadADIOS2stdio)
    add_get_remote_tests_helper(WriteMemorySelectionRead)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
+endif()
+
+if (ADIOS2_HAVE_XRootD)
+   macro(add_get_xrremote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetXRRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetXRRemote PROPERTIES FIXTURES_REQUIRED XRServer ENVIRONMENT "DoXRootD=1" WORKING_DIRECTORY ${XROOTD_DIR})
+   endmacro()
+
+   add_test(NAME generateXRootDConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDConfig.sh $<TARGET_FILE:adios2_xrootd>  )
+   add_test(NAME remoteXRServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd.sh ${XROOTD_SERVER_BINARY} ${CMAKE_CURRENT_BINARY_DIR})
+
+   set_tests_properties(remoteXRServerSetup PROPERTIES FIXTURES_SETUP XRServer WORKING_DIRECTORY ${XROOTD_DIR})
+   set_tests_properties(remoteXRServerSetup PROPERTIES DEPENDS "generateXRootDConfig")
+
+   add_test(NAME remoteXRServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd.sh )
+   set_tests_properties(remoteXRServerCleanup         PROPERTIES FIXTURES_CLEANUP    XRServer)
+
+   ##### add remote tests below this line
+   add_get_xrremote_tests_helper(WriteReadADIOS2stdio)
+   add_get_xrremote_tests_helper(WriteMemorySelectionRead)
 endif()
 
 if(ADIOS2_HAVE_MPI)
@@ -215,6 +251,7 @@ gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
 # BP4 and BP5 but NOT BP3
 bp4_bp5_gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW)
 bp4_bp5_gtest_add_tests_helper(JoinedArray MPI_ALLOW)
+bp4_bp5_gtest_add_tests_helper(OpenWithMetadata MPI_NONE)
 
 # BP4 only for now
 # gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4
@@ -250,28 +287,3 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStrea
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
-
-if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
-  gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
-    WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-  )
-  gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP4
-    WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-  )
-  gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-  gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-
-  foreach(tgt ${Test.Engine.BP.WriteReadCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
-  endforeach()
-
-  foreach(tgt ${Test.Engine.BP.SelectionsCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
-  endforeach()
-endif()

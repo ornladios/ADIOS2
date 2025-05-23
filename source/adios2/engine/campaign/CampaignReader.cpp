@@ -14,6 +14,7 @@
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
+#include "adios2/toolkit/remote/EVPathRemote.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
@@ -82,6 +83,10 @@ void CampaignReader::PerformGets()
     if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "     PerformGets()\n";
+    }
+    for (auto ep : m_Engines)
+    {
+        ep->PerformGets();
     }
     m_NeedPerformGets = false;
 }
@@ -191,24 +196,33 @@ void CampaignReader::InitTransports()
     if (m_Options.verbose > 0)
     {
         std::cout << "Local hostname = " << m_Options.hostname << "\n";
-        std::cout << "Database result:\n  version = " << m_CampaignData.version << "\n  hosts:\n";
+        std::cout << "Database result:\n  version = " << m_CampaignData.version.version
+                  << "\n  hosts:\n";
 
         for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
         {
             CampaignHost &h = m_CampaignData.hosts[hostidx];
-            std::cout << "    host =" << h.hostname << "  long name = " << h.longhostname
+            std::cout << "    host = " << h.hostname << "  long name = " << h.longhostname
                       << "  directories: \n";
             for (size_t diridx = 0; diridx < h.dirIdx.size(); ++diridx)
             {
                 std::cout << "      dir = " << m_CampaignData.directory[h.dirIdx[diridx]] << "\n";
             }
         }
-        std::cout << "  datasets:\n";
-        for (auto &it : m_CampaignData.bpdatasets)
+        std::cout << "  keys:\n";
+        for (size_t keyidx = 0; keyidx < m_CampaignData.keys.size(); ++keyidx)
         {
-            CampaignBPDataset &ds = it.second;
+            CampaignKey &k = m_CampaignData.keys[keyidx];
+            std::cout << "    key = " << k.id << "\n";
+        }
+        std::cout << "  datasets:\n";
+        for (auto &it : m_CampaignData.datasets)
+        {
+            CampaignDataset &ds = it.second;
             std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
                       << m_CampaignData.directory[ds.dirIdx] << PathSeparator << ds.name << "\n";
+            std::cout << "      uuid: " << ds.uuid << "\n";
+            std::cout << "      fmt : " << ds.format.ToString() << "\n";
             for (auto &bpf : ds.files)
             {
                 std::cout << "      file: " << bpf.name << "\n";
@@ -220,11 +234,13 @@ void CampaignReader::InitTransports()
     // nlohmann::json js = nlohmann::json::parse(cs);
     // std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() <<
     // std::endl;
-    int i = 0;
-    for (auto &it : m_CampaignData.bpdatasets)
+    std::unique_ptr<Remote> connectionManager = nullptr;
+    int dsIdx = 0;
+    for (auto &it : m_CampaignData.datasets)
     {
-        CampaignBPDataset &ds = it.second;
-        adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
+        ++dsIdx; // Datasets are indexed from 1 in SQL tables
+        CampaignDataset &ds = it.second;
+        adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
         std::string localPath;
         if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Options.hostname)
         {
@@ -277,24 +293,117 @@ void CampaignReader::InitTransports()
                     m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
                 const std::string remoteURL =
                     m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
-                localPath = m_Options.cachepath + PathSeparator +
-                            m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + m_Name +
-                            PathSeparator + ds.name;
+                localPath = m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) +
+                            PathSeparator + ds.uuid;
                 if (m_Options.verbose > 0)
                 {
-                    std::cout << "Open remote file " << remoteURL
-                              << "\n    and use local cache for metadata at " << localPath << " \n";
+                    std::cout << "Open remote file " << remoteURL << " \n";
                 }
-                helper::CreateDirectory(localPath);
-                for (auto &bpf : ds.files)
+
+                std::string keyhex;
+                if (ds.hasKey)
                 {
-                    /*std::cout << "     save file " << remoteURL << "/" <<
-                       bpf.name
-                              << " to " << localPath << "/" << bpf.name << "\n";*/
-                    SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "The dataset is key protected with key id "
+                                  << m_CampaignData.keys[ds.keyIdx].id << "\n";
+                    }
+#ifdef ADIOS2_HAVE_SODIUM
+                    if (m_CampaignData.keys[ds.keyIdx].keyHex.empty())
+                    {
+                        // Retrieve key
+                        if (!connectionManager)
+                        {
+                            connectionManager = std::unique_ptr<Remote>(
+                                new Remote(core::ADIOS::StaticGetHostOptions()));
+                        }
+                        m_CampaignData.keys[ds.keyIdx].keyHex =
+                            connectionManager->GetKeyFromConnectionManager(
+                                m_CampaignData.keys[ds.keyIdx].id);
+
+                        if (m_Options.verbose > 0)
+                        {
+                            std::cout << "-- Received key " << m_CampaignData.keys[ds.keyIdx].keyHex
+                                      << "\n";
+                        }
+                    }
+
+                    if (m_CampaignData.keys[ds.keyIdx].keyHex == "0")
+                    {
+                        // We received no key, ignore files encrypted with this key
+                        std::cerr << "ERROR: don't have the key "
+                                  << m_CampaignData.keys[ds.keyIdx].id << " to decrypt " << ds.name
+                                  << ". Ignoring this dataset." << std::endl;
+                        continue;
+                    }
+
+                    keyhex = m_CampaignData.keys[ds.keyIdx].keyHex;
+#else
+                    helper::Throw<std::runtime_error>(
+                        "Engine", "CampaignReader", "InitTransports",
+                        "ADIOS needs to be built with libsodium and with SST to "
+                        "be able to process protected campaign files");
+#endif
                 }
+
+                if (ds.format != FileFormat::TEXT)
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "    use local cache for metadata at " << localPath << " \n";
+                    }
+                    helper::CreateDirectory(localPath);
+                }
+
+                // first file is HDF5's file to be opened as path
+                // second file is min/max data if available
+                // first file if TEXT's file to be opened as path
+                std::string newLocalPath = localPath;
+                bool setHDF5FilePath = true;
+                for (auto &f : ds.files)
+                {
+                    std::string path =
+                        localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(f.name);
+                    if (ds.format != FileFormat::TEXT)
+                    {
+                        SaveToFile(m_DB, path, f, keyhex, m_CampaignData);
+                    }
+                    else
+                    {
+                        // TEXT -> create a variable, will read from DB directly, no local path
+                        CreateTextVariable(f.name, f.lengthOriginal, dsIdx);
+                        continue;
+                    }
+
+                    if (setHDF5FilePath)
+                    {
+                        if (ds.format == FileFormat::HDF5)
+                        {
+                            newLocalPath = path;
+                            setHDF5FilePath = false;
+                        }
+                    }
+                }
+
                 io.SetParameter("RemoteDataPath", remotePath);
                 io.SetParameter("RemoteHost", m_CampaignData.hosts[ds.hostIdx].hostname);
+                io.SetParameter("UUID", ds.uuid);
+
+                // Save info in cache directory for cache manager and for humans
+                {
+                    std::ofstream f(localPath + PathSeparator + "info.txt");
+                    if (f.is_open())
+                    {
+                        f << "Campaign = " << m_Name << "\n";
+                        f << "Dataset = " << ds.name << "\n";
+                        f << "RemoteHost = " << m_CampaignData.hosts[ds.hostIdx].hostname << "\n";
+                        f << "RemoteDataPath = " << remotePath << "\n";
+                        f.close();
+                    }
+                }
+
+                // HDF5/TEXT point to the first file under the uuid folder in cache
+                localPath = newLocalPath;
             }
         }
         else
@@ -304,6 +413,24 @@ void CampaignReader::InitTransports()
             {
                 std::cout << "Open local file " << localPath << "\n";
             }
+            if (ds.format == FileFormat::TEXT)
+            {
+                // TEXT -> create a variable
+                CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx);
+            }
+        }
+
+        if (ds.format == FileFormat::HDF5)
+        {
+            io.SetEngine("HDF5");
+        }
+        else if (ds.format == FileFormat::TEXT)
+        {
+            continue;
+        }
+        else if (ds.format == FileFormat::Unknown)
+        {
+            continue;
         }
 
         adios2::core::Engine &e = io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
@@ -319,7 +446,15 @@ void CampaignReader::InitTransports()
         {
             auto vname = vr.first;
             std::string fname = ds.name;
-            std::string newname = fname + "/" + vname;
+            std::string newname;
+            if (ds.format == FileFormat::HDF5)
+            {
+                newname = fname + vname;
+            }
+            else
+            {
+                newname = fname + "/" + vname;
+            }
 
             const DataType type = io.InquireVariableType(vname);
 
@@ -358,7 +493,6 @@ void CampaignReader::InitTransports()
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
-        ++i;
     }
 }
 
@@ -374,6 +508,17 @@ void CampaignReader::DoClose(const int transportIndex)
     }
     sqlite3_close(m_DB);
     m_IsOpen = false;
+}
+
+void CampaignReader::CreateTextVariable(const std::string &name, const size_t len,
+                                        const size_t dsIdx)
+{
+    // TEXT -> create a variable, will read from DB directly, no local path
+    Variable<char> &v = m_IO.DefineVariable<char>(name, Dims{len}, Dims{0ULL}, Dims{len}, false);
+    v.m_AvailableStepsCount = 1;
+    v.m_AvailableStepsStart = 0;
+    CampaignVarInternalInfo internalInfo(&v, dsIdx);
+    m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
 }
 
 void CampaignReader::DestructorClose(bool Verbose) noexcept { sqlite3_close(m_DB); }
@@ -401,6 +546,32 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var, size_t Step) 
             return MV;
         }
     }
+    else
+    {
+        auto it = m_CampaignVarInternalInfo.find(Var.m_Name);
+        if (it != m_CampaignVarInternalInfo.end())
+        {
+            int ndims = static_cast<int>(Var.m_Shape.size());
+            MinVarInfo *MV = new MinVarInfo(ndims, Var.m_Shape.data());
+            MV->Step = 0;
+            MV->Dims = ndims;
+            MV->Shape = Var.m_Shape.data();
+            MV->WasLocalValue = false;
+            MV->IsValue = false;
+            MV->IsReverseDims = false;
+            MV->BlocksInfo.reserve(1);
+            MinBlockInfo Blk;
+            Blk.WriterID = 0;
+            Blk.BlockID = 0;
+            Blk.Start = Var.m_Start.data();
+            Blk.Count = Var.m_Count.data();
+            Blk.MinMax.Init(adios2::DataType::Char);
+            Blk.MinMax.MinUnion.field_int8 = (int8_t)'a';
+            Blk.MinMax.MaxUnion.field_int8 = (int8_t)'z';
+            MV->BlocksInfo.push_back(Blk);
+            return MV;
+        }
+    }
     return nullptr;
 }
 
@@ -412,6 +583,15 @@ bool CampaignReader::VarShape(const VariableBase &Var, const size_t Step, Dims &
         VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
         Engine *e = m_Engines[it->second.engineIdx];
         return e->VarShape(*vb, Step, Shape);
+    }
+    else
+    {
+        auto it = m_CampaignVarInternalInfo.find(Var.m_Name);
+        if (it != m_CampaignVarInternalInfo.end())
+        {
+            Shape = Var.m_Shape;
+            return true;
+        }
     }
     return false;
 }
@@ -426,23 +606,37 @@ bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
         Engine *e = m_Engines[it->second.engineIdx];
         return e->VariableMinMax(*vb, Step, MinMax);
     }
+    else
+    {
+        auto it = m_CampaignVarInternalInfo.find(Var.m_Name);
+        if (it != m_CampaignVarInternalInfo.end())
+        {
+            MinMax.Init(adios2::DataType::Char);
+            MinMax.MinUnion.field_int8 = (int8_t)'a';
+            MinMax.MaxUnion.field_int8 = (int8_t)'z';
+            return true;
+        }
+    }
     return false;
 }
 
+std::string CampaignReader::VariableExprStr(const VariableBase &Var)
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VariableExprStr(*vb);
+    }
+    return "";
+}
+
 #define declare_type(T)                                                                            \
-    void CampaignReader::DoGetSync(Variable<T> &variable, T *data)                                 \
-    {                                                                                              \
-        PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");                                             \
-        auto p = TranslateToActualVariable(variable);                                              \
-        p.second->Get(*p.first, data, adios2::Mode::Sync);                                         \
-    }                                                                                              \
+    void CampaignReader::DoGetSync(Variable<T> &variable, T *data) { GetSyncTCC(variable, data); } \
     void CampaignReader::DoGetDeferred(Variable<T> &variable, T *data)                             \
     {                                                                                              \
-        PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");                                             \
-        auto it = m_VarInternalInfo.find(variable.m_Name);                                         \
-        Variable<T> *v = reinterpret_cast<Variable<T> *>(it->second.originalVar);                  \
-        Engine *e = m_Engines[it->second.engineIdx];                                               \
-        e->Get(*v, data, adios2::Mode::Deferred);                                                  \
+        GetDeferredTCC(variable, data);                                                            \
     }                                                                                              \
                                                                                                    \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                                    \
@@ -450,6 +644,12 @@ bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
     {                                                                                              \
         PERFSTUBS_SCOPED_TIMER("CampaignReader::AllStepsBlocksInfo");                              \
         auto it = m_VarInternalInfo.find(variable.m_Name);                                         \
+        if (it == m_VarInternalInfo.end())                                                         \
+        {                                                                                          \
+            std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> allStepsBlocksInfo;  \
+            /*allStepsBlocksInfo[0] = ;*/                                                          \
+            return allStepsBlocksInfo;                                                             \
+        }                                                                                          \
         Variable<T> *v = reinterpret_cast<Variable<T> *>(it->second.originalVar);                  \
         Engine *e = m_Engines[it->second.engineIdx];                                               \
         return e->AllStepsBlocksInfo(*v);                                                          \
@@ -478,10 +678,22 @@ bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-#define declare_type(T)
+void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, DataType type, void *data)
+{
+    if (type != DataType::Char)
+    {
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "GetVariableFromDB",
+                                             "Expected char variable but was called with a type " +
+                                                 ToString(type));
+    }
 
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+    CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
+    const CampaignFile &f = ds.files[0];
+    std::string keyhex;
+    if (ds.hasKey)
+        keyhex = m_CampaignData.keys[ds.keyIdx].keyHex;
+    ReadToMemory(m_DB, (char *)data, f, keyhex, m_CampaignData);
+}
 
 } // end namespace engine
 } // end namespace core

@@ -4,6 +4,8 @@
 unset MAKEFLAGS
 unset MAKE
 
+declare PREFIX
+
 function make_target_flags() {
   local tgt=$1
   sleep 1
@@ -58,21 +60,17 @@ function prefixify() {
   echo "$@" | sed "s|${PREFIX}|\${ADIOS2_PREFIX}|g"
 }
 
-PREFIX="$1"
+###########################################################################
+# Main
+arg_prefix="$1"
 
-if [ "${1:0:1}" != "/" ]
+# Prefix should be an absolute path, but if it's not, make it absolute
+if [ "${arg_prefix:0:1}" != "/" ]
 then
-  # Convert relative paths to absolute based on DESTDIR
-  PREFIX="${DESTDIR:-$(pwd)}/$1"
-else
-  # check if the PREFIX directory exists and prepend DESTDIR if not
-  if [ ! -d "${PREFIX}" ]
-  then
-    PREFIX="${DESTDIR}$1"
-  fi
+  PREFIX="$PWD/$arg_prefix"
 fi
 
-shift
+PREFIX="${DESTDIR}${arg_prefix}"
 
 CMAKE="@CMAKE_COMMAND@"
 SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"

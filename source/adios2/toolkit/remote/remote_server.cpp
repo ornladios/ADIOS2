@@ -9,17 +9,22 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosNetwork.h"
+#include "adios2/operator/OperatorFactory.h"
 #include <evpath.h>
 
 #include <cstdio>  // remove
 #include <cstring> // strerror
 #include <errno.h> // errno
 #include <fcntl.h> // open
+#include <fstream>
 #include <inttypes.h>
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
 #ifndef _MSC_VER
+#include <mutex>
+#include <thread>
 #include <unistd.h> // write, close, ftruncate
 
 static int fd_is_valid(int fd) { return fcntl(fd, F_GETFD) != -1 || errno != EBADF; }
@@ -57,6 +62,31 @@ size_t ADIOSFilesOpened = 0;
 static int report_port_selection = 0;
 int parent_pid;
 uint64_t random_cookie = 0;
+
+/* Threading for compressing responses of Gets */
+size_t maxThreads = 8;
+size_t nThreads = 0;
+std::mutex mutex_nThreads;
+void WaitForAvailableThread()
+{
+    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    auto d = std::chrono::milliseconds(1000);
+    while (true)
+    {
+        {
+            std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
+            if (nThreads < maxThreads)
+            {
+                ++nThreads;
+                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
+                //           << std::endl;
+                break;
+            }
+        }
+        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        std::this_thread::sleep_for(d);
+    }
+};
 
 std::string readable_size(uint64_t size)
 {
@@ -234,6 +264,156 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     last_service_time = std::chrono::steady_clock::now();
 }
 
+template <class T>
+void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonADIOSFile *f,
+                          size_t readSize, T *RawData, void *Dest, int GetResponseCondition,
+                          Accuracy acc, std::string name, adios2::DataType vartype,
+                          size_t stepStart, size_t stepCount, adios2::Dims count,
+                          adios2::Dims start, size_t blockid, bool boxselection)
+
+{
+    _ReadResponseMsg Response;
+    memset(&Response, 0, sizeof(Response));
+    Response.Size = readSize;
+    Response.ReadResponseCondition = GetResponseCondition;
+    Response.Dest = Dest; /* final data destination in client memory space */
+    Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
+
+    if (acc.error > 0.0)
+    {
+#if defined(ADIOS2_HAVE_MGARD) || defined(ADIOS2_HAVE_ZFP)
+#if defined(ADIOS2_HAVE_MGARD)
+        Params p = {{"accuracy", std::to_string(acc.error)},
+                    {"s", std::to_string(acc.norm)},
+                    {"mode", (acc.relative ? "REL" : "ABS")}};
+        auto op = MakeOperator("mgard", p);
+#elif defined(ADIOS2_HAVE_ZFP)
+        Params p = {{"accuracy", std::to_string(acc.error)}};
+        auto op = MakeOperator("zfp", p);
+#endif
+        // TODO: would be nicer:
+        // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
+        T *CompressedData = (T *)malloc(Response.Size);
+        adios2::Dims c;
+        if (stepCount <= 1)
+        {
+            c = count;
+        }
+        else
+        {
+            c = helper::DimsWithStep(stepCount, count);
+        }
+        size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
+        if (result == 0)
+        {
+            Response.ReadData = (char *)RawData;
+            free(CompressedData);
+        }
+        else
+        {
+            Response.ReadData = (char *)CompressedData;
+            Response.Size = result;
+            Response.OperatorType = op->m_TypeEnum;
+            free(RawData);
+        }
+#else
+        Response.ReadData = (char *)RawData;
+#endif
+    }
+    else
+    {
+        Response.ReadData = (char *)RawData;
+    }
+
+    if (verbose >= 2)
+    {
+        if (boxselection)
+        {
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
+                      << ">(" << name << ") start = " << start << " count = " << count
+                      << " steps = " << stepStart << ".." << stepStart + stepCount - 1 << std::endl;
+        }
+        else
+        {
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
+                      << ">(" << name << ") block = " << blockid << std::endl;
+        }
+    }
+    // std::cout << "-- start sending response --" << std::endl;
+    CMwrite(conn, ReadResponseFormat, &Response);
+    free(Response.ReadData);
+    // std::cout << "-- sent response --" << std::endl;
+    {
+        // std::cout << "-- get lock --" << std::endl;
+        std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
+        // std::cout << "-- lock acquired --" << std::endl;
+        f->m_BytesSent += Response.Size;
+        f->m_OperationCount++;
+        TotalGetBytesSent += Response.Size;
+        TotalGets++;
+        --nThreads;
+    }
+    // std::cout << "-- done --" << std::endl;
+}
+
+template <class T>
+void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_state,
+                           GetRequestMsg &GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
+                           AnonADIOSFile *f)
+{
+    // This part cannot be threaded as ADIOS InquireVariable/Get are not thread-safe
+    Variable<T> *var = f->m_io->InquireVariable<T>(VarName);
+    if (f->m_mode == RemoteOpenRandomAccess)
+        var->SetStepSelection({GetMsg->Step, GetMsg->StepCount});
+    if (GetMsg->BlockID != -1)
+        var->SetBlockSelection(GetMsg->BlockID);
+    if (GetMsg->Start)
+    {
+        Box<Dims> b;
+        if (GetMsg->Count)
+        {
+            for (int i = 0; i < GetMsg->DimCount; i++)
+            {
+                b.first.push_back(GetMsg->Start[i]);
+                b.second.push_back(GetMsg->Count[i]);
+            }
+        }
+        var->SetSelection(b);
+    }
+    std::cout << "Reading var " << VarName << " with "
+              << (GetMsg->Relative ? "relative" : "absolute") << " error " << GetMsg->Error
+              << " in norm " << GetMsg->Norm << std::endl;
+    size_t readSize = var->SelectionSize() * sizeof(T);
+    T *RawData = (T *)malloc(readSize);
+    f->m_engine->Get(*var, RawData, Mode::Sync);
+
+    WaitForAvailableThread(); /* blocking here until we can launch a thread */
+
+    // Handle returning data in a separate thread so that we can serve another read operation in the
+    // meantime. Compress data if possible and if requested.
+    // Note: Can't pass Variable object to thread as other response will modify its content
+    Accuracy acc = {GetMsg->Error, GetMsg->Norm, (bool)GetMsg->Relative};
+    std::thread{ReturnResponseThread<T>,
+                conn,
+                ev_state->ReadResponseFormat,
+                f,
+                readSize,
+                RawData,
+                GetMsg->Dest,
+                GetMsg->GetResponseCondition,
+                acc,
+                var->m_Name,
+                var->m_Type,
+                var->m_StepsStart,
+                var->m_StepsCount,
+                var->Count(), // function, not m_Count is correct for block selections
+                var->m_Start,
+                var->m_BlockID,
+                (var->m_SelectionType == SelectionType::BoundingBox)}
+        .detach();
+    return;
+}
+
 static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
                               attr_list attrs)
 {
@@ -260,15 +440,6 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
 
     std::string VarName = std::string(GetMsg->VarName);
     adios2::DataType TypeOfVar = f->m_io->InquireVariableType(VarName);
-    Box<Dims> b;
-    if (GetMsg->Count)
-    {
-        for (int i = 0; i < GetMsg->DimCount; i++)
-        {
-            b.first.push_back(GetMsg->Start[i]);
-            b.second.push_back(GetMsg->Count[i]);
-        }
-    }
 
     try
     {
@@ -278,30 +449,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
 #define GET(T)                                                                                     \
     else if (TypeOfVar == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        _ReadResponseMsg Response;                                                                 \
-        memset(&Response, 0, sizeof(Response));                                                    \
-        auto var = f->m_io->InquireVariable<T>(VarName);                                           \
-        if (f->m_mode == RemoteOpenRandomAccess)                                                   \
-            var->SetStepSelection({GetMsg->Step, 1});                                              \
-        if (GetMsg->BlockID != -1)                                                                 \
-            var->SetBlockSelection(GetMsg->BlockID);                                               \
-        if (GetMsg->Start)                                                                         \
-            var->SetSelection(b);                                                                  \
-        Response.Size = var->SelectionSize() * sizeof(T);                                          \
-        T *RetData = (T *)malloc(Response.Size);                                                   \
-        f->m_engine->Get(*var, RetData, Mode::Sync);                                               \
-        Response.ReadData = (char *)RetData;                                                       \
-        Response.ReadResponseCondition = GetMsg->GetResponseCondition;                             \
-        Response.Dest = GetMsg->Dest; /* final data destination in client memory space */          \
-        if (verbose >= 2)                                                                          \
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << TypeOfVar  \
-                      << ">(" << VarName << ")" << b << std::endl;                                 \
-        f->m_BytesSent += Response.Size;                                                           \
-        f->m_OperationCount++;                                                                     \
-        TotalGetBytesSent += Response.Size;                                                        \
-        TotalGets++;                                                                               \
-        CMwrite(conn, ev_state->ReadResponseFormat, &Response);                                    \
-        free(RetData);                                                                             \
+        PrepareResponseForGet<T>(conn, ev_state, std::ref(GetMsg), std::ref(VarName), TypeOfVar,   \
+                                 f);                                                               \
     }
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
@@ -353,6 +502,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     Response.ReadData = (char *)tmp;
     Response.ReadResponseCondition = ReadMsg->ReadResponseCondition;
     Response.Dest = ReadMsg->Dest;
+    Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
     if (verbose >= 2)
         std::cout << "Returning " << readable_size(Response.Size) << " for Read " << std::endl;
     f->m_BytesSent += Response.Size;
@@ -501,7 +651,7 @@ static bool server_timeout(void *CMvoid, int time_since_service)
     CManager cm = (CManager)CMvoid;
     if (verbose && (time_since_service > 90))
         std::cout << time_since_service << " seconds since last service.\n";
-    if (time_since_service > 600)
+    if (time_since_service > 6000)
     {
         if (verbose)
             std::cout << "Timing out remote server" << std::endl;
@@ -542,6 +692,9 @@ static void timer_start(void *param, unsigned int interval)
     }).detach();
 }
 
+const char usage[] = "Usage:  adios2_remote_server [-background] [-kill_server] [-no_timeout] "
+                     "[-status] [-v] [-q] [-l logfile] [-t nthreads]\n";
+
 int main(int argc, char **argv)
 {
     CManager cm;
@@ -550,6 +703,7 @@ int main(int argc, char **argv)
     int kill_server = 0;
     int status_server = 0;
     int no_timeout = 0; // default to timeout
+    std::ofstream fileOut;
 
     for (int i = 1; i < argc; i++)
     {
@@ -581,12 +735,38 @@ int main(int argc, char **argv)
         {
             verbose--;
         }
+        else if (strcmp(argv[i], "-l") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -l requires an argument\n");
+                fprintf(stderr, usage);
+                exit(1);
+            }
+            char *filename = argv[i];
+            // Opening the output file stream and associate it with
+            // logfile
+            fileOut.open(filename);
+
+            // Redirecting cout to write to logfile
+            std::cout.rdbuf(fileOut.rdbuf());
+        }
+        else if (strcmp(argv[i], "-t") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -t requires an argument\n");
+                fprintf(stderr, usage);
+                exit(1);
+            }
+            maxThreads = strtol(argv[i], nullptr, 10);
+        }
         else
         {
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
-            fprintf(stderr,
-                    "Usage:  adios2_remote_server [-background] [-kill_server] [-no_timeout] "
-                    "[-status] [-v] [-q]\n");
+            fprintf(stderr, usage);
             exit(1);
         }
     }
@@ -664,13 +844,12 @@ int main(int argc, char **argv)
             close(2);
             exit(0);
         }
-        /* I'm the child, close IO FDs so that ctest continues.  No verbosity here */
-        verbose = 0;
 
         //  Why close a bunch of FDs here?  Well, if we've linked with XRootD, stderr might have
-        //  been dup()'d in library initialization.  We don't need those FDs and we have to close
-        //  them to make sure we disassociate from the CTest parent (or else fixture startup hangs).
-        //  It doesn't seem to work to close them before the fork, so we close them afterwards.
+        //  been dup()'d in library initialization.  We don't need those FDs and we have to
+        //  close them to make sure we disassociate from the CTest parent (or else fixture
+        //  startup hangs). It doesn't seem to work to close them before the fork, so we close
+        //  them afterwards.
         for (int fd = 0; fd <= 16; fd++)
         {
             if (fd_is_valid(fd))
@@ -678,9 +857,9 @@ int main(int argc, char **argv)
                 // OK, fd is valid, should we close it?
                 if ((lseek(fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE))
                 {
-                    // In the circumstances we care about (running under CTest), we want to close
-                    // FDs that are pipes.  The condition above tests for that and we should get
-                    // here only if it's a pipe.
+                    // In the circumstances we care about (running under CTest), we want to
+                    // close FDs that are pipes.  The condition above tests for that and we
+                    // should get here only if it's a pipe.
                     close(fd);
                 }
             }
@@ -720,14 +899,16 @@ int main(int argc, char **argv)
         rename(filename, final_filename);
     }
 
+    std::cout << "Hostname = " << helper::GetFQDN() << std::endl;
     attr_list contact_list = CMget_contact_list(cm);
     if (contact_list)
     {
         int Port = -1;
         get_int_attr(listen_list, CM_IP_PORT, &Port);
-        printf("Listening on Port %d\n", Port);
+        std::cout << "Listening on Port " << Port << std::endl;
     }
     ev_state.cm = cm;
+    std::cout << "Max threads = " << maxThreads << std::endl;
 
     RegisterFormats(ev_state);
 
