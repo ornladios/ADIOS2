@@ -86,6 +86,22 @@ void Engine::EndStep() { ThrowUp("EndStep"); }
 void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
 void Engine::PerformGets() { ThrowUp("PerformGets"); }
 void Engine::PerformDataWrite() { return; }
+void Engine::SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement)
+{
+    ThrowUp("SetStepApplicationTime");
+}
+
+double Engine::GetStepApplicationTime()
+{
+    ThrowUp("GetStepApplicationTime");
+    return -1.0;
+}
+
+std::vector<double> Engine::AllStepsApplicationTime()
+{
+    ThrowUp("AllStepsApplicationTime");
+    return std::vector<double>();
+}
 
 void Engine::Close(const int transportIndex)
 {

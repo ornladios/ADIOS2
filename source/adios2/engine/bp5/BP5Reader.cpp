@@ -249,10 +249,14 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         if (m_FirstStep)
         {
             m_FirstStep = false;
+            // this might have been done earlier
+            m_NextStepApplicationTime = m_ApplicationTimeTable[0];
         }
         else
         {
             ++m_CurrentStep;
+            // this might have been done earlier
+            m_NextStepApplicationTime = m_ApplicationTimeTable[m_CurrentStep];
         }
 
         m_IO.m_EngineStep = m_CurrentStep;
@@ -288,6 +292,69 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 }
 
 size_t BP5Reader::CurrentStep() const { return m_CurrentStep; }
+
+double BP5Reader::GetStepApplicationTime()
+{
+    if (m_OpenMode != Mode::Read)
+    {
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "EndStep",
+                                        "GetStepApplicationTime called in random access mode");
+    }
+    if (m_BetweenStepPairs)
+        return m_NextStepApplicationTime;
+    else
+    {
+        // messier logic
+        StepStatus status;
+        double timeoutSeconds = 1.0; // arbitrary
+        if (m_FirstStep)
+        {
+            if (!m_StepsCount)
+            {
+                // not steps was found in Open/Init, check for new steps now
+                status = CheckForNewSteps(Seconds(timeoutSeconds));
+            }
+        }
+        else
+        {
+            if (m_CurrentStep + 1 >= m_StepsCount)
+            {
+                // we processed steps in memory, check for new steps now
+                status = CheckForNewSteps(Seconds(timeoutSeconds));
+            }
+        }
+        if (m_StepsCount > m_CurrentStep)
+        {
+            /* we have got new steps and new metadata in memory */
+            m_NextStepApplicationTime = m_ApplicationTimeTable[m_CurrentStep + 1];
+        }
+        else
+        {
+            if (m_WriterIsActive)
+            {
+                //  Something better to do here?
+                helper::Throw<std::logic_error>("Engine", "BP5Reader", "GetStepApplicationTime",
+                                                "GetStepApplicationTime finds Writer Not Ready");
+            }
+            else
+            {
+                helper::Throw<std::logic_error>("Engine", "BP5Reader", "GetStepApplicationTime",
+                                                "GetStepApplicationTime finds End of Stream");
+            }
+        }
+    }
+    return m_NextStepApplicationTime;
+}
+
+std::vector<double> BP5Reader::AllStepsApplicationTime()
+{
+    if (m_OpenMode != Mode::ReadRandomAccess)
+    {
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "EndStep",
+                                        "GetStepApplicationTime called in random access mode");
+    }
+    return m_ApplicationTimeTable;
+}
 
 void BP5Reader::EndStep()
 {
@@ -1396,16 +1463,17 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
                                                   " version");
         }
 
-        // BP minor version, unused
+        // BP minor version, important!
         position = m_BPMinorVersionPosition;
-        const uint8_t minorversion =
+        m_WriterMinorVersion =
             helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
-        if (minorversion != m_BP5MinorVersion)
+        if (m_WriterMinorVersion < 2)
         {
-            helper::Throw<std::runtime_error>("Engine", "BP5Reader", "ParseMetadataIndex",
-                                              "Current ADIOS2 BP5 Engine only supports version 5." +
-                                                  std::to_string(m_BP5MinorVersion) + ", found 5." +
-                                                  std::to_string(minorversion) + " version");
+            helper::Throw<std::runtime_error>(
+                "Engine", "BP5Reader", "ParseMetadataIndex",
+                "Current ADIOS2 BP5 Engine only supports BP5 files between version 5.2 and 5." +
+                    std::to_string(m_BP5MinorVersion) + ", found 5." +
+                    std::to_string(m_WriterMinorVersion) + " version");
         }
 
         // Writer active flag
@@ -1482,6 +1550,10 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
         }
         case IndexRecord::StepRecord: {
             std::vector<uint64_t> ptrs;
+            double MetadataApplicationTime = -1.0;
+            if (m_WriterMinorVersion >= 3)
+                MetadataApplicationTime =
+                    helper::ReadValue<double>(buffer, position, m_Minifooter.IsLittleEndian);
             const uint64_t MetadataPos =
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
             const uint64_t MetadataSize =
@@ -1507,6 +1579,8 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
                 // absolute pos in file before read
                 ptrs.push_back(MetadataPos);
                 m_MetadataIndexTable[m_StepsCount] = ptrs;
+                m_ApplicationTimeTable.resize(m_StepsCount + 1);
+                m_ApplicationTimeTable[m_StepsCount] = MetadataApplicationTime;
 #ifdef DUMPDATALOCINFO
                 for (uint64_t i = 0; i < m_WriterCount; i++)
                 {
