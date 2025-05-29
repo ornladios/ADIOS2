@@ -305,14 +305,13 @@ double BP5Reader::GetStepApplicationTime()
     else
     {
         // messier logic
-        StepStatus status;
         double timeoutSeconds = 1.0; // arbitrary
         if (m_FirstStep)
         {
             if (!m_StepsCount)
             {
                 // not steps was found in Open/Init, check for new steps now
-                status = CheckForNewSteps(Seconds(timeoutSeconds));
+                (void)CheckForNewSteps(Seconds(timeoutSeconds));
             }
         }
         else
@@ -320,7 +319,7 @@ double BP5Reader::GetStepApplicationTime()
             if (m_CurrentStep + 1 >= m_StepsCount)
             {
                 // we processed steps in memory, check for new steps now
-                status = CheckForNewSteps(Seconds(timeoutSeconds));
+                (void)CheckForNewSteps(Seconds(timeoutSeconds));
             }
         }
         if (m_StepsCount > m_CurrentStep)
