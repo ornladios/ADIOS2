@@ -80,7 +80,7 @@ def ReadIndex(f, fileSize, verbose):
                 AppTime = str(ddata[0]).ljust(10)
                 AppOutputStr = " | AppTime = " + AppTime
                 data = np.frombuffer(table, dtype=np.uint64, count=3,
-                                     offset=pos+8)
+                                     offset=pos + 8)
                 pos = pos + 1 * 8 + 3 * 8
 
             stepstr = str(step).ljust(6)
