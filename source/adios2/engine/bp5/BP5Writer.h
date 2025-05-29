@@ -46,6 +46,7 @@ public:
     ~BP5Writer();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
+    void SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement = 1.0);
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void PerformDataWrite() final;
@@ -71,6 +72,8 @@ private:
 
     int64_t m_WriterStep = 0;
     bool m_IsFirstStep = true; // might not be 0 for append
+    double m_ApplicationTimeForNextStep = 0.0;
+    double m_ApplicationTimeIncrement = 1.0;
     /*
      *  Burst buffer variables
      */

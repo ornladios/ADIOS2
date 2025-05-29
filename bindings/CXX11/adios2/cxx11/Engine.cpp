@@ -63,6 +63,24 @@ bool Engine::BetweenStepPairs()
     return m_Engine->BetweenStepPairs();
 }
 
+void Engine::SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::SetApplicationStepTime");
+    m_Engine->SetStepApplicationTime(ApplicationTime, PostStepIncrement);
+}
+
+double Engine::GetStepApplicationTime()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::GetStepApplicationTime");
+    return m_Engine->GetStepApplicationTime();
+}
+
+std::vector<double> Engine::AllStepsApplicationTime()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::AllStepsApplicationTime");
+    return m_Engine->AllStepsApplicationTime();
+}
+
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep(const StepMode, const float)");

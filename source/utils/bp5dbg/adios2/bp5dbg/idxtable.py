@@ -2,7 +2,7 @@ from os import fstat
 
 import numpy as np
 
-from .utils import ReadHeader
+from .utils import ReadHeader, GetBPMinorVersion
 
 # metadata index table (list of dictionary)
 #   step:           step (superfluous, since list idx = step)
@@ -68,8 +68,21 @@ def ReadIndex(f, fileSize, verbose):
             print("Record '{0}', length = {1}".format(record, reclen))
         if record == 's':
             # print("Step record, length = {0}".format(reclen))
-            data = np.frombuffer(table, dtype=np.uint64, count=3,
-                                 offset=pos)
+            if GetBPMinorVersion() == 2:
+                data = np.frombuffer(table, dtype=np.uint64, count=3,
+                                     offset=pos)
+                pos = pos + 3 * 8
+                AppOutputStr = ""
+
+            else:
+                ddata = np.frombuffer(table, dtype=np.float64, count=1,
+                                      offset=pos)
+                AppTime = str(ddata[0]).ljust(10)
+                AppOutputStr = " | AppTime = " + AppTime
+                data = np.frombuffer(table, dtype=np.uint64, count=3,
+                                     offset=pos+8)
+                pos = pos + 1 * 8 + 3 * 8
+
             stepstr = str(step).ljust(6)
             mdatapos = str(data[0]).ljust(10)
             mdatasize = str(data[1]).ljust(10)
@@ -84,11 +97,9 @@ def ReadIndex(f, fileSize, verbose):
             MetadataIndexTable.append(md)
 
             if verbose:
-                print("|   Step = " + stepstr + "| MetadataPos = " +
+                print("|   Step = " + stepstr + AppOutputStr + " | MetadataPos = " +
                       mdatapos + " |  MetadataSize = " + mdatasize +
                       "   | FlushCount = " + flushcount + "|")
-
-            pos = pos + 3 * 8
 
             for Writer in range(0, WriterCount):
                 start = " Writer " + str(Writer) + " data "

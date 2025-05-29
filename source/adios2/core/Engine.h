@@ -130,6 +130,32 @@ public:
     bool BetweenStepPairs() const;
 
     /**
+     * Set "Application Time" for the next timestep.  ADIOS does not
+     * directly interpret this value, but it is associated with the
+     * metadata for the next timestep (used in writer-side EndStep()).
+     * PostStepIncrement is used to increment the value after each
+     * step, but repeated calls to SetApplicationStepTime can be made
+     * to achieve irregular time intervals.
+     */
+    void SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement = 1.0);
+
+    /**
+     * Get "Application Time" for the next or current step.  This is a
+     * reader-side call and if called outside of BeginStep/EndStep it
+     * will return the ApplicationTime for the next step, if after
+     * BeginStep it returns for the current step.  Not supported by
+     * all engines and not available in RandomAccessRead mode.  Next
+     * step time not possible for some streaming engines.
+     */
+    double GetStepApplicationTime();
+
+    /**
+     * Get "Application Time" for all available steps.  Only available
+     * in RandomAccessRead mode.
+     */
+    std::vector<double> AllStepsApplicationTime();
+
+    /**
      * Put signature that pre-allocates a Variable in Buffer returning a Span of
      * the payload memory from variable.m_Count
      * @param variable input variable to be allocated

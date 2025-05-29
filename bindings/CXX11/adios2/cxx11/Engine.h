@@ -438,6 +438,32 @@ public:
     void EndStep();
 
     /**
+     * Set "Application Time" for the next step.  ADIOS does not
+     * directly interpret this value, but it is associated with the
+     * metadata for the next step (used in writer-side EndStep()).
+     * PostStepIncrement is used to increment the value after each
+     * step, but repeated calls to SetApplicationStepTime can be made
+     * to achieve irregular time intervals.
+     */
+    void SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement = 1.0);
+
+    /**
+     * Get "Application Time" for the next or current step.  This is a
+     * reader-side call and if called outside of BeginStep/EndStep it
+     * will return the ApplicationTime for the next step, if after
+     * BeginStep it returns for the current step.  Not supported by
+     * all engines and not available in ReadRandomAccess mode.  Next
+     * step time not possible for some streaming engines.
+     */
+    double GetStepApplicationTime();
+
+    /**
+     * Get "Application Time" for all available steps.  Only available
+     * in ReadRandomAccessRead mode.
+     */
+    std::vector<double> AllStepsApplicationTime();
+
+    /**
      * Returns True if engine status is between BeginStep()/EndStep() pair,
      * False otherwise.
      */
@@ -516,7 +542,7 @@ public:
 
     /**
      * @brief Promise that the reader data selections of are fixed and
-     * will not change in future timesteps. This information, provided
+     * will not change in future steps. This information, provided
      * before the EndStep() representing a fixed read pattern, may be
      * utilized by the input Engine to optimize data flow.
      */
