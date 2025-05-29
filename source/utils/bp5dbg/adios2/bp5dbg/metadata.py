@@ -18,7 +18,7 @@ def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry):
 
     currentpos = f.tell()
     if mdpos > currentpos:
-        print(f"Offset {currentpos}..{mdpos-1} is a gap unaccounted for")
+        print(f"Offset {currentpos}..{mdpos - 1} is a gap unaccounted for")
 
     if mdpos < currentpos:
         print(f"ERROR: step {step} metadata pos {mdpos} points before the "
@@ -40,7 +40,7 @@ def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry):
     if (mdsize == mdsize_in_file[0] + 8):
         print(f"  Size = {mdsize_in_file[0]}")
     else:
-        print(f"ERROR: md record supposed to be {mdsize-8} + 8 bytes "
+        print(f"ERROR: md record supposed to be {mdsize - 8} + 8 bytes "
               f"(as recorded in index), but found in file "
               f"{mdsize_in_file[0]}")
 
