@@ -773,7 +773,7 @@ extern CP_DP_Interface LoadDaosDP()
     daosDPInterface.readerReleaseTimestep = NULL;
     daosDPInterface.destroyReader = DaosDestroyReader;
     daosDPInterface.destroyWriter = DaosDestroyWriter;
-    daosDPInterface.destroyWriterPerReader = DaosDestroyWriterPerReader;
+    daosDPInterface.destroyWriterPerReader = NULL; // unneeded DaosDestroyWriterPerReader;
     daosDPInterface.getPriority = DaosGetPriority;
     daosDPInterface.unGetPriority = NULL;
     return &daosDPInterface;
