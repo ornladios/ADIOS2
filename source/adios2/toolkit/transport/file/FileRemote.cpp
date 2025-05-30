@@ -71,7 +71,12 @@ void FileRemote::SetParameters(const Params &params)
     }
 }
 
-void FileRemote::WaitForOpen() {}
+void FileRemote::WaitForOpen()
+{
+    if (!m_IsOpen)
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileRemote",
+                                             "WaitForOpen", "Remote file is not open");
+}
 
 void FileRemote::SetUpCache()
 {
