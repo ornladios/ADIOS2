@@ -1406,7 +1406,7 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
                (void *)CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
 
-    if (strncmp("mpi", ParentStream->ConfigParams->DataTransport, 3) == 0 &&
+    if (CP_WSR_Stream->ParentStream->DP_Interface->destroyWriterPerReader &&
         CP_WSR_Stream->DP_WSR_Stream)
     {
         CP_WSR_Stream->ParentStream->DP_Interface->destroyWriterPerReader(
@@ -1462,7 +1462,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream, enum StreamSta
         }
         else
         {
-            if (strncmp("mpi", ParentStream->ConfigParams->DataTransport, 3) == 0 &&
+            if (CP_WSR_Stream->ParentStream->DP_Interface->destroyWriterPerReader &&
                 CP_WSR_Stream->DP_WSR_Stream)
             {
                 CP_WSR_Stream->ParentStream->DP_Interface->destroyWriterPerReader(

@@ -1457,7 +1457,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.timestepArrived = EvpathRSTimestepArrived;
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
-    evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;
+    evpathDPInterface.destroyWriterPerReader = NULL; // unneeded EvpathDestroyWriterPerReader;
     evpathDPInterface.getPriority = EvpathGetPriority;
     evpathDPInterface.unGetPriority = NULL;
     return &evpathDPInterface;
