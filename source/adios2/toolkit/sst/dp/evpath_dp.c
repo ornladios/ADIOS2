@@ -788,18 +788,6 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS
     return WSR_Stream;
 }
 
-// writer-side routine, called from the main program
-static void EvpathDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
-{
-    Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSR_Stream_v;
-    if (WSR_Stream->ReaderRequestArray)
-    {
-        free(WSR_Stream->ReaderRequestArray);
-    }
-    WSR_Stream->ReaderRequestArray = NULL;
-    free(WSR_Stream);
-}
-
 // reader-side routine, called from the main program
 static void EvpathProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
                                             int writerCohortSize, CP_PeerCohort PeerCohort,
@@ -1457,7 +1445,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.timestepArrived = EvpathRSTimestepArrived;
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
-    evpathDPInterface.destroyWriterPerReader = NULL; // unneeded EvpathDestroyWriterPerReader;
+    evpathDPInterface.destroyWriterPerReader = NULL;
     evpathDPInterface.getPriority = EvpathGetPriority;
     evpathDPInterface.unGetPriority = NULL;
     return &evpathDPInterface;
