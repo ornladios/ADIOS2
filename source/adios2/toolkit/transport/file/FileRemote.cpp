@@ -74,8 +74,10 @@ void FileRemote::SetParameters(const Params &params)
 void FileRemote::WaitForOpen()
 {
     if (!m_IsOpen)
+    {
         helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileRemote",
                                              "WaitForOpen", "Remote file is not open");
+    }
 }
 
 void FileRemote::SetUpCache()
@@ -121,6 +123,7 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
         int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(m_Hostname);
         m_Remote->OpenSimpleFile("localhost", localPort, m_Name);
         ProfilerStop("open");
+        m_IsOpen = true;
         m_Size = m_Remote->m_Size;
         break;
     }
