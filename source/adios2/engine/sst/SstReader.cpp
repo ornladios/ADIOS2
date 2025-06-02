@@ -669,33 +669,13 @@ bool SstReader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMa
     return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
 }
 
-void *SstReader::performDeferredReadRemoteMemory(DeferredReadRemoteMemory const &params)
-{
-    return SstReadRemoteMemory(m_Input, (int)params.rank, CurrentStep(), params.payloadStart,
-                               params.payloadSize, params.buffer, params.dp_info);
-}
-
-constexpr static size_t BATCH_SIZE = 10;
-
 void SstReader::BP5PerformGets()
 {
     size_t maxReadSize;
     auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(true, &maxReadSize);
     std::vector<void *> sstReadHandlers;
-    std::vector<void *> nextSstReadHandlers;
-    sstReadHandlers.reserve(BATCH_SIZE);
-    nextSstReadHandlers.reserve(BATCH_SIZE);
-
-    auto iterator = ReadRequests.cbegin();
-    auto end = ReadRequests.cend();
-
-    auto enqueue_next = [&](std::vector<void *> &sstReadHandlers_lambda) {
-        if (iterator == end)
-        {
-            return false;
-        }
-        auto const &Req = *iterator;
-
+    for (const auto &Req : ReadRequests)
+    {
         void *dp_info = NULL;
         if (m_CurrentStepMetaData->DP_TimestepInfo)
         {
@@ -703,36 +683,15 @@ void SstReader::BP5PerformGets()
         }
         auto ret = SstReadRemoteMemory(m_Input, (int)Req.WriterRank, Req.Timestep, Req.StartOffset,
                                        Req.ReadLength, Req.DestinationAddr, dp_info);
-        sstReadHandlers_lambda.push_back(ret);
-        ++iterator;
-        return true;
-    };
-
-    // Initiate request queue with first BATCH_SIZE requests
-    for (size_t i = 0; i < BATCH_SIZE; ++i)
-    {
-        if (!enqueue_next(sstReadHandlers))
-        {
-            break;
-        }
+        sstReadHandlers.push_back(ret);
     }
-
-    // Drain current request queue
-    // For each fulfilled request, enqueue the next into the next queue
-    // poor man's asynchrony
-    while (!sstReadHandlers.empty())
+    for (const auto &i : sstReadHandlers)
     {
-        nextSstReadHandlers.clear();
-        for (const auto &i : sstReadHandlers)
+        if (SstWaitForCompletion(m_Input, i) != SstSuccess)
         {
-            if (SstWaitForCompletion(m_Input, i) != SstSuccess)
-            {
-                helper::Throw<std::runtime_error>("Engine", "SstReader", "BP5PerformGets",
-                                                  "Writer failed before returning data");
-            }
-            enqueue_next(nextSstReadHandlers);
+            helper::Throw<std::runtime_error>("Engine", "SstReader", "BP5PerformGets",
+                                              "Writer failed before returning data");
         }
-        sstReadHandlers.swap(nextSstReadHandlers);
     }
 
     m_BP5Deserializer->FinalizeGets(ReadRequests);
@@ -751,7 +710,7 @@ void SstReader::PerformGets()
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
-        std::vector<DeferredReadRemoteMemory> sstReadHandlers;
+        std::vector<void *> sstReadHandlers;
         std::vector<std::vector<char>> buffers;
         size_t iter = 0;
 
@@ -780,46 +739,14 @@ void SstReader::PerformGets()
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
-        // run read requests in batches and wait for them to finish
-        auto iterator = sstReadHandlers.cbegin();
-        auto end = sstReadHandlers.cend();
-        std::vector<void *> enqueuedHandlers;
-        std::vector<void *> nextEnqueuedHandlers;
-        enqueuedHandlers.reserve(BATCH_SIZE);
-        nextEnqueuedHandlers.reserve(BATCH_SIZE);
-
-        auto enqueue_next = [&](std::vector<void *> &enqueuedHandlers) {
-            if (iterator == end)
-            {
-                return false;
-            }
-            enqueuedHandlers.push_back(performDeferredReadRemoteMemory(*iterator));
-            ++iterator;
-            return true;
-        };
-
-        // Initiate request queue with first BATCH_SIZE requests
-        for (size_t i = 0; i < BATCH_SIZE; ++i)
+        // wait for all SstRead requests to finish
+        for (const auto &i : sstReadHandlers)
         {
-            if (!enqueue_next(enqueuedHandlers))
+            if (SstWaitForCompletion(m_Input, i) != SstSuccess)
             {
-                break;
+                helper::Throw<std::runtime_error>("Engine", "SstReader", "PerformGets",
+                                                  "Writer failed before returning data");
             }
-        }
-
-        while (!enqueuedHandlers.empty())
-        {
-            nextEnqueuedHandlers.clear();
-            for (const auto &i : enqueuedHandlers)
-            {
-                if (SstWaitForCompletion(m_Input, i) != SstSuccess)
-                {
-                    helper::Throw<std::runtime_error>("Engine", "SstReader", "PerformGets",
-                                                      "Writer failed before returning data");
-                }
-                enqueue_next(nextEnqueuedHandlers);
-            }
-            enqueuedHandlers.swap(nextEnqueuedHandlers);
         }
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)

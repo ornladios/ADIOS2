@@ -54,19 +54,8 @@ public:
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
-    struct DeferredReadRemoteMemory
-    {
-        size_t rank;
-        size_t payloadStart;
-        size_t payloadSize;
-        char *buffer;
-        void *dp_info;
-    };
-    void *performDeferredReadRemoteMemory(DeferredReadRemoteMemory const &);
-
     template <class T>
-    void ReadVariableBlocksRequests(Variable<T> &variable,
-                                    std::vector<DeferredReadRemoteMemory> &sstReadHandlers,
+    void ReadVariableBlocksRequests(Variable<T> &variable, std::vector<void *> &sstReadHandlers,
                                     std::vector<std::vector<char>> &buffers);
 
     template <class T>

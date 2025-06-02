@@ -25,7 +25,7 @@ namespace engine
 
 template <class T>
 void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
-                                           std::vector<DeferredReadRemoteMemory> &sstReadHandlers,
+                                           std::vector<void *> &sstReadHandlers,
                                            std::vector<std::vector<char>> &buffers)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -65,8 +65,9 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
                     PERFSTUBS_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
-                    sstReadHandlers.push_back(
-                        DeferredReadRemoteMemory{rank, payloadStart, payloadSize, buffer, dp_info});
+                    auto ret = SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(), payloadStart,
+                                                   payloadSize, buffer, dp_info);
+                    sstReadHandlers.push_back(ret);
                 }
                 // if remote data buffer is not compressed
                 else
@@ -86,9 +87,10 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                             subStreamInfo.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,
                             elementOffset))
                     {
-                        sstReadHandlers.push_back(DeferredReadRemoteMemory{
-                            rank, writerBlockStart, writerBlockSize,
-                            reinterpret_cast<char *>(blockInfo.Data + elementOffset), dp_info});
+                        auto ret = SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(),
+                                                       writerBlockStart, writerBlockSize,
+                                                       blockInfo.Data + elementOffset, dp_info);
+                        sstReadHandlers.push_back(ret);
                     }
                     // if either input or output is not contiguous memory then
                     // find all contiguous parts.
@@ -97,9 +99,10 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                         // batch all read requests
                         buffers.emplace_back();
                         buffers.back().resize(writerBlockSize);
-                        sstReadHandlers.push_back(
-                            DeferredReadRemoteMemory{rank, writerBlockStart, writerBlockSize,
-                                                     buffers.back().data(), dp_info});
+                        auto ret =
+                            SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(), writerBlockStart,
+                                                writerBlockSize, buffers.back().data(), dp_info);
+                        sstReadHandlers.push_back(ret);
                     }
                 }
                 ++threadID;
