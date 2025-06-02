@@ -150,7 +150,7 @@ static ucs_status_t init_fabric(struct fabric_state *fabric, struct _SstParams *
         return status;
     }
 
-    Svcs->verbose(CP_Stream, DPCriticalVerbose, "UCX init Success\n");
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "UCX init Success\n");
 
     return status;
 }

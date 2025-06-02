@@ -3087,7 +3087,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.timestepArrived = (CP_DP_ReaderTimestepArrivalFunc)RdmaTimestepArrived;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
-    RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
+    RdmaDPInterface.destroyWriterPerReader = NULL; // unused at CP level RdmaDestroyWriterPerReader;
     RdmaDPInterface.getPriority = RdmaGetPriority;
     RdmaDPInterface.unGetPriority = RdmaUnGetPriority;
     return &RdmaDPInterface;
