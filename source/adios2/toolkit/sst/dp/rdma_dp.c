@@ -137,8 +137,9 @@ struct cq_event_list
     struct cq_event_list *next;
 };
 
-// Parameters for make_progress(), launched as a separate threads
-// to make manual progress in fabrics that require it
+// Parameters for make_progress(), launched either as a separate thread
+// to make manual progress in fabrics that require it, or used to make manual
+// progress synchronously on the main thread in readers.
 struct cq_manual_progress
 {
     struct fid_cq *cq_signal;
@@ -1249,15 +1250,27 @@ static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_S
             // so the reader knows to make progress at those points.
             do_init_thread = 0;
         }
+
         if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
         {
             Svcs->verbose(CP_Stream, DPTraceVerbose,
                           "Using the fabric's automatic progress capability.\n");
             return EXIT_SUCCESS;
         }
-        Svcs->verbose(
-            CP_Stream, DPTraceVerbose,
-            "Using a separate thread to comply with the fabric's manual progress preference.\n");
+        else if (is_reader)
+        {
+            Svcs->verbose(
+                CP_Stream, DPTraceVerbose,
+                "Fabric requires manual progress, will make progress synchronously (reader). "
+                "Specify environment variable FABRIC_PROGRESS_THREAD=1 to make progress in the "
+                "background.\n");
+        }
+        else
+        {
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "Using a separate thread to comply with the fabric's manual progress "
+                          "preference (writer).\n");
+        }
         break;
     case ProgressThreadYes:
         Svcs->verbose(CP_Stream, DPTraceVerbose,
@@ -1898,8 +1911,8 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
             /*
              * Cannot make a blocking call here since maybe the fi_read() task
              * above did not register, so there is nothing to wait for.
-             * Need to specify either a timeout or call this non-blockingly to
-             * ensure that this returns.
+             * Need to specify either a timeout or call this non-blockingly
+             * (i.e. timeout=0) to ensure that this returns.
              */
             make_some_progress(Fabric->cq_manual_progress, 0, NULL, 0);
         }

@@ -369,9 +369,9 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
         // decision for all users here.
         // We consider manual progress as an optional feature that needs to be
         // actively switched on. Treat this case same as ProgressThreadNo.
-        Svcs->verbose(
-            CP_Stream, DPTraceVerbose,
-            "Not using a separate thread for manual progress since it was not requested.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Not using a separate thread for manual progress since it was not requested. "
+                      "Request it by setting environment variable SST_UCX_PROGRESS_THREAD=1.\n");
         Stream->Fabric->keep_making_progress = 0;
         break;
     case ProgressThreadNo:
