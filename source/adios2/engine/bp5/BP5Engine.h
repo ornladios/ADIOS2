@@ -35,6 +35,7 @@ public:
             4: abs. pos in metadata File for step
     */
     std::unordered_map<uint64_t, std::vector<uint64_t>> m_MetadataIndexTable;
+    std::vector<double> m_ApplicationTimeTable;
 
     struct Minifooter
     {
@@ -77,7 +78,7 @@ public:
     static constexpr size_t m_VersionTagLength = sizeof(BP5IndexTableHeader().VersionTag);
     static constexpr size_t m_HeaderTailPadding = sizeof(BP5IndexTableHeader().unused2);
 
-    static constexpr uint8_t m_BP5MinorVersion = 2;
+    static constexpr uint8_t m_BP5MinorVersion = 3;
 
     /** Index record types */
     enum IndexRecord
