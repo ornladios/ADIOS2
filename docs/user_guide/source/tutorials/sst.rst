@@ -16,9 +16,10 @@ SST Engine Example:
 
 1. WAN (default)
 """""""""""""""""
-    - Works for both serial or MPI code.
-    - Using sockets to communicate
-
+    - works for both serial or MPI code.
+    - using sockets to communicate
+        - srun -n 1 -N 1  writer > wout 2>&1 &
+        - srun -n 1 -N 1  reader > rout 2>&1 &
 
 2. RDMA
 *************** 
@@ -38,7 +39,7 @@ SST Engine Example:
 4. UCX
 ***************
     
-    - On perlmutter, to use UCX: 
+    - on Frontier, to use UCX: 
        - Export UCX_ROOT=/opt/cray/pe/cray-ucx/2.7.0-1/ucx/
        - load 3 ucx modules:
             - craype-network-ucx  
