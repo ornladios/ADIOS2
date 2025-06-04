@@ -65,6 +65,15 @@ int main(int argc, char *argv[])
         adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
+	if ( (size % 2) == 0 ) {
+	  std::cout<<"  specified MPI "<<std::endl;
+	  sstIO.SetParameter("DataTransport", "MPI");
+	} else if ( (size % 5) == 0 ) {
+	  std::cout<<"  specified RDMA "<<std::endl;
+	  sstIO.SetParameter("DataTransport", "RDMA");
+	} else
+	  std::cout<<"  use default "<<std::endl;
+
         // Define variable and local size
         auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {size * Nx}, {rank * Nx}, {Nx});
 
