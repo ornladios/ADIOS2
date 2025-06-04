@@ -8,6 +8,7 @@
  *      Author: Greg Eisenhauer
  */
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -28,6 +29,19 @@ void PrintData(const std::vector<T> &data, const int rank, const size_t step)
     std::cout << "]" << std::endl;
 }
 
+void PrintHelp(int rank)
+{
+    if (rank != 0)
+        return;
+
+    std::cout << "Usage: program_name <DataTransportChoice>\n"
+              << "DataTransportChoice must be exactly one of the following (case-insensitive):\n"
+              << "  - RDMA\n"
+              << "  - MPI\n"
+              << "  - UCX\n"
+              << "  - WAN (default if none is provided)\n";
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -45,6 +59,26 @@ int main(int argc, char *argv[])
     rank = 0;
     size = 1;
 #endif
+
+    std::string dt = "WAN";
+
+    if (argc == 2)
+    {
+        dt = argv[1];
+        std::string dt_upper = dt;
+        std::transform(dt_upper.begin(), dt_upper.end(), dt_upper.begin(), ::toupper);
+        if ((dt_upper != "WAN") && (dt_upper != "MPI") && (dt_upper != "RDMA") &&
+            (dt_upper != "UCX"))
+        {
+            PrintHelp(rank);
+            return -1;
+        }
+    }
+    else if (argc > 2)
+    {
+        PrintHelp(rank);
+        return 0;
+    }
 
     std::vector<float> myFloats = {
         static_cast<float>(10.0 * rank + 0), static_cast<float>(10.0 * rank + 1),
@@ -65,18 +99,10 @@ int main(int argc, char *argv[])
         adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
-        if ((size % 2) == 0)
-        {
-            std::cout << "  specified DataTransport=MPI  " << std::endl;
-            sstIO.SetParameter("DataTransport", "MPI");
-        }
-        else if ((size % 5) == 0)
-        {
-            std::cout << "  specified DataTransport=RDMA " << std::endl;
-            sstIO.SetParameter("DataTransport", "RDMA");
-        }
-        else
-            std::cout << "  use default DataTransport" << std::endl;
+        if (rank == 0)
+            std::cout << "  assigning SST DataTransport=" << dt << std::endl;
+
+        sstIO.SetParameter("DataTransport", dt);
 
         // Define variable and local size
         auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {size * Nx}, {rank * Nx}, {Nx});

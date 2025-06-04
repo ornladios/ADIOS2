@@ -9,7 +9,7 @@ SST Engine Example:
 0. Notes:
 """""""""""""""""
     - It is easier to test in interactive node on HPC
-    - The writer DataTransport is set to use MPI if (numranks % 2 == 0) , RDMA if (numranks % 5 == 0). WAN in all other cases.  
+    - usage: writer [DataTransportChoice] (defaults to WAN) 
     - To turn on verbose flag for both SST server or client, set this in your env:
          - export SstVerbose=N ( 0 <= N <= 5)
          - To check whether the preferred SST Dataplane is activated, look for "DataTransport" values in the verbose output.
