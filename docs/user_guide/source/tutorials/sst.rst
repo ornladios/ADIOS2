@@ -1,3 +1,4 @@
+.. _sec:tutorials_sst:
 ====================
 SST Engine Example:
 ====================
