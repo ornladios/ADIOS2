@@ -95,17 +95,18 @@ namespace adios2
 namespace helper
 {
 
-std::pair<int, int> Partitioning::FindPartition(const int rank)
+RankPartition Partitioning::FindPartition(const int parentRank)
 {
-    std::pair<int, int> result(0, 0);
+    RankPartition result;
     for (int i = 0; i < m_Partitions.size(); ++i)
     {
         std::vector<int> nextPart = m_Partitions[i];
-        const auto it = std::find(nextPart.begin(), nextPart.end(), rank);
+        const auto it = std::find(nextPart.begin(), nextPart.end(), parentRank);
         if (it != nextPart.end())
         {
-            result.first = i;
-            result.second = std::distance(std::begin(nextPart), it);
+            result.m_subStreamIndex = i;
+            result.m_aggregatorRank = *(nextPart.begin());
+            result.m_rankOrder = std::distance(std::begin(nextPart), it);
         }
     }
     return result;

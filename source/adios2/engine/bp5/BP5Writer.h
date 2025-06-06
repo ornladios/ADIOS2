@@ -205,6 +205,7 @@ private:
     aggregator::MPIAggregator *m_Aggregator; // points to one of these below
     aggregator::MPIShmChain m_AggregatorTwoLevelShm;
     aggregator::MPIChain m_AggregatorEveroneWrites;
+    aggregator::MPIChain m_AggregatorDataSizeBased;
     bool m_IAmDraining = false;
     bool m_IAmWritingData = false;
     helper::Comm *DataWritingComm; // processes that write the same data file

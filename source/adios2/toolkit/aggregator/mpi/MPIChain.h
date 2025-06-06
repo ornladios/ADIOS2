@@ -29,6 +29,7 @@ public:
 
     void Init(const size_t numAggregators, const size_t subStreams,
               helper::Comm const &parentComm) final;
+    void Init(const uint64_t rankDataSize, helper::Comm const &parentComm) final;
 
     void Close() final;
 

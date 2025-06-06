@@ -22,6 +22,13 @@ namespace adios2
 namespace helper
 {
 
+struct RankPartition
+{
+    int m_subStreamIndex;
+    int m_aggregatorRank;
+    int m_rankOrder;
+};
+
 /**
  * Represent the results of a partitioning
  */
@@ -33,7 +40,7 @@ struct Partitioning
     std::vector<uint64_t> m_Sizes;
 
     // Given a rank id, return its partition index index within the partition
-    std::pair<int, int> FindPartition(int rank);
+    RankPartition FindPartition(int rank);
 };
 
 /**

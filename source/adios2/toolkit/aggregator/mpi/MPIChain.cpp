@@ -47,6 +47,59 @@ void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
     }
 }
 
+void MPIChain::Init(const uint64_t rankDataSize, helper::Comm const &parentComm)
+{
+    int parentRank = parentComm.Rank();
+    int parentSize = parentComm.Size();
+
+    std::vector<uint64_t> allsizes = parentComm.AllGatherValues(rankDataSize);
+
+    std::cout << "Rank data sizes: [";
+    for (int i = 0; i < allsizes.size(); ++i)
+    {
+        if (i > 0)
+        {
+            std::cout << ", ";
+        }
+        std::cout << allsizes[i];
+    }
+
+    int numPartitions = std::max(parentSize / 2, 1);
+    std::cout << "], request " << numPartitions << " partitions" << std::endl;
+
+    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+    RankPartition myLocation = partitioning.FindPartition(parentRank);
+    std::cout << "Rank " << parentRank << " is element " << myLocation.second
+            << " in partition " << myLocation.first << std::endl;
+
+
+    m_SubStreamIndex = myLocation.m_subStreamIndex;
+    m_AggregatorRank = myLocation.m_aggregatorRank;
+
+    m_Comm = parentComm.Split(m_AggregatorRank, myLocation.m_rankOrder,
+                              "creating aggregators comm with split at Open");
+
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
+
+    if (m_Rank != 0)
+    {
+        m_IsAggregator = false;
+    }
+
+    m_IsActive = true;
+    m_SubStreams = partitioning.m_Partitions.size();
+
+    HandshakeRank(0);
+    HandshakeLinks();
+
+    // add a receiving buffer except for the last rank (only sends)
+    if (m_Rank < m_Size)
+    {
+        m_Buffers.emplace_back(new format::BufferSTL()); // just one for now
+    }
+}
+
 void MPIChain::Close() { MPIAggregator::Close(); }
 
 MPIChain::ExchangeRequests MPIChain::IExchange(format::Buffer &buffer, const int step)
