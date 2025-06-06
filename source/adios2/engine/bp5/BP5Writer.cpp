@@ -328,27 +328,12 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
 {
-    // Every rank gets the amount of data on each rank
-    uint64_t mydatasize = Data->Size();
-    std::vector<uint64_t> allsizes = m_Comm.AllGatherValues(mydatasize);
-
-    std::cout << "Rank data sizes: [";
-    for (int i = 0; i < allsizes.size(); ++i)
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
-        if (i > 0)
-        {
-            std::cout << ", ";
-        }
-        std::cout << allsizes[i];
+        InitAggregator();
+        InitTransports();
+        InitBPBuffer();
     }
-
-    int numPartitions = std::max(m_Comm.Size() / 2, 1);
-    std::cout << "], request " << numPartitions << " partitions" << std::endl;
-
-    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
-    std::pair<int, int> myLocation = partitioning.FindPartition(m_Comm.Rank());
-    std::cout << "Rank " << m_Comm.Rank() << " is element " << myLocation.second
-              << " in partition " << myLocation.first << std::endl;
 
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
@@ -1216,7 +1201,7 @@ void BP5Writer::InitAggregator()
     // m_Aggregator.m_SubFileIndex is always set
     std::string init_str = "InitAgg";
 
-    std::cout << "BP5Writer::InitAggregator()" << std::endl;
+    // std::cout << "BP5Writer::InitAggregator()" << std::endl;
 
     if (m_Parameters.AsyncWrite)
     {
@@ -1243,6 +1228,16 @@ void BP5Writer::InitAggregator()
         m_IAmWritingData = true;
         DataWritingComm = &m_AggregatorEveroneWrites.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorEveroneWrites);
+    }
+    else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    {
+        // Every rank gets the amount of data on each rank
+        uint64_t mydatasize = Data->Size();
+
+        // no-op if never initialized
+        m_AggregatorDataSizeBased.Close();
+        m_AggregatorDataSizeBased.Init(mydatasize, m_Comm);
+
     }
     else
     {

@@ -135,6 +135,7 @@ void IOXML(core::ADIOS &adios, const pugi::xml_node &ioNode, core::IO &io, const
         const std::unique_ptr<pugi::xml_attribute> type =
             helper::XMLAttribute("type", *engine, hint);
         io.SetEngine(type->value());
+        std::cout << "  io.SetEngine(" << type->value() << ")" << std::endl;
 
         const Params parameters = helper::XMLGetParameters(*engine, hint);
         io.SetParameters(parameters);
@@ -187,6 +188,7 @@ ParseConfigXML(core::ADIOS &adios, const std::string &configFileXML,
                std::map<std::string, core::IO> &ios,
                std::unordered_map<std::string, std::pair<std::string, Params>> &operators)
 {
+    std::cout << "Parsing XML config file: " << configFileXML << std::endl;
     const std::string hint("for config file " + configFileXML + " in call to ADIOS constructor");
 
     const std::string configFileContents = FileContents(adios, configFileXML);
