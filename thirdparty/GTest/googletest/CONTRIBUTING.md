@@ -21,8 +21,8 @@ accept your pull requests.
 
 ## Are you a Googler?
 
-If you are a Googler, please make an attempt to submit an internal change rather
-than a GitHub Pull Request. If you are not able to submit an internal change a
+If you are a Googler, please make an attempt to submit an internal contribution
+rather than a GitHub Pull Request. If you are not able to submit internally, a
 PR is acceptable as an alternative.
 
 ## Contributing A Patch
@@ -80,8 +80,8 @@ fairly rigid coding style, as defined by the
 [google-styleguide](https://github.com/google/styleguide) project. All patches
 will be expected to conform to the style outlined
 [here](https://google.github.io/styleguide/cppguide.html). Use
-[.clang-format](https://github.com/google/googletest/blob/master/.clang-format)
-to check your formatting.
+[.clang-format](https://github.com/google/googletest/blob/main/.clang-format) to
+check your formatting.
 
 ## Requirements for Contributors
 

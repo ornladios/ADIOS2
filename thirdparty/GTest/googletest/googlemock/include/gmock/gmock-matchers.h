@@ -240,7 +240,7 @@
 //
 // To learn more about using these macros, please search for 'MATCHER'
 // on
-// https://github.com/google/googletest/blob/master/docs/gmock_cook_book.md
+// https://github.com/google/googletest/blob/main/docs/gmock_cook_book.md
 //
 // This file also implements some commonly used argument matchers.  More
 // matchers can be defined by the user implementing the
@@ -258,6 +258,7 @@
 #include <algorithm>
 #include <cmath>
 #include <initializer_list>
+#include <ios>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -313,7 +314,9 @@ class StringMatchResultListener : public MatchResultListener {
  private:
   ::std::stringstream ss_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(StringMatchResultListener);
+  StringMatchResultListener(const StringMatchResultListener&) = delete;
+  StringMatchResultListener& operator=(const StringMatchResultListener&) =
+      delete;
 };
 
 // Anything inside the 'internal' namespace IS INTERNAL IMPLEMENTATION
@@ -533,19 +536,18 @@ inline Matcher<T> SafeMatcherCast(const Matcher<U>& matcher) {
                 "T must be implicitly convertible to U");
   // Enforce that we are not converting a non-reference type T to a reference
   // type U.
-  GTEST_COMPILE_ASSERT_(
-      std::is_reference<T>::value || !std::is_reference<U>::value,
-      cannot_convert_non_reference_arg_to_reference);
+  static_assert(std::is_reference<T>::value || !std::is_reference<U>::value,
+                "cannot convert non reference arg to reference");
   // In case both T and U are arithmetic types, enforce that the
   // conversion is not lossy.
   typedef GTEST_REMOVE_REFERENCE_AND_CONST_(T) RawT;
   typedef GTEST_REMOVE_REFERENCE_AND_CONST_(U) RawU;
   constexpr bool kTIsOther = GMOCK_KIND_OF_(RawT) == internal::kOther;
   constexpr bool kUIsOther = GMOCK_KIND_OF_(RawU) == internal::kOther;
-  GTEST_COMPILE_ASSERT_(
+  static_assert(
       kTIsOther || kUIsOther ||
           (internal::LosslessArithmeticConvertible<RawT, RawU>::value),
-      conversion_of_arithmetic_types_must_be_lossless);
+      "conversion of arithmetic types must be lossless");
   return MatcherCast<T>(matcher);
 }
 
@@ -678,9 +680,9 @@ bool TupleMatches(const MatcherTuple& matcher_tuple,
                   const ValueTuple& value_tuple) {
   // Makes sure that matcher_tuple and value_tuple have the same
   // number of fields.
-  GTEST_COMPILE_ASSERT_(std::tuple_size<MatcherTuple>::value ==
-                            std::tuple_size<ValueTuple>::value,
-                        matcher_and_value_have_different_numbers_of_fields);
+  static_assert(std::tuple_size<MatcherTuple>::value ==
+                    std::tuple_size<ValueTuple>::value,
+                "matcher and value have different numbers of fields");
   return TuplePrefix<std::tuple_size<ValueTuple>::value>::Matches(matcher_tuple,
                                                                   value_tuple);
 }
@@ -2258,7 +2260,11 @@ class ResultOfMatcher {
     }
 
     bool MatchAndExplain(T obj, MatchResultListener* listener) const override {
-      *listener << "which is mapped by the given callable to ";
+      if (result_description_.empty()) {
+        *listener << "which is mapped by the given callable to ";
+      } else {
+        *listener << "whose " << result_description_ << " is ";
+      }
       // Cannot pass the return value directly to MatchPrintAndExplain, which
       // takes a non-const reference as argument.
       // Also, specifying template argument explicitly is needed because T could
@@ -2304,11 +2310,11 @@ class SizeIsMatcher {
         : size_matcher_(MatcherCast<SizeType>(size_matcher)) {}
 
     void DescribeTo(::std::ostream* os) const override {
-      *os << "size ";
+      *os << "has a size that ";
       size_matcher_.DescribeTo(os);
     }
     void DescribeNegationTo(::std::ostream* os) const override {
-      *os << "size ";
+      *os << "has a size that ";
       size_matcher_.DescribeNegationTo(os);
     }
 
@@ -2552,7 +2558,8 @@ class WhenSortedByMatcher {
     const Comparator comparator_;
     const Matcher<const ::std::vector<LhsValue>&> matcher_;
 
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(Impl);
+    Impl(const Impl&) = delete;
+    Impl& operator=(const Impl&) = delete;
   };
 
  private:
@@ -2566,9 +2573,9 @@ class WhenSortedByMatcher {
 // container and the RHS container respectively.
 template <typename TupleMatcher, typename RhsContainer>
 class PointwiseMatcher {
-  GTEST_COMPILE_ASSERT_(
+  static_assert(
       !IsHashTable<GTEST_REMOVE_REFERENCE_AND_CONST_(RhsContainer)>::value,
-      use_UnorderedPointwise_with_hash_tables);
+      "use UnorderedPointwise with hash tables");
 
  public:
   typedef internal::StlContainerView<RhsContainer> RhsView;
@@ -2587,9 +2594,9 @@ class PointwiseMatcher {
 
   template <typename LhsContainer>
   operator Matcher<LhsContainer>() const {
-    GTEST_COMPILE_ASSERT_(
+    static_assert(
         !IsHashTable<GTEST_REMOVE_REFERENCE_AND_CONST_(LhsContainer)>::value,
-        use_UnorderedPointwise_with_hash_tables);
+        "use UnorderedPointwise with hash tables");
 
     return Matcher<LhsContainer>(
         new Impl<const LhsContainer&>(tuple_matcher_, rhs_));
@@ -3229,6 +3236,21 @@ auto UnpackStructImpl(const T& t, MakeIndexSequence<16>, char) {
   const auto& [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] = t;
   return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p);
 }
+template <typename T>
+auto UnpackStructImpl(const T& t, MakeIndexSequence<17>, char) {
+  const auto& [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q] = t;
+  return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q);
+}
+template <typename T>
+auto UnpackStructImpl(const T& t, MakeIndexSequence<18>, char) {
+  const auto& [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r] = t;
+  return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r);
+}
+template <typename T>
+auto UnpackStructImpl(const T& t, MakeIndexSequence<19>, char) {
+  const auto& [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s] = t;
+  return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s);
+}
 #endif  // defined(__cpp_structured_bindings)
 
 template <size_t I, typename T>
@@ -3295,8 +3317,8 @@ class FieldsAreMatcherImpl<Struct, IndexSequence<I...>>
     std::vector<StringMatchResultListener> inner_listener(sizeof...(I));
 
     VariadicExpand(
-        {failed_pos == ~size_t{} && !std::get<I>(matchers_).MatchAndExplain(
-                                        std::get<I>(tuple), &inner_listener[I])
+        {failed_pos == ~size_t{}&& !std::get<I>(matchers_).MatchAndExplain(
+                           std::get<I>(tuple), &inner_listener[I])
              ? failed_pos = I
              : 0 ...});
     if (failed_pos != ~size_t{}) {
@@ -3623,23 +3645,6 @@ class UnorderedElementsAreMatcherImpl
         AnalyzeElements(stl_container.begin(), stl_container.end(),
                         &element_printouts, listener);
 
-    if (matrix.LhsSize() == 0 && matrix.RhsSize() == 0) {
-      return true;
-    }
-
-    if (match_flags() == UnorderedMatcherRequire::ExactMatch) {
-      if (matrix.LhsSize() != matrix.RhsSize()) {
-        // The element count doesn't match.  If the container is empty,
-        // there's no need to explain anything as Google Mock already
-        // prints the empty container. Otherwise we just need to show
-        // how many elements there actually are.
-        if (matrix.LhsSize() != 0 && listener->IsInterested()) {
-          *listener << "which has " << Elements(matrix.LhsSize());
-        }
-        return false;
-      }
-    }
-
     return VerifyMatchMatrix(element_printouts, matrix, listener) &&
            FindPairing(matrix, listener);
   }
@@ -3721,10 +3726,10 @@ class ElementsAreMatcher {
 
   template <typename Container>
   operator Matcher<Container>() const {
-    GTEST_COMPILE_ASSERT_(
+    static_assert(
         !IsHashTable<GTEST_REMOVE_REFERENCE_AND_CONST_(Container)>::value ||
             ::std::tuple_size<MatcherTuple>::value < 2,
-        use_UnorderedElementsAre_with_hash_tables);
+        "use UnorderedElementsAre with hash tables");
 
     typedef GTEST_REMOVE_REFERENCE_AND_CONST_(Container) RawContainer;
     typedef typename internal::StlContainerView<RawContainer>::type View;
@@ -3772,9 +3777,9 @@ class ElementsAreArrayMatcher {
 
   template <typename Container>
   operator Matcher<Container>() const {
-    GTEST_COMPILE_ASSERT_(
+    static_assert(
         !IsHashTable<GTEST_REMOVE_REFERENCE_AND_CONST_(Container)>::value,
-        use_UnorderedElementsAreArray_with_hash_tables);
+        "use UnorderedElementsAreArray with hash tables");
 
     return Matcher<Container>(new ElementsAreMatcherImpl<const Container&>(
         matchers_.begin(), matchers_.end()));
@@ -4094,7 +4099,12 @@ class ArgsMatcherImpl : public MatcherInterface<ArgsTuple> {
     const char* sep = "";
     // Workaround spurious C4189 on MSVC<=15.7 when k is empty.
     (void)sep;
-    const char* dummy[] = {"", (*os << sep << "#" << k, sep = ", ")...};
+    // The static_cast to void is needed to silence Clang's -Wcomma warning.
+    // This pattern looks suspiciously like we may have mismatched parentheses
+    // and may have been trying to use the first operation of the comma operator
+    // as a member of the array, so Clang warns that we may have made a mistake.
+    const char* dummy[] = {
+        "", (static_cast<void>(*os << sep << "#" << k), sep = ", ")...};
     (void)dummy;
     *os << ") ";
   }
@@ -5062,7 +5072,8 @@ inline bool ExplainMatchResult(M matcher, const T& value,
 //
 // MATCHER_P(XAndYThat, matcher,
 //           "X that " + DescribeMatcher<int>(matcher, negation) +
-//               " and Y that " + DescribeMatcher<double>(matcher, negation)) {
+//               (negation ? " or" : " and") + " Y that " +
+//               DescribeMatcher<double>(matcher, negation)) {
 //   return ExplainMatchResult(matcher, arg.x(), result_listener) &&
 //          ExplainMatchResult(matcher, arg.y(), result_listener);
 // }
@@ -5460,7 +5471,13 @@ PolymorphicMatcher<internal::ExceptionMatcherImpl<Err>> ThrowsMessage(
       }                                                                        \
     };                                                                         \
   };                                                                           \
-  GTEST_ATTRIBUTE_UNUSED_ inline name##Matcher name() { return {}; }           \
+  inline name##Matcher GMOCK_INTERNAL_WARNING_PUSH()                           \
+      GMOCK_INTERNAL_WARNING_CLANG(ignored, "-Wunused-function")               \
+          GMOCK_INTERNAL_WARNING_CLANG(ignored, "-Wunused-member-function")    \
+              name                                                             \
+              GMOCK_INTERNAL_WARNING_POP()() {                                 \
+    return {};                                                                 \
+  }                                                                            \
   template <typename arg_type>                                                 \
   bool name##Matcher::gmock_Impl<arg_type>::MatchAndExplain(                   \
       const arg_type& arg,                                                     \

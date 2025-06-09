@@ -39,13 +39,17 @@
 #pragma warning(disable : 4100)
 #endif
 
+#include <vector>
+
 #include "test/gmock-matchers_test.h"
 
 namespace testing {
 namespace gmock_matchers_test {
 namespace {
 
-TEST(MonotonicMatcherTest, IsPrintable) {
+INSTANTIATE_GTEST_MATCHER_TEST_P(MonotonicMatcherTest);
+
+TEST_P(MonotonicMatcherTestP, IsPrintable) {
   stringstream ss;
   ss << GreaterThan(5);
   EXPECT_EQ("is > 5", ss.str());
@@ -130,6 +134,8 @@ TEST(MatcherInterfaceTest, CanBeImplementedUsingNewAPI) {
   EXPECT_EQ("value % 2 == 1", Explain(m, 3));
 }
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(MatcherTest);
+
 // Tests default-constructing a matcher.
 TEST(MatcherTest, CanBeDefaultConstructed) { Matcher<double> m; }
 
@@ -192,7 +198,7 @@ TEST(MatcherTest, CanDescribeItself) {
 }
 
 // Tests Matcher<T>::MatchAndExplain().
-TEST(MatcherTest, MatchAndExplain) {
+TEST_P(MatcherTestP, MatchAndExplain) {
   Matcher<int> m = GreaterThan(0);
   StringMatchResultListener listener1;
   EXPECT_TRUE(m.MatchAndExplain(42, &listener1));
@@ -376,11 +382,18 @@ TEST(MakePolymorphicMatcherTest, ConstructsMatcherUsingNewAPI) {
   EXPECT_EQ("% 2 == 0", Explain(m2, '\x42'));
 }
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(MatcherCastTest);
+
 // Tests that MatcherCast<T>(m) works when m is a polymorphic matcher.
-TEST(MatcherCastTest, FromPolymorphicMatcher) {
-  Matcher<int> m = MatcherCast<int>(Eq(5));
-  EXPECT_TRUE(m.Matches(5));
-  EXPECT_FALSE(m.Matches(6));
+TEST_P(MatcherCastTestP, FromPolymorphicMatcher) {
+  Matcher<int16_t> m;
+  if (use_gtest_matcher_) {
+    m = MatcherCast<int16_t>(GtestGreaterThan(int64_t{5}));
+  } else {
+    m = MatcherCast<int16_t>(Gt(int64_t{5}));
+  }
+  EXPECT_TRUE(m.Matches(6));
+  EXPECT_FALSE(m.Matches(4));
 }
 
 // For testing casting matchers between compatible types.
@@ -579,7 +592,8 @@ class Base {
   Base() {}
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(Base);
+  Base(const Base&) = delete;
+  Base& operator=(const Base&) = delete;
 };
 
 class Derived : public Base {
@@ -590,10 +604,17 @@ class Derived : public Base {
 
 class OtherDerived : public Base {};
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(SafeMatcherCastTest);
+
 // Tests that SafeMatcherCast<T>(m) works when m is a polymorphic matcher.
-TEST(SafeMatcherCastTest, FromPolymorphicMatcher) {
-  Matcher<char> m2 = SafeMatcherCast<char>(Eq(32));
-  EXPECT_TRUE(m2.Matches(' '));
+TEST_P(SafeMatcherCastTestP, FromPolymorphicMatcher) {
+  Matcher<char> m2;
+  if (use_gtest_matcher_) {
+    m2 = SafeMatcherCast<char>(GtestGreaterThan(32));
+  } else {
+    m2 = SafeMatcherCast<char>(Gt(32));
+  }
+  EXPECT_TRUE(m2.Matches('A'));
   EXPECT_FALSE(m2.Matches('\n'));
 }
 
@@ -964,6 +985,30 @@ TEST(ComparisonBaseTest, WorksWithMoveOnly) {
   helper.Call(MoveOnly(1));
 }
 
+TEST(IsEmptyTest, MatchesContainer) {
+  const Matcher<std::vector<int>> m = IsEmpty();
+  std::vector<int> a = {};
+  std::vector<int> b = {1};
+  EXPECT_TRUE(m.Matches(a));
+  EXPECT_FALSE(m.Matches(b));
+}
+
+TEST(IsEmptyTest, MatchesStdString) {
+  const Matcher<std::string> m = IsEmpty();
+  std::string a = "z";
+  std::string b = "";
+  EXPECT_FALSE(m.Matches(a));
+  EXPECT_TRUE(m.Matches(b));
+}
+
+TEST(IsEmptyTest, MatchesCString) {
+  const Matcher<const char*> m = IsEmpty();
+  const char a[] = "";
+  const char b[] = "x";
+  EXPECT_TRUE(m.Matches(a));
+  EXPECT_FALSE(m.Matches(b));
+}
+
 // Tests that IsNull() matches any NULL pointer of any type.
 TEST(IsNullTest, MatchesNullPointer) {
   Matcher<int*> m1 = IsNull();
@@ -1318,13 +1363,15 @@ TEST(HasSubstrTest, CanDescribeSelf) {
   EXPECT_EQ("has substring \"foo\\n\\\"\"", Describe(m));
 }
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(KeyTest);
+
 TEST(KeyTest, CanDescribeSelf) {
   Matcher<const pair<std::string, int>&> m = Key("foo");
   EXPECT_EQ("has a key that is equal to \"foo\"", Describe(m));
   EXPECT_EQ("doesn't have a key that is equal to \"foo\"", DescribeNegation(m));
 }
 
-TEST(KeyTest, ExplainsResult) {
+TEST_P(KeyTestP, ExplainsResult) {
   Matcher<pair<int, bool>> m = Key(GreaterThan(10));
   EXPECT_EQ("whose first field is a value which is 5 less than 10",
             Explain(m, make_pair(5, true)));
@@ -1344,6 +1391,8 @@ TEST(KeyTest, WorksWithMoveOnly) {
   pair<std::unique_ptr<int>, std::unique_ptr<int>> p;
   EXPECT_THAT(p, Key(Eq(nullptr)));
 }
+
+INSTANTIATE_GTEST_MATCHER_TEST_P(PairTest);
 
 template <size_t I>
 struct Tag {};
@@ -1433,7 +1482,7 @@ TEST(PairTest, CanDescribeSelf) {
       DescribeNegation(m2));
 }
 
-TEST(PairTest, CanExplainMatchResultTo) {
+TEST_P(PairTestP, CanExplainMatchResultTo) {
   // If neither field matches, Pair() should explain about the first
   // field.
   const Matcher<pair<int, int>> m = Pair(GreaterThan(0), GreaterThan(0));
@@ -1521,6 +1570,8 @@ TEST(PairTest, InsideContainsUsingMap) {
   EXPECT_THAT(container, Not(Contains(Pair(3, _))));
 }
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(FieldsAreTest);
+
 TEST(FieldsAreTest, MatchesCorrectly) {
   std::tuple<int, std::string, double> p(25, "foo", .5);
 
@@ -1546,7 +1597,7 @@ TEST(FieldsAreTest, CanDescribeSelf) {
       DescribeNegation(m1));
 }
 
-TEST(FieldsAreTest, CanExplainMatchResultTo) {
+TEST_P(FieldsAreTestP, CanExplainMatchResultTo) {
   // The first one that fails is the one that gives the error.
   Matcher<std::tuple<int, int, int>> m =
       FieldsAre(GreaterThan(0), GreaterThan(0), GreaterThan(0));
@@ -1659,6 +1710,21 @@ TEST(FieldsAreTest, StructuredBindings) {
   };
   EXPECT_THAT(MyVarType16{},
               FieldsAre(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  struct MyVarType17 {
+    int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q;
+  };
+  EXPECT_THAT(MyVarType17{},
+              FieldsAre(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  struct MyVarType18 {
+    int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r;
+  };
+  EXPECT_THAT(MyVarType18{},
+              FieldsAre(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  struct MyVarType19 {
+    int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s;
+  };
+  EXPECT_THAT(MyVarType19{}, FieldsAre(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0));
 }
 #endif
 
@@ -2260,7 +2326,9 @@ TEST(ExplainMatchResultTest, AllOf_True_True_2) {
   EXPECT_EQ("", Explain(m, 2));
 }
 
-TEST(ExplainmatcherResultTest, MonomorphicMatcher) {
+INSTANTIATE_GTEST_MATCHER_TEST_P(ExplainmatcherResultTest);
+
+TEST_P(ExplainmatcherResultTestP, MonomorphicMatcher) {
   const Matcher<int> m = GreaterThan(5);
   EXPECT_EQ("which is 1 more than 5", Explain(m, 6));
 }

@@ -39,6 +39,7 @@
 #include <chrono>  // NOLINT
 #include <list>
 #include <memory>
+#include <string>
 #include <thread>   // NOLINT
 #include <utility>  // For std::pair and std::make_pair.
 #include <vector>
@@ -387,17 +388,13 @@ TEST(GtestCheckDeathTest, LivesSilentlyOnSuccess) {
 // the platform. The test will produce compiler errors in case of failure.
 // For simplicity, we only cover the most important platforms here.
 TEST(RegexEngineSelectionTest, SelectsCorrectRegexEngine) {
-#if !GTEST_USES_PCRE
-#if GTEST_HAS_POSIX_RE
-
+#if GTEST_HAS_ABSL
+  EXPECT_TRUE(GTEST_USES_RE2);
+#elif GTEST_HAS_POSIX_RE
   EXPECT_TRUE(GTEST_USES_POSIX_RE);
-
 #else
-
   EXPECT_TRUE(GTEST_USES_SIMPLE_RE);
-
 #endif
-#endif  // !GTEST_USES_PCRE
 }
 
 #if GTEST_USES_POSIX_RE
@@ -1186,7 +1183,8 @@ class DestructorCall {
 #endif
   static std::vector<DestructorCall*>* const list_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(DestructorCall);
+  DestructorCall(const DestructorCall&) = delete;
+  DestructorCall& operator=(const DestructorCall&) = delete;
 };
 
 std::vector<DestructorCall*>* const DestructorCall::list_ =

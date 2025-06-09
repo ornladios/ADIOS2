@@ -61,6 +61,7 @@ TEST(CommandLineFlagsTest, CanBeAccessedInCodeOnceGTestHIsIncluded) {
 #include <cstdint>
 #include <map>
 #include <ostream>
+#include <set>
 #include <string>
 #include <type_traits>
 #include <unordered_set>
@@ -3454,10 +3455,10 @@ TEST_F(NoFatalFailureTest, MessageIsStreamable) {
   TestPartResultArray gtest_failures;
   {
     ScopedFakeTestPartResultReporter gtest_reporter(&gtest_failures);
-    EXPECT_NO_FATAL_FAILURE(FAIL() << "foo") << "my message";
+    EXPECT_NO_FATAL_FAILURE([] { FAIL() << "foo"; }()) << "my message";
   }
   ASSERT_EQ(2, gtest_failures.size());
-  EXPECT_EQ(TestPartResult::kNonFatalFailure,
+  EXPECT_EQ(TestPartResult::kFatalFailure,
             gtest_failures.GetTestPartResult(0).type());
   EXPECT_EQ(TestPartResult::kNonFatalFailure,
             gtest_failures.GetTestPartResult(1).type());
@@ -5770,15 +5771,6 @@ TEST_F(ParseFlagsTest, FailFast) {
   GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::FailFast(true), false);
 }
 
-// Tests parsing a bad --gtest_filter flag.
-TEST_F(ParseFlagsTest, FilterBad) {
-  const char* argv[] = {"foo.exe", "--gtest_filter", nullptr};
-
-  const char* argv2[] = {"foo.exe", "--gtest_filter", nullptr};
-
-  GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::Filter(""), true);
-}
-
 // Tests parsing an empty --gtest_filter flag.
 TEST_F(ParseFlagsTest, FilterEmpty) {
   const char* argv[] = {"foo.exe", "--gtest_filter=", nullptr};
@@ -5929,15 +5921,6 @@ TEST_F(ParseFlagsTest, ListTestsFalse_F) {
   const char* argv2[] = {"foo.exe", nullptr};
 
   GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::ListTests(false), false);
-}
-
-// Tests parsing --gtest_output (invalid).
-TEST_F(ParseFlagsTest, OutputEmpty) {
-  const char* argv[] = {"foo.exe", "--gtest_output", nullptr};
-
-  const char* argv2[] = {"foo.exe", "--gtest_output", nullptr};
-
-  GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags(), true);
 }
 
 // Tests parsing --gtest_output=xml
@@ -6178,6 +6161,58 @@ TEST_F(ParseFlagsTest, ThrowOnFailureTrue) {
 
   GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::ThrowOnFailure(true), false);
 }
+
+// Tests parsing a bad --gtest_filter flag.
+TEST_F(ParseFlagsTest, FilterBad) {
+  const char* argv[] = {"foo.exe", "--gtest_filter", nullptr};
+
+  const char* argv2[] = {"foo.exe", "--gtest_filter", nullptr};
+
+#if GTEST_HAS_ABSL && GTEST_HAS_DEATH_TEST
+  // Invalid flag arguments are a fatal error when using the Abseil Flags.
+  EXPECT_EXIT(GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::Filter(""), true),
+              testing::ExitedWithCode(1),
+              "ERROR: Missing the value for the flag 'gtest_filter'");
+#elif !GTEST_HAS_ABSL
+  GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::Filter(""), true);
+#else
+  static_cast<void>(argv);
+  static_cast<void>(argv2);
+#endif
+}
+
+// Tests parsing --gtest_output (invalid).
+TEST_F(ParseFlagsTest, OutputEmpty) {
+  const char* argv[] = {"foo.exe", "--gtest_output", nullptr};
+
+  const char* argv2[] = {"foo.exe", "--gtest_output", nullptr};
+
+#if GTEST_HAS_ABSL && GTEST_HAS_DEATH_TEST
+  // Invalid flag arguments are a fatal error when using the Abseil Flags.
+  EXPECT_EXIT(GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags(), true),
+              testing::ExitedWithCode(1),
+              "ERROR: Missing the value for the flag 'gtest_output'");
+#elif !GTEST_HAS_ABSL
+  GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags(), true);
+#else
+  static_cast<void>(argv);
+  static_cast<void>(argv2);
+#endif
+}
+
+#if GTEST_HAS_ABSL
+TEST_F(ParseFlagsTest, AbseilPositionalFlags) {
+  const char* argv[] = {"foo.exe", "--gtest_throw_on_failure=1", "--",
+                        "--other_flag", nullptr};
+
+  // When using Abseil flags, it should be possible to pass flags not recognized
+  // using "--" to delimit positional arguments. These flags should be returned
+  // though argv.
+  const char* argv2[] = {"foo.exe", "--other_flag", nullptr};
+
+  GTEST_TEST_PARSING_FLAGS_(argv, argv2, Flags::ThrowOnFailure(true), false);
+}
+#endif
 
 #if GTEST_OS_WINDOWS
 // Tests parsing wide strings.
@@ -6602,6 +6637,9 @@ TEST(ColoredOutputTest, UsesColorsWhenTermSupportsColors) {
   SetEnv("TERM", "xterm-color");      // TERM supports colors.
   EXPECT_TRUE(ShouldUseColor(true));  // Stdout is a TTY.
 
+  SetEnv("TERM", "xterm-kitty");      // TERM supports colors.
+  EXPECT_TRUE(ShouldUseColor(true));  // Stdout is a TTY.
+
   SetEnv("TERM", "xterm-256color");   // TERM supports colors.
   EXPECT_TRUE(ShouldUseColor(true));  // Stdout is a TTY.
 
@@ -6850,7 +6888,8 @@ class SequenceTestingListener : public EmptyTestEventListener {
   std::vector<std::string>* vector_;
   const char* const id_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(SequenceTestingListener);
+  SequenceTestingListener(const SequenceTestingListener&) = delete;
+  SequenceTestingListener& operator=(const SequenceTestingListener&) = delete;
 };
 
 TEST(EventListenerTest, AppendKeepsOrder) {
@@ -7139,28 +7178,26 @@ struct IncompleteType;
 // Tests that HasDebugStringAndShortDebugString<T>::value is a compile-time
 // constant.
 TEST(HasDebugStringAndShortDebugStringTest, ValueIsCompileTimeConstant) {
-  GTEST_COMPILE_ASSERT_(
-      HasDebugStringAndShortDebugString<HasDebugStringMethods>::value,
-      const_true);
-  GTEST_COMPILE_ASSERT_(
+  static_assert(HasDebugStringAndShortDebugString<HasDebugStringMethods>::value,
+                "const_true");
+  static_assert(
       HasDebugStringAndShortDebugString<InheritsDebugStringMethods>::value,
-      const_true);
-  GTEST_COMPILE_ASSERT_(HasDebugStringAndShortDebugString<
-                            const InheritsDebugStringMethods>::value,
-                        const_true);
-  GTEST_COMPILE_ASSERT_(
+      "const_true");
+  static_assert(HasDebugStringAndShortDebugString<
+                    const InheritsDebugStringMethods>::value,
+                "const_true");
+  static_assert(
       !HasDebugStringAndShortDebugString<WrongTypeDebugStringMethod>::value,
-      const_false);
-  GTEST_COMPILE_ASSERT_(
+      "const_false");
+  static_assert(
       !HasDebugStringAndShortDebugString<NotConstDebugStringMethod>::value,
-      const_false);
-  GTEST_COMPILE_ASSERT_(
+      "const_false");
+  static_assert(
       !HasDebugStringAndShortDebugString<MissingDebugStringMethod>::value,
-      const_false);
-  GTEST_COMPILE_ASSERT_(
-      !HasDebugStringAndShortDebugString<IncompleteType>::value, const_false);
-  GTEST_COMPILE_ASSERT_(!HasDebugStringAndShortDebugString<int>::value,
-                        const_false);
+      "const_false");
+  static_assert(!HasDebugStringAndShortDebugString<IncompleteType>::value,
+                "const_false");
+  static_assert(!HasDebugStringAndShortDebugString<int>::value, "const_false");
 }
 
 // Tests that HasDebugStringAndShortDebugString<T>::value is true when T has
@@ -7670,7 +7707,7 @@ auto* dynamic_test = testing::RegisterTest(
     __LINE__, []() -> DynamicUnitTestFixture* { return new DynamicTest; });
 
 TEST(RegisterTest, WasRegistered) {
-  auto* unittest = testing::UnitTest::GetInstance();
+  const auto& unittest = testing::UnitTest::GetInstance();
   for (int i = 0; i < unittest->total_test_suite_count(); ++i) {
     auto* tests = unittest->GetTestSuite(i);
     if (tests->name() != std::string("DynamicUnitTestFixture")) continue;
