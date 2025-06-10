@@ -106,12 +106,19 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# Force C++11 (No extensions) and C99
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# This C++ standard is required to build ADIOS2
+set(ADIOS2_REQUIRED_CXX_STANDARD 14)
+set(ADIOS2_REQUIRED_C_STANDARD 99)
+if(DEFINED CMAKE_CXX_STANDARD AND CMAKE_CXX_STANDARD LESS ${ADIOS2_REQUIRED_CXX_STANDARD})
+  message(FATAL_ERROR "Requested CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} which is less than the required ${ADIOS2_REQUIRED_CXX_STANDARD}.")
+endif()
+set(CMAKE_CXX_STANDARD ${ADIOS2_REQUIRED_CXX_STANDARD} CACHE STRING "C++ standard to conform to")
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(NOT MSVC)
-  set(CMAKE_C_STANDARD 99)
+  if(NOT CMAKE_C_STANDARD ) 
+    set(CMAKE_C_STANDARD 99)
+  endif()
   set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
@@ -405,10 +412,13 @@ endif()
 #------------------------------------------------------------------------------#
 message("")
 message("ADIOS2 build configuration:")
-message("  ADIOS Version: ${ADIOS2_VERSION}")
-message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} "
-                         "${CMAKE_CXX_COMPILER_VERSION} "
-                         "${CMAKE_CXX_COMPILER_WRAPPER}")
+message("  ADIOS Version : ${ADIOS2_VERSION}")
+if(DEFINED CMAKE_CXX_STANDARD AND CMAKE_CXX_STANDARD)
+  message("  C++ standard  : "           "${CMAKE_CXX_STANDARD}")
+endif()
+message("  C++ Compiler  : ${CMAKE_CXX_COMPILER_ID} "
+                          "${CMAKE_CXX_COMPILER_VERSION} "
+                          "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 message("")
 if(ADIOS2_HAVE_CUDA)
