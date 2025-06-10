@@ -28,7 +28,7 @@ find_program(ZIP_EXECUTABLE NAMES zip PATHS /usr/bin /usr/local/bin /opt/local/b
 if(ZIP_EXECUTABLE)
     message(STATUS "Found zip executable: ${ZIP_EXECUTABLE}")
 else()
-    message(WARNING "zip executable not found.")
+    message(WARNING "Zip executable not found, no backwards compatiblity checks will be performed.")
 endif()
 
 foreach (TestSet ${TestSets})
