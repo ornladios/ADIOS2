@@ -32,6 +32,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
     const int nsteps = 10;
     const int stepsPerFile = 4;
     int rank = 0, nproc = 1;
+    const size_t fixDim = 5;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -42,6 +43,16 @@ TEST_F(TimeSeries, WriteReadShape2D)
     const std::string fname("TimeSeries");
     adios2::ADIOS adios;
 #endif
+
+    const size_t dim0 = static_cast<size_t>(nproc);
+    const size_t off0 = static_cast<size_t>(rank);
+
+    std::vector<double> bufOut(nsteps, 0.0);
+    for (size_t i = 0; i < bufOut.size(); i++)
+    {
+        bufOut[i] = rank + static_cast<double>(i) / 10.0;
+    }
+
     // Writer
     {
         adios2::IO outIO = adios.DeclareIO("Output");
@@ -52,15 +63,9 @@ TEST_F(TimeSeries, WriteReadShape2D)
             outIO.SetEngine(engineName);
         }
 
-        const size_t dim0 = static_cast<size_t>(nproc);
-        const size_t off0 = static_cast<size_t>(rank);
         auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
-
-        std::vector<double> buf(nsteps, 0.0);
-        for (size_t i = 0; i < buf.size(); i++)
-        {
-            buf[i] = rank + static_cast<double>(i) / 10.0;
-        }
+        auto varfix =
+            outIO.DefineVariable<double>("vfixdim", {dim0, fixDim}, {off0, 0}, {1, fixDim}, true);
 
         if (!rank)
         {
@@ -101,7 +106,8 @@ TEST_F(TimeSeries, WriteReadShape2D)
                           << ")" << std::endl;
             }
 
-            writer.Put(var, buf.data());
+            writer.Put(var, bufOut.data());
+            writer.Put(varfix, bufOut.data());
 
             writer.EndStep();
         }
@@ -137,7 +143,11 @@ TEST_F(TimeSeries, WriteReadShape2D)
             auto var = inIO.InquireVariable<double>("v");
             EXPECT_TRUE(var);
 
+            auto varfix = inIO.InquireVariable<double>("vfixdim");
+            EXPECT_TRUE(varfix);
+
             auto shape = var.Shape();
+            auto shapefix = varfix.Shape();
 
             if (!rank)
             {
@@ -149,6 +159,19 @@ TEST_F(TimeSeries, WriteReadShape2D)
             EXPECT_EQ(shape[0], nproc);
             EXPECT_EQ(shape[1], expected_shape);
 
+            std::vector<double> bufIn;
+            var.SetSelection({{off0, 0}, {1, shape[1]}});
+            reader.Get(var, bufIn, adios2::Mode::Sync);
+            for (size_t i = 0; i < shape[1]; ++i)
+            {
+                EXPECT_EQ(bufOut[i], bufIn[i]);
+            }
+            varfix.SetSelection({{off0, 0}, {1, shapefix[1]}});
+            reader.Get(varfix, bufIn, adios2::Mode::Sync);
+            for (size_t i = 0; i < shapefix[1]; ++i)
+            {
+                EXPECT_EQ(bufOut[i], bufIn[i]);
+            }
             reader.EndStep();
             ++i;
         }
@@ -169,10 +192,15 @@ TEST_F(TimeSeries, WriteReadShape2D)
         auto var = inIO.InquireVariable<double>("v");
         EXPECT_TRUE(var);
 
+        auto varfix = inIO.InquireVariable<double>("vfixdim");
+        EXPECT_TRUE(varfix);
+
         for (size_t i = 0; i < nsteps; i++)
         {
             var.SetStepSelection({i, 1});
+            varfix.SetStepSelection({i, 1});
             auto shape = var.Shape();
+            auto shapefix = varfix.Shape();
             if (!rank)
             {
 
@@ -182,6 +210,20 @@ TEST_F(TimeSeries, WriteReadShape2D)
             size_t expected_shape = i + 1;
             EXPECT_EQ(shape[0], nproc);
             EXPECT_EQ(shape[1], expected_shape);
+
+            std::vector<double> bufIn;
+            var.SetSelection({{off0, 0}, {1, shape[1]}});
+            reader.Get(var, bufIn, adios2::Mode::Sync);
+            for (size_t i = 0; i < shape[1]; ++i)
+            {
+                EXPECT_EQ(bufOut[i], bufIn[i]);
+            }
+            varfix.SetSelection({{off0, 0}, {1, shapefix[1]}});
+            reader.Get(varfix, bufIn, adios2::Mode::Sync);
+            for (size_t i = 0; i < shapefix[1]; ++i)
+            {
+                EXPECT_EQ(bufOut[i], bufIn[i]);
+            }
         }
 
         reader.Close();

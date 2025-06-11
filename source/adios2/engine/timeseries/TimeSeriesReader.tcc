@@ -69,7 +69,11 @@ inline Variable<T> TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO
 
         for (size_t i = 0; i < viis.stepCount; ++i)
         {
-            v->m_AvailableShapes[viis.startStep + i + 1] = variable->m_AvailableShapes[i + 1];
+            auto it = variable->m_AvailableShapes.find(i + 1);
+            if (it != variable->m_AvailableShapes.end())
+            {
+                v->m_AvailableShapes[viis.startStep + i + 1] = variable->m_AvailableShapes[i + 1];
+            }
         }
         v->m_AvailableStepsCount += viis.stepCount;
 
