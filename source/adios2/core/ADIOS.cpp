@@ -25,10 +25,6 @@
 
 #include <adios2-perfstubs-interface.h>
 
-// callbacks
-#include "adios2/operator/callback/Signature1.h"
-#include "adios2/operator/callback/Signature2.h"
-
 #ifdef ADIOS2_HAVE_AWSSDK
 #include <aws/core/Aws.h>
 #include <aws/core/utils/logging/LogLevel.h>
