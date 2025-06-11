@@ -10,7 +10,10 @@
 #include "MPIChain.h"
 
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosPartitioner.h"  // PartitionRanks
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
+
+#include <iostream>
 
 namespace adios2
 {
@@ -47,7 +50,8 @@ void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
     }
 }
 
-void MPIChain::Init(const uint64_t rankDataSize, helper::Comm const &parentComm)
+void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
+                             helper::Comm const &parentComm)
 {
     int parentRank = parentComm.Rank();
     int parentSize = parentComm.Size();
@@ -64,14 +68,13 @@ void MPIChain::Init(const uint64_t rankDataSize, helper::Comm const &parentComm)
         std::cout << allsizes[i];
     }
 
-    int numPartitions = std::max(parentSize / 2, 1);
+    int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
     std::cout << "], request " << numPartitions << " partitions" << std::endl;
 
     helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
-    RankPartition myLocation = partitioning.FindPartition(parentRank);
-    std::cout << "Rank " << parentRank << " is element " << myLocation.second
-            << " in partition " << myLocation.first << std::endl;
-
+    helper::RankPartition myLocation = partitioning.FindPartition(parentRank);
+    std::cout << "Rank " << parentRank << " is element " << myLocation.m_rankOrder
+            << " in partition " << myLocation.m_subStreamIndex << std::endl;
 
     m_SubStreamIndex = myLocation.m_subStreamIndex;
     m_AggregatorRank = myLocation.m_aggregatorRank;
@@ -88,7 +91,7 @@ void MPIChain::Init(const uint64_t rankDataSize, helper::Comm const &parentComm)
     }
 
     m_IsActive = true;
-    m_SubStreams = partitioning.m_Partitions.size();
+    m_SubStreams = numPartitions;
 
     HandshakeRank(0);
     HandshakeLinks();

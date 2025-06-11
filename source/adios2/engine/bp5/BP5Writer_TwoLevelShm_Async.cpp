@@ -257,7 +257,8 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     m_AsyncWriteInfo->comm_chain = helper::Comm(); // unused in this aggregation
     m_AsyncWriteInfo->tstart = m_EngineStart;
     m_AsyncWriteInfo->tokenChain = new shm::TokenChain<uint64_t>(&a->m_Comm);
-    m_AsyncWriteInfo->tm = &m_FileDataManager;
+    AggTransportData* aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
+    m_AsyncWriteInfo->tm = &(aggData->m_FileDataManager);
     m_AsyncWriteInfo->Data = Data;
     m_AsyncWriteInfo->flagRush = &m_flagRush;
     m_AsyncWriteInfo->lock = &m_AsyncWriteLock;
