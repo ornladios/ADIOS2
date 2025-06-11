@@ -55,11 +55,29 @@ public:
     size_t DebugGetDataBufferSize() const final;
 
 private:
+    struct AggTransportData
+    {
+        AggTransportData(core::IO &IO, helper::Comm &comm) : m_FileDataManager(IO, comm) {}
+
+        /** Manage BP data files Transports from IO AddTransport */
+        transportman::TransportMan m_FileDataManager;
+
+        /**
+         * Name of subfiles to directly write to (for all transports)
+         * This is either original target or burst buffer if used
+         */
+        std::vector<std::string> m_SubStreamNames;
+
+        /* Name of subfiles on target if burst buffer is used (for all transports)
+        */
+        std::vector<std::string> m_DrainSubStreamNames;
+    };
+
+    std::string GetCacheKey(aggregator::MPIAggregator* aggregator);
+    std::map<std::string, AggTransportData> m_AggregatorSpecifics;
+
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
-
-    /** Manage BP data files Transports from IO AddTransport */
-    transportman::TransportMan m_FileDataManager;
 
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
@@ -85,12 +103,7 @@ private:
      * m_Name is a constant of Engine and is the user provided target path
      */
     std::string m_BBName;
-    /* Name of subfiles to directly write to (for all transports)
-     * This is either original target or burst buffer if used */
-    std::vector<std::string> m_SubStreamNames;
-    /* Name of subfiles on target if burst buffer is used (for all transports)
-     */
-    std::vector<std::string> m_DrainSubStreamNames;
+
     std::vector<std::string> m_MetadataFileNames;
     std::vector<std::string> m_DrainMetadataFileNames;
     std::vector<std::string> m_MetaMetadataFileNames;
@@ -103,7 +116,7 @@ private:
     /** Parses parameters from IO SetParameters */
     void InitParameters() final;
     /** Set up the aggregator */
-    void InitAggregator();
+    void InitAggregator(const uint64_t DataSize = 0);
     /** Complete opening/createing metadata and data files */
     void InitTransports() final;
     /** Allocates memory and starts a PG group */

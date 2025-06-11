@@ -148,7 +148,8 @@ void BP5Writer::WriteMyOwnData(format::BufferV *Data)
 {
     std::vector<core::iovec> DataVec = Data->DataVec();
     m_StartDataPos = m_DataPos;
-    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
+    AggTransportData* aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
+    aggData->m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
     m_DataPos += Data->Size();
 }
 
@@ -253,6 +254,7 @@ void BP5Writer::WriteOthersData(size_t TotalSize)
     /* Only an Aggregator calls this function */
     aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
+    AggTransportData* aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
     size_t wrote = 0;
     while (wrote < TotalSize)
     {
@@ -272,7 +274,7 @@ void BP5Writer::WriteOthersData(size_t TotalSize)
         << (int)b->buf[b->actual_size - 1] << "]" << std::endl;*/
 
         // b->actual_size: how much we need to write
-        m_FileDataManager.WriteFiles(b->buf, b->actual_size);
+        aggData->m_FileDataManager.WriteFiles(b->buf, b->actual_size);
 
         wrote += b->actual_size;
 
