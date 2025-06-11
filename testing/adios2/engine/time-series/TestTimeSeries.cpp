@@ -127,7 +127,6 @@ TEST_F(TimeSeries, WriteReadShape2D)
             std::cout << "Reading as stream with BeginStep/EndStep:" << std::endl;
         }
 
-        int i = 0;
         while (true)
         {
             adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
@@ -152,7 +151,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
             if (!rank)
             {
 
-                std::cout << "Step " << i << " shape (" << shape[0] << ", " << shape[1] << ")"
+                std::cout << "Step " << step << " shape (" << shape[0] << ", " << shape[1] << ")"
                           << std::endl;
             }
 
@@ -173,7 +172,6 @@ TEST_F(TimeSeries, WriteReadShape2D)
                 EXPECT_EQ(bufOut[i], bufIn[i]);
             }
             reader.EndStep();
-            ++i;
         }
 
         reader.Close();
