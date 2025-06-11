@@ -290,6 +290,7 @@ void BP5Writer::AsyncWriteDataCleanup()
         {
         case (int)AggregationType::EveryoneWrites:
         case (int)AggregationType::EveryoneWritesSerial:
+        case (int)AggregationType::DataSizeBased:
             AsyncWriteDataCleanup_EveryoneWrites();
             break;
         case (int)AggregationType::TwoLevelShm:
@@ -313,6 +314,7 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_EveryoneWrites_Async(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
+        case (int)AggregationType::DataSizeBased:
             WriteData_EveryoneWrites_Async(Data, true);
             break;
         case (int)AggregationType::TwoLevelShm:
@@ -1241,6 +1243,8 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         init_str += "-ew";
     else if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
         init_str += "-ews";
+    else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+        init_str += "-dsb";
     else
         init_str += "-tls";
 
@@ -1333,8 +1337,9 @@ void BP5Writer::InitTransports()
     */
 
     std::string cacheKey = GetCacheKey(m_Aggregator);
+    auto search = m_AggregatorSpecifics.find(cacheKey);
 
-    if (auto search = m_AggregatorSpecifics.find(cacheKey); search != m_AggregatorSpecifics.end())
+    if (search != m_AggregatorSpecifics.end())
     {
         std::cout << "No need to initialize for aggregator with key " << cacheKey << std::endl;
         return;
@@ -1861,8 +1866,12 @@ void BP5Writer::DoClose(const int transportIndex)
         m_Profiler.Stop("DC_WaitOnAsync1");
     }
 
-    AggTransportData* aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
-    aggData->m_FileDataManager.CloseFiles(transportIndex);
+    // However many AggTransportData we created, we need to close them all
+    for (auto it = m_AggregatorSpecifics.begin(); it != m_AggregatorSpecifics.end(); ++it)
+    {
+        it->second.m_FileDataManager.CloseFiles(transportIndex);
+    }
+
     // Delete files from temporary storage if draining was on
 
     if (m_Comm.Rank() == 0)
