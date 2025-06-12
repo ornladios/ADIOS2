@@ -116,7 +116,7 @@ private:
     /** Parses parameters from IO SetParameters */
     void InitParameters() final;
     /** Set up the aggregator */
-    void InitAggregator(const uint64_t DataSize = 0);
+    void InitAggregator(const uint64_t DataSize = 1);
     /** Complete opening/createing metadata and data files */
     void InitTransports() final;
     /** Allocates memory and starts a PG group */
