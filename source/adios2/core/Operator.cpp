@@ -35,24 +35,6 @@ Params &Operator::GetParameters() noexcept { return m_Parameters; }
 void Operator::SetAccuracy(const adios2::Accuracy &a) noexcept { m_AccuracyRequested = a; }
 adios2::Accuracy Operator::GetAccuracy() const noexcept { return m_AccuracyProvided; }
 
-#define declare_type(T)                                                                            \
-                                                                                                   \
-    void Operator::RunCallback1(const T *arg0, const std::string &arg1, const std::string &arg2,   \
-                                const std::string &arg3, const size_t arg4, const Dims &arg5,      \
-                                const Dims &arg6, const Dims &arg7) const                          \
-    {                                                                                              \
-        CheckCallbackType("Callback1");                                                            \
-    }
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-void Operator::RunCallback2(void *arg0, const std::string &arg1, const std::string &arg2,
-                            const std::string &arg3, const size_t arg4, const Dims &arg5,
-                            const Dims &arg6, const Dims &arg7) const
-{
-    CheckCallbackType("Callback2");
-}
-
 // PROTECTED
 
 Dims Operator::ConvertDims(const Dims &dimensions, const DataType type, const size_t targetDims,
@@ -107,16 +89,24 @@ size_t Operator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
     return ElemCount * ElemSize + 128;
 };
 
-// PRIVATE
-void Operator::CheckCallbackType(const std::string type) const
+size_t Operator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                         const DataType type, char *bufferOut)
 {
-    if (m_TypeString != type)
-    {
-        helper::Throw<std::invalid_argument>("Core", "Operator", "CheckCallbackType",
-                                             "operator of type " + m_TypeString +
-                                                 " doesn't match expected callback type " + type +
-                                                 " arguments");
-    }
+    return 0;
+}
+size_t Operator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                         const DataType type, char *bufferOut, Params params)
+{
+    return 0;
+}
+size_t Operator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut,
+                                Params params)
+{
+    return 0;
+}
+size_t Operator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
+{
+    return 0;
 }
 
 } // end namespace core

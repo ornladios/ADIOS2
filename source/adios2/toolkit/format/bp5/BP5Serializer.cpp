@@ -15,6 +15,7 @@
 #include "adios2/core/VariableDerived.h"
 #endif
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/OperatorFactory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
 
 #include <stddef.h> // max_align_t
@@ -854,6 +855,15 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
             CompressedSize = VB->m_Operations[0]->Operate((const char *)Data, tmpOffsets, tmpCount,
                                                           (DataType)Rec->Type, CompressedData);
+            if (CompressedSize == 0)
+            {
+                Params operatorParams = core::CreateOperatorParams(m_Engine, VB);
+                // Try to other Operate API if the operator was not applied
+                CompressedSize = VB->m_Operations[0]->Operate((const char *)Data, tmpOffsets,
+                                                              tmpCount, (DataType)Rec->Type,
+                                                              CompressedData, operatorParams);
+            }
+
             // if the operator was not applied
             if (CompressedSize == 0)
                 CompressedSize = helper::CopyMemoryWithOpHeader(
