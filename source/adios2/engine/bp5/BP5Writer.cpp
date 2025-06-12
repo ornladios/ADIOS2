@@ -357,7 +357,7 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
 {
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
-        InitAggregator();
+        InitAggregator(Data->Size());
         InitTransports();
     }
 
@@ -1254,7 +1254,6 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
         m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
     {
-        std::cout << "EveryOneWrites_Serial init aggregator" << std::endl;
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
         m_AggregatorEveroneWrites.Init(m_Parameters.NumAggregators, m_Parameters.NumSubFiles,
                                        m_Comm);
@@ -1266,6 +1265,7 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
     else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
         // Close() is a no-op if never initialized
+        std::cout << "InitAggregator() - DataSizeBased: Closing and re-opening MPIChain" << std::endl;
         m_AggregatorDataSizeBased.Close();
         m_AggregatorDataSizeBased.InitSizeBased(DataSize, 0, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
@@ -1338,14 +1338,13 @@ void BP5Writer::InitTransports()
 
     std::string cacheKey = GetCacheKey(m_Aggregator);
     auto search = m_AggregatorSpecifics.find(cacheKey);
+    bool cacheHit = false;
 
     if (search != m_AggregatorSpecifics.end())
     {
-        std::cout << "No need to initialize for aggregator with key " << cacheKey << std::endl;
-        return;
+        std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey << std::endl;
+        cacheHit = true;
     }
-
-    std::cout << "Performinng initialization for aggregator with key " << cacheKey << std::endl;
 
     m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
     AggTransportData& aggData = m_AggregatorSpecifics.at(cacheKey);
@@ -1357,11 +1356,15 @@ void BP5Writer::InitTransports()
     // /path/name.bp.dir/name.bp.rank
     aggData.m_SubStreamNames = GetBPSubStreamNames(transportsNames, m_Aggregator->m_SubStreamIndex);
 
+    std::cout << "Rank " << m_Comm.Rank() << " - A" << std::endl;
+
     if (m_IAmDraining)
     {
+        std::cout << "Rank " << m_Comm.Rank() << " - B" << std::endl;
         // Only (master)aggregators will run draining processes
         if (m_DrainBB)
         {
+            std::cout << "Rank " << m_Comm.Rank() << " - C" << std::endl;
             const std::vector<std::string> drainTransportNames =
                 aggData.m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
             aggData.m_DrainSubStreamNames =
@@ -1374,25 +1377,31 @@ void BP5Writer::InitTransports()
         }
     }
 
+    std::cout << "Rank " << m_Comm.Rank() << " - D" << std::endl;
+
     /* Create the directories either on target or burst buffer if used */
     //    m_BP4Serializer.m_Profiler.Start("mkdir");
 
     if (m_Comm.Rank() == 0)
     {
+        std::cout << "Rank " << m_Comm.Rank() << " - E" << std::endl;
         m_MetadataFileNames = GetBPMetadataFileNames(transportsNames);
         m_MetaMetadataFileNames = GetBPMetaMetadataFileNames(transportsNames);
         m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(transportsNames);
     }
+    std::cout << "Rank " << m_Comm.Rank() << " - F" << std::endl;
     m_FileMetadataManager.MkDirsBarrier(m_MetadataFileNames, m_IO.m_TransportsParameters,
                                         m_Parameters.NodeLocal || m_WriteToBB);
+    std::cout << "Rank " << m_Comm.Rank() << " - G" << std::endl;
     /* Create the directories on burst buffer if used */
     if (m_DrainBB)
     {
+        std::cout << "Rank " << m_Comm.Rank() << " - H" << std::endl;
         /* Create the directories on target anyway by main thread */
         aggData.m_FileDataManager.MkDirsBarrier(aggData.m_DrainSubStreamNames, m_IO.m_TransportsParameters,
                                         m_Parameters.NodeLocal);
     }
-
+    std::cout << "Rank " << m_Comm.Rank() << " - I" << std::endl;
     /* Everyone opens its data file. Each aggregation chain opens
        one data file and does so in chain, not everyone at once */
     if (m_Parameters.AsyncOpen)
@@ -1402,7 +1411,7 @@ void BP5Writer::InitTransports()
             m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
         }
     }
-
+    std::cout << "Rank " << m_Comm.Rank() << " - J" << std::endl;
     if (m_Parameters.DirectIO)
     {
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
@@ -1412,26 +1421,41 @@ void BP5Writer::InitTransports()
     }
 
     bool useProfiler = true;
-
+    std::cout << "Rank " << m_Comm.Rank() << " - K" << std::endl;
     if (m_IAmWritingData)
     {
-        aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
-                                    useProfiler, *DataWritingComm);
+        // If we got a cache hit above, we'd like to skip the enclosed OpenFiles
+        // since we should have opened those files already.  However, if some ranks
+        // ended up in new substreams (and thus need to open the files), then we
+        // end up in mpi deadlock (communication among all ranks is expected on the
+        // DataWritingComm.  So commenting out for now to allow getting a little
+        // further.
+        // if (!cacheHit)
+        // {
+            std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
+            aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
+                                                m_IO.m_TransportsParameters, useProfiler,
+                                                *DataWritingComm);
+        // }
     }
-
+    std::cout << "Rank " << m_Comm.Rank() << " - M" << std::endl;
     if (m_IAmDraining)
     {
         if (m_DrainBB)
         {
             for (const auto &name : aggData.m_DrainSubStreamNames)
             {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+                // if (!cacheHit)
+                // {
+                    m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+                // }
             }
         }
     }
-
+    std::cout << "Rank " << m_Comm.Rank() << " - N" << std::endl;
     if (m_Comm.Rank() == 0)
     {
+        std::cout << "Rank " << m_Comm.Rank() << " - O" << std::endl;
         // force turn off directio to metadata files
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
@@ -1611,6 +1635,8 @@ void BP5Writer::InitBPBuffer()
 {
     AggTransportData& aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
 
+    std::cout << "Rank " << m_Comm.Rank() << " InitBPBuffer()" << std::endl;
+
     if (m_OpenMode == Mode::Append)
     {
         format::BufferSTL preMetadataIndex;
@@ -1721,6 +1747,7 @@ void BP5Writer::InitBPBuffer()
         m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams))
     {
         // new Writer Map is needed, generate now, write later
+        std::cout << "Rank " << m_Comm.Rank() << " new writer needed, generate now, write later" << std::endl;
         const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
         m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
     }
