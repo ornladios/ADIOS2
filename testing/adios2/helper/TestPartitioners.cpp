@@ -71,8 +71,8 @@ TEST(ADIOS2Partitioner, ADIOS2PartitionerGreedy)
     {
         adios2::helper::RankPartition part = result.FindPartition(i);
         std::cout << "Rank " << i << ": ssi = " << part.m_subStreamIndex
-                  << ", order = " << part.m_rankOrder << ", agg = "
-                  << part.m_aggregatorRank << std::endl;
+                  << ", order = " << part.m_rankOrder << ", agg = " << part.m_aggregatorRank
+                  << std::endl;
     }
 
     ASSERT_EQ(result.m_Partitions.size(), numPartitions);

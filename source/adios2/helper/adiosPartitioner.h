@@ -61,9 +61,9 @@ enum class PartitioningStrategy
  * If the selected strategy does not exist or does not support choosing
  * a number of partitions when -1 is passed, an exception is raised.
  */
-Partitioning PartitionRanks(const std::vector<uint64_t> &rankValues,
-                            uint64_t numberOfPartitions = -1,
-                            PartitioningStrategy strategy = PartitioningStrategy::GreedyNumberPartitioning);
+Partitioning
+PartitionRanks(const std::vector<uint64_t> &rankValues, uint64_t numberOfPartitions = -1,
+               PartitioningStrategy strategy = PartitioningStrategy::GreedyNumberPartitioning);
 
 } // end namespace helper
 } // end namespace adios2
