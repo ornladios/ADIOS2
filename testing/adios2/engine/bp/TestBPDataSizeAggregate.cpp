@@ -40,39 +40,63 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     uint64_t globalNy = sum0ToN(globalNx);
     uint64_t globalNumElements = globalNx * globalNy;
 
-    // Define local data, size varies by rank
-    uint64_t localNy = worldRank + 1;
-    std::vector<double> rankData(globalNx, localNy);
-    uint64_t localElementCount = rankData.size();
-
-    adios2::IO bpIO = adios.DeclareIO("WriteIO");
-    bpIO.SetEngine("BPFile");
-    bpIO.SetParameter("AggregationType", "DataSizeBased");
-
-    adios2::Variable<double> varGlobalArray =
-        bpIO.DefineVariable<double>("GlobalArray", {globalNx, globalNy});
-
-    adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
-
-    bpWriter.BeginStep();
-
-    for (uint64_t i = 0; i < localElementCount; ++i)
     {
-        rankData[i] =
-            globalNx * worldSize * 1.0 + worldRank * localNy * 1.0 + static_cast<double>(i);
-        ;
+        // Define local data, size varies by rank
+        uint64_t localNy = worldRank + 1;
+        std::vector<double> rankData(globalNx, localNy);
+        uint64_t localElementCount = rankData.size();
+
+        adios2::IO bpIO = adios.DeclareIO("WriteIO");
+        bpIO.SetEngine("BPFile");
+        bpIO.SetParameter("AggregationType", "DataSizeBased");
+        bpIO.SetParameter("NumAggregators", "4");
+
+        adios2::Variable<double> varGlobalArray =
+            bpIO.DefineVariable<double>("GlobalArray", {globalNx, globalNy});
+
+        adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
+
+        bpWriter.BeginStep();
+
+        for (uint64_t i = 0; i < localElementCount; ++i)
+        {
+            rankData[i] =
+                globalNx * worldSize * 1.0 + worldRank * localNy * 1.0 + static_cast<double>(i);
+            ;
+        }
+
+        varGlobalArray.SetSelection(
+            adios2::Box<adios2::Dims>({0, static_cast<size_t>(sum0ToN(worldRank))},
+                                      {globalNx, static_cast<size_t>(localNy)}));
+        bpWriter.Put<double>(varGlobalArray, rankData.data());
+        bpWriter.EndStep();
+
+        bpWriter.Close();
     }
-
-    varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
-        {0, static_cast<size_t>(sum0ToN(worldRank))}, {globalNx, static_cast<size_t>(localNy)}));
-    bpWriter.Put<double>(varGlobalArray, rankData.data());
-    bpWriter.EndStep();
-
-    bpWriter.Close();
 
     if (worldRank == 0)
     {
-        std::cout << "Finished writing unbalanced data" << std::endl;
+        std::cout << "Finished writing unbalanced data, reading it back" << std::endl;
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+
+        io.SetEngine("BPFile");
+        adios2::Engine bpReader = io.Open("unbalanced_output.bp", adios2::Mode::ReadRandomAccess);
+
+        auto var_array = io.InquireVariable<double>("GlobalArray");
+        EXPECT_TRUE(var_array);
+        ASSERT_EQ(var_array.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_array.Steps(), 1);
+        ASSERT_EQ(var_array.Shape().size(), 2);
+
+        std::vector<double> array;
+
+        bpReader.Get(var_array, array, adios2::Mode::Sync);
+        ASSERT_EQ(array.size(), var_array.Shape()[0] * var_array.Shape()[1]);
+
+        bpReader.Close();
     }
 }
 

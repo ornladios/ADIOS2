@@ -41,6 +41,7 @@ struct Partitioning
 
     // Given a rank id, return its partition index index within the partition
     RankPartition FindPartition(int rank);
+    void PrintSummary();
 };
 
 /**
