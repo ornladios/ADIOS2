@@ -125,9 +125,11 @@ bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 
-gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} EXTRA_ARGS "BP5" "AggregationType=DataSizeBased"
-)
+if (ADIOS2_HAVE_MPI)
+  gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
+    WORKING_DIRECTORY ${BP5_DIR}
+  )
+endif()
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
