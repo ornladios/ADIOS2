@@ -12,6 +12,7 @@
 #define ADIOS2_HELPER_ADIOSPARTITIONER_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 /// \endcond
@@ -24,7 +25,7 @@ namespace helper
 
 struct RankPartition
 {
-    int m_subStreamIndex;
+    size_t m_subStreamIndex;
     int m_aggregatorRank;
     int m_rankOrder;
 };

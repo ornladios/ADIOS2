@@ -18,7 +18,7 @@ namespace
 uint64_t sum0ToN(uint64_t n)
 {
     uint64_t sum = 0;
-    for (int i = 1; i <= n; ++i)
+    for (size_t i = 1; i <= n; ++i)
     {
         sum += i;
     }
@@ -38,7 +38,6 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
     uint64_t globalNx = worldSize;
     uint64_t globalNy = sum0ToN(globalNx);
-    uint64_t globalNumElements = globalNx * globalNy;
 
     {
         // Define local data, size varies by rank

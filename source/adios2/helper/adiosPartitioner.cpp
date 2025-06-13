@@ -43,13 +43,13 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
     adios2::helper::Partitioning result;
 
     // Sort the incoming values, keeping track of the original indices
-    std::vector<std::pair<uint64_t, int>> valuesAndIndices;
-    for (int i = 0; i < values.size(); ++i)
+    std::vector<std::pair<uint64_t, size_t>> valuesAndIndices;
+    for (size_t i = 0; i < values.size(); ++i)
     {
         valuesAndIndices.push_back(std::make_pair(values[i], i));
     }
     std::sort(valuesAndIndices.begin(), valuesAndIndices.end(),
-              [](std::pair<uint64_t, uint64_t> a, std::pair<uint64_t, uint64_t> b) {
+              [](std::pair<uint64_t, size_t> a, std::pair<uint64_t, size_t> b) {
                   return a.first > b.first;
               });
 
@@ -57,7 +57,7 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
     result.m_Sizes.resize(numberOfPartitions);
     std::fill(result.m_Sizes.begin(), result.m_Sizes.end(), 0);
 
-    for (int i = 0; i < valuesAndIndices.size(); ++i)
+    for (size_t i = 0; i < valuesAndIndices.size(); ++i)
     {
         int64_t index_of_smallest =
             std::distance(std::begin(result.m_Sizes),
@@ -100,7 +100,7 @@ namespace helper
 RankPartition Partitioning::FindPartition(const int parentRank)
 {
     RankPartition result;
-    for (int i = 0; i < m_Partitions.size(); ++i)
+    for (size_t i = 0; i < m_Partitions.size(); ++i)
     {
         std::vector<int> nextPart = m_Partitions[i];
         const auto it = std::find(nextPart.begin(), nextPart.end(), parentRank);
@@ -117,11 +117,11 @@ RankPartition Partitioning::FindPartition(const int parentRank)
 void Partitioning::PrintSummary()
 {
     std::cout << "Paritioning resulted in " << m_Partitions.size() << " substreams:" << std::endl;
-    for (int i = 0; i < m_Partitions.size(); ++i)
+    for (size_t i = 0; i < m_Partitions.size(); ++i)
     {
         std::vector<int> nextPart = m_Partitions[i];
         std::cout << "  " << i << ": [";
-        for (int j = 0; j < nextPart.size(); ++j)
+        for (size_t j = 0; j < nextPart.size(); ++j)
         {
             std::cout << nextPart[j] << " ";
         }

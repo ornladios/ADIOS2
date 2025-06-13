@@ -61,7 +61,7 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
     if (parentRank == 0)
     {
         std::cout << "Rank data sizes: [";
-        for (int i = 0; i < allsizes.size(); ++i)
+        for (size_t i = 0; i < allsizes.size(); ++i)
         {
             if (i > 0)
             {

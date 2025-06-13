@@ -55,12 +55,12 @@ TEST(ADIOS2Partitioner, ADIOS2PartitionerGreedy)
     result = adios2::helper::PartitionRanks(
         dataSizes, numPartitions, adios2::helper::PartitioningStrategy::GreedyNumberPartitioning);
 
-    for (int i = 0; i < result.m_Partitions.size(); ++i)
+    for (size_t i = 0; i < result.m_Partitions.size(); ++i)
     {
         std::cout << "Partition " << i << " (size = " << result.m_Sizes[i] << ") :" << std::endl;
         std::vector<int> nextPart = result.m_Partitions[i];
         std::cout << "  ";
-        for (int j = 0; j < nextPart.size(); ++j)
+        for (size_t j = 0; j < nextPart.size(); ++j)
         {
             std::cout << nextPart[j] << " ";
         }
