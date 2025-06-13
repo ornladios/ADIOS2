@@ -937,8 +937,12 @@ void BP5Writer::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
-    InitAggregator();
-    InitTransports();
+
+    if (m_Parameters.AggregationType != (int)AggregationType::DataSizeBased)
+    {
+        InitAggregator();
+        InitTransports();
+    }
 }
 
 MinVarInfo *BP5Writer::WriterMinBlocksInfo(const core::VariableBase &Var)
@@ -1345,8 +1349,12 @@ void BP5Writer::InitTransports()
         std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey << std::endl;
         cacheHit = true;
     }
+    else
+    {
+        // Didn't have one in the cache, add it now
+        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
+    }
 
-    m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
     AggTransportData& aggData = m_AggregatorSpecifics.at(cacheKey);
 
     // Names passed to IO AddTransport option with key "Name"

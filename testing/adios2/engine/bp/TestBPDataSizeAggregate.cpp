@@ -10,7 +10,21 @@
 #include <thread>
 
 using namespace adios2;
-MPI_Comm mpiComm;
+
+int worldRank, worldSize;
+
+namespace
+{
+uint64_t sum0ToN(uint64_t n)
+{
+    uint64_t sum = 0;
+    for (int i = 1; i <= n; ++i)
+    {
+        sum += i;
+    }
+    return sum;
+}
+}
 
 class DSATest : public ::testing::Test
 {
@@ -20,70 +34,49 @@ public:
 
 TEST_F(DSATest, TestWriteUnbalancedData)
 {
-    adios2::ADIOS adios;
-    adios2::IO io = adios.DeclareIO("ReadIO");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 
-    io.SetEngine("BPFile");
-    adios2::Engine bpReader = io.Open("unbalanced_data.bp", adios2::Mode::ReadRandomAccess);
+    uint64_t globalNx = worldSize;
+    uint64_t globalNy = sum0ToN(globalNx);
+    uint64_t globalNumElements = globalNx * globalNy;
 
-    /*
-    $ bpls unbalanced_data.bp
-      float    Normals       {75786, 3}
-      int32_t  connectivity  {446712}
-      float    coordinates   {75786, 3}
-      float    value         {75786}
-    */
+    // Define local data, size varies by rank
+    uint64_t localNy = worldRank + 1;
+    std::vector<double> rankData(globalNx, localNy);
+    uint64_t localElementCount = rankData.size();
 
-    auto var_norms = io.InquireVariable<float>("Normals");
-    EXPECT_TRUE(var_norms);
-    ASSERT_EQ(var_norms.ShapeID(), adios2::ShapeID::GlobalArray);
-    ASSERT_EQ(var_norms.Steps(), 1);
-    ASSERT_EQ(var_norms.Shape().size(), 2);
+    adios2::IO bpIO = adios.DeclareIO("WriteIO");
+    bpIO.SetEngine("BPFile");
+    bpIO.SetParameter("AggregationType", "DataSizeBased");
 
-    auto var_conn = io.InquireVariable<int32_t>("connectivity");
-    EXPECT_TRUE(var_conn);
-    ASSERT_EQ(var_conn.ShapeID(), adios2::ShapeID::GlobalArray);
-    ASSERT_EQ(var_conn.Steps(), 1);
-    ASSERT_EQ(var_conn.Shape().size(), 1);
+    adios2::Variable<double> varGlobalArray =
+        bpIO.DefineVariable<double>("GlobalArray", {globalNx, globalNy});
 
-    auto var_coords = io.InquireVariable<float>("coordinates");
-    EXPECT_TRUE(var_coords);
-    ASSERT_EQ(var_coords.ShapeID(), adios2::ShapeID::GlobalArray);
-    ASSERT_EQ(var_coords.Steps(), 1);
-    ASSERT_EQ(var_coords.Shape().size(), 2);
+    adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
 
-    auto var_val = io.InquireVariable<float>("value");
-    EXPECT_TRUE(var_val);
-    ASSERT_EQ(var_val.ShapeID(), adios2::ShapeID::GlobalArray);
-    ASSERT_EQ(var_val.Steps(), 1);
-    ASSERT_EQ(var_val.Shape().size(), 1);
+    bpWriter.BeginStep();
 
-    std::vector<float> normals;
-    std::vector<int32_t> conn;
-    std::vector<float> coords;
-    std::vector<float> value;
+    for (uint64_t i = 0; i < localElementCount; ++i)
+    {
+        rankData[i] = globalNx * worldSize * 1.0 + worldRank * localNy * 1.0 + static_cast<double>(i);;
+    }
 
-    bpReader.Get(var_norms, normals, adios2::Mode::Sync);
-    ASSERT_EQ(normals.size(), var_norms.Shape()[0] * var_norms.Shape()[1]);
+    varGlobalArray.SetSelection(adios2::Box<adios2::Dims>({0, static_cast<size_t>(sum0ToN(worldRank))},
+                                                          {globalNx, static_cast<size_t>(localNy)}));
+    bpWriter.Put<double>(varGlobalArray, rankData.data());
+    bpWriter.EndStep();
 
-    bpReader.Get(var_conn, conn, adios2::Mode::Sync);
-    ASSERT_EQ(conn.size(), var_conn.Shape()[0]);
+    bpWriter.Close();
 
-    bpReader.Get(var_coords, coords, adios2::Mode::Sync);
-    ASSERT_EQ(coords.size(), var_coords.Shape()[0] * var_coords.Shape()[1]);
-
-    bpReader.Get(var_val, value, adios2::Mode::Sync);
-    ASSERT_EQ(value.size(), var_val.Shape()[0]);
-
-    bpReader.Close();
-
-    // Now attempt to write the data back out using data-size based aggregation
+    if (worldRank == 0)
+    {
+        std::cout << "Finished writing unbalanced data" << std::endl;
+    }
 }
 
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
-    int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
     ::testing::InitGoogleTest(&argc, argv);
