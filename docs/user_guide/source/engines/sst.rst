@@ -301,3 +301,27 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   SpeculativePreloadMode        string                **AUTO**, ON, OFF
   SpecAutoNodeThreshold         integer               **1**
  ============================= ===================== ====================================================
+
+Additionally to the above controls, finetuning for technical parameters of the data planes may become necessary under some circumstances. The following environment variables are read and interpreted by the data planes:
+
+* By the **RDMA/libfabric data plane**:
+
+    *   ``FABRIC_PROVIDER`` denotes the networking technology used within libfabric. libfabric is a unified API for a multitude of networking technologies, of which ADIOS2 supports a select few by default, including ``verbs``, ``gni``, ``psm2``, ``cxi``. Other providers (such as e.g. ``tcp`` or ``sockets``) can be specified with this environment variable. Available providers can be found by running ``fi_info`` (part of libfabric) on the target system and looking for identifiers labeled as ``provider:``.
+
+        Note: If the provider is not supported by default in ADIOS2, the environment variable ``FABRIC_IFACE`` *must* additionally be specified. If the provider is supported by default, both ``FABRIC_PROVIDER`` and ``FABRIC_IFACE`` are optional as ADIOS2 implements a heuristic for automatically selecting an adequate fabric.
+
+    *  ``FABRIC_IFACE`` denotes the network interface to be used. This will often be the name of the network card, but may also have distinct values such as ``shm`` for the shared memory provider. Available values can be found by running ``fi_info`` (part of libfabric) on the target system and looking for identifiers labeled as ``domain:``.
+
+       Note that an interface such as a network card can generally be accessed by multiple providers, e.g. the loopback interface ``lo`` will typically be available both from providers ``tcp`` and ``sockets``. Use environment variable ``FABRIC_PROVIDER`` for predictible results.
+
+    *   ``FABRIC_PROGRESS_THREAD``: The RDMA data plane will normally decide automatically if a progress thread should be used: By default, a progress thread will be started on the writer side, if the fabric requires manual data progress (also check the man page for ``man fi_domain``). The reader end will make synchronous progress without a thread by default.
+
+        This behavior can be overridden by defining ``FABRIC_PROGRESS_THREAD``: A value of ``1``, ``yes`` or ``on`` will force the use of a progress thread, no matter any other conditions. Any other value will force disable progress threads.
+
+    * ``SLINGSHOT_DEVICES``, ``SLINGSHOT_VNIS``, ``SLINGSHOT_SVC_IDS``: Variables defined by the Slingshot network for exchanging authentication keys. The CXI provider will only be activated if those variables are defined. These variables should not be defined manually, but by the Batch system.
+
+* By the **UCX data plane**:
+
+    * ``SST_UCX_PROGRESS_THREAD``: Some setups of UCX may require progress threads. Unlike in the RDMA data plane, progress threads are not opened automatically, but must be requested by defining this environment variable as either ``1``, ``on`` or ``yes``. Any other value as well as no definition of the environment variable at all will not create progress threads.
+
+    * Tip: For restricting UCX to communication with shared memory only, set ``UCX_TLS=shm``. Progress threads must be used on the writer and reader side. It might be necessary to additionally set ``UCX_POSIX_USE_PROC_LINK=n`` on some systems.
