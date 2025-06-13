@@ -21,8 +21,6 @@ add_library(adios2_core
   core/Info.cpp
 
   # operator
-  operator/callback/Signature1.cpp
-  operator/callback/Signature2.cpp
   operator/OperatorFactory.cpp
   operator/compress/CompressNull.cpp
 
