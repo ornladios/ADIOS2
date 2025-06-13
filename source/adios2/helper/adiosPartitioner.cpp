@@ -14,6 +14,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <stdexcept>
 #include <utility>
@@ -42,13 +43,15 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
     adios2::helper::Partitioning result;
 
     // Sort the incoming values, keeping track of the original indices
-    std::vector<std::pair<int, int>> valuesAndIndices;
+    std::vector<std::pair<uint64_t, int>> valuesAndIndices;
     for (int i = 0; i < values.size(); ++i)
     {
         valuesAndIndices.push_back(std::make_pair(values[i], i));
     }
     std::sort(valuesAndIndices.begin(), valuesAndIndices.end(),
-              [](std::pair<int, int> a, std::pair<int, int> b) { return a.first > b.first; });
+              [](std::pair<uint64_t, uint64_t> a, std::pair<uint64_t, uint64_t> b) {
+                  return a.first > b.first;
+              });
 
     result.m_Partitions.resize(numberOfPartitions);
     result.m_Sizes.resize(numberOfPartitions);
@@ -56,7 +59,7 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
 
     for (int i = 0; i < valuesAndIndices.size(); ++i)
     {
-        int index_of_smallest =
+        int64_t index_of_smallest =
             std::distance(std::begin(result.m_Sizes),
                           std::min_element(std::begin(result.m_Sizes), std::end(result.m_Sizes)));
         result.m_Sizes[index_of_smallest] += valuesAndIndices[i].first;
@@ -105,10 +108,25 @@ RankPartition Partitioning::FindPartition(const int parentRank)
         {
             result.m_subStreamIndex = i;
             result.m_aggregatorRank = *(nextPart.begin());
-            result.m_rankOrder = std::distance(std::begin(nextPart), it);
+            result.m_rankOrder = static_cast<int>(std::distance(std::begin(nextPart), it));
         }
     }
     return result;
+}
+
+void Partitioning::PrintSummary()
+{
+    std::cout << "Paritioning resulted in " << m_Partitions.size() << " substreams:" << std::endl;
+    for (int i = 0; i < m_Partitions.size(); ++i)
+    {
+        std::vector<int> nextPart = m_Partitions[i];
+        std::cout << "  " << i << ": [";
+        for (int j = 0; j < nextPart.size(); ++j)
+        {
+            std::cout << nextPart[j] << " ";
+        }
+        std::cout << "], partition data size: " << m_Sizes[i] << std::endl;
+    }
 }
 
 Partitioning PartitionRanks(const std::vector<uint64_t> &rankValues, uint64_t numberOfPartitions,

@@ -58,23 +58,28 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
 
     std::vector<uint64_t> allsizes = parentComm.AllGatherValues(rankDataSize);
 
-    std::cout << "Rank data sizes: [";
-    for (int i = 0; i < allsizes.size(); ++i)
+    if (parentRank == 0)
     {
-        if (i > 0)
+        std::cout << "Rank data sizes: [";
+        for (int i = 0; i < allsizes.size(); ++i)
         {
-            std::cout << ", ";
+            if (i > 0)
+            {
+                std::cout << ", ";
+            }
+            std::cout << allsizes[i];
         }
-        std::cout << allsizes[i];
     }
 
     int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
-    std::cout << "], request " << numPartitions << " partitions" << std::endl;
-
     helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+
+    if (parentRank == 0)
+    {
+        partitioning.PrintSummary();
+    }
+
     helper::RankPartition myLocation = partitioning.FindPartition(parentRank);
-    std::cout << "Rank " << parentRank << " is element " << myLocation.m_rankOrder
-              << " in partition " << myLocation.m_subStreamIndex << std::endl;
 
     m_SubStreamIndex = myLocation.m_subStreamIndex;
     m_AggregatorRank = myLocation.m_aggregatorRank;
