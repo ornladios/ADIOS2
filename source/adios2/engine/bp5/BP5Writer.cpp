@@ -1342,13 +1342,13 @@ void BP5Writer::InitTransports()
 
     std::string cacheKey = GetCacheKey(m_Aggregator);
     auto search = m_AggregatorSpecifics.find(cacheKey);
-    bool cacheHit = false;
+    // bool cacheHit = false;
 
     if (search != m_AggregatorSpecifics.end())
     {
         std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
                   << std::endl;
-        cacheHit = true;
+        // cacheHit = true;
     }
     else
     {
@@ -1454,6 +1454,7 @@ void BP5Writer::InitTransports()
         {
             for (const auto &name : aggData.m_DrainSubStreamNames)
             {
+                // MPI deadlock if some but not all ranks had aggregator cache hit
                 // if (!cacheHit)
                 // {
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
