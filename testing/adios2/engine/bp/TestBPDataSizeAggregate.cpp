@@ -58,11 +58,13 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
     for (uint64_t i = 0; i < localElementCount; ++i)
     {
-        rankData[i] = globalNx * worldSize * 1.0 + worldRank * localNy * 1.0 + static_cast<double>(i);;
+        rankData[i] =
+            globalNx * worldSize * 1.0 + worldRank * localNy * 1.0 + static_cast<double>(i);
+        ;
     }
 
-    varGlobalArray.SetSelection(adios2::Box<adios2::Dims>({0, static_cast<size_t>(sum0ToN(worldRank))},
-                                                          {globalNx, static_cast<size_t>(localNy)}));
+    varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
+        {0, static_cast<size_t>(sum0ToN(worldRank))}, {globalNx, static_cast<size_t>(localNy)}));
     bpWriter.Put<double>(varGlobalArray, rankData.data());
     bpWriter.EndStep();
 

@@ -262,7 +262,7 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seria
         m_AsyncWriteInfo->tokenChain = nullptr;
     }
     m_AsyncWriteInfo->tstart = m_EngineStart;
-    AggTransportData* aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
+    AggTransportData *aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
     m_AsyncWriteInfo->tm = &(aggData->m_FileDataManager);
     m_AsyncWriteInfo->Data = Data;
     m_AsyncWriteInfo->startPos = m_StartDataPos;

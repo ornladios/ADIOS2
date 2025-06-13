@@ -34,7 +34,7 @@ public:
     // communicator, initialize the chain using a data-size based rank
     // partitioning.
     void InitSizeBased(const uint64_t rankDataSize, const int subStreams,
-              helper::Comm const &parentComm);
+                       helper::Comm const &parentComm);
 
     void Close() final;
 

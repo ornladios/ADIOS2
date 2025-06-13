@@ -10,7 +10,7 @@
 #include "MPIChain.h"
 
 #include "adios2/helper/adiosLog.h"
-#include "adios2/helper/adiosPartitioner.h"  // PartitionRanks
+#include "adios2/helper/adiosPartitioner.h" // PartitionRanks
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 
 #include <iostream>
@@ -74,7 +74,7 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
     helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
     helper::RankPartition myLocation = partitioning.FindPartition(parentRank);
     std::cout << "Rank " << parentRank << " is element " << myLocation.m_rankOrder
-            << " in partition " << myLocation.m_subStreamIndex << std::endl;
+              << " in partition " << myLocation.m_subStreamIndex << std::endl;
 
     m_SubStreamIndex = myLocation.m_subStreamIndex;
     m_AggregatorRank = myLocation.m_aggregatorRank;

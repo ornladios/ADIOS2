@@ -69,11 +69,11 @@ private:
         std::vector<std::string> m_SubStreamNames;
 
         /* Name of subfiles on target if burst buffer is used (for all transports)
-        */
+         */
         std::vector<std::string> m_DrainSubStreamNames;
     };
 
-    std::string GetCacheKey(aggregator::MPIAggregator* aggregator);
+    std::string GetCacheKey(aggregator::MPIAggregator *aggregator);
     std::map<std::string, AggTransportData> m_AggregatorSpecifics;
 
     /** Single object controlling BP buffering */
