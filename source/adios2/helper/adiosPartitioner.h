@@ -25,8 +25,8 @@ namespace helper
 
 struct RankPartition
 {
+    // These are typed to matched how they're used in MPIAggregator
     size_t m_subStreamIndex;
-    // These should be size_t too I think
     int m_aggregatorRank;
     int m_rankOrder;
 };
