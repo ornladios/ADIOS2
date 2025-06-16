@@ -58,7 +58,7 @@ TEST(ADIOS2Partitioner, ADIOS2PartitionerGreedy)
     for (size_t i = 0; i < result.m_Partitions.size(); ++i)
     {
         std::cout << "Partition " << i << " (size = " << result.m_Sizes[i] << ") :" << std::endl;
-        std::vector<int> nextPart = result.m_Partitions[i];
+        std::vector<size_t> nextPart = result.m_Partitions[i];
         std::cout << "  ";
         for (size_t j = 0; j < nextPart.size(); ++j)
         {

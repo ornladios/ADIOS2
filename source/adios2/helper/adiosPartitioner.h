@@ -26,6 +26,7 @@ namespace helper
 struct RankPartition
 {
     size_t m_subStreamIndex;
+    // These should be size_t too I think
     int m_aggregatorRank;
     int m_rankOrder;
 };
@@ -36,7 +37,7 @@ struct RankPartition
 struct Partitioning
 {
     // List of partitions, each partition is a list of rank ids
-    std::vector<std::vector<int>> m_Partitions;
+    std::vector<std::vector<size_t>> m_Partitions;
     // List of partition sizes (sum of sizes of component ranks)
     std::vector<uint64_t> m_Sizes;
 
