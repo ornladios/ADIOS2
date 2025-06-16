@@ -49,7 +49,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
         bpIO.SetEngine("BPFile");
         bpIO.SetParameter("AggregationType", "DataSizeBased");
-        bpIO.SetParameter("NumAggregators", "4");
+        bpIO.SetParameter("NumAggregators", "2");
 
         adios2::Variable<double> varGlobalArray =
             bpIO.DefineVariable<double>("GlobalArray", {globalNx, globalNy});
