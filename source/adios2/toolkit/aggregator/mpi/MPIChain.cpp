@@ -56,6 +56,9 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
     int parentRank = parentComm.Rank();
     int parentSize = parentComm.Size();
 
+    // It doesn't seem like this logic belongs here, maybe this method should
+    // take a adios2::helper::RankPartition instead, and the partitioning moved
+    // somewhere else.
     std::vector<uint64_t> allsizes = parentComm.AllGatherValues(rankDataSize);
 
     if (parentRank == 0)

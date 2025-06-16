@@ -102,7 +102,7 @@ RankPartition Partitioning::FindPartition(const int parentRank)
     RankPartition result;
     for (size_t i = 0; i < m_Partitions.size(); ++i)
     {
-        std::vector<int> nextPart = m_Partitions[i];
+        std::vector<size_t> nextPart = m_Partitions[i];
         const auto it = std::find(nextPart.begin(), nextPart.end(), parentRank);
         if (it != nextPart.end())
         {
@@ -119,7 +119,7 @@ void Partitioning::PrintSummary()
     std::cout << "Paritioning resulted in " << m_Partitions.size() << " substreams:" << std::endl;
     for (size_t i = 0; i < m_Partitions.size(); ++i)
     {
-        std::vector<int> nextPart = m_Partitions[i];
+        std::vector<size_t> nextPart = m_Partitions[i];
         std::cout << "  " << i << ": [";
         for (size_t j = 0; j < nextPart.size(); ++j)
         {

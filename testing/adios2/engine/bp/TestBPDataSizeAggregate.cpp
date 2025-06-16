@@ -42,7 +42,8 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     {
         // Define local data, size varies by rank
         uint64_t localNy = worldRank + 1;
-        std::vector<double> rankData(globalNx, localNy);
+        std::vector<double> rankData;
+        rankData.resize(globalNx * localNy);
         uint64_t localElementCount = rankData.size();
 
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
