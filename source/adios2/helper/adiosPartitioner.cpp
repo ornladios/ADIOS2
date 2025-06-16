@@ -107,7 +107,7 @@ RankPartition Partitioning::FindPartition(const int parentRank)
         if (it != nextPart.end())
         {
             result.m_subStreamIndex = i;
-            result.m_aggregatorRank = *(nextPart.begin());
+            result.m_aggregatorRank = static_cast<int>(*(nextPart.begin()));
             result.m_rankOrder = static_cast<int>(std::distance(std::begin(nextPart), it));
         }
     }
