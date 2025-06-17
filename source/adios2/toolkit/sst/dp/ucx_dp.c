@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
@@ -57,6 +58,9 @@ struct fabric_state
 
     ucp_address_t *local_addr;
     size_t local_addr_len;
+
+    pthread_t progress_thread;
+    char keep_making_progress;
 };
 
 /*
@@ -115,7 +119,7 @@ static ucs_status_t init_fabric(struct fabric_state *fabric, struct _SstParams *
         return status;
     }
     ucp_params.field_mask = UCP_PARAM_FIELD_FEATURES;
-    ucp_params.features = UCP_FEATURE_RMA;
+    ucp_params.features = UCP_FEATURE_RMA | UCP_FEATURE_WAKEUP;
 
     status = ucp_init(&ucp_params, config, &fabric->ucp_context);
     if (status != UCS_OK)
@@ -282,6 +286,60 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream, void **Read
     return Stream;
 }
 
+typedef struct fabric_state progress_thread_params;
+
+static void *make_progress(void *params_)
+{
+    progress_thread_params *params = params_;
+    while (params->keep_making_progress)
+    {
+        while (ucp_worker_progress(params->ucp_worker) != 0)
+        { // go again
+        }
+        ucp_worker_wait(params->ucp_worker);
+    }
+    return NULL;
+}
+
+typedef enum
+{
+    ProgressThreadUnspecified,
+    ProgressThreadYes,
+    ProgressThreadNo
+} ProgressThread;
+
+/*
+ * `export UCX_POSIX_USE_PROC_LINK=n` might be necessary to make this work.
+ */
+static ProgressThread use_progress_thread()
+{
+    size_t const max_len = 4;
+    char const *use_progress_thread_envvar = getenv("SST_UCX_PROGRESS_THREAD");
+    char use_progress_thread[max_len];
+
+    if (!use_progress_thread_envvar)
+    {
+        return ProgressThreadUnspecified;
+    }
+
+    strncpy(use_progress_thread, use_progress_thread_envvar, max_len);
+    for (size_t i = 0; i < max_len; ++i)
+    {
+        use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
+    }
+
+    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
+        strncmp(use_progress_thread, "yes", max_len) == 0 ||
+        strncmp(use_progress_thread, "on", max_len) == 0)
+    {
+        return ProgressThreadYes;
+    }
+    else
+    {
+        return ProgressThreadNo;
+    }
+}
+
 static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                   attr_list DPAttrs, SstStats Stats)
 {
@@ -302,6 +360,37 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
     }
 
     Stream->CP_Stream = CP_Stream;
+
+    switch (use_progress_thread())
+    {
+    case ProgressThreadUnspecified:
+        // Since UCX does not allow asking the worker if it supports
+        // automatic progress, we can do no more here than make a generic
+        // decision for all users here.
+        // We consider manual progress as an optional feature that needs to be
+        // actively switched on. Treat this case same as ProgressThreadNo.
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Not using a separate thread for manual progress since it was not requested. "
+                      "Request it by setting environment variable SST_UCX_PROGRESS_THREAD=1.\n");
+        Stream->Fabric->keep_making_progress = 0;
+        break;
+    case ProgressThreadNo:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Not using a separate thread for manual progress upon user request.\n");
+        Stream->Fabric->keep_making_progress = 0;
+        break;
+    case ProgressThreadYes:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Using a separate thread for manual progress upon user request.\n");
+        Stream->Fabric->keep_making_progress = 1;
+        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress,
+                           Stream->Fabric) != 0)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+            return NULL;
+        }
+        break;
+    }
 
     return (void *)Stream;
 }
@@ -372,9 +461,9 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
         if (status != UCS_OK)
         {
             Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
-                          "UCX Error during ucp_ep_create() with: %s.\n",
+                          "UCX Error during ucp_ep_create() with: %s. Let's ignore for now, this "
+                          "point-to-point connection might not be needed.\n",
                           ucs_status_string(status));
-            return;
         }
         Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
@@ -438,6 +527,7 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
     param.op_attr_mask = 0;
     ret->req =
         ucp_get_nbx(RS_Stream->WriterEP[Rank], Buffer, Length, (uint64_t)Addr, rkey_p, &param);
+    ucp_rkey_destroy(rkey_p);
     status = UCS_PTR_STATUS(ret->req);
     if (status != UCS_OK && status != UCS_INPROGRESS)
     {
@@ -700,6 +790,17 @@ static void UcxDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     pthread_mutex_unlock(&ucx_ts_mutex);
 
     Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
+
+    if (WS_Stream->Fabric->keep_making_progress == 1)
+    {
+        WS_Stream->Fabric->keep_making_progress = 0;
+        ucp_worker_signal(WS_Stream->Fabric->ucp_worker);
+        if (pthread_join(WS_Stream->Fabric->progress_thread, NULL) != 0)
+        {
+            Svcs->verbose(WS_Stream, DPCriticalVerbose, "Could not join thread.\n");
+            return;
+        }
+    }
 
     if (WS_Stream->Fabric)
     {
