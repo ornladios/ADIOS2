@@ -1271,7 +1271,7 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         std::cout << "InitAggregator() - DataSizeBased: Closing and re-opening MPIChain"
                   << std::endl;
         m_AggregatorDataSizeBased.Close();
-        m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumAggregators, m_Comm);
+        m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumSubFiles, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingData = true;
         DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
