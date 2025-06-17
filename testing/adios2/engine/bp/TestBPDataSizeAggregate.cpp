@@ -15,6 +15,12 @@ namespace
 {
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 {
+    if (n > vec.size())
+    {
+        std::cout << "Index out of range (sumFirstN), size=" << vec.size() << ", n=" << n
+                  << std::endl;
+        throw std::runtime_error("Index out of range (sumFirstN)");
+    }
     uint64_t sum = 0;
     for (size_t i = 0; i < n; ++i)
     {
@@ -25,9 +31,29 @@ uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 
 void swap(std::vector<uint64_t> &vec, uint64_t idx1, uint64_t idx2)
 {
+    if (idx1 >= vec.size() || idx2 >= vec.size())
+    {
+        std::cout << "Index out of range (swap), size=" << vec.size() << ", idx1=" << idx1
+                  << ", idx2=" << idx2 << std::endl;
+        throw std::runtime_error("Index out of range (swap)");
+    }
     uint64_t tmp = vec[idx1];
     vec[idx1] = vec[idx2];
     vec[idx2] = tmp;
+}
+
+void shuffle(std::vector<uint64_t> &vec)
+{
+    size_t nRanks = vec.size();
+    if (nRanks > 2)
+    {
+        // Swap the first and last (by default that's smallest and largest)
+        swap(vec, 0, nRanks - 1);
+    }
+    else
+    {
+        std::cout << "Cannot shuffle rank data sizes with fewer than three ranks" << std::endl;
+    }
 }
 
 int worldRank, worldSize;
@@ -49,7 +75,6 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
     std::vector<uint64_t> rankDataSizes(worldSize);
     std::iota(rankDataSizes.begin(), rankDataSizes.end(), 1);
-    swap(rankDataSizes, 4, 5);
 
     if (worldRank == 0)
     {
@@ -66,40 +91,55 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
     uint64_t globalNx = worldSize;
     uint64_t globalNy = sumFirstN(rankDataSizes, rankDataSizes.size());
+    uint64_t largestValue = (globalNx * globalNy) - 1;
+
+    adios2::IO bpIO = adios.DeclareIO("WriteIO");
+    bpIO.SetEngine("BPFile");
+    bpIO.SetParameter("AggregationType", aggregationType);
+    bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
 
     {
-        // Define local data, size varies by rank
-        uint64_t localNy = rankDataSizes[worldRank];
-        uint64_t localOffset = sumFirstN(rankDataSizes, worldRank);
-        std::vector<uint64_t> rankData;
-        rankData.resize(globalNx * localNy);
-
-        adios2::IO bpIO = adios.DeclareIO("WriteIO");
-        bpIO.SetEngine("BPFile");
-        bpIO.SetParameter("AggregationType", aggregationType);
-        bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
-
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
+    }
 
+    {
         adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
 
-        bpWriter.BeginStep();
-
-        uint64_t index = 0;
-        for (uint64_t x = 0; x < globalNx; ++x)
+        for (size_t step = 0; step < nSteps; ++step)
         {
-            uint64_t value = (x * globalNy) + localOffset;
-            for (uint64_t y = 0; y < localNy; ++y)
+            // Define local data, size varies by rank
+            uint64_t localNy = rankDataSizes[worldRank];
+            uint64_t localOffset = sumFirstN(rankDataSizes, worldRank);
+            std::vector<uint64_t> rankData;
+            rankData.resize(globalNx * localNy);
+
+            adios2::Variable<uint64_t> varGlobalArray =
+                bpIO.InquireVariable<uint64_t>("GlobalArray");
+
+            bpWriter.BeginStep();
+
+            uint64_t index = 0;
+            for (uint64_t x = 0; x < globalNx; ++x)
             {
-                rankData[index++] = value++;
+                uint64_t value = (x * globalNy) + localOffset;
+                for (uint64_t y = 0; y < localNy; ++y)
+                {
+                    rankData[index++] = (step * largestValue) + value++;
+                }
+            }
+
+            varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
+                {0, static_cast<size_t>(localOffset)}, {globalNx, static_cast<size_t>(localNy)}));
+            bpWriter.Put<uint64_t>(varGlobalArray, rankData.data());
+            bpWriter.EndStep();
+
+            if (step < nSteps - 1)
+            {
+                // If we're doing another time step, shuffle rank data sizes
+                shuffle(rankDataSizes);
             }
         }
-
-        varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
-            {0, static_cast<size_t>(localOffset)}, {globalNx, static_cast<size_t>(localNy)}));
-        bpWriter.Put<uint64_t>(varGlobalArray, rankData.data());
-        bpWriter.EndStep();
 
         bpWriter.Close();
     }
@@ -118,17 +158,22 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         auto var_array = io.InquireVariable<uint64_t>("GlobalArray");
         EXPECT_TRUE(var_array);
         ASSERT_EQ(var_array.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_array.Steps(), 1);
+        ASSERT_EQ(var_array.Steps(), nSteps);
         ASSERT_EQ(var_array.Shape().size(), 2);
 
-        std::vector<uint64_t> array;
-
-        bpReader.Get(var_array, array, adios2::Mode::Sync);
-        ASSERT_EQ(array.size(), var_array.Shape()[0] * var_array.Shape()[1]);
-
-        for (size_t i = 0; i < array.size(); ++i)
+        for (size_t step = 0; step < nSteps; ++step)
         {
-            ASSERT_EQ(array[i], static_cast<uint64_t>(i));
+            std::vector<uint64_t> array;
+
+            var_array.SetStepSelection({step, 1});
+
+            bpReader.Get(var_array, array, adios2::Mode::Sync);
+            ASSERT_EQ(array.size(), var_array.Shape()[0] * var_array.Shape()[1]);
+
+            for (size_t i = 0; i < array.size(); ++i)
+            {
+                ASSERT_EQ(array[i], static_cast<uint64_t>((step * largestValue) + i));
+            }
         }
 
         bpReader.Close();
