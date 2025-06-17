@@ -11,8 +11,6 @@
 
 using namespace adios2;
 
-int worldRank, worldSize;
-
 namespace
 {
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
@@ -32,8 +30,11 @@ void swap(std::vector<uint64_t> &vec, uint64_t idx1, uint64_t idx2)
     vec[idx2] = tmp;
 }
 
-std::string aggregationType;  // comes from command line
-std::string numberOfSubFiles; // comes from command line
+int worldRank, worldSize;
+uint64_t nSteps = 1;
+std::string aggregationType = "DataSizeBased"; // comes from command line
+std::string numberOfSubFiles = "2";            // comes from command line
+std::string numberOfSteps = "1";               // comes from command line
 }
 
 class DSATest : public ::testing::Test
@@ -48,14 +49,20 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
     std::vector<uint64_t> rankDataSizes(worldSize);
     std::iota(rankDataSizes.begin(), rankDataSizes.end(), 1);
-    // swap(rankDataSizes, 1, 2);
+    swap(rankDataSizes, 4, 5);
 
-    std::cout << "Rank data sizes (in number of columns)" << std::endl;
-    for (int i = 0; i < rankDataSizes.size(); ++i)
+    if (worldRank == 0)
     {
-        std::cout << rankDataSizes[i] << " ";
+        std::cout << "Number of timesteps: " << nSteps << std::endl;
+        std::cout << "Aggregation type: " << aggregationType << std::endl;
+        std::cout << "Number of subfiles: " << numberOfSubFiles << std::endl;
+        std::cout << "Rank data sizes (in number of columns)" << std::endl;
+        for (int i = 0; i < rankDataSizes.size(); ++i)
+        {
+            std::cout << rankDataSizes[i] << " ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 
     uint64_t globalNx = worldSize;
     uint64_t globalNy = sumFirstN(rankDataSizes, rankDataSizes.size());
@@ -64,21 +71,17 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         // Define local data, size varies by rank
         uint64_t localNy = rankDataSizes[worldRank];
         uint64_t localOffset = sumFirstN(rankDataSizes, worldRank);
-        std::cout << "Rank " << worldRank << " local offset: " << localOffset << std::endl;
-        std::vector<double> rankData;
+        std::vector<uint64_t> rankData;
         rankData.resize(globalNx * localNy);
         uint64_t localElementCount = rankData.size();
 
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
         bpIO.SetEngine("BPFile");
-
-        std::cout << "Setting AggregationType to " << aggregationType << std::endl;
         bpIO.SetParameter("AggregationType", aggregationType);
-        std::cout << "Setting NumSubFiles to " << numberOfSubFiles << std::endl;
         bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
 
-        adios2::Variable<double> varGlobalArray =
-            bpIO.DefineVariable<double>("GlobalArray", {globalNx, globalNy});
+        adios2::Variable<uint64_t> varGlobalArray =
+            bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
 
         adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
 
@@ -96,7 +99,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
         varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
             {0, static_cast<size_t>(localOffset)}, {globalNx, static_cast<size_t>(localNy)}));
-        bpWriter.Put<double>(varGlobalArray, rankData.data());
+        bpWriter.Put<uint64_t>(varGlobalArray, rankData.data());
         bpWriter.EndStep();
 
         bpWriter.Close();
@@ -113,20 +116,20 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         io.SetEngine("BPFile");
         adios2::Engine bpReader = io.Open("unbalanced_output.bp", adios2::Mode::ReadRandomAccess);
 
-        auto var_array = io.InquireVariable<double>("GlobalArray");
+        auto var_array = io.InquireVariable<uint64_t>("GlobalArray");
         EXPECT_TRUE(var_array);
         ASSERT_EQ(var_array.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_array.Steps(), 1);
         ASSERT_EQ(var_array.Shape().size(), 2);
 
-        std::vector<double> array;
+        std::vector<uint64_t> array;
 
         bpReader.Get(var_array, array, adios2::Mode::Sync);
         ASSERT_EQ(array.size(), var_array.Shape()[0] * var_array.Shape()[1]);
 
         for (size_t i = 0; i < array.size(); ++i)
         {
-            ASSERT_EQ(array[i], static_cast<double>(i));
+            ASSERT_EQ(array[i], static_cast<uint64_t>(i));
         }
 
         bpReader.Close();
@@ -147,6 +150,20 @@ int main(int argc, char **argv)
     if (argc > 2)
     {
         numberOfSubFiles = std::string(argv[2]);
+    }
+    if (argc > 3)
+    {
+        numberOfSteps = std::string(argv[3]);
+    }
+
+    try
+    {
+        nSteps = std::stoul(numberOfSteps);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Unable to convert " << numberOfSteps << " to a number due to: " << e.what()
+                  << ". Defaulting to " << nSteps << std::endl;
     }
 
     int result = RUN_ALL_TESTS();
