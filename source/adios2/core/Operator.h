@@ -61,16 +61,6 @@ public:
     void SetAccuracy(const adios2::Accuracy &a) noexcept;
     adios2::Accuracy GetAccuracy() const noexcept;
 
-#define declare_type(T)                                                                            \
-    virtual void RunCallback1(const T *, const std::string &, const std::string &,                 \
-                              const std::string &, const size_t, const Dims &, const Dims &,       \
-                              const Dims &) const;
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-    virtual void RunCallback2(void *, const std::string &, const std::string &, const std::string &,
-                              const size_t, const Dims &, const Dims &, const Dims &) const;
-
     virtual size_t GetHeaderSize() const;
 
     /** Give an upper bound estimate how big the transformed data could be */
@@ -83,19 +73,54 @@ public:
      * @param blockCount
      * @param type
      * @param bufferOut
-     * @param parameters
      * @return size of compressed buffer
+     * This is the default Operate API and will be used if it exists in the subclass.  It should be
+     * used preferentially if the operator does not require per-invocation parameters.
      */
     virtual size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
-                           const DataType type, char *bufferOut) = 0;
+                           const DataType type, char *bufferOut);
+
+    /**
+     * @param dataIn
+     * @param blockStart
+     * @param blockCount
+     * @param type
+     * @param bufferOut
+     * @param parameters
+     * @return size of compressed buffer
+     *
+     * This is the extended Operate API that includes parameters create by CreateOperatorParameters.
+     * Currently those include EngineName and VariableName.  This API will only be called if the
+     * default Operate is *not* redefined in the subclass.
+     */
+    virtual size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                           const DataType type, char *bufferOut, Params params);
 
     /**
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
      * @return size of decompressed buffer
+     * This is the default InverseOperate API and will be used if it exists in the subclass.  It
+     * should be used preferentially if the operator does not require per-invocation parameters.
      */
-    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) = 0;
+    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut);
+
+    /**
+     * @param bufferIn
+     * @param sizeIn
+     * @param dataOut
+     * @param params
+     * @return size of decompressed buffer
+     *
+     * This is the extended InverseOperate API that includes
+     * parameters create by CreateOperatorParameters.  Currently those
+     * include EngineName and VariableName.  This API will only be
+     * called if the default InverseOperate is *not* redefined in the
+     * subclass.
+     */
+    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut,
+                                  Params params);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 

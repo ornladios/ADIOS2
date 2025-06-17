@@ -191,7 +191,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
 }
 
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, MemorySpace memSpace,
-                  std::shared_ptr<Operator> op)
+                  std::shared_ptr<Operator> op, Engine *engine, VariableBase *var)
 {
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);
@@ -200,6 +200,11 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, Memo
         op = MakeOperator(OperatorTypeToString(compressorType), {});
     }
     size_t sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut);
+    if ((sizeOut == 0) && engine && var)
+    {
+        Params operatorParams = CreateOperatorParams(engine, var);
+        sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut, operatorParams);
+    }
     if (sizeOut == 0) // the inverse operator was not applied
     {
         size_t headerSize = op->GetHeaderSize();
@@ -208,6 +213,12 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, Memo
                                      /*endianReverse*/ false, memSpace);
     }
     return sizeOut;
+}
+
+Params CreateOperatorParams(const Engine *engine, const VariableBase *variable)
+{
+    Params p = {{"EngineName", engine->m_Name}, {"VariableName", variable->m_Name}};
+    return p;
 }
 
 } // end namespace core

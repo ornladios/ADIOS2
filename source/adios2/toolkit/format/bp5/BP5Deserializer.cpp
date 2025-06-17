@@ -2001,7 +2001,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             core::Decompress(
                 IncomingData,
                 ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
-                decompressBuffer.data(), Req.MemSpace, op);
+                decompressBuffer.data(), Req.MemSpace, op, m_Engine, VB);
             VB->m_AccuracyProvided = op->GetAccuracy();
         }
         IncomingData = decompressBuffer.data();
