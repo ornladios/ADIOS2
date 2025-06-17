@@ -25,7 +25,7 @@ uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
     return sum;
 }
 
-void swap(std::vector<uint64_t>& vec, uint64_t idx1, uint64_t idx2)
+void swap(std::vector<uint64_t> &vec, uint64_t idx1, uint64_t idx2)
 {
     uint64_t tmp = vec[idx1];
     vec[idx1] = vec[idx2];
@@ -94,9 +94,8 @@ TEST_F(DSATest, TestWriteUnbalancedData)
             }
         }
 
-        varGlobalArray.SetSelection(
-            adios2::Box<adios2::Dims>({0, static_cast<size_t>(localOffset)},
-                                      {globalNx, static_cast<size_t>(localNy)}));
+        varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
+            {0, static_cast<size_t>(localOffset)}, {globalNx, static_cast<size_t>(localNy)}));
         bpWriter.Put<double>(varGlobalArray, rankData.data());
         bpWriter.EndStep();
 
