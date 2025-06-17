@@ -101,6 +101,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     {
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
+        EXPECT_TRUE(varGlobalArray);
     }
 
     {
