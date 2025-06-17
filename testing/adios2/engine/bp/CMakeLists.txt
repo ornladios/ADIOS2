@@ -127,7 +127,7 @@ bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 
 if (ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
-    WORKING_DIRECTORY ${BP5_DIR}
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" 2
   )
 endif()
 
