@@ -16,7 +16,7 @@ namespace
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 {
     uint64_t sum = 0;
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
     {
         sum += vec[i];
     }
@@ -57,7 +57,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         std::cout << "Aggregation type: " << aggregationType << std::endl;
         std::cout << "Number of subfiles: " << numberOfSubFiles << std::endl;
         std::cout << "Rank data sizes (in number of columns)" << std::endl;
-        for (int i = 0; i < rankDataSizes.size(); ++i)
+        for (size_t i = 0; i < rankDataSizes.size(); ++i)
         {
             std::cout << rankDataSizes[i] << " ";
         }
@@ -73,7 +73,6 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         uint64_t localOffset = sumFirstN(rankDataSizes, worldRank);
         std::vector<uint64_t> rankData;
         rankData.resize(globalNx * localNy);
-        uint64_t localElementCount = rankData.size();
 
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
         bpIO.SetEngine("BPFile");
