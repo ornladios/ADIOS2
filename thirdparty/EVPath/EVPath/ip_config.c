@@ -387,7 +387,10 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     if (buf[0] == 0) {
 	/* bloody hell, what do you have to do? */
 	struct in_addr IP;
+	// <winsock2.h>: #define h_errno WSAGetLastError()
+#ifndef HAVE_WINDOWS_H
 	extern int h_errno;
+#endif
 	char *iface;
 	if (get_string_attr(attrs, CM_IP_INTERFACE, &iface)){
 	    IP.s_addr = htonl(get_self_ip_iface(trace_func, trace_data, iface));

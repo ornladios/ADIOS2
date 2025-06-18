@@ -1629,16 +1629,16 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
         {
             uint64_t MEBSize;
             helper::CopyFromBuffer(Aggregate.data(), Position, &MEBSize);
-            MetadataBlocks.push_back({Aggregate.data() + Position, MEBSize});
-            Position += MEBSize;
+            MetadataBlocks.push_back({Aggregate.data() + Position, static_cast<size_t>(MEBSize)});
+            Position += static_cast<size_t>(MEBSize);
         }
         helper::CopyFromBuffer(Aggregate.data(), Position, &ABCount);
         for (uint64_t i = 0; i < ABCount; ++i)
         {
             uint64_t AEBSize;
             helper::CopyFromBuffer(Aggregate.data(), Position, &AEBSize);
-            AttributeBlocks.push_back({Aggregate.data() + Position, AEBSize});
-            Position += AEBSize;
+            AttributeBlocks.push_back({Aggregate.data() + Position, static_cast<size_t>(AEBSize)});
+            Position += static_cast<size_t>(AEBSize);
         }
         uint64_t element;
         helper::CopyFromBuffer(Aggregate.data(), Position, &DSCount);
