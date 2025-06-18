@@ -72,6 +72,7 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
             }
             std::cout << allsizes[i];
         }
+        std::cout << "]" << std::endl;
     }
 
     int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
