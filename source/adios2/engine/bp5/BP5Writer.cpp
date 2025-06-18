@@ -53,8 +53,10 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::C
 std::string BP5Writer::GetCacheKey(aggregator::MPIAggregator *aggregator)
 {
     std::stringstream ss;
-    ss << aggregator->m_SubStreamIndex << "-" << aggregator->m_AggregatorRank << "-"
-       << aggregator->m_Rank << "-" << aggregator->m_IsAggregator;
+    ss << "ssidx:" << aggregator->m_SubStreamIndex << "-";
+    //    << "aggrank:" << aggregator->m_AggregatorRank << "-"
+    //    << "order:" << aggregator->m_Rank << "-"
+    //    << "isagg:" << aggregator->m_IsAggregator << "-";
     return ss.str();
 }
 
@@ -1342,13 +1344,13 @@ void BP5Writer::InitTransports()
 
     std::string cacheKey = GetCacheKey(m_Aggregator);
     auto search = m_AggregatorSpecifics.find(cacheKey);
-    // bool cacheHit = false;
+    bool cacheHit = false;
 
     if (search != m_AggregatorSpecifics.end())
     {
         std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
                   << std::endl;
-        // cacheHit = true;
+        cacheHit = true;
     }
     else
     {
@@ -1439,13 +1441,21 @@ void BP5Writer::InitTransports()
         // end up in mpi deadlock (communication among all ranks is expected on the
         // DataWritingComm.  So commenting out for now to allow getting a little
         // further.
-        // if (!cacheHit)
-        // {
-        std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
-        aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
-                                            m_IO.m_TransportsParameters, useProfiler,
-                                            *DataWritingComm);
-        // }
+        if (!cacheHit)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
+            if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+            {
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
+                                                    m_IO.m_TransportsParameters, useProfiler);
+            }
+            else
+            {
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
+                                                    m_IO.m_TransportsParameters, useProfiler,
+                                                    *DataWritingComm);
+            }
+        }
     }
     std::cout << "Rank " << m_Comm.Rank() << " - M" << std::endl;
     if (m_IAmDraining)
@@ -1463,7 +1473,7 @@ void BP5Writer::InitTransports()
         }
     }
     std::cout << "Rank " << m_Comm.Rank() << " - N" << std::endl;
-    if (m_Comm.Rank() == 0)
+    if (m_Comm.Rank() == 0 && m_WriterStep == 0)
     {
         std::cout << "Rank " << m_Comm.Rank() << " - O" << std::endl;
         // force turn off directio to metadata files
