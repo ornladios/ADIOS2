@@ -7,7 +7,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES
     "^(GNU|Clang|AppleClang|XLClang|XL|VisualAge|SunPro|HP|Intel|IntelLLVM|PGI|NVIDIA|NVHPC)$")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 endif()
-
+if(CMAKE_CXX_COMPILER_ID MATCHES
+    "^(MSVC)$")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd5287")
+endif()
 
 function(message_start_thirdparty)
   get_filename_component(tp_base "${CMAKE_CURRENT_LIST_DIR}" NAME_WE)
@@ -122,7 +125,7 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_DILL)
     add_subdirectory(dill)
   endif()
-  find_package(dill REQUIRED)
+  find_package(dill QUIET)
 
   add_subdirectory(ffs)
 endif()
