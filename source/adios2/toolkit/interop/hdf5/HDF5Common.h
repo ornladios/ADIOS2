@@ -128,7 +128,15 @@ public:
     static const std::string PARAMETER_CHUNK_VARS;
     static const std::string PARAMETER_HAS_IDLE_WRITER_RANK;
 
+    static const std::string PARAMETER_OPENPMD_COMPLIANT;
+    static const std::string PARAMETER_OPENPMD_FILE_BASED;
+    static const std::string PARAMETER_OPENPMD_ITERATION;
+    static const std::string ATTRNAME_OPENPMD_COMPLIANT;
+    static const std::string ATTRNAME_OPENPMD_FILE_BASED;
+    static const std::string ATTRNAME_OPENPMD_ITERATION;
+
     void ParseParameters(core::IO &io);
+    void PreInitParseParameters(core::IO &io);
     void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
     void Append(const std::string &name, helper::Comm const &comm);
 
@@ -156,6 +164,9 @@ public:
 
     void Close();
     void Advance();
+
+    void ReadOpenPMDAttributes();
+    void WriteOpenPMDAttributes();
 
     /*
      * This function will browse all (non-string) variables in io and define
@@ -199,12 +210,12 @@ public:
     void AddNonStringAttribute(core::IO &io, std::string const &attrName, hid_t attrId,
                                hid_t h5Type, hsize_t arraySize);
 
-    static void StaticGetAdiosStepString(std::string &adiosStepName, size_t ts);
+    void GetAdiosStepString(std::string &adiosStepName, size_t ts);
 
     hid_t m_PropertyListId = -1;
     hid_t m_PropertyTxfID = -1;
     hid_t m_FileId = -1;
-    hid_t m_GroupId = -1;
+    std::vector<hid_t> m_GroupIds;
 
     hid_t m_DefH5TypeComplexLongDouble;
     hid_t m_DefH5TypeComplexDouble;
@@ -222,6 +233,10 @@ public:
     T GetADIOSType(hid_t);
 
     bool m_IsGeneratedByAdios = false;
+
+    bool m_IsOpenPMDCompliant = false;
+    bool m_IsOpenPMDFileBased = false;
+    size_t m_OpenPMDIteration = 0;
 
     struct MPI_API
     {
