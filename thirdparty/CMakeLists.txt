@@ -122,7 +122,7 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_DILL)
     add_subdirectory(dill)
   endif()
-  find_package(dill REQUIRED)
+  find_package(dill QUIET)
 
   add_subdirectory(ffs)
 endif()

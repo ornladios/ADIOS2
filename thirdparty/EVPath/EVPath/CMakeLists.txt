@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.7 LANGUAGES C CXX)
+project(EVPath VERSION 4.5.8 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -205,7 +205,9 @@ _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
 
 if(TARGET ffs) # The unaliased target exists so it's built by us
-  set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  if (DILL_FOUND)  # this only exists in meta-builds
+    set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  endif()
 else()
   set(CMAKE_REQUIRED_LIBRARIES ffs::ffs)
   CHECK_INCLUDE_FILE(cod.h HAVE_COD_H)
