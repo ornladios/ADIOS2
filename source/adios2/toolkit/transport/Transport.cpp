@@ -78,22 +78,28 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 void Transport::OpenChain(const std::string &name, const Mode openMode,
                           const helper::Comm &chainComm, const bool async, const bool directio)
 {
-    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type + " using library " +
-                          m_Library + " doesn't implement the OpenChain function\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "transport::Transport", "NotImplemented",
+                                         "ERROR: " + m_Name + " transport type " + m_Type +
+                                             " using library " + m_Library +
+                                             " doesn't implement the OpenChain function\n");
 }
 
 void Transport::SetParameters(const Params &parameters) {}
 
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
 {
-    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type + " using library " +
-                          m_Library + " doesn't implement the SetBuffer function\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "transport::Transport", "NotImplemented",
+                                         "ERROR: " + m_Name + " transport type " + m_Type +
+                                             " using library " + m_Library +
+                                             " doesn't implement the SetBuffer function\n");
 }
 
 void Transport::Flush()
 {
-    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type + " using library " +
-                          m_Library + " doesn't implement the Flush function\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "transport::Transport", "NotImplemented",
+                                         "ERROR: " + m_Name + " transport type " + m_Type +
+                                             " using library " + m_Library +
+                                             " doesn't implement the Flush function\n");
 }
 
 size_t Transport::GetSize() { return 0; }
