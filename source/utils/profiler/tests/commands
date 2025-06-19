@@ -1,0 +1,13 @@
+###################################################
+## processing profiler at ../sample_data/t0/t0.json
+## using scripts at ../scripts/
+## outputs will be at plots/zero
+###################################################
+source 1.sh ../scripts zero ../sample_data/t0/t0.json
+
+###################################################
+## processing profiler at ../sample_data/t10/t10.json
+## outputs will be at plots/ten
+###################################################
+source 1.sh ../scripts ten ../sample_data/t10/t10.json
+
