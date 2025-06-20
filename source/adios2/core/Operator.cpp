@@ -89,21 +89,14 @@ size_t Operator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
     return ElemCount * ElemSize + 128;
 };
 
+void Operator::AddExtraParameters(const Params &params) {}
+
 size_t Operator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
                          const DataType type, char *bufferOut)
 {
     return 0;
 }
-size_t Operator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
-                         const DataType type, char *bufferOut, Params params)
-{
-    return 0;
-}
-size_t Operator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut,
-                                Params params)
-{
-    return 0;
-}
+
 size_t Operator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     return 0;

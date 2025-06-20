@@ -853,17 +853,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             BufferV::BufferPos pos = CurDataBuffer->Allocate(AllocSize, ElemSize);
             char *CompressedData = (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
+            Params operatorParams = core::CreateOperatorParams(m_Engine, VB);
+            VB->m_Operations[0]->AddExtraParameters(operatorParams);
             CompressedSize = VB->m_Operations[0]->Operate((const char *)Data, tmpOffsets, tmpCount,
                                                           (DataType)Rec->Type, CompressedData);
-            if (CompressedSize == 0)
-            {
-                Params operatorParams = core::CreateOperatorParams(m_Engine, VB);
-                // Try to other Operate API if the operator was not applied
-                CompressedSize = VB->m_Operations[0]->Operate((const char *)Data, tmpOffsets,
-                                                              tmpCount, (DataType)Rec->Type,
-                                                              CompressedData, operatorParams);
-            }
-
             // if the operator was not applied
             if (CompressedSize == 0)
                 CompressedSize = helper::CopyMemoryWithOpHeader(
