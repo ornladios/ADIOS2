@@ -19,11 +19,6 @@
 #define strdup(x) _strdup(x)
 #endif
 
-#define ThrowUp(x)                                                                                 \
-    helper::Throw<std::invalid_argument>("Core", "Engine", "ThrowUp",                              \
-                                         "Non-overridden function " + std::string(x) +             \
-                                             " called in Remote")
-
 namespace adios2
 {
 
@@ -57,7 +52,24 @@ void OpenSimpleResponseHandler(CManager cm, CMConnection conn, void *vevent, voi
     void *obj = CMCondition_get_client_data(cm, open_response_msg->OpenResponseCondition);
     static_cast<EVPathRemote *>(obj)->m_ID = open_response_msg->FileHandle;
     static_cast<EVPathRemote *>(obj)->m_Size = open_response_msg->FileSize;
+    std::vector<char> *Tmp = static_cast<EVPathRemote *>(obj)->m_TmpContentVector;
+    if (Tmp && open_response_msg->FileContents)
+    {
+        Tmp->resize(open_response_msg->FileSize);
+        memcpy(Tmp->data(), open_response_msg->FileContents, open_response_msg->FileSize);
+    }
+
     CMCondition_signal(cm, open_response_msg->OpenResponseCondition);
+    return;
+};
+
+void CloseResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                          attr_list attrs)
+{
+    EVPathRemoteCommon::CloseFileResponseMsg close_response_msg =
+        static_cast<EVPathRemoteCommon::CloseFileResponseMsg>(vevent);
+
+    CMCondition_signal(cm, close_response_msg->CloseResponseCondition);
     return;
 };
 
@@ -117,6 +129,8 @@ void EVPathRemote::InitCMData()
         CMregister_handler(ev_state.OpenSimpleResponseFormat,
                            (CMHandlerFunc)OpenSimpleResponseHandler, &ev_state);
         CMregister_handler(ev_state.ReadResponseFormat, (CMHandlerFunc)ReadResponseHandler,
+                           &ev_state);
+        CMregister_handler(ev_state.CloseResponseFormat, (CMHandlerFunc)CloseResponseHandler,
                            &ev_state);
     });
 }
@@ -187,10 +201,56 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    open_msg.ReadContents = 0;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
     CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
     m_Active = true;
+}
+
+void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t port,
+                                      const std::string filename, std::vector<char> &contents)
+{
+
+    EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
+    InitCMData();
+    attr_list contact_list = create_attr_list();
+    atom_t CM_IP_PORT = -1;
+    atom_t CM_IP_HOSTNAME = -1;
+    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+    CM_IP_PORT = attr_atom_from_string("IP_PORT");
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
+    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    free_attr_list(contact_list);
+    if (!m_conn)
+        return;
+
+    memset(&open_msg, 0, sizeof(open_msg));
+    open_msg.FileName = (char *)filename.c_str();
+    open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    open_msg.ReadContents = 1;
+    CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
+    m_TmpContentVector = &contents; // this will be accessed in the handler
+    CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
+    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
+    // file does not remain open after OpenReadSimpleFile
+    m_TmpContentVector = nullptr;
+    m_Active = false;
+}
+
+void EVPathRemote::Close()
+{
+
+    EVPathRemoteCommon::_CloseFileMsg CloseMsg;
+    memset(&CloseMsg, 0, sizeof(CloseMsg));
+    CloseMsg.CloseResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    CloseMsg.FileHandle = m_ID;
+    CMCondition_set_client_data(ev_state.cm, CloseMsg.CloseResponseCondition, (void *)this);
+    CMwrite(m_conn, ev_state.CloseFileFormat, &CloseMsg);
+    CMCondition_wait(ev_state.cm, CloseMsg.CloseResponseCondition);
+    m_Active = false;
+    m_ID = 0;
 }
 
 EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size_t StepCount,
@@ -198,6 +258,10 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
                                           Accuracy &accuracy, void *dest)
 {
     EVPathRemoteCommon::_GetRequestMsg GetMsg;
+    if (!m_Active)
+        helper::Throw<std::invalid_argument>("Remote", "EVPathRemoteFile", "FileNotOpen",
+                                             "Attempted a Get on an unopened file\n");
+
     memset(&GetMsg, 0, sizeof(GetMsg));
     GetMsg.GetResponseCondition = CMCondition_get(ev_state.cm, m_conn);
     GetMsg.FileHandle = m_ID;
@@ -219,6 +283,9 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
 EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest)
 {
     EVPathRemoteCommon::_ReadRequestMsg ReadMsg;
+    if (!m_Active)
+        helper::Throw<std::invalid_argument>("Remote", "EVPathRemoteFile", "FileNotOpen",
+                                             "Attempted a Read on an unopened file\n");
     memset(&ReadMsg, 0, sizeof(ReadMsg));
     ReadMsg.ReadResponseCondition = CMCondition_get(ev_state.cm, m_conn);
     ReadMsg.FileHandle = m_ID;
