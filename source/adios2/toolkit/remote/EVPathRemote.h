@@ -38,10 +38,28 @@ public:
 
     explicit operator bool() const { return m_Active; }
 
+    /*
+     * Open() and OpenSimpleFile() are synchronous calls that
+     * internally return a unique ID of an open file on the server.
+     * Barring an explicit Close() operation, that file will remain
+     * open until the connection between the client and server closes.
+     * Note that because of connection sharing and other network-level
+     * considerations, this might not happen upon destruction of the
+     * EVPathRemote object.
+     */
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering);
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
+
+    /*
+     * OpenReadSimpleFile() is a synchronous call that returns the
+     * full contents of a remote simple file as a char array.  It does
+     * this with a single round-trip to the server and does not leave
+     * an open file on the server.
+     */
+    void OpenReadSimpleFile(const std::string hostname, const int32_t port,
+                            const std::string filename, std::vector<char> &contents);
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
                   Dims &Start, Accuracy &accuracy, void *dest);
@@ -50,7 +68,21 @@ public:
 
     GetHandle Read(size_t Start, size_t Size, void *Dest);
 
+    /*
+     * EVPathRemote::Close is an active synchronous operation that
+     * involves a round-trip to the server, waiting for a response to
+     * ensure that the file is closed on the server.  This should
+     * likely not be performed in any destructors because of the
+     * delays involved.  However server files are also closed after
+     * the network connection from which they were opened goes away.
+     * This is a passive asynchronous operation that will happen
+     * sometime after the EVPathRemote object is destroyed.
+     */
+    void Close();
+
     int64_t m_ID;
+
+    std::vector<char> *m_TmpContentVector;
 
 private:
 #ifdef ADIOS2_HAVE_SST

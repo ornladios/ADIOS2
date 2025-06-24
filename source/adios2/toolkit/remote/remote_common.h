@@ -36,6 +36,7 @@ typedef struct _OpenSimpleFileMsg
 {
     int OpenResponseCondition;
     char *FileName;
+    int ReadContents;
 } *OpenSimpleFileMsg;
 
 typedef struct _OpenSimpleResponseMsg
@@ -94,8 +95,17 @@ typedef struct _ReadResponseMsg
  */
 typedef struct _CloseFileMsg
 {
-    void *FileHandle;
+    int CloseResponseCondition;
+    int64_t FileHandle;
 } *CloseFileMsg;
+
+/*
+ */
+typedef struct _CloseFileResponseMsg
+{
+    int CloseResponseCondition;
+    int Status;
+} *CloseFileResponseMsg;
 
 typedef struct _KillServerMsg
 {
@@ -145,6 +155,7 @@ struct Remote_evpath_state
     CMFormat ReadRequestFormat;
     CMFormat ReadResponseFormat;
     CMFormat CloseFileFormat;
+    CMFormat CloseResponseFormat;
     CMFormat KillServerFormat;
     CMFormat KillResponseFormat;
     CMFormat StatusServerFormat;

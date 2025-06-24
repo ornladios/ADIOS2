@@ -41,6 +41,9 @@ public:
     virtual void OpenSimpleFile(const std::string hostname, const int32_t port,
                                 const std::string filename);
 
+    virtual void OpenReadSimpleFile(const std::string hostname, const int32_t port,
+                                    const std::string filename, std::vector<char> &contents);
+
     typedef void *GetHandle;
 
     virtual GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
@@ -49,6 +52,8 @@ public:
     virtual bool WaitForGet(GetHandle handle);
 
     virtual GetHandle Read(size_t Start, size_t Size, void *Dest);
+
+    virtual void Close();
 
     size_t m_Size;
 

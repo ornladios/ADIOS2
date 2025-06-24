@@ -35,6 +35,12 @@ void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
     ThrowUp("RemoteSimpleOpen");
 };
 
+void Remote::OpenReadSimpleFile(const std::string hostname, const int32_t port,
+                                const std::string filename, std::vector<char> &contents)
+{
+    ThrowUp("RemoteSimpleOpenRead");
+};
+
 Remote::GetHandle Remote::Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
                               Dims &Count, Dims &Start, Accuracy &accuracy, void *dest)
 {
@@ -53,6 +59,9 @@ Remote::GetHandle Remote::Read(size_t Start, size_t Size, void *Dest)
     ThrowUp("RemoteRead");
     return (Remote::GetHandle)0;
 };
+
+void Remote::Close() { ThrowUp("RemoteClose"); };
+
 Remote::~Remote() {}
 Remote::Remote(const adios2::HostOptions &hostOptions)
 : m_HostOptions(std::make_shared<adios2::HostOptions>(hostOptions))

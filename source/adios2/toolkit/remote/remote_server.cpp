@@ -250,16 +250,54 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     _OpenSimpleResponseMsg open_response_msg;
     std::cout << "Got an open simple request for file " << open_msg->FileName << std::endl;
     AnonSimpleFile *f = new AnonSimpleFile(open_msg->FileName);
+    if (f->m_FileDescriptor == -1)
+        std::cout << "Open failed! BAD!" << std::endl;
+    char *ContentsToFree = NULL;
     f->m_FileName = open_msg->FileName;
     memset(&open_response_msg, 0, sizeof(open_response_msg));
     open_response_msg.FileHandle = f->m_ID;
     open_response_msg.FileSize = f->m_Size;
     open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
-
+    if (open_msg->ReadContents)
+    {
+        // This is a one-shot operation
+        ContentsToFree = (char *)malloc(f->m_Size);
+        size_t remaining = f->m_Size;
+        char *pointer = ContentsToFree;
+        while (remaining > 0)
+        {
+            ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
+            if (ret <= 0)
+            {
+                // EOF or error,  should send a message back, but we haven't define error handling
+                // yet
+                std::cout << "Read failed! BAD!" << std::endl;
+                // instead free tmp and return;
+                free(ContentsToFree);
+                return;
+            }
+            else
+            {
+                remaining -= ret;
+                pointer += ret;
+            }
+        }
+        open_response_msg.FileContents = ContentsToFree;
+        if (verbose >= 1)
+            std::cout << "closing simple file after OpenRead" << f->m_FileName << "\" total sent "
+                      << readable_size(f->m_Size) << std::endl;
+        delete f;
+    }
+    else
+    {
+        // file is to remain open, keep records
+        CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
+        SimpleFileMap[f->m_ID] = f;
+        ConnToFileMap.emplace(conn, f->m_ID);
+    }
     CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
-    CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
-    SimpleFileMap[f->m_ID] = f;
-    ConnToFileMap.emplace(conn, f->m_ID);
+    if (ContentsToFree)
+        free(ContentsToFree);
     SimpleFilesOpened++;
     last_service_time = std::chrono::steady_clock::now();
 }
@@ -513,6 +551,40 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     free(tmp);
 }
 
+static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                             attr_list attrs)
+{
+    CloseFileMsg CloseMsg = static_cast<CloseFileMsg>(vevent);
+    struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
+    AnonADIOSFile *afile = ADIOSFileMap[CloseMsg->FileHandle];
+    int Ret = 1; // failure
+    if (afile)
+    {
+        if (verbose >= 1)
+            std::cout << "closing ADIOS file \"" << afile->m_FileName << "\" total sent "
+                      << readable_size(afile->m_BytesSent) << " in " << afile->m_OperationCount
+                      << " Get()s" << std::endl;
+        ADIOSFileMap.erase(CloseMsg->FileHandle);
+        delete afile;
+        Ret = 0;
+    }
+    AnonSimpleFile *sfile = SimpleFileMap[CloseMsg->FileHandle];
+    if (sfile)
+    {
+        if (verbose >= 1)
+            std::cout << "closing simple file " << sfile->m_FileName << "\" total sent "
+                      << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
+                      << " Read()s" << std::endl;
+        SimpleFileMap.erase(CloseMsg->FileHandle);
+        delete sfile;
+        Ret = 0;
+    }
+    struct _CloseFileResponseMsg close_response_msg;
+    close_response_msg.CloseResponseCondition = CloseMsg->CloseResponseCondition;
+    close_response_msg.Status = Ret;
+    CMwrite(conn, ev_state->CloseResponseFormat, &close_response_msg);
+}
+
 static void KillServerHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
                               attr_list attrs)
 {
@@ -578,6 +650,7 @@ void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
     CMregister_handler(ev_state.OpenSimpleFileFormat, OpenSimpleHandler, &ev_state);
     CMregister_handler(ev_state.GetRequestFormat, GetRequestHandler, &ev_state);
     CMregister_handler(ev_state.ReadRequestFormat, ReadRequestHandler, &ev_state);
+    CMregister_handler(ev_state.CloseFileFormat, CloseFileHandler, &ev_state);
     CMregister_handler(ev_state.KillServerFormat, KillServerHandler, &ev_state);
     CMregister_handler(ev_state.KillResponseFormat, KillResponseHandler, &ev_state);
     CMregister_handler(ev_state.StatusServerFormat, StatusServerHandler, &ev_state);
@@ -703,7 +776,9 @@ int main(int argc, char **argv)
     int kill_server = 0;
     int status_server = 0;
     int no_timeout = 0; // default to timeout
+    char *log_filename = NULL;
     std::ofstream fileOut;
+    std::ofstream fileOut2;
 
     for (int i = 1; i < argc; i++)
     {
@@ -744,10 +819,10 @@ int main(int argc, char **argv)
                 fprintf(stderr, usage);
                 exit(1);
             }
-            char *filename = argv[i];
+            log_filename = argv[i];
             // Opening the output file stream and associate it with
             // logfile
-            fileOut.open(filename);
+            fileOut.open(log_filename);
 
             // Redirecting cout to write to logfile
             std::cout.rdbuf(fileOut.rdbuf());
@@ -863,6 +938,15 @@ int main(int argc, char **argv)
                     close(fd);
                 }
             }
+        }
+        if (log_filename)
+        {
+            // Opening the output file stream and associate it with
+            // logfile
+            fileOut2.open(log_filename);
+
+            // Redirecting cout to write to logfile
+            std::cout.rdbuf(fileOut2.rdbuf());
         }
 #endif
     }
