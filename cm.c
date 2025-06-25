@@ -2311,10 +2311,11 @@ timeout_conn(CManager cm, void *client_data)
 	 byte_swap = 1;
      case 0x004d4400:  /* CMD\0 */
 	 break;
-     case 0x00444d01: /* \1DMC reversed byte order long msg*/
+     case 0x00424d00: /* \0BMC reversed byte order long msg*/
 	 byte_swap = 1;
-     case 0x004d4401:  /* CMD\1 long msg*/
+     case 0x004d4200:  /* CMB\0 long msg*/
 	 short_length = 0;
+	 get_attrs = 1;
 	 break;
      case 0x00414d00: /* \0AMC reversed byte order */
 	 byte_swap = 1;
@@ -2390,7 +2391,8 @@ timeout_conn(CManager cm, void *client_data)
 	     header_len = 16;
 	 }
 	 if (!short_length) {
-	     header_len += 4; /* extra data length bytes */
+	     header_len = 16; /* extra data length bytes */
+	     skip = 0;
 	 }
      } else {
 	 if (short_length) {
@@ -2451,6 +2453,7 @@ timeout_conn(CManager cm, void *client_data)
 	     ((char*)&tmp)[1] = base[6];
 	     ((char*)&tmp)[2] = base[5];
 	     ((char*)&tmp)[3] = base[4];
+	     data_length += tmp;
 	     if (header_len != 12) {
 		 ((char*)&attr_length)[0] = base[11];
 		 ((char*)&attr_length)[1] = base[10];
@@ -2463,10 +2466,10 @@ timeout_conn(CManager cm, void *client_data)
  #else
 	     checksum = (unsigned char) check_sum_base[0];
  #endif
-	     data_length = ((int64_t)(((int *) base)[0])) << 32;
-	     data_length += ((int *) base)[1];
+	     data_length = ((int64_t)(((unsigned int *) base)[1])) << 32;
+	     data_length += ((unsigned int *) base)[0];
 	     if (header_len != 12) {
-		 attr_length = ((int *) base)[1];
+		 attr_length = ((int *) base)[2];
 	     }
 	 }
      }
@@ -3258,9 +3261,8 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      void *header_ptr = NULL;
      int header_len = 0;
      int no_attr_header[2] = {0x434d4400, 0};  /* CMD\0 in first entry */
-//  not yet impl     int no_attr_long_header[4] = {0x434d4401, 0x434d4401, 0, 0};  /* CMD\1 in first entry, pad to 16 */
      int attr_header[4] = {0x434d4100, 0x434d4100, 0, 0};  /* CMA\0 in first entry, pad to 16 */
-     int attr_long_header[4] = {0x434d4101, 0, 0, 0};  /* CMA\1 in first entry */
+     int attr_long_header[4] = {0x434d4200, 0, 0, 0};  /* CMB\0 in first entry */
      FFSEncodeVector vec;
      size_t length = 0, vec_count = 0, actual;
      int do_write = 1;
@@ -3336,7 +3338,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 length += vec[vec_count].iov_len;
 	 vec_count++;
      }
-     if ((length & 0x7fffffff) == 0) {
+     if (length > 0x7fffffff) {
 	 long_message = 1;
      }
      if (attrs != NULL) {
