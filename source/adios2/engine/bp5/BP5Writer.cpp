@@ -26,6 +26,9 @@
 #include <memory> // make_shared
 #include <sstream>
 
+// For debugging of metadata and offsets etc
+#define DUMPDATALOCINFO
+
 namespace adios2
 {
 namespace core
@@ -372,8 +375,15 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
                        "Chain token in BP5Writer::WriteData");
         std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                  << " received data pos = " << m_DataPos << " from a/"
-                  << a->m_Comm.Rank() - 1 << std::endl;
+                  << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Rank() - 1
+                  << std::endl;
+    }
+    else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased &&
+             m_WriterStep > 0)
+    {
+        // We are one of the aggregator rank 0.  If we are doing data-size based aggregation
+        // and this is the second timestep or later, we should update our notion of m_DataPos
+        m_DataPos = m_SubstreamDataPos[a->m_SubStreamIndex];
     }
 
     // align to PAGE_SIZE
@@ -398,8 +408,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         /* send token now, effectively serializing the writers in the chain */
         uint64_t nextWriterPos = m_DataPos;
         std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                  << " sending data pos = " << m_DataPos << " to a/"
-                  << a->m_Comm.Rank() + 1 << std::endl;
+                  << " sending data pos = " << m_DataPos << " to a/" << a->m_Comm.Rank() + 1
+                  << std::endl;
         a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
                         "Chain token in BP5Writer::WriteData");
     }
@@ -411,8 +421,7 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         if (a->m_Comm.Rank() == a->m_Comm.Size() - 1)
         {
             std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                  << " sending data pos = " << m_DataPos << " to a/0"
-                  << std::endl;
+                      << " sending data pos = " << m_DataPos << " to a/0" << std::endl;
             a->m_Comm.Isend(&m_DataPos, 1, 0, 0, "Final chain token in BP5Writer::WriteData");
         }
         if (a->m_Comm.Rank() == 0)
@@ -420,8 +429,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
             a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
                            "Chain token in BP5Writer::WriteData");
             std::cout << "g-" << m_Comm.Rank() << "/a-0"
-                  << " received data pos = " << m_DataPos << " from a/"
-                  << a->m_Comm.Size() - 1 << std::endl;
+                      << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() - 1
+                      << std::endl;
         }
     }
 
@@ -431,7 +440,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
 
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize)
 {
-    std::cout << "Rank " << m_Comm.Rank() << " WriteMetadataFileIndex(" << MetaDataPos << ", " << MetaDataSize << ")" << std::endl;
+    std::cout << "Rank " << m_Comm.Rank() << " WriteMetadataFileIndex(" << MetaDataPos << ", "
+              << MetaDataSize << ")" << std::endl;
 
     // bufsize: Step record
     size_t bufsize =
@@ -941,6 +951,32 @@ void BP5Writer::EndStep()
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
     aggData.m_FileDataManager.FlushFiles();
 
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    {
+        if (m_Aggregator->m_Comm.Rank() == 0)
+        {
+            // Need all aggregator chains rank 0 processes to know the m_DataPos
+            // of each substream
+            std::vector<uint64_t> subStreamPos = m_CommAggregators.AllGatherValues(m_DataPos);
+
+            for (size_t i = 0; i < subStreamPos.size(); ++i)
+            {
+                m_SubstreamDataPos[i] = subStreamPos[i];
+            }
+        }
+
+        // Broadcast substream data positions to all ranks, since any
+        // of them could become a substream rank 0 on the next time step
+        m_Aggregator->m_Comm.BroadcastVector(m_SubstreamDataPos, 0);
+
+        std::cout << "Rank " << m_Comm.Rank() << " thinks substream positions are: [";
+        for (size_t i = 0; i < m_SubstreamDataPos.size(); ++i)
+        {
+            std::cout << m_SubstreamDataPos[i] << " ";
+        }
+        std::cout << "]" << std::endl;
+    }
+
     m_Profiler.Stop("ES");
     m_WriterStep++;
     m_EndStepEnd = Now();
@@ -1298,6 +1334,23 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         m_IAmWritingData = true;
         DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorDataSizeBased);
+
+        /* comm for Aggregators only.
+         *  We are only interested in the chain of rank 0s
+         */
+        int color = m_Aggregator->m_Comm.Rank();
+        if (m_WriterStep > 0)
+        {
+            m_CommAggregators.Free("freeing aggregators comm for data-size based aggregation");
+        }
+        else
+        {
+            // Stuff we only want to do on the first timestep
+            m_SubstreamDataPos.resize(m_Parameters.NumSubFiles);
+        }
+        m_CommAggregators =
+            m_Comm.Split(color, m_Aggregator->m_SubStreamIndex,
+                         "(re)creating aggregators comm for data-size based aggregation");
     }
     else
     {
@@ -1320,12 +1373,6 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
     }
 
     m_Profiler.Stop(init_str);
-
-    /* comm for Aggregators only.
-     *  We are only interested in the chain of rank 0s
-     */
-    int color = m_Aggregator->m_Comm.Rank();
-    m_CommAggregators = m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
 
     /* Metadata aggregator for two-level metadata aggregation */
     {

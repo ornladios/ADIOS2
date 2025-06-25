@@ -259,6 +259,12 @@ private:
      */
     std::vector<uint64_t> m_WriterDataPos;
 
+    /**
+     * For keeping track of data pos in each substream/file when doing
+     * data-size based aggregation
+     */
+    std::vector<uint64_t> m_SubstreamDataPos;
+
     bool m_MarshalAttributesNecessary = true;
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;

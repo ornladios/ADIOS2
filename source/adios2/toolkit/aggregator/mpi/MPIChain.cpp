@@ -101,6 +101,7 @@ void MPIChain::InitSizeBased(const uint64_t rankDataSize, const int subStreams,
 
     m_IsActive = true;
     m_SubStreams = numPartitions;
+    m_NumAggregators = m_SubStreams;
 
     HandshakeRank(0);
     HandshakeLinks();
