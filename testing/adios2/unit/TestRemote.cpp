@@ -31,13 +31,13 @@ TEST(Remote, OpenRead)
     ofile << FILE_STRING;
     ofile.close();
 
-    adios2::HostOptions hostOptions;
     int localPort = 26200;
     std::vector<char> contents;
     {
         std::unique_ptr<Remote> remote = nullptr;
 
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
+        remote =
+            std::unique_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
         remote->OpenReadSimpleFile("localhost", localPort, FNAME, contents);
         std::cout << "Contents size was " << contents.size() << std::endl;
         ASSERT_EQ(contents.size(), strlen(FILE_STRING));
