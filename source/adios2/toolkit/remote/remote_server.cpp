@@ -672,10 +672,11 @@ void connect_and_kill(int ServerPort)
     add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
     CMConnection conn = CMinitiate_conn(cm, contact_list);
-    if (!conn) {
+    if (!conn)
+    {
         free_attr_list(contact_list);
         CManager_close(cm);
-	exit(0);
+        exit(0);
     }
 
     ev_state.cm = cm;
@@ -706,7 +707,8 @@ void connect_and_get_status(int ServerPort)
     add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
     CMConnection conn = CMinitiate_conn(cm, contact_list);
-    if (!conn) {
+    if (!conn)
+    {
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
