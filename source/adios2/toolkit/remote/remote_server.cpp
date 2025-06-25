@@ -609,7 +609,7 @@ static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, vo
 {
     KillResponseMsg kill_response_msg = static_cast<KillResponseMsg>(vevent);
     std::cout << "Server final status: " << kill_response_msg->Status << std::endl;
-    exit(0);
+    CMCondition_signal(cm, kill_response_msg->KillResponseCondition);
 }
 
 static void StatusServerHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -641,7 +641,7 @@ static void StatusResponseHandler(CManager cm, CMConnection conn, void *vevent, 
     StatusResponseMsg status_response_msg = static_cast<StatusResponseMsg>(vevent);
     std::cout << "Server running on " << status_response_msg->Hostname
               << " current status: " << status_response_msg->Status << std::endl;
-    exit(0);
+    CMCondition_signal(cm, status_response_msg->StatusResponseCondition);
 }
 
 void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
@@ -669,11 +669,14 @@ void connect_and_kill(int ServerPort)
     atom_t CM_IP_HOSTNAME = -1;
     CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname);
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
     CMConnection conn = CMinitiate_conn(cm, contact_list);
-    if (!conn)
-        return;
+    if (!conn) {
+        free_attr_list(contact_list);
+        CManager_close(cm);
+	exit(0);
+    }
 
     ev_state.cm = cm;
 
@@ -685,6 +688,8 @@ void connect_and_kill(int ServerPort)
     kill_msg.KillResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
     CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition);
+    CMConnection_close(conn);
+    CManager_close(ev_state.cm);
     exit(0);
 }
 
@@ -698,11 +703,14 @@ void connect_and_get_status(int ServerPort)
     atom_t CM_IP_HOSTNAME = -1;
     CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname);
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
     CMConnection conn = CMinitiate_conn(cm, contact_list);
-    if (!conn)
-        return;
+    if (!conn) {
+        free_attr_list(contact_list);
+        CManager_close(cm);
+        exit(0);
+    }
 
     ev_state.cm = cm;
 
@@ -714,6 +722,8 @@ void connect_and_get_status(int ServerPort)
     status_msg.StatusResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
     CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition);
+    CMConnection_close(conn);
+    CManager_close(ev_state.cm);
     exit(0);
 }
 

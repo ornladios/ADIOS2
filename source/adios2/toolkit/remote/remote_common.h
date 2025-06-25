@@ -122,6 +122,7 @@ typedef struct _KillResponseMsg
 typedef struct _StatusServerMsg
 {
     int StatusResponseCondition;
+    char *Status;
 } *StatusServerMsg;
 
 typedef struct _StatusResponseMsg
