@@ -525,8 +525,11 @@ libcmsockets_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entr
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
-    if ((sock = initiate_conn(cm, svc, trans, attrs, socket_conn_data, conn_attr_list)) < 0)
-	return NULL;
+    if ((sock = initiate_conn(cm, svc, trans, attrs, socket_conn_data, conn_attr_list)) < 0) {
+        free(socket_conn_data);
+        free_attr_list(conn_attr_list);
+        return NULL;
+    }
 
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (intptr_t)socket_conn_data->remote_contact_port);
