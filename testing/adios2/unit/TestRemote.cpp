@@ -49,7 +49,8 @@ TEST(Remote, OpenRead)
 
     {
         std::unique_ptr<Remote> remote = nullptr;
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
+        remote =
+            std::unique_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
         remote->OpenSimpleFile("localhost", localPort, FNAME);
         std::cout << "Contents size is " << remote->m_Size << std::endl;
         contents.resize(remote->m_Size); // should be unnecessary
