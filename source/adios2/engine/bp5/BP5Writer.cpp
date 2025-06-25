@@ -1349,7 +1349,7 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
             m_SubstreamDataPos.resize(m_Parameters.NumSubFiles);
         }
         m_CommAggregators =
-            m_Comm.Split(color, m_Aggregator->m_SubStreamIndex,
+            m_Comm.Split(color, static_cast<int>(m_Aggregator->m_SubStreamIndex),
                          "(re)creating aggregators comm for data-size based aggregation");
     }
     else
