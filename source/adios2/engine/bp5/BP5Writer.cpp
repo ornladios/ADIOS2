@@ -514,7 +514,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
 #ifdef DUMPDATALOCINFO
     std::cout << "WriterMapRecordType is: " << (buf.data() + StepRecordStartPos)[0] << std::endl;
-    size_t *BufPtr = (size_t*)(buf.data() + StepRecordStartPos + 1);
+    size_t *BufPtr = (size_t *)(buf.data() + StepRecordStartPos + 1);
     std::cout << "WriterMapRecordLength is: " << *BufPtr++ << std::endl;
     std::cout << "MetadataPos is: " << *BufPtr++ << std::endl;
     std::cout << "MetadataSize is: " << *BufPtr++ << std::endl;
@@ -528,7 +528,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
         for (size_t j = 0; j < FlushPosSizeInfo.size(); ++j)
         {
             std::cout << "loc:" << *BufPtr++;
-	    std::cout << " siz:" << *BufPtr++ << std::endl;
+            std::cout << " siz:" << *BufPtr++ << std::endl;
         }
         std::cout << "loc:" << *BufPtr++ << std::endl;
     }
@@ -1522,7 +1522,14 @@ void BP5Writer::InitTransports()
             // std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
             if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
             {
-                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
+                adios2::Mode mode = m_OpenMode;
+                if (m_WriterStep > 0)
+                {
+                    // override the mode to be append if we're opening a file that
+                    // was already opened by another rank.
+                    mode = Mode::Append;
+                }
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                     m_IO.m_TransportsParameters, useProfiler);
             }
             else
