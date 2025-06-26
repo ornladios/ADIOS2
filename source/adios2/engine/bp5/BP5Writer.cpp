@@ -1460,7 +1460,7 @@ void BP5Writer::InitTransports()
     /* Create the directories either on target or burst buffer if used */
     //    m_BP4Serializer.m_Profiler.Start("mkdir");
 
-    if (m_Comm.Rank() == 0)
+    if (m_Comm.Rank() == 0 && m_WriterStep == 0)
     {
         // std::cout << "Rank " << m_Comm.Rank() << " - E" << std::endl;
         m_MetadataFileNames = GetBPMetadataFileNames(transportsNames);
@@ -1506,8 +1506,9 @@ void BP5Writer::InitTransports()
         // since we should have opened those files already.  However, if some ranks
         // ended up in new substreams (and thus need to open the files), then we
         // end up in mpi deadlock (communication among all ranks is expected on the
-        // DataWritingComm.  So commenting out for now to allow getting a little
-        // further.
+        // DataWritingComm. So, if we could be entering this function more than once
+        // (only the case if aggregation type is data-size based), then we use the
+        // OpenFiles signature without a communicator.
         if (!cacheHit)
         {
             // std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
