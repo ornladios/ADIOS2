@@ -265,6 +265,8 @@ private:
      */
     std::vector<uint64_t> m_SubstreamDataPos;
 
+    bool m_AggregatorInitializedThisStep;
+
     bool m_MarshalAttributesNecessary = true;
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
