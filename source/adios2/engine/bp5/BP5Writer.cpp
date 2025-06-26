@@ -487,6 +487,9 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
 
     // Step record
     record = StepRecord;
+#ifdef DUMPDATALOCINFO
+    size_t StepRecordStartPos = pos;
+#endif
     helper::CopyToBuffer(buf, pos, &record, 1); // record type
     d = (3 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
     helper::CopyToBuffer(buf, pos, &d, 1); // record length
@@ -510,7 +513,12 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
 
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
 #ifdef DUMPDATALOCINFO
-    std::cout << "Flush count is :" << FlushPosSizeInfo.size() << std::endl;
+    std::cout << "WriterMapRecordType is: " << (buf.data() + StepRecordStartPos)[0] << std::endl;
+    size_t *BufPtr = (size_t*)(buf.data() + StepRecordStartPos + 1);
+    std::cout << "WriterMapRecordLength is: " << *BufPtr++ << std::endl;
+    std::cout << "MetadataPos is: " << *BufPtr++ << std::endl;
+    std::cout << "MetadataSize is: " << *BufPtr++ << std::endl;
+    std::cout << "Flush count is :" << *BufPtr++ << std::endl;
     std::cout << "Write Index positions = {" << std::endl;
 
     for (size_t i = 0; i < m_Comm.Size(); ++i)
@@ -519,10 +527,10 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
         uint64_t eachWriterSize = FlushPosSizeInfo.size() * 2 + 1;
         for (size_t j = 0; j < FlushPosSizeInfo.size(); ++j)
         {
-            std::cout << "loc:" << buf[3 + eachWriterSize * i + j * 2]
-                      << " siz:" << buf[3 + eachWriterSize * i + j * 2 + 1] << std::endl;
+            std::cout << "loc:" << *BufPtr++;
+	    std::cout << " siz:" << *BufPtr++ << std::endl;
         }
-        std::cout << "loc:" << buf[3 + eachWriterSize * (i + 1) - 1] << std::endl;
+        std::cout << "loc:" << *BufPtr++ << std::endl;
     }
     std::cout << "}" << std::endl;
 #endif
