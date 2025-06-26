@@ -27,7 +27,7 @@
 #include <sstream>
 
 // For debugging of metadata and offsets etc
-#define DUMPDATALOCINFO
+//#define DUMPDATALOCINFO
 
 namespace adios2
 {
@@ -41,13 +41,14 @@ using namespace adios2::format;
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
   /*m_FileDataManager(io, m_Comm),*/ m_FileMetadataManager(io, m_Comm),
-  m_FileMetadataIndexManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm)
+  m_FileMetadataIndexManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm),
+  m_AggregatorInitializedThisStep(false)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
 
-    std::cout << " --- Constructing BP5Writer (" << m_Comm.Rank() << ")--- " << std::endl;
+    // std::cout << " --- Constructing BP5Writer (" << m_Comm.Rank() << ")--- " << std::endl;
 
     Init();
     m_IsOpen = true;
@@ -65,8 +66,8 @@ std::string BP5Writer::GetCacheKey(aggregator::MPIAggregator *aggregator)
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::BeginStep(" << mode << ", " << timeoutSeconds
-              << ") " << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::BeginStep(" << mode << ", " << timeoutSeconds
+    //           << ") " << std::endl;
 
     if (m_BetweenStepPairs)
     {
@@ -156,7 +157,7 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 
 void BP5Writer::PerformPuts()
 {
-    std::cout << " BP5Writer::PerformPuts() " << std::endl;
+    // std::cout << " BP5Writer::PerformPuts() " << std::endl;
 
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
     m_Profiler.Start("PP");
@@ -168,7 +169,7 @@ void BP5Writer::PerformPuts()
 void BP5Writer::WriteMetaMetadata(
     const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetaMetadata() " << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetaMetadata() " << std::endl;
 
     for (auto &b : MetaMetaBlocks)
     {
@@ -183,7 +184,7 @@ void BP5Writer::WriteMetaMetadata(
 uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
                                   const std::vector<core::iovec> &AttributeBlocks)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetadata() OVERLOAD1" << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetadata() OVERLOAD1" << std::endl;
 
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
@@ -237,7 +238,7 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
                                   const std::vector<size_t> &SizeVector,
                                   const std::vector<core::iovec> &AttributeBlocks)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetadata() OVERLOAD2" << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteMetadata() OVERLOAD2" << std::endl;
 
     size_t MDataTotalSize = std::accumulate(SizeVector.begin(), SizeVector.end(), size_t(0));
     uint64_t MetaDataSize = 0;
@@ -308,7 +309,7 @@ void BP5Writer::AsyncWriteDataCleanup()
 
 void BP5Writer::WriteData(format::BufferV *Data)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteData() " << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteData() " << std::endl;
 
     if (m_Parameters.AsyncWrite)
     {
@@ -361,8 +362,12 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
 {
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
-        InitAggregator(Data->Size());
-        InitTransports();
+        if (!m_AggregatorInitializedThisStep)
+        {
+            InitAggregator(Data->Size());
+            InitTransports();
+            m_AggregatorInitializedThisStep = true;
+        }
     }
 
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
@@ -374,9 +379,9 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
     {
         a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
                        "Chain token in BP5Writer::WriteData");
-        std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                  << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Rank() - 1
-                  << std::endl;
+        // std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
+        //           << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Rank() - 1
+        //           << std::endl;
     }
     else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased &&
              m_WriterStep > 0)
@@ -407,9 +412,9 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
     {
         /* send token now, effectively serializing the writers in the chain */
         uint64_t nextWriterPos = m_DataPos;
-        std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                  << " sending data pos = " << m_DataPos << " to a/" << a->m_Comm.Rank() + 1
-                  << std::endl;
+        // std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
+        //           << " sending data pos = " << m_DataPos << " to a/" << a->m_Comm.Rank() + 1
+        //           << std::endl;
         a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
                         "Chain token in BP5Writer::WriteData");
     }
@@ -420,28 +425,28 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         // so it can update its data pos
         if (a->m_Comm.Rank() == a->m_Comm.Size() - 1)
         {
-            std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
-                      << " sending data pos = " << m_DataPos << " to a/0" << std::endl;
+            // std::cout << "g-" << m_Comm.Rank() << "/a-" << a->m_Comm.Rank()
+            //           << " sending data pos = " << m_DataPos << " to a/0" << std::endl;
             a->m_Comm.Isend(&m_DataPos, 1, 0, 0, "Final chain token in BP5Writer::WriteData");
         }
         if (a->m_Comm.Rank() == 0)
         {
             a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
                            "Chain token in BP5Writer::WriteData");
-            std::cout << "g-" << m_Comm.Rank() << "/a-0"
-                      << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() - 1
-                      << std::endl;
+            // std::cout << "g-" << m_Comm.Rank() << "/a-0"
+            //           << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() - 1
+            //           << std::endl;
         }
     }
 
-    std::cout << "Rank " << m_Comm.Rank() << " m_StartDataPos = " << m_StartDataPos
-              << " final m_DataPos = " << m_DataPos << std::endl;
+    // std::cout << "Rank " << m_Comm.Rank() << " m_StartDataPos = " << m_StartDataPos
+    //           << " final m_DataPos = " << m_DataPos << std::endl;
 }
 
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize)
 {
-    std::cout << "Rank " << m_Comm.Rank() << " WriteMetadataFileIndex(" << MetaDataPos << ", "
-              << MetaDataSize << ")" << std::endl;
+    // std::cout << "Rank " << m_Comm.Rank() << " WriteMetadataFileIndex(" << MetaDataPos << ", "
+    //           << MetaDataSize << ")" << std::endl;
 
     // bufsize: Step record
     size_t bufsize =
@@ -498,7 +503,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
     d = static_cast<uint64_t>(FlushPosSizeInfo.size());
     helper::CopyToBuffer(buf, pos, &d, 1);
 
-    std::cout << "  Writer positions: [";
+    // std::cout << "  Writer positions: [";
     for (int writer = 0; writer < m_Comm.Size(); writer++)
     {
         for (size_t flushNum = 0; flushNum < FlushPosSizeInfo.size(); flushNum++)
@@ -507,9 +512,9 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
             helper::CopyToBuffer(buf, pos, &FlushPosSizeInfo[flushNum][2 * writer], 2);
         }
         helper::CopyToBuffer(buf, pos, &m_WriterDataPos[writer], 1);
-        std::cout << m_WriterDataPos[writer] << " ";
+        // std::cout << m_WriterDataPos[writer] << " ";
     }
-    std::cout << "]" << std::endl;
+    // std::cout << "]" << std::endl;
 
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
 #ifdef DUMPDATALOCINFO
@@ -895,7 +900,7 @@ void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo 
 
 void BP5Writer::EndStep()
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::EndStep() " << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::EndStep() " << std::endl;
 
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     ComputeDerivedVariables();
@@ -932,12 +937,12 @@ void BP5Writer::EndStep()
 
     if (m_Parameters.UseSelectiveMetadataAggregation)
     {
-        std::cout << "Doing SELECTIVE metadata aggregation" << std::endl;
+        // std::cout << "Doing SELECTIVE metadata aggregation" << std::endl;
         SelectiveAggregationMetadata(TSInfo);
     }
     else
     {
-        std::cout << "Doing TWOLEVEL metadata aggregation" << std::endl;
+        // std::cout << "Doing TWOLEVEL metadata aggregation" << std::endl;
         TwoLevelAggregationMetadata(TSInfo);
     }
 
@@ -977,16 +982,17 @@ void BP5Writer::EndStep()
         // of them could become a substream rank 0 on the next time step
         m_Aggregator->m_Comm.BroadcastVector(m_SubstreamDataPos, 0);
 
-        std::cout << "Rank " << m_Comm.Rank() << " thinks substream positions are: [";
-        for (size_t i = 0; i < m_SubstreamDataPos.size(); ++i)
-        {
-            std::cout << m_SubstreamDataPos[i] << " ";
-        }
-        std::cout << "]" << std::endl;
+        // std::cout << "Rank " << m_Comm.Rank() << " thinks substream positions are: [";
+        // for (size_t i = 0; i < m_SubstreamDataPos.size(); ++i)
+        // {
+        //     std::cout << m_SubstreamDataPos[i] << " ";
+        // }
+        // std::cout << "]" << std::endl;
     }
 
     m_Profiler.Stop("ES");
     m_WriterStep++;
+    m_AggregatorInitializedThisStep = false;
     m_EndStepEnd = Now();
     if (!m_RankMPI)
     {
@@ -1334,8 +1340,11 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
     else if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
         // Close() is a no-op if never initialized
-        std::cout << "InitAggregator() - DataSizeBased: Closing and re-opening MPIChain"
-                  << std::endl;
+        // std::cout << "InitAggregator() - DataSizeBased: Closing and re-opening MPIChain"
+        //           << std::endl;
+        // TODO: We can't allow ranks to change subfiles between calls to Put().
+        // TODO: So we InitSizeBased() on the first Put() only, or else only on EndStep().
+        // TODO: Consequently, partition decision could be based on incomplete step data.
         m_AggregatorDataSizeBased.Close();
         m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumSubFiles, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
@@ -1423,8 +1432,8 @@ void BP5Writer::InitTransports()
 
     if (search != m_AggregatorSpecifics.end())
     {
-        std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
-                  << std::endl;
+        // std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
+        //           << std::endl;
         cacheHit = true;
     }
     else
@@ -1891,7 +1900,7 @@ void BP5Writer::ExitComputationBlock() noexcept
 
 void BP5Writer::FlushData(const bool isFinal)
 {
-    std::cout << " BP5Writer::FlushData() " << std::endl;
+    // std::cout << " BP5Writer::FlushData() " << std::endl;
 
     BufferV *DataBuf;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
@@ -1970,7 +1979,7 @@ BP5Writer::~BP5Writer()
 
 void BP5Writer::DoClose(const int transportIndex)
 {
-    std::cout << " BP5Writer::" << m_Comm.Rank() << "::DoClose() " << std::endl;
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::DoClose() " << std::endl;
 
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
 
