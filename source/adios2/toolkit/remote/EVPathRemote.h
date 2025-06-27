@@ -82,7 +82,7 @@ public:
 
     int64_t m_ID;
 
-    std::vector<char> *m_TmpContentVector;
+    std::vector<char> *m_TmpContentVector = nullptr;
 
 private:
 #ifdef ADIOS2_HAVE_SST
