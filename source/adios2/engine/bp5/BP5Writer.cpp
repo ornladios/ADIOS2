@@ -27,7 +27,7 @@
 #include <sstream>
 
 // For debugging of metadata and offsets etc
-//#define DUMPDATALOCINFO
+// #define DUMPDATALOCINFO
 
 namespace adios2
 {
@@ -66,7 +66,8 @@ std::string BP5Writer::GetCacheKey(aggregator::MPIAggregator *aggregator)
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::BeginStep(" << mode << ", " << timeoutSeconds
+    // std::cout << " BP5Writer::" << m_Comm.Rank() << "::BeginStep(" << mode << ", " <<
+    // timeoutSeconds
     //           << ") " << std::endl;
 
     if (m_BetweenStepPairs)
@@ -434,7 +435,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
             a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
                            "Chain token in BP5Writer::WriteData");
             // std::cout << "g-" << m_Comm.Rank() << "/a-0"
-            //           << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() - 1
+            //           << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() -
+            //           1
             //           << std::endl;
         }
     }
