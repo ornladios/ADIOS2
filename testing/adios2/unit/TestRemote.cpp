@@ -41,7 +41,7 @@ TEST(Remote, OpenRead)
         remote->OpenReadSimpleFile("localhost", localPort, FNAME, contents);
         std::cout << "Contents size was " << contents.size() << std::endl;
         ASSERT_EQ(contents.size(), strlen(FILE_STRING));
-        ASSERT_EQ(0, strcmp(FILE_STRING, contents.data()));
+        ASSERT_EQ(0, memcmp(FILE_STRING, contents.data(), contents.size()));
 
         // OpenReadSimple doesn't leave the file open
         EXPECT_THROW(remote->Read(0, 1, contents.data()), std::invalid_argument);
@@ -54,7 +54,7 @@ TEST(Remote, OpenRead)
         std::cout << "Contents size is " << remote->m_Size << std::endl;
         contents.resize(remote->m_Size); // should be unnecessary
         remote->Read(0, remote->m_Size, contents.data());
-        ASSERT_EQ(0, strcmp(FILE_STRING, contents.data()));
+        ASSERT_EQ(0, memcmp(FILE_STRING, contents.data(), contents.size()));
         remote->Close();
 
         // Can't read a closed file

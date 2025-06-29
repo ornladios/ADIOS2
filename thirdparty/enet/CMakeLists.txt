@@ -14,5 +14,8 @@ set(BUILD_DOCS OFF CACHE BOOL "")
 add_subdirectory(enet)
 set(enet_DIR ${CMAKE_CURRENT_BINARY_DIR}/enet CACHE INTERNAL "")
 setup_libversion_dir(enet)
-
+if(CMAKE_CXX_COMPILER_ID MATCHES
+    "^(MSVC)$")
+  target_compile_options(enet PRIVATE /wd5287 /Wv:18)
+endif()
 message_end_thirdparty()
