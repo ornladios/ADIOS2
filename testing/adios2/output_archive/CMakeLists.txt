@@ -28,7 +28,7 @@ find_program(ZIP_EXECUTABLE NAMES zip PATHS /usr/bin /usr/local/bin /opt/local/b
 if(ZIP_EXECUTABLE)
     message(STATUS "Found zip executable: ${ZIP_EXECUTABLE}")
 else()
-    message(WARNING "Zip executable not found, no backwards compatiblity checks will be performed.")
+    message(NOTICE "Zip executable not found, no backwards compatiblity checks will be performed.")
 endif()
 
 foreach (TestSet ${TestSets})
@@ -65,8 +65,8 @@ foreach (TestSet ${TestSets})
     # currently enabled.
     #
     set(NewFileEngineList )
-    if (ADIOS2_HAVE_MPI AND ZIP_EXECUTABLE )
-        #  Engines to create new files with  nothing if no MPI  (Not doing this for the moment)
+    if (ADIOS2_HAVE_MPI AND ZIP_EXECUTABLE AND NOT WIN32)
+        #  Engines to create new files with  (need MPI, ZIP and touch (so don't do on Windows)
 	set(NewFileEngineList bp5)
     endif()
     
