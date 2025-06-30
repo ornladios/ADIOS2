@@ -1351,7 +1351,7 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumSubFiles, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingData = true;
-        DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
+        // DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorDataSizeBased);
 
         /* comm for Aggregators only.
@@ -1517,40 +1517,49 @@ void BP5Writer::InitTransports()
         }
     }
 
+    helper::Comm openSyncComm;
+
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    {
+        // Split my writer chain so only ranks that actually need to open a
+        // file can do so in an ordered fashion.
+        int color = cacheHit == true ? 0 : 1;
+        openSyncComm = m_AggregatorDataSizeBased.m_Comm.Split(
+            color, m_AggregatorDataSizeBased.m_Comm.Rank(),
+            "Synchronize opening files for DataSizeBased aggregation");
+        DataWritingComm = &openSyncComm;
+    }
+
     bool useProfiler = true;
     // std::cout << "Rank " << m_Comm.Rank() << " - K" << std::endl;
     if (m_IAmWritingData)
     {
-        // If we got a cache hit above, we'd like to skip the enclosed OpenFiles
-        // since we should have opened those files already.  However, if some ranks
-        // ended up in new substreams (and thus need to open the files), then we
-        // end up in mpi deadlock (communication among all ranks is expected on the
-        // DataWritingComm. So, if we could be entering this function more than once
-        // (only the case if aggregation type is data-size based), then we use the
-        // OpenFiles signature without a communicator.
         if (!cacheHit)
         {
+            adios2::Mode mode = m_OpenMode;
+
             // std::cout << "Rank " << m_Comm.Rank() << " - L" << std::endl;
             if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
             {
-                adios2::Mode mode = m_OpenMode;
                 if (m_WriterStep > 0)
                 {
                     // override the mode to be append if we're opening a file that
                     // was already opened by another rank.
                     mode = Mode::Append;
                 }
-                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                    m_IO.m_TransportsParameters, useProfiler);
             }
-            else
-            {
-                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, m_OpenMode,
-                                                    m_IO.m_TransportsParameters, useProfiler,
-                                                    *DataWritingComm);
-            }
+
+            aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
+                                                m_IO.m_TransportsParameters, useProfiler,
+                                                *DataWritingComm);
         }
     }
+
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    {
+        openSyncComm.Free();
+    }
+
     // std::cout << "Rank " << m_Comm.Rank() << " - M" << std::endl;
     if (m_IAmDraining)
     {
