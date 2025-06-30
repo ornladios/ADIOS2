@@ -61,6 +61,7 @@ uint64_t nSteps = 1;
 std::string aggregationType = "DataSizeBased"; // comes from command line
 std::string numberOfSubFiles = "2";            // comes from command line
 std::string numberOfSteps = "1";               // comes from command line
+std::string verbose = "0";
 }
 
 class DSATest : public ::testing::Test
@@ -97,6 +98,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     bpIO.SetEngine("BPFile");
     bpIO.SetParameter("AggregationType", aggregationType);
     bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
+    bpIO.SetParameter("verbose", verbose);
 
     {
         adios2::Variable<uint64_t> varGlobalArray =
@@ -200,6 +202,10 @@ int main(int argc, char **argv)
     {
         numberOfSteps = std::string(argv[3]);
     }
+    if (argc > 4)
+    {
+        verbose = std::string(argv[4]);
+    }
 
     try
     {
@@ -208,7 +214,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Unable to convert " << numberOfSteps << " to a number due to: " << e.what()
-                  << ". Defaulting to " << nSteps << std::endl;
+                  << ". Defaulting nSteps to " << nSteps << std::endl;
     }
 
     int result = RUN_ALL_TESTS();
