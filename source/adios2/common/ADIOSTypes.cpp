@@ -478,7 +478,7 @@ static void PrintMBI(std::ostream &os, const MinBlockInfo &blk, int Dims)
 void PrintMVI(std::ostream &os, const MinVarInfo &mvi)
 {
     os << "Step: " << mvi.Step << "  Dims: " << mvi.Dims << " Shape: {";
-    if ((mvi.Dims == 0) || (mvi.Shape == NULL))
+    if ((mvi.Dims == 0) || (mvi.Shape.size() == 0))
         os << "NULL";
     else
     {
