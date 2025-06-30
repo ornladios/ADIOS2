@@ -166,16 +166,27 @@ TEST_F(DSATest, TestWriteUnbalancedData)
 
         for (size_t step = 0; step < nSteps; ++step)
         {
+            // Define local data, size varies by rank
+            uint64_t localNy = rankDataSizes[worldRank];
+            uint64_t localOffset = sumFirstN(rankDataSizes, worldRank);
+            uint64_t rankDataSize = globalNx * localNy;
             std::vector<uint64_t> array;
 
             var_array.SetStepSelection({step, 1});
+            var_array.SetSelection(adios2::Box<adios2::Dims>(
+                {0, static_cast<size_t>(localOffset)}, {globalNx, static_cast<size_t>(localNy)}));
 
             bpReader.Get(var_array, array, adios2::Mode::Sync);
-            ASSERT_EQ(array.size(), var_array.Shape()[0] * var_array.Shape()[1]);
+            ASSERT_EQ(array.size(), rankDataSize);
 
-            for (size_t i = 0; i < array.size(); ++i)
+            uint64_t index = 0;
+            for (uint64_t x = 0; x < globalNx; ++x)
             {
-                ASSERT_EQ(array[i], static_cast<uint64_t>((step * largestValue) + i));
+                uint64_t value = (x * globalNy) + localOffset;
+                for (uint64_t y = 0; y < localNy; ++y)
+                {
+                    ASSERT_EQ(array[index++], (step * largestValue) + value++);
+                }
             }
         }
 
