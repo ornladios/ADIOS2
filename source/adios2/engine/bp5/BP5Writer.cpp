@@ -449,9 +449,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
             if (m_Parameters.verbose > 0)
             {
                 std::cout << "g-" << m_Comm.Rank() << "/a-0"
-                          << " received data pos = " << m_DataPos << " from a/" << a->m_Comm.Size() -
-                          1
-                          << std::endl;
+                          << " received data pos = " << m_DataPos << " from a/"
+                          << a->m_Comm.Size() - 1 << std::endl;
             }
         }
     }
@@ -548,7 +547,8 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
 #ifdef DUMPDATALOCINFO
     if (m_Parameters.verbose > 0)
     {
-        std::cout << "WriterMapRecordType is: " << (buf.data() + StepRecordStartPos)[0] << std::endl;
+        std::cout << "WriterMapRecordType is: " << (buf.data() + StepRecordStartPos)[0]
+                  << std::endl;
         size_t *BufPtr = (size_t *)(buf.data() + StepRecordStartPos + 1);
         std::cout << "WriterMapRecordLength is: " << *BufPtr++ << std::endl;
         std::cout << "MetadataPos is: " << *BufPtr++ << std::endl;
@@ -1598,8 +1598,8 @@ void BP5Writer::InitTransports()
 
             if (m_Parameters.verbose > 0)
             {
-                std::cout << "Rank " << m_Comm.Rank() << " opening file(s): "
-                          << aggData.m_SubStreamNames[0] << std::endl;
+                std::cout << "Rank " << m_Comm.Rank()
+                          << " opening file(s): " << aggData.m_SubStreamNames[0] << std::endl;
             }
             aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                 m_IO.m_TransportsParameters, useProfiler,
@@ -1927,8 +1927,7 @@ void BP5Writer::InitBPBuffer()
         // new Writer Map is needed, generate now, write later
         if (m_Parameters.verbose > 0)
         {
-            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed"
-                      << std::endl;
+            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed" << std::endl;
         }
         const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
         m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
