@@ -237,6 +237,12 @@ gtest_add_tests_helper(DirectIO MPI_NONE BP Engine.BP. .BP5
 gtest_add_tests_helper(ReadMultithreaded MPI_NONE BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
 )
+gtest_add_tests_helper(NewFileAppendMode MPI_NONE BP Engine.BP. .BP5.EWS
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "EveryoneWritesSerial"
+)
+gtest_add_tests_helper(NewFileAppendMode MPI_NONE BP Engine.BP. .BP5.TLS
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "TwoLevelShm"
+)
 
 # Only a single test is enough, pick the latest engine
 gtest_add_tests_helper(AccuracyDefaults MPI_NONE BP Engine.BP. .BP5
