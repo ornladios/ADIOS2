@@ -1,0 +1,23 @@
+name: setup-ccache
+description: setup ccache artifacts
+inputs:
+  key:
+    description: "cache key name"
+    required: true
+outputs:
+  cache-hit:
+    description: "Whether the key was found"
+    value: ${{ steps.restore-cache.outputs.cache-hit }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Restore cache
+      uses: actions/cache/restore@v4
+      id: restore-cache
+      with:
+        path: .ccache
+        key: ccache-${{ inputs.key }}-${{ github.sha }}
+        restore-keys: ccache-${{ inputs.key }}
+    - name: Configure cache
+      shell: bash
+      run: ccache -z
