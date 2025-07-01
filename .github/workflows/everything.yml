@@ -361,22 +361,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [win2019, win2022]
+        os: [win2022, win2025]
         shared: [shared]
         parallel: [msmpi]
         include:
-          - os: win2019
-            image: windows-2019
-            compiler: vs2019
           - os: win2022
             image: windows-2022
             compiler: vs2022
-          - os: win2022
-            image: windows-2022
+          - os: win2025
+            image: windows-2025
+            compiler: vs2022
+          - os: win2025
+            image: windows-2025
             compiler: vs2022
             parallel: serial
-          - os: win2022
-            image: windows-2022
+          - os: win2025
+            image: windows-2025
             shared: static
             compiler: vs2022
             parallel: serial
