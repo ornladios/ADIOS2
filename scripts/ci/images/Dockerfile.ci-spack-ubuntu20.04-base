@@ -76,7 +76,9 @@ RUN apt-get update && apt-get install -y \
     apt-get remove -y \
     gcc-9 \
     g++-9 \
-    gfortran-9 && \
+    gfortran-9 \
+    zip \
+    && \
     apt-get autoremove --purge -y && \
     apt-get clean && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 && \
