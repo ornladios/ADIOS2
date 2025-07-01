@@ -22,8 +22,6 @@ MPIChain::MPIChain() : MPIAggregator() {}
 void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
                     helper::Comm const &parentComm)
 {
-    /* numAggregators ignored here as BP3/BP4 uses substreams = aggregators */
-    m_NumAggregators = subStreams;
     if (subStreams > 0)
     {
         InitComm(subStreams, parentComm);
@@ -33,6 +31,12 @@ void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
     {
         InitCommOnePerNode(parentComm);
     }
+    // m_NumAggregators should be set here instead of before either Init, since InitCommOnePerNode
+    // updates m_SubStreams, but not m_NumAggregators. BP5Writer will use m_NumAggregators
+    // to set the size of m_AppendDataPos so not having m_NumAggregators set causes a segfault
+    // when writing a new BP5 file in append mode.
+    /* numAggregators ignored here as BP3/BP4 uses substreams = aggregators */
+    m_NumAggregators = m_SubStreams;
 
     HandshakeLinks();
 
