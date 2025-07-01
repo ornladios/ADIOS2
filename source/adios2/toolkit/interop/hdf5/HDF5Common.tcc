@@ -12,6 +12,7 @@
 #define ADIOS2_TOOLKIT_INTEROP_HDF5_HDF5COMMON_TCC_
 
 #include "HDF5Common.h"
+#include <cstdint>
 #include <iostream>
 #include <vector>
 

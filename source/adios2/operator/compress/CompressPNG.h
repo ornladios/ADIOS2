@@ -11,6 +11,7 @@
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 
+#include <cstdint>
 #include <set>
 
 #include "adios2/core/Operator.h"

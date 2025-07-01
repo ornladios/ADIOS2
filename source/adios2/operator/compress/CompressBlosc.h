@@ -12,6 +12,7 @@
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_
 
+#include <cstdint>
 #include <map>
 #include <set>
 

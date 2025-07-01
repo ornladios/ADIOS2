@@ -15,6 +15,7 @@
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
+#include <cstdint>
 
 namespace adios2
 {
