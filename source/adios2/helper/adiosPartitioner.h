@@ -29,6 +29,7 @@ struct RankPartition
     size_t m_subStreamIndex;
     int m_aggregatorRank;
     int m_rankOrder;
+    int m_subStreams;
 };
 
 /**

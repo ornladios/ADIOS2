@@ -14,7 +14,9 @@
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosMemory.h" // PaddingToAlignOffset
+#include "adios2/helper/adiosMemory.h"      // PaddingToAlignOffset
+#include "adios2/helper/adiosPartitioner.h" // RankPartition
+
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
@@ -75,6 +77,8 @@ private:
 
     std::string GetCacheKey(aggregator::MPIAggregator *aggregator);
     std::map<std::string, AggTransportData> m_AggregatorSpecifics;
+    helper::RankPartition GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
+                                           helper::Comm const &parentComm);
 
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;

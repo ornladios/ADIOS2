@@ -64,6 +64,45 @@ std::string BP5Writer::GetCacheKey(aggregator::MPIAggregator *aggregator)
     return ss.str();
 }
 
+helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
+                                                  helper::Comm const &parentComm)
+{
+    int parentRank = parentComm.Rank();
+    int parentSize = parentComm.Size();
+
+    m_Profiler.AddTimerWatch("AllGatherRankData");
+    m_Profiler.Start("AllGatherRankData");
+    std::vector<uint64_t> allsizes = parentComm.AllGatherValues(rankDataSize);
+    m_Profiler.Stop("AllGatherRankData");
+
+    if (parentRank == 0 && m_Parameters.verbose > 0)
+    {
+        std::cout << "Rank data sizes: [";
+        for (size_t i = 0; i < allsizes.size(); ++i)
+        {
+            if (i > 0)
+            {
+                std::cout << ", ";
+            }
+            std::cout << allsizes[i];
+        }
+        std::cout << "]" << std::endl;
+    }
+
+    int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
+    m_Profiler.AddTimerWatch("PartitionRanks");
+    m_Profiler.Start("PartitionRanks");
+    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+    m_Profiler.Stop("PartitionRanks");
+
+    if (parentRank == 0 && m_Parameters.verbose > 0)
+    {
+        partitioning.PrintSummary();
+    }
+
+    return partitioning.FindPartition(parentRank);
+}
+
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     // std::cout << " BP5Writer::" << m_Comm.Rank() << "::BeginStep(" << mode << ", " <<
@@ -368,6 +407,9 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
     {
         if (!m_AggregatorInitializedThisStep)
         {
+            // We can't allow ranks to change subfiles between calls to Put(), so we only
+            // do this initialization once per timestep. Consequently, partition decision
+            // could be based on incomplete step data.
             InitAggregator(Data->Size());
             InitTransports();
             m_AggregatorInitializedThisStep = true;
@@ -1397,23 +1439,22 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
             std::cout << "InitAggregator() - DataSizeBased: Closing and re-opening MPIChain"
                       << std::endl;
         }
-        // TODO: We can't allow ranks to change subfiles between calls to Put().
-        // TODO: So we InitSizeBased() on the first Put() only, or else only on EndStep().
-        // TODO: Consequently, partition decision could be based on incomplete step data.
+
+        // Partition ranks based on data size
+        m_Profiler.AddTimerWatch("GetPartitionInfo");
+        m_Profiler.Start("GetPartitionInfo");
+        helper::RankPartition myPart = GetPartitionInfo(DataSize, m_Parameters.NumSubFiles, m_Comm);
+        m_Profiler.Stop("GetPartitionInfo");
+
+        // Close the aggregator and re-initialize with the partitioning details for this rank
         m_AggregatorDataSizeBased.Close();
-        m_Profiler.AddTimerWatch("InitSizeBased");
-        m_Profiler.Start("InitSizeBased");
-        m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumSubFiles, m_Comm);
-        m_Profiler.Stop("InitSizeBased");
+        m_AggregatorDataSizeBased.InitExplicit(myPart.m_subStreams, myPart.m_subStreamIndex,
+                                               myPart.m_aggregatorRank, myPart.m_rankOrder, m_Comm);
+
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingData = true;
-        // DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorDataSizeBased);
 
-        /* comm for Aggregators only.
-         *  We are only interested in the chain of rank 0s
-         */
-        int color = m_Aggregator->m_Comm.Rank();
         if (m_WriterStep > 0)
         {
             m_CommAggregators.Free("freeing aggregators comm for data-size based aggregation");
@@ -1421,8 +1462,12 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         else
         {
             // Stuff we only want to do on the first timestep
-            m_SubstreamDataPos.resize(m_Parameters.NumSubFiles);
+            m_SubstreamDataPos.resize(myPart.m_subStreams);
         }
+
+        // This comm is for aggregator ranks only, it is used to exchange information about
+        // the current data position in each file at the end of each write.
+        int color = m_Aggregator->m_Comm.Rank();
         m_CommAggregators =
             m_Comm.Split(color, static_cast<int>(m_Aggregator->m_SubStreamIndex),
                          "(re)creating aggregators comm for data-size based aggregation");

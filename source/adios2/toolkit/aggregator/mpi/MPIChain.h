@@ -29,12 +29,10 @@ public:
 
     void Init(const size_t numAggregators, const size_t subStreams,
               helper::Comm const &parentComm) final;
-    // Given the amount of data on this rank, the desired number of substreams
-    // (0 or less means let the partitioning logic decide), and the parent
-    // communicator, initialize the chain using a data-size based rank
-    // partitioning.
-    void InitSizeBased(const uint64_t rankDataSize, const int subStreams,
-                       helper::Comm const &parentComm);
+
+    // Explicit specification of all values
+    void InitExplicit(const int subStreams, const size_t subStreamIdx, const int aggregatorRank,
+                      const int rankOrder, helper::Comm const &parentComm);
 
     void Close() final;
 
