@@ -16,10 +16,10 @@
 *.so
 *.tmp
 *.exe
-# *.bp
+*.bp
 *.out
 *.pyc
-# *.bp
+*.bp
 *.bp.dir
 build/
 

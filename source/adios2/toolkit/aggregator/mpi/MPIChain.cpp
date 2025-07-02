@@ -12,8 +12,6 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 
-#include <iostream>
-
 namespace adios2
 {
 namespace aggregator

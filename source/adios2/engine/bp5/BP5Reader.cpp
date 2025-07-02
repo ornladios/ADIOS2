@@ -907,7 +907,6 @@ void BP5Reader::Init()
     InitTransports();
     if (!m_Parameters.SelectSteps.empty())
     {
-        std::cout << "Ok, SelectSteps parameter is not empty" << std::endl;
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
     }
 

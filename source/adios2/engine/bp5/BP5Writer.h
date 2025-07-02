@@ -16,7 +16,6 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosMemory.h"      // PaddingToAlignOffset
 #include "adios2/helper/adiosPartitioner.h" // RankPartition
-
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"

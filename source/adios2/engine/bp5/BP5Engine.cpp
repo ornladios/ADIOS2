@@ -227,11 +227,9 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         parameter = def;
         if (itKey != params_lowercase.end())
         {
-            // std::cout << lkey << ": " << parameter << std::endl;
             parameter = itKey->second;
             return true;
         }
-        // std::cout << lkey << " GAH!" << std::endl;
         return false;
     };
 
