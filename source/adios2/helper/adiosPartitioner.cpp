@@ -138,7 +138,7 @@ RankPartition Partitioning::FindPartition(const int parentRank)
             result.m_rankOrder = static_cast<int>(std::distance(std::begin(nextPart), it));
         }
     }
-    result.m_subStreams = m_Partitions.size();
+    result.m_subStreams = static_cast<int>(m_Partitions.size());
     return result;
 }
 
