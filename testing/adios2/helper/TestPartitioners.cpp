@@ -49,34 +49,20 @@ TEST(ADIOS2Partitioner, ADIOS2PartitionerGreedy)
     ASSERT_EQ(result.m_Partitions[3][1], 8);
     ASSERT_EQ(result.m_Partitions[3][2], 2);
 
-    dataSizes = {0, 0, 0, 0};
-    // dataSizes = {1, 1, 1, 1};
-    numPartitions = 2;
+    dataSizes = {10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0};
+    numPartitions = 4;
     result = adios2::helper::PartitionRanks(
         dataSizes, numPartitions, adios2::helper::PartitioningStrategy::GreedyNumberPartitioning);
 
-    for (size_t i = 0; i < result.m_Partitions.size(); ++i)
-    {
-        std::cout << "Partition " << i << " (size = " << result.m_Sizes[i] << ") :" << std::endl;
-        std::vector<size_t> nextPart = result.m_Partitions[i];
-        std::cout << "  ";
-        for (size_t j = 0; j < nextPart.size(); ++j)
-        {
-            std::cout << nextPart[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for (int i = 0; i < 4; ++i)
-    {
-        adios2::helper::RankPartition part = result.FindPartition(i);
-        std::cout << "Rank " << i << ": ssi = " << part.m_subStreamIndex
-                  << ", order = " << part.m_rankOrder << ", agg = " << part.m_aggregatorRank
-                  << std::endl;
-    }
-
+    // expected partitions: [[0, 4, 8], [1, 5, 9], [2, 6, 10], [3, 7, 11]]
     ASSERT_EQ(result.m_Partitions.size(), numPartitions);
     ASSERT_EQ(result.m_Sizes.size(), numPartitions);
+
+    for (size_t i = 0; i < result.m_Partitions.size(); ++i)
+    {
+        ASSERT_EQ(result.m_Partitions[i].size(), 3);
+        ASSERT_EQ(result.m_Sizes[i], 10);
+    }
 }
 
 int main(int argc, char **argv)
