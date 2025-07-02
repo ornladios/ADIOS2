@@ -1006,8 +1006,12 @@ void BP5Writer::EndStep()
 
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
+        m_Profiler.AddTimerWatch("ShareFilePos");
+        m_Profiler.Start("ShareFilePos");
         if (m_Aggregator->m_Comm.Rank() == 0)
         {
+            m_Profiler.AddTimerWatch("ShareFilePos_AG");
+            m_Profiler.Start("ShareFilePos_AG");
             // Need all aggregator chains rank 0 processes to know the m_DataPos
             // of each substream
             std::vector<uint64_t> subStreamPos = m_CommAggregators.AllGatherValues(m_DataPos);
@@ -1016,11 +1020,15 @@ void BP5Writer::EndStep()
             {
                 m_SubstreamDataPos[i] = subStreamPos[i];
             }
+            m_Profiler.Stop("ShareFilePos_AG");
         }
 
         // Broadcast substream data positions to all ranks, since any
         // of them could become a substream rank 0 on the next time step
+        m_Profiler.AddTimerWatch("ShareFilePos_BC");
+        m_Profiler.Start("ShareFilePos_BC");
         m_Aggregator->m_Comm.BroadcastVector(m_SubstreamDataPos, 0);
+        m_Profiler.Stop("ShareFilePos_BC");
 
         if (m_Parameters.verbose > 0)
         {
@@ -1031,6 +1039,7 @@ void BP5Writer::EndStep()
             }
             std::cout << "]" << std::endl;
         }
+        m_Profiler.Stop("ShareFilePos");
     }
 
     m_Profiler.Stop("ES");
@@ -1392,7 +1401,10 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         // TODO: So we InitSizeBased() on the first Put() only, or else only on EndStep().
         // TODO: Consequently, partition decision could be based on incomplete step data.
         m_AggregatorDataSizeBased.Close();
+        m_Profiler.AddTimerWatch("InitSizeBased");
+        m_Profiler.Start("InitSizeBased");
         m_AggregatorDataSizeBased.InitSizeBased(DataSize, m_Parameters.NumSubFiles, m_Comm);
+        m_Profiler.Stop("InitSizeBased");
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingData = true;
         // DataWritingComm = &m_AggregatorDataSizeBased.m_Comm;
