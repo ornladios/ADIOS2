@@ -82,10 +82,12 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
         }
         else
         {
+            // If the rank has any data, add it to the partition with the smallest total size
+            // and update the total size of that partition
             index_of_smallest = std::distance(
                 std::begin(result.m_Sizes),
                 std::min_element(std::begin(result.m_Sizes), std::end(result.m_Sizes)));
-            result.m_Sizes[index_of_smallest] += valuesAndIndices[i].first;
+            result.m_Sizes[index_of_smallest] += dataSize;
         }
 
         result.m_Partitions[index_of_smallest].push_back(valuesAndIndices[i].second);
