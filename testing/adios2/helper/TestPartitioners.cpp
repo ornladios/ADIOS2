@@ -37,13 +37,13 @@ TEST(ADIOS2Partitioner, ADIOS2PartitionerGreedy)
     ASSERT_EQ(result.m_Partitions[0][1], 5);
     ASSERT_EQ(result.m_Partitions[0][2], 4);
     ASSERT_EQ(result.m_Partitions[0][3], 11);
-    ASSERT_EQ(result.m_Partitions[1].size(), 2);
+    ASSERT_EQ(result.m_Partitions[1].size(), 3);
     ASSERT_EQ(result.m_Partitions[1][0], 0);
     ASSERT_EQ(result.m_Partitions[1][1], 1);
-    ASSERT_EQ(result.m_Partitions[2].size(), 3);
+    ASSERT_EQ(result.m_Partitions[1][2], 7);
+    ASSERT_EQ(result.m_Partitions[2].size(), 2);
     ASSERT_EQ(result.m_Partitions[2][0], 10);
     ASSERT_EQ(result.m_Partitions[2][1], 6);
-    ASSERT_EQ(result.m_Partitions[2][2], 7);
     ASSERT_EQ(result.m_Partitions[3].size(), 3);
     ASSERT_EQ(result.m_Partitions[3][0], 9);
     ASSERT_EQ(result.m_Partitions[3][1], 8);
