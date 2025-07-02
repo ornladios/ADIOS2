@@ -25,7 +25,6 @@ namespace
 using Partitioner =
     std::function<adios2::helper::Partitioning(const std::vector<uint64_t> &, uint64_t)>;
 
-
 bool CompareLengths(std::vector<size_t> a, std::vector<size_t> b)
 {
     if (a.size() < b.size())
@@ -34,7 +33,6 @@ bool CompareLengths(std::vector<size_t> a, std::vector<size_t> b)
     }
     return false;
 }
-
 
 /**
  * Implements Greedy Number Partitioning as described here:
@@ -79,14 +77,14 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
             // we also don't need to add the size of the rank data to the partition total
             index_of_smallest =
                 std::distance(std::begin(result.m_Partitions),
-                              std::min_element(std::begin(result.m_Partitions), std::end(result.m_Partitions), CompareLengths));
-
+                              std::min_element(std::begin(result.m_Partitions),
+                                               std::end(result.m_Partitions), CompareLengths));
         }
         else
         {
-            index_of_smallest =
-                std::distance(std::begin(result.m_Sizes),
-                              std::min_element(std::begin(result.m_Sizes), std::end(result.m_Sizes)));
+            index_of_smallest = std::distance(
+                std::begin(result.m_Sizes),
+                std::min_element(std::begin(result.m_Sizes), std::end(result.m_Sizes)));
             result.m_Sizes[index_of_smallest] += valuesAndIndices[i].first;
         }
 
