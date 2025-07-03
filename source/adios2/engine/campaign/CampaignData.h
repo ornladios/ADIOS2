@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include <sqlite3.h>
-
 namespace adios2
 {
 namespace core
@@ -35,6 +33,14 @@ struct CampaignHost
     std::vector<size_t> dirIdx; // index in CampaignData.directory global list of dirs
 };
 
+struct CampaignDirectory
+{
+    size_t hostIdx;
+    std::string path;
+    bool archive; // true if this is on an archival storage
+    std::string archiveSystemName;
+};
+
 struct CampaignKey
 {
     std::string id;
@@ -44,11 +50,13 @@ struct CampaignKey
 struct CampaignFile
 {
     std::string name;
-    size_t datasetIdx; // index of parent CampaignDataset in the map
+    size_t datasetIdx; // index of grandparent CampaignDataset in the map
+    size_t replicaIdx; // index of parent CampaignReplica in CampaignDataset
     bool compressed;
     size_t lengthOriginal;
     size_t lengthCompressed;
-    int64_t ctime;
+    int64_t modtime;
+    std::string checksum; // SHA1 checksum of file
 };
 
 class FileFormat
@@ -60,7 +68,8 @@ public:
         Unknown,
         ADIOS,
         HDF5,
-        TEXT
+        TEXT,
+        IMAGE
     };
 
     FileFormat() = default;
@@ -83,16 +92,40 @@ private:
     Value value;
 };
 
-struct CampaignDataset
+struct CampaignReplica
 {
-    std::string uuid;
     std::string name;
-    FileFormat format;
     size_t hostIdx;
     size_t dirIdx;
+    size_t datasetIdx; // index of parent CampaignDataset in the map
+    bool deleted;
     bool hasKey;
     size_t keyIdx;
+    size_t size; // replica size on remote location
     std::vector<CampaignFile> files;
+    // image replicas have resolution information (ds.format == FileFormat::IMAGE)
+    size_t x;
+    size_t y;
+};
+
+struct CampaignDataset
+{
+    std::string name;
+    std::string uuid;
+    size_t tsid;    // time series id, 0 = not part of any time series
+    size_t tsorder; // order for a time-series, 0..n-1
+    FileFormat format;
+    bool deleted;
+    std::map<size_t, CampaignReplica> replicas; // indexed by replicaID, 1..n, not contiguous
+};
+
+struct CampaignTimeSeries
+{
+    size_t tsid;
+    std::string name;
+    // map of datasets of a time-series: <tsorder, datasetIdx>
+    // indexed by tsorder, 0..n-1, not contiguous
+    std::map<size_t, size_t> datasets;
 };
 
 struct CampaignVersion
@@ -104,23 +137,49 @@ struct CampaignVersion
     double version;
 };
 
-struct CampaignData
+class CampaignData
 {
+public:
+    /* hosts, keys and directories are indexed from 0..n-1 in this class,
+       so the database values are converted from 1..n to 0..n-1,
+       for easy addressing in vectors.
+       Hosts, keys and dirs are never deleted from the database.
+
+       Datasets and their replicas are stored in a map, indexed by their
+       rowid values (1..n). Deleted items still exists in database but will
+       not be added to the map here.
+
+       File's datasetIdx and replicaIdx are 1..n as in the database.
+
+       TimeSeries is a series of Datasets with a given tsid, ordered by tsorder (0..n-1).
+    */
     CampaignVersion version;
     std::vector<CampaignHost> hosts;
     std::vector<CampaignKey> keys;
-    std::vector<std::string> directory;
-    std::map<size_t, CampaignDataset> datasets;
+    std::vector<CampaignDirectory> directory;
+    std::map<size_t, CampaignDataset> datasets;      // indexed by datasetID, 1..n, not contiguous
+    std::map<size_t, CampaignTimeSeries> timeseries; // indexed by tsid, 1..n, not contiguous
+
+    CampaignData() = default;
+    ~CampaignData() = default;
+
+    void Open(const std::string path);
+    void ReadDatabase();
+    void Close();
+
+    void SaveToFile(const std::string &path, const CampaignFile &file, std::string &keyHex);
+
+    // assumed that memory for data is allocated
+    void ReadToMemory(char *data, const CampaignFile &file, std::string &keyHex);
+
+    // return 0 if there is no replica found for 'hostname', otherwise the replica index
+    size_t FindReplicaOnHost(const size_t datasetIdx, std::string hostname);
+
+private:
+    void DumpToFileOrMemory(const CampaignFile &file, std::string &keyHex, const std::string &path,
+                            char *data);
+    void *m_DB = nullptr;
 };
-
-void ReadCampaignData(sqlite3 *db, CampaignData &cd);
-
-void SaveToFile(sqlite3 *db, const std::string &path, const CampaignFile &file, std::string &keyHex,
-                const CampaignData &cd);
-
-// assumed that memory for data is allocated
-void ReadToMemory(sqlite3 *db, char *data, const CampaignFile &file, std::string &keyHex,
-                  const CampaignData &cd);
 
 } // end namespace engine
 } // end namespace core

@@ -15,6 +15,7 @@
 
 #include <adios2-perfstubs-interface.h>
 
+#include <fstream>
 #include <iostream>
 
 namespace adios2
@@ -111,12 +112,53 @@ void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
         CopyPropertiesToActualVariable(variable, p.first);
         p.second->Get(*p.first, data, adios2::Mode::Sync);
     }
-    else if (DataType::Char == helper::GetDataType<T>())
+    else if (DataType::Char == helper::GetDataType<T>() ||
+             DataType::UInt8 == helper::GetDataType<T>())
     {
         auto it = m_CampaignVarInternalInfo.find(variable.m_Name);
         if (it != m_CampaignVarInternalInfo.end())
         {
-            GetVariableFromDB(it->first, it->second.dsIdx, variable.m_Type, (void *)data);
+            // FIXME: Selection support for TEXT/IMAGE variables
+            if (!it->second.path.empty())
+            {
+                // local file
+                std::ifstream is(it->second.path, std::ios::binary);
+                is.seekg(0, std::ios::end);
+                size_t length = is.tellg();
+                is.seekg(0, std::ios::beg);
+                if (m_Options.verbose > 1)
+                {
+                    std::cout << "---- Read local file " << it->second.path << "  size = " << length
+                              << std::endl;
+                }
+                is.read((char *)data, length);
+                is.close();
+            }
+            else if (m_CampaignData.datasets[it->second.dsIdx]
+                         .replicas[it->second.repIdx]
+                         .files.size())
+            {
+                // has embedded file
+                GetVariableFromDB(it->first, it->second.dsIdx, it->second.repIdx, variable.m_Type,
+                                  (void *)data);
+            }
+            else
+            {
+                // remote file
+                auto &ds = m_CampaignData.datasets[it->second.dsIdx];
+                auto &rep = ds.replicas[it->second.repIdx];
+                if (m_Options.verbose > 0)
+                {
+                    std::cout << " -- Read remote file "
+                              << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
+                              << m_CampaignData.directory[rep.dirIdx].path << PathSeparator
+                              << rep.name << "  of size " << rep.size << "\n";
+                }
+                std::string remotePath =
+                    m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                ReadRemoteFile(m_CampaignData.hosts[rep.hostIdx].hostname, remotePath, rep.size,
+                               (void *)data);
+            }
         }
     }
 }
