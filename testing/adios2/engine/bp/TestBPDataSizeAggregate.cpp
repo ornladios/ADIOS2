@@ -94,19 +94,17 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     uint64_t globalNy = sumFirstN(rankDataSizes, rankDataSizes.size());
     uint64_t largestValue = (globalNx * globalNy) - 1;
 
-    adios2::IO bpIO = adios.DeclareIO("WriteIO");
-    bpIO.SetEngine("BPFile");
-    bpIO.SetParameter("AggregationType", aggregationType);
-    bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
-    bpIO.SetParameter("verbose", verbose);
-
     {
+        adios2::IO bpIO = adios.DeclareIO("WriteIO");
+        bpIO.SetEngine("BPFile");
+        bpIO.SetParameter("AggregationType", aggregationType);
+        bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
+        bpIO.SetParameter("verbose", verbose);
+
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
         EXPECT_TRUE(varGlobalArray);
-    }
 
-    {
         adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
 
         for (size_t step = 0; step < nSteps; ++step)
