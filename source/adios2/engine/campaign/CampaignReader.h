@@ -18,8 +18,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
-
-#include <sqlite3.h>
+#include "adios2/toolkit/remote/Remote.h"
 
 namespace adios2
 {
@@ -81,7 +80,15 @@ private:
     {
         void *originalVar; // Variable<T> in m_IO
         size_t dsIdx;      // in m_CampaignData.datasets
-        CampaignVarInternalInfo(void *p, size_t i) : originalVar(p), dsIdx(i) {}
+        size_t repIdx;     // in m_CampaignData.datasets.replicas
+        std::string path;  // local file path, empty for in-DB data
+        CampaignVarInternalInfo(void *p, size_t i, size_t j) : originalVar(p), dsIdx(i), repIdx(j)
+        {
+        }
+        CampaignVarInternalInfo(void *p, size_t i, size_t j, const std::string &path)
+        : originalVar(p), dsIdx(i), repIdx(j), path(path)
+        {
+        }
     };
     std::unordered_map<std::string, CampaignVarInternalInfo> m_CampaignVarInternalInfo;
 
@@ -122,9 +129,19 @@ private:
     std::vector<typename Variable<T>::BPInfo> BlocksInfoTCC(const Variable<T> &variable,
                                                             const size_t step) const;
 
-    void CreateTextVariable(const std::string &name, const size_t len, const size_t dsIdx);
+    std::string SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io);
+    void CreateDatasetAttributes(const std::string type, const std::string &name,
+                                 const size_t dsIdx, const size_t repIdx,
+                                 const std::string localPath);
+    void CreateTextVariable(const std::string &name, const size_t len, const size_t dsIdx,
+                            const size_t repIdx, const std::string localPath = "");
+    void CreateImageVariable(const std::string &name, const size_t len, const size_t dsIdx,
+                             const size_t repIdx, const std::string localPath = "");
 
-    void GetVariableFromDB(std::string name, size_t dsIdx, DataType type, void *data);
+    void GetVariableFromDB(std::string name, size_t dsIdx, size_t repIdx, DataType type,
+                           void *data);
+    void OpenDatasetWithADIOS(std::string prefixName, FileFormat format, adios2::core::IO &io,
+                              std::string &localPath);
 
     /**
      * Called if destructor is called on an open engine.  Should warn or take
@@ -168,8 +185,12 @@ private:
     BlocksInfoCommon(const core::Variable<std::string> &variable,
                      const std::vector<size_t> &blocksIndexOffsets) const;
 
-    sqlite3 *m_DB;
     CampaignData m_CampaignData;
+    std::unique_ptr<Remote> m_ConnectionManager = nullptr; // for reading keys from conn.manager
+
+    // for reading individual remote file
+    void ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
+                        const size_t size, void *data);
 };
 
 } // end namespace engine

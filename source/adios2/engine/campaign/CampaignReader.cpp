@@ -15,6 +15,7 @@
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
 #include "adios2/toolkit/remote/EVPathRemote.h"
+#include "adios2/toolkit/remote/XrootdRemote.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
@@ -169,6 +170,209 @@ void CampaignReader::InitParameters()
     }
 }
 
+std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io)
+{
+    std::string localPath;
+    CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
+    CampaignReplica &rep = ds.replicas[repIdx];
+    bool done = false;
+    auto it = m_HostOptions.find(m_CampaignData.hosts[rep.hostIdx].hostname);
+    if (it != m_HostOptions.end())
+    {
+        const HostConfig &ho = (it->second).front();
+        if (ho.protocol == HostAccessProtocol::S3)
+        {
+            const std::string endpointURL = ho.endpoint;
+            const std::string objPath = m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
+            Params p;
+            p.emplace("Library", "awssdk");
+            p.emplace("endpoint", endpointURL);
+            p.emplace("cache", m_Options.cachepath + PathSeparator +
+                                   m_CampaignData.hosts[rep.hostIdx].hostname + PathSeparator +
+                                   m_Name);
+            p.emplace("verbose", std::to_string(ho.verbose));
+            p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
+            io.AddTransport("File", p);
+            io.SetEngine("BP5");
+            localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+            if (ho.isAWS_EC2)
+            {
+                adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
+            }
+            else
+            {
+                adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
+            }
+
+            if (ho.awsProfile.empty())
+            {
+                adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
+            }
+            else
+            {
+                std::string es = "AWS_PROFILE=" + ho.awsProfile;
+                adios2sys::SystemTools::PutEnv(es);
+            }
+
+            done = true;
+        }
+    }
+
+    if (!done)
+    {
+        const std::string remotePath =
+            m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+        const std::string remoteURL = m_CampaignData.hosts[rep.hostIdx].hostname + ":" + remotePath;
+        localPath =
+            m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
+        if (m_Options.verbose > 0)
+        {
+            std::cout << "Open remote file " << remoteURL << " \n";
+        }
+
+        std::string keyhex;
+        if (rep.hasKey)
+        {
+            if (m_Options.verbose > 0)
+            {
+                std::cout << "The dataset is key protected with key id "
+                          << m_CampaignData.keys[rep.keyIdx].id << "\n";
+            }
+#ifdef ADIOS2_HAVE_SODIUM
+            if (m_CampaignData.keys[rep.keyIdx].keyHex.empty())
+            {
+                // Retrieve key
+                if (!m_ConnectionManager)
+                {
+                    m_ConnectionManager =
+                        std::unique_ptr<Remote>(new Remote(core::ADIOS::StaticGetHostOptions()));
+                }
+                m_CampaignData.keys[rep.keyIdx].keyHex =
+                    m_ConnectionManager->GetKeyFromConnectionManager(
+                        m_CampaignData.keys[rep.keyIdx].id);
+
+                if (m_Options.verbose > 0)
+                {
+                    std::cout << "-- Received key " << m_CampaignData.keys[rep.keyIdx].keyHex
+                              << "\n";
+                }
+            }
+
+            if (m_CampaignData.keys[rep.keyIdx].keyHex == "0")
+            {
+                // We received no key, ignore files encrypted with this key
+                std::cerr << "ERROR: don't have the key " << m_CampaignData.keys[rep.keyIdx].id
+                          << " to decrypt " << ds.name << ". Ignoring this dataset." << std::endl;
+                return "";
+            }
+
+            keyhex = m_CampaignData.keys[rep.keyIdx].keyHex;
+#else
+            helper::Throw<std::runtime_error>(
+                "Engine", "CampaignReader", "InitTransports",
+                "ADIOS needs to be built with libsodium and with SST to "
+                "be able to process protected campaign files");
+#endif
+        }
+
+        if (ds.format != FileFormat::TEXT)
+        {
+            if (m_Options.verbose > 0)
+            {
+                std::cout << "    use local cache for metadata at " << localPath << " \n";
+            }
+            helper::CreateDirectory(localPath);
+        }
+
+        // first file is HDF5's file to be opened as path
+        // second file is min/max data if available
+        // first file if TEXT's file to be opened as path
+        std::string newLocalPath = localPath;
+        bool setHDF5FilePath = true;
+        if (rep.files.size())
+        {
+            for (auto &f : rep.files)
+            {
+                std::string path =
+                    localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(f.name);
+                if (ds.format == FileFormat::TEXT)
+                {
+                    // TEXT -> create a variable, will read from DB directly, no local path
+                    CreateTextVariable(ds.name, f.lengthOriginal, dsIdx, repIdx);
+                    continue;
+                }
+                else if (ds.format == FileFormat::IMAGE)
+                {
+                    // IMAGE -> create a variable, will read from DB directly, no local path
+                    std::string imgName =
+                        ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                    CreateImageVariable(imgName, f.lengthOriginal, dsIdx, repIdx);
+                    continue;
+                }
+                else
+                {
+                    m_CampaignData.SaveToFile(path, f, keyhex);
+                }
+
+                if (setHDF5FilePath)
+                {
+                    if (ds.format == FileFormat::HDF5)
+                    {
+                        newLocalPath = path;
+                        setHDF5FilePath = false;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // a remote dataset without any embedded file
+            if (ds.format == FileFormat::TEXT)
+            {
+                // TEXT -> create a variable, will read from remote
+                CreateTextVariable(ds.name, rep.size, dsIdx, repIdx);
+            }
+            else if (ds.format == FileFormat::IMAGE)
+            {
+                // IMAGE -> create a variable, will read from remote
+                std::string imgName =
+                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                CreateImageVariable(imgName, rep.size, dsIdx, repIdx);
+            }
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "CampaignReader", "Open",
+                    "ADIOS/HDF5 replicas must have embedded metadata file(s) but found none for " +
+                        rep.name);
+            }
+        }
+
+        io.SetParameter("RemoteDataPath", remotePath);
+        io.SetParameter("RemoteHost", m_CampaignData.hosts[rep.hostIdx].hostname);
+        io.SetParameter("UUID", ds.uuid);
+
+        // Save info in cache directory for cache manager and for humans
+        {
+            std::ofstream f(localPath + PathSeparator + "info.txt");
+            if (f.is_open())
+            {
+                f << "Campaign = " << m_Name << "\n";
+                f << "Dataset = " << ds.name << "\n";
+                f << "Replica idx = " << repIdx << "\n";
+                f << "Replica = " << rep.name << "\n";
+                f << "RemoteHost = " << m_CampaignData.hosts[rep.hostIdx].hostname << "\n";
+                f << "RemoteDataPath = " << remotePath << "\n";
+                f.close();
+            }
+        }
+
+        // HDF5/TEXT point to the first file under the uuid folder in cache
+        localPath = newLocalPath;
+    }
+    return localPath;
+}
+
 void CampaignReader::InitTransports()
 {
     std::string path = m_Name;
@@ -182,16 +386,8 @@ void CampaignReader::InitTransports()
         }
     }
 
-    int rc = sqlite3_open(path.c_str(), &m_DB);
-    if (rc)
-    {
-        std::string dbmsg(sqlite3_errmsg(m_DB));
-        sqlite3_close(m_DB);
-        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "Open",
-                                             "Cannot open database" + path + ": " + dbmsg);
-    }
-
-    ReadCampaignData(m_DB, m_CampaignData);
+    m_CampaignData.Open(path);
+    m_CampaignData.ReadDatabase();
 
     if (m_Options.verbose > 0)
     {
@@ -202,11 +398,18 @@ void CampaignReader::InitTransports()
         for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
         {
             CampaignHost &h = m_CampaignData.hosts[hostidx];
-            std::cout << "    host = " << h.hostname << "  long name = " << h.longhostname
-                      << "  directories: \n";
+            std::cout << "    " << hostidx + 1 << ". host = " << h.hostname
+                      << "  long name = " << h.longhostname << "  directories: \n";
             for (size_t diridx = 0; diridx < h.dirIdx.size(); ++diridx)
             {
-                std::cout << "      dir = " << m_CampaignData.directory[h.dirIdx[diridx]] << "\n";
+                std::cout << "      " << h.dirIdx[diridx] + 1
+                          << ". dir = " << m_CampaignData.directory[h.dirIdx[diridx]].path;
+                if (m_CampaignData.directory[h.dirIdx[diridx]].archive)
+                {
+                    std::cout << "  - Archive: "
+                              << m_CampaignData.directory[h.dirIdx[diridx]].archiveSystemName;
+                }
+                std::cout << "\n";
             }
         }
         std::cout << "  keys:\n";
@@ -216,199 +419,175 @@ void CampaignReader::InitTransports()
             std::cout << "    key = " << k.id << "\n";
         }
         std::cout << "  datasets:\n";
-        for (auto &it : m_CampaignData.datasets)
+        for (auto &itDS : m_CampaignData.datasets)
         {
-            CampaignDataset &ds = it.second;
-            std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
-                      << m_CampaignData.directory[ds.dirIdx] << PathSeparator << ds.name << "\n";
+            CampaignDataset &ds = itDS.second;
+            if (ds.tsid && (ds.format == FileFormat::HDF5 || ds.format == FileFormat::ADIOS))
+                continue;
+            std::cout << "    " << ds.name << "\n";
             std::cout << "      uuid: " << ds.uuid << "\n";
             std::cout << "      fmt : " << ds.format.ToString() << "\n";
-            for (auto &bpf : ds.files)
+            for (auto &itRep : ds.replicas)
             {
-                std::cout << "      file: " << bpf.name << "\n";
+                CampaignReplica &rep = itRep.second;
+                std::cout << "      " << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
+                          << m_CampaignData.directory[rep.dirIdx].path << PathSeparator << rep.name
+                          << "\n";
+                if (rep.hasKey)
+                {
+                    std::cout << "          key: " << rep.keyIdx << "\n";
+                }
+                for (auto &f : rep.files)
+                {
+                    std::cout << "          file: " << f.name << "\n";
+                }
+            }
+        }
+        std::cout << "\n\n  time series:\n";
+        for (auto &itTS : m_CampaignData.timeseries)
+        {
+            size_t tsid = itTS.first;
+            CampaignTimeSeries &ts = itTS.second;
+            auto &ds = m_CampaignData.datasets[ts.datasets.begin()->second];
+            if (ds.format == FileFormat::IMAGE || ds.format == FileFormat::TEXT)
+                continue;
+            std::cout << "    " << tsid << ". " << ts.name << "\n";
+            for (auto &itDS : ts.datasets)
+            {
+                size_t tsorder = itDS.first;
+                size_t dsid = itDS.second;
+                CampaignDataset &ds = m_CampaignData.datasets[dsid];
+                std::cout << "    " << ds.name << "\n";
+                std::cout << "      tsorder: " << tsorder << "\n";
+                std::cout << "      uuid: " << ds.uuid << "\n";
+                std::cout << "      fmt : " << ds.format.ToString() << "\n";
+                for (auto &itRep : ds.replicas)
+                {
+                    CampaignReplica &rep = itRep.second;
+                    std::cout << "      " << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
+                              << m_CampaignData.directory[rep.dirIdx].path << PathSeparator
+                              << rep.name << "\n";
+                    if (rep.hasKey)
+                    {
+                        std::cout << "          key: " << rep.keyIdx << "\n";
+                    }
+                    for (auto &f : rep.files)
+                    {
+                        std::cout << "          file: " << f.name << "\n";
+                    }
+                }
             }
         }
     }
 
-    // std::string cs = m_Comm.BroadcastFile(m_Name, "broadcast campaign file");
-    // nlohmann::json js = nlohmann::json::parse(cs);
-    // std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() <<
-    // std::endl;
-    std::unique_ptr<Remote> connectionManager = nullptr;
-    int dsIdx = 0;
-    for (auto &it : m_CampaignData.datasets)
+    // process ADIOS/HDF5 datasets per time-series first
+    for (auto &itTS : m_CampaignData.timeseries)
     {
-        ++dsIdx; // Datasets are indexed from 1 in SQL tables
-        CampaignDataset &ds = it.second;
-        adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
-        std::string localPath;
-        if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Options.hostname)
+        size_t tsIdx = itTS.first;
+        CampaignTimeSeries &ts = itTS.second;
+
+        if (!ts.datasets.size())
+            continue;
+
+        auto &ds = m_CampaignData.datasets[ts.datasets.begin()->second];
+        if (ds.format == FileFormat::IMAGE || ds.format == FileFormat::TEXT)
+            continue;
+
+        std::string localCachePath =
+            m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
+        helper::CreateDirectory(localCachePath);
+        std::string atsFilePath = localCachePath + PathSeparator + ts.name + ".ats";
+        if (m_Options.verbose > 0)
         {
-            bool done = false;
-            auto it = m_HostOptions.find(m_CampaignData.hosts[ds.hostIdx].hostname);
-            if (it != m_HostOptions.end())
+            std::cout << "    " << tsIdx << ". " << ts.name << "  --> " << atsFilePath << std::endl;
+        }
+        std::ofstream atsfile(atsFilePath);
+
+        adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader-TS-" + std::to_string(tsIdx));
+        for (auto &itDS : ts.datasets)
+        {
+            size_t tsorder = itDS.first;
+            size_t dsIdx = itDS.second;
+            CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
+            std::string localPath;
+            size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+            if (!repIdx)
             {
-                const HostConfig &ho = (it->second).front();
-                if (ho.protocol == HostAccessProtocol::S3)
+                // pick the first replica. FIXME: need a smart way to pick a replica
+                auto itRep = ds.replicas.begin();
+                repIdx = itRep->first;
+                std::string localPath = SaveRemoteMD(dsIdx, repIdx, io);
+                if (!localPath.empty())
                 {
-                    const std::string endpointURL = ho.endpoint;
-                    const std::string objPath = m_CampaignData.directory[ds.dirIdx] + "/" + ds.name;
-                    Params p;
-                    p.emplace("Library", "awssdk");
-                    p.emplace("endpoint", endpointURL);
-                    p.emplace("cache", m_Options.cachepath + PathSeparator +
-                                           m_CampaignData.hosts[ds.hostIdx].hostname +
-                                           PathSeparator + m_Name);
-                    p.emplace("verbose", std::to_string(ho.verbose));
-                    p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
-                    io.AddTransport("File", p);
-                    io.SetEngine("BP5");
-                    localPath = m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
-                    if (ho.isAWS_EC2)
+                    if (m_Options.verbose > 0)
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
+                        std::cout << "      " << tsorder << ". " << ds.name << " local file "
+                                  << localPath << "\n";
                     }
-                    else
+                    atsfile << localPath << std::endl;
+                }
+                else
+                {
+                    if (m_Options.verbose > 0)
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
+                        std::cout << "      " << tsorder << ". " << ds.name << " Skipping \n";
                     }
-
-                    if (ho.awsProfile.empty())
-                    {
-                        adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
-                    }
-                    else
-                    {
-                        std::string es = "AWS_PROFILE=" + ho.awsProfile;
-                        adios2sys::SystemTools::PutEnv(es);
-                    }
-
-                    done = true;
                 }
             }
-
-            if (!done)
+            else
             {
-                const std::string remotePath =
-                    m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
-                const std::string remoteURL =
-                    m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
-                localPath = m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) +
-                            PathSeparator + ds.uuid;
+                CampaignReplica &rep = ds.replicas[repIdx];
+                localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
                 if (m_Options.verbose > 0)
                 {
-                    std::cout << "Open remote file " << remoteURL << " \n";
+                    std::cout << "      " << ds.tsorder << ". " << ds.name << " local file "
+                              << localPath << "\n";
                 }
+                atsfile << localPath << std::endl;
+            }
+        }
+        atsfile.close();
+        OpenDatasetWithADIOS(ts.name, ds.format, io, atsFilePath);
+    }
 
-                std::string keyhex;
-                if (ds.hasKey)
+    // process individual datasets not in any time-series (and all images/texts)
+    for (auto &it : m_CampaignData.datasets)
+    {
+        size_t dsIdx = it.first;
+        CampaignDataset &ds = it.second;
+        if (ds.tsid && (ds.format == FileFormat::HDF5 || ds.format == FileFormat::ADIOS))
+            continue;
+        if (ds.format == FileFormat::IMAGE)
+            continue;
+        adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
+        std::string localPath;
+        size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+        if (!repIdx)
+        {
+            /* FIXME: For now we only consider the first remote replica */
+            size_t repIdx;
+            auto itRep = ds.replicas.begin();
+            repIdx = itRep->first;
+            localPath = SaveRemoteMD(dsIdx, repIdx, io);
+            if (!localPath.empty())
+            {
+                if (m_Options.verbose > 0)
                 {
-                    if (m_Options.verbose > 0)
-                    {
-                        std::cout << "The dataset is key protected with key id "
-                                  << m_CampaignData.keys[ds.keyIdx].id << "\n";
-                    }
-#ifdef ADIOS2_HAVE_SODIUM
-                    if (m_CampaignData.keys[ds.keyIdx].keyHex.empty())
-                    {
-                        // Retrieve key
-                        if (!connectionManager)
-                        {
-                            connectionManager = std::unique_ptr<Remote>(
-                                new Remote(core::ADIOS::StaticGetHostOptions()));
-                        }
-                        m_CampaignData.keys[ds.keyIdx].keyHex =
-                            connectionManager->GetKeyFromConnectionManager(
-                                m_CampaignData.keys[ds.keyIdx].id);
-
-                        if (m_Options.verbose > 0)
-                        {
-                            std::cout << "-- Received key " << m_CampaignData.keys[ds.keyIdx].keyHex
-                                      << "\n";
-                        }
-                    }
-
-                    if (m_CampaignData.keys[ds.keyIdx].keyHex == "0")
-                    {
-                        // We received no key, ignore files encrypted with this key
-                        std::cerr << "ERROR: don't have the key "
-                                  << m_CampaignData.keys[ds.keyIdx].id << " to decrypt " << ds.name
-                                  << ". Ignoring this dataset." << std::endl;
-                        continue;
-                    }
-
-                    keyhex = m_CampaignData.keys[ds.keyIdx].keyHex;
-#else
-                    helper::Throw<std::runtime_error>(
-                        "Engine", "CampaignReader", "InitTransports",
-                        "ADIOS needs to be built with libsodium and with SST to "
-                        "be able to process protected campaign files");
-#endif
+                    std::cout << "    " << ds.name << " local file " << localPath << "\n";
                 }
-
-                if (ds.format != FileFormat::TEXT)
+            }
+            else
+            {
+                if (m_Options.verbose > 0)
                 {
-                    if (m_Options.verbose > 0)
-                    {
-                        std::cout << "    use local cache for metadata at " << localPath << " \n";
-                    }
-                    helper::CreateDirectory(localPath);
+                    std::cout << "    " << ds.name << " Skipping \n";
                 }
-
-                // first file is HDF5's file to be opened as path
-                // second file is min/max data if available
-                // first file if TEXT's file to be opened as path
-                std::string newLocalPath = localPath;
-                bool setHDF5FilePath = true;
-                for (auto &f : ds.files)
-                {
-                    std::string path =
-                        localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(f.name);
-                    if (ds.format != FileFormat::TEXT)
-                    {
-                        SaveToFile(m_DB, path, f, keyhex, m_CampaignData);
-                    }
-                    else
-                    {
-                        // TEXT -> create a variable, will read from DB directly, no local path
-                        CreateTextVariable(f.name, f.lengthOriginal, dsIdx);
-                        continue;
-                    }
-
-                    if (setHDF5FilePath)
-                    {
-                        if (ds.format == FileFormat::HDF5)
-                        {
-                            newLocalPath = path;
-                            setHDF5FilePath = false;
-                        }
-                    }
-                }
-
-                io.SetParameter("RemoteDataPath", remotePath);
-                io.SetParameter("RemoteHost", m_CampaignData.hosts[ds.hostIdx].hostname);
-                io.SetParameter("UUID", ds.uuid);
-
-                // Save info in cache directory for cache manager and for humans
-                {
-                    std::ofstream f(localPath + PathSeparator + "info.txt");
-                    if (f.is_open())
-                    {
-                        f << "Campaign = " << m_Name << "\n";
-                        f << "Dataset = " << ds.name << "\n";
-                        f << "RemoteHost = " << m_CampaignData.hosts[ds.hostIdx].hostname << "\n";
-                        f << "RemoteDataPath = " << remotePath << "\n";
-                        f.close();
-                    }
-                }
-
-                // HDF5/TEXT point to the first file under the uuid folder in cache
-                localPath = newLocalPath;
             }
         }
         else
         {
-            localPath = m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
+            CampaignReplica &rep = ds.replicas[repIdx];
+            localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
             if (m_Options.verbose > 0)
             {
                 std::cout << "Open local file " << localPath << "\n";
@@ -416,7 +595,8 @@ void CampaignReader::InitTransports()
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable
-                CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx);
+                CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx,
+                                   repIdx, localPath);
             }
         }
 
@@ -424,7 +604,7 @@ void CampaignReader::InitTransports()
         {
             io.SetEngine("HDF5");
         }
-        else if (ds.format == FileFormat::TEXT)
+        else if (ds.format == FileFormat::TEXT || ds.format == FileFormat::IMAGE)
         {
             continue;
         }
@@ -432,35 +612,113 @@ void CampaignReader::InitTransports()
         {
             continue;
         }
+        OpenDatasetWithADIOS(ds.name, ds.format, io, localPath);
+    }
 
-        adios2::core::Engine &e = io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
-
-        m_IOs.push_back(&io);
-        m_Engines.push_back(&e);
-
-        auto vmap = io.GetAvailableVariables();
-        auto amap = io.GetAvailableAttributes();
-        VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1, m_Engines.size() - 1);
-
-        for (auto &vr : vmap)
+    // process images separately as all resolutions are presented as different variables
+    for (auto &it : m_CampaignData.datasets)
+    {
+        size_t dsIdx = it.first;
+        CampaignDataset &ds = it.second;
+        if (ds.format != FileFormat::IMAGE)
+            continue;
+        std::string localPath;
+        if (m_Options.verbose > 1)
         {
-            auto vname = vr.first;
-            std::string fname = ds.name;
-            std::string newname;
-            if (ds.format == FileFormat::HDF5)
+            std::cout << "-- Image " << ds.name << ":\n";
+        }
+        for (auto &itRep : ds.replicas)
+        {
+            size_t repIdx = itRep.first;
+            CampaignReplica &rep = itRep.second;
+            if (m_Options.verbose > 1)
             {
-                newname = fname + vname;
+                std::cout << "      " << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
+                          << m_CampaignData.directory[rep.dirIdx].path << PathSeparator << rep.name
+                          << "\n";
+            }
+            if (m_CampaignData.directory[rep.dirIdx].archive)
+            {
+                // this is an image in an archived place, skip
+                continue;
+            }
+            else if (rep.files.size())
+            {
+                // this replica has embedded image
+                // IMAGE -> create a variable, will read from DB directly, no local path
+                std::string imgName =
+                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                if (m_Options.verbose > 1)
+                {
+                    std::cout << "        --- embedded image " << imgName << "\n";
+                }
+                auto f = rep.files.begin();
+                CreateImageVariable(imgName, f->lengthOriginal, dsIdx, repIdx);
+            }
+            else if (m_CampaignData.hosts[rep.hostIdx].hostname == m_Options.hostname)
+            {
+                // this replica is local
+                localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                if (m_Options.verbose > 1)
+                {
+                    std::cout << "        --- local image " << localPath << " and resolution "
+                              << rep.x << "x" << rep.y << std::endl;
+                }
+                std::string imgName =
+                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                CreateImageVariable(imgName, adios2sys::SystemTools::FileLength(localPath), dsIdx,
+                                    repIdx, localPath);
             }
             else
             {
-                newname = fname + "/" + vname;
+                // this is a remote image
+                std::string imgName =
+                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                if (m_Options.verbose > 1)
+                {
+                    std::cout << "        --- remote image " << imgName << "\n";
+                }
+                CreateImageVariable(imgName, rep.size, dsIdx, repIdx);
             }
+        }
+    }
+}
 
-            const DataType type = io.InquireVariableType(vname);
+void CampaignReader::OpenDatasetWithADIOS(std::string prefixName, FileFormat format,
+                                          adios2::core::IO &io, std::string &localPath)
+{
+    adios2::core::Engine &e = io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
 
-            if (type == DataType::Struct)
-            {
-            }
+    m_IOs.push_back(&io);
+    m_Engines.push_back(&e);
+
+    auto vmap = io.GetAvailableVariables();
+    auto amap = io.GetAvailableAttributes();
+    VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1, m_Engines.size() - 1);
+
+    for (auto &vr : vmap)
+    {
+        auto vname = vr.first;
+        std::string fname = prefixName;
+        std::string newname;
+        if (format == FileFormat::HDF5)
+        {
+            newname = fname + vname;
+        }
+        if (!vname.empty() && vname[0] == '/')
+        {
+            newname = fname + vname;
+        }
+        else
+        {
+            newname = fname + "/" + vname;
+        }
+
+        const DataType type = io.InquireVariableType(vname);
+
+        if (type == DataType::Struct)
+        {
+        }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
@@ -468,21 +726,21 @@ void CampaignReader::InitTransports()
         Variable<T> v = DuplicateVariable(vi, m_IO, newname, internalInfo);                        \
     }
 
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-        }
+    }
 
-        for (auto &ar : amap)
+    for (auto &ar : amap)
+    {
+        auto aname = ar.first;
+        std::string fname = prefixName;
+        std::string newname = fname + "/" + aname;
+
+        const DataType type = io.InquireAttributeType(aname);
+
+        if (type == DataType::Struct)
         {
-            auto aname = ar.first;
-            std::string fname = ds.name;
-            std::string newname = fname + "/" + aname;
-
-            const DataType type = io.InquireAttributeType(aname);
-
-            if (type == DataType::Struct)
-            {
-            }
+        }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
@@ -490,9 +748,8 @@ void CampaignReader::InitTransports()
         Attribute<T> v = DuplicateAttribute(ai, m_IO, newname);                                    \
     }
 
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-        }
     }
 }
 
@@ -506,22 +763,55 @@ void CampaignReader::DoClose(const int transportIndex)
     {
         ep->Close();
     }
-    sqlite3_close(m_DB);
+    m_CampaignData.Close();
     m_IsOpen = false;
 }
 
+void CampaignReader::CreateDatasetAttributes(const std::string type, const std::string &name,
+                                             const size_t dsIdx, const size_t repIdx,
+                                             const std::string localPath)
+{
+    m_IO.DefineAttribute<std::string>("__dataset_type__", type, name);
+    bool isLocal = false;
+    if (!localPath.empty())
+        isLocal = true; // file is on current host
+
+    if (m_CampaignData.datasets[dsIdx].replicas[repIdx].files.size() > 0)
+        isLocal = true; // file is embedded in archive
+
+    // FIXME: in cache?
+
+    m_IO.DefineAttribute<std::string>("__dataset_location__", (isLocal ? "local" : "remote"), name);
+}
+
 void CampaignReader::CreateTextVariable(const std::string &name, const size_t len,
-                                        const size_t dsIdx)
+                                        const size_t dsIdx, const size_t repIdx,
+                                        const std::string localPath)
 {
     // TEXT -> create a variable, will read from DB directly, no local path
     Variable<char> &v = m_IO.DefineVariable<char>(name, Dims{len}, Dims{0ULL}, Dims{len}, false);
     v.m_AvailableStepsCount = 1;
     v.m_AvailableStepsStart = 0;
-    CampaignVarInternalInfo internalInfo(&v, dsIdx);
+    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, localPath);
     m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
+    CreateDatasetAttributes("text", name, dsIdx, repIdx, localPath);
 }
 
-void CampaignReader::DestructorClose(bool Verbose) noexcept { sqlite3_close(m_DB); }
+void CampaignReader::CreateImageVariable(const std::string &name, const size_t len,
+                                         const size_t dsIdx, const size_t repIdx,
+                                         const std::string localPath)
+{
+    // TEXT -> create a variable, will read from DB directly, no local path
+    Variable<uint8_t> &v =
+        m_IO.DefineVariable<uint8_t>(name, Dims{len}, Dims{0ULL}, Dims{len}, false);
+    v.m_AvailableStepsCount = 1;
+    v.m_AvailableStepsStart = 0;
+    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, localPath);
+    m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
+    CreateDatasetAttributes("image", name, dsIdx, repIdx, localPath);
+}
+
+void CampaignReader::DestructorClose(bool Verbose) noexcept { m_CampaignData.Close(); }
 
 // Remove the engine name from the var name, which must be of pattern
 // <engineName>/<original var name>
@@ -565,10 +855,23 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var, size_t Step) 
             Blk.BlockID = 0;
             Blk.Start = Var.m_Start.data();
             Blk.Count = Var.m_Count.data();
-            Blk.MinMax.Init(adios2::DataType::Char);
-            Blk.MinMax.MinUnion.field_int8 = (int8_t)'a';
-            Blk.MinMax.MaxUnion.field_int8 = (int8_t)'z';
-            MV->BlocksInfo.push_back(Blk);
+            switch (m_CampaignData.datasets.at(it->second.dsIdx).format)
+            {
+            case FileFormat::TEXT:
+                Blk.MinMax.Init(adios2::DataType::Char);
+                Blk.MinMax.MinUnion.field_int8 = (int8_t)'a';
+                Blk.MinMax.MaxUnion.field_int8 = (int8_t)'z';
+                MV->BlocksInfo.push_back(Blk);
+                break;
+            case FileFormat::IMAGE:
+                Blk.MinMax.Init(adios2::DataType::UInt8);
+                Blk.MinMax.MinUnion.field_uint8 = 0;
+                Blk.MinMax.MaxUnion.field_uint8 = 255;
+                MV->BlocksInfo.push_back(Blk);
+                break;
+            default:
+                break;
+            }
             return MV;
         }
     }
@@ -611,10 +914,21 @@ bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
         auto it = m_CampaignVarInternalInfo.find(Var.m_Name);
         if (it != m_CampaignVarInternalInfo.end())
         {
-            MinMax.Init(adios2::DataType::Char);
-            MinMax.MinUnion.field_int8 = (int8_t)'a';
-            MinMax.MaxUnion.field_int8 = (int8_t)'z';
-            return true;
+            switch (m_CampaignData.datasets[it->second.dsIdx].format)
+            {
+            case FileFormat::TEXT:
+                MinMax.Init(adios2::DataType::Char);
+                MinMax.MinUnion.field_int8 = (int8_t)'A';
+                MinMax.MaxUnion.field_int8 = (int8_t)'Z';
+                return true;
+            case FileFormat::IMAGE:
+                MinMax.Init(adios2::DataType::UInt8);
+                MinMax.MinUnion.field_uint8 = 1;
+                MinMax.MaxUnion.field_uint8 = 254;
+                return true;
+            default:
+                return false;
+            }
         }
     }
     return false;
@@ -630,6 +944,55 @@ std::string CampaignReader::VariableExprStr(const VariableBase &Var)
         return e->VariableExprStr(*vb);
     }
     return "";
+}
+
+void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, size_t repIdx, DataType type,
+                                       void *data)
+{
+    if (type != DataType::Char && type != DataType::UInt8)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "CampaignReader", "GetVariableFromDB",
+            "Expected char/uint8_t variable but was called with a type " + ToString(type));
+    }
+
+    CampaignReplica &rep = m_CampaignData.datasets[dsIdx].replicas[repIdx];
+    const CampaignFile &f = rep.files.at(0);
+    std::string keyhex;
+    if (rep.hasKey)
+        keyhex = m_CampaignData.keys[rep.keyIdx].keyHex;
+    m_CampaignData.ReadToMemory((char *)data, f, keyhex);
+}
+
+void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
+                                    const size_t size, void *data)
+{
+    std::unique_ptr<Remote> remote = nullptr;
+#ifdef ADIOS2_HAVE_XROOTD
+    if (getenv("DoXRootD"))
+    {
+        remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
+        remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
+    }
+    else
+#endif
+#ifdef ADIOS2_HAVE_SST
+    {
+        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
+        int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
+        remote->OpenSimpleFile("localhost", localPort, remotePath);
+    }
+#endif
+    // evaluate validity of object, not just that the pointer is non-NULL
+    if (remote == nullptr || !(*remote))
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Engine", "CampaignReader", "ReadRemoteFile",
+            "Cannot get remote connection to read file " + remoteHost + ":" + remotePath +
+                ". Make sure connection manager is running, and the server specification for the "
+                "host is valid.");
+    }
+    remote->Read(0, size, data);
 }
 
 #define declare_type(T)                                                                            \
@@ -677,23 +1040,6 @@ std::string CampaignReader::VariableExprStr(const VariableBase &Var)
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-
-void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, DataType type, void *data)
-{
-    if (type != DataType::Char)
-    {
-        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "GetVariableFromDB",
-                                             "Expected char variable but was called with a type " +
-                                                 ToString(type));
-    }
-
-    CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
-    const CampaignFile &f = ds.files[0];
-    std::string keyhex;
-    if (ds.hasKey)
-        keyhex = m_CampaignData.keys[ds.keyIdx].keyHex;
-    ReadToMemory(m_DB, (char *)data, f, keyhex, m_CampaignData);
-}
 
 } // end namespace engine
 } // end namespace core
