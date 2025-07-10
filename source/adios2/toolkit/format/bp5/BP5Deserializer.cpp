@@ -477,7 +477,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                     VarRec->Def = Def;
                 }
                 if (Operator)
-                    VarRec->Operator = strdup("SomeOperator");
+                    VarRec->Operator = strdup("null");
                 C->ElementSize = ElementSize;
             }
             C->VarRec = VarRec;
@@ -940,6 +940,12 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine = m_Engine;
                     VarByKey[VarRec->Variable] = VarRec;
                     VarRec->LastTSAdded = Step; // starts at 1
+                    if (VarRec->Operator)
+                    {
+                        auto VB = static_cast<VariableBase *>(VarRec->Variable);
+                        auto tmpOp = MakeOperator("null", {});
+                        VB->m_Operations.push_back(tmpOp);
+                    }
                     if (!meta_base->Shape)
                     {
                         static_cast<VariableBase *>(VarRec->Variable)->m_ShapeID =
@@ -1984,7 +1990,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         // Get the operator of the variable if exists or create one
         std::shared_ptr<Operator> op = nullptr;
         VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
-        if (!VB->m_Operations.empty())
+        if (!VB->m_Operations.empty() && (VB->m_Operations[0]->m_TypeString != "null"))
         {
             op = VB->m_Operations[0];
         }
@@ -1992,7 +1998,25 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         {
             Operator::OperatorType compressorType =
                 static_cast<Operator::OperatorType>(IncomingData[0]);
-            op = MakeOperator(OperatorTypeToString(compressorType), {});
+            try
+            {
+                op = MakeOperator(OperatorTypeToString(compressorType), {});
+            }
+            catch (...)
+            {
+                std::exception_ptr ex = std::current_exception();
+                // if MakeOperator throws an exception, we can't complete this request.  To make it
+                // isn't tried again, we have to clear PendingGetRequests.  Also cleanup
+                // Read.DestinationAddr.
+                PendingGetRequests.clear();
+                if (freeAddr)
+                {
+                    free((char *)Read.DestinationAddr);
+                }
+                std::rethrow_exception(ex);
+            }
+            VB->m_Operations.resize(1);
+            VB->m_Operations[0] = op;
         }
         op->SetAccuracy(VB->GetAccuracyRequested());
 
