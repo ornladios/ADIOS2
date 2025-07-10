@@ -101,9 +101,12 @@ size_t PluginOperator::GetEstimatedSize(const size_t ElemCount, const size_t Ele
     return commonHeaderSize + paramsSize + implSize;
 }
 
+void PluginOperator::AddExtraParameters(const Params &params) { m_ExtraParams = params; }
+
 size_t PluginOperator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
                                const DataType type, char *bufferOut)
 {
+    m_Impl->m_Plugin->AddExtraParameters(m_ExtraParams);
     // handle common header first
     size_t offset = 0;
     const uint8_t bufferVersion = 1;
@@ -146,6 +149,7 @@ size_t PluginOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
     // now set up the plugin if it hasn't already
     PluginInit(pluginName, pluginLibrary);
 
+    m_Impl->m_Plugin->AddExtraParameters(m_ExtraParams);
     // add offset to bufferIn, so plugin doesn't have to worry about plugin
     // header or common header
     size_t pluginSize =
