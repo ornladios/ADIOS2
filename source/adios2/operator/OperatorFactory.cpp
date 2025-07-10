@@ -199,12 +199,15 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, Memo
     {
         op = MakeOperator(OperatorTypeToString(compressorType), {});
     }
-    size_t sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut);
-    if ((sizeOut == 0) && engine && var)
+
+    if (engine && var)
     {
         Params operatorParams = CreateOperatorParams(engine, var);
-        sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut, operatorParams);
+        op->AddExtraParameters(operatorParams);
     }
+
+    size_t sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut);
+
     if (sizeOut == 0) // the inverse operator was not applied
     {
         size_t headerSize = op->GetHeaderSize();
