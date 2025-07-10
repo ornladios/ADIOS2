@@ -18,6 +18,8 @@
 #error "Inline file should only be included from its header, never on its own"
 #endif
 
+#include <cstdint>
+
 namespace adios2
 {
 
