@@ -2079,16 +2079,16 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         helper::DimsArray intersectCount(IntersectionBox.second);
         helper::DimsArray blockStart(BlockBox.first);
         helper::DimsArray blockCount(BlockBox.second);
-        helper::DimsArray memoryStart(DimCount, SelOffset);
-        helper::DimsArray memoryCount(VB->m_MemoryCount);
+        helper::DimsArray memoryStart(outStart);
+        helper::DimsArray memoryCount(outMemCount);
         for (size_t d = 0; d < intersectStart.size(); d++)
         {
             // change {intersect,block}Count from [start, end] to {start, count}
             intersectCount[d] -= (intersectStart[d] - 1);
             blockCount[d] -= (blockStart[d] - 1);
             // shift everything by MemoryStart
-            intersectStart[d] += VB->m_MemoryStart[d];
-            blockStart[d] += VB->m_MemoryStart[d];
+            intersectStart[d] += outMemStart[d];
+            blockStart[d] += outMemStart[d];
         }
         helper::NdCopy(VirtualIncomingData, intersectStart, intersectCount, true, true,
                        (char *)Req.Data, intersectStart, intersectCount, true, true, ElementSize,
