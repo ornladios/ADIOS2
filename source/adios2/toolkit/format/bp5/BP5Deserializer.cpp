@@ -1980,56 +1980,57 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     std::vector<char> decompressBuffer;
     if (((struct BP5VarRec *)Req.VarRec)->Operator != NULL)
     {
-        size_t DestSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
-        for (size_t dim = 0; dim < ((struct BP5VarRec *)Req.VarRec)->DimCount; dim++)
+        try
         {
-            DestSize *= writer_meta_base->Count[dim + Read.BlockID * writer_meta_base->Dims];
-        }
-        decompressBuffer.resize(DestSize);
-
-        // Get the operator of the variable if exists or create one
-        std::shared_ptr<Operator> op = nullptr;
-        VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
-        if (!VB->m_Operations.empty() && (VB->m_Operations[0]->m_TypeString != "null"))
-        {
-            op = VB->m_Operations[0];
-        }
-        else
-        {
-            Operator::OperatorType compressorType =
-                static_cast<Operator::OperatorType>(IncomingData[0]);
-            try
+            size_t DestSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
+            for (size_t dim = 0; dim < ((struct BP5VarRec *)Req.VarRec)->DimCount; dim++)
             {
+                DestSize *= writer_meta_base->Count[dim + Read.BlockID * writer_meta_base->Dims];
+            }
+            decompressBuffer.resize(DestSize);
+
+            // Get the operator of the variable if exists or create one
+            std::shared_ptr<Operator> op = nullptr;
+            VariableBase *VB =
+                static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
+            if (!VB->m_Operations.empty() && (VB->m_Operations[0]->m_TypeString != "null"))
+            {
+                op = VB->m_Operations[0];
+            }
+            else
+            {
+                Operator::OperatorType compressorType =
+                    static_cast<Operator::OperatorType>(IncomingData[0]);
                 op = MakeOperator(OperatorTypeToString(compressorType), {});
+                VB->m_Operations.resize(1);
+                VB->m_Operations[0] = op;
             }
-            catch (...)
-            {
-                std::exception_ptr ex = std::current_exception();
-                // if MakeOperator throws an exception, we can't complete this request.  To make it
-                // isn't tried again, we have to clear PendingGetRequests.  Also cleanup
-                // Read.DestinationAddr.
-                PendingGetRequests.clear();
-                if (freeAddr)
-                {
-                    free((char *)Read.DestinationAddr);
-                }
-                std::rethrow_exception(ex);
-            }
-            VB->m_Operations.resize(1);
-            VB->m_Operations[0] = op;
-        }
-        op->SetAccuracy(VB->GetAccuracyRequested());
+            op->SetAccuracy(VB->GetAccuracyRequested());
 
-        {
-            std::lock_guard<std::mutex> lockGuard(mutexDecompress);
-            core::Decompress(
-                IncomingData,
-                ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
-                decompressBuffer.data(), Req.MemSpace, op, m_Engine, VB);
-            VB->m_AccuracyProvided = op->GetAccuracy();
+            {
+                std::lock_guard<std::mutex> lockGuard(mutexDecompress);
+                core::Decompress(
+                    IncomingData,
+                    ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
+                    decompressBuffer.data(), Req.MemSpace, op, m_Engine, VB);
+                VB->m_AccuracyProvided = op->GetAccuracy();
+            }
+            IncomingData = decompressBuffer.data();
+            VirtualIncomingData = IncomingData;
         }
-        IncomingData = decompressBuffer.data();
-        VirtualIncomingData = IncomingData;
+        catch (...)
+        {
+            std::exception_ptr ex = std::current_exception();
+            // if MakeOperator or Decompress throws an exception, we can't complete this request. To
+            // make it isn't tried again, we have to clear PendingGetRequests.  Also cleanup
+            // Read.DestinationAddr.
+            PendingGetRequests.clear();
+            if (freeAddr)
+            {
+                free((char *)Read.DestinationAddr);
+            }
+            std::rethrow_exception(ex);
+        }
     }
     if (Req.Start.size())
     {

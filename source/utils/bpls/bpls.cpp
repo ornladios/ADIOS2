@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include "adios2/helper/adiosLog.h"
+#include "adios2/operator/plugin/PluginOperator.h"
 
 #if defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
 #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
@@ -1014,7 +1015,16 @@ int doList_operators(core::Engine *fp, core::IO *io)
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
                     op = e.var->m_Operations[0];
-                    OpStrings.insert(op->m_TypeString);
+                    auto plugin = dynamic_cast<plugin::PluginOperator *>(op.get());
+                    if (plugin)
+                    {
+                        OpStrings.insert(plugin->m_PluginLibrary + "(" + plugin->m_PluginName +
+                                         ")");
+                    }
+                    else
+                    {
+                        OpStrings.insert(op->m_TypeString);
+                    }
                 }
                 catch (std::invalid_argument const &ex)
                 {
@@ -1024,6 +1034,19 @@ int doList_operators(core::Engine *fp, core::IO *io)
                     size_t end = text.substr(start).find(' ');
                     std::string op = text.substr(start, end);
                     OpStrings.insert(op);
+                }
+                catch (std::runtime_error const &ex)
+                {
+                    // plugin operator we didn't find  Parse the text
+                    std::string text = ex.what();
+                    size_t libstart = text.find("library \"") + 9;
+                    size_t libend = text.substr(libstart).find('"');
+                    std::string lib = text.substr(libstart, libend);
+                    std::string rem = text.substr(libstart + libend + 1);
+                    size_t opstart = rem.find('"') + 1;
+                    size_t opend = rem.substr(opstart).find('"');
+                    std::string op = rem.substr(opstart, opend);
+                    OpStrings.insert(lib + "(" + op + ")");
                 }
             }
         }
