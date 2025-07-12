@@ -18,6 +18,7 @@ readonly paths="
 
 extract_source () {
     git_archive
+    sed -i '2i#include <cstdint>' "${extractdir}/${name}-reduced/src/emitterutils.cpp"
 }
 
 . "${BASH_SOURCE%/*}/../update-common.sh"
