@@ -182,9 +182,11 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
 
     if (ret == nullptr)
     {
-        helper::Throw<std::invalid_argument>("Operator", "OperatorFactory", "MakeOperator",
-                                             "ADIOS2 didn't compile with " + typeLowerCase +
-                                                 " library, operator not added");
+        auto m = MakeMessage("Operator", "OperatorFactory", "MakeOperator",
+                             "ADIOS2 didn't compile with " + typeLowerCase +
+                                 " library, operator not added",
+                             -1, helper::LogMode::EXCEPTION);
+        throw MissingOperatorFailure(m, typeLowerCase);
     }
 
     return ret;

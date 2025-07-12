@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include "adios2/helper/adiosLog.h"
+#include "adios2/operator/plugin/PluginOperator.h"
 
 #if defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
 #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
@@ -97,6 +98,7 @@ bool attrsonly;          // do list attributes only
 bool longopt;            // -l is turned on
 bool timestep;           // read step by step
 bool ignore_flatten;     // dont flatten steps to one
+bool list_operators;     // list all operators used in the file
 bool filestream = false; // are we using an engine through FileStream?
 bool noindex;            // do no print array indices with data
 bool printByteAsChar;    // print 8 bit integer arrays as string
@@ -149,6 +151,7 @@ void display_help()
            "reading)\n"
            "  --ignore_flatten           Display steps as written (don't flatten, even if writer "
            "said to)\n"
+           "  --list_operators           List all operators used in the file\n"
            "  --dump      | -d           Dump matched variables/attributes\n"
            "                               To match attributes too, add option "
            "-a\n"
@@ -600,6 +603,8 @@ int bplsMain(int argc, char *argv[])
     arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
     arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
     arg.AddBooleanArgument("--dump", &dump, "Dump matched variables/attributes");
+    arg.AddBooleanArgument("--list_operators", &list_operators,
+                           "List the operators used in the file");
     arg.AddBooleanArgument("-d", &dump, "");
     arg.AddBooleanArgument("--long", &longopt,
                            "Print values of all scalars and attributes and min/max "
@@ -781,6 +786,7 @@ void init_globals()
     listmeshes = false;
     attrsonly = false;
     longopt = false;
+    list_operators = false;
     // timefrom             = 1;
     // timeto               = -1;
     use_regexp = false;
@@ -977,6 +983,68 @@ int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<std::str
 }
 
 int nEntriesMatched = 0;
+
+int doList_operators(core::Engine *fp, core::IO *io)
+{
+    const core::VarMap &variables = io->GetVariables();
+    std::set<std::string> OpStrings;
+
+    for (const auto &vpair : variables)
+    {
+        Entry e(vpair.second->m_Type, vpair.second.get());
+        if (e.var->m_Operations.size() > 0)
+        {
+            auto op = e.var->m_Operations[0];
+            if (op->m_TypeString == "null")
+            {
+                try
+                {
+                    if (e.typeName == DataType::Struct)
+                    {
+                        // not supported
+                    }
+#define declare_template_instantiation(T)                                                          \
+    else if (e.typeName == helper::GetDataType<T>())                                               \
+    {                                                                                              \
+        core::Variable<T> *variable = static_cast<core::Variable<T> *>(e.var);                     \
+        variable->SetBlockSelection(0);                                                            \
+        std::vector<T> dataV;                                                                      \
+        dataV.resize(variable->SelectionSize());                                                   \
+        fp->Get(*variable, dataV, adios2::Mode::Sync);                                             \
+    }
+                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+                    op = e.var->m_Operations[0];
+                    auto plugin = dynamic_cast<plugin::PluginOperator *>(op.get());
+                    if (plugin)
+                    {
+                        OpStrings.insert(plugin->m_PluginLibrary + "(" + plugin->m_PluginName +
+                                         ")");
+                    }
+                    else
+                    {
+                        OpStrings.insert(op->m_TypeString);
+                    }
+                }
+                catch (MissingOperatorFailure const &ex)
+                {
+                    // we didn't compile with the operator used
+                    OpStrings.insert(ex.m_Operator);
+                }
+                catch (PluginLoadFailure const &ex)
+                {
+                    // plugin operator we didn't find
+                    OpStrings.insert(ex.m_PluginLibrary + "(" + ex.m_PluginName + ")");
+                }
+            }
+        }
+    }
+    std::cout << "Operators used in this file:" << std::endl;
+    for (const auto &opname : OpStrings)
+        std::cout << " * " << opname << std::endl;
+
+    return 0;
+}
 
 int doList_vars(core::Engine *fp, core::IO *io)
 {
@@ -1595,6 +1663,12 @@ int doList(std::string path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
+    if (list_operators && timestep)
+    {
+        fprintf(stderr,
+                "--list_operators incompatible with --timestep, turning off timestep mode\n");
+        timestep = false;
+    }
     core::ADIOS adios("C++");
     const adios2::UserOptions userOptions = adios.GetUserOptions();
 
@@ -1771,6 +1845,10 @@ int doList(std::string path)
         else
         {
             doList_vars(fp, &io);
+            if (list_operators)
+            {
+                doList_operators(fp, &io);
+            }
         }
 
         fp->Close();

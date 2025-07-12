@@ -343,7 +343,15 @@ size_t VariableBase::AddOperation(const std::string &type, const Params &paramet
     auto op = MakeOperator(type, parameters);
     if (op->IsDataTypeValid(m_Type))
     {
-        m_Operations.push_back(op);
+        if (!m_Operations.empty() && (m_Operations[0]->m_TypeString == "null"))
+        {
+            // if there's a dummy operation in place, replace it
+            m_Operations[0] = op;
+        }
+        else
+        {
+            m_Operations.push_back(op);
+        }
     }
     else
     {

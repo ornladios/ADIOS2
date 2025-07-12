@@ -48,6 +48,9 @@ public:
 
     bool IsDataTypeValid(const DataType type) const override;
 
+    std::string m_PluginLibrary;
+    std::string m_PluginName;
+
 protected:
     void PluginInit(const std::string &pluginName, const std::string &pluginLibrary);
 

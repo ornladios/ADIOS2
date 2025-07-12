@@ -61,7 +61,11 @@ PluginOperator::PluginOperator(const Params &parameters)
     }
 }
 
-PluginOperator::~PluginOperator() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
+PluginOperator::~PluginOperator()
+{
+    if (m_Impl->m_Plugin)
+        m_Impl->m_HandleDestroy(m_Impl->m_Plugin);
+}
 
 void PluginOperator::PluginInit(const std::string &pluginName, const std::string &pluginLibrary)
 {
@@ -72,11 +76,24 @@ void PluginOperator::PluginInit(const std::string &pluginName, const std::string
 
     auto &pluginManager = PluginManager::GetInstance();
     pluginManager.SetParameters(m_Parameters);
-    pluginManager.LoadPlugin(pluginName, pluginLibrary);
-
+    try
+    {
+        pluginManager.LoadPlugin(pluginName, pluginLibrary);
+    }
+    catch (...)
+    {
+        auto m = MakeMessage("Plugins", "PluginOperator", "PluginInit",
+                             "Failed to load library " + m_PluginLibrary + " looking for plugin " +
+                                 m_PluginName,
+                             -1, helper::LogMode::EXCEPTION);
+        throw PluginLoadFailure(m, pluginLibrary, pluginName);
+    }
     m_Impl->m_HandleCreate = pluginManager.GetOperatorCreateFun(pluginName);
     m_Impl->m_HandleDestroy = pluginManager.GetOperatorDestroyFun(pluginName);
     m_Impl->m_Plugin = m_Impl->m_HandleCreate(m_Parameters);
+    // add for external visibility
+    m_PluginName = pluginName;
+    m_PluginLibrary = pluginLibrary;
 }
 
 size_t PluginOperator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
