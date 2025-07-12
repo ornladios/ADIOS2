@@ -300,15 +300,18 @@ void TimeSeriesReader::ProcessIO(adios2::core::IO &io, adios2::core::Engine &e)
         Variable<T> *vi = io.InquireVariable<T>(vname);                                            \
         MinMaxStruct MinMax;                                                                       \
         T min, max;                                                                                \
-        if (e.VariableMinMax(*vi, DefaultSizeT, MinMax))                                           \
+        if (TypeHasMinMax(type))                                                                   \
         {                                                                                          \
-            min = *reinterpret_cast<T *>(&MinMax.MinUnion);                                        \
-            max = *reinterpret_cast<T *>(&MinMax.MaxUnion);                                        \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            min = vi->m_Min;                                                                       \
-            max = vi->m_Max;                                                                       \
+            if (e.VariableMinMax(*vi, DefaultSizeT, MinMax))                                       \
+            {                                                                                      \
+                min = *reinterpret_cast<T *>(&MinMax.MinUnion);                                    \
+                max = *reinterpret_cast<T *>(&MinMax.MaxUnion);                                    \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                min = vi->m_Min;                                                                   \
+                max = vi->m_Max;                                                                   \
+            }                                                                                      \
         }                                                                                          \
         Variable<T> v =                                                                            \
             DuplicateVariable(vi, m_IO, m_IOs.size() - 1, m_Engines.size() - 1, min, max);         \
