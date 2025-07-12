@@ -1026,27 +1026,15 @@ int doList_operators(core::Engine *fp, core::IO *io)
                         OpStrings.insert(op->m_TypeString);
                     }
                 }
-                catch (std::invalid_argument const &ex)
+                catch (MissingOperatorFailure const &ex)
                 {
-                    // if we didn't compile with the operator, the above with throw.  Parse the text
-                    std::string text = ex.what();
-                    size_t start = text.find("compile with ") + 13;
-                    size_t end = text.substr(start).find(' ');
-                    std::string op = text.substr(start, end);
-                    OpStrings.insert(op);
+                    // we didn't compile with the operator used
+                    OpStrings.insert(ex.m_Operator);
                 }
-                catch (std::runtime_error const &ex)
+                catch (PluginLoadFailure const &ex)
                 {
-                    // plugin operator we didn't find  Parse the text
-                    std::string text = ex.what();
-                    size_t libstart = text.find("library \"") + 9;
-                    size_t libend = text.substr(libstart).find('"');
-                    std::string lib = text.substr(libstart, libend);
-                    std::string rem = text.substr(libstart + libend + 1);
-                    size_t opstart = rem.find('"') + 1;
-                    size_t opend = rem.substr(opstart).find('"');
-                    std::string op = rem.substr(opstart, opend);
-                    OpStrings.insert(lib + "(" + op + ")");
+                    // plugin operator we didn't find
+                    OpStrings.insert(ex.m_PluginLibrary + "(" + ex.m_PluginName + ")");
                 }
             }
         }

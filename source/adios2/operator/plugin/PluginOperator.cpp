@@ -82,9 +82,11 @@ void PluginOperator::PluginInit(const std::string &pluginName, const std::string
     }
     catch (...)
     {
-        helper::Throw<std::runtime_error>("Plugins", "PluginOperator", "PluginInit",
-                                          "Failed to load library \"" + pluginLibrary +
-                                              "\" looking for plugin \"" + pluginName + "\"");
+        auto m = MakeMessage("Plugins", "PluginOperator", "PluginInit",
+                             "Failed to load library " + m_PluginLibrary + " looking for plugin " +
+                                 m_PluginName,
+                             -1, helper::LogMode::EXCEPTION);
+        throw PluginLoadFailure(m, pluginLibrary, pluginName);
     }
     m_Impl->m_HandleCreate = pluginManager.GetOperatorCreateFun(pluginName);
     m_Impl->m_HandleDestroy = pluginManager.GetOperatorDestroyFun(pluginName);

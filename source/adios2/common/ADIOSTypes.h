@@ -359,6 +359,34 @@ std::string ToString(const Dims &dims);
 std::string ToString(const Box<Dims> &box);
 std::string ToString(const MemorySpace value);
 
+// Derived exception class for specific errors
+class PluginLoadFailure : public std::runtime_error
+{
+public:
+    PluginLoadFailure(const std::string &msg, const std::string &Library, const std::string &Name)
+    : runtime_error(msg), m_PluginLibrary(Library), m_PluginName(Name)
+    {
+    }
+
+    std::string m_PluginLibrary;
+    std::string m_PluginName;
+
+private:
+};
+
+class MissingOperatorFailure : public std::invalid_argument
+{
+public:
+    MissingOperatorFailure(const std::string &msg, const std::string &Operator)
+    : invalid_argument(msg), m_Operator(Operator)
+    {
+    }
+
+    std::string m_Operator;
+
+private:
+};
+
 /** UserOptions holds all user options from ~/.config/adios2/adios2.yaml */
 struct UserOptions
 {
