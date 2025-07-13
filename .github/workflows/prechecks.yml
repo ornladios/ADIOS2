@@ -1,0 +1,84 @@
+name: prechecks
+
+on:
+  push:
+    branches:
+      - master
+      - release*
+  pull_request:
+    branches:
+      - master
+      - release*
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  git_checks:
+    runs-on: ubuntu-latest
+    outputs:
+      num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for appropriately named topic branch
+        run: |
+          scripts/ci/gh-actions/check-branch-name.sh
+      - name: Check for code changes
+        id: get_code_changes
+        run: |
+          scripts/ci/gh-actions/get-changed-files.sh
+          echo "::group::Test script output files"
+          ls -la ./*-changed-files.txt
+          NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
+          echo "Number of files changed (filtered): ${NUM_CHANGES}"
+          echo "num_code_changes=${NUM_CHANGES}" >> "${GITHUB_OUTPUT}"
+
+  actionlint:
+    name: GitHub Actions Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install actionlint
+      run: |
+        # Download and install actionlint
+        bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+        echo "${PWD}" >> "$GITHUB_PATH"
+
+    - name: Run actionlint
+      run: actionlint
+
+  format:
+    needs: git_checks
+    if: needs.git_checks.outputs.num_code_changes > 0
+
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ornladios/adios2:ci-formatting
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: gha
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: CXX
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-clang-format.sh
+      - name: Python flake8
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-flake8.sh
+      - name: Python pylint
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-pylint.sh
+      - name: Python black
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-black.sh
+      - name: Shell
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-shellcheck.sh
