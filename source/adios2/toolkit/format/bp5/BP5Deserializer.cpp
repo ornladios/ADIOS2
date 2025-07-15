@@ -31,6 +31,7 @@
 #endif
 
 #include "adios2/operator/OperatorFactory.h"
+#include "adios2/operator/plugin/PluginOperator.h"
 
 #include <array>
 #include <float.h>
@@ -1993,22 +1994,39 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             std::shared_ptr<Operator> op = nullptr;
             VariableBase *VB =
                 static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
-            if (!VB->m_Operations.empty() && (VB->m_Operations[0]->m_TypeString != "null"))
-            {
-                op = VB->m_Operations[0];
-            }
-            else
-            {
-                Operator::OperatorType compressorType =
-                    static_cast<Operator::OperatorType>(IncomingData[0]);
-                op = MakeOperator(OperatorTypeToString(compressorType), {});
-                VB->m_Operations.resize(1);
-                VB->m_Operations[0] = op;
-            }
-            op->SetAccuracy(VB->GetAccuracyRequested());
-
             {
                 std::lock_guard<std::mutex> lockGuard(mutexDecompress);
+                // lock_guard protects mods to VB->m_Operations as well as the decompress operator
+                if (!VB->m_Operations.empty() && (VB->m_Operations[0]->m_TypeString != "null"))
+                {
+                    op = VB->m_Operations[0];
+                }
+                else
+                {
+                    Operator::OperatorType compressorType =
+                        static_cast<Operator::OperatorType>(IncomingData[0]);
+                    op = MakeOperator(OperatorTypeToString(compressorType), {});
+                    VB->m_Operations.clear();
+                    VB->m_Operations.push_back(op);
+                    if (m_Engine->m_OperatorNameQuery)
+                    {
+                        if (compressorType == Operator::PLUGIN_INTERFACE)
+                        {
+                            auto pop = dynamic_cast<plugin::PluginOperator *>(op.get());
+                            pop->m_OperatorNameQuery = true;
+                        }
+                        else
+                        {
+                            auto m = MakeMessage("Operator", "OperatorFactory", "MakeOperator",
+                                                 "ADIOS2 compiled with " +
+                                                     OperatorTypeToString(compressorType) +
+                                                     " library, operator added",
+                                                 -1, helper::LogMode::EXCEPTION);
+                            throw MissingOperatorFailure(m, OperatorTypeToString(compressorType));
+                        }
+                    }
+                }
+                op->SetAccuracy(VB->GetAccuracyRequested());
                 core::Decompress(
                     IncomingData,
                     ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],

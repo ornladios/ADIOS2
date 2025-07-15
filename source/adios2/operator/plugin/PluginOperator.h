@@ -50,6 +50,7 @@ public:
 
     std::string m_PluginLibrary;
     std::string m_PluginName;
+    bool m_OperatorNameQuery = false;
 
 protected:
     void PluginInit(const std::string &pluginName, const std::string &pluginLibrary);
