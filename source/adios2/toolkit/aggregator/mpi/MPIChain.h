@@ -30,6 +30,10 @@ public:
     void Init(const size_t numAggregators, const size_t subStreams,
               helper::Comm const &parentComm) final;
 
+    // Explicit specification of all values
+    void InitExplicit(const int subStreams, const size_t subStreamIdx, const int aggregatorRank,
+                      const int rankOrder, helper::Comm const &parentComm);
+
     void Close() final;
 
     struct ExchangeRequests
