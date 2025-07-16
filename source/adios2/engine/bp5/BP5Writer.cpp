@@ -2013,6 +2013,10 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
     {                                                                                              \
         PERFSTUBS_SCOPED_TIMER("BP5Writer::Put");                                                  \
         PutCommonSpan(variable, span, initialize, value);                                          \
+    }                                                                                              \
+    size_t BP5Writer::PutCount(Variable<T> &variable)                                              \
+    {                                                                                              \
+        return m_BP5Serializer.PutCount((void *)&variable);                                        \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

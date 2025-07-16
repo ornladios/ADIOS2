@@ -192,6 +192,7 @@ endif()
 
 set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
 
+bp_gtest_add_tests_helper(MultiSpan MPI_NONE)
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariablesSel MPI_ALLOW)

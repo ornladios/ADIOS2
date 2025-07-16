@@ -57,6 +57,7 @@ public:
     void Marshal(void *Variable, const char *Name, const DataType Type, size_t ElemSize,
                  size_t DimCount, const size_t *Shape, const size_t *Count, const size_t *Offsets,
                  const void *Data, bool Sync, BufferV::BufferPos *span);
+    size_t PutCount(void *Variable);
     /*
      * BP5 has two attribute marshalling methods.  The first,
      * MarshallAttribute(), creates new MetaMetadata whenever a new

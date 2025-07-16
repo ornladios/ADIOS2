@@ -980,6 +980,33 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     }
 }
 
+size_t BP5Serializer::PutCount(void *Var)
+{
+    BP5WriterRec VarRec = LookupWriterRec(Var);
+
+    if (!VarRec)
+        return 0;
+
+    BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+
+    int AlreadyWritten = BP5BitfieldTest(MBase, VarRec->FieldID);
+
+    if (!AlreadyWritten)
+        return 0;
+
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Var);
+    if (VB->m_SingleValue)
+    {
+        return 1;
+    }
+    else
+    {
+        // everything else
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + VarRec->MetaOffset);
+        return MetaEntry->BlockCount;
+    }
+}
+
 const void *BP5Serializer::SearchDeferredBlocks(size_t MetaOffset, size_t BlockID)
 {
     for (auto &Def : DeferredExterns)
