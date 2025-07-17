@@ -58,7 +58,7 @@ TEST(Remote, OpenRead)
         remote->Close();
 
         // Can't read a closed file
-	EXPECT_THROW(remote->Read(0, 1, contents.data()), std::invalid_argument);
+        EXPECT_THROW(remote->Read(0, 1, contents.data()), std::invalid_argument);
     }
 }
 }
