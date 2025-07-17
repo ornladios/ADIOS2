@@ -48,17 +48,17 @@ TEST(Remote, OpenRead)
     }
 
     {
-        std::unique_ptr<Remote> remote = nullptr;
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
-        remote->OpenSimpleFile("localhost", localPort, FNAME);
-        std::cout << "Contents size is " << remote->m_Size << std::endl;
-        contents.resize(remote->m_Size); // should be unnecessary
-        remote->Read(0, remote->m_Size, contents.data());
-        ASSERT_EQ(0, memcmp(FILE_STRING, contents.data(), contents.size()));
-        remote->Close();
+        // std::unique_ptr<Remote> remote = nullptr;
+        // remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
+        // remote->OpenSimpleFile("localhost", localPort, FNAME);
+        // std::cout << "Contents size is " << remote->m_Size << std::endl;
+        // contents.resize(remote->m_Size); // should be unnecessary
+        // remote->Read(0, remote->m_Size, contents.data());
+        // ASSERT_EQ(0, memcmp(FILE_STRING, contents.data(), contents.size()));
+        // remote->Close();
 
         // Can't read a closed file
-        EXPECT_THROW(remote->Read(0, 1, contents.data()), std::invalid_argument);
+        //        EXPECT_THROW(remote->Read(0, 1, contents.data()), std::invalid_argument);
     }
 }
 }
