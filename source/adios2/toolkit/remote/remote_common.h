@@ -100,6 +100,12 @@ typedef struct _CloseFileMsg
 } *CloseFileMsg;
 
 /*
+ * There is something that happens when EVPath tries to marshall tiny
+ * (8-byte) stack-allocated (common) messages that causes problems
+ * when using Address Sanitation is used.  Some messages below have an
+ * "unused" field that pads them out to a larger size.  That field is
+ * undeclared to FFS/EVPath, but the larger message size avoids
+ * whatever issue is happening.
  */
 typedef struct _CloseFileResponseMsg
 {
