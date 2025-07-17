@@ -31,7 +31,7 @@ TEST_F(SpanTests, MultiSpan)
 {
 
     using namespace adios2;
-    using type = uint32_t;
+    using type = size_t;
 
     const std::string fname("MultiSpan.bp");
 
@@ -69,7 +69,7 @@ TEST_F(SpanTests, MultiSpan)
             {
                 EXPECT_NE(spans[i].data(), spans[i - 1].data());
             }
-            std::iota(spans[i].begin(), spans[i].end(), i * 10);
+            std::iota(spans[i].begin(), spans[i].end(), (type)i * 10);
         }
 
         engine.EndStep();
