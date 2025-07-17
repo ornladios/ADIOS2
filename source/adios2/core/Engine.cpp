@@ -196,7 +196,8 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 
 #define declare_type(T)                                                                            \
     void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); }                     \
-    void Engine::DoPutDeferred(Variable<T> &, const T *) { ThrowUp("DoPutDeferred"); }
+    void Engine::DoPutDeferred(Variable<T> &, const T *) { ThrowUp("DoPutDeferred"); }             \
+    size_t Engine::PutCount(Variable<T> &variable) { return variable.m_BlocksInfo.size(); }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

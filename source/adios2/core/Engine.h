@@ -571,7 +571,8 @@ protected:
 
 #define declare_type(T)                                                                            \
     virtual void DoPutSync(Variable<T> &, const T *);                                              \
-    virtual void DoPutDeferred(Variable<T> &, const T *);
+    virtual void DoPutDeferred(Variable<T> &, const T *);                                          \
+    virtual size_t PutCount(Variable<T> &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
