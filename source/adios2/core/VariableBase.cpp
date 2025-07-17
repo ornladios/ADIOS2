@@ -346,12 +346,9 @@ size_t VariableBase::AddOperation(const std::string &type, const Params &paramet
         if (!m_Operations.empty() && (m_Operations[0]->m_TypeString == "null"))
         {
             // if there's a dummy operation in place, replace it
-            m_Operations[0] = op;
+            m_Operations.clear();
         }
-        else
-        {
-            m_Operations.push_back(op);
-        }
+        m_Operations.push_back(op);
     }
     else
     {
