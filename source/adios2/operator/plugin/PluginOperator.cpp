@@ -94,6 +94,14 @@ void PluginOperator::PluginInit(const std::string &pluginName, const std::string
     // add for external visibility
     m_PluginName = pluginName;
     m_PluginLibrary = pluginLibrary;
+    if (m_OperatorNameQuery)
+    {
+        auto m = MakeMessage("Plugins", "PluginOperator", "PluginInit",
+                             "Succeeding in load library " + m_PluginLibrary +
+                                 " looking for plugin " + m_PluginName,
+                             -1, helper::LogMode::EXCEPTION);
+        throw PluginLoadFailure(m, pluginLibrary, pluginName);
+    }
 }
 
 size_t PluginOperator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,

@@ -1010,7 +1010,9 @@ int doList_operators(core::Engine *fp, core::IO *io)
         variable->SetBlockSelection(0);                                                            \
         std::vector<T> dataV;                                                                      \
         dataV.resize(variable->SelectionSize());                                                   \
+        fp->m_OperatorNameQuery = true;                                                            \
         fp->Get(*variable, dataV, adios2::Mode::Sync);                                             \
+        fp->m_OperatorNameQuery = false;                                                           \
     }
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

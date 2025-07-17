@@ -529,6 +529,10 @@ public:
     void RegisterCreatedVariable(const VariableBase *var);
     void RemoveCreatedVars();
 
+    /** true: We only need the name of an operator used in Get, not actual operation
+     */
+    bool m_OperatorNameQuery = false;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */
