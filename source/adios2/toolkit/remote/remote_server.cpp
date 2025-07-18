@@ -674,6 +674,8 @@ void connect_and_kill(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
+                  << std::endl;
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -709,6 +711,8 @@ void connect_and_get_status(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
+                  << std::endl;
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);

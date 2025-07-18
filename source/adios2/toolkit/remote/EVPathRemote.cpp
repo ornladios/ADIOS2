@@ -157,7 +157,10 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     }
     free_attr_list(contact_list);
     if (!m_conn)
-        return;
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to connect to remote server");
+    }
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -200,7 +203,10 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
     free_attr_list(contact_list);
     if (!m_conn)
-        return;
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                          "Failed to connect to remote server");
+    }
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -232,7 +238,10 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
     free_attr_list(contact_list);
     if (!m_conn)
-        return;
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                          "Failed to connect to remote server");
+    }
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
