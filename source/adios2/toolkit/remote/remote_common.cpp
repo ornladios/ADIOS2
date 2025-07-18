@@ -108,7 +108,9 @@ FMStructDescRec CloseFileStructs[] = {{"Close", CloseFileList, sizeof(struct _Cl
 FMField CloseResponseList[] = {
     {"CloseResponseCondition", "integer", sizeof(int),
      FMOffset(CloseFileResponseMsg, CloseResponseCondition)},
-    {"Status", "integer", sizeof(intptr_t), FMOffset(CloseFileResponseMsg, Status)},
+    {"Status", "integer", sizeof(int), FMOffset(CloseFileResponseMsg, Status)},
+    {"unused1", "integer", sizeof(size_t), FMOffset(CloseFileResponseMsg, unused)},
+    {"unused2", "integer", sizeof(size_t), FMOffset(CloseFileResponseMsg, unused2)},
     {NULL, NULL, 0, 0}};
 
 FMStructDescRec CloseResponseStructs[] = {
