@@ -225,7 +225,7 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
         helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
                                           "Failed to receive open acknowledgement, server failed?");
     }
-    if ((m_ID == -1) && (m_Size == -1))
+    if ((m_ID == -1) && (m_Size == (size_t)-1))
     {
         helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
                                           "Open failed on server");

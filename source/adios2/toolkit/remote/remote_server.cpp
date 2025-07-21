@@ -307,7 +307,7 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
 error_return:
     memset(&open_response_msg, 0, sizeof(open_response_msg));
     open_response_msg.FileHandle = -1;
-    open_response_msg.FileSize = -1;
+    open_response_msg.FileSize = (size_t)-1;
     open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
     CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
     delete f;
