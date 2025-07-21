@@ -137,10 +137,10 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
       set_tests_properties(Remote.BP${testname}.FileRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoFileRemote=1" WORKING_DIRECTORY ${REMOTE_DIR})
    endmacro()
 
-   add_test(NAME remoteServerSetup   COMMAND adios2_remote_server -background)
+   add_test(NAME remoteServerSetup   COMMAND adios2_remote_server -background -l /tmp/server_output)
    set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server WORKING_DIRECTORY ${REMOTE_DIR})
 
-   add_test(NAME remoteServerCleanup COMMAND adios2_remote_server -kill_server)
+   add_test(NAME remoteServerCleanup COMMAND adios2_remote_server -kill_server -d /tmp/server_output)
    set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server WORKING_DIRECTORY ${REMOTE_DIR})
 
   if (ADIOS2_HAVE_KVCACHE)
