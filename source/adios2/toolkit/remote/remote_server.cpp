@@ -250,9 +250,13 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     _OpenSimpleResponseMsg open_response_msg;
     std::cout << "Got an open simple request for file " << open_msg->FileName << std::endl;
     AnonSimpleFile *f = new AnonSimpleFile(open_msg->FileName);
-    if (f->m_FileDescriptor == -1)
-        std::cout << "Open failed! BAD!" << std::endl;
     char *ContentsToFree = NULL;
+    if (f->m_FileDescriptor == -1)
+    {
+        std::cout << "Simple Open failed! returning error!" << std::endl;
+        goto error_return;
+    }
+
     f->m_FileName = open_msg->FileName;
     memset(&open_response_msg, 0, sizeof(open_response_msg));
     open_response_msg.FileHandle = f->m_ID;
@@ -269,12 +273,10 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
             ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
             if (ret <= 0)
             {
-                // EOF or error,  should send a message back, but we haven't define error handling
-                // yet
-                std::cout << "Read failed! BAD!" << std::endl;
+                std::cout << "Simple OpenRead failed! returning error!" << std::endl;
                 // instead free tmp and return;
                 free(ContentsToFree);
-                return;
+                goto error_return;
             }
             else
             {
@@ -300,6 +302,15 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
         free(ContentsToFree);
     SimpleFilesOpened++;
     last_service_time = std::chrono::steady_clock::now();
+    return;
+
+error_return:
+    memset(&open_response_msg, 0, sizeof(open_response_msg));
+    open_response_msg.FileHandle = -1;
+    open_response_msg.FileSize = -1;
+    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+    CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
+    delete f;
 }
 
 template <class T>
@@ -690,7 +701,10 @@ void connect_and_kill(int ServerPort)
     memset(&kill_msg, 0, sizeof(kill_msg));
     kill_msg.KillResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
-    CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition);
+    if (CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition) != 1)
+    {
+        std::cout << "Server existed, but no kill confirmation.  Maybe OK" << std::endl;
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -727,7 +741,10 @@ void connect_and_get_status(int ServerPort)
     memset(&status_msg, 0, sizeof(status_msg));
     status_msg.StatusResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
-    CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition);
+    if (CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition) != 1)
+    {
+        std::cout << "Server existed, but no status response..." << std::endl;
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -842,6 +859,19 @@ int main(int argc, char **argv)
 
             // Redirecting cout to write to logfile
             std::cout.rdbuf(fileOut.rdbuf());
+        }
+        else if (strcmp(argv[i], "-d") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -d requires an argument\n");
+                fprintf(stderr, usage);
+                exit(1);
+            }
+            log_filename = argv[i];
+            std::string tmp = std::string("cat ") + log_filename;
+            system(tmp.c_str());
         }
         else if (strcmp(argv[i], "-t") == 0)
         {
