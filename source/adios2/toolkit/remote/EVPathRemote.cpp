@@ -187,6 +187,12 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
         helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
                                           "Failed to receive open acknowledgement, server failed?");
     }
+    system("pwd");
+    if (m_ID == -1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to Open ADIOS file \"" + filename + "\"");
+    }
     m_Active = true;
 }
 
@@ -228,7 +234,7 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     if ((m_ID == -1) && (m_Size == (size_t)-1))
     {
         helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
-                                          "Open failed on server");
+                                          "Failed to open simple file \"" + filename + "\"");
     }
     else
     {
