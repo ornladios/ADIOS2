@@ -77,13 +77,16 @@ inline Variable<T> TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO
         }
         v->m_AvailableStepsCount += viis.stepCount;
 
-        if (helper::LessThan(min, v->m_Min))
+        if (TypeHasMinMax(variable->m_Type))
         {
-            v->m_Min = min;
-        }
-        if (helper::GreaterThan(max, v->m_Max))
-        {
-            v->m_Max = max;
+            if (helper::LessThan(min, v->m_Min))
+            {
+                v->m_Min = min;
+            }
+            if (helper::GreaterThan(max, v->m_Max))
+            {
+                v->m_Max = max;
+            }
         }
 
         // std::cout << "Updated variable " << v->m_Name << " from engine " << engineIdx
@@ -106,8 +109,11 @@ inline Variable<T> TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO
         v.m_JoinedDimPos = variable->m_JoinedDimPos;
         v.m_AvailableStepBlockIndexOffsets = variable->m_AvailableStepBlockIndexOffsets;
         v.m_AvailableShapes = variable->m_AvailableShapes;
-        v.m_Min = min;
-        v.m_Max = max;
+        if (TypeHasMinMax(variable->m_Type))
+        {
+            v.m_Min = min;
+            v.m_Max = max;
+        }
         v.m_Value = variable->m_Value;
         v.m_StepsStart = variable->m_StepsStart;
         v.m_StepsCount = variable->m_StepsCount;
