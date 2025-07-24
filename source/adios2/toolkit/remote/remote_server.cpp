@@ -64,12 +64,12 @@ int parent_pid;
 uint64_t random_cookie = 0;
 
 /* Threading for compressing responses of Gets */
-size_t maxThreads = 8;
+size_t maxThreads = 1;
 size_t nThreads = 0;
 std::mutex mutex_nThreads;
 void WaitForAvailableThread()
 {
-    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    std::cout << "WaitForAvailableThread(): enter " << std::endl;
     auto d = std::chrono::milliseconds(1000);
     while (true)
     {
@@ -78,12 +78,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
-                //           << std::endl;
+                std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
+                          << std::endl;
                 break;
             }
         }
-        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
         std::this_thread::sleep_for(d);
     }
 };
@@ -335,12 +335,14 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
 
 {
     _ReadResponseMsg Response;
+    std::cout << "-- start ReturnResponseThread for " << name << " --" << std::endl;
     memset(&Response, 0, sizeof(Response));
     Response.Size = readSize;
     Response.ReadResponseCondition = GetResponseCondition;
     Response.Dest = Dest; /* final data destination in client memory space */
     Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
 
+    std::cout << "-- acc.error = " << acc.error << " --" << std::endl;
     if (acc.error > 0.0)
     {
 #if defined(ADIOS2_HAVE_MGARD) || defined(ADIOS2_HAVE_ZFP)
@@ -348,13 +350,16 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         Params p = {{"accuracy", std::to_string(acc.error)},
                     {"s", std::to_string(acc.norm)},
                     {"mode", (acc.relative ? "REL" : "ABS")}};
+        std::cout << "-- make op mgard --" << std::endl;
         auto op = MakeOperator("mgard", p);
 #elif defined(ADIOS2_HAVE_ZFP)
         Params p = {{"accuracy", std::to_string(acc.error)}};
+        std::cout << "-- make op zfp --" << std::endl;
         auto op = MakeOperator("zfp", p);
 #endif
         // TODO: would be nicer:
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
+        std::cout << "-- done make op size = " << Response.Size << " --" << std::endl;
         T *CompressedData = (T *)malloc(Response.Size);
         adios2::Dims c;
         if (stepCount <= 1)
@@ -368,26 +373,30 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
         if (result == 0)
         {
+            std::cout << "-- no comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)RawData;
             free(CompressedData);
         }
         else
         {
+            std::cout << "-- comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)CompressedData;
             Response.Size = result;
             Response.OperatorType = op->m_TypeEnum;
             free(RawData);
         }
 #else
+        std::cout << "-- setting ReadData 1 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
 #endif
     }
     else
     {
+        std::cout << "-- setting ReadData 2 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
     }
 
-    if (verbose >= 2)
+    if (verbose >= 0)
     {
         if (boxselection)
         {
@@ -401,21 +410,22 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
                       << ">(" << name << ") block = " << blockid << std::endl;
         }
     }
-    // std::cout << "-- start sending response --" << std::endl;
+    std::cout << "-- start sending response " << name << " --" << std::endl;
     CMwrite(conn, ReadResponseFormat, &Response);
     free(Response.ReadData);
-    // std::cout << "-- sent response --" << std::endl;
+    std::cout << "-- sent response " << name << " --" << std::endl;
     {
         // std::cout << "-- get lock --" << std::endl;
         std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
-        // std::cout << "-- lock acquired --" << std::endl;
+        std::cout << "-- lock acquired " << name << " --" << std::endl;
         f->m_BytesSent += Response.Size;
         f->m_OperationCount++;
+        std::cout << "-- file touch done " << name << "--" << std::endl;
         TotalGetBytesSent += Response.Size;
         TotalGets++;
         --nThreads;
     }
-    // std::cout << "-- done --" << std::endl;
+    std::cout << "-- done " << name << " --" << std::endl;
 }
 
 template <class T>
@@ -447,8 +457,15 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
               << " in norm " << GetMsg->Norm << std::endl;
     size_t readSize = var->SelectionSize() * sizeof(T);
     T *RawData = (T *)malloc(readSize);
-    f->m_engine->Get(*var, RawData, Mode::Sync);
-
+    try
+    {
+        f->m_engine->Get(*var, RawData, Mode::Sync);
+    }
+    catch (...)
+    {
+        std::cout << "Reading var " << VarName << " failed with exception, continuing" << std::endl;
+        return;
+    }
     WaitForAvailableThread(); /* blocking here until we can launch a thread */
 
     // Handle returning data in a separate thread so that we can serve another read operation in the
