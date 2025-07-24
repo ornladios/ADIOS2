@@ -64,12 +64,12 @@ int parent_pid;
 uint64_t random_cookie = 0;
 
 /* Threading for compressing responses of Gets */
-size_t maxThreads = 8;
+size_t maxThreads = 1;
 size_t nThreads = 0;
 std::mutex mutex_nThreads;
 void WaitForAvailableThread()
 {
-    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    std::cout << "WaitForAvailableThread(): enter " << std::endl;
     auto d = std::chrono::milliseconds(1000);
     while (true)
     {
@@ -78,12 +78,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
-                //           << std::endl;
+                std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
+                          << std::endl;
                 break;
             }
         }
-        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
         std::this_thread::sleep_for(d);
     }
 };
@@ -181,11 +181,15 @@ public:
         }
         m_Size = static_cast<size_t>(fileStat.st_size);
     }
-    ~AnonSimpleFile() { close(m_FileDescriptor); }
+    ~AnonSimpleFile()
+    {
+        if (m_FileDescriptor != -1)
+            close(m_FileDescriptor);
+    }
 };
 
 std::unordered_map<uint64_t, AnonADIOSFile *> ADIOSFileMap;
-std::unordered_map<uint64_t, AnonSimpleFile *> SimpleFileMap;
+std::unordered_map<uint64_t, std::shared_ptr<AnonSimpleFile>> SimpleFileMap;
 std::unordered_multimap<void *, uint64_t> ConnToFileMap;
 static auto last_service_time = std::chrono::steady_clock::now();
 
@@ -204,7 +208,7 @@ static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
             ADIOSFileMap.erase(it1->second);
             delete file;
         }
-        AnonSimpleFile *sfile = SimpleFileMap[it1->second];
+        auto sfile = SimpleFileMap[it1->second];
         if (sfile)
         {
             if (verbose >= 1)
@@ -212,7 +216,6 @@ static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
                           << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
                           << " Read()s" << std::endl;
             SimpleFileMap.erase(it1->second);
-            delete file;
         }
     }
     ConnToFileMap.erase(conn);
@@ -222,18 +225,27 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
                         attr_list attrs)
 {
     OpenFileMsg open_msg = static_cast<OpenFileMsg>(vevent);
+    AnonADIOSFile *f;
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     _OpenResponseMsg open_response_msg;
+    memset(&open_response_msg, 0, sizeof(open_response_msg));
+    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
     std::string strMode = "Streaming";
     if (open_msg->Mode == RemoteOpenRandomAccess)
         strMode = "RandomAccess";
     std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
               << std::endl;
-    AnonADIOSFile *f =
-        new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
-    memset(&open_response_msg, 0, sizeof(open_response_msg));
-    open_response_msg.FileHandle = f->m_ID;
-    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+    try
+    {
+        f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
+        open_response_msg.FileHandle = f->m_ID;
+    }
+    catch (...)
+    {
+        open_response_msg.FileHandle = -1;
+        CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
+        return;
+    }
     CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
     CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
     ADIOSFileMap[f->m_ID] = f;
@@ -245,61 +257,73 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
 static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
                               attr_list attrs)
 {
+    _OpenSimpleResponseMsg open_response_msg;
+    memset(&open_response_msg, 0, sizeof(open_response_msg));
     OpenSimpleFileMsg open_msg = static_cast<OpenSimpleFileMsg>(vevent);
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
-    _OpenSimpleResponseMsg open_response_msg;
     std::cout << "Got an open simple request for file " << open_msg->FileName << std::endl;
-    AnonSimpleFile *f = new AnonSimpleFile(open_msg->FileName);
-    if (f->m_FileDescriptor == -1)
-        std::cout << "Open failed! BAD!" << std::endl;
-    char *ContentsToFree = NULL;
-    f->m_FileName = open_msg->FileName;
-    memset(&open_response_msg, 0, sizeof(open_response_msg));
-    open_response_msg.FileHandle = f->m_ID;
-    open_response_msg.FileSize = f->m_Size;
-    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
-    if (open_msg->ReadContents)
+    try
     {
-        // This is a one-shot operation
-        ContentsToFree = (char *)malloc(f->m_Size);
-        size_t remaining = f->m_Size;
-        char *pointer = ContentsToFree;
-        while (remaining > 0)
+        auto f = std::make_shared<AnonSimpleFile>(open_msg->FileName);
+        char *ContentsToFree = NULL;
+        if (f->m_FileDescriptor == -1)
         {
-            ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
-            if (ret <= 0)
-            {
-                // EOF or error,  should send a message back, but we haven't define error handling
-                // yet
-                std::cout << "Read failed! BAD!" << std::endl;
-                // instead free tmp and return;
-                free(ContentsToFree);
-                return;
-            }
-            else
-            {
-                remaining -= ret;
-                pointer += ret;
-            }
+            std::cout << "Simple Open failed! returning error!" << std::endl;
+            throw std::runtime_error("open failed");
         }
-        open_response_msg.FileContents = ContentsToFree;
-        if (verbose >= 1)
-            std::cout << "closing simple file after OpenRead" << f->m_FileName << "\" total sent "
-                      << readable_size(f->m_Size) << std::endl;
-        delete f;
+
+        f->m_FileName = open_msg->FileName;
+        open_response_msg.FileHandle = f->m_ID;
+        open_response_msg.FileSize = f->m_Size;
+        open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+        if (open_msg->ReadContents)
+        {
+            // This is a one-shot operation
+            ContentsToFree = (char *)malloc(f->m_Size);
+            size_t remaining = f->m_Size;
+            char *pointer = ContentsToFree;
+            while (remaining > 0)
+            {
+                ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
+                if (ret <= 0)
+                {
+                    std::cout << "Simple OpenRead failed! returning error!" << std::endl;
+                    // instead free tmp and return;
+                    free(ContentsToFree);
+                    throw std::runtime_error("read failed");
+                }
+                else
+                {
+                    remaining -= ret;
+                    pointer += ret;
+                }
+            }
+            open_response_msg.FileContents = ContentsToFree;
+            if (verbose >= 1)
+                std::cout << "closing simple file after OpenRead" << f->m_FileName
+                          << "\" total sent " << readable_size(f->m_Size) << std::endl;
+        }
+        else
+        {
+            // file is to remain open, keep records
+            CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
+            SimpleFileMap[f->m_ID] = f;
+            ConnToFileMap.emplace(conn, f->m_ID);
+        }
+        CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
+        if (ContentsToFree)
+            free(ContentsToFree);
+        SimpleFilesOpened++;
+        last_service_time = std::chrono::steady_clock::now();
+        return;
     }
-    else
+    catch (...)
     {
-        // file is to remain open, keep records
-        CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
-        SimpleFileMap[f->m_ID] = f;
-        ConnToFileMap.emplace(conn, f->m_ID);
+        open_response_msg.FileHandle = -1;
+        open_response_msg.FileSize = (size_t)-1;
+        open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+        CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
     }
-    CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
-    if (ContentsToFree)
-        free(ContentsToFree);
-    SimpleFilesOpened++;
-    last_service_time = std::chrono::steady_clock::now();
 }
 
 template <class T>
@@ -311,12 +335,14 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
 
 {
     _ReadResponseMsg Response;
+    std::cout << "-- start ReturnResponseThread for " << name << " --" << std::endl;
     memset(&Response, 0, sizeof(Response));
     Response.Size = readSize;
     Response.ReadResponseCondition = GetResponseCondition;
     Response.Dest = Dest; /* final data destination in client memory space */
     Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
 
+    std::cout << "-- acc.error = " << acc.error << " --" << std::endl;
     if (acc.error > 0.0)
     {
 #if defined(ADIOS2_HAVE_MGARD) || defined(ADIOS2_HAVE_ZFP)
@@ -324,13 +350,16 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         Params p = {{"accuracy", std::to_string(acc.error)},
                     {"s", std::to_string(acc.norm)},
                     {"mode", (acc.relative ? "REL" : "ABS")}};
+        std::cout << "-- make op mgard --" << std::endl;
         auto op = MakeOperator("mgard", p);
 #elif defined(ADIOS2_HAVE_ZFP)
         Params p = {{"accuracy", std::to_string(acc.error)}};
+        std::cout << "-- make op zfp --" << std::endl;
         auto op = MakeOperator("zfp", p);
 #endif
         // TODO: would be nicer:
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
+        std::cout << "-- done make op size = " << Response.Size << " --" << std::endl;
         T *CompressedData = (T *)malloc(Response.Size);
         adios2::Dims c;
         if (stepCount <= 1)
@@ -344,26 +373,30 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
         if (result == 0)
         {
+            std::cout << "-- no comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)RawData;
             free(CompressedData);
         }
         else
         {
+            std::cout << "-- comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)CompressedData;
             Response.Size = result;
             Response.OperatorType = op->m_TypeEnum;
             free(RawData);
         }
 #else
+        std::cout << "-- setting ReadData 1 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
 #endif
     }
     else
     {
+        std::cout << "-- setting ReadData 2 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
     }
 
-    if (verbose >= 2)
+    if (verbose >= 0)
     {
         if (boxselection)
         {
@@ -377,21 +410,22 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
                       << ">(" << name << ") block = " << blockid << std::endl;
         }
     }
-    // std::cout << "-- start sending response --" << std::endl;
+    std::cout << "-- start sending response " << name << " --" << std::endl;
     CMwrite(conn, ReadResponseFormat, &Response);
     free(Response.ReadData);
-    // std::cout << "-- sent response --" << std::endl;
+    std::cout << "-- sent response " << name << " --" << std::endl;
     {
         // std::cout << "-- get lock --" << std::endl;
         std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
-        // std::cout << "-- lock acquired --" << std::endl;
+        std::cout << "-- lock acquired " << name << " --" << std::endl;
         f->m_BytesSent += Response.Size;
         f->m_OperationCount++;
+        std::cout << "-- file touch done " << name << "--" << std::endl;
         TotalGetBytesSent += Response.Size;
         TotalGets++;
         --nThreads;
     }
-    // std::cout << "-- done --" << std::endl;
+    std::cout << "-- done " << name << " --" << std::endl;
 }
 
 template <class T>
@@ -423,8 +457,15 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
               << " in norm " << GetMsg->Norm << std::endl;
     size_t readSize = var->SelectionSize() * sizeof(T);
     T *RawData = (T *)malloc(readSize);
-    f->m_engine->Get(*var, RawData, Mode::Sync);
-
+    try
+    {
+        f->m_engine->Get(*var, RawData, Mode::Sync);
+    }
+    catch (...)
+    {
+        std::cout << "Reading var " << VarName << " failed with exception, continuing" << std::endl;
+        return;
+    }
     WaitForAvailableThread(); /* blocking here until we can launch a thread */
 
     // Handle returning data in a separate thread so that we can serve another read operation in the
@@ -459,6 +500,11 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     AnonADIOSFile *f = ADIOSFileMap[GetMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     last_service_time = std::chrono::steady_clock::now();
+    if (!f)
+    {
+        std::cout << "file not open, abort Get" << std::endl;
+        return;
+    }
     if (f->m_mode == RemoteOpen)
     {
         if (f->currentStep == -1)
@@ -505,7 +551,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
                                attr_list attrs)
 {
     ReadRequestMsg ReadMsg = static_cast<ReadRequestMsg>(vevent);
-    AnonSimpleFile *f = SimpleFileMap[ReadMsg->FileHandle];
+    auto f = SimpleFileMap[ReadMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     last_service_time = std::chrono::steady_clock::now();
     if (f->m_CurrentOffset != ReadMsg->Offset)
@@ -568,7 +614,7 @@ static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void 
         delete afile;
         Ret = 0;
     }
-    AnonSimpleFile *sfile = SimpleFileMap[CloseMsg->FileHandle];
+    auto sfile = SimpleFileMap[CloseMsg->FileHandle];
     if (sfile)
     {
         if (verbose >= 1)
@@ -576,10 +622,10 @@ static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void 
                       << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
                       << " Read()s" << std::endl;
         SimpleFileMap.erase(CloseMsg->FileHandle);
-        delete sfile;
         Ret = 0;
     }
     struct _CloseFileResponseMsg close_response_msg;
+    memset(&close_response_msg, 0, sizeof(close_response_msg));
     close_response_msg.CloseResponseCondition = CloseMsg->CloseResponseCondition;
     close_response_msg.Status = Ret;
     CMwrite(conn, ev_state->CloseResponseFormat, &close_response_msg);
@@ -674,6 +720,8 @@ void connect_and_kill(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
+                  << std::endl;
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -688,7 +736,10 @@ void connect_and_kill(int ServerPort)
     memset(&kill_msg, 0, sizeof(kill_msg));
     kill_msg.KillResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
-    CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition);
+    if (CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition) != 1)
+    {
+        std::cout << "Server existed, but no kill confirmation.  Maybe OK" << std::endl;
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -709,6 +760,8 @@ void connect_and_get_status(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
+                  << std::endl;
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -723,7 +776,10 @@ void connect_and_get_status(int ServerPort)
     memset(&status_msg, 0, sizeof(status_msg));
     status_msg.StatusResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
-    CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition);
+    if (CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition) != 1)
+    {
+        std::cout << "Server existed, but no status response..." << std::endl;
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -838,6 +894,19 @@ int main(int argc, char **argv)
 
             // Redirecting cout to write to logfile
             std::cout.rdbuf(fileOut.rdbuf());
+        }
+        else if (strcmp(argv[i], "-d") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -d requires an argument\n");
+                fprintf(stderr, usage);
+                exit(1);
+            }
+            log_filename = argv[i];
+            std::string tmp = std::string("cat ") + log_filename;
+            system(tmp.c_str());
         }
         else if (strcmp(argv[i], "-t") == 0)
         {
