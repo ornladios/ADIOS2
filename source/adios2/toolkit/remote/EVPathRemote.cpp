@@ -29,6 +29,7 @@ EVPathRemote::~EVPathRemote()
 {
     if (m_conn)
         CMConnection_close(m_conn);
+    m_conn = NULL;
 }
 
 void OpenResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -140,24 +141,27 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
 {
 
     EVPathRemoteCommon::_OpenFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+    if (!m_Active)
     {
-        // if we didn't find a server, but we're in testing, wait briefly and try again
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+        {
+            // if we didn't find a server, but we're in testing, wait briefly and try again
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        }
+        free_attr_list(contact_list);
+        if (!m_conn)
+            return;
     }
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -185,18 +189,21 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
+    if (!m_Active)
+    {
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        free_attr_list(contact_list);
+        if (!m_conn)
+            return;
+    }
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -213,19 +220,21 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
-
+    if (!m_Active)
+    {
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        free_attr_list(contact_list);
+        if (!m_conn)
+            return;
+    }
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
@@ -303,6 +312,37 @@ bool EVPathRemote::WaitForGet(GetHandle handle)
 
     return result;
 }
+
+std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>>
+    CManagerSingleton::m_EVPathRemotes;
+
+std::pair<std::shared_ptr<EVPathRemote>, int>
+CManagerSingleton::MakeEVPathConnection(const std::string &hostName)
+{
+    auto it = m_EVPathRemotes.find(hostName);
+    if (it != m_EVPathRemotes.end())
+    {
+        if (it->second.first && *(it->second.first))
+        {
+            return it->second;
+        }
+    }
+    auto m_Remote =
+        std::shared_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+    try
+    {
+        int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(hostName);
+        std::pair<std::shared_ptr<EVPathRemote>, int> pair(m_Remote, localPort);
+        m_EVPathRemotes.emplace(hostName, pair);
+        return pair;
+    }
+    catch (const std::invalid_argument &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    return std::pair<std::shared_ptr<EVPathRemote>, int>(nullptr, -1);
+}
+
 #else
 
 void EVPathRemote::Open(const std::string hostname, const int32_t port, const std::string filename,
