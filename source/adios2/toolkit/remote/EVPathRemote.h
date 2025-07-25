@@ -94,6 +94,9 @@ private:
     bool m_Active = false;
 };
 
+/* Helper function to manage connections, one per host */
+std::pair<std::shared_ptr<EVPathRemote>, int> MakeEVPathConnection(const std::string &hostName);
+
 #ifdef ADIOS2_HAVE_SST
 class CManagerSingleton
 {

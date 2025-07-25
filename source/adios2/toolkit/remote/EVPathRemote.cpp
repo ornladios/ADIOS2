@@ -303,6 +303,36 @@ bool EVPathRemote::WaitForGet(GetHandle handle)
 
     return result;
 }
+
+std::pair<std::shared_ptr<EVPathRemote>, int> MakeEVPathConnection(const std::string &hostName)
+{
+    /* Map of hostname : connection/port */
+    static std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>> m_EVPathRemotes;
+
+    auto it = m_EVPathRemotes.find(hostName);
+    if (it != m_EVPathRemotes.end())
+    {
+        if (it->second.first && *(it->second.first))
+        {
+            return it->second;
+        }
+    }
+    auto m_Remote =
+        std::shared_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+    try
+    {
+        int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(hostName);
+        std::pair<std::shared_ptr<EVPathRemote>, int> pair(m_Remote, localPort);
+        m_EVPathRemotes.emplace(hostName, pair);
+        return pair;
+    }
+    catch (const std::invalid_argument &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    return std::pair<std::shared_ptr<EVPathRemote>, int>(nullptr, -1);
+}
+
 #else
 
 void EVPathRemote::Open(const std::string hostname, const int32_t port, const std::string filename,
