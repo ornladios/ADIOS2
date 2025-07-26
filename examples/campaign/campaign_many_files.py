@@ -1,11 +1,11 @@
+import numpy
+import adios2
+
 #
 # Create many files for a campaign, each with a single small array
 #
 
 NFILES = 100
-
-import numpy
-import adios2
 
 # User data
 myArray = numpy.array([0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
