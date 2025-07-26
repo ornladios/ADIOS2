@@ -2029,13 +2029,16 @@ void
 INT_EVforget_connection(CManager cm, CMConnection conn)
 {
     event_path_data evp = cm->evp;
-    int s;
-    for (s = evp->stone_base_num; s < evp->stone_count + evp->stone_base_num; ++s)  {
-	stone_type stone = stone_struct(evp, s);
-	if (!stone) continue;
-        if (stone->last_remote_source == conn) {
-            stone->last_remote_source = NULL;
-            stone->squelch_depth = 0;
+    if (evp)
+    {
+        int s;
+        for (s = evp->stone_base_num; s < evp->stone_count + evp->stone_base_num; ++s)  {
+            stone_type stone = stone_struct(evp, s);
+            if (!stone) continue;
+            if (stone->last_remote_source == conn) {
+                stone->last_remote_source = NULL;
+                stone->squelch_depth = 0;
+            }
         }
     }
 }
