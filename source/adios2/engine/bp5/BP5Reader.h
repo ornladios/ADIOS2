@@ -102,7 +102,7 @@ private:
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
     bool m_dataIsRemote = false;
-    std::unique_ptr<Remote> m_Remote;
+    std::shared_ptr<Remote> m_Remote;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
 
