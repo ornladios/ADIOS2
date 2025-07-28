@@ -1308,7 +1308,9 @@ CManager_free(CManager cm)
      free_FFSBuffer(conn->io_out_buffer);
      free_AttrBuffer(conn->attr_encode_buffer);
  #ifdef EV_INTERNAL_H
-     INT_EVforget_connection(conn->cm, conn);
+     if (conn->cm->evp) {
+	 INT_EVforget_connection(conn->cm, conn);
+     }
  #endif
      INT_CMfree(conn);
  }
