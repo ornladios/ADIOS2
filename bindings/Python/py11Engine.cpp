@@ -35,6 +35,15 @@ Engine::operator bool() const noexcept
     return *m_Engine ? true : false;
 }
 
+pybind11::bytes Engine::GetMetadata()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::GetMetadata");
+    size_t size;
+    char *ptr;
+    m_Engine->GetMetadata(&ptr, &size);
+    return pybind11::bytes(ptr, size);
+}
+
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");

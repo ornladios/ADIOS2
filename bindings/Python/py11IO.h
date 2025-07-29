@@ -12,6 +12,8 @@
 #define ADIOS2_BINDINGS_PYTHON_IO_H_
 
 #include <pybind11/numpy.h>
+#include <pybind11/pytypes.h>
+#include <pybind11/stl.h>
 
 #include <complex>
 #include <string>
@@ -108,6 +110,8 @@ public:
     void RemoveAllAttributes();
 
     Engine Open(const std::string &name, const int openMode);
+
+    Engine Open(const std::string &name, const pybind11::bytes &metadata);
 
 #if ADIOS2_USE_MPI
     Engine Open(const std::string &name, const int openMode, MPI4PY_Comm comm);

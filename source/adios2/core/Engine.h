@@ -43,6 +43,7 @@ namespace core
  * Close */
 class Engine
 {
+
 public:
     using AdvanceAsyncCallback = std::function<void(std::shared_ptr<core::Engine>)>;
 

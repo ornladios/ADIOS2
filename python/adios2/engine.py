@@ -1,6 +1,6 @@
 """License:
-  Distributed under the OSI-approved Apache License, Version 2.0.  See
-  accompanying file Copyright.txt for details.
+Distributed under the OSI-approved Apache License, Version 2.0.  See
+accompanying file Copyright.txt for details.
 """
 
 import numpy as np
@@ -188,3 +188,11 @@ class Engine:
     def flush(self, transport_index=-1):
         """Flush all transports attached to this Engine instance"""
         self.impl.Flush(transport_index)
+
+    def get_metadata(self):
+        """
+        Get metadata of an open file in a serialized form that can be
+        sent to other processes and used to open the file again by
+        avoiding reading the metadata from disk.
+        """
+        return self.impl.GetMetadata()

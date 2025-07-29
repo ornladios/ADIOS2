@@ -161,6 +161,9 @@ class Stream:
 
         return self
 
+    def get_metadata(self):
+        return self._engine.get_metadata()
+
     def step_status(self):
         """Inspect the stream status. Return adios2.bindings.StepStatus"""
         return self._step_status

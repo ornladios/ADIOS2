@@ -356,6 +356,14 @@ Engine IO::Open(const std::string &name, const int mode)
     return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode)));
 }
 
+Engine IO::Open(const std::string &name, const pybind11::bytes &metadata)
+{
+    helper::CheckForNullptr(m_IO, "for engine " + name + ", in call to IO::Open");
+    std::string s = pybind11::cast<std::string>(metadata);
+    // size_t len = metadata.size();
+    return Engine(&m_IO->Open(name, s.c_str(), s.size()));
+}
+
 void IO::FlushAll()
 {
     helper::CheckForNullptr(m_IO, "in call to IO::FlushAll");

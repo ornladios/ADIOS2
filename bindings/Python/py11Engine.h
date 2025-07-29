@@ -12,6 +12,8 @@
 #define ADIOS2_BINDINGS_PYTHON_ENGINE_H_
 
 #include <pybind11/numpy.h>
+#include <pybind11/pytypes.h>
+#include <pybind11/stl.h>
 
 #include <string>
 
@@ -44,6 +46,8 @@ public:
     ~Engine() = default;
 
     explicit operator bool() const noexcept;
+
+    pybind11::bytes GetMetadata();
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = -1.f);
     StepStatus BeginStep();

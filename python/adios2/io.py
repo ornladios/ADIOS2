@@ -1,6 +1,6 @@
 """License:
-  Distributed under the OSI-approved Apache License, Version 2.0.  See
-  accompanying file Copyright.txt for details.
+Distributed under the OSI-approved Apache License, Version 2.0.  See
+accompanying file Copyright.txt for details.
 """
 
 import numpy as np
@@ -287,6 +287,20 @@ class IO:
             return Engine(self.impl.Open(name, mode, comm))
 
         return Engine(self.impl.Open(name, mode))
+
+    def open_with_metadata(self, name, metadata: bytes):
+        """
+        Open an engine with metadata already in memory
+
+        Parameters
+            name
+                Engine name
+
+            metadata
+                file metadata retrieved by FileReader.get_metadata()
+        """
+
+        return Engine(self.impl.Open(name, metadata))
 
     def set_engine(self, name):
         """
