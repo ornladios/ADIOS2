@@ -8,7 +8,7 @@ import adios2
 NFILES = 100
 
 # User data
-myArray = numpy.array([0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
+myArray = numpy.arange(0.0, 9.0, 1)
 Nx = myArray.size
 
 for n in range(NFILES):
