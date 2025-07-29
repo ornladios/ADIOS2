@@ -64,12 +64,12 @@ int parent_pid;
 uint64_t random_cookie = 0;
 
 /* Threading for compressing responses of Gets */
-size_t maxThreads = 1;
+size_t maxThreads = 8;
 size_t nThreads = 0;
 std::mutex mutex_nThreads;
 void WaitForAvailableThread()
 {
-    std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
     auto d = std::chrono::milliseconds(1000);
     while (true)
     {
@@ -78,12 +78,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
-                          << std::endl;
+                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
+                //           << std::endl;
                 break;
             }
         }
-        std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
         std::this_thread::sleep_for(d);
     }
 };
@@ -233,8 +233,6 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     std::string strMode = "Streaming";
     if (open_msg->Mode == RemoteOpenRandomAccess)
         strMode = "RandomAccess";
-    std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
-              << std::endl;
     try
     {
         f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
@@ -261,7 +259,6 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     memset(&open_response_msg, 0, sizeof(open_response_msg));
     OpenSimpleFileMsg open_msg = static_cast<OpenSimpleFileMsg>(vevent);
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
-    std::cout << "Got an open simple request for file " << open_msg->FileName << std::endl;
     try
     {
         auto f = std::make_shared<AnonSimpleFile>(open_msg->FileName);
@@ -327,6 +324,12 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
 }
 
 template <class T>
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+// To be removed when we figure out why msan has an issue here
+__attribute__((no_sanitize("memory")))
+#endif
+#endif
 void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonADIOSFile *f,
                           size_t readSize, T *RawData, void *Dest, int GetResponseCondition,
                           Accuracy acc, std::string name, adios2::DataType vartype,
@@ -335,14 +338,12 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
 
 {
     _ReadResponseMsg Response;
-    std::cout << "-- start ReturnResponseThread for " << name << " --" << std::endl;
     memset(&Response, 0, sizeof(Response));
     Response.Size = readSize;
     Response.ReadResponseCondition = GetResponseCondition;
     Response.Dest = Dest; /* final data destination in client memory space */
     Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
 
-    std::cout << "-- acc.error = " << acc.error << " --" << std::endl;
     if (acc.error > 0.0)
     {
 #if defined(ADIOS2_HAVE_MGARD) || defined(ADIOS2_HAVE_ZFP)
@@ -350,16 +351,13 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         Params p = {{"accuracy", std::to_string(acc.error)},
                     {"s", std::to_string(acc.norm)},
                     {"mode", (acc.relative ? "REL" : "ABS")}};
-        std::cout << "-- make op mgard --" << std::endl;
         auto op = MakeOperator("mgard", p);
 #elif defined(ADIOS2_HAVE_ZFP)
         Params p = {{"accuracy", std::to_string(acc.error)}};
-        std::cout << "-- make op zfp --" << std::endl;
         auto op = MakeOperator("zfp", p);
 #endif
         // TODO: would be nicer:
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
-        std::cout << "-- done make op size = " << Response.Size << " --" << std::endl;
         T *CompressedData = (T *)malloc(Response.Size);
         adios2::Dims c;
         if (stepCount <= 1)
@@ -373,36 +371,34 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
         if (result == 0)
         {
-            std::cout << "-- no comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)RawData;
             free(CompressedData);
         }
         else
         {
-            std::cout << "-- comp result = " << result << " --" << std::endl;
             Response.ReadData = (char *)CompressedData;
             Response.Size = result;
             Response.OperatorType = op->m_TypeEnum;
             free(RawData);
         }
 #else
-        std::cout << "-- setting ReadData 1 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
 #endif
     }
     else
     {
-        std::cout << "-- setting ReadData 2 size " << Response.Size << " --" << std::endl;
         Response.ReadData = (char *)RawData;
     }
 
-    if (verbose >= 0)
+    if (verbose >= 2)
     {
         if (boxselection)
         {
+            size_t stepEnd = stepStart + stepCount - 1;
             std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
                       << ">(" << name << ") start = " << start << " count = " << count
-                      << " steps = " << stepStart << ".." << stepStart + stepCount - 1 << std::endl;
+                      << " steps = " << stepStart << ".." << stepCount << ".." << stepEnd
+                      << std::endl;
         }
         else
         {
@@ -410,27 +406,27 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
                       << ">(" << name << ") block = " << blockid << std::endl;
         }
     }
-    std::cout << "-- start sending response " << name << " --" << std::endl;
     CMwrite(conn, ReadResponseFormat, &Response);
     free(Response.ReadData);
-    std::cout << "-- sent response " << name << " --" << std::endl;
     {
-        // std::cout << "-- get lock --" << std::endl;
         std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
-        std::cout << "-- lock acquired " << name << " --" << std::endl;
         f->m_BytesSent += Response.Size;
         f->m_OperationCount++;
-        std::cout << "-- file touch done " << name << "--" << std::endl;
         TotalGetBytesSent += Response.Size;
         TotalGets++;
         --nThreads;
     }
-    std::cout << "-- done " << name << " --" << std::endl;
 }
 
 template <class T>
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+// To be removed when we figure out why msan has an issue here
+__attribute__((no_sanitize("memory")))
+#endif
+#endif
 void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_state,
-                           GetRequestMsg &GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
+                           GetRequestMsg GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
                            AnonADIOSFile *f)
 {
     // This part cannot be threaded as ADIOS InquireVariable/Get are not thread-safe
@@ -533,8 +529,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
 #define GET(T)                                                                                     \
     else if (TypeOfVar == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        PrepareResponseForGet<T>(conn, ev_state, std::ref(GetMsg), std::ref(VarName), TypeOfVar,   \
-                                 f);                                                               \
+        PrepareResponseForGet<T>(conn, ev_state, GetMsg, VarName, TypeOfVar, f);                   \
     }
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
@@ -1006,6 +1001,8 @@ int main(int argc, char **argv)
         //  close them to make sure we disassociate from the CTest parent (or else fixture
         //  startup hangs). It doesn't seem to work to close them before the fork, so we close
         //  them afterwards.
+        freopen("/tmp/server_stdout", "a", stdout);
+        freopen("/tmp/server_stderr", "a", stderr);
         for (int fd = 0; fd <= 16; fd++)
         {
             if (fd_is_valid(fd))
