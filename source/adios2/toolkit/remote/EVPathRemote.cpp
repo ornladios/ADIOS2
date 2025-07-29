@@ -158,11 +158,11 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         }
-	if (!m_conn)
-	{
-	    helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
-					      "Failed to connect to remote server");
-	}
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                              "Failed to connect to remote server");
+        }
     }
 
     memset(&open_msg, 0, sizeof(open_msg));
@@ -213,11 +213,11 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
         add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
-	if (!m_conn)
-	{
-	    helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
-					      "Failed to connect to remote server");
-	}
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                              "Failed to connect to remote server");
+        }
     }
 
     memset(&open_msg, 0, sizeof(open_msg));
@@ -259,11 +259,11 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
         add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
-	if (!m_conn)
-	{
-	    helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
-					      "Failed to connect to remote server");
-	}
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                              "Failed to connect to remote server");
+        }
     }
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
