@@ -48,6 +48,7 @@ static int fd_is_valid(int fd) { return fcntl(fd, F_GETFD) != -1 || errno != EBA
 using namespace adios2::EVPathRemoteCommon;
 
 using namespace adios2::core;
+using namespace adios2::helper;
 using namespace adios2;
 
 int verbose = 1;
@@ -67,9 +68,33 @@ uint64_t random_cookie = 0;
 size_t maxThreads = 8;
 size_t nThreads = 0;
 std::mutex mutex_nThreads;
+std::mutex output_mutex;
+char *log_filename = NULL;
+std::ofstream fileOut;
+
+static void log_output(const std::string out)
+{
+    std::lock_guard<std::mutex> lockGuard(output_mutex);
+    static bool initialized = false;
+    if (!initialized && log_filename)
+    {
+        // Opening the output file stream and associate it with
+        // logfile
+        fileOut.open(log_filename);
+    }
+    if (log_filename)
+    {
+        fileOut << out << std::endl;
+    }
+    else
+    {
+        std::cout << out << std::endl;
+    }
+}
+
 void WaitForAvailableThread()
 {
-    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    // log_output("WaitForAvailableThread(): enter ");
     auto d = std::chrono::milliseconds(1000);
     while (true)
     {
@@ -78,12 +103,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
-                //           << std::endl;
+                log_output("WaitForAvailableThread(): exit with threads = " +
+                           std::to_string(nThreads));
                 break;
             }
         }
-        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        log_output("WaitForAvailableThread(): sleep = " + std::to_string(nThreads));
         std::this_thread::sleep_for(d);
     }
 };
@@ -202,9 +227,9 @@ static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
         if (file)
         {
             if (verbose >= 1)
-                std::cout << "closing ADIOS file \"" << file->m_FileName << "\" total sent "
-                          << readable_size(file->m_BytesSent) << " in " << file->m_OperationCount
-                          << " Get()s" << std::endl;
+                log_output("closing ADIOS file \"" + file->m_FileName + "\" total sent " +
+                           readable_size(file->m_BytesSent) + " in " +
+                           std::to_string(file->m_OperationCount) + " Get()s");
             ADIOSFileMap.erase(it1->second);
             delete file;
         }
@@ -212,9 +237,9 @@ static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
         if (sfile)
         {
             if (verbose >= 1)
-                std::cout << "closing simple file " << sfile->m_FileName << "\" total sent "
-                          << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
-                          << " Read()s" << std::endl;
+                log_output("closing simple file " + sfile->m_FileName + "\" total sent " +
+                           readable_size(sfile->m_BytesSent) + " in " +
+                           std::to_string(sfile->m_OperationCount) + " Read()s");
             SimpleFileMap.erase(it1->second);
         }
     }
@@ -265,7 +290,7 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
         char *ContentsToFree = NULL;
         if (f->m_FileDescriptor == -1)
         {
-            std::cout << "Simple Open failed! returning error!" << std::endl;
+            log_output("Simple Open failed! returning error!");
             throw std::runtime_error("open failed");
         }
 
@@ -284,7 +309,7 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
                 ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
                 if (ret <= 0)
                 {
-                    std::cout << "Simple OpenRead failed! returning error!" << std::endl;
+                    log_output("Simple OpenRead failed! returning error!");
                     // instead free tmp and return;
                     free(ContentsToFree);
                     throw std::runtime_error("read failed");
@@ -297,8 +322,8 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
             }
             open_response_msg.FileContents = ContentsToFree;
             if (verbose >= 1)
-                std::cout << "closing simple file after OpenRead" << f->m_FileName
-                          << "\" total sent " << readable_size(f->m_Size) << std::endl;
+                log_output("closing simple file after OpenRead" + f->m_FileName + "\" total sent " +
+                           readable_size(f->m_Size));
         }
         else
         {
@@ -324,12 +349,6 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
 }
 
 template <class T>
-#if defined(__clang__)
-#if __has_feature(memory_sanitizer)
-// To be removed when we figure out why msan has an issue here
-__attribute__((no_sanitize("memory")))
-#endif
-#endif
 void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonADIOSFile *f,
                           size_t readSize, T *RawData, void *Dest, int GetResponseCondition,
                           Accuracy acc, std::string name, adios2::DataType vartype,
@@ -395,15 +414,16 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         if (boxselection)
         {
             size_t stepEnd = stepStart + stepCount - 1;
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
-                      << ">(" << name << ") start = " << start << " count = " << count
-                      << " steps = " << stepStart << ".." << stepCount << ".." << stepEnd
-                      << std::endl;
+            log_output("Returning " + readable_size(Response.Size) + " for Get<" +
+                       adios2::ToString(vartype) + ">(" + name +
+                       ") start = " + DimsToString(start) + " count = " + DimsToString(count) +
+                       " steps = " + std::to_string(stepStart) + ".." + std::to_string(stepEnd));
         }
         else
         {
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
-                      << ">(" << name << ") block = " << blockid << std::endl;
+            log_output("Returning " + readable_size(Response.Size) + " for Get<" +
+                       adios2::ToString(vartype) + ">(" + name +
+                       ") block = " + std::to_string(blockid));
         }
     }
     CMwrite(conn, ReadResponseFormat, &Response);
@@ -419,12 +439,6 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
 }
 
 template <class T>
-#if defined(__clang__)
-#if __has_feature(memory_sanitizer)
-// To be removed when we figure out why msan has an issue here
-__attribute__((no_sanitize("memory")))
-#endif
-#endif
 void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_state,
                            GetRequestMsg GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
                            AnonADIOSFile *f)
@@ -448,9 +462,9 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
         }
         var->SetSelection(b);
     }
-    std::cout << "Reading var " << VarName << " with "
-              << (GetMsg->Relative ? "relative" : "absolute") << " error " << GetMsg->Error
-              << " in norm " << GetMsg->Norm << std::endl;
+    log_output("Reading var " + VarName + " with " + (GetMsg->Relative ? "relative" : "absolute") +
+               " error " + std::to_string(GetMsg->Error) + " in norm " +
+               std::to_string(GetMsg->Norm));
     size_t readSize = var->SelectionSize() * sizeof(T);
     T *RawData = (T *)malloc(readSize);
     try
@@ -459,7 +473,7 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
     }
     catch (...)
     {
-        std::cout << "Reading var " << VarName << " failed with exception, continuing" << std::endl;
+        log_output("Reading var " + VarName + " failed with exception, continuing");
         return;
     }
     WaitForAvailableThread(); /* blocking here until we can launch a thread */
@@ -498,7 +512,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     last_service_time = std::chrono::steady_clock::now();
     if (!f)
     {
-        std::cout << "file not open, abort Get" << std::endl;
+        log_output("file not open, abort Get");
         return;
     }
     if (f->m_mode == RemoteOpen)
@@ -511,7 +525,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         while (f->m_engine->CurrentStep() < GetMsg->Step)
         {
             if (verbose >= 2)
-                std::cout << "Advancing a step" << std::endl;
+                log_output("Advancing a step");
             f->m_engine->EndStep();
             f->m_engine->BeginStep();
             f->currentStep++;
@@ -537,8 +551,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     catch (const std::exception &exc)
     {
         if (verbose)
-            std::cout << "Returning exception " << exc.what() << " for Get<" << TypeOfVar << ">("
-                      << VarName << ")" << std::endl;
+            log_output("Returning exception " + std::string(exc.what()) + " for Get<" +
+                       ToString(TypeOfVar) + ">(" + VarName + ")");
     }
 }
 
@@ -563,7 +577,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
         if (ret <= 0)
         {
             // EOF or error,  should send a message back, but we haven't define error handling yet
-            std::cout << "Read failed! BAD!" << std::endl;
+            log_output("Read failed! BAD!");
             // instead free tmp and return;
             free(tmp);
             return;
@@ -583,7 +597,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     Response.Dest = ReadMsg->Dest;
     Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
     if (verbose >= 2)
-        std::cout << "Returning " << readable_size(Response.Size) << " for Read " << std::endl;
+        log_output("Returning " + readable_size(Response.Size) + " for Read ");
     f->m_BytesSent += Response.Size;
     f->m_OperationCount++;
     TotalSimpleBytesSent += Response.Size;
@@ -602,9 +616,9 @@ static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void 
     if (afile)
     {
         if (verbose >= 1)
-            std::cout << "closing ADIOS file \"" << afile->m_FileName << "\" total sent "
-                      << readable_size(afile->m_BytesSent) << " in " << afile->m_OperationCount
-                      << " Get()s" << std::endl;
+            log_output("closing ADIOS file \"" + afile->m_FileName + "\" total sent " +
+                       readable_size(afile->m_BytesSent) + " in " +
+                       std::to_string(afile->m_OperationCount) + " Get()s");
         ADIOSFileMap.erase(CloseMsg->FileHandle);
         delete afile;
         Ret = 0;
@@ -613,9 +627,9 @@ static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void 
     if (sfile)
     {
         if (verbose >= 1)
-            std::cout << "closing simple file " << sfile->m_FileName << "\" total sent "
-                      << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
-                      << " Read()s" << std::endl;
+            log_output("closing simple file " + sfile->m_FileName + "\" total sent " +
+                       readable_size(sfile->m_BytesSent) + " in " +
+                       std::to_string(sfile->m_OperationCount) + " Read()s");
         SimpleFileMap.erase(CloseMsg->FileHandle);
         Ret = 0;
     }
@@ -635,10 +649,10 @@ static void KillServerHandler(CManager cm, CMConnection conn, void *vevent, void
     memset(&kill_response_msg, 0, sizeof(kill_response_msg));
     kill_response_msg.KillResponseCondition = kill_msg->KillResponseCondition;
     std::stringstream Status;
-    Status << "ADIOS files Opened: " << ADIOSFilesOpened << " (" << TotalGets << " gets for "
-           << readable_size(TotalGetBytesSent) << ")  Simple files opened: " << SimpleFilesOpened
-           << " (" << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent)
-           << ")";
+    Status << "ADIOS files Opened: " << std::to_string(ADIOSFilesOpened) << " ("
+           << std::to_string(TotalGets) << " gets for " << readable_size(TotalGetBytesSent)
+           << ")  Simple files opened: " << std::to_string(SimpleFilesOpened) << " ("
+           << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent) << ")";
     kill_response_msg.Status = strdup(Status.str().c_str());
     CMwrite(conn, ev_state->KillResponseFormat, &kill_response_msg);
     free(kill_response_msg.Status);
@@ -649,7 +663,7 @@ static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, vo
                                 attr_list attrs)
 {
     KillResponseMsg kill_response_msg = static_cast<KillResponseMsg>(vevent);
-    std::cout << "Server final status: " << kill_response_msg->Status << std::endl;
+    log_output("Server final status: " + std::string(kill_response_msg->Status));
     CMCondition_signal(cm, kill_response_msg->KillResponseCondition);
 }
 
@@ -680,8 +694,8 @@ static void StatusResponseHandler(CManager cm, CMConnection conn, void *vevent, 
                                   attr_list attrs)
 {
     StatusResponseMsg status_response_msg = static_cast<StatusResponseMsg>(vevent);
-    std::cout << "Server running on " << status_response_msg->Hostname
-              << " current status: " << status_response_msg->Status << std::endl;
+    log_output("Server running on " + std::string(status_response_msg->Hostname) +
+               " current status: " + std::string(status_response_msg->Status));
     CMCondition_signal(cm, status_response_msg->StatusResponseCondition);
 }
 
@@ -715,8 +729,8 @@ void connect_and_kill(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
-        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
-                  << std::endl;
+        log_output("No server at destination \"" + std::string(hostname) + "\" port " +
+                   std::to_string(ServerPort));
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -733,7 +747,7 @@ void connect_and_kill(int ServerPort)
     CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
     if (CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition) != 1)
     {
-        std::cout << "Server existed, but no kill confirmation.  Maybe OK" << std::endl;
+        log_output("Server existed, but no kill confirmation.  Maybe OK");
     }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
@@ -755,8 +769,8 @@ void connect_and_get_status(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
-        std::cout << "No server at destination \"" << hostname << "\" port " << ServerPort
-                  << std::endl;
+        log_output("No server at destination \"" + std::string(hostname) + "\" port " +
+                   std::to_string(ServerPort));
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -773,7 +787,7 @@ void connect_and_get_status(int ServerPort)
     CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
     if (CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition) != 1)
     {
-        std::cout << "Server existed, but no status response..." << std::endl;
+        log_output("Server existed, but no status response...");
     }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
@@ -786,11 +800,11 @@ static bool server_timeout(void *CMvoid, int time_since_service)
 {
     CManager cm = (CManager)CMvoid;
     if (verbose && (time_since_service > 90))
-        std::cout << time_since_service << " seconds since last service.\n";
+        log_output(std::to_string(time_since_service) + " seconds since last service.");
     if (time_since_service > 6000)
     {
         if (verbose)
-            std::cout << "Timing out remote server" << std::endl;
+            log_output("Timing out remote server");
         CManager_close(cm);
         return true;
     }
@@ -805,7 +819,7 @@ uint64_t rand64(void)
     uint64_t r = 0;
     for (int i = 0; i < 64; i += RAND_MAX_WIDTH)
     {
-        r <<= RAND_MAX_WIDTH;
+        r += RAND_MAX_WIDTH;
         r ^= (unsigned)rand();
     }
     return r;
@@ -840,8 +854,6 @@ int main(int argc, char **argv)
     int status_server = 0;
     int no_timeout = 0; // default to timeout
     char *log_filename = NULL;
-    std::ofstream fileOut;
-    std::ofstream fileOut2;
 
     for (int i = 1; i < argc; i++)
     {
@@ -883,12 +895,6 @@ int main(int argc, char **argv)
                 exit(1);
             }
             log_filename = argv[i];
-            // Opening the output file stream and associate it with
-            // logfile
-            fileOut.open(log_filename);
-
-            // Redirecting cout to write to logfile
-            std::cout.rdbuf(fileOut.rdbuf());
         }
         else if (strcmp(argv[i], "-d") == 0)
         {
@@ -990,6 +996,8 @@ int main(int argc, char **argv)
                 fprintf(stdout, "%s", buffer);
                 fflush(stdout);
             }
+            std::cout << "calling exit 0" << std::endl;
+            ;
             close(0);
             close(1);
             close(2);
@@ -1016,15 +1024,6 @@ int main(int argc, char **argv)
                     close(fd);
                 }
             }
-        }
-        if (log_filename)
-        {
-            // Opening the output file stream and associate it with
-            // logfile
-            fileOut2.open(log_filename);
-
-            // Redirecting cout to write to logfile
-            std::cout.rdbuf(fileOut2.rdbuf());
         }
 #endif
     }
@@ -1061,16 +1060,16 @@ int main(int argc, char **argv)
         rename(filename, final_filename);
     }
 
-    std::cout << "Hostname = " << helper::GetFQDN() << std::endl;
+    log_output("Hostname = " + helper::GetFQDN());
     attr_list contact_list = CMget_contact_list(cm);
     if (contact_list)
     {
         int Port = -1;
         get_int_attr(listen_list, CM_IP_PORT, &Port);
-        std::cout << "Listening on Port " << Port << std::endl;
+        log_output("Listening on Port " + std::to_string(Port));
     }
     ev_state.cm = cm;
-    std::cout << "Max threads = " << maxThreads << std::endl;
+    log_output("Max threads = " + std::to_string(maxThreads));
 
     RegisterFormats(ev_state);
 
