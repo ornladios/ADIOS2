@@ -154,10 +154,11 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
         {
-            // if we didn't find a server, but we're in testing, wait briefly and try again
+            // if we didn't find a server, but we're in testing, wait briefly and once more
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         }
+        free_attr_list(contact_list);
         if (!m_conn)
         {
             helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
