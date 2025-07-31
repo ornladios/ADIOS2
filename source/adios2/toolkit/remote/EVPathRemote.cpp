@@ -154,13 +154,16 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
         {
-            // if we didn't find a server, but we're in testing, wait briefly and try again
+            // if we didn't find a server, but we're in testing, wait briefly and once more
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         }
         free_attr_list(contact_list);
         if (!m_conn)
-            return;
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                              "Failed to connect to remote server");
+        }
     }
 
     memset(&open_msg, 0, sizeof(open_msg));
@@ -180,7 +183,16 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     open_msg.RowMajorOrder = RowMajorOrdering;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
+    if (m_ID == -1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to Open ADIOS file \"" + filename + "\"");
+    }
     m_Active = true;
 }
 
@@ -202,7 +214,10 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
         if (!m_conn)
-            return;
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                              "Failed to connect to remote server");
+        }
     }
 
     memset(&open_msg, 0, sizeof(open_msg));
@@ -211,8 +226,20 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     open_msg.ReadContents = 0;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
-    m_Active = true;
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
+    if ((m_ID == -1) && (m_Size == (size_t)-1))
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                          "Failed to open simple file \"" + filename + "\"");
+    }
+    else
+    {
+        m_Active = true;
+    }
 }
 
 void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t port,
@@ -233,7 +260,10 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
         if (!m_conn)
-            return;
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                              "Failed to connect to remote server");
+        }
     }
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -242,7 +272,11 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     m_TmpContentVector = &contents; // this will be accessed in the handler
     CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
     // file does not remain open after OpenReadSimpleFile
     m_TmpContentVector = nullptr;
     m_Active = false;
@@ -257,7 +291,12 @@ void EVPathRemote::Close()
     CloseMsg.FileHandle = m_ID;
     CMCondition_set_client_data(ev_state.cm, CloseMsg.CloseResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.CloseFileFormat, &CloseMsg);
-    CMCondition_wait(ev_state.cm, CloseMsg.CloseResponseCondition);
+    if (CMCondition_wait(ev_state.cm, CloseMsg.CloseResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>(
+            "Remote", "EVPathRemote", "CloseFile",
+            "Failed to receive close acknowledgement, server failed?");
+    }
     m_Active = false;
     m_ID = 0;
 }
@@ -302,13 +341,22 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
     ReadMsg.Size = Size;
     ReadMsg.Dest = Dest;
     CMwrite(m_conn, ev_state.ReadRequestFormat, &ReadMsg);
-    CMCondition_wait(ev_state.cm, ReadMsg.ReadResponseCondition);
+    if (CMCondition_wait(ev_state.cm, ReadMsg.ReadResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Read",
+                                          "No Remote Read acknowledgement, server failed?");
+    }
     return (Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition;
 }
 
 bool EVPathRemote::WaitForGet(GetHandle handle)
 {
     int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+    if (result != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Read",
+                                          "No Remote Read acknowledgement, server failed?");
+    }
 
     return result;
 }

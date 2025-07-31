@@ -48,6 +48,7 @@ static int fd_is_valid(int fd) { return fcntl(fd, F_GETFD) != -1 || errno != EBA
 using namespace adios2::EVPathRemoteCommon;
 
 using namespace adios2::core;
+using namespace adios2::helper;
 using namespace adios2;
 
 int verbose = 1;
@@ -67,9 +68,33 @@ uint64_t random_cookie = 0;
 size_t maxThreads = 8;
 size_t nThreads = 0;
 std::mutex mutex_nThreads;
+std::mutex output_mutex;
+char *log_filename = NULL;
+std::ofstream fileOut;
+
+static void log_output(const std::string out)
+{
+    std::lock_guard<std::mutex> lockGuard(output_mutex);
+    static bool initialized = false;
+    if (!initialized && log_filename)
+    {
+        // Opening the output file stream and associate it with
+        // logfile
+        fileOut.open(log_filename);
+    }
+    if (log_filename)
+    {
+        fileOut << out << std::endl;
+    }
+    else
+    {
+        std::cout << out << std::endl;
+    }
+}
+
 void WaitForAvailableThread()
 {
-    // std::cout << "WaitForAvailableThread(): enter " << std::endl;
+    // log_output("WaitForAvailableThread(): enter ");
     auto d = std::chrono::milliseconds(1000);
     while (true)
     {
@@ -78,12 +103,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                // std::cout << "WaitForAvailableThread(): exit with threads = " << nThreads
-                //           << std::endl;
+                log_output("WaitForAvailableThread(): exit with threads = " +
+                           std::to_string(nThreads));
                 break;
             }
         }
-        // std::cout << "WaitForAvailableThread(): sleep = " << nThreads << std::endl;
+        log_output("WaitForAvailableThread(): sleep = " + std::to_string(nThreads));
         std::this_thread::sleep_for(d);
     }
 };
@@ -181,11 +206,15 @@ public:
         }
         m_Size = static_cast<size_t>(fileStat.st_size);
     }
-    ~AnonSimpleFile() { close(m_FileDescriptor); }
+    ~AnonSimpleFile()
+    {
+        if (m_FileDescriptor != -1)
+            close(m_FileDescriptor);
+    }
 };
 
 std::unordered_map<uint64_t, AnonADIOSFile *> ADIOSFileMap;
-std::unordered_map<uint64_t, AnonSimpleFile *> SimpleFileMap;
+std::unordered_map<uint64_t, std::shared_ptr<AnonSimpleFile>> SimpleFileMap;
 std::unordered_multimap<void *, uint64_t> ConnToFileMap;
 static auto last_service_time = std::chrono::steady_clock::now();
 
@@ -198,21 +227,20 @@ static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
         if (file)
         {
             if (verbose >= 1)
-                std::cout << "closing ADIOS file \"" << file->m_FileName << "\" total sent "
-                          << readable_size(file->m_BytesSent) << " in " << file->m_OperationCount
-                          << " Get()s" << std::endl;
+                log_output("closing ADIOS file \"" + file->m_FileName + "\" total sent " +
+                           readable_size(file->m_BytesSent) + " in " +
+                           std::to_string(file->m_OperationCount) + " Get()s");
             ADIOSFileMap.erase(it1->second);
             delete file;
         }
-        AnonSimpleFile *sfile = SimpleFileMap[it1->second];
+        auto sfile = SimpleFileMap[it1->second];
         if (sfile)
         {
             if (verbose >= 1)
-                std::cout << "closing simple file " << sfile->m_FileName << "\" total sent "
-                          << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
-                          << " Read()s" << std::endl;
+                log_output("closing simple file " + sfile->m_FileName + "\" total sent " +
+                           readable_size(sfile->m_BytesSent) + " in " +
+                           std::to_string(sfile->m_OperationCount) + " Read()s");
             SimpleFileMap.erase(it1->second);
-            delete file;
         }
     }
     ConnToFileMap.erase(conn);
@@ -222,18 +250,25 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
                         attr_list attrs)
 {
     OpenFileMsg open_msg = static_cast<OpenFileMsg>(vevent);
+    AnonADIOSFile *f;
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     _OpenResponseMsg open_response_msg;
+    memset(&open_response_msg, 0, sizeof(open_response_msg));
+    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
     std::string strMode = "Streaming";
     if (open_msg->Mode == RemoteOpenRandomAccess)
         strMode = "RandomAccess";
-    std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
-              << std::endl;
-    AnonADIOSFile *f =
-        new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
-    memset(&open_response_msg, 0, sizeof(open_response_msg));
-    open_response_msg.FileHandle = f->m_ID;
-    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+    try
+    {
+        f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
+        open_response_msg.FileHandle = f->m_ID;
+    }
+    catch (...)
+    {
+        open_response_msg.FileHandle = -1;
+        CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
+        return;
+    }
     CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
     CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
     ADIOSFileMap[f->m_ID] = f;
@@ -245,61 +280,72 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
 static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
                               attr_list attrs)
 {
+    _OpenSimpleResponseMsg open_response_msg;
+    memset(&open_response_msg, 0, sizeof(open_response_msg));
     OpenSimpleFileMsg open_msg = static_cast<OpenSimpleFileMsg>(vevent);
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
-    _OpenSimpleResponseMsg open_response_msg;
-    std::cout << "Got an open simple request for file " << open_msg->FileName << std::endl;
-    AnonSimpleFile *f = new AnonSimpleFile(open_msg->FileName);
-    if (f->m_FileDescriptor == -1)
-        std::cout << "Open failed! BAD!" << std::endl;
-    char *ContentsToFree = NULL;
-    f->m_FileName = open_msg->FileName;
-    memset(&open_response_msg, 0, sizeof(open_response_msg));
-    open_response_msg.FileHandle = f->m_ID;
-    open_response_msg.FileSize = f->m_Size;
-    open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
-    if (open_msg->ReadContents)
+    try
     {
-        // This is a one-shot operation
-        ContentsToFree = (char *)malloc(f->m_Size);
-        size_t remaining = f->m_Size;
-        char *pointer = ContentsToFree;
-        while (remaining > 0)
+        auto f = std::make_shared<AnonSimpleFile>(open_msg->FileName);
+        char *ContentsToFree = NULL;
+        if (f->m_FileDescriptor == -1)
         {
-            ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
-            if (ret <= 0)
-            {
-                // EOF or error,  should send a message back, but we haven't define error handling
-                // yet
-                std::cout << "Read failed! BAD!" << std::endl;
-                // instead free tmp and return;
-                free(ContentsToFree);
-                return;
-            }
-            else
-            {
-                remaining -= ret;
-                pointer += ret;
-            }
+            log_output("Simple Open failed! returning error!");
+            throw std::runtime_error("open failed");
         }
-        open_response_msg.FileContents = ContentsToFree;
-        if (verbose >= 1)
-            std::cout << "closing simple file after OpenRead" << f->m_FileName << "\" total sent "
-                      << readable_size(f->m_Size) << std::endl;
-        delete f;
+
+        f->m_FileName = open_msg->FileName;
+        open_response_msg.FileHandle = f->m_ID;
+        open_response_msg.FileSize = f->m_Size;
+        open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+        if (open_msg->ReadContents)
+        {
+            // This is a one-shot operation
+            ContentsToFree = (char *)malloc(f->m_Size);
+            size_t remaining = f->m_Size;
+            char *pointer = ContentsToFree;
+            while (remaining > 0)
+            {
+                ssize_t ret = read(f->m_FileDescriptor, pointer, (int)remaining);
+                if (ret <= 0)
+                {
+                    log_output("Simple OpenRead failed! returning error!");
+                    // instead free tmp and return;
+                    free(ContentsToFree);
+                    throw std::runtime_error("read failed");
+                }
+                else
+                {
+                    remaining -= ret;
+                    pointer += ret;
+                }
+            }
+            open_response_msg.FileContents = ContentsToFree;
+            if (verbose >= 1)
+                log_output("closing simple file after OpenRead" + f->m_FileName + "\" total sent " +
+                           readable_size(f->m_Size));
+        }
+        else
+        {
+            // file is to remain open, keep records
+            CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
+            SimpleFileMap[f->m_ID] = f;
+            ConnToFileMap.emplace(conn, f->m_ID);
+        }
+        CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
+        if (ContentsToFree)
+            free(ContentsToFree);
+        SimpleFilesOpened++;
+        last_service_time = std::chrono::steady_clock::now();
+        return;
     }
-    else
+    catch (...)
     {
-        // file is to remain open, keep records
-        CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
-        SimpleFileMap[f->m_ID] = f;
-        ConnToFileMap.emplace(conn, f->m_ID);
+        open_response_msg.FileHandle = -1;
+        open_response_msg.FileSize = (size_t)-1;
+        open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
+        CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
     }
-    CMwrite(conn, ev_state->OpenSimpleResponseFormat, &open_response_msg);
-    if (ContentsToFree)
-        free(ContentsToFree);
-    SimpleFilesOpened++;
-    last_service_time = std::chrono::steady_clock::now();
 }
 
 template <class T>
@@ -367,36 +413,34 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
     {
         if (boxselection)
         {
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
-                      << ">(" << name << ") start = " << start << " count = " << count
-                      << " steps = " << stepStart << ".." << stepStart + stepCount - 1 << std::endl;
+            size_t stepEnd = stepStart + stepCount - 1;
+            log_output("Returning " + readable_size(Response.Size) + " for Get<" +
+                       adios2::ToString(vartype) + ">(" + name +
+                       ") start = " + DimsToString(start) + " count = " + DimsToString(count) +
+                       " steps = " + std::to_string(stepStart) + ".." + std::to_string(stepEnd));
         }
         else
         {
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
-                      << ">(" << name << ") block = " << blockid << std::endl;
+            log_output("Returning " + readable_size(Response.Size) + " for Get<" +
+                       adios2::ToString(vartype) + ">(" + name +
+                       ") block = " + std::to_string(blockid));
         }
     }
-    // std::cout << "-- start sending response --" << std::endl;
     CMwrite(conn, ReadResponseFormat, &Response);
     free(Response.ReadData);
-    // std::cout << "-- sent response --" << std::endl;
     {
-        // std::cout << "-- get lock --" << std::endl;
         std::lock_guard<std::mutex> lockGuard(mutex_nThreads);
-        // std::cout << "-- lock acquired --" << std::endl;
         f->m_BytesSent += Response.Size;
         f->m_OperationCount++;
         TotalGetBytesSent += Response.Size;
         TotalGets++;
         --nThreads;
     }
-    // std::cout << "-- done --" << std::endl;
 }
 
 template <class T>
 void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_state,
-                           GetRequestMsg &GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
+                           GetRequestMsg GetMsg, std::string &VarName, adios2::DataType TypeOfVar,
                            AnonADIOSFile *f)
 {
     // This part cannot be threaded as ADIOS InquireVariable/Get are not thread-safe
@@ -418,13 +462,20 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
         }
         var->SetSelection(b);
     }
-    std::cout << "Reading var " << VarName << " with "
-              << (GetMsg->Relative ? "relative" : "absolute") << " error " << GetMsg->Error
-              << " in norm " << GetMsg->Norm << std::endl;
+    log_output("Reading var " + VarName + " with " + (GetMsg->Relative ? "relative" : "absolute") +
+               " error " + std::to_string(GetMsg->Error) + " in norm " +
+               std::to_string(GetMsg->Norm));
     size_t readSize = var->SelectionSize() * sizeof(T);
     T *RawData = (T *)malloc(readSize);
-    f->m_engine->Get(*var, RawData, Mode::Sync);
-
+    try
+    {
+        f->m_engine->Get(*var, RawData, Mode::Sync);
+    }
+    catch (...)
+    {
+        log_output("Reading var " + VarName + " failed with exception, continuing");
+        return;
+    }
     WaitForAvailableThread(); /* blocking here until we can launch a thread */
 
     // Handle returning data in a separate thread so that we can serve another read operation in the
@@ -459,6 +510,11 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     AnonADIOSFile *f = ADIOSFileMap[GetMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     last_service_time = std::chrono::steady_clock::now();
+    if (!f)
+    {
+        log_output("file not open, abort Get");
+        return;
+    }
     if (f->m_mode == RemoteOpen)
     {
         if (f->currentStep == -1)
@@ -469,7 +525,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         while (f->m_engine->CurrentStep() < GetMsg->Step)
         {
             if (verbose >= 2)
-                std::cout << "Advancing a step" << std::endl;
+                log_output("Advancing a step");
             f->m_engine->EndStep();
             f->m_engine->BeginStep();
             f->currentStep++;
@@ -487,8 +543,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
 #define GET(T)                                                                                     \
     else if (TypeOfVar == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        PrepareResponseForGet<T>(conn, ev_state, std::ref(GetMsg), std::ref(VarName), TypeOfVar,   \
-                                 f);                                                               \
+        PrepareResponseForGet<T>(conn, ev_state, GetMsg, VarName, TypeOfVar, f);                   \
     }
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
@@ -496,8 +551,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     catch (const std::exception &exc)
     {
         if (verbose)
-            std::cout << "Returning exception " << exc.what() << " for Get<" << TypeOfVar << ">("
-                      << VarName << ")" << std::endl;
+            log_output("Returning exception " + std::string(exc.what()) + " for Get<" +
+                       ToString(TypeOfVar) + ">(" + VarName + ")");
     }
 }
 
@@ -505,7 +560,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
                                attr_list attrs)
 {
     ReadRequestMsg ReadMsg = static_cast<ReadRequestMsg>(vevent);
-    AnonSimpleFile *f = SimpleFileMap[ReadMsg->FileHandle];
+    auto f = SimpleFileMap[ReadMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     last_service_time = std::chrono::steady_clock::now();
     if (f->m_CurrentOffset != ReadMsg->Offset)
@@ -522,7 +577,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
         if (ret <= 0)
         {
             // EOF or error,  should send a message back, but we haven't define error handling yet
-            std::cout << "Read failed! BAD!" << std::endl;
+            log_output("Read failed! BAD!");
             // instead free tmp and return;
             free(tmp);
             return;
@@ -542,7 +597,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     Response.Dest = ReadMsg->Dest;
     Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
     if (verbose >= 2)
-        std::cout << "Returning " << readable_size(Response.Size) << " for Read " << std::endl;
+        log_output("Returning " + readable_size(Response.Size) + " for Read ");
     f->m_BytesSent += Response.Size;
     f->m_OperationCount++;
     TotalSimpleBytesSent += Response.Size;
@@ -561,25 +616,25 @@ static void CloseFileHandler(CManager cm, CMConnection conn, void *vevent, void 
     if (afile)
     {
         if (verbose >= 1)
-            std::cout << "closing ADIOS file \"" << afile->m_FileName << "\" total sent "
-                      << readable_size(afile->m_BytesSent) << " in " << afile->m_OperationCount
-                      << " Get()s" << std::endl;
+            log_output("closing ADIOS file \"" + afile->m_FileName + "\" total sent " +
+                       readable_size(afile->m_BytesSent) + " in " +
+                       std::to_string(afile->m_OperationCount) + " Get()s");
         ADIOSFileMap.erase(CloseMsg->FileHandle);
         delete afile;
         Ret = 0;
     }
-    AnonSimpleFile *sfile = SimpleFileMap[CloseMsg->FileHandle];
+    auto sfile = SimpleFileMap[CloseMsg->FileHandle];
     if (sfile)
     {
         if (verbose >= 1)
-            std::cout << "closing simple file " << sfile->m_FileName << "\" total sent "
-                      << readable_size(sfile->m_BytesSent) << " in " << sfile->m_OperationCount
-                      << " Read()s" << std::endl;
+            log_output("closing simple file " + sfile->m_FileName + "\" total sent " +
+                       readable_size(sfile->m_BytesSent) + " in " +
+                       std::to_string(sfile->m_OperationCount) + " Read()s");
         SimpleFileMap.erase(CloseMsg->FileHandle);
-        delete sfile;
         Ret = 0;
     }
     struct _CloseFileResponseMsg close_response_msg;
+    memset(&close_response_msg, 0, sizeof(close_response_msg));
     close_response_msg.CloseResponseCondition = CloseMsg->CloseResponseCondition;
     close_response_msg.Status = Ret;
     CMwrite(conn, ev_state->CloseResponseFormat, &close_response_msg);
@@ -594,10 +649,10 @@ static void KillServerHandler(CManager cm, CMConnection conn, void *vevent, void
     memset(&kill_response_msg, 0, sizeof(kill_response_msg));
     kill_response_msg.KillResponseCondition = kill_msg->KillResponseCondition;
     std::stringstream Status;
-    Status << "ADIOS files Opened: " << ADIOSFilesOpened << " (" << TotalGets << " gets for "
-           << readable_size(TotalGetBytesSent) << ")  Simple files opened: " << SimpleFilesOpened
-           << " (" << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent)
-           << ")";
+    Status << "ADIOS files Opened: " << std::to_string(ADIOSFilesOpened) << " ("
+           << std::to_string(TotalGets) << " gets for " << readable_size(TotalGetBytesSent)
+           << ")  Simple files opened: " << std::to_string(SimpleFilesOpened) << " ("
+           << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent) << ")";
     kill_response_msg.Status = strdup(Status.str().c_str());
     CMwrite(conn, ev_state->KillResponseFormat, &kill_response_msg);
     free(kill_response_msg.Status);
@@ -608,7 +663,7 @@ static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, vo
                                 attr_list attrs)
 {
     KillResponseMsg kill_response_msg = static_cast<KillResponseMsg>(vevent);
-    std::cout << "Server final status: " << kill_response_msg->Status << std::endl;
+    log_output("Server final status: " + std::string(kill_response_msg->Status));
     CMCondition_signal(cm, kill_response_msg->KillResponseCondition);
 }
 
@@ -639,8 +694,8 @@ static void StatusResponseHandler(CManager cm, CMConnection conn, void *vevent, 
                                   attr_list attrs)
 {
     StatusResponseMsg status_response_msg = static_cast<StatusResponseMsg>(vevent);
-    std::cout << "Server running on " << status_response_msg->Hostname
-              << " current status: " << status_response_msg->Status << std::endl;
+    log_output("Server running on " + std::string(status_response_msg->Hostname) +
+               " current status: " + std::string(status_response_msg->Status));
     CMCondition_signal(cm, status_response_msg->StatusResponseCondition);
 }
 
@@ -674,6 +729,8 @@ void connect_and_kill(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        log_output("No server at destination \"" + std::string(hostname) + "\" port " +
+                   std::to_string(ServerPort));
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -688,7 +745,10 @@ void connect_and_kill(int ServerPort)
     memset(&kill_msg, 0, sizeof(kill_msg));
     kill_msg.KillResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
-    CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition);
+    if (CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition) != 1)
+    {
+        log_output("Server existed, but no kill confirmation.  Maybe OK");
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -709,6 +769,8 @@ void connect_and_get_status(int ServerPort)
     CMConnection conn = CMinitiate_conn(cm, contact_list);
     if (!conn)
     {
+        log_output("No server at destination \"" + std::string(hostname) + "\" port " +
+                   std::to_string(ServerPort));
         free_attr_list(contact_list);
         CManager_close(cm);
         exit(0);
@@ -723,7 +785,10 @@ void connect_and_get_status(int ServerPort)
     memset(&status_msg, 0, sizeof(status_msg));
     status_msg.StatusResponseCondition = CMCondition_get(ev_state.cm, conn);
     CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
-    CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition);
+    if (CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition) != 1)
+    {
+        log_output("Server existed, but no status response...");
+    }
     CMConnection_close(conn);
     CManager_close(ev_state.cm);
     exit(0);
@@ -735,11 +800,11 @@ static bool server_timeout(void *CMvoid, int time_since_service)
 {
     CManager cm = (CManager)CMvoid;
     if (verbose && (time_since_service > 90))
-        std::cout << time_since_service << " seconds since last service.\n";
+        log_output(std::to_string(time_since_service) + " seconds since last service.");
     if (time_since_service > 6000)
     {
         if (verbose)
-            std::cout << "Timing out remote server" << std::endl;
+            log_output("Timing out remote server");
         CManager_close(cm);
         return true;
     }
@@ -754,7 +819,7 @@ uint64_t rand64(void)
     uint64_t r = 0;
     for (int i = 0; i < 64; i += RAND_MAX_WIDTH)
     {
-        r <<= RAND_MAX_WIDTH;
+        r += RAND_MAX_WIDTH;
         r ^= (unsigned)rand();
     }
     return r;
@@ -789,8 +854,6 @@ int main(int argc, char **argv)
     int status_server = 0;
     int no_timeout = 0; // default to timeout
     char *log_filename = NULL;
-    std::ofstream fileOut;
-    std::ofstream fileOut2;
 
     for (int i = 1; i < argc; i++)
     {
@@ -832,12 +895,19 @@ int main(int argc, char **argv)
                 exit(1);
             }
             log_filename = argv[i];
-            // Opening the output file stream and associate it with
-            // logfile
-            fileOut.open(log_filename);
-
-            // Redirecting cout to write to logfile
-            std::cout.rdbuf(fileOut.rdbuf());
+        }
+        else if (strcmp(argv[i], "-d") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -d requires an argument\n");
+                fprintf(stderr, usage);
+                exit(1);
+            }
+            log_filename = argv[i];
+            std::string tmp = std::string("cat ") + log_filename;
+            system(tmp.c_str());
         }
         else if (strcmp(argv[i], "-t") == 0)
         {
@@ -926,6 +996,8 @@ int main(int argc, char **argv)
                 fprintf(stdout, "%s", buffer);
                 fflush(stdout);
             }
+            std::cout << "calling exit 0" << std::endl;
+            ;
             close(0);
             close(1);
             close(2);
@@ -937,6 +1009,8 @@ int main(int argc, char **argv)
         //  close them to make sure we disassociate from the CTest parent (or else fixture
         //  startup hangs). It doesn't seem to work to close them before the fork, so we close
         //  them afterwards.
+        freopen("/tmp/server_stdout", "a", stdout);
+        freopen("/tmp/server_stderr", "a", stderr);
         for (int fd = 0; fd <= 16; fd++)
         {
             if (fd_is_valid(fd))
@@ -950,15 +1024,6 @@ int main(int argc, char **argv)
                     close(fd);
                 }
             }
-        }
-        if (log_filename)
-        {
-            // Opening the output file stream and associate it with
-            // logfile
-            fileOut2.open(log_filename);
-
-            // Redirecting cout to write to logfile
-            std::cout.rdbuf(fileOut2.rdbuf());
         }
 #endif
     }
@@ -995,16 +1060,16 @@ int main(int argc, char **argv)
         rename(filename, final_filename);
     }
 
-    std::cout << "Hostname = " << helper::GetFQDN() << std::endl;
+    log_output("Hostname = " + helper::GetFQDN());
     attr_list contact_list = CMget_contact_list(cm);
     if (contact_list)
     {
         int Port = -1;
         get_int_attr(listen_list, CM_IP_PORT, &Port);
-        std::cout << "Listening on Port " << Port << std::endl;
+        log_output("Listening on Port " + std::to_string(Port));
     }
     ev_state.cm = cm;
-    std::cout << "Max threads = " << maxThreads << std::endl;
+    log_output("Max threads = " + std::to_string(maxThreads));
 
     RegisterFormats(ev_state);
 

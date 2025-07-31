@@ -3,6 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+# Remote_dir used in engine/bp and unit tests
+set(REMOTE_DIR ${CMAKE_CURRENT_BINARY_DIR}/remote)
+file(MAKE_DIRECTORY ${REMOTE_DIR})
+
 add_subdirectory(interface)
 add_subdirectory(unit)
 add_subdirectory(engine)
