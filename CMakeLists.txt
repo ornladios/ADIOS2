@@ -1,28 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat EVPath as a subproject of
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.4 LANGUAGES C CXX)
-
-# Enable <PackageName>_ROOT variables for dependency searching
-# CMake v3.12
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-# Enable imported targets as library dependencies for CHECK_INCLUDE_FILE
-if(POLICY CMP0075)
-  cmake_policy(SET CMP0075 NEW)
-endif()
-
-# Let option(...) setings work with non-cache variables.  Useful for including
-# EVPath as a third party dependency in another project.
-# CMake v3.13
-if(POLICY CMP0077)
-  cmake_policy(SET CMP0077 NEW)
-endif()
+project(EVPath VERSION 4.5.8 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -223,7 +205,9 @@ _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
 
 if(TARGET ffs) # The unaliased target exists so it's built by us
-  set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  if (DILL_FOUND)  # this only exists in meta-builds
+    set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  endif()
 else()
   set(CMAKE_REQUIRED_LIBRARIES ffs::ffs)
   CHECK_INCLUDE_FILE(cod.h HAVE_COD_H)
@@ -589,8 +573,6 @@ find_package(Perl)
 if (PERL_FOUND) 
   add_custom_command(
     OUTPUT "cm_interface.c" "revp.c" "revpath.h" "revp_internal.h"
-    SOURCE
-      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
     COMMAND ${PERL_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
       ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h

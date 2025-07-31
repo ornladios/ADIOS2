@@ -307,9 +307,7 @@ static atom_t CM_IP_INTERFACE = -1;
 static atom_t CM_TRANSPORT = -1;
 
 static int
-check_host(hostname, sin_addr)
-	char *hostname;
-void *sin_addr;
+check_host(char *hostname, void *sin_addr)
 {
 	struct hostent *host_addr;
 	host_addr = gethostbyname(hostname);
@@ -1369,9 +1367,7 @@ fabric_service_incoming(void *void_trans, void *void_eq)
 }
 
 extern void
-libcmfabric_LTX_shutdown_conn(svc, fcd)
-	CMtrans_services svc;
-fabric_conn_data_ptr fcd;
+libcmfabric_LTX_shutdown_conn(CMtrans_services svc, fabric_conn_data_ptr fcd)
 {
 	svc->trace_out(fcd->fabd->cm, "CMFABRIC shutdown_conn, removing select %d\n",
 	               fcd->fd);
@@ -1507,14 +1503,8 @@ err0:
 }
 
 static int
-initiate_conn(cm, svc, trans, attrs, fcd, conn_attr_list, no_more_redirect)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-fabric_conn_data_ptr fcd;
-attr_list conn_attr_list;
-int no_more_redirect;
+initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, 
+	      fabric_conn_data_ptr fcd, attr_list conn_attr_list, int no_more_redirect)
 {
 	int int_port_num;
 	fabric_client_data_ptr fabd = (fabric_client_data_ptr) trans->trans_data;
@@ -1599,11 +1589,7 @@ int no_more_redirect;
  * (name_str stores the machine name).
  */
 extern CMConnection
-libcmfabric_LTX_initiate_conn(cm, svc, trans, attrs)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmfabric_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     fabric_conn_data_ptr fcd = create_fabric_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
@@ -1690,12 +1676,7 @@ libcmfabric_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry tr
 }
 
 extern int
-libcmfabric_LTX_connection_eq(cm, svc, trans, attrs, fcd)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-fabric_conn_data_ptr fcd;
+libcmfabric_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, fabric_conn_data_ptr fcd)
 {
 
 	int int_port_num;
@@ -2269,11 +2250,7 @@ struct iovec {
 #endif
 
 extern void
-libcmfabric_LTX_set_write_notify(trans, svc, fcd, enable)
-	transport_entry trans;
-CMtrans_services svc;
-fabric_conn_data_ptr fcd;
-int enable;
+libcmfabric_LTX_set_write_notify(transport_entry trans, CMtrans_services svc, fabric_conn_data_ptr fcd, int enable)
 {
 	if (enable != 0) {
 		svc->fd_write_select(trans->cm, fcd->fd, (select_list_func) trans->write_possible,
@@ -2452,12 +2429,7 @@ libcmfabric_LTX_writev_complete_notify_func(CMtrans_services svc,
 }
 
 extern int
-libcmfabric_LTX_writev_func(svc, fcd, iovs, iovcnt, attrs)
-CMtrans_services svc;
-fabric_conn_data_ptr fcd;
-void *iovs;
-int iovcnt;
-attr_list attrs;
+libcmfabric_LTX_writev_func(CMtrans_services svc, fabric_conn_data_ptr fcd, void *iovs, int iovcnt, attr_list attrs)
 {
     return libcmfabric_LTX_writev_complete_notify_func(svc, fcd, iovs, iovcnt, 
 						   attrs, NULL, NULL);

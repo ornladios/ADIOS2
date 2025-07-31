@@ -353,7 +353,7 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
 	}
 
 	for(p = info; p != NULL; p = p->ai_next) {
-	    strcpy(buf, p->ai_canonname);
+	    if (p->ai_canonname) strcpy(buf, p->ai_canonname);
 	}
 
 	freeaddrinfo(info);
