@@ -5,6 +5,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
@@ -19,6 +20,7 @@
 #include <fcntl.h> // open
 #include <fstream>
 #include <inttypes.h>
+#include <iomanip>
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
@@ -63,6 +65,7 @@ size_t ADIOSFilesOpened = 0;
 static int report_port_selection = 0;
 int parent_pid;
 uint64_t random_cookie = 0;
+TimePoint startTime;
 
 /* Threading for compressing responses of Gets */
 size_t maxThreads = 8;
@@ -84,11 +87,13 @@ static void log_output(const std::string out)
     }
     if (log_filename)
     {
-        fileOut << out << std::endl;
+        fileOut << std::fixed << std::setprecision(3) << ((Seconds)(Now() - startTime)).count()
+                << ": " << out << std::endl;
     }
     else
     {
-        std::cout << out << std::endl;
+        std::cout << std::fixed << std::setprecision(3) << ((Seconds)(Now() - startTime)).count()
+                  << ": " << out << std::endl;
     }
 }
 
@@ -853,7 +858,6 @@ int main(int argc, char **argv)
     int kill_server = 0;
     int status_server = 0;
     int no_timeout = 0; // default to timeout
-    char *log_filename = NULL;
 
     for (int i = 1; i < argc; i++)
     {
@@ -1060,6 +1064,7 @@ int main(int argc, char **argv)
         rename(filename, final_filename);
     }
 
+    startTime = Now();
     log_output("Hostname = " + helper::GetFQDN());
     attr_list contact_list = CMget_contact_list(cm);
     if (contact_list)
