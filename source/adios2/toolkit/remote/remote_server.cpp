@@ -83,7 +83,8 @@ static void log_output(const std::string out)
     {
         // Opening the output file stream and associate it with
         // logfile
-        fileOut.open(log_filename);
+        fileOut.open(log_filename, std::ios::app);
+        initialized = true;
     }
     if (log_filename)
     {
@@ -108,12 +109,12 @@ void WaitForAvailableThread()
             if (nThreads < maxThreads)
             {
                 ++nThreads;
-                log_output("WaitForAvailableThread(): exit with threads = " +
-                           std::to_string(nThreads));
+                // log_output("WaitForAvailableThread(): exit with threads = " +
+                //        std::to_string(nThreads));
                 break;
             }
         }
-        log_output("WaitForAvailableThread(): sleep = " + std::to_string(nThreads));
+        // log_output("WaitForAvailableThread(): sleep = " + std::to_string(nThreads));
         std::this_thread::sleep_for(d);
     }
 };
@@ -668,7 +669,7 @@ static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, vo
                                 attr_list attrs)
 {
     KillResponseMsg kill_response_msg = static_cast<KillResponseMsg>(vevent);
-    log_output("Server final status: " + std::string(kill_response_msg->Status));
+    std::cout << "Server final status: " << std::string(kill_response_msg->Status) << std::endl;
     CMCondition_signal(cm, kill_response_msg->KillResponseCondition);
 }
 
@@ -699,8 +700,8 @@ static void StatusResponseHandler(CManager cm, CMConnection conn, void *vevent, 
                                   attr_list attrs)
 {
     StatusResponseMsg status_response_msg = static_cast<StatusResponseMsg>(vevent);
-    log_output("Server running on " + std::string(status_response_msg->Hostname) +
-               " current status: " + std::string(status_response_msg->Status));
+    std::cout << "Server running on " << std::string(status_response_msg->Hostname)
+              << " current status: " << std::string(status_response_msg->Status) << std::endl;
     CMCondition_signal(cm, status_response_msg->StatusResponseCondition);
 }
 
