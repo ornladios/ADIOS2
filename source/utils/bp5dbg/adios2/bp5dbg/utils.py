@@ -1,6 +1,8 @@
 
 LocalValueDim = 18446744073709551613
 
+bpminorversion = 0
+
 dataTypes = {
     -1: 'unknown',
     0: 'byte',
@@ -49,6 +51,9 @@ dataTypeSize = {
     55: 1
 }
 
+
+def GetBPMinorVersion():
+    return bpminorversion
 
 def GetTypeName(typeID):
     name = dataTypes.get(typeID)
@@ -130,6 +135,7 @@ def ReadHeader(f, fileSize, fileType, verbose):
         status = False
 
     bpversion = int(header[37])
+    global bpminorversion
     bpminorversion = int(header[38])
     active = int(header[39])
     if active == 0:
