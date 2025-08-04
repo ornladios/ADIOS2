@@ -80,31 +80,10 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
     EVPathRemoteCommon::ReadResponseMsg read_response_msg =
         static_cast<EVPathRemoteCommon::ReadResponseMsg>(vevent);
 
-    switch (read_response_msg->OperatorType)
-    {
-    case adios2::core::Operator::OperatorType::COMPRESS_MGARD: {
-        auto op = adios2::core::MakeOperator("mgard", {});
-        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
-                           (char *)read_response_msg->Dest);
-        break;
-    }
-
-    case adios2::core::Operator::OperatorType::COMPRESS_ZFP: {
-        auto op = adios2::core::MakeOperator("zfp", {});
-        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
-                           (char *)read_response_msg->Dest);
-        break;
-    }
-
-    case adios2::core::Operator::OperatorType::COMPRESS_NULL:
-        memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
-        break;
-    default:
-        helper::Throw<std::invalid_argument>("Remote", "EVPathRemote", "ReadResponseHandler",
-                                             "Invalid operator type " +
-                                                 std::to_string(read_response_msg->OperatorType) +
-                                                 " received in response");
-    }
+    void *obj = CMCondition_get_client_data(cm, read_response_msg->ReadResponseCondition);
+    CMtake_buffer(cm, read_response_msg);
+    static_cast<EVPathRemote *>(obj)->m_Responses.emplace(read_response_msg->ReadResponseCondition,
+                                                          read_response_msg);
     CMCondition_signal(cm, read_response_msg->ReadResponseCondition);
     return;
 };
@@ -324,8 +303,61 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
     GetMsg.Norm = accuracy.norm;
     GetMsg.Relative = accuracy.relative;
     GetMsg.Dest = dest;
+    CMCondition_set_client_data(ev_state.cm, GetMsg.GetResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
     return (Remote::GetHandle)(intptr_t)GetMsg.GetResponseCondition;
+}
+
+void EVPathRemote::ProcessReadResponse(GetHandle handle)
+{
+    auto it = m_Responses.find((int)(intptr_t)handle);
+    if (it == m_Responses.end())
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "WaitForGet",
+                                          "Handle " + std::to_string((int)(intptr_t)handle) +
+                                              " not found in list of responses");
+    }
+
+    EVPathRemoteCommon::ReadResponseMsg read_response_msg = it->second;
+    switch (read_response_msg->OperatorType)
+    {
+
+    case adios2::core::Operator::OperatorType::COMPRESS_MGARD: {
+        auto op = adios2::core::MakeOperator("mgard", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_ZFP: {
+        auto op = adios2::core::MakeOperator("zfp", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_NULL:
+        memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>("Remote", "EVPathRemote", "ReadResponseHandler",
+                                             "Invalid operator type " +
+                                                 std::to_string(read_response_msg->OperatorType) +
+                                                 " received in response");
+    }
+    CMreturn_buffer(ev_state.cm, read_response_msg);
+}
+
+bool EVPathRemote::WaitForGet(GetHandle handle)
+{
+    int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+    if (result != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Wait for Read/Get",
+                                          "No Remote Read acknowledgement, server failed?");
+    }
+    ProcessReadResponse(handle);
+    return result;
 }
 
 EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest)
@@ -340,25 +372,10 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
     ReadMsg.Offset = Start;
     ReadMsg.Size = Size;
     ReadMsg.Dest = Dest;
+    CMCondition_set_client_data(ev_state.cm, ReadMsg.ReadResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.ReadRequestFormat, &ReadMsg);
-    if (CMCondition_wait(ev_state.cm, ReadMsg.ReadResponseCondition) != 1)
-    {
-        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Read",
-                                          "No Remote Read acknowledgement, server failed?");
-    }
+    WaitForGet((Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition);
     return (Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition;
-}
-
-bool EVPathRemote::WaitForGet(GetHandle handle)
-{
-    int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
-    if (result != 1)
-    {
-        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Read",
-                                          "No Remote Read acknowledgement, server failed?");
-    }
-
-    return result;
 }
 
 std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>>

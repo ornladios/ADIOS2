@@ -377,6 +377,7 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
                     {"s", std::to_string(acc.norm)},
                     {"mode", (acc.relative ? "REL" : "ABS")}};
         auto op = MakeOperator("mgard", p);
+        log_output("    Compressing with mgard: " + name);
 #elif defined(ADIOS2_HAVE_ZFP)
         Params p = {{"accuracy", std::to_string(acc.error)}};
         auto op = MakeOperator("zfp", p);
@@ -384,6 +385,7 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         // TODO: would be nicer:
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
         T *CompressedData = (T *)malloc(Response.Size);
+        log_output("    Allocated for compressed output: " + readable_size(Response.Size));
         adios2::Dims c;
         if (stepCount <= 1)
         {
@@ -394,6 +396,7 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
             c = helper::DimsWithStep(stepCount, count);
         }
         size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
+        log_output("    Compressed result size = " + readable_size(result));
         if (result == 0)
         {
             Response.ReadData = (char *)RawData;
