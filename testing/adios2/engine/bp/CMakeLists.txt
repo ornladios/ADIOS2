@@ -104,6 +104,7 @@ bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
 gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
+gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
 
 bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
