@@ -47,7 +47,6 @@ set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 set(CTEST_TEST_ARGS
   # Install.Make ticket: https://github.com/ornladios/ADIOS2/issues/4272
-  # DataMan tickets: https://github.com/ornladios/ADIOS2/issues/4273
-  EXCLUDE "Install.Make|Test.Engine.DataManSingleValues|Test.Engine.DataMan1xN.Serial"
+  EXCLUDE "Install.Make"
 )
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
