@@ -37,8 +37,6 @@ TEST_F(LargeBlocks, MultiBlock)
     // Testing if the POSIX reader transport is reading in chunks of 2147381248
     // bytes correctly (from the correct offsets)
 
-    int rank = 0, nproc = 1;
-
     adios2::ADIOS adios;
 
     const std::string fname = "LargeBlocks.bp";
