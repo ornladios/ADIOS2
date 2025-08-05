@@ -84,6 +84,7 @@ public:
 
     std::vector<char> *m_TmpContentVector = nullptr;
 #ifdef ADIOS2_HAVE_SST
+    std::mutex m_ResponsesMutex;
     std::map<int, EVPathRemoteCommon::ReadResponseMsg>
         m_Responses; // read/get responses to be processed
 #endif
@@ -93,7 +94,6 @@ private:
     void InitCMData();
     EVPathRemoteCommon::Remote_evpath_state ev_state;
     CMConnection m_conn = NULL;
-    std::mutex m_CMInitMutex;
     void ProcessReadResponse(GetHandle handle);
 #endif
     bool m_Active = false;

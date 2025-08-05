@@ -82,8 +82,11 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
 
     void *obj = CMCondition_get_client_data(cm, read_response_msg->ReadResponseCondition);
     CMtake_buffer(cm, read_response_msg);
-    static_cast<EVPathRemote *>(obj)->m_Responses.emplace(read_response_msg->ReadResponseCondition,
-                                                          read_response_msg);
+    {
+        const std::lock_guard<std::mutex> lock(static_cast<EVPathRemote *>(obj)->m_ResponsesMutex);
+        static_cast<EVPathRemote *>(obj)->m_Responses.emplace(
+            read_response_msg->ReadResponseCondition, read_response_msg);
+    }
     CMCondition_signal(cm, read_response_msg->ReadResponseCondition);
     return;
 };
@@ -310,7 +313,11 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
 
 void EVPathRemote::ProcessReadResponse(GetHandle handle)
 {
-    auto it = m_Responses.find((int)(intptr_t)handle);
+    std::map<int, adios2::EVPathRemoteCommon::ReadResponseMsg>::iterator it;
+    {
+        const std::lock_guard<std::mutex> lock(m_ResponsesMutex);
+        it = m_Responses.find((int)(intptr_t)handle);
+    }
     if (it == m_Responses.end())
     {
         helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "WaitForGet",
