@@ -64,7 +64,7 @@ stages:
     - *setup_env_ecpci
     - *install_ccache
   script:
-    - bash scripts/ci/gitlab-ci/run.sh update
+    - bash scripts/ci/gitlab-ci/run.sh -s update
   artifacts:
     expire_in: 24 hours
     when: always
@@ -80,9 +80,9 @@ stages:
   before_script:
     - *setup_env_ecpci
   script:
-    - bash scripts/ci/gitlab-ci/run.sh configure
-    - bash scripts/ci/gitlab-ci/run.sh build
-    - bash scripts/ci/gitlab-ci/run.sh test
+    - bash scripts/ci/gitlab-ci/run.sh -s configure
+    - bash scripts/ci/gitlab-ci/run.sh -s build
+    - bash scripts/ci/gitlab-ci/run.sh -s test
   after_script:
     - *setup_env_ecpci
     - bash scripts/ci/gitlab-ci/run.sh submit

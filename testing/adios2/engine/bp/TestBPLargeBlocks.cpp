@@ -13,23 +13,46 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <sys/statvfs.h>
 
 #include <adios2.h>
+#include <adios2sys/SystemTools.hxx>
 
 #include <gtest/gtest.h>
 
 std::string engineName; // comes from command line
 
+constexpr size_t DefaultMaxFileBatchSize = 4294762496;
+constexpr double AdditionalSpace = 0.2;
+constexpr size_t RequiredDiskSpace =
+    static_cast<size_t>(DefaultMaxFileBatchSize * (1.0 + AdditionalSpace));
+
 class LargeBlocks : public ::testing::Test
 {
 public:
     LargeBlocks() = default;
+    bool CanDiskAllocateBytes(size_t size)
+    {
+        struct statvfs stat;
+        if (statvfs(".", &stat) != 0)
+        {
+            return false;
+        }
+        // # of block avail * block_size
+        const size_t available_size = static_cast<size_t>(stat.f_bavail) * stat.f_frsize;
+        return available_size >= size;
+    }
 };
-
-constexpr size_t DefaultMaxFileBatchSize = 2147381248;
 
 TEST_F(LargeBlocks, MultiBlock)
 {
+    if (!this->CanDiskAllocateBytes(RequiredDiskSpace))
+    {
+        std::cerr << "SKIP: insufficient space in disk, bytes needed: " << RequiredDiskSpace
+                  << std::endl;
+        return;
+    }
+
     // Write a small variable
     // Write a large (>2147381248 bytes) so that it's offset is >0 in the file.
     // Read the large variable back and confirm that the data on the
@@ -108,6 +131,7 @@ TEST_F(LargeBlocks, MultiBlock)
         }
         reader.Close();
     }
+    adios2sys::SystemTools::RemoveADirectory(fname);
 }
 
 int main(int argc, char **argv)
