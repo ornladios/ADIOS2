@@ -272,6 +272,12 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p, D
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
 {
     auto ret = VarByKey.find(Key);
+    if (ret == VarByKey.end())
+    {
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
+            "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+    }
     return ret->second;
 }
 
