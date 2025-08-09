@@ -34,7 +34,7 @@ stages:
 
 .frontier-cmake-common:
   rules:
-    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/
+    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/ && $MAINTAINANCE_PIPELINE == null
   interruptible: true
   variables:
     CCACHE_BASEDIR:       "/lustre/orion/ums029/scratch/"
@@ -169,7 +169,7 @@ build:frontier-cray:
 
 .report-status:
   rules:
-    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/
+    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/ && $MAINTAINANCE_PIPELINE == null
   tags: [ shell ]
   extends:
     .frontier-common
@@ -205,7 +205,7 @@ success:
 failure:
   stage: post
   rules:
-    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/
+    - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/ && $MAINTAINANCE_PIPELINE == null
       when: on_failure
   variables:
     STATUS_DESC: Pipeline failed
@@ -252,3 +252,18 @@ launch_pipelines:
     include:
       - artifact: generated_pipelines.yml
         job: generate_pipelines
+
+# Frontier runtime files for the runners occasionally get corrupted,
+# Add manual job to remove it
+wipe_runtime_directory:
+  stage: build
+  tags: [ shell ]
+  variables:
+    CUSTOM_CI_BUILDS_DIR: "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/runtime"
+    OLCF_SERVICE_ACCOUNT: "ums029_auser"
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_PIPELINE_SOURCE =~ /web/ && $MAINTAINANCE_PIPELINE != null
+  script:
+    - rm -vrf "${CUSTOM_CI_BUILDS_DIR}/"*
+    - chmod -vR g+rw "/lustre/orion/ums029/scratch/ums029_auser"
