@@ -104,7 +104,12 @@ bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
 gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
-gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
+
+if(UNIX)
+  gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
+  set_tests_properties(Engine.BP.LargeBlocks.MultiBlock.BP5.Serial PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" RUN_SERIAL TRUE)
+  target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)
+endif()
 
 bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
