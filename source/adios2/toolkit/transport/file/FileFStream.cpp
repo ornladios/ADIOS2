@@ -16,6 +16,16 @@
 /// \endcond
 
 #if __cplusplus >= 201703L
+#define ADIOS2_USE_STD_FILESYSTEM
+
+#if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__llvm__) && !defined(__INTEL_COMPILER)
+// GCC version 7 does not support std::filesystem from C++17 even though it
+// reports to support C++17.
+#undef ADIOS2_USE_STD_FILESYSTEM
+#endif
+#endif
+
+#ifdef ADIOS2_USE_STD_FILESYSTEM
 #include <filesystem>
 #endif
 
@@ -348,7 +358,7 @@ size_t FileFStream::CurrentPos()
 
 void FileFStream::Truncate(const size_t length)
 {
-#if __cplusplus >= 201703L
+#ifdef ADIOS2_USE_STD_FILESYSTEM
     // C++17 specific stuff here
     WaitForOpen();
     std::filesystem::path p(m_Name);

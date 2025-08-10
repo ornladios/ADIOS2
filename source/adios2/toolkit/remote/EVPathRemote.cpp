@@ -29,6 +29,7 @@ EVPathRemote::~EVPathRemote()
 {
     if (m_conn)
         CMConnection_close(m_conn);
+    m_conn = NULL;
 }
 
 void OpenResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -79,30 +80,12 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
     EVPathRemoteCommon::ReadResponseMsg read_response_msg =
         static_cast<EVPathRemoteCommon::ReadResponseMsg>(vevent);
 
-    switch (read_response_msg->OperatorType)
+    void *obj = CMCondition_get_client_data(cm, read_response_msg->ReadResponseCondition);
+    CMtake_buffer(cm, read_response_msg);
     {
-    case adios2::core::Operator::OperatorType::COMPRESS_MGARD: {
-        auto op = adios2::core::MakeOperator("mgard", {});
-        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
-                           (char *)read_response_msg->Dest);
-        break;
-    }
-
-    case adios2::core::Operator::OperatorType::COMPRESS_ZFP: {
-        auto op = adios2::core::MakeOperator("zfp", {});
-        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
-                           (char *)read_response_msg->Dest);
-        break;
-    }
-
-    case adios2::core::Operator::OperatorType::COMPRESS_NULL:
-        memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
-        break;
-    default:
-        helper::Throw<std::invalid_argument>("Remote", "EVPathRemote", "ReadResponseHandler",
-                                             "Invalid operator type " +
-                                                 std::to_string(read_response_msg->OperatorType) +
-                                                 " received in response");
+        const std::lock_guard<std::mutex> lock(static_cast<EVPathRemote *>(obj)->m_ResponsesMutex);
+        static_cast<EVPathRemote *>(obj)->m_Responses.emplace(
+            read_response_msg->ReadResponseCondition, read_response_msg);
     }
     CMCondition_signal(cm, read_response_msg->ReadResponseCondition);
     return;
@@ -140,24 +123,30 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
 {
 
     EVPathRemoteCommon::_OpenFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+    if (!m_Active)
     {
-        // if we didn't find a server, but we're in testing, wait briefly and try again
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
         m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+        {
+            // if we didn't find a server, but we're in testing, wait briefly and once more
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        }
+        free_attr_list(contact_list);
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                              "Failed to connect to remote server");
+        }
     }
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -176,7 +165,16 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     open_msg.RowMajorOrder = RowMajorOrdering;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
+    if (m_ID == -1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenADIOSFile",
+                                          "Failed to Open ADIOS file \"" + filename + "\"");
+    }
     m_Active = true;
 }
 
@@ -185,18 +183,24 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
+    if (!m_Active)
+    {
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        free_attr_list(contact_list);
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                              "Failed to connect to remote server");
+        }
+    }
 
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
@@ -204,8 +208,20 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     open_msg.ReadContents = 0;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
-    m_Active = true;
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
+    if ((m_ID == -1) && (m_Size == (size_t)-1))
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenSimpleFile",
+                                          "Failed to open simple file \"" + filename + "\"");
+    }
+    else
+    {
+        m_Active = true;
+    }
 }
 
 void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t port,
@@ -213,19 +229,24 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
-    InitCMData();
-    attr_list contact_list = create_attr_list();
-    atom_t CM_IP_PORT = -1;
-    atom_t CM_IP_HOSTNAME = -1;
-    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-    CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
-    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-    m_conn = CMinitiate_conn(ev_state.cm, contact_list);
-    free_attr_list(contact_list);
-    if (!m_conn)
-        return;
-
+    if (!m_Active)
+    {
+        InitCMData();
+        attr_list contact_list = create_attr_list();
+        atom_t CM_IP_PORT = -1;
+        atom_t CM_IP_HOSTNAME = -1;
+        CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+        CM_IP_PORT = attr_atom_from_string("IP_PORT");
+        add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
+        add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        free_attr_list(contact_list);
+        if (!m_conn)
+        {
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                              "Failed to connect to remote server");
+        }
+    }
     memset(&open_msg, 0, sizeof(open_msg));
     open_msg.FileName = (char *)filename.c_str();
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
@@ -233,7 +254,11 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     m_TmpContentVector = &contents; // this will be accessed in the handler
     CMwrite(m_conn, ev_state.OpenSimpleFileFormat, &open_msg);
-    CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
+    if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "OpenReadSimpleFile",
+                                          "Failed to receive open acknowledgement, server failed?");
+    }
     // file does not remain open after OpenReadSimpleFile
     m_TmpContentVector = nullptr;
     m_Active = false;
@@ -248,7 +273,12 @@ void EVPathRemote::Close()
     CloseMsg.FileHandle = m_ID;
     CMCondition_set_client_data(ev_state.cm, CloseMsg.CloseResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.CloseFileFormat, &CloseMsg);
-    CMCondition_wait(ev_state.cm, CloseMsg.CloseResponseCondition);
+    if (CMCondition_wait(ev_state.cm, CloseMsg.CloseResponseCondition) != 1)
+    {
+        helper::Throw<std::runtime_error>(
+            "Remote", "EVPathRemote", "CloseFile",
+            "Failed to receive close acknowledgement, server failed?");
+    }
     m_Active = false;
     m_ID = 0;
 }
@@ -276,8 +306,65 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
     GetMsg.Norm = accuracy.norm;
     GetMsg.Relative = accuracy.relative;
     GetMsg.Dest = dest;
+    CMCondition_set_client_data(ev_state.cm, GetMsg.GetResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
     return (Remote::GetHandle)(intptr_t)GetMsg.GetResponseCondition;
+}
+
+void EVPathRemote::ProcessReadResponse(GetHandle handle)
+{
+    std::map<int, adios2::EVPathRemoteCommon::ReadResponseMsg>::iterator it;
+    {
+        const std::lock_guard<std::mutex> lock(m_ResponsesMutex);
+        it = m_Responses.find((int)(intptr_t)handle);
+    }
+    if (it == m_Responses.end())
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "WaitForGet",
+                                          "Handle " + std::to_string((int)(intptr_t)handle) +
+                                              " not found in list of responses");
+    }
+
+    EVPathRemoteCommon::ReadResponseMsg read_response_msg = it->second;
+    switch (read_response_msg->OperatorType)
+    {
+
+    case adios2::core::Operator::OperatorType::COMPRESS_MGARD: {
+        auto op = adios2::core::MakeOperator("mgard", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_ZFP: {
+        auto op = adios2::core::MakeOperator("zfp", {});
+        op->InverseOperate(read_response_msg->ReadData, read_response_msg->Size,
+                           (char *)read_response_msg->Dest);
+        break;
+    }
+
+    case adios2::core::Operator::OperatorType::COMPRESS_NULL:
+        memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>("Remote", "EVPathRemote", "ReadResponseHandler",
+                                             "Invalid operator type " +
+                                                 std::to_string(read_response_msg->OperatorType) +
+                                                 " received in response");
+    }
+    CMreturn_buffer(ev_state.cm, read_response_msg);
+}
+
+bool EVPathRemote::WaitForGet(GetHandle handle)
+{
+    int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+    if (result != 1)
+    {
+        helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "Wait for Read/Get",
+                                          "No Remote Read acknowledgement, server failed?");
+    }
+    ProcessReadResponse(handle);
+    return result;
 }
 
 EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest)
@@ -292,17 +379,42 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
     ReadMsg.Offset = Start;
     ReadMsg.Size = Size;
     ReadMsg.Dest = Dest;
+    CMCondition_set_client_data(ev_state.cm, ReadMsg.ReadResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.ReadRequestFormat, &ReadMsg);
-    CMCondition_wait(ev_state.cm, ReadMsg.ReadResponseCondition);
+    WaitForGet((Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition);
     return (Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition;
 }
 
-bool EVPathRemote::WaitForGet(GetHandle handle)
-{
-    int result = CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
+std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>>
+    CManagerSingleton::m_EVPathRemotes;
 
-    return result;
+std::pair<std::shared_ptr<EVPathRemote>, int>
+CManagerSingleton::MakeEVPathConnection(const std::string &hostName)
+{
+    auto it = m_EVPathRemotes.find(hostName);
+    if (it != m_EVPathRemotes.end())
+    {
+        if (it->second.first && *(it->second.first))
+        {
+            return it->second;
+        }
+    }
+    auto m_Remote =
+        std::shared_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+    try
+    {
+        int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(hostName);
+        std::pair<std::shared_ptr<EVPathRemote>, int> pair(m_Remote, localPort);
+        m_EVPathRemotes.emplace(hostName, pair);
+        return pair;
+    }
+    catch (const std::invalid_argument &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    return std::pair<std::shared_ptr<EVPathRemote>, int>(nullptr, -1);
 }
+
 #else
 
 void EVPathRemote::Open(const std::string hostname, const int32_t port, const std::string filename,

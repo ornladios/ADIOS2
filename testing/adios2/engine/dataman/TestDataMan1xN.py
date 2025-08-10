@@ -9,7 +9,9 @@
 from multiprocessing import Process
 import unittest
 import numpy as np
-import adios2
+import adios2.bindings as adios2
+import multiprocessing as mp
+mp.set_start_method('fork')
 
 
 class TestDataMan1D(unittest.TestCase):

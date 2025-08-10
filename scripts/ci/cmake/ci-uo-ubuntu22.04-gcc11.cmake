@@ -1,25 +1,33 @@
-# Client maintainer: vicente.bolea@kitware.com
-set(ENV{CC}  clang)
-set(ENV{CXX} clang++)
-set(ENV{FC}  gfortran-12)
+include(ProcessorCount)
+ProcessorCount(NCPUS)
+math(EXPR N2CPUS "${NCPUS}*2")
+
+set(ENV{CC}  gcc)
+set(ENV{CXX} g++)
+set(ENV{FC}  gfortran)
+
+execute_process(
+  COMMAND "python3-config" "--prefix"
+  OUTPUT_VARIABLE PY_ROOT
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_AWSSDK:BOOL=ON
+ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc2:BOOL=ON
-ADIOS2_USE_Bzip2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=ON
-ADIOS2_USE_Sodium:BOOL=ON
-ADIOS2_USE_ZeroMQ:BOOL=ON
+ADIOS2_USE_SZ:BOOL=ON
+ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:BOOL=ON
+ADIOS2_USE_Catalyst:BOOL=OFF
 
-Python_ROOT_DIR:PATH=$ENV{CMAKE_PREFIX_PATH}
+Python_ROOT_DIR:PATH=${PY_ROOT}
 Python_FIND_STRATEGY:STRING=LOCATION
 Python_FIND_FRAMEWORK:STRING=FIRST
 
@@ -28,13 +36,9 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-serial/.spack-env/view/lib/libgomp.so.1
 ")
 
-set(ENV{MACOSX_DEPLOYMENT_TARGET} "14.5")
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
-set(CTEST_TEST_ARGS
-  # Install.Make ticket: https://github.com/ornladios/ADIOS2/issues/4272
-  EXCLUDE "Install.Make"
-)
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

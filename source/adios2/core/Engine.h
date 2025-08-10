@@ -529,6 +529,10 @@ public:
     void RegisterCreatedVariable(const VariableBase *var);
     void RemoveCreatedVars();
 
+    /** true: We only need the name of an operator used in Get, not actual operation
+     */
+    bool m_OperatorNameQuery = false;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */
@@ -567,7 +571,8 @@ protected:
 
 #define declare_type(T)                                                                            \
     virtual void DoPutSync(Variable<T> &, const T *);                                              \
-    virtual void DoPutDeferred(Variable<T> &, const T *);
+    virtual void DoPutDeferred(Variable<T> &, const T *);                                          \
+    virtual size_t PutCount(Variable<T> &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

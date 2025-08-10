@@ -415,10 +415,16 @@ void BP5Reader::PerformGets()
 #endif
 #ifdef ADIOS2_HAVE_SST
         {
-            m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
-            int localPort =
-                m_Remote->LaunchRemoteServerViaConnectionManager(m_Parameters.RemoteHost);
-            m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
+            auto pair = CManagerSingleton::MakeEVPathConnection(m_Parameters.RemoteHost);
+            // m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
+            // int localPort =
+            //    m_Remote->LaunchRemoteServerViaConnectionManager(m_Parameters.RemoteHost);
+            m_Remote = pair.first;
+            int localPort = pair.second;
+            if (m_Remote && localPort > -1)
+            {
+                m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
+            }
         }
 #endif
 #ifdef ADIOS2_HAVE_KVCACHE

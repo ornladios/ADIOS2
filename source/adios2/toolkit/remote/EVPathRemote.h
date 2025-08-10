@@ -83,13 +83,18 @@ public:
     int64_t m_ID;
 
     std::vector<char> *m_TmpContentVector = nullptr;
+#ifdef ADIOS2_HAVE_SST
+    std::mutex m_ResponsesMutex;
+    std::map<int, EVPathRemoteCommon::ReadResponseMsg>
+        m_Responses; // read/get responses to be processed
+#endif
 
 private:
 #ifdef ADIOS2_HAVE_SST
     void InitCMData();
     EVPathRemoteCommon::Remote_evpath_state ev_state;
     CMConnection m_conn = NULL;
-    std::mutex m_CMInitMutex;
+    void ProcessReadResponse(GetHandle handle);
 #endif
     bool m_Active = false;
 };
@@ -99,6 +104,12 @@ class CManagerSingleton
 {
 public:
     static CManagerSingleton &Instance(EVPathRemoteCommon::Remote_evpath_state &ev_state);
+
+    /* Map of hostname : connection/port */
+    static std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>> m_EVPathRemotes;
+    /* Helper function to manage connections, one per host */
+    static std::pair<std::shared_ptr<EVPathRemote>, int>
+    MakeEVPathConnection(const std::string &hostName);
 
 private:
     CManager m_cm = NULL;
@@ -111,7 +122,11 @@ private:
         CMfork_comm_thread(internalEvState.cm);
     }
 
-    ~CManagerSingleton() { CManager_close(m_cm); }
+    ~CManagerSingleton()
+    {
+        m_EVPathRemotes.clear();
+        CManager_close(m_cm);
+    }
 };
 #endif
 

@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 if (NOT ADIOS2_USE_PIP)
-  add_executable(adios2_remote_server ./remote_server.cpp remote_common.cpp)
+  add_executable(adios2_remote_server ./remote_server.cpp)
 
   target_link_libraries(adios2_remote_server
                         PUBLIC EVPath::EVPath adios2_core adios2sys

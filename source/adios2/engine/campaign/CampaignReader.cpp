@@ -20,7 +20,10 @@
 #include <adios2sys/SystemTools.hxx>
 
 #include <fstream>
+#include <future>
 #include <iostream>
+#include <mutex>
+#include <thread>
 
 #include <nlohmann_json.hpp>
 
@@ -85,9 +88,52 @@ void CampaignReader::PerformGets()
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "     PerformGets()\n";
     }
-    for (auto ep : m_Engines)
+
+    size_t nextEngine = 0;
+    size_t nEngines = m_Engines.size();
+    std::mutex mutexNext;
+
+    auto lf_GetNext = [&]() -> size_t {
+        std::lock_guard<std::mutex> lockGuard(mutexNext);
+        size_t reqidx = MaxSizeT;
+        if (nextEngine < nEngines)
+        {
+            reqidx = nextEngine;
+            ++nextEngine;
+        }
+        return reqidx;
+    };
+
+    auto lf_WaitForPerformGets = [&](const size_t threadID) -> bool {
+        while (true)
+        {
+            const auto engineIdx = lf_GetNext();
+            if (engineIdx > nEngines)
+            {
+                break;
+            }
+            m_Engines[engineIdx]->PerformGets();
+        }
+        return true;
+    };
+
+    size_t nThreads = std::min(nEngines, (size_t)16);
+    std::vector<std::future<bool>> futures(nThreads - 1);
+
+    // launch Threads-1 threads to process subsets of handles,
+    // then main thread process the last subset
+    for (size_t tid = 0; tid < nThreads - 1; ++tid)
     {
-        ep->PerformGets();
+        futures[tid] = std::async(std::launch::async, lf_WaitForPerformGets, tid + 1);
+    }
+
+    // main thread runs last subset of reads
+    lf_WaitForPerformGets(0);
+
+    // wait for all async threads
+    for (auto &f : futures)
+    {
+        f.get();
     }
     m_NeedPerformGets = false;
 }

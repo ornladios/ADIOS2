@@ -98,7 +98,7 @@ std::string GetFQDN() noexcept
         for (p = info; p != NULL; p = p->ai_next)
         {
             // printf("hostname: %s\n", p->ai_canonname);
-            if (strchr(p->ai_canonname, '.') != NULL)
+            if (p->ai_canonname && (strchr(p->ai_canonname, '.') != NULL))
             {
                 strncpy(hostname, p->ai_canonname, sizeof(hostname) - 1);
                 break;

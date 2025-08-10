@@ -126,8 +126,8 @@ private:
 
 #define declare_type(T)                                                                            \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span, const bool initialize,     \
-               const T &value) final;
-
+               const T &value) final;                                                              \
+    size_t PutCount(Variable<T> &variable);
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

@@ -514,7 +514,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             position += DefaultMaxFileBatchSize;
             start += DefaultMaxFileBatchSize;
         }
-        lf_PRead(&buffer[position], remainder, position);
+        lf_PRead(&buffer[position], remainder, start);
     }
     else
     {

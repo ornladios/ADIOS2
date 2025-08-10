@@ -37,8 +37,9 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable, const bool initia
             "variables using Span");
     }
 
+    size_t CurWriterBlockCount = PutCount(variable);
     auto itSpan = variable.m_BlocksSpan.emplace(
-        variable.m_BlocksInfo.size(), typename Variable<T>::Span(*this, variable.TotalSize()));
+        CurWriterBlockCount, typename Variable<T>::Span(*this, variable.TotalSize()));
     DoPut(variable, itSpan.first->second, initialize, value);
     return itSpan.first->second;
 }
