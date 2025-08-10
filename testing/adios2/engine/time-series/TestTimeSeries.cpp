@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include <bits/stdc++.h> // minmax_element
+#include <algorithm> // minmax_element
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
