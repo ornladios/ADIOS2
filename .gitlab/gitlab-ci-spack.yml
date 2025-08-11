@@ -34,37 +34,12 @@ default:
     exclude:
       - $CI_BIN_DIR/**/*.o
 
-.common-test:
-  extends:
-    - .common
-  stage: test
-  script:
-    - bash scripts/ci/gitlab-ci/run.sh test
-
 .common-memcheck:
   extends:
     - .common
   stage: test
   script:
     - bash scripts/ci/gitlab-ci/run.sh memcheck
-
-#===============================================================================
-build:uo-ubuntu22.04-gcc11:
-  image:
-    name: ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc11
-    entrypoint: [""]
-  before_script:
-    - source /spack/share/spack/setup-env.sh
-  extends: [.common-build]
-
-test:uo-ubuntu22.04-gcc11:
-  image:
-    name: ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc11
-    entrypoint: [""]
-  before_script:
-    - source /spack/share/spack/setup-env.sh
-  extends: [.common-test]
-  needs: [build:uo-ubuntu22.04-gcc11]
 
 #===============================================================================
 build:uo-sanitizer-asan:
