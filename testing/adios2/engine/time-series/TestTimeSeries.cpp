@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include <algorithm> // minmax_element
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -53,6 +54,8 @@ TEST_F(TimeSeries, WriteReadShape2D)
         bufOut[i] = rank + static_cast<double>(i) / 10.0;
     }
 
+    std::vector<char> textOut = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'};
+
     // Writer
     {
         adios2::IO outIO = adios.DeclareIO("Output");
@@ -64,6 +67,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
         }
 
         auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
+        auto varchar = outIO.DefineVariable<char>("vchar", {dim0, 1}, {off0, 0}, {1, 1});
         auto varfix =
             outIO.DefineVariable<double>("vfixdim", {dim0, fixDim}, {off0, 0}, {1, fixDim}, true);
 
@@ -100,6 +104,9 @@ TEST_F(TimeSeries, WriteReadShape2D)
             var.SetShape({dim0, i + 1});
             var.SetSelection({{off0, 0}, {1, i + 1}});
 
+            varchar.SetShape({dim0, i + 1});
+            varchar.SetSelection({{off0, 0}, {1, i + 1}});
+
             if (!rank)
             {
                 std::cout << "Step " << i << " shape (" << var.Shape()[0] << ", " << var.Shape()[1]
@@ -107,8 +114,8 @@ TEST_F(TimeSeries, WriteReadShape2D)
             }
 
             writer.Put(var, bufOut.data());
+            writer.Put(varchar, textOut.data());
             writer.Put(varfix, bufOut.data());
-
             writer.EndStep();
         }
 
@@ -147,12 +154,13 @@ TEST_F(TimeSeries, WriteReadShape2D)
 
             auto shape = var.Shape();
             auto shapefix = varfix.Shape();
+            auto mm = var.MinMax();
 
             if (!rank)
             {
 
                 std::cout << "Step " << step << " shape (" << shape[0] << ", " << shape[1] << ")"
-                          << std::endl;
+                          << "  min/max = " << mm.first << " / " << mm.second << std::endl;
             }
 
             EXPECT_EQ(shape[0], nproc);
@@ -165,6 +173,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
             {
                 EXPECT_EQ(bufOut[i], bufIn[i]);
             }
+
             varfix.SetSelection({{off0, 0}, {1, shapefix[1]}});
             reader.Get(varfix, bufIn, adios2::Mode::Sync);
             for (size_t i = 0; i < shapefix[1]; ++i)
@@ -199,11 +208,12 @@ TEST_F(TimeSeries, WriteReadShape2D)
             varfix.SetStepSelection({i, 1});
             auto shape = var.Shape();
             auto shapefix = varfix.Shape();
+            auto mm = var.MinMax(i);
             if (!rank)
             {
 
                 std::cout << "Step " << i << " shape (" << shape[0] << ", " << shape[1] << ")"
-                          << std::endl;
+                          << "  min/max = " << mm.first << " / " << mm.second << std::endl;
             }
             size_t expected_shape = i + 1;
             EXPECT_EQ(shape[0], nproc);
@@ -216,6 +226,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
             {
                 EXPECT_EQ(bufOut[i], bufIn[i]);
             }
+
             varfix.SetSelection({{off0, 0}, {1, shapefix[1]}});
             reader.Get(varfix, bufIn, adios2::Mode::Sync);
             for (size_t i = 0; i < shapefix[1]; ++i)

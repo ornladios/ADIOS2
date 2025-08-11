@@ -49,11 +49,7 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode, h
     m_IsOpen = true;
 }
 
-HDF5ReaderP::~HDF5ReaderP()
-{
-    if (IsValid())
-        DoClose();
-}
+HDF5ReaderP::~HDF5ReaderP() { DestructorClose(m_FailVerbose); }
 
 bool HDF5ReaderP::IsValid()
 {
@@ -132,6 +128,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
         std::vector<hsize_t> start(ndims), count(ndims), stride(ndims);
         bool isOrderC = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
 
+        size_t total_size = 1;
         for (size_t i = 0u; i < ndims; i++)
         {
             if (isOrderC)
@@ -146,6 +143,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
             }
             slabsize *= count[i];
             stride[i] = 1;
+            total_size *= variable.m_Shape[i];
         }
         hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start.data(), stride.data(),
                                         count.data(), NULL);
@@ -166,7 +164,10 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
             elementsRead *= count[i];
         }
 
-        bool useRemote = CheckRemote();
+        /* FIXME: Right now it's baked into campaign management that HDF5 metadata files contain
+           data for arrays of <= 128 elements. This code must be in sync with what the
+           hpc_campaign_hdf5_metadata.py script does */
+        bool useRemote = (total_size > 128 && CheckRemote());
 
         if (useRemote)
         {
@@ -399,12 +400,15 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void HDF5ReaderP::DoClose(const int transportIndex)
 {
-    /*
-     */
     EndStep();
-    /*
-     */
     m_H5File.Close();
+    m_IsOpen = false;
+}
+
+void HDF5ReaderP::DestructorClose(bool Verbose) noexcept
+{
+    if (IsValid())
+        DoClose();
 }
 
 size_t HDF5ReaderP::DoSteps() const { return m_H5File.GetAdiosStep(); }

@@ -913,9 +913,17 @@ int main(int argc, char **argv)
                 fprintf(stderr, usage);
                 exit(1);
             }
-            log_filename = argv[i];
-            std::string tmp = std::string("cat ") + log_filename;
-            system(tmp.c_str());
+            {
+                std::ifstream file(argv[i]);
+                if (file.fail())
+                {
+                    std::cerr << "Error opening file " << argv[i] << std::endl;
+                    return 1;
+                }
+                std::string tp;
+                while (std::getline(file, tp))
+                    std::cout << tp << std::endl;
+            }
         }
         else if (strcmp(argv[i], "-t") == 0)
         {
