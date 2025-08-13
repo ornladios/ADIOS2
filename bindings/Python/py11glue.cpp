@@ -9,6 +9,7 @@
  */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 
 #include <complex>
@@ -323,6 +324,10 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 
         .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(const std::string &, const int)) &
                          adios2::py11::IO::Open)
+
+        .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(const std::string &,
+                                                                const pybind11::bytes &)) &
+                         adios2::py11::IO::Open)
 #if ADIOS2_USE_MPI
         .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(const std::string &, const int,
                                                                 adios2::py11::MPI4PY_Comm comm)) &
@@ -480,6 +485,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  const bool opBool = engine ? true : false;
                  return opBool;
              })
+
+        .def("GetMetadata", &adios2::py11::Engine::GetMetadata, pybind11::return_value_policy::move)
+
         .def("BeginStep",
              (adios2::StepStatus(adios2::py11::Engine::*)(const adios2::StepMode, const float)) &
                  adios2::py11::Engine::BeginStep,
