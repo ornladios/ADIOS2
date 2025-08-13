@@ -9,6 +9,7 @@ from adios2 import bindings, Adios, Stream, IO
 
 
 # pylint: disable=W0221
+# pylint: disable=R0902   # Too many instance attributes
 class FileReader(Stream):
     """High level implementation of the FileReader class for read Random access mode"""
 

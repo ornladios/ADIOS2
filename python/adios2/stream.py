@@ -162,6 +162,11 @@ class Stream:
         return self
 
     def get_metadata(self):
+        """
+        Get metadata of an open file in a serialized form that can be
+        sent to other processes and used to open the file again by
+        avoiding reading the metadata from disk.
+        """
         return self._engine.get_metadata()
 
     def step_status(self):
