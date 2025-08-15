@@ -74,7 +74,7 @@ inline void FixHomePath(std::string &path, std::string &homePath)
     }
 }
 
-/*std::string NodeType(const YAML::Node &node)
+std::string NodeType(const YAML::Node &node)
 {
     switch (node.Type())
     {
@@ -90,7 +90,7 @@ inline void FixHomePath(std::string &path, std::string &homePath)
         return "Undefined";
     }
     return "NoIdeaWhatThisIs";
-}*/
+}
 
 template <class T>
 void SetOption(T &value, const std::string nodeName, const YAML::Node &upperNode,
@@ -444,6 +444,77 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
             hostConfigs.push_back(hc);
         }
         hosts.emplace(hostname, hostConfigs);
+    }
+}
+
+void ParseTimeSeriesFile(Comm &comm, const std::string &atsYAML, TimeSeriesList &tsl)
+{
+    const std::string hint =
+        "when parsing ATS time series file " + atsYAML + " in call to TimeSeries engine";
+
+    const std::string content = comm.BroadcastFile(atsYAML, hint);
+
+    const YAML::Node document = YAML::Load(content);
+
+    if (!document)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "TimeSeries", "ParseTimeSeriesFile",
+            "parser error in file " + atsYAML +
+                ": invalid format. Check with any YAML editor if format is ill-formed, " + hint);
+    }
+
+    if (!document.IsSequence())
+    {
+        helper::Throw<std::invalid_argument>("Helper", "TimeSeries", "ParseTimeSeriesFile",
+                                             "parser error: not a YAML Sequence of file entries, " +
+                                                 hint);
+    }
+
+    /* top level is a sequence of local path scalars and remote path dictionaries */
+    int nEntry = -1;
+    for (auto itDoc = document.begin(); itDoc != document.end(); ++itDoc)
+    {
+        ++nEntry;
+        if (nEntry < tsl.lastUsedEntry)
+            continue;
+
+        if (itDoc->Type() == YAML::NodeType::Scalar)
+        {
+            TimeSeriesEntry tse;
+            tse.localpath = itDoc->as<std::string>();
+            if (tse.localpath == "end")
+            {
+                tsl.ended = true;
+                break;
+            }
+            tsl.entries.push_back(tse);
+            continue;
+        }
+        else if (itDoc->Type() == YAML::NodeType::Map)
+        {
+            TimeSeriesEntry tse;
+            /* a dictionary of host options, with each entry a dictionary */
+            YAML::Node nameentry = *itDoc;
+
+            SetOption(tse.localpath, "localpath", nameentry, hint, isMandatory);
+            if (tse.localpath == "end")
+            {
+                tsl.ended = true;
+                break;
+            }
+
+            SetOption(tse.remotehost, "remotehost", nameentry, hint);
+            SetOption(tse.remotepath, "remotepath", nameentry, hint);
+            SetOption(tse.uuid, "uuid", nameentry, hint);
+            tsl.entries.push_back(tse);
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>("Helper", "TimeSeries", "ParseTimeSeriesFile",
+                                                 "parser error: entry " + std::to_string(nEntry) +
+                                                     " is " + NodeType(*itDoc) + ", " + hint);
+        }
     }
 }
 

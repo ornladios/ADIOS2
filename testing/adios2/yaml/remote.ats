@@ -1,0 +1,8 @@
+- localpath: /home/adios/data/remote_local_1
+  remotepath: /remote/path1
+  remotehost: Host1
+  uuid: 0123456789abcdef0123456879abcdef
+- localpath: /home/adios/data/remote_local_2
+  remotepath: /remote/path2
+  remotehost: Host2
+  uuid: abcdef0123456879abcdef0123456789

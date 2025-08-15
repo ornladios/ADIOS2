@@ -96,7 +96,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
                 }
 
                 writer = outIO.Open(fileName, adios2::Mode::Write);
-                atsFile << fileName << std::endl;
+                atsFile << "- " << fileName << std::endl;
                 ++fileIdx;
             }
             writer.BeginStep();
@@ -120,7 +120,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
         }
 
         writer.Close();
-        atsFile << "--end--" << std::endl;
+        atsFile << "- end" << std::endl;
         atsFile.close();
     }
 
