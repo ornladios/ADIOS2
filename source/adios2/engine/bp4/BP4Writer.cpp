@@ -219,7 +219,7 @@ void BP4Writer::InitTransports()
 
     // Names passed to IO AddTransport option with key "Name"
     const std::vector<std::string> transportsNames =
-        m_FileDataManager.GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
+        transportman::TransportMan::GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
 
     if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
@@ -228,7 +228,7 @@ void BP4Writer::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
             m_DrainSubStreamNames = m_BP4Serializer.GetBPSubStreamNames(drainTransportNames);
             /* start up BB thread */
             m_FileDrainer.SetVerbose(m_BP4Serializer.m_Parameters.BurstBufferVerbose,
@@ -280,7 +280,7 @@ void BP4Writer::InitTransports()
         // if (m_BP4Serializer.m_Parameters.CollectiveMetadata)
         //{
         const std::vector<std::string> transportsNames =
-            m_FileMetadataManager.GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
+            transportman::TransportMan::GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
 
         m_MetadataFileNames = m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
@@ -301,7 +301,7 @@ void BP4Writer::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
             m_DrainMetadataFileNames = m_BP4Serializer.GetBPMetadataFileNames(drainTransportNames);
             m_DrainMetadataIndexFileNames =
                 m_BP4Serializer.GetBPMetadataIndexFileNames(drainTransportNames);
@@ -501,7 +501,8 @@ void BP4Writer::DoClose(const int transportIndex)
                 m_FileDrainer.AddOperationDelete(name);
             }
             const std::vector<std::string> transportsNames =
-                m_FileDataManager.GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_BBName,
+                                                              m_IO.m_TransportsParameters);
             for (const auto &name : transportsNames)
             {
                 m_FileDrainer.AddOperationDelete(name);

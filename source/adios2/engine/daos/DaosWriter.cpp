@@ -1177,7 +1177,7 @@ void DaosWriter::InitTransports()
 
     // Names passed to IO AddTransport option with key "Name"
     const std::vector<std::string> transportsNames =
-        m_FileDataManager.GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
+        transportman::TransportMan::GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
 
     // /path/name.bp.dir/name.bp.rank
     m_SubStreamNames = GetBPSubStreamNames(transportsNames, m_Aggregator->m_SubStreamIndex);
@@ -1188,7 +1188,7 @@ void DaosWriter::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
             m_DrainSubStreamNames =
                 GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
@@ -1275,7 +1275,7 @@ void DaosWriter::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
             m_DrainMetadataFileNames = GetBPMetadataFileNames(drainTransportNames);
             m_DrainMetadataIndexFileNames = GetBPMetadataIndexFileNames(drainTransportNames);
 

@@ -20,7 +20,8 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // overridden on command line
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
 
@@ -96,6 +97,7 @@ TEST_P(BPAppendAfterStepsP, Test)
         /* Write nSteps steps */
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
+        ioWrite.SetParameter("AggregationType", aggType);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
         adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
@@ -213,6 +215,11 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
     }
 
     result = RUN_ALL_TESTS();

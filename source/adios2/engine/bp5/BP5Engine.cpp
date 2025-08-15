@@ -277,6 +277,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             {
                 parameter = (int)AggregationType::TwoLevelShm;
             }
+            else if (value == "datasizebased")
+            {
+                parameter = (int)AggregationType::DataSizeBased;
+            }
             else
             {
                 helper::Throw<std::invalid_argument>(

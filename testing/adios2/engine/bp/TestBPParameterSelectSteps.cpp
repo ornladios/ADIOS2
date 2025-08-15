@@ -20,7 +20,9 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // overridden on command line
+int streamingFileId = 0;
 constexpr std::size_t NSteps = 10;
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
@@ -80,6 +82,7 @@ public:
         std::string filename = "ParameterSelectSteps" + std::to_string(mpiSize) + ".bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
+        ioWrite.SetParameter("AggregationType", aggType);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -192,9 +195,11 @@ TEST_P(BPParameterSelectStepsP, Stream)
     adios2::ADIOS adios;
 #endif
 
-    std::string filename = "ParameterSelectStepsStream" + std::to_string(mpiSize) + ".bp";
+    std::string filename = "ParameterSelectStepsStream_id_" + std::to_string(streamingFileId++) +
+                           "_size_" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
     ioWrite.SetEngine(engineName);
+    ioWrite.SetParameter("AggregationType", aggType);
     adios2::Engine writer = ioWrite.Open(filename, adios2::Mode::Write);
 
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
@@ -302,6 +307,11 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
     }
 
     result = RUN_ALL_TESTS();

@@ -20,7 +20,8 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // overridden on command line
 constexpr std::size_t NSteps = 4;
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
@@ -89,6 +90,7 @@ public:
             filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_File.bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
+        ioWrite.SetParameter("AggregationType", aggType);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -279,6 +281,11 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
     }
 
     result = RUN_ALL_TESTS();
