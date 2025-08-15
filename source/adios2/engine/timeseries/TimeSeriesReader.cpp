@@ -11,9 +11,10 @@
 #include "TimeSeriesReader.h"
 #include "TimeSeriesReader.tcc"
 
-#include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
+#include <yaml-cpp/yaml.h>
 
 #include <ios>
 #include <iostream>
@@ -44,10 +45,6 @@ TimeSeriesReader::~TimeSeriesReader()
         DestructorClose(m_FailVerbose);
     }
     m_IsOpen = false;
-    if (!m_ATSFile.is_open())
-    {
-        m_ATSFile.close();
-    }
 }
 
 StepStatus TimeSeriesReader::BeginStep(const StepMode mode, const float timeoutSeconds)
@@ -76,12 +73,13 @@ StepStatus TimeSeriesReader::BeginStep(const StepMode mode, const float timeoutS
         {
             // move onto new file in time series if available
             CheckForFiles();
-            if (!m_Filenames.empty())
+            if (!m_TimeSeriesList.entries.empty())
             {
-                InitFile(m_Filenames[0], false);
-                m_Filenames.pop_front();
+                InitFile(m_TimeSeriesList.entries[0], false);
+                m_TimeSeriesList.entries.pop_front();
+                ++m_TimeSeriesList.lastUsedEntry;
             }
-            else if (m_NoMoreFiles)
+            else if (m_TimeSeriesList.ended)
                 return StepStatus::EndOfStream;
             else
                 return StepStatus::NotReady;
@@ -215,62 +213,35 @@ void TimeSeriesReader::InitTransports()
     {
         if (!ret)
         {
-            helper::Throw<std::invalid_argument>(
-                "Engine", "TimeSeriesReader", "InitTransports",
-                "Error reading TimeSeries file " + m_Name +
-                    ", in call to Open, no files found in the TimeSeries file");
+            helper::Throw<std::invalid_argument>("Engine", "TimeSeriesReader", "InitTransports",
+                                                 "Error reading TimeSeries file " + m_Name +
+                                                     ", in call to Open");
         }
         // open all files now
-        for (const auto &filename : m_Filenames)
+        for (const auto &tse : m_TimeSeriesList.entries)
         {
-            InitFile(filename, true);
+            InitFile(tse, true);
+            ++m_TimeSeriesList.lastUsedEntry;
         }
-        m_Filenames.clear();
+        m_TimeSeriesList.entries.clear();
+        m_TimeSeriesList.ended = true;
     }
 }
 
 bool TimeSeriesReader::CheckForFiles()
 {
-    /* Note: instead of closing and reopening the text file repeatedly, one may think of using
-       ifstream::clear() to reset the eof flag and read the text file as stream. It works when
-       another C++ program writes and flushes to the text file using ofstream. However, if a human
-       adds new lines to the file, e.g. with vi, it will not show up in the reader. */
-    if (m_NoMoreFiles)
+    if (m_TimeSeriesList.ended)
         return false;
 
-    m_ATSFile.open(m_Name, std::ios::in);
-    if (!m_ATSFile.is_open())
-        return false;
-
-    m_ATSFile.seekg(m_ATSFileLastPos, std::ios::beg);
-    std::string line;
-    while (std::getline(m_ATSFile, line))
+    try
     {
-        if (adios2sys::SystemTools::StringStartsWith(line, "--end"))
-        {
-            m_NoMoreFiles = true;
-            break;
-        }
-        else if (line.empty() || line[0] == '#')
-        {
-            // skip empty lines and comments
-            continue;
-        }
-        else
-        {
-            if (adios2sys::SystemTools::FileIsFullPath(line) || m_ATSFileDir.empty())
-            {
-                m_Filenames.push_back(line);
-            }
-            else
-            {
-                std::string fullpath = m_ATSFileDir + adios2::PathSeparator + line;
-                m_Filenames.push_back(fullpath);
-            }
-            m_ATSFileLastPos = m_ATSFile.tellg();
-        }
+        helper::ParseTimeSeriesFile(m_Comm, m_Name, m_TimeSeriesList);
     }
-    m_ATSFile.close();
+    catch (std::invalid_argument &e)
+    {
+        std::cout << "TimeSeries WARNING: " << e.what() << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -347,11 +318,17 @@ void TimeSeriesReader::ProcessIO(adios2::core::IO &io, adios2::core::Engine &e)
     }
 }
 
-void TimeSeriesReader::InitFile(std::string filename, bool process)
+void TimeSeriesReader::InitFile(const helper::TimeSeriesEntry &tse, bool process)
 {
     static size_t fileCount = 0;
     adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("TimeSeriesReader" + std::to_string(fileCount));
-    adios2::core::Engine &e = io.Open(filename, m_OpenMode, m_Comm.Duplicate());
+    if (!tse.remotehost.empty() && !tse.remotepath.empty())
+    {
+        io.SetParameter("RemoteDataPath", tse.remotepath);
+        io.SetParameter("RemoteHost", tse.remotehost);
+        io.SetParameter("UUID", tse.uuid);
+    }
+    adios2::core::Engine &e = io.Open(tse.localpath, m_OpenMode, m_Comm.Duplicate());
     m_StepsCount += e.Steps();
     m_IOs.push_back(&io);
     m_Engines.push_back(&e);
@@ -375,6 +352,7 @@ void TimeSeriesReader::DoClose(const int transportIndex)
             e->Close();
         }
     }
+    m_IsOpen = false;
 }
 
 size_t TimeSeriesReader::FindStep(const VarInternalInfo &vii, const size_t step) const

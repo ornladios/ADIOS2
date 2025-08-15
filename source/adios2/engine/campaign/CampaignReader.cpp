@@ -570,7 +570,12 @@ void CampaignReader::InitTransports()
                         std::cout << "      " << tsorder << ". " << ds.name << " local file "
                                   << localPath << "\n";
                     }
-                    atsfile << localPath << std::endl;
+                    CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
+                    CampaignReplica &rep = ds.replicas[repIdx];
+                    atsfile << "- localpath: " << localPath << "\n  remotepath: "
+                            << m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name
+                            << "\n  remotehost: " << m_CampaignData.hosts[rep.hostIdx].hostname
+                            << "\n  uuid: " << ds.uuid << std::endl;
                 }
                 else
                 {
@@ -589,9 +594,10 @@ void CampaignReader::InitTransports()
                     std::cout << "      " << ds.tsorder << ". " << ds.name << " local file "
                               << localPath << "\n";
                 }
-                atsfile << localPath << std::endl;
+                atsfile << "- " << localPath << std::endl;
             }
         }
+        atsfile << "- end" << std::endl;
         atsfile.close();
         OpenDatasetWithADIOS(ts.name, ds.format, io, atsFilePath);
     }

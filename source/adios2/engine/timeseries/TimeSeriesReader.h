@@ -24,6 +24,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosYAML.h"
 
 #include <deque>
 #include <fstream>
@@ -63,15 +64,9 @@ public:
 
 private:
     int m_Verbosity = 0;
-    int m_ReaderRank; // my rank in the readers' comm
-    std::ifstream m_ATSFile;
-    size_t m_ATSFileLastPos = 0;
+    int m_ReaderRank;         // my rank in the readers' comm
     std::string m_ATSFileDir; // directory of the ATS file, for relative paths
-    std::deque<std::string> m_Filenames;
-
-    // m_NoMoreFiles: becomes true when --end-- is read from the ATS file but we still have
-    // to finish processing the files in m_Filenames
-    bool m_NoMoreFiles = false;
+    helper::TimeSeriesList m_TimeSeriesList;
 
     int m_CurrentStep = 0;
     size_t m_StepsCount = 0;
@@ -130,7 +125,7 @@ private:
     void InitParameters() final;
     void InitTransports() final;
     void ProcessIO(adios2::core::IO &io, adios2::core::Engine &e);
-    void InitFile(std::string filename,
+    void InitFile(const helper::TimeSeriesEntry &tse,
                   bool process); // open one file and process its variables and attributes
     bool CheckForFiles();        // read (new) entries in ATS file until --end--
 
@@ -161,7 +156,7 @@ private:
      * Called if destructor is called on an open engine.  Should warn or take
      * any non-complex measure that might help recover.
      */
-    void DestructorClose(bool Verbose) noexcept final{};
+    void DestructorClose(bool Verbose) noexcept final { DoClose(); };
 
     template <class T>
     void GetCommon(Variable<T> &variable, T *data, adios2::Mode mode);

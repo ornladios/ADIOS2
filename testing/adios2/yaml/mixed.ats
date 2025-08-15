@@ -1,0 +1,20 @@
+- /tmp/data/local_1.h5
+
+- localpath: /home/adios/data/remote_local_1
+  remotepath: /remote/path1
+  remotehost: Host1
+  uuid: 0123456789abcdef0123456879abcdef
+
+- localpath: /tmp/data/local_2.h5
+
+# Commented out file should not appear in list
+# - localpath: /tmp/data/local_2.h5
+#
+
+- localpath: /home/adios/data/remote_local_2
+  remotepath: /remote/path2
+  remotehost: Host2
+  uuid: abcdef0123456879abcdef0123456789
+
+- end
+- should-not-appear-in-list.txt
