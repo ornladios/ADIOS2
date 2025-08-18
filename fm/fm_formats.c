@@ -3106,20 +3106,20 @@ serverAtomicRead(void *fd, void *buffer, int length)
 {
     char *junk_result_str = NULL;
     int junk_errno;
-    int ret = ffs_server_read_func(fd, buffer, length, &junk_errno,
+    size_t ret = ffs_server_read_func(fd, buffer, length, &junk_errno,
 				  &junk_result_str);
 
     if (getenv("BAD_CLIENT") && (drand48() < 0.0001)) sleep(600);
     if (ret != length) {
 	if (get_format_server_verbose()) {
-	    printf("server read error, return is %d, length %d, errno %d\n",
+	    printf("server read error, return is %zu, length %d, errno %d\n",
 		   ret, length, junk_errno);
 	    if (junk_result_str != NULL) {
 		printf("result_string is %s\n", junk_result_str);
 	    }
 	}
     }
-    return ret;
+    return (int)ret;
 }
 
 extern int
@@ -3128,8 +3128,8 @@ serverAtomicWrite(void *fd, void *buffer, int length)
     char *junk_result_str;
     int junk_errno;
     if (getenv("BAD_CLIENT") && (drand48() < 0.001)) sleep(600);
-    return ffs_server_write_func(fd, buffer, length, &junk_errno,
-				&junk_result_str);
+    return (int) ffs_server_write_func(fd, buffer, length, &junk_errno,
+				       &junk_result_str);
 }
 
 
@@ -3177,8 +3177,8 @@ server_register_format(FMContext fmc, FMFormat format)
 	struct {
 	    char reg[2];
 	    unsigned short len;
-	    } tmp = {{'f', 2}, 0 };	/* format reg, version 2 */
-	int ret;
+	} tmp = {{'f', 2}, 0 };	/* format reg, version 2 */
+	size_t ret;
 	int errno;
 	char *errstr;
 	char ret_info[2];

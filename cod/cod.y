@@ -4953,8 +4953,6 @@ static int semanticize_decl(cod_parse_context context, sm_ref decl,
 {
     switch(decl->node_type) {
     case cod_declaration: {
-	sm_ref ctype;
-
 	if (resolve_local(decl->node.declaration.id, scope) != NULL) {
 	    if (resolve_local(decl->node.declaration.id, scope) != decl) {
 		cod_src_error(context, decl, "Duplicate Symbol \"%s\"", 
@@ -5063,7 +5061,6 @@ static int semanticize_decl(cod_parse_context context, sm_ref decl,
 	    decl->node.declaration.cg_type = cg_type;
 	    decl->node.declaration.sm_complex_type = typ;
 	}
-	ctype = decl->node.declaration.sm_complex_type;
 	if (decl->node.declaration.init_value != NULL) {
 	    int ret;
 	    ret = semanticize_expr(context, decl->node.declaration.init_value, 
