@@ -55,7 +55,7 @@ static void byte_swap(char *data, int size);
 static int get_double_warn = 0;
 static int get_long_warn = 0;
 
-FMfloat_format ffs_my_float_format = Format_Unknown;
+extern FMfloat_format fm_my_float_format;
 /* 
  * ffs_reverse_float_formats identifies for each format what, 
  * if any, format is its byte-swapped reverse.
@@ -149,27 +149,6 @@ FFSinfer_float_format(char *float_magic, int object_len)
     }
     return Format_Unknown;
 }
-
-extern void
-init_float_formats()
-{
-    static int done = 0;
-    if (!done) {
-	double d = MAGIC_FLOAT;
-	ffs_my_float_format = FFSinfer_float_format((char*)&d, sizeof(d));
-	switch (ffs_my_float_format) {
-	case Format_IEEE_754_bigendian:
-	case Format_IEEE_754_littleendian:
-	case Format_IEEE_754_mixedendian:
-	    break;
-	case Format_Unknown:
-	    fprintf(stderr, "Warning, unknown local floating point format\n");
-	    break;
-	}
-	done++;
-    }
-}
-	
 
 void
 FFSfree_conversion(IOConversionPtr conv)
@@ -294,7 +273,7 @@ create_conversion(FFSTypeHandle src_ioformat, FMFieldList target_field_list, int
 				 target_field_count * sizeof(IOconvFieldStruct));
     int column_row_swap_necessary = (target_column_major != src_ioformat->body->column_major_arrays);
     
-    if (target_fp_format == Format_Unknown) target_fp_format = ffs_my_float_format;
+    if (target_fp_format == Format_Unknown) target_fp_format = fm_my_float_format;
 
     conv_ptr->notify_of_format_change = 0;
     conv_ptr->context = src_ioformat->context;
@@ -665,7 +644,7 @@ set_general_IOconversion_for_format(FFSContext iofile, FFSTypeHandle file_ioform
     conv_ptr = create_conversion(file_ioformat, native_field_list,
 				 native_struct_size, pointer_size,
 				 file_ioformat->body->byte_reversal, 
-				 ffs_my_float_format, conv_type,
+				 fm_my_float_format, conv_type,
 /*				 iofile->native_column_major_arrays*/ 0,
 				 string_offset_size, FALSE, target_list);
 
