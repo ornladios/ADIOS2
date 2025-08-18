@@ -117,39 +117,6 @@ min_align_size(int size)
     return align_size;
 }
 
-static FMfloat_format
-FFSinfer_float_format(char *float_magic, int object_len)
-{
-    switch (object_len) {
-    case 4:
-	if (memcmp(float_magic, &IEEE_754_4_bigendian[0], 4) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_4_littleendian[0], 4) == 0) {
-	    return Format_IEEE_754_littleendian;
-	}
-	break;
-    case 8:
-	if (memcmp(float_magic, &IEEE_754_8_bigendian[0], 8) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_littleendian[0], 8) == 0) {
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_mixedendian[0], 8) == 0) {
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    case 16:
-	if (memcmp(float_magic, &IEEE_754_16_bigendian[0], 16) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_littleendian[0], 16) ==0){
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_mixedendian[0], 16) == 0){
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    }
-    return Format_Unknown;
-}
-
 void
 FFSfree_conversion(IOConversionPtr conv)
 {

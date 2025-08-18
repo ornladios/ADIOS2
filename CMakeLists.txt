@@ -319,7 +319,7 @@ if(NOT HAS_IOV_BASE_IOVEC)
 endif()
 
 TRY_RUN(RUN_RESULT COMPILE_RESULT
-	SOURCES ${CMAKE_SOURCE_DIR}/cmake/float_format_test.c
+	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/float_format_test.c
 	RUN_OUTPUT_VARIABLE FFS_FLOAT_FORMAT)
 message(STATUS "Float format is ${FFS_FLOAT_FORMAT}")
 
