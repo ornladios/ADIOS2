@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "Starting install DILL script"
 mkdir dill
 cd dill
 git clone https://github.com/GTKorvo/dill.git source
@@ -12,3 +12,4 @@ cmake \
   ../source
 cmake --build . -j4 --config $1
 cmake --install . --config $1
+echo "Finish install DILL script"

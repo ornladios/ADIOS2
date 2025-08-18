@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: eisen@cc.gatech.edu
 
 set(CTEST_CMAKE_GENERATOR "Visual Studio 17 2022")
 set(CTEST_CMAKE_GENERATOR_PLATFORM x64)
