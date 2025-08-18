@@ -106,7 +106,11 @@ CHECK_TYPE_SIZE("long" SIZEOF_LONG)
 CHECK_TYPE_SIZE("long double" SIZEOF_LONG_DOUBLE)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+if (${CMAKE_C_BYTE_ORDER} STREQUAL "BIG_ENDIAN")
+set (WORDS_BIGENDIAN 1)
+else()
+set (WORDS_BIGENDIAN 0)
+endif()
 
 if(NOT (DEFINED NO_SOCKETS))
   check_function_exists(socket SOCKETS_FOUND)
@@ -313,6 +317,14 @@ CHECK_STRUCT_HAS_MEMBER("struct iovec" iov_base sys/uio.h HAS_IOV_BASE_IOVEC)
 if(NOT HAS_IOV_BASE_IOVEC)
   set(NEED_IOVEC_DEFINE TRUE)
 endif()
+
+TRY_RUN(RUN_RESULT COMPILE_RESULT
+        # Binary directory:
+        ${CMAKE_CURRENT_BINARY_DIR}/
+        # source file
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/float_format_test.c
+	RUN_OUTPUT_VARIABLE FFS_FLOAT_FORMAT)
+message(STATUS "Float format is ${FFS_FLOAT_FORMAT}")
 
 if(NOT DEFINED FORMAT_SERVER_HOST)
   set(FORMAT_SERVER_HOST "formathost.cercs.gatech.edu")

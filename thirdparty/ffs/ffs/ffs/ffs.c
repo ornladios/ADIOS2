@@ -921,7 +921,6 @@ create_FFSContext_FM(FMContext fmc)
 {
     FFSContext c;
     c = (FFSContext) malloc((size_t) sizeof(*c));
-    init_float_formats();
     if (fmc == NULL) {
         fmc = create_FMcontext();
     } else {

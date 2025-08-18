@@ -55,7 +55,7 @@ static void byte_swap(char *data, int size);
 static int get_double_warn = 0;
 static int get_long_warn = 0;
 
-FMfloat_format ffs_my_float_format = Format_Unknown;
+extern FMfloat_format fm_my_float_format;
 /* 
  * ffs_reverse_float_formats identifies for each format what, 
  * if any, format is its byte-swapped reverse.
@@ -66,26 +66,6 @@ FMfloat_format ffs_reverse_float_formats[] = {
     Format_IEEE_754_bigendian, /* bigendian complements littleendian */
     Format_Unknown /* no exact opposite for mixed-endian (ARM) */
 };
-
-static unsigned char IEEE_754_4_bigendian[] = 
-  {0x3c, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_4_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x3c};
-static unsigned char IEEE_754_8_bigendian[] = 
-  {0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_8_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f};
-static unsigned char IEEE_754_8_mixedendian[] = 
-  {0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_16_bigendian[] = 
-  {0x3f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_16_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x3f};
-static unsigned char IEEE_754_16_mixedendian[] = 
-  {0x00, 0x00, 0xf8, 0x3f, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static char *float_format_str[] = {
     "Unknown float format",
@@ -116,60 +96,6 @@ min_align_size(int size)
     }
     return align_size;
 }
-
-static FMfloat_format
-FFSinfer_float_format(char *float_magic, int object_len)
-{
-    switch (object_len) {
-    case 4:
-	if (memcmp(float_magic, &IEEE_754_4_bigendian[0], 4) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_4_littleendian[0], 4) == 0) {
-	    return Format_IEEE_754_littleendian;
-	}
-	break;
-    case 8:
-	if (memcmp(float_magic, &IEEE_754_8_bigendian[0], 8) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_littleendian[0], 8) == 0) {
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_mixedendian[0], 8) == 0) {
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    case 16:
-	if (memcmp(float_magic, &IEEE_754_16_bigendian[0], 16) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_littleendian[0], 16) ==0){
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_mixedendian[0], 16) == 0){
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    }
-    return Format_Unknown;
-}
-
-extern void
-init_float_formats()
-{
-    static int done = 0;
-    if (!done) {
-	double d = MAGIC_FLOAT;
-	ffs_my_float_format = FFSinfer_float_format((char*)&d, sizeof(d));
-	switch (ffs_my_float_format) {
-	case Format_IEEE_754_bigendian:
-	case Format_IEEE_754_littleendian:
-	case Format_IEEE_754_mixedendian:
-	    break;
-	case Format_Unknown:
-	    fprintf(stderr, "Warning, unknown local floating point format\n");
-	    break;
-	}
-	done++;
-    }
-}
-	
 
 void
 FFSfree_conversion(IOConversionPtr conv)
@@ -294,7 +220,7 @@ create_conversion(FFSTypeHandle src_ioformat, FMFieldList target_field_list, int
 				 target_field_count * sizeof(IOconvFieldStruct));
     int column_row_swap_necessary = (target_column_major != src_ioformat->body->column_major_arrays);
     
-    if (target_fp_format == Format_Unknown) target_fp_format = ffs_my_float_format;
+    if (target_fp_format == Format_Unknown) target_fp_format = fm_my_float_format;
 
     conv_ptr->notify_of_format_change = 0;
     conv_ptr->context = src_ioformat->context;
@@ -665,7 +591,7 @@ set_general_IOconversion_for_format(FFSContext iofile, FFSTypeHandle file_ioform
     conv_ptr = create_conversion(file_ioformat, native_field_list,
 				 native_struct_size, pointer_size,
 				 file_ioformat->body->byte_reversal, 
-				 ffs_my_float_format, conv_type,
+				 fm_my_float_format, conv_type,
 /*				 iofile->native_column_major_arrays*/ 0,
 				 string_offset_size, FALSE, target_list);
 

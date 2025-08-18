@@ -270,7 +270,7 @@ typedef struct {
 
 #define MAX_UNSIGNED_TYPE unsigned MAX_INTEGER_TYPE
 
-typedef int (*IOinterface_func)(void *conn, void *buffer, size_t length,
+typedef size_t (*IOinterface_func)(void *conn, void *buffer, size_t length,
 				      int *errno_p, char **result_p);
 
 #if !defined(HAVE_IOVEC_DEFINE) && !defined(_STRUCT_IOVEC) && !(defined(_BITS_UIO_H))
@@ -287,7 +287,7 @@ struct	iovec {
 #endif
 #endif
 
-typedef int (*IOinterface_funcv)(void *conn, struct iovec *iov, 
+typedef size_t (*IOinterface_funcv)(void *conn, struct iovec *iov, 
 				 int icount, int *errno_p, 
 				 char **result_p);
 

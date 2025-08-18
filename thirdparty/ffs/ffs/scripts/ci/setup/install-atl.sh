@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "Starting install ATL script"
 mkdir atl
 cd atl
 git clone https://github.com/GTKorvo/atl.git source
@@ -12,3 +12,4 @@ cmake \
   ../source
 cmake --build . -j4 --config $1
 cmake --install . --config $1
+echo "Finish install ATL script"
