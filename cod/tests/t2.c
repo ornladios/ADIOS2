@@ -26,6 +26,7 @@ main(int argc, char **argv)
     while (argc > 1) {
 	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
+	    (void)verbose;
 	} else if (strcmp(argv[1], "-w") == 0) {
 	    if (argc <= 1) {
 		printf("Need argument to \"-w\"\n");

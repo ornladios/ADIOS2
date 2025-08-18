@@ -371,7 +371,7 @@ open_FFSfd(void *fd, const char *flags)
     f->c = create_FFSContext_FM(f->fmc);
     if (allow_input) {
 	int magic_number;
-	int count;
+	size_t count;
 
 	count = f->read_func(f->file_id, &magic_number, 4, NULL, NULL);
 	if ((count <= 0) && allow_input && allow_output) {
@@ -517,7 +517,7 @@ static void
 dump_index_block(FFSFile f)
 {
     off_t end = ffs_file_lseek_func(f->file_id, 0, SEEK_CUR);
-    int ret;
+    size_t ret;
 
     size_t size =  f->cur_index->write_info.index_block_size;
     unsigned char *index_base = f->cur_index->write_info.index_block;
