@@ -16,7 +16,8 @@
 
 #include <gtest/gtest.h>
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // overridden on command line
 
 // Number of elements per process
 const std::size_t Nx = 10;
@@ -130,6 +131,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             io.SetEngine(engineName);
         }
 
+        io.SetParameter("AggregationType", aggType);
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -386,6 +388,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             io.SetEngine(engineName);
         }
 
+        io.SetParameter("AggregationType", aggType);
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (int step = 0; step < static_cast<int>(NSteps); ++step)
@@ -670,6 +673,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             io.SetEngine(engineName);
         }
 
+        io.SetParameter("AggregationType", aggType);
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -937,6 +941,12 @@ int main(int argc, char **argv)
     {
         engineName = std::string(argv[1]);
     }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
+    }
+
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
