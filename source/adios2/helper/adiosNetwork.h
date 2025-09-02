@@ -74,6 +74,7 @@ public:
     void Connect(std::string hostname, uint16_t port, std::string protocol = "tcp");
     void RequestResponse(const std::string &request, char *response, size_t maxResponseSize);
     void Close();
+    int GetSocket();
 
 private:
     NetworkSocketData *m_Data;

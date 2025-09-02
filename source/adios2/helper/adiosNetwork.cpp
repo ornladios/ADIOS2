@@ -360,6 +360,7 @@ NetworkSocket::NetworkSocket()
 NetworkSocket::~NetworkSocket() { delete m_Data; };
 
 bool NetworkSocket::valid() const { return (m_Data->m_Socket > 0); }
+int NetworkSocket::GetSocket() { return (m_Data->m_Socket); }
 
 static sockaddr_in ResolveHostName(std::string m_hostname, uint16_t m_server_port)
 {

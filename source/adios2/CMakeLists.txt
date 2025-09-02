@@ -237,6 +237,7 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTP.cpp)
+target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTPS.cpp)
 
 if(ADIOS2_HAVE_AWSSDK)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileAWSSDK.cpp)
