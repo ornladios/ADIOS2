@@ -16,12 +16,7 @@
 #include "fm_internal.h"
 
 static int
-nt_file_read_func(conn, buffer, length, errno_p, result_p)
-void *conn;
-void *buffer;
-int length;
-int *errno_p;
-char **result_p;
+nt_file_read_func(void *conn, void *buffer, int length, int *errno_p, char **result_p)
 {
     int left = length;
     DWORD iget;
@@ -61,12 +56,7 @@ char **result_p;
 }
 
 static int
-nt_socket_read_func(conn, buffer, length, errno_p, result_p)
-void *conn;
-void *buffer;
-int length;
-int *errno_p;
-char **result_p;
+nt_socket_read_func(void *conn, void *buffer, int length, int *errno_p, char **result_p)
 {
     int left = length;
     int iget;
@@ -130,12 +120,7 @@ char **result_p;
 
 
 static int
-nt_file_write_func(conn, buffer, length, errno_p, result_p)
-void *conn;
-void *buffer;
-int length;
-int *errno_p;
-char **result_p;
+nt_file_write_func(void *conn, void *buffer, int length, int *errno_p, char **result_p)
 {
     int left = length;
     int iget = 0;
@@ -163,12 +148,7 @@ char **result_p;
 
 
 static int
-nt_socket_write_func(conn, buffer, length, errno_p, result_p)
-void *conn;
-void *buffer;
-int length;
-int *errno_p;
-char **result_p;
+nt_socket_write_func(void *conn, void *buffer, int length, int *errno_p, char **result_p)
 {
     int left = length;
     int iget = 0;
@@ -196,8 +176,7 @@ char **result_p;
 
 
 static int
-nt_close_func(conn)
-void *conn;
+nt_close_func(void *conn)
 {
     DWORD status;
     /* make sure handle exists before we close it. *otherwise -- an * * *
@@ -267,18 +246,13 @@ nt_file_lseek_func (void *file, size_t pos, int origin)
 }
 
 
-static int
-nt_socket_readv_func(conn, iov, icount, errno_p, result_p)
-void *conn;
-struct iovec *iov;
-int icount;
-int *errno_p;
-char **result_p;
+static size_t
+nt_socket_readv_func(void *conn, struct iovec *iov, int icount, int *errno_p, char **result_p)
 {
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_socket_read_func(conn, (void*)iov[i].iov_base, iov[i].iov_len,
+	if (nt_socket_read_func(conn, (void*)iov[i].iov_base, (int)iov[i].iov_len,
 				errno_p, result_p) != iov[i].iov_len) {
 	    return i;
 	}
@@ -288,17 +262,12 @@ char **result_p;
 
 
 static int
-null_file_readv_func(conn, iov, icount, errno_p, result_p)
-void *conn;
-struct iovec *iov;
-int icount;
-int *errno_p;
-char **result_p;
+null_file_readv_func(void *conn, struct iovec *iov, int icount, int *errno_p, char **result_p)
 {
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_file_read_func(conn, (void*)iov[i].iov_base, iov[i].iov_len, errno_p,
+	if (nt_file_read_func(conn, (void*)iov[i].iov_base, (int)iov[i].iov_len, errno_p,
 			      result_p) != iov[i].iov_len) {
 	    return i;
 	}
@@ -307,17 +276,12 @@ char **result_p;
 }
 
 static int
-null_file_writev_func(conn, iov, icount, errno_p, result_p)
-void* conn;
-struct iovec* iov;
-int icount;
-int* errno_p;
-char** result_p;
+null_file_writev_func(void* conn, struct iovec* iov, int icount, int* errno_p, char** result_p)
 {
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_file_write_func(conn, (void*)iov[i].iov_base, iov[i].iov_len, errno_p,
+	if (nt_file_write_func(conn, (void*)iov[i].iov_base, (int)iov[i].iov_len, errno_p,
 	    result_p) != iov[i].iov_len) {
 	    return i;
 	}
@@ -346,8 +310,7 @@ nt_socket_init_func()
 
 
 static int
-nt_poll_func(conn)
-void *conn;
+nt_poll_func(void *conn)
 {
     int fd = (int) (intptr_t) conn;
     struct timeval time;

@@ -8,7 +8,8 @@ list (APPEND TESTS get_set_test)
 set (PROGS ffs_write ffs_index_test ffs_file_test test_file_unique)
 
 if (DILL_FOUND)
-  list (APPEND TESTS no_leaf_test)
+  #  no_left_test tests deprecated functionality
+  #  list (APPEND TESTS no_leaf_test)
 
   ADD_EXECUTABLE(marshal_test marshal_test.c)
   TARGET_LINK_LIBRARIES(marshal_test ffs)
