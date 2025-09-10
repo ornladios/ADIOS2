@@ -124,7 +124,7 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode, const helper::
     switch (m_OpenMode)
     {
     case Mode::Write:
-        if (async)
+        if (async && chainComm.Size() == 1)
         {
             m_IsOpening = true;
             m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name);
