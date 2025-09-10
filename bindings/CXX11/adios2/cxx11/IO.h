@@ -287,10 +287,10 @@ public:
      * @return engine object
      */
     Engine Open(const std::string &name, const Mode mode);
+
     /**
      * Return a Group object for hierarchical reading.
-     * @param name starting path
-     * @param a delimiter to separate groups in a string representation
+     * @param delimiter to separate groups in a string representation
      * @return Group object
      */
     Group InquireGroup(char delimiter = '/');
@@ -319,6 +319,7 @@ public:
      * @param name unique engine identifier within IO object
      * (file name in case of File transports)
      * @param md file metadata residing in memory
+     * @param mdsize size of metadata
      * @return a reference to a derived object of the Engine class
      * @exception std::invalid_argument if Engine with unique name is already
      * created with another Open

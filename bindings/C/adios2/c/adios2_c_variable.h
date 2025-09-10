@@ -31,13 +31,15 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
 
 /**
  * Set the write mode of a variable
- * @param false - write data; true - write only stats
+ * @param variable handler
+ * @param mode false - write data; true - write only stats
  */
 adios2_error adios2_store_stats_only(adios2_variable *variable, const adios2_bool mode);
 
 /**
  * Sets the memory space for all following Puts/Gets
  * to either host (default) or device
+ * @param variable handler
  * @param mem memory space where Put/Get buffers are allocated
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
@@ -45,7 +47,7 @@ adios2_error adios2_set_memory_space(adios2_variable *variable, const adios2_mem
 
 /**
  * Get the memory space that was set by the application for a given variable
- * @param memory space output, the variable memory space
+ * @param mem memory space output, the variable memory space
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
@@ -166,7 +168,7 @@ adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variabl
  * Retrieve current variable shape for a given memory space
  * @param shape output, must be pre-allocated with ndims
  * @param variable handler
- * @param memory space
+ * @param mem memory space
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_variable_shape_with_memory_space(size_t *shape, const adios2_variable *variable,

@@ -95,7 +95,6 @@ endif()
 if(Python_Interpreter_FOUND)
   add_subdirectory(bp4dbg)
   add_subdirectory(bp5dbg)
-  add_subdirectory(adios_campaign_manager)
   install(PROGRAMS adios2_json_pp.py
     RENAME adios2_json_pp
     DESTINATION ${CMAKE_INSTALL_BINDIR}
