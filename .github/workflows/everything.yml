@@ -27,26 +27,17 @@
 name: GitHub Actions
 
 on:
-  push:
-    branches:
-      - master
-      - release*
-  pull_request:
-    branches:
-      - master
-      - release*
+  workflow_run:
+    workflows: [prechecks]
+    types:
+      - completed
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-
-#######################################
-# Git checks
-#######################################
-
-  git_checks:
+  git_changes:
     runs-on: ubuntu-latest
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
@@ -54,63 +45,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Check for appropriately named topic branch
-        run: |
-          scripts/ci/gh-actions/check-branch-name.sh
       - name: Check for code changes
         id: get_code_changes
         run: |
           scripts/ci/gh-actions/get-changed-files.sh
           echo "::group::Test script output files"
-          ls -la *-changed-files.txt
-          NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
+          ls -la ./*-changed-files.txt
+          NUM_CHANGES="$(wc -l < filtered-changed-files.txt)"
           echo "Number of files changed (filtered): ${NUM_CHANGES}"
-          echo "num_code_changes=${NUM_CHANGES}" >> $GITHUB_OUTPUT
-
-#######################################
-# Formatting jobs
-#######################################
-
-  format:
-    needs: git_checks
-    if: needs.git_checks.outputs.num_code_changes > 0
-
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ornladios/adios2:ci-formatting
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          path: gha
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: source
-      - name: CXX
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-clang-format.sh
-      - name: Python flake8
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-flake8.sh
-      - name: Python pylint
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-pylint.sh
-      - name: Python black
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-black.sh
-      - name: Shell
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-shellcheck.sh
-
+          echo "num_code_changes=${NUM_CHANGES}" >> "${GITHUB_OUTPUT}"
 
 #######################################
 # Build and test jobs
 #######################################
 
   ubuntu:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ubuntu-22.04
     container:
@@ -194,7 +145,7 @@ jobs:
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
       - name: Print ccache statistics
-        run: ccache -s | tee $GITHUB_STEP_SUMMARY
+        run: ccache -s | tee "${GITHUB_STEP_SUMMARY}"
       - name: Save cache
         uses: actions/cache/save@v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
@@ -207,8 +158,8 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh test
 
   el8:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     container:
@@ -271,8 +222,8 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh test
 
   macos:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
     env:
@@ -347,8 +298,8 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh test
 
   windows:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
     env:
@@ -410,8 +361,8 @@ jobs:
 #######################################
 
   docker:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
@@ -458,12 +409,12 @@ jobs:
             target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
             docker tag \
                 ornladios/adios2:ci-tmp \
-                ornladios/adios2:${target_tag}
+                "ornladios/adios2:${target_tag}"
             docker login \
                 --username="${DOCKERHUB_USERNAME}" \
                 --password="${DOCKERHUB_PASSWORD}"
             docker push \
-                ornladios/adios2:${target_tag}
+                "ornladios/adios2:${target_tag}"
 
 #######################################
 # Contract testing jobs
@@ -475,8 +426,8 @@ jobs:
   # run steps lets the steps be written as though they too were using a
   # standard container job.
   contract:
-    needs: [format, git_checks, docker]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    needs: [docker, git_changes]
+    if: needs.git_changes.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
@@ -531,7 +482,6 @@ jobs:
 #######################################
 
   analyze:
-    needs: [format, git_checks]
     name: CodeQL
     runs-on: ubuntu-latest
     container:
