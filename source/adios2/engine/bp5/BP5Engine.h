@@ -149,7 +149,7 @@ public:
     MACRO(DirectIO, Bool, bool, false)                                                             \
     MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
     MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                                              \
-    MACRO(AggregationType, AggregationType, int, (int)AggregationType::TwoLevelShm)                \
+    MACRO(AggregationType, AggregationType, int, (int)AggregationType::EveryoneWritesSerial)       \
     MACRO(AsyncOpen, Bool, bool, true)                                                             \
     MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                                      \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)                                   \
