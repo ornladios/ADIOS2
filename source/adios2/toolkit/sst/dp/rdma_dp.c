@@ -1028,7 +1028,7 @@ static int get_cxi_auth_key_from_env(CP_Services Svcs, void *CP_Stream, struct _
     char const *slingshot_devices = getenv("SLINGSHOT_DEVICES");
     char const *preferred_device = get_preferred_domain(Params);
 
-    if (!preferred_device || strncmp("cxi", preferred_device, 3) != 0 || !slingshot_devices)
+    if ((preferred_device && strncmp("cxi", preferred_device, 3) != 0) || !slingshot_devices)
     {
         return EXIT_FAILURE;
     }
