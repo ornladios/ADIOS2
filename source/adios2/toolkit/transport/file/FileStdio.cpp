@@ -72,15 +72,11 @@ void FileStdio::Open(const std::string &name, const Mode openMode, const bool as
     case Mode::Write:
         if (async)
         {
-            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Open",
-                                                  "write mode async " + m_Name);
             m_IsOpening = true;
             m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name);
         }
         else
         {
-            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Open",
-                                                  "write mode no-async " + m_Name);
             errno = 0;
             m_File = std::fopen(name.c_str(), "wb");
         }
@@ -93,8 +89,6 @@ void FileStdio::Open(const std::string &name, const Mode openMode, const bool as
         std::fseek(m_File, 0, SEEK_END);
         break;
     case Mode::Read:
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Open",
-                                              "read mode " + m_Name);
         errno = 0;
         m_File = std::fopen(name.c_str(), "rb");
         break;
@@ -134,15 +128,11 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode, const helper::
     case Mode::Write:
         if (async)
         {
-            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio",
-                                                  "OpenChain", "write mode async" + m_Name);
             m_IsOpening = true;
             m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name);
         }
         else
         {
-            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio",
-                                                  "OpenChain", "write mode no-async" + m_Name);
             errno = 0;
             m_File = std::fopen(name.c_str(), "wb");
         }
@@ -155,8 +145,6 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode, const helper::
         std::fseek(m_File, 0, SEEK_END);
         break;
     case Mode::Read:
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "OpenChain",
-                                              "read mode " + m_Name);
         errno = 0;
         m_File = std::fopen(name.c_str(), "rb");
         break;
