@@ -46,36 +46,32 @@ public:
     ~Group();
     /**
      * @brief returns available groups on the path set
-     * @param
      * @return vector of strings
      */
     std::vector<std::string> AvailableGroups();
     /**
      * @brief returns available variables on the path set
-     * @param
      * @return vector of strings
      */
     std::vector<std::string> AvailableVariables();
     /**
      * @brief returns available attributes on the path set
-     * @param
      * @return vector of strings
      */
     std::vector<std::string> AvailableAttributes();
     /**
      * @brief returns the current path
-     * @param
      * @return current path as a string
      */
     std::string InquirePath();
     /**
      * @brief set the path, points to a particular node on the tree
-     * @param next possible path extension
+     * @param path possible path extension
      */
     void setPath(std::string path);
     /**
      * @brief returns a new group object
-     * @param name of the group
+     * @param group_name of the group
      * @return new group object
      */
     Group InquireGroup(std::string group_name);
@@ -92,6 +88,8 @@ public:
      * Gets an existing attribute of primitive type by name. A wrapper for
      * the corresponding function of the IO class
      * @param name of attribute to be retrieved
+     * @param variableName optional, looking for an attribute of a variable
+     * @param separator optional, path separator, default is "/"
      * @return pointer to an existing attribute in current IO, nullptr if not
      * found
      */

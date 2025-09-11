@@ -149,7 +149,7 @@ public:
 
     /**
      * Set the write mode of a variable
-     * @param false - write data; true - write only stats
+     * @param mode false - write data; true - write only stats
      */
     void StoreStatsOnly(const bool mode);
 

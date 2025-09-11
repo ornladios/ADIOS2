@@ -166,7 +166,7 @@ void CampaignReader::Init()
 void CampaignReader::InitParameters()
 {
     const UserOptions::Campaign &opts = m_UserOptions.campaign;
-    m_Options.active = true; // this is really just for Recording
+    m_Options.active = false; // this is really just for Recording
     m_Options.hostname = opts.hostname;
     m_Options.campaignstorepath = opts.campaignstorepath;
     m_Options.cachepath = opts.cachepath;
