@@ -50,13 +50,13 @@ Derived variables that store data become primary data once the write operation i
    Derived variables are currently supported only by the BP5 engine
 
 Build ADIOS2 with support for derived variables
---------------------------
+-----------------------------------------------
 
 By default the derived variables are ``OFF``. Building ADIOS2 with derived variables turned on requires ``-DADIOS2_USE_Derived_Variables=ON``.
 
 
 Supported derived operations
---------------------------
+----------------------------
 
 In the current implementation, all input variables for a derived operation need to have the same type.
 

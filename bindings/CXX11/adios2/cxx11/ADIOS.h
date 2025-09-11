@@ -136,6 +136,8 @@ public:
     /**
      * Declares a new IO class object
      * @param name unique IO name identifier within current ADIOS object
+     * @param ArrayOrder can be forced to be RowMajor or ColumnMajor, or Auto depending on the
+     * programming language
      * @return reference to newly created IO object inside current ADIOS
      * object
      * @exception std::invalid_argument if IO with unique name is already

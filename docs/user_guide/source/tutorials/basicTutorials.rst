@@ -8,3 +8,4 @@ Basic Tutorials
    attributes
    operators
    steps
+   sst
