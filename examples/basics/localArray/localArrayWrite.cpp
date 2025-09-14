@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
             v2.reserve(Nelems);
             for (size_t i = 0; i < Nelems; i++)
             {
-                v2[i] = rank * 1.0 + step * 0.1;
+                v2.push_back(rank * 1.0 + step * 0.1);
             }
 
             // Set the size of the array now because we did not know
