@@ -211,14 +211,14 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
         CQEntries = &data_entry;
         batch_size = 1;
     }
-    params->Svcs->verbose(params->Stream, DPTraceVerbose, "blocking on CQ read, batch size %d\n", batch_size);
+    params->Svcs->verbose(params->Stream, DPTraceVerbose, "blocking on CQ read, batch size %d\n",
+                          batch_size);
     ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL, timeout);
-    params->Svcs->verbose(
-	params->Stream, DPTraceVerbose, "Done with fi_cq_sread(), do_continue is %d\n", params->do_continue);
+    params->Svcs->verbose(params->Stream, DPTraceVerbose,
+                          "Done with fi_cq_sread(), do_continue is %d\n", params->do_continue);
     if (rc < 1)
     {
-	params->Svcs->verbose(
-	    params->Stream, DPTraceVerbose, "Trying fi_cq_readerr\n");
+        params->Svcs->verbose(params->Stream, DPTraceVerbose, "Trying fi_cq_readerr\n");
         struct fi_cq_err_entry error = {.err = 0};
         fi_cq_readerr(params->cq_signal, &error, 0);
         if (error.err != -FI_SUCCESS)
@@ -231,8 +231,7 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
     }
     else
     {
-	params->Svcs->verbose(
-	    params->Stream, DPTraceVerbose, "Got %d cq entries\n", rc);
+        params->Svcs->verbose(params->Stream, DPTraceVerbose, "Got %d cq entries\n", rc);
         for (size_t i = 0; i < rc; ++i)
         {
             struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
@@ -240,13 +239,11 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
             memcpy(value, &CQEntries[i], sizeof(struct fi_cq_data_entry));
             next_item->value = value;
             next_item->next = NULL;
-	    params->Svcs->verbose(
-		params->Stream, DPTraceVerbose, "manual progress push %d\n", i);
+            params->Svcs->verbose(params->Stream, DPTraceVerbose, "manual progress push %d\n", i);
             cq_manual_progress_push(params, next_item);
         }
     }
-    params->Svcs->verbose(
-	params->Stream, DPCriticalVerbose, "falling out of make_some_progress\n");
+    params->Svcs->verbose(params->Stream, DPCriticalVerbose, "falling out of make_some_progress\n");
 }
 
 static void *make_progress(void *params_)
@@ -734,46 +731,46 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
 
     if (fabric->cq_manual_progress)
     {
-	int result;
+        int result;
 
         fabric->cq_manual_progress->do_continue = 0;
         // make_progress() is still cluelessly waiting for anything to happen
         // before it gets the chance to check the do_continue flag.
         // so we give it some event.
-	Svcs->verbose(CP_Stream, DPTraceVerbose, "FI_CQ_SIGNAL to waiting thread Waiting.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose, "FI_CQ_SIGNAL to waiting thread Waiting.\n");
 
-	result = fi_cq_signal(fabric->cq_signal);
-	if (result != FI_SUCCESS)
-	{
-	    Svcs->verbose(CP_Stream, DPCriticalVerbose, 
-			  "fi_cq_signal failed with %d (%s).\n",
-			  result,
-			  fi_strerror(result));
-	    if (fabric->pthread_id) 
-	    {
-		result = pthread_cancel(fabric->pthread_id);
-		if (result != 0) {
-		    Svcs->verbose(CP_Stream, DPCriticalVerbose,
-				  "pthread_cancel failed with result %d\n",result);
-		}
-		fabric->pthread_id = 0;
-	    }
-	}
-	    
+        result = fi_cq_signal(fabric->cq_signal);
+        if (result != FI_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose, "fi_cq_signal failed with %d (%s).\n",
+                          result, fi_strerror(result));
+            if (fabric->pthread_id)
+            {
+                result = pthread_cancel(fabric->pthread_id);
+                if (result != 0)
+                {
+                    Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                                  "pthread_cancel failed with result %d\n", result);
+                }
+                fabric->pthread_id = 0;
+            }
+        }
+
         if (fabric->pthread_id != 0)
         {
-	    Svcs->verbose(CP_Stream, DPTraceVerbose, "Waiting on Join thread. %p\n", (void*) fabric->pthread_id);
+            Svcs->verbose(CP_Stream, DPTraceVerbose, "Waiting on Join thread. %p\n",
+                          (void *)fabric->pthread_id);
             if (pthread_join(fabric->pthread_id, NULL) != 0)
             {
                 Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not join thread.\n");
                 return;
             }
-	    fabric->pthread_id = 0;
+            fabric->pthread_id = 0;
         }
 
         pthread_mutex_destroy(&fabric->cq_manual_progress->cq_event_list_mutex);
 
-	Svcs->verbose(CP_Stream, DPTraceVerbose, "working through manual progress list\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose, "working through manual progress list\n");
         struct cq_event_list *head = fabric->cq_manual_progress->cq_event_list;
         while (head)
         {
@@ -2344,7 +2341,7 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Working through Step Log\n");
     while (StepLog)
     {
-	Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Destroy Step \n");
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Destroy Step \n");
         RdmaDestroyRankReqLog(RS_Stream, StepLog->RankLog);
         tStepLog = StepLog;
         StepLog = StepLog->Next;
