@@ -1139,7 +1139,10 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	final_variant_size_for_record(input_record_len, conv);
     orig_variant_size = input_record_len - expand_size_to_align(ioformat->body->record_length);
 
-    make_tmp_buffer(&c->tmp, 0);
+    if (!in_place_base_conversion_possible(conv)) {
+	// if we can do in-place, no temporary is necessary
+	make_tmp_buffer(&c->tmp, 0);
+    }
     /* set base dest values */
     if (params->final_base == NULL) {
 	/* need memory for at least the base record in temp area */
