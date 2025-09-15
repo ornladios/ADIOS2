@@ -58,6 +58,11 @@ public:
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step = SIZE_MAX);
     void InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
     void InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
+    FFSTypeHandle BufferMetaMetaPrep(void *MetadataBlock);
+    void *MetadataBufferPrep(void *MetadataBlock, const size_t BlockLen, const size_t WriterRank,
+                             FFSTypeHandle FFSformat) const;
+    void InstallMetadataBuffer(void *MetadataBuffer, size_t WriterRank, size_t Step,
+                               FFSTypeHandle FFSFormat);
 
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data

@@ -702,11 +702,14 @@ size_t BP5Deserializer::WriterCohortSize(size_t Step) const
 void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
                                       size_t Step)
 {
-    const size_t writerCohortSize = WriterCohortSize(Step);
-    FFSTypeHandle FFSformat;
-    void *BaseData;
-    static int DumpMetadata = -1;
-    FFSformat = FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
+    FFSTypeHandle FFSformat = BufferMetaMetaPrep(MetadataBlock);
+    void *BaseData = MetadataBufferPrep(MetadataBlock, BlockLen, WriterRank, FFSformat);
+    InstallMetadataBuffer(BaseData, WriterRank, Step, FFSformat);
+}
+
+FFSTypeHandle BP5Deserializer::BufferMetaMetaPrep(void *MetadataBlock)
+{
+    FFSTypeHandle FFSformat = FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
     if (!FFSformat)
     {
         helper::Throw<std::logic_error>("Toolkit", "format::BP5Deserializer", "InstallMetaData",
@@ -722,6 +725,15 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
+    return FFSformat;
+}
+
+void *BP5Deserializer::MetadataBufferPrep(void *MetadataBlock, const size_t BlockLen,
+                                          const size_t WriterRank, FFSTypeHandle FFSformat) const
+{
+    void *BaseData;
+    static std::once_flag once;
+    static bool DumpMetadata = false;
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(ReaderFFSContext, (char *)MetadataBlock, &BaseData);
@@ -733,16 +745,20 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
         BaseData = malloc(DecodedLength);
         FFSdecode_to_buffer(ReaderFFSContext, (char *)MetadataBlock, BaseData);
     }
-    if (DumpMetadata == -1)
-    {
-        DumpMetadata = (getenv("BP5DumpMetadata") != NULL);
-    }
+    std::call_once(once, [&]() { DumpMetadata = (getenv("BP5DumpMetadata") != NULL); });
     if (DumpMetadata)
     {
         printf("\nIncomingMetadatablock from WriterRank %d is %p :\n", (int)WriterRank, BaseData);
         FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
         printf("\n\n");
     }
+    return BaseData;
+}
+
+void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, size_t Step,
+                                            FFSTypeHandle FFSformat)
+{
+    const size_t writerCohortSize = WriterCohortSize(Step);
     struct ControlInfo *Control;
     struct ControlStruct *ControlFields;
     Control = GetPriorControl(FMFormat_of_original(FFSformat));

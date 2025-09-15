@@ -248,6 +248,7 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
+    void ParallelInstallMetadataForTimestep(size_t Step);
     std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
                                        const size_t maxOpenFiles, const size_t WriterRank,
                                        const size_t Timestep, const size_t StartOffset,

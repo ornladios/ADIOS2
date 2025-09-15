@@ -22,6 +22,7 @@
 #endif
 
 std::string engine = "sst";
+std::string filename = "MetaDataTest";
 adios2::Params engineParams = {}; // parsed from command line
 
 int NSteps = 10;
@@ -98,6 +99,7 @@ static void Usage()
     std::cout << "  --engine <enginename>" << std::endl;
     std::cout << "  --engine_params <param=value,param=value>" << std::endl;
     std::cout << "  --file  (run in file mode)" << std::endl;
+    std::cout << "  --filename <filename>" << std::endl;
 }
 
 static void ParseArgs(int argc, char **argv)
@@ -218,6 +220,12 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--filename")
+        {
+	    filename = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--reader_delay")
         {
             std::istringstream ss(argv[2]);
@@ -293,7 +301,7 @@ void DoWriter(adios2::Params writerParams)
 
     io.SetEngine(engine);
     io.SetParameters(writerParams);
-    adios2::Engine writer = io.Open("MetaDataTest", adios2::Mode::Write);
+    adios2::Engine writer = io.Open(filename, adios2::Mode::Write);
     std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     adios2::Variable<float> *Floats = new adios2::Variable<float>[NumVars];
@@ -380,7 +388,7 @@ void DoReader()
     engineParams["SpeculativePreloadMode"] = "Off";
     engineParams["ReaderShortCircuitReads"] = "On";
     io.SetParameters(engineParams);
-    adios2::Engine reader = io.Open("MetaDataTest", adios2::Mode::Read);
+    adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
     std::chrono::time_point<std::chrono::high_resolution_clock> startTS, endBeginStep, finishTS;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     std::this_thread::sleep_for(std::chrono::seconds(ReaderDelay));
