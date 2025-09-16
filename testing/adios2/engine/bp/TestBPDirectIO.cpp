@@ -13,7 +13,8 @@
 
 #include <gtest/gtest.h>
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // comes from command line
 
 class ADIOSReadDirectIOTest : public ::testing::Test
 {
@@ -30,12 +31,14 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 
     int mpiRank = 0, mpiSize = 1;
 
+    std::string filename = "ADIOSDirectIO.agg-" + aggType;
+
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    std::string filename = "ADIOSDirectIO_MPI.bp";
+    filename += "_MPI.bp";
 #else
-    std::string filename = "ADIOSDirectIO.bp";
+    filename += ".bp";
 #endif
 
     // Write test data using BP
@@ -47,6 +50,7 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 #endif
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
+        ioWrite.SetParameter("AggregationType", aggType);
         ioWrite.SetParameter("DirectIO", "true");
         ioWrite.SetParameter("DirectIOAlignOffset", "4096");
         ioWrite.SetParameter("DirectIOAlignBuffer", "4096");
@@ -134,6 +138,11 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
     }
 
     int result = RUN_ALL_TESTS();

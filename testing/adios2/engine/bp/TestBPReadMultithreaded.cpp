@@ -20,7 +20,8 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName; // comes from command line
+std::string engineName;              // comes from command line
+std::string aggType = "TwoLevelShm"; // overridden on command line
 constexpr std::size_t NSteps = 4;
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
@@ -59,17 +60,19 @@ public:
 
     bool StreamOutputWritten = false;
     bool FileOutputWritten = false;
+    std::string StreamOutputFileName;
+    std::string FileOutputFileName;
 
-    void CreateOutput(bool stream)
+    std::string CreateOutput(bool stream)
     {
         // This is not really a test but to create a dataset for all read tests
         if (stream && StreamOutputWritten)
         {
-            return;
+            return StreamOutputFileName;
         }
         if (!stream && FileOutputWritten)
         {
-            return;
+            return FileOutputFileName;
         }
         int mpiRank = 0, mpiSize = 1;
 #if ADIOS2_USE_MPI
@@ -84,11 +87,20 @@ public:
 #endif
         std::string filename;
         if (stream)
-            filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_Stream.bp";
+        {
+            StreamOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
+                                   std::to_string(mpiSize) + "_Stream.bp";
+            filename = StreamOutputFileName;
+        }
         else
-            filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_File.bp";
+        {
+            FileOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
+                                 std::to_string(mpiSize) + "_File.bp";
+            filename = FileOutputFileName;
+        }
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
+        ioWrite.SetParameter("AggregationType", aggType);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -113,9 +125,15 @@ public:
         }
         engine.Close();
         if (stream)
+        {
             StreamOutputWritten = true;
+            return StreamOutputFileName;
+        }
         else
+        {
             FileOutputWritten = true;
+            return FileOutputFileName;
+        }
     }
 };
 
@@ -143,8 +161,7 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
 #else
     adios2::ADIOS adios;
 #endif
-    CreateOutput(false);
-    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_File.bp";
+    std::string filename = CreateOutput(false);
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));
@@ -211,8 +228,7 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
 #else
     adios2::ADIOS adios;
 #endif
-    CreateOutput(true);
-    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_Stream.bp";
+    std::string filename = CreateOutput(true);
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));
@@ -279,6 +295,11 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
     }
 
     result = RUN_ALL_TESTS();
