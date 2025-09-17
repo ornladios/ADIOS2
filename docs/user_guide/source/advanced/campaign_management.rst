@@ -30,7 +30,7 @@ The Gray-Scott example, that is included with ADIOS2, in `examples/simulation/gr
 Assuming we are in 
 
 - /lustre/orion/csc143/proj-shared/demo/gray-scott
-- on a machine that we named **OLCF** in our Campaign hostname in ~/.config/adios2/adios2.yaml
+- on a machine that we named **OLCF** in our Campaign hostname in ~/.config/hpc-campaign/config.yaml
 - our campaignpath is set to **/lustre/orion/csc143/proj-shared/adios-campaign-store/demoproject** 
 
 .. code-block:: bash
@@ -142,7 +142,7 @@ Assuming the campaign archive was synced to a local machine's campaign store und
 
 .. code-block:: bash
 
-    $ python3 -m hpc_campaign_list gray-scott
+    $ hpc_campaign_list gray-scott
     csc143/demoproject/frontier_gray-scott_100.aca
 
     $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca
@@ -166,7 +166,7 @@ Assuming the campaign archive was synced to a local machine's campaign store und
       }
       "
 
-To read array data though, we need to set up remote data access. On the local machine set up *~/.config/adios2/hosts.yaml* so that the campaign connector can find how to connect to **OLCF**.
+To read array data though, we need to set up remote data access. On the local machine set up *~/.config/hpc-campaign/hosts.yaml* so that the campaign connector can find how to connect to **OLCF**.
 
 Assuming that 
 
@@ -175,7 +175,7 @@ Assuming that
 
 .. code-block:: bash
 
-    $ cat ~/.config/adios2/hosts.yaml
+    $ cat ~/.config/hpc-campaign/hosts.yaml
     OLCF:
       dtn-ssh:
           protocol: ssh
@@ -190,7 +190,7 @@ First, we need to launch the **hpc_campaign_connector**, specifying to load the 
 
 .. code-block:: bash
 		
-    $ hpc_campaign_connector -c ~/.config/adios2/hosts.yaml -p  30000
+    $ hpc_campaign_connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
     SSH Tunnel Server:  127.0.0.1 30000
 
 Assuming the campaign archive was synced to a local machine's campaign store under `csc143/demoproject`, now we can retrieve data:
@@ -225,7 +225,7 @@ the passcode to login to OLCF, and logs on screen activity similar to this:
 
 .. code-block:: bash
 
-    $ hpc_campaign_connector -c ~/.config/adios2/hosts.yaml -p  30000
+    $ hpc_campaign_connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
     SSH Tunnel Server:  127.0.0.1 30000
     Client 127.0.0.1:
     Request  : /run_service?group=OLCF&service=dtn-ssh
