@@ -77,17 +77,18 @@ SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
 BUILD_DIR=$(mktemp -d)
 pushd ${BUILD_DIR}
 
+compiler_settings=""
 if [ @ADIOS2_CONFIG_MPICC@ -eq 1 ]
 then
-  export CC="@MPI_C_COMPILER@"
+  compiler_settings="$compiler_settings -DCMAKE_C_COMPILER=@MPI_C_COMPILER@"
 fi
 if [ @ADIOS2_CONFIG_MPICXX@ -eq 1 ]
 then
-  export CXX="@MPI_CXX_COMPILER@"
+  compiler_settings="$compiler_settings -DCMAKE_CXX_COMPILER=@MPI_CXX_COMPILER@"
 fi
 if [ @ADIOS2_CONFIG_MPIFC@ -eq 1 ]
 then
-  export FC="@MPI_Fortran_COMPILER@"
+  compiler_settings="$compiler_settings -DCMAKE_Fortran_COMPILER=@MPI_Fortran_COMPILER@"
 fi
 
 if [ -z "$adios2_DIR" ]
@@ -107,7 +108,7 @@ then
 fi
 
 echo "Configuring adios2-config@ADIOS2_EXECUTABLE_SUFFIX@ dummy CMake project"
-if ! ${CMAKE} -G "Unix Makefiles" ${SOURCE_DIR} ${EXTRA_CMAKE_ARGS}
+if ! ${CMAKE} -G "Unix Makefiles" ${SOURCE_DIR} $compiler_settings ${EXTRA_CMAKE_ARGS}
 then
   echo "Failed"
   exit 1
