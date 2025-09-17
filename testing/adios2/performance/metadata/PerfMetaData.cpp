@@ -31,6 +31,8 @@ int NumArrays = 100;
 int NumAttrs = 100;
 bool AttributesEverywhere = false;
 int NumBlocks = 1;
+int ReaderSteps = 0;
+bool SkipTraversal = false;
 int ReaderDelay = 0;
 int WriterSize;
 int FileMode = 0;
@@ -44,6 +46,7 @@ char *ErrorStr = NULL;
 int LastVarSize;
 int LastArraySize;
 int LastAttrsSize;
+int LastBlocksCount;
 
 typedef enum
 {
@@ -165,6 +168,10 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--skip_traversal")
+        {
+            SkipTraversal = true;
+        }
         else if (std::string(argv[1]) == "--e3sm")
         {
             NumArrays = 535;
@@ -222,7 +229,7 @@ static void ParseArgs(int argc, char **argv)
         }
         else if (std::string(argv[1]) == "--filename")
         {
-	    filename = std::string(argv[2]);
+            filename = std::string(argv[2]);
             argv++;
             argc--;
         }
@@ -394,7 +401,11 @@ void DoReader()
     std::this_thread::sleep_for(std::chrono::seconds(ReaderDelay));
     std::vector<float> in(1);
 
+    ReaderSteps = 0;
+    if (FileReader)
+        WriterSize = 10000; // bigger than likely
     in.resize(WriterSize);
+    bool DoTraversalOnce = true;
     while (1)
     {
         startTS = std::chrono::high_resolution_clock::now();
@@ -404,93 +415,100 @@ void DoReader()
         {
             break;
         }
-        //	if (DoGets) {
-        std::vector<adios2::Variable<float>> Floats;
-        std::vector<adios2::Variable<float>> FloatArrays;
-        std::vector<adios2::Attribute<float>> Attributes;
-        int Cont = 1;
-        int i = 0;
-        while (Cont)
+        if (!SkipTraversal || DoTraversalOnce)
         {
-            std::string varname = "Variable" + std::to_string(i++);
-            adios2::Variable<float> tmp = io.InquireVariable<float>(varname);
-            if (tmp)
+            DoTraversalOnce = false;
+            std::vector<adios2::Variable<float>> Floats;
+            std::vector<adios2::Variable<float>> FloatArrays;
+            std::vector<adios2::Attribute<float>> Attributes;
+            int Cont = 1;
+            int i = 0;
+            while (Cont)
             {
-                Floats.push_back(tmp);
-            }
-            else
-            {
-                Cont = 0;
-            }
-        }
-        Cont = 1;
-        i = 0;
-        while (Cont)
-        {
-            std::string varname = "Array" + std::to_string(i++);
-            adios2::Variable<float> tmp = io.InquireVariable<float>(varname);
-            if (tmp)
-            {
-                FloatArrays.push_back(tmp);
-            }
-            else
-            {
-                Cont = 0;
-            }
-        }
-        i = 0;
-        Cont = 1;
-        while (Cont)
-        {
-            std::string varname = "Attribute" + std::to_string(i++);
-            adios2::Attribute<float> tmp = io.InquireAttribute<float>(varname);
-            if (tmp)
-            {
-                Attributes.push_back(tmp);
-            }
-            else
-            {
-                Cont = 0;
-            }
-        }
-        LastVarSize = (int)Floats.size();
-        for (auto Var : Floats)
-        {
-            reader.Get(Var, in.data());
-        }
-        LastArraySize = (int)FloatArrays.size();
-        for (auto Var : FloatArrays)
-        {
-            if (Var.ShapeID() == adios2::ShapeID::GlobalArray)
-            {
-                reader.Get(Var, in.data());
-            }
-            else
-            {
-                // local, go through blocks
-                for (int rank = 0; rank < WriterSize; rank++)
+                std::string varname = "Variable" + std::to_string(i++);
+                adios2::Variable<float> tmp = io.InquireVariable<float>(varname);
+                if (tmp)
                 {
-                    for (auto blk : reader.BlocksInfo(Var, reader.CurrentStep()))
+                    Floats.push_back(tmp);
+                }
+                else
+                {
+                    Cont = 0;
+                }
+            }
+            Cont = 1;
+            i = 0;
+            while (Cont)
+            {
+                std::string varname = "Array" + std::to_string(i++);
+                adios2::Variable<float> tmp = io.InquireVariable<float>(varname);
+                if (tmp)
+                {
+                    FloatArrays.push_back(tmp);
+                }
+                else
+                {
+                    Cont = 0;
+                }
+            }
+            i = 0;
+            Cont = 1;
+            while (Cont)
+            {
+                std::string varname = "Attribute" + std::to_string(i++);
+                adios2::Attribute<float> tmp = io.InquireAttribute<float>(varname);
+                if (tmp)
+                {
+                    Attributes.push_back(tmp);
+                }
+                else
+                {
+                    Cont = 0;
+                }
+            }
+            LastVarSize = (int)Floats.size();
+            LastArraySize = (int)FloatArrays.size();
+            LastBlocksCount = (int)reader.BlocksInfo(FloatArrays[0], reader.CurrentStep()).size();
+            if (!SkipTraversal)
+            {
+                for (auto Var : Floats)
+                {
+                    reader.Get(Var, in.data());
+                }
+                for (auto Var : FloatArrays)
+                {
+                    if (Var.ShapeID() == adios2::ShapeID::GlobalArray)
                     {
-                        Var.SetBlockSelection(blk.BlockID);
                         reader.Get(Var, in.data());
+                    }
+                    else
+                    {
+                        // local, go through blocks
+                        for (int rank = 0; rank < WriterSize; rank++)
+                        {
+                            for (auto blk : reader.BlocksInfo(Var, reader.CurrentStep()))
+                            {
+                                Var.SetBlockSelection(blk.BlockID);
+                                reader.Get(Var, in.data());
+                            }
+                        }
+                    }
+                }
+                LastAttrsSize = (int)Attributes.size();
+                for (auto Attr : Attributes)
+                {
+                    if (Attr.Data().front() != 0.0)
+                    {
+                        std::cerr << "Bad attr data" << std::endl;
                     }
                 }
             }
         }
-        LastAttrsSize = (int)Attributes.size();
-        for (auto Attr : Attributes)
-        {
-            if (Attr.Data().front() != 0.0)
-            {
-                std::cerr << "Bad attr data" << std::endl;
-            }
-        }
-        //	}
         reader.EndStep();
         finishTS = std::chrono::high_resolution_clock::now();
         InstallTime += (endBeginStep - startTS);
         TraversalTime += (finishTS - endBeginStep);
+        ReaderSteps++;
     }
     reader.Close();
 }
@@ -499,16 +517,31 @@ void DoReaderOutput()
 {
     std::cout << "Metadata Installation Time " << InstallTime.count() << " seconds." << std::endl;
 
-    std::cout << "Metadata Traversal Time " << TraversalTime.count() << " seconds." << std::endl;
+    if (!SkipTraversal)
+        std::cout << "Metadata Traversal Time " << TraversalTime.count() << " seconds."
+                  << std::endl;
 
-    std::cout << "Parameters Nsteps=" << NSteps << ", NumArrays=" << NumArrays
-              << ", NumVArs=" << NumVars << ", NumAttrs=" << NumAttrs << ", NumBlocks=" << NumBlocks
-              << std::endl;
-    if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) || (NumAttrs != LastAttrsSize))
+    if (!FileReader)
     {
-        std::cout << "Arrays=" << LastArraySize << ", Vars=" << LastVarSize
-                  << ", Attrs=" << LastAttrsSize << ", NumBlocks=" << NumBlocks << std::endl;
-        std::cout << "Inconsistency" << std::endl;
+        std::cout << "Parameters Nsteps=" << NSteps << ", NumArrays=" << NumArrays
+                  << ", NumVars=" << NumVars << ", NumAttrs=" << NumAttrs
+                  << ", NumBlocks=" << NumBlocks << std::endl;
+    }
+    else
+    {
+        std::cout << "NSteps= " << ReaderSteps << ", Arrays = " << LastArraySize
+                  << ", Vars=" << LastVarSize << ", Attrs=" << LastAttrsSize
+                  << ", NumBlocks=" << LastBlocksCount << std::endl;
+    }
+    if (!FileReader && !FileWriter)
+    {
+        if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) || (NumAttrs != LastAttrsSize))
+        {
+            std::cout << "Reader values NSteps= " << ReaderSteps << ", Arrays = " << LastArraySize
+                      << ", Vars=" << LastVarSize << ", Attrs=" << LastAttrsSize
+                      << ", NumBlocks=" << NumBlocks << std::endl;
+            std::cout << "Inconsistency between writer and reader in sizes" << std::endl;
+        }
     }
 }
 

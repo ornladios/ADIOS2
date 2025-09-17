@@ -204,9 +204,8 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
 void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
 {
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
-    size_t m_MetadataThreads = 24;
+    size_t m_MetadataThreads = m_Parameters.MetadataThreads;
     size_t nThreads = (m_MetadataThreads < WriterCount ? m_MetadataThreads : WriterCount);
-    std::cout << "DOing Parallel, nthreads " << nThreads << std::endl;
     size_t nextRank = 0;
     std::mutex mutexRankMetadata;
     std::vector<size_t> MDsize_vec(WriterCount);
@@ -365,7 +364,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         m_BP5Deserializer->SetupForStep(m_CurrentStep,
                                         m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
 
-        if (!getenv("SerialMetadata"))
+        if (m_Parameters.MetadataThreads > 1)
         {
             ParallelInstallMetadataForTimestep(m_CurrentStep);
         }
@@ -1450,10 +1449,14 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             {
                 m_BP5Deserializer->SetupForStep(Step,
                                                 m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
-                if (getenv("Pmetadata"))
+                if (m_Parameters.MetadataThreads > 1)
+                {
                     ParallelInstallMetadataForTimestep(Step);
+                }
                 else
+                {
                     InstallMetadataForTimestep(Step);
+                }
             }
         }
     }
