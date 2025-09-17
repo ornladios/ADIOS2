@@ -62,14 +62,14 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 #. Aggregation
 
-   #. **AggregationType**: *TwoLevelShm*, *EveryoneWritesSerial* and
-      *EveryoneWrites* are three data aggregation strategies. See :ref:`Aggregation in BP5`. The default is *TwoLevelShm*.
+   #. **AggregationType**: *TwoLevelShm*, *EveryoneWritesSerial*, *DataSizeBased*, and
+      *EveryoneWrites* are four data aggregation strategies. See :ref:`Aggregation in BP5`. The default is *TwoLevelShm*.
  
-   #. **NumAggregators**: The number of processes that will ever write data directly to storage. The default is set to the number of compute nodes the application is running on (i.e. one process per compute node). TwoLevelShm will select a fixed number of processes *per compute-node* to get close to the intention of the user but does not guarantee the exact number of aggregators.
+   #. **NumAggregators**: The number of processes that will ever write data directly to storage. The default is set to the number of compute nodes the application is running on (i.e. one process per compute node). TwoLevelShm will select a fixed number of processes *per compute-node* to get close to the intention of the user but does not guarantee the exact number of aggregators. *DataSaizeBased* will ignore this configuration setting and set the value to *NumSubFiles*.
 
    #. **AggregatorRatio**: An alternative option to NumAggregators to pick every nth process as aggregator. The number of aggregators will be automatically kept to be within 1 and total number of processes no matter what bad number is supplied here. Moreover, TwoLevelShm will select an fixed number of processes *per compute-node* to get close to the intention of this ratio but does not guarantee the exact number of aggregators.
 
-   #. **NumSubFiles**: The number of data files to write to in the *.bp/* directory. Only used by *TwoLevelShm* aggregator, where the number of files can be smaller then the number of aggregators. The default is set to *NumAggregators*. 
+   #. **NumSubFiles**: The number of data files to write to in the *.bp/* directory. Used by *TwoLevelShm* and *DataSizeBased* aggregators.  For *TwoLevelShm* the number of files can be smaller then the number of aggregators, while for *DataSizeBased*, the number of aggregators is ignored and set equal to this value. The default is set to *NumAggregators*.
 
    #. **StripeSize**: The data blocks of different processes are aligned to this size (default is 4096 bytes) in the files. Its purpose is to avoid multiple processes to write to the same file system block and potentially slow down the write.  
 
@@ -160,10 +160,10 @@ This engine allows the user to fine tune the buffering operations through the fo
 =============================== ===================== ===========================================================
  OpenTimeoutSecs                 float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
  BeginStepPollingFrequencySecs   float                 **1**, 10.0 
- AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, EveryoneWrites
- NumAggregators                  integer >= 1          **0 (one file per compute node)**
+ AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, DataSizeBased, EveryoneWrites
+ NumAggregators                  integer >= 1          **0 (one file per compute node)**, ignored when *AggregationType=DataSizeBased*
  AggregatorRatio                 integer >= 1          not used unless set
- NumSubFiles                     integer >= 1          **=NumAggregators**, only used when *AggregationType=TwoLevelShm*
+ NumSubFiles                     integer >= 1          **=NumAggregators**, used when *AggregationType=TwoLevelShm* or *AggregationType=DataSizeBased*
  StripeSize                      integer+units         **4KB**
  MaxShmSize                      integer+units         **4294762496**
  BufferVType                     string                **chunk**, malloc
