@@ -387,7 +387,8 @@ public:
 private:
 };
 
-/** UserOptions holds all user options from ~/.config/adios2/adios2.yaml */
+/** UserOptions holds all user options from ~/.config/adios2/adios2.yaml and
+ * ~/.config/hpc-campaign/config.yaml*/
 struct UserOptions
 {
     struct General
@@ -453,7 +454,7 @@ struct HostConfig
     int verbose = 0;
 };
 
-/** HostOptions holds all user options from ~/.config/adios2/hosts.yaml */
+/** HostOptions holds all user options from ~/.config/hpc-campaign/hosts.yaml */
 using HostOptions = std::map<std::string, std::vector<HostConfig>>;
 
 /**

@@ -96,9 +96,10 @@ int Remote::LaunchRemoteServerViaConnectionManager(const std::string remoteHost)
     }
     if (!hostconf)
     {
-        helper::Throw<std::invalid_argument>("Toolkit", "Remote", "EstablishConnection",
-                                             "No ssh configuration found for host " + remoteHost +
-                                                 ". Add config in ~/.config/adios2/hosts.yaml");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "Remote", "EstablishConnection",
+            "No ssh configuration found for host " + remoteHost +
+                ". Add config in ~/.config/hpc-campaign/hosts.yaml");
     }
 
     std::string request = "/run_service?group=" + remoteHost + "&service=" + hostconf->name;
