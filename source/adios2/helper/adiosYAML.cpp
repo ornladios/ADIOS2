@@ -277,7 +277,7 @@ void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOpt
 
     /*
      * This code section below determines what options we recognize at all from the
-     * ~/.config/adios2/adios2.yaml file
+     * ~/.config/adios2/adios2.yaml and ~/.config/hpc-campaign/config.yaml files
      */
     {
         UserOptions::General &opts = options.general;

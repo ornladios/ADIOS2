@@ -164,10 +164,12 @@ public:
     void RecordOutputStep(const std::string &name, const size_t step = UnknownStep,
                           const double time = UnknownTime);
 
-    /** A constant reference to the user options from ~/.config/adios2/adios2.yaml */
+    /** A constant reference to the user options from
+     * ~/.config/adios2/adios2.yaml and ~/.config/hpc-campaign/config.yaml
+     */
     const adios2::UserOptions &GetUserOptions();
 
-    /** A constant reference to the host options from ~/.config/adios2/hosts.yaml */
+    /** A constant reference to the host options from ~/.config/hpc-campaign/hosts.yaml */
     const adios2::HostOptions &GetHostOptions();
 
 private:
