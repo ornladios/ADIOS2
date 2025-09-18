@@ -164,6 +164,7 @@ public:
     MACRO(ReaderShortCircuitReads, Bool, bool, false)                                              \
     MACRO(StatsLevel, UInt, unsigned int, 1)                                                       \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
+    MACRO(MetadataThreads, UInt, unsigned int, 8)                                                  \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
     MACRO(UseSelectiveMetadataAggregation, Bool, bool, true)                                       \
     MACRO(OneLevelGatherRanksLimit, Int, int, 6000)                                                \

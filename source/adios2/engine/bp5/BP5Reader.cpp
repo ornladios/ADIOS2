@@ -201,6 +201,110 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
     }
 }
 
+void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
+{
+    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
+    size_t m_MetadataThreads = m_Parameters.MetadataThreads;
+    size_t nThreads = (m_MetadataThreads < WriterCount ? m_MetadataThreads : WriterCount);
+    size_t nextRank = 0;
+    std::mutex mutexRankMetadata;
+    std::vector<size_t> MDsize_vec(WriterCount);
+    std::vector<size_t> MDpos_vec(WriterCount);
+    std::vector<void *> PreppedBuffer_vec(WriterCount);
+    std::vector<FFSTypeHandle> FFSFormat_vec(WriterCount);
+
+    auto lf_GetNextRank = [&]() -> size_t {
+        std::lock_guard<std::mutex> lockGuard(mutexRankMetadata);
+        size_t idx = MaxSizeT;
+        if (nextRank < WriterCount)
+        {
+            idx = nextRank;
+            ++nextRank;
+        }
+        return idx;
+    };
+
+    auto lf_InstallForRank = [&](const size_t threadID) -> bool {
+        while (true)
+        {
+            const auto rank = lf_GetNextRank();
+            if (rank > WriterCount)
+            {
+                break;
+            }
+            size_t ThisMDSize = MDsize_vec[rank];
+            char *ThisMD = m_Metadata.Data() + MDpos_vec[rank];
+            FFSTypeHandle FFSFormat = FFSFormat_vec[rank];
+            void *PreppedBuffer =
+                m_BP5Deserializer->MetadataBufferPrep(ThisMD, ThisMDSize, rank, FFSFormat);
+            {
+                std::lock_guard<std::mutex> lockGuard(mutexRankMetadata);
+                PreppedBuffer_vec[rank] = PreppedBuffer;
+                FFSFormat_vec[rank] = FFSFormat;
+            }
+        }
+        return true;
+    };
+
+    std::vector<std::future<bool>> futures(nThreads);
+    size_t pgstart = m_MetadataIndexTable[Step][0];
+    size_t Position = pgstart + sizeof(uint64_t); // skip total data size
+    size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        // variable metadata for timestep
+        size_t ThisMDSize =
+            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
+        MDsize_vec[WriterRank] = ThisMDSize;
+        MDpos_vec[WriterRank] = MDPosition;
+        char *ThisMD = m_Metadata.Data() + MDPosition;
+        FFSFormat_vec[WriterRank] = m_BP5Deserializer->BufferMetaMetaPrep(ThisMD);
+        MDPosition += ThisMDSize;
+    }
+
+    {
+        std::vector<std::future<bool>> futures(nThreads);
+
+        // launch Threads-1 threads to process subsets of handles,
+        // then main thread process the last subset
+        for (size_t tid = 0; tid < nThreads; ++tid)
+        {
+            futures[tid] = std::async(std::launch::async, lf_InstallForRank, tid + 1);
+        }
+
+        // wait for all async threads
+        for (auto &f : futures)
+        {
+            f.get();
+        }
+    }
+    // complete the metadata installation, serial part
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_FlattenSteps))
+        {
+            m_BP5Deserializer->InstallMetadataBuffer(PreppedBuffer_vec[WriterRank], WriterRank,
+                                                     Step, FFSFormat_vec[WriterRank]);
+        }
+        else
+        {
+            m_BP5Deserializer->InstallMetadataBuffer(PreppedBuffer_vec[WriterRank], WriterRank,
+                                                     SIZE_MAX, FFSFormat_vec[WriterRank]);
+        }
+    }
+
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        // attribute metadata for timestep
+        size_t ThisADSize =
+            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
+        char *ThisAD = m_Metadata.Data() + MDPosition;
+        if (ThisADSize > 0)
+            m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+        MDPosition += ThisADSize;
+    }
+}
+
 StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::BeginStep");
@@ -256,26 +360,18 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
 
         m_IO.m_EngineStep = m_CurrentStep;
-        //        SstBlock AttributeBlockList =
-        //            SstGetAttributeData(m_Input, SstCurrentStep(m_Input));
-        //        i = 0;
-        //        while (AttributeBlockList && AttributeBlockList[i].BlockData)
-        //        {
-        //            m_IO.RemoveAllAttributes();
-        //            m_BP5Deserializer->InstallAttributeData(
-        //                AttributeBlockList[i].BlockData,
-        //                AttributeBlockList[i].BlockSize);
-        //            i++;
-        //        }
 
         m_BP5Deserializer->SetupForStep(m_CurrentStep,
                                         m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
 
-        /* Remove all existing variables from previous steps
-           It seems easier than trying to update them */
-        // m_IO.RemoveAllVariables();
-
-        InstallMetadataForTimestep(m_CurrentStep);
+        if (m_Parameters.MetadataThreads > 1)
+        {
+            ParallelInstallMetadataForTimestep(m_CurrentStep);
+        }
+        else
+        {
+            InstallMetadataForTimestep(m_CurrentStep);
+        }
         m_IO.ResetVariablesStepSelection(false, "in call to BP5 Reader BeginStep");
 
         // caches attributes for each step
@@ -1353,7 +1449,14 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             {
                 m_BP5Deserializer->SetupForStep(Step,
                                                 m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
-                InstallMetadataForTimestep(Step);
+                if (m_Parameters.MetadataThreads > 1)
+                {
+                    ParallelInstallMetadataForTimestep(Step);
+                }
+                else
+                {
+                    InstallMetadataForTimestep(Step);
+                }
             }
         }
     }
