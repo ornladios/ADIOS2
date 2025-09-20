@@ -27,12 +27,12 @@ install(TARGETS bpls EXPORT adios2
 )
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/bpls/bpls.cmake.gen.in"
-  "${PROJECT_BINARY_DIR}/bpls.cmake.gen"
+  "${CMAKE_CURRENT_BINARY_DIR}/bpls.cmake.gen"
   @ONLY
 )
 file(GENERATE
   OUTPUT "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  INPUT "${PROJECT_BINARY_DIR}/bpls.cmake.gen"
+  INPUT "${CMAKE_CURRENT_BINARY_DIR}/bpls.cmake.gen"
 )
 
 # BPCMP
@@ -41,12 +41,12 @@ if(ADIOS2_HAVE_Python)
 
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/bpcmp/bpcmp.cmake.gen.in"
-    "${PROJECT_BINARY_DIR}/bpcmp.cmake.gen"
+    "${CMAKE_CURRENT_BINARY_DIR}/bpcmp.cmake.gen"
     @ONLY
   )
   file(GENERATE
     OUTPUT "${PROJECT_BINARY_DIR}/$<CONFIG>/bpcmp.cmake"
-    INPUT "${PROJECT_BINARY_DIR}/bpcmp.cmake.gen"
+    INPUT "${CMAKE_CURRENT_BINARY_DIR}/bpcmp.cmake.gen"
   )
 endif()
 
