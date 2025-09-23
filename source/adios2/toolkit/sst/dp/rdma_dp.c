@@ -783,9 +783,25 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
 
     int res;
 
+    int delay = 100; // Initial delay of 100ms
+    int max_delay = 2000;    // Maximum delay of 2 seconds
     do
     {
         res = fi_close((struct fid *)fabric->signal);
+        if (res == -FI_EBUSY)
+        {
+            usleep(delay);
+            delay *= 2;
+            if (delay > max_delay)
+            {
+                // fall out of loop
+                Svcs->verbose(
+                    CP_Stream, DPCriticalVerbose,
+                    "could not close fabric->signal after several tries, failed with %d (%s).\n",
+                    res, fi_strerror(res));
+                break;
+            }
+        }
     } while (res == -FI_EBUSY);
 
     if (res != FI_SUCCESS)
