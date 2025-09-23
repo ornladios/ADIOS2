@@ -40,18 +40,18 @@ Assuming we are in
     $ ls -d *.bp
     ckpt.bp gs.bp
 
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 delete --campaign
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 create
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 dataset gs.bp ckpt.bp
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 delete --campaign
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 create
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 dataset gs.bp ckpt.bp
     
     $ mpirun -n 3 adios2_simulations_gray-scott_pdf-calc gs.bp pdf.bp 1000
     $ ls -d *.bp
     ckpt.bp gs.bp pdf.bp
 
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 dataset pdf.bp
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 text settings-files.json --store
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 dataset pdf.bp
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 text settings-files.json --store
 
-    $ hpc_campaign_manager demoproject/frontier_gray-scott_100 info
+    $ hpc_campaign manager demoproject/frontier_gray-scott_100 info
     =============================
     ADIOS Campaign Archive, version 0.5, created on Sep 10 14:29
 
@@ -142,7 +142,7 @@ Assuming the campaign archive was synced to a local machine's campaign store und
 
 .. code-block:: bash
 
-    $ hpc_campaign_list gray-scott
+    $ hpc_campaign list gray-scott
     csc143/demoproject/frontier_gray-scott_100.aca
 
     $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca
@@ -186,11 +186,11 @@ Assuming that
           args: -background -report_port_selection -v -v -l ~/dtn/log.adios2_remote_server -t 16
           verbose: 1
 
-First, we need to launch the **hpc_campaign_connector**, specifying to load the host configuration, and to listen on port `30000` for the requests for connections.
+First, we need to launch the **hpc_campaign connector**, specifying to load the host configuration, and to listen on port `30000` for the requests for connections.
 
 .. code-block:: bash
 		
-    $ hpc_campaign_connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
+    $ hpc_campaign connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
     SSH Tunnel Server:  127.0.0.1 30000
 
 Assuming the campaign archive was synced to a local machine's campaign store under `csc143/demoproject`, now we can retrieve data:
@@ -225,7 +225,7 @@ the passcode to login to OLCF, and logs on screen activity similar to this:
 
 .. code-block:: bash
 
-    $ hpc_campaign_connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
+    $ hpc_campaign connector -c ~/.config/hpc-campaign/hosts.yaml -p  30000
     SSH Tunnel Server:  127.0.0.1 30000
     Client 127.0.0.1:
     Request  : /run_service?group=OLCF&service=dtn-ssh
