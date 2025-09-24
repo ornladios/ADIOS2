@@ -26,7 +26,7 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_INDEX, {"INDEX", false}},
     {ExpressionOperator::OP_ADD, {"ADD", true}},
     {ExpressionOperator::OP_SUBTRACT, {"SUBTRACT", true}},
-    {ExpressionOperator::OP_MULT, {"MULT", false}},
+    {ExpressionOperator::OP_MULT, {"MULT", true}},
     {ExpressionOperator::OP_DIV, {"DIV", false}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
@@ -44,24 +44,31 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
-    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
-    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"/", ExpressionOperator::OP_DIV},          {"divide", ExpressionOperator::OP_DIV},
-    {"DIVIDE", ExpressionOperator::OP_DIV},     {"*", ExpressionOperator::OP_MULT},
-    {"multiply", ExpressionOperator::OP_MULT},  {"MULTIPLY", ExpressionOperator::OP_MULT},
-    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
-    {"pow", ExpressionOperator::OP_POW},        {"POW", ExpressionOperator::OP_POW},
-    {"sin", ExpressionOperator::OP_SIN},        {"cos", ExpressionOperator::OP_COS},
-    {"tan", ExpressionOperator::OP_TAN},        {"asin", ExpressionOperator::OP_ASIN},
-    {"acos", ExpressionOperator::OP_ACOS},      {"atan", ExpressionOperator::OP_ATAN},
-    {"^", ExpressionOperator::OP_POW},          {"magnitude", ExpressionOperator::OP_MAGN},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"cross", ExpressionOperator::OP_CROSS},
-    {"curl", ExpressionOperator::OP_CURL},      {"CURL", ExpressionOperator::OP_CURL}};
+    {"INDEX", ExpressionOperator::OP_INDEX},       {"+", ExpressionOperator::OP_ADD},
+    {"ADD", ExpressionOperator::OP_ADD},           {"-", ExpressionOperator::OP_SUBTRACT},
+    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT}, {"/", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},        {"*", ExpressionOperator::OP_MULT},
+    {"MULTIPLY", ExpressionOperator::OP_MULT},     {"SQRT", ExpressionOperator::OP_SQRT},
+    {"POW", ExpressionOperator::OP_POW},           {"SIN", ExpressionOperator::OP_SIN},
+    {"COS", ExpressionOperator::OP_COS},           {"^", ExpressionOperator::OP_POW},
+    {"TAN", ExpressionOperator::OP_TAN},           {"ASIN", ExpressionOperator::OP_ASIN},
+    {"ACOS", ExpressionOperator::OP_ACOS},         {"ATAN", ExpressionOperator::OP_ATAN},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN},    {"CROSS", ExpressionOperator::OP_CROSS},
+    {"CURL", ExpressionOperator::OP_CURL}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
-inline ExpressionOperator get_op(std::string op) { return string_to_op.at(op); }
+inline bool get_op_associativity(ExpressionOperator op)
+{
+    return op_property.at(op).is_associative;
+}
+
+inline ExpressionOperator get_op(std::string op)
+{
+    std::transform(op.begin(), op.end(), op.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+    return string_to_op.at(op);
+}
 
 // helper function
 ExpressionOperator convert_op(std::string opname)
