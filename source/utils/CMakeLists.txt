@@ -4,8 +4,8 @@
 #------------------------------------------------------------------------------#
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/verinfo.h.in
-  ${PROJECT_BINARY_DIR}/verinfo.h
+  "${CMAKE_CURRENT_SOURCE_DIR}/verinfo.h.in"
+  "${PROJECT_BINARY_DIR}/verinfo.h"
   @ONLY
 )
 
@@ -26,13 +26,13 @@ install(TARGETS bpls EXPORT adios2
   ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/bpls/bpls.cmake.gen.in
-  ${PROJECT_BINARY_DIR}/bpls.cmake.gen
+  "${CMAKE_CURRENT_SOURCE_DIR}/bpls/bpls.cmake.gen.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/bpls.cmake.gen"
   @ONLY
 )
 file(GENERATE
-  OUTPUT ${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake
-  INPUT ${PROJECT_BINARY_DIR}/bpls.cmake.gen
+  OUTPUT "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+  INPUT "${CMAKE_CURRENT_BINARY_DIR}/bpls.cmake.gen"
 )
 
 # BPCMP
@@ -40,13 +40,13 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(bpcmp)
 
   configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/bpcmp/bpcmp.cmake.gen.in
-    ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
+    "${CMAKE_CURRENT_SOURCE_DIR}/bpcmp/bpcmp.cmake.gen.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/bpcmp.cmake.gen"
     @ONLY
   )
   file(GENERATE
-    OUTPUT ${PROJECT_BINARY_DIR}/$<CONFIG>/bpcmp.cmake
-    INPUT ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
+    OUTPUT "${PROJECT_BINARY_DIR}/$<CONFIG>/bpcmp.cmake"
+    INPUT "${CMAKE_CURRENT_BINARY_DIR}/bpcmp.cmake.gen"
   )
 endif()
 
@@ -112,8 +112,8 @@ install(PROGRAMS adios2_deactivate_bp
 
 # Simplified wrappers for adios2_reorganize
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/adios_reorganize/adios2_reorganize_wrapper
-  ${PROJECT_BINARY_DIR}/adios2_reorganize_wrapper
+  "${CMAKE_CURRENT_SOURCE_DIR}/adios_reorganize/adios2_reorganize_wrapper"
+  "${PROJECT_BINARY_DIR}/adios2_reorganize_wrapper"
   @ONLY
 )
 
