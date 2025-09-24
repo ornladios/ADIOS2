@@ -6,6 +6,7 @@
 #include "adios2/helper/adiosLog.h"
 #include "parser/ASTDriver.h"
 
+#include <algorithm>
 #include <functional>
 
 namespace adios2
@@ -119,6 +120,10 @@ void ASTNode_to_ExpressionTree(adios2::detail::ASTNode *node, adios2::derived::E
                     else
                         exp.AddVarChild(std::get<1>(childTree));
                 }
+                // move the constants to the current node
+                auto constants = temp_node.GetConstants();
+                for (const auto &c : constants)
+                    exp.AddNumChild(c);
             }
             else
             {
@@ -127,14 +132,16 @@ void ASTNode_to_ExpressionTree(adios2::detail::ASTNode *node, adios2::derived::E
         }
     }
 }
+
 }
 
 namespace derived
 {
 struct OperatorFunctions
 {
-    std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
-    std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>)> DimsFct;
+    std::function<DerivedData(ExprData)> ComputeFct;
+    std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>, bool)>
+        DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
 
@@ -290,10 +297,12 @@ Expression::ApplyExpression(const size_t numBlocks,
             auto count = op.Count;
             exprDims.push_back({start, count, count});
         }
-        auto outDims = op_fct.DimsFct(exprDims);
+        auto outDims = op_fct.DimsFct(exprDims, m_Consts.size() > 0);
 
+        // add constants to the input data for applying the operator
+        ExprData exprInputData({exprData[blk], m_Consts, outType});
         // apply function over the operands
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], outType);
+        outputData[blk] = op_fct.ComputeFct(exprInputData);
         // set the dimension and type of the output data
         outputData[blk].Type = outType;
         outputData[blk].Start = std::get<0>(outDims);
