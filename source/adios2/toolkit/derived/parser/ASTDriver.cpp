@@ -71,13 +71,19 @@ void ASTDriver::add_lookup_entry(std::string alias, std::string var_name)
     aliases.insert({alias, {var_name, {}}});
 }
 
+void ASTDriver::add_number(std::string num)
+{
+    ASTNode *node = new ASTNode("NUM", num);
+    holding.push(node);
+}
+
 void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
 {
     ASTNode *node = new ASTNode(op_name, numsubexprs);
+    if (numsubexprs != holding.size())
+        throw std::runtime_error("ERROR: derived expression cannot be parsed ");
     for (size_t i = 1; i <= numsubexprs; ++i)
     {
-        // TODO: check that holding contains ASTNode(s)
-        // else throw error that parsing failed
         ASTNode *subexpr = holding.top();
         node->insert_subexpr_n(subexpr, numsubexprs - i);
         holding.pop();

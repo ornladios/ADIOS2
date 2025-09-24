@@ -49,7 +49,7 @@
 %token <std::string> OPERATOR
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
-%token <int> INT "number"
+%token <std::string> NUM
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
@@ -70,7 +70,7 @@ assignment:
 ;
 
 exp:
-  "number" {  }
+  NUM { drv.add_number($1); }
 | exp OPERATOR exp { drv.createNode($2, 2); }
 | "(" exp ")" {  }
 | IDENTIFIER "(" list ")" { drv.createNode($1, $3); }
@@ -87,17 +87,17 @@ indices_list:
 
 index:
   %empty                  { $$ = {-1, -1,  1}; }
-| INT COLON INT COLON INT { $$ = {$1, $3, $5}; }
-| COLON INT COLON INT     { $$ = {-1, $2, $4}; }
-| INT COLON COLON INT     { $$ = {$1, -1, $4}; }
-| INT COLON INT COLON     { $$ = {$1, $3,  1}; }
-| INT COLON INT           { $$ = {$1, $3,  1}; }
-| COLON COLON INT         { $$ = {-1, -1, $3}; }
-| COLON INT COLON         { $$ = {-1, $2,  1}; }
-| COLON INT               { $$ = {-1, $2,  1}; }
-| INT COLON COLON         { $$ = {$1, -1,  1}; }
-| INT COLON               { $$ = {$1, -1,  1}; }
-| INT                     { $$ = {$1, $1,  1}; }
+| NUM COLON NUM COLON NUM { $$ = {std::stoi($1), std::stoi($3), std::stoi($5)}; }
+| COLON NUM COLON NUM     { $$ = {-1, std::stoi($2), std::stoi($4)}; }
+| NUM COLON COLON NUM     { $$ = {std::stoi($1), -1, std::stoi($4)}; }
+| NUM COLON NUM COLON     { $$ = {std::stoi($1), std::stoi($3),  1}; }
+| NUM COLON NUM           { $$ = {std::stoi($1), std::stoi($3),  1}; }
+| COLON COLON NUM         { $$ = {-1, -1, std::stoi($3)}; }
+| COLON NUM COLON         { $$ = {-1, std::stoi($2),  1}; }
+| COLON NUM               { $$ = {-1, std::stoi($2),  1}; }
+| NUM COLON COLON         { $$ = {std::stoi($1), -1,  1}; }
+| NUM COLON               { $$ = {std::stoi($1), -1,  1}; }
+| NUM                     { $$ = {std::stoi($1), std::stoi($1),  1}; }
 ;
 
 list:

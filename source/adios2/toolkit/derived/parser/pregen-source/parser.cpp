@@ -209,7 +209,6 @@ namespace adios2 { namespace detail {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.YY_MOVE_OR_COPY< int > (YY_MOVE (that.value));
         break;
@@ -217,6 +216,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
@@ -243,7 +243,6 @@ namespace adios2 { namespace detail {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.move< int > (YY_MOVE (that.value));
         break;
@@ -251,6 +250,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
@@ -277,7 +277,6 @@ namespace adios2 { namespace detail {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.copy< int > (that.value);
         break;
@@ -285,6 +284,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.copy< std::string > (that.value);
         break;
 
@@ -310,7 +310,6 @@ namespace adios2 { namespace detail {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.move< int > (that.value);
         break;
@@ -318,6 +317,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.move< std::string > (that.value);
         break;
 
@@ -598,7 +598,6 @@ namespace adios2 { namespace detail {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         yylhs.value.emplace< int > ();
         break;
@@ -606,6 +605,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         yylhs.value.emplace< std::string > ();
         break;
 
@@ -673,9 +673,9 @@ namespace adios2 { namespace detail {
 #line 674 "parser.cpp"
     break;
 
-  case 8: // exp: "number"
+  case 8: // exp: "NUM"
 #line 73 "../parser.y"
-           {  }
+           { drv.add_number(yystack_[0].value.as < std::string > ()); }
 #line 680 "parser.cpp"
     break;
 
@@ -733,69 +733,69 @@ namespace adios2 { namespace detail {
 #line 734 "parser.cpp"
     break;
 
-  case 18: // index: "number" ":" "number" ":" "number"
+  case 18: // index: "NUM" ":" "NUM" ":" "NUM"
 #line 90 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[4].value.as < int > (), yystack_[2].value.as < int > (), yystack_[0].value.as < int > ()}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[4].value.as < std::string > ()), std::stoi(yystack_[2].value.as < std::string > ()), std::stoi(yystack_[0].value.as < std::string > ())}; }
 #line 740 "parser.cpp"
     break;
 
-  case 19: // index: ":" "number" ":" "number"
+  case 19: // index: ":" "NUM" ":" "NUM"
 #line 91 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[2].value.as < int > (), yystack_[0].value.as < int > ()}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, std::stoi(yystack_[2].value.as < std::string > ()), std::stoi(yystack_[0].value.as < std::string > ())}; }
 #line 746 "parser.cpp"
     break;
 
-  case 20: // index: "number" ":" ":" "number"
+  case 20: // index: "NUM" ":" ":" "NUM"
 #line 92 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[3].value.as < int > (), -1, yystack_[0].value.as < int > ()}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[3].value.as < std::string > ()), -1, std::stoi(yystack_[0].value.as < std::string > ())}; }
 #line 752 "parser.cpp"
     break;
 
-  case 21: // index: "number" ":" "number" ":"
+  case 21: // index: "NUM" ":" "NUM" ":"
 #line 93 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[3].value.as < int > (), yystack_[1].value.as < int > (),  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[3].value.as < std::string > ()), std::stoi(yystack_[1].value.as < std::string > ()),  1}; }
 #line 758 "parser.cpp"
     break;
 
-  case 22: // index: "number" ":" "number"
+  case 22: // index: "NUM" ":" "NUM"
 #line 94 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[2].value.as < int > (), yystack_[0].value.as < int > (),  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[2].value.as < std::string > ()), std::stoi(yystack_[0].value.as < std::string > ()),  1}; }
 #line 764 "parser.cpp"
     break;
 
-  case 23: // index: ":" ":" "number"
+  case 23: // index: ":" ":" "NUM"
 #line 95 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, -1, yystack_[0].value.as < int > ()}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, -1, std::stoi(yystack_[0].value.as < std::string > ())}; }
 #line 770 "parser.cpp"
     break;
 
-  case 24: // index: ":" "number" ":"
+  case 24: // index: ":" "NUM" ":"
 #line 96 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[1].value.as < int > (),  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, std::stoi(yystack_[1].value.as < std::string > ()),  1}; }
 #line 776 "parser.cpp"
     break;
 
-  case 25: // index: ":" "number"
+  case 25: // index: ":" "NUM"
 #line 97 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[0].value.as < int > (),  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {-1, std::stoi(yystack_[0].value.as < std::string > ()),  1}; }
 #line 782 "parser.cpp"
     break;
 
-  case 26: // index: "number" ":" ":"
+  case 26: // index: "NUM" ":" ":"
 #line 98 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[2].value.as < int > (), -1,  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[2].value.as < std::string > ()), -1,  1}; }
 #line 788 "parser.cpp"
     break;
 
-  case 27: // index: "number" ":"
+  case 27: // index: "NUM" ":"
 #line 99 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[1].value.as < int > (), -1,  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[1].value.as < std::string > ()), -1,  1}; }
 #line 794 "parser.cpp"
     break;
 
-  case 28: // index: "number"
+  case 28: // index: "NUM"
 #line 100 "../parser.y"
-                          { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[0].value.as < int > (), yystack_[0].value.as < int > (),  1}; }
+                          { yylhs.value.as < std::tuple<int, int, int> > () = {std::stoi(yystack_[0].value.as < std::string > ()), std::stoi(yystack_[0].value.as < std::string > ()),  1}; }
 #line 800 "parser.cpp"
     break;
 
@@ -1003,7 +1003,7 @@ namespace adios2 { namespace detail {
     static const char *const yy_sname[] =
     {
     "end of file", "error", "invalid token", "=", ",", ":", "(", ")", "[",
-  "]", "OPERATOR", "identifier", "VARNAME", "number", "$accept", "lines",
+  "]", "OPERATOR", "identifier", "VARNAME", "NUM", "$accept", "lines",
   "assignment", "exp", "indices_list", "index", "list", YY_NULLPTR
     };
     return yy_sname[yysymbol];

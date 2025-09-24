@@ -418,13 +418,13 @@ namespace adios2 { namespace detail {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // "number"
       // list
       char dummy1[sizeof (int)];
 
       // OPERATOR
       // "identifier"
       // VARNAME
+      // NUM
       char dummy2[sizeof (std::string)];
 
       // index
@@ -494,7 +494,7 @@ namespace adios2 { namespace detail {
     TOK_OPERATOR = 10,             // OPERATOR
     TOK_IDENTIFIER = 11,           // "identifier"
     TOK_VARNAME = 12,              // VARNAME
-    TOK_INT = 13                   // "number"
+    TOK_NUM = 13                   // "number"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -526,7 +526,7 @@ namespace adios2 { namespace detail {
         S_OPERATOR = 10,                         // OPERATOR
         S_IDENTIFIER = 11,                       // "identifier"
         S_VARNAME = 12,                          // VARNAME
-        S_INT = 13,                              // "number"
+        S_NUM = 13,                              // "number"
         S_YYACCEPT = 14,                         // $accept
         S_lines = 15,                            // lines
         S_assignment = 16,                       // assignment
@@ -570,7 +570,6 @@ namespace adios2 { namespace detail {
       {
         switch (this->kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.move< int > (std::move (that.value));
         break;
@@ -578,6 +577,7 @@ namespace adios2 { namespace detail {
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -692,7 +692,6 @@ namespace adios2 { namespace detail {
         // Value type destructor.
 switch (yykind)
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.template destroy< int > ();
         break;
@@ -700,6 +699,7 @@ switch (yykind)
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.template destroy< std::string > ();
         break;
 
@@ -813,18 +813,6 @@ switch (yykind)
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, int v, location_type l)
-        : super_type (token_kind_type (tok), std::move (v), std::move (l))
-#else
-      symbol_type (int tok, const int& v, const location_type& l)
-        : super_type (token_kind_type (tok), v, l)
-#endif
-      {
-#if !defined _MSC_VER || defined __clang__
-        YY_ASSERT (tok == token::TOK_INT);
-#endif
-      }
-#if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
         : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
@@ -833,7 +821,7 @@ switch (yykind)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
-        YY_ASSERT ((token::TOK_OPERATOR <= tok && tok <= token::TOK_VARNAME));
+        YY_ASSERT ((token::TOK_OPERATOR <= tok && tok <= token::TOK_NUM));
 #endif
       }
     };
@@ -1082,16 +1070,16 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_INT (int v, location_type l)
+      make_NUM (std::string v, location_type l)
       {
-        return symbol_type (token::TOK_INT, std::move (v), std::move (l));
+        return symbol_type (token::TOK_NUM, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_INT (const int& v, const location_type& l)
+      make_NUM (const std::string& v, const location_type& l)
       {
-        return symbol_type (token::TOK_INT, v, l);
+        return symbol_type (token::TOK_NUM, v, l);
       }
 #endif
 
@@ -1465,7 +1453,6 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.copy< int > (YY_MOVE (that.value));
         break;
@@ -1473,6 +1460,7 @@ switch (yykind)
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -1515,7 +1503,6 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case symbol_kind::S_INT: // "number"
       case symbol_kind::S_list: // list
         value.move< int > (YY_MOVE (s.value));
         break;
@@ -1523,6 +1510,7 @@ switch (yykind)
       case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_NUM: // NUM
         value.move< std::string > (YY_MOVE (s.value));
         break;
 

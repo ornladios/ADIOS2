@@ -547,9 +547,6 @@ char *yytext;
 #line 547 "lexer.cpp"
 #define YY_NO_INPUT 1
 #line 94 "../lexer.l"
-  // A number symbol corresponding to the value in S.
-  adios2::detail::parser::symbol_type
-  make_INT (const std::string &s, const adios2::detail::parser::location_type& loc);
 #line 553 "lexer.cpp"
 #line 106 "../lexer.l"
   // Code run each time a pattern is matched.
@@ -881,7 +878,7 @@ return adios2::detail::parser::make_R_BRACE (loc);
 case 10:
 YY_RULE_SETUP
 #line 128 "../lexer.l"
-return make_INT (yytext, loc);
+return adios2::detail::parser::make_NUM (yytext, loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
@@ -1884,16 +1881,6 @@ void yyfree (void * ptr )
 
 #line 137 "../lexer.l"
 
-
-adios2::detail::parser::symbol_type
-make_INT (const std::string &s, const adios2::detail::parser::location_type& loc)
-{
-  errno = 0;
-  long n = strtol (s.c_str(), NULL, 10);
-  if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
-    throw adios2::detail::parser::syntax_error (loc, "integer is out of range: " + s);
-  return adios2::detail::parser::make_INT ((int) n, loc);
-}
 
 void
 adios2::detail::ASTDriver::parse (const std::string input)

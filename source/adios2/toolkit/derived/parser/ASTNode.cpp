@@ -86,7 +86,7 @@ std::string ASTNode::get_varname() { return varname; }
 
 std::vector<std::tuple<int, int, int>> ASTNode::get_indices() { return indices; }
 
-double ASTNode::get_value() { return value; }
+std::string ASTNode::get_number() { return alias; }
 
 void ASTNode::set_varname(const std::string s) { varname = s; }
 
