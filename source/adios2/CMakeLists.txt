@@ -33,6 +33,7 @@ add_library(adios2_core
   helper/adiosNetwork.cpp
   helper/adiosPartitioner.cpp
   helper/adiosPluginManager.cpp
+  helper/adiosRerouting.cpp
   helper/adiosString.cpp helper/adiosString.tcc
   helper/adiosSystem.cpp
   helper/adiosType.cpp
