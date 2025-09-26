@@ -247,6 +247,11 @@ macro(bp5agg_gtest_add_tests testname mpi)
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased")
 endmacro()
 
+if (ADIOS2_HAVE_MPI)
+  gtest_add_tests_helper(RerouteMessage MPI_ONLY BP Engine.BPReroute. .BP5.RR
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5")
+endif()
+
 # BP5 only for now, so test all the aggregators while we're at it
 bp5agg_gtest_add_tests(ParameterSelectSteps MPI_ALLOW)
 bp5agg_gtest_add_tests(AppendAfterSteps MPI_ALLOW)

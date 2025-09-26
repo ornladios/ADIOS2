@@ -370,7 +370,16 @@ void BP5Writer::WriteData(format::BufferV *Data)
             break;
         case (int)AggregationType::EveryoneWritesSerial:
         case (int)AggregationType::DataSizeBased:
-            WriteData_EveryoneWrites(Data, true);
+            // For rerouting to be useful, there must be multiple writers sending
+            // data to multiple subfiles.
+            if (m_Parameters.EnableWriterRerouting && m_Comm.Size() > 1 && m_Aggregator->m_SubStreams > 1)
+            {
+                WriteData_WithRerouting(Data);
+            }
+            else
+            {
+                WriteData_EveryoneWrites(Data, true);
+            }
             break;
         case (int)AggregationType::TwoLevelShm:
             WriteData_TwoLevelShm(Data);
