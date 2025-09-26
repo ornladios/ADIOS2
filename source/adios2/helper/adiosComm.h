@@ -61,6 +61,14 @@ public:
     };
 
     /**
+     * @brief Various constants
+     */
+    enum class Constants
+    {
+        CommRecvAny = -10
+    };
+
+    /**
      * @brief Default constructor.  Produces an empty communicator.
      *
      * An empty communicator may not be used for communcation.
