@@ -197,6 +197,7 @@ private:
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
     void WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters);
+    void WriteData_WithRerouting(format::BufferV *Data);
     void WriteData_EveryoneWrites_Async(format::BufferV *Data, bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
