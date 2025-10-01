@@ -158,7 +158,7 @@ list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDist
 if (ADIOS2_HAVE_MPI)
   import_bp_test(WriteMemorySelectionRead 3 3)
   list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.3x3")
-  list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;")
+  list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;3x5BiDir")
 endif()
 
 #
@@ -186,7 +186,7 @@ MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS
 list (FILTER BP_SST_TESTS EXCLUDE REGEX "Joined*")
 
 set (SST_TESTS "")
-LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS} "3x5BiDir")
+LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS})
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
