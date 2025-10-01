@@ -98,13 +98,12 @@ TEST_F(BiDir, ADIOS2BiDir)
         (void)writer_io.DefineVariable<int16_t>("i16", shape, start, count);
         (void)writer_io.DefineVariable<int32_t>("i32(testparen)", shape, start, count);
         (void)writer_io.DefineVariable<int64_t>("i64", shape, start, count);
-        auto var_r32 = writer_io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r64 = writer_io.DefineVariable<double>("r64", shape, start_r64, count_r64);
+        (void)writer_io.DefineVariable<float>("r32", shape, start, count);
+        (void)writer_io.DefineVariable<double>("r64", shape, start_r64, count_r64);
         (void)writer_io.DefineVariable<std::complex<float>>("c32", shape, start, count);
         (void)writer_io.DefineVariable<std::complex<double>>("c64", shape, start, count);
-        auto var_r64_2d = writer_io.DefineVariable<double>("r64_2d", shape2, start2, count2);
-        auto var_r64_2d_rev =
-            writer_io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        (void)writer_io.DefineVariable<double>("r64_2d", shape2, start2, count2);
+        (void)writer_io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
         (void)writer_io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
     }
 
