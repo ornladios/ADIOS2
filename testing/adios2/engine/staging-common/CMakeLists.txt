@@ -39,7 +39,9 @@ set (PROGS TestCommonWrite TestShapeChangingWrite
     TestWriteJoined
     TestReadJoined
     TestOnDemandWrite
-    TestOnDemandRead)
+    TestOnDemandRead
+    TestBiDir
+)
 
 foreach(helper ${PROGS} )
   add_executable(${helper} ${helper}.cpp)
@@ -177,7 +179,6 @@ MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
-MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP5_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
@@ -185,7 +186,7 @@ MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS
 list (FILTER BP_SST_TESTS EXCLUDE REGEX "Joined*")
 
 set (SST_TESTS "")
-LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS})
+LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS} "3x5BiDir")
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
