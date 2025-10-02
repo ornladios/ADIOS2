@@ -10,16 +10,15 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosRerouting.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
-#include <algorithm> // max
 #include <ctime>
 #include <iostream>
-#include <random>
 #include <thread>
 
 namespace adios2
@@ -30,21 +29,20 @@ namespace engine
 {
 
 using namespace adios2::format;
-using namespace adios2::helper;
 
 void BP5Writer::ReroutingCommunicationLoop()
 {
-    // Sleep for a random amount of time between 0 and 6 seconds
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(0, 6000);
-    int sleepMillis = distrib(gen);
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillis));
+    using RerouteMessage = typename adios2::helper::RerouteMessage;
 
     int subCoord = m_Aggregator->m_AggregatorRank;
+    bool iAmSubCoord = m_RankMPI == subCoord;
+    // Arbitrarily make the last rank the global coordinator
+    // TODO: should the global coordinator role be assigned to a subcoordinator?
+    bool iAmGlobalCoord = m_RankMPI == m_Comm.Size() - 1;
     std::queue<int> writerQueue;
     int writingRank = -1;
-    uint64_t currentFilePos;
+    uint64_t currentFilePos = 0;
+    bool sentFinished = false;
 
     // Now start the
     std::cout << "    Rank " << m_Comm.Rank() << " ReroutingCommunicationLoop()" << std::endl;
@@ -53,20 +51,16 @@ void BP5Writer::ReroutingCommunicationLoop()
     std::cout << "        subfile index: " << m_Aggregator->m_SubStreamIndex << std::endl;
     std::cout << "        total subfiles: " << m_Aggregator->m_SubStreams << std::endl;
 
-    if (m_Rank == subCoord && m_DataPosShared == true)
+    if (iAmSubCoord && m_DataPosShared == true)
     {
         // We are a subcoordinator and have shared data pos after a previous timestep,
         // we should update our notion of m_DataPos
-        currentFilePos = m_SubstreamDataPos[a->m_SubStreamIndex];
+        currentFilePos = m_SubstreamDataPos[m_Aggregator->m_SubStreamIndex];
         m_DataPosShared = false;
     }
 
-    // align to PAGE_SIZE
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
-    m_StartDataPos = m_DataPos;
-
     // First send a message to the SC to get added to their writing queue
-    adios2::helper::RerouteMessage submitMsg;
+    RerouteMessage submitMsg;
     submitMsg.m_MsgType = RerouteMessage::MessageType::WRITE_SUBMISSION;
     submitMsg.m_SrcRank = m_RankMPI;
     submitMsg.m_DestRank = subCoord;
@@ -75,52 +69,89 @@ void BP5Writer::ReroutingCommunicationLoop()
     while (true)
     {
         int msgReady = 0;
+        helper::Comm::Status status = m_Comm.Iprobe(
+            static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
 
-        m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
-
-        if (msgReady)
+        // If there is a message ready, receive and handle it
+        // if (msgReady)
+        while (msgReady)
         {
-            // If there is a message ready, receive and handle it
-            adios2::helper::RerouteMessage message;
-            message.RecvFrom(m_Comm, static_cast<int>(helper::Comm::Constants::CommRecvAny));
+            RerouteMessage message;
+            message.RecvFrom(m_Comm, status.Source);
 
-            switch (message.m_MsgType)
+            switch ((RerouteMessage::MessageType) message.m_MsgType)
             {
-            case (int)RerouteMessage::MessageType::WRITE_SUBMISSION:
+            case RerouteMessage::MessageType::WRITE_SUBMISSION:
                 writerQueue.push(message.m_SrcRank);
                 break;
-            case (int)RerouteMessage::MessageType::DO_WRITE:
-                m_TargetIndex = message.m_SubStreamIdx;
-                m_DataPos = message.m_Offset;
+            case RerouteMessage::MessageType::DO_WRITE:
+                {
+                    std::unique_lock<std::mutex> lck(m_WriteMutex);
+                    m_TargetIndex = message.m_SubStreamIdx;
+                    m_DataPos = message.m_Offset;
+                    m_TargetCoordinator = message.m_SrcRank;
+                    m_ReadyToWrite = true;
+                    m_WriteCV.notify_one();
+                }
+                break;
+            case RerouteMessage::MessageType::WRITE_COMPLETION:
+                currentFilePos = message.m_Offset;
+                writingRank = -1;
                 break;
             default:
                 break;
             }
+
+            msgReady = 0;
+            status = m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
         }
 
         // Check if writing has finished, and alert the target SC
+        {
+            std::lock_guard<std::mutex> lck(m_NotifMutex);
+            if (m_FinishedWriting && !sentFinished)
+            {
+                adios2::helper::RerouteMessage writeCompleteMsg;
+                writeCompleteMsg.m_MsgType = RerouteMessage::MessageType::WRITE_COMPLETION;
+                writeCompleteMsg.m_SrcRank = m_RankMPI;
+                writeCompleteMsg.m_DestRank = m_TargetCoordinator;
+                writeCompleteMsg.m_SubStreamIdx = m_TargetIndex;
+                writeCompleteMsg.m_Offset = m_DataPos;
+                writeCompleteMsg.SendTo(m_Comm, m_TargetCoordinator);
+                sentFinished = true;
+
+                if (!iAmSubCoord /*&& !iAmGlobalCoord*/ )
+                {
+                    // My only role was to write (no communication responsibility) so I am
+                    // done at this point.
+                    break;
+                }
+            }
+        }
 
         // Check if anyone is writing right now, and if not, ask the next writer to start
-        if (writingRank == -1)
+        if (iAmSubCoord && writingRank == -1)
         {
             if (!writerQueue.empty())
             {
-                int nextWriter = writerQueue.pop();
+                int nextWriter = writerQueue.front();
+                writerQueue.pop();
                 adios2::helper::RerouteMessage writeMsg;
-                writeMsg.m_MsgType = adios2::helper::RerouteMessage::MessageType::DO_WRITE;
+                writeMsg.m_MsgType = RerouteMessage::MessageType::DO_WRITE;
                 writeMsg.m_SrcRank = m_RankMPI;
                 writeMsg.m_DestRank = nextWriter;
                 writeMsg.m_SubStreamIdx = m_Aggregator->m_SubStreamIndex;
                 writeMsg.m_Offset = currentFilePos;
-                writeMsg.SendTo(comm, nextWriter);
                 writingRank = nextWriter;
+                writeMsg.SendTo(m_Comm, nextWriter);
             }
-
+            else
+            {
+                // TODO: Send WRITE_IDLE to the GC instead of ending the loop here
+                break;
+            }
         }
     }
-
-
-
 }
 
 void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
@@ -143,11 +174,37 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
     //              - you're done
     //              - the new offset (or the amount you wrote)
 
-    m_readyToWrite = false;
+    m_ReadyToWrite = false;
+    m_FinishedWriting = false;
 
     std::thread commThread(&BP5Writer::ReroutingCommunicationLoop, this);
 
     std::cout << "Background thread for rank " << m_RankMPI << " is now running" << std::endl;
+
+    // wait until communication thread indicates it's our turn to write
+    {
+        std::unique_lock<std::mutex> lck(m_WriteMutex);
+        m_WriteCV.wait(lck, [this]{ return m_ReadyToWrite; });
+    }
+
+    // Do the writing
+
+    // align to PAGE_SIZE
+    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
+    m_StartDataPos = m_DataPos;
+
+    std::vector<core::iovec> DataVec = Data->DataVec();
+    // TODO: use m_TargetIndex here instead of being locked into aggregator's index
+    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
+    aggData.m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
+
+    m_DataPos += Data->Size();
+
+    // Now signal the communication thread that this rank has finished writing
+    {
+        std::lock_guard<std::mutex> lck(m_NotifMutex);
+        m_FinishedWriting = true;
+    }
 
     commThread.join();
 
