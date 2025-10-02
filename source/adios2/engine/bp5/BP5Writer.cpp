@@ -369,7 +369,20 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_EveryoneWrites(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
+            WriteData_EveryoneWrites(Data, true);
+            break;
         case (int)AggregationType::DataSizeBased:
+            // First initialize aggregator and transports if we haven't done it yet this step
+            if (!m_AggregatorInitializedThisStep)
+            {
+                // We can't allow ranks to change subfiles between calls to Put(), so we only
+                // do this initialization once per timestep. Consequently, partition decision
+                // could be based on incomplete step data.
+                InitAggregator(Data->Size());
+                InitTransports();
+                m_AggregatorInitializedThisStep = true;
+            }
+
             // For rerouting to be useful, there must be multiple writers sending
             // data to multiple subfiles.
             if (m_Parameters.EnableWriterRerouting && m_Comm.Size() > 1 && m_Aggregator->m_SubStreams > 1)
@@ -398,19 +411,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
 {
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
-    {
-        if (!m_AggregatorInitializedThisStep)
-        {
-            // We can't allow ranks to change subfiles between calls to Put(), so we only
-            // do this initialization once per timestep. Consequently, partition decision
-            // could be based on incomplete step data.
-            InitAggregator(Data->Size());
-            InitTransports();
-            m_AggregatorInitializedThisStep = true;
-        }
-    }
-
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on aggregator

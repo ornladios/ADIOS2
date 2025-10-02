@@ -30,6 +30,13 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     origMsg.m_Size = 1213;
     origMsg.SendTo(comm, destRank);
 
+    int ready = 0;
+
+    while (!ready)
+    {
+        comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &ready);
+    }
+
     // Receive a message from another (any) rank
     adios2::helper::RerouteMessage receivedMsg;
     receivedMsg.RecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny));

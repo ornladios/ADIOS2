@@ -126,9 +126,12 @@ bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 
 if (ADIOS2_HAVE_MPI)
-  # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level
+  # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level, rerouting?
   gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "2"
+  )
+  gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB.Rerouting
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "2" "1" "5" "WithRerouting"
   )
 endif()
 

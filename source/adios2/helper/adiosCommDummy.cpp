@@ -111,6 +111,10 @@ public:
     Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                     const std::string &hint) const override;
 
+    Comm::Status Probe(int source, int tag, const std::string &hint) const override;
+
+    Comm::Status Iprobe(int source, int tag, int *flag, const std::string &hint) const override;
+
     Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                   const std::string &hint) const override;
     int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit, void *baseptr,
@@ -278,6 +282,18 @@ Comm::Req CommImplDummy::Irecv(void *, size_t, Datatype, int, int, const std::st
 {
     auto req = std::unique_ptr<CommReqImplDummy>(new CommReqImplDummy());
     return MakeReq(std::move(req));
+}
+
+Comm::Status CommImplDummy::Probe(int source, int tag, const std::string &hint) const
+{
+    Comm::Status status;
+    return status;
+}
+
+Comm::Status CommImplDummy::Iprobe(int source, int tag, int *flag, const std::string &hint) const
+{
+    Comm::Status status;
+    return status;
 }
 
 Comm::Win CommImplDummy::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,

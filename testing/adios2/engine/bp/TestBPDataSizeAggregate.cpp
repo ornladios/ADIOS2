@@ -18,7 +18,8 @@ uint64_t nSteps = 1;
 std::string aggregationType = "DataSizeBased"; // comes from command line
 std::string numberOfSubFiles = "2";            // comes from command line
 std::string numberOfSteps = "1";               // comes from command line
-std::string verbose = "0";
+std::string verbose = "0";                     // comes from command line
+bool rerouting = false;                        // comes from command line
 
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 {
@@ -99,6 +100,11 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         bpIO.SetParameter("AggregationType", aggregationType);
         bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
         bpIO.SetParameter("verbose", verbose);
+
+        if (rerouting)
+        {
+            bpIO.SetParameter("EnableWriterRerouting", "true");
+        }
 
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
@@ -213,6 +219,14 @@ int main(int argc, char **argv)
     if (argc > 4)
     {
         verbose = std::string(argv[4]);
+    }
+    if (argc > 5)
+    {
+        std::string lastArg = std::string(argv[5]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     try
