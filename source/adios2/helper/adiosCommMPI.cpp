@@ -202,6 +202,10 @@ public:
     Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                     const std::string &hint) const override;
 
+    Comm::Status Probe(int source, int tag, const std::string &hint) const override;
+
+    Comm::Status Iprobe(int source, int tag, int *flag, const std::string &hint) const override;
+
     Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                   const std::string &hint) const override;
     int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit, void *baseptr,
@@ -511,6 +515,26 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
     }
 
     return MakeReq(std::move(req));
+}
+
+Comm::Status CommImplMPI::Probe(int source, int tag, const std::string &hint) const
+{
+    MPI_Status mpiStatus;
+    CheckMPIReturn(MPI_Probe(GetMPISource(source), tag, m_MPIComm, &mpiStatus), hint);
+    Comm::Status status;
+    status.Source = mpiStatus.MPI_SOURCE;
+    status.Tag = mpiStatus.MPI_TAG;
+    return status;
+}
+
+Comm::Status CommImplMPI::Iprobe(int source, int tag, int *flag, const std::string &hint) const
+{
+    MPI_Status mpiStatus;
+    CheckMPIReturn(MPI_Iprobe(GetMPISource(source), tag, m_MPIComm, flag, &mpiStatus), hint);
+    Comm::Status status;
+    status.Source = mpiStatus.MPI_SOURCE;
+    status.Tag = mpiStatus.MPI_TAG;
+    return status;
 }
 
 Comm::Win CommImplMPI::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,

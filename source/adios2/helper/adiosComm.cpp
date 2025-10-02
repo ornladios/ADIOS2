@@ -91,6 +91,34 @@ std::string Comm::BroadcastFile(const std::string &fileName, const std::string h
     return fileContents;
 }
 
+Comm::Status Comm::Probe(int source, int tag, const std::string &hint) const
+{
+    if (source < 0 || source > m_Impl->Size() - 1)
+    {
+        if (source != static_cast<int>(Comm::Constants::CommRecvAny))
+        {
+            throw std::runtime_error(
+                "Invalid MPI source rank in Probe: " + std::to_string(source) +
+                " for a communicator of size " + std::to_string(m_Impl->Size()));
+        }
+    }
+    return m_Impl->Probe(source, tag, hint);
+}
+
+Comm::Status Comm::Iprobe(int source, int tag, int *flag, const std::string &hint) const
+{
+    if (source < 0 || source > m_Impl->Size() - 1)
+    {
+        if (source != static_cast<int>(Comm::Constants::CommRecvAny))
+        {
+            throw std::runtime_error(
+                "Invalid MPI source rank in Iprobe: " + std::to_string(source) +
+                " for a communicator of size " + std::to_string(m_Impl->Size()));
+        }
+    }
+    return m_Impl->Iprobe(source, tag, flag, hint);
+}
+
 std::vector<size_t> Comm::GetGathervDisplacements(const size_t *counts, const size_t countsSize)
 {
     std::vector<size_t> displacements(countsSize);
