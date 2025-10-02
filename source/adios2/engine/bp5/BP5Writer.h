@@ -308,7 +308,12 @@ private:
     // is enabled
     void ReroutingCommunicationLoop();
     size_t m_TargetIndex;
-    std::atomic<bool> m_readyToWrite;
+    int m_TargetCoordinator;
+    std::mutex m_WriteMutex;
+    std::mutex m_NotifMutex;
+    std::condition_variable m_WriteCV;
+    bool m_ReadyToWrite;
+    bool m_FinishedWriting;
 
     /* Async write's future */
     std::future<int> m_WriteFuture;

@@ -33,10 +33,33 @@ public:
         DO_WRITE,
         WRITER_IDLE,
         WRITE_SUBMISSION,
+        WRITE_COMPLETION,
         REROUTE_REQUEST,
         REROUTE_ACK,
         REROUTE_REJECT,
     };
+
+    std::string GetTypeString(MessageType mtype)
+    {
+        switch (mtype)
+        {
+        case MessageType::DO_WRITE:
+            return std::string("DO_WRITE");
+            break;
+        case MessageType::WRITER_IDLE:
+            return std::string("WRITER_IDLE");
+            break;
+        case MessageType::WRITE_SUBMISSION:
+            return std::string("WRITE_SUBMISSION");
+            break;
+        case MessageType::WRITE_COMPLETION:
+            return std::string("WRITE_COMPLETION");
+            break;
+        default:
+            return std::string("UNKNOWN");
+            break;
+        }
+    }
 
     // Store a RerouteMsg so it can sent/received over mpi
     void ToBuffer(std::vector<char> &buffer);

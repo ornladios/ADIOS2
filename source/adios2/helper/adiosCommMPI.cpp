@@ -73,7 +73,6 @@ int GetMPISource(int source)
 {
     if (source == static_cast<int>(Comm::Constants::CommRecvAny))
     {
-        std::cout << "Source override" << std::endl;
         return MPI_ANY_SOURCE;
     }
 
