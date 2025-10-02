@@ -304,6 +304,12 @@ private:
      */
     uint64_t CountStepsInMetadataIndex(format::BufferSTL &bufferSTL);
 
+    // Thread function for inter-rank communication when rerouting aggregation
+    // is enabled
+    void ReroutingCommunicationLoop();
+    size_t m_TargetIndex;
+    std::atomic<bool> m_readyToWrite;
+
     /* Async write's future */
     std::future<int> m_WriteFuture;
     // variables to delay writing to index file
