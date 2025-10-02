@@ -53,6 +53,9 @@ void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
 
 void RerouteMessage::SendTo(helper::Comm& comm, int destRank)
 {
+    std::cout << "Rank " << comm.Rank() << " sending "
+              << this->GetTypeString(this->m_MsgType) << " to " << destRank << std::endl;
+
     std::vector<char> sendBuf;
     this->ToBuffer(sendBuf);
 
@@ -80,6 +83,15 @@ void RerouteMessage::RecvFrom(helper::Comm& comm, int srcRank)
     helper::Comm::Status status = comm.Recv(recvBuf.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
 
     this->FromBuffer(recvBuf);
+
+    std::cout << "Rank " << comm.Rank() << " received "
+              << this->GetTypeString(this->m_MsgType) << " from " << status.Source
+              << std::endl;
+
+    if (status.Source != this->m_SrcRank)
+    {
+        std::cout << "   GAHHHHHHH!" << std::endl;
+    }
 }
 
 } // end namespace helper
