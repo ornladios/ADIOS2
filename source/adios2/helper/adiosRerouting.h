@@ -30,7 +30,9 @@ class RerouteMessage
 public:
     enum class MessageType
     {
+        DO_WRITE,
         WRITER_IDLE,
+        WRITE_SUBMISSION,
         REROUTE_REQUEST,
         REROUTE_ACK,
         REROUTE_REJECT,
