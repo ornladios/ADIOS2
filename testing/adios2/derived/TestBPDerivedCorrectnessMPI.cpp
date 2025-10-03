@@ -86,27 +86,27 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x+y+z",
+                                    "add(x, y, z)",
                                     mode);
         bpOut.DefineDerivedVariable(derConstAdd,
                                     "x =" + varname[0] + " \n"
-                                    "add(x+4, 1)",
+                                    "add(x, 4, 1)",
                                     mode);
         bpOut.DefineDerivedVariable(derSubtrName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x-y-z",
+                                    "SUBTRACT(x, y, z)",
                                     mode);
         bpOut.DefineDerivedVariable(derMultName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x*y*z",
+                                    "multiply(x, y, z)",
                                     mode);
         bpOut.DefineDerivedVariable(derConstMult,
                                     "x =" + varname[0] + " \n"
-                                    "multiply(x,5)*2",
+                                    "multiply(x, 5, 2)",
                                     mode);
         bpOut.DefineDerivedVariable(derDivName,
                                     "x =" + varname[0] + " \n"

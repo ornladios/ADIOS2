@@ -33,6 +33,7 @@
 %code {
 #include "ASTDriver.h"
 #include "ASTNode.h"
+#include <string>
 }
 
 %define api.token.prefix {TOK_}
@@ -49,7 +50,7 @@
 %token <std::string> OPERATOR
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
-%token <std::string> NUM
+%token <double> NUM
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
@@ -85,6 +86,7 @@ indices_list:
 | index { $$ = {$1}; }
 ;
 
+/*
 index:
   %empty                  { $$ = {-1, -1,  1}; }
 | NUM COLON NUM COLON NUM { $$ = {std::stoi($1), std::stoi($3), std::stoi($5)}; }
@@ -99,6 +101,7 @@ index:
 | NUM COLON               { $$ = {std::stoi($1), -1,  1}; }
 | NUM                     { $$ = {std::stoi($1), std::stoi($1),  1}; }
 ;
+*/
 
 list:
   %empty { $$ = 0; }

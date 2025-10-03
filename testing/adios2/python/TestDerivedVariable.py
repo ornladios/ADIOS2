@@ -6,7 +6,7 @@ import numpy as np
 
 class TestDerivedVariable(unittest.TestCase):
     FILENAME = "pythontestderivedvariable.bp"
-    EXPR = "t = temps\nt+t"
+    EXPR = "t = temps\nadd(t, t)"
     TEMP = np.array([35, 40, 30, 45], dtype=np.int64)
 
     def test_01_create_write(self):

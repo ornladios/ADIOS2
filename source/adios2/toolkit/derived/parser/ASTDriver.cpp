@@ -23,8 +23,8 @@ ASTDriver::~ASTDriver()
 
 ASTNode *ASTDriver::getAST()
 {
-    // TODO: check only one ASTNode remains in holding
-    // else throw error that parsing failed
+    if (holding.size() == 0)
+        throw std::runtime_error("ERROR: derived expression cannot be parsed ");
     resolve(holding.top());
     return holding.top();
 }
@@ -71,7 +71,7 @@ void ASTDriver::add_lookup_entry(std::string alias, std::string var_name)
     aliases.insert({alias, {var_name, {}}});
 }
 
-void ASTDriver::add_number(std::string num)
+void ASTDriver::add_number(double num)
 {
     ASTNode *node = new ASTNode("NUM", num);
     holding.push(node);

@@ -21,6 +21,12 @@ ASTNode::ASTNode(std::string op, std::string a)
     alias = a;
 }
 
+ASTNode::ASTNode(std::string op, double a)
+{
+    opname = op;
+    alias = std::to_string(a);
+}
+
 ASTNode::ASTNode(std::string op, std::vector<std::tuple<int, int, int>> i)
 {
     opname = op;
