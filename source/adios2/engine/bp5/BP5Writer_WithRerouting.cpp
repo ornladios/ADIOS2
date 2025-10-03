@@ -60,6 +60,8 @@ void BP5Writer::ReroutingCommunicationLoop()
             writerQueue.push(static_cast<int>(rank));
         }
 
+        currentFilePos = m_DataPos;
+
         if (m_DataPosShared)
         {
             // We have shared data pos after a previous timestep, we should update our
@@ -144,6 +146,7 @@ void BP5Writer::ReroutingCommunicationLoop()
             else
             {
                 // TODO: Send WRITE_IDLE to the GC instead of ending the loop here
+                m_DataPos = currentFilePos;
                 break;
             }
         }
