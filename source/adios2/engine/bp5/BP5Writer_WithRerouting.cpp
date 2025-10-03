@@ -32,13 +32,13 @@ using namespace adios2::format;
 
 void BP5Writer::ReroutingCommunicationLoop()
 {
-    using RerouteMessage = typename adios2::helper::RerouteMessage;
+    using RerouteMessage = adios2::helper::RerouteMessage;
 
     int subCoord = m_Aggregator->m_AggregatorRank;
     bool iAmSubCoord = m_RankMPI == subCoord;
     // Arbitrarily make the last rank the global coordinator
     // TODO: should the global coordinator role be assigned to a subcoordinator?
-    bool iAmGlobalCoord = m_RankMPI == m_Comm.Size() - 1;
+    // bool iAmGlobalCoord = m_RankMPI == m_Comm.Size() - 1;
     std::queue<int> writerQueue;
     int writingRank = -1;
     uint64_t currentFilePos = 0;
