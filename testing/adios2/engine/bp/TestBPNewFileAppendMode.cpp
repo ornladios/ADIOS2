@@ -14,6 +14,7 @@
 
 std::string engineName;                               // comes from command line
 std::string aggregationType = "EveryoneWritesSerial"; // comes from command line
+bool rerouting = false;                               // overridden on command line
 
 class BPNewFileAppendMode : public ::testing::Test
 {
@@ -43,6 +44,8 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
         fname += "-EW.bp";
     }
 
+    fname += std::string("_RR") + (rerouting ? "Y" : "N");
+
     const size_t Nx = 6;
 
     adios2::ADIOS adios;
@@ -64,6 +67,9 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
         io.SetParameter("AggregationType", aggregationType);
         io.SetParameter("NumAggregators", "0");
 
+        const char* rr = (rerouting ? "true" : "false");
+        io.SetParameter("EnableWriterRerouting", rr);
+
         adios2::Engine engine = io.Open(fname, adios2::Mode::Append);
 
         engine.Close();
@@ -82,6 +88,15 @@ int main(int argc, char **argv)
     if (argc > 2)
     {
         aggregationType = std::string(argv[2]);
+    }
+
+    if (argc > 3)
+    {
+        std::string lastArg = std::string(argv[3]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     result = RUN_ALL_TESTS();

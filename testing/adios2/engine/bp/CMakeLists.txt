@@ -248,6 +248,8 @@ macro(bp5agg_gtest_add_tests testname mpi)
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "TwoLevelShm")
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased")
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB.RR
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased" "WithRerouting")
 endmacro()
 
 if (ADIOS2_HAVE_MPI)
