@@ -22,6 +22,7 @@
 
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // overridden on command line
+bool rerouting = false;              // overridden on command line
 int streamingFileId = 0;
 constexpr std::size_t NSteps = 10;
 const std::size_t Nx = 10;
@@ -80,12 +81,16 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
-        OutputFileName = "ParameterSelectSteps_agg_" + aggType + "_id_" +
-                         std::to_string(streamingFileId++) + "_size_" + std::to_string(mpiSize) +
-                         ".bp";
+        OutputFileName = "ParameterSelectSteps_agg_" + aggType + "_RR" + (rerouting ? "Y" : "N") +
+                         "_id_" + std::to_string(streamingFileId++) + "_size_" +
+                         std::to_string(mpiSize) + ".bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
         ioWrite.SetParameter("AggregationType", aggType);
+
+        const char* rr = (rerouting ? "true" : "false");
+        ioWrite.SetParameter("EnableWriterRerouting", rr);
+
         adios2::Engine engine = ioWrite.Open(OutputFileName, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -200,12 +205,16 @@ TEST_P(BPParameterSelectStepsP, Stream)
     adios2::ADIOS adios;
 #endif
 
-    std::string filename = "ParameterSelectStepsStream_agg_" + aggType + "_id_" +
-                           std::to_string(streamingFileId++) + "_size_" + std::to_string(mpiSize) +
-                           ".bp";
+    std::string filename = "ParameterSelectStepsStream_agg_" + aggType + "_RR" +
+                           (rerouting ? "Y" : "N") + "_id_" + std::to_string(streamingFileId++) +
+                           "_size_" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
     ioWrite.SetEngine(engineName);
     ioWrite.SetParameter("AggregationType", aggType);
+
+    const char* rr = (rerouting ? "true" : "false");
+    ioWrite.SetParameter("EnableWriterRerouting", rr);
+
     adios2::Engine writer = ioWrite.Open(filename, adios2::Mode::Write);
 
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
@@ -318,6 +327,15 @@ int main(int argc, char **argv)
     if (argc > 2)
     {
         aggType = std::string(argv[2]);
+    }
+
+    if (argc > 3)
+    {
+        std::string lastArg = std::string(argv[3]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     result = RUN_ALL_TESTS();
