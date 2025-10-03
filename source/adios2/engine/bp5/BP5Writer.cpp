@@ -115,15 +115,15 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
 
     m_Profiler.AddTimerWatch("PartitionRanks");
     m_Profiler.Start("PartitionRanks");
-    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+    m_Partitioning = helper::PartitionRanks(allsizes, numPartitions);
     m_Profiler.Stop("PartitionRanks");
 
     if (parentRank == 0 && m_Parameters.verbose > 0)
     {
-        partitioning.PrintSummary();
+        m_Partitioning.PrintSummary();
     }
 
-    return partitioning.FindPartition(parentRank);
+    return m_Partitioning.FindPartition(parentRank);
 }
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
