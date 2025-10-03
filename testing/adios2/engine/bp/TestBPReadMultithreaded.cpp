@@ -22,6 +22,7 @@
 
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // overridden on command line
+bool rerouting = false;              // overridden on command line
 constexpr std::size_t NSteps = 4;
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
@@ -85,22 +86,27 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
+        std::string rr(std::string("_RR") + (rerouting ? "Y" : "N"));
         std::string filename;
         if (stream)
         {
-            StreamOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
+            StreamOutputFileName = "BPReadMultithreaded_agg_" + aggType + rr + "_size_" +
                                    std::to_string(mpiSize) + "_Stream.bp";
             filename = StreamOutputFileName;
         }
         else
         {
-            FileOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
+            FileOutputFileName = "BPReadMultithreaded_agg_" + aggType + rr + "_size_" +
                                  std::to_string(mpiSize) + "_File.bp";
             filename = FileOutputFileName;
         }
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
         ioWrite.SetParameter("AggregationType", aggType);
+
+        const char* rrParam = (rerouting ? "true" : "false");
+        ioWrite.SetParameter("EnableWriterRerouting", rrParam);
+
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -300,6 +306,15 @@ int main(int argc, char **argv)
     if (argc > 2)
     {
         aggType = std::string(argv[2]);
+    }
+
+    if (argc > 3)
+    {
+        std::string lastArg = std::string(argv[3]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     result = RUN_ALL_TESTS();
