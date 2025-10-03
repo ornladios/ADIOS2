@@ -68,10 +68,10 @@ public:
     void FromBuffer(const std::vector<char> &buffer);
 
     // Send the contents of this message to another rank
-    void SendTo(helper::Comm& comm, int destRank);
+    void SendTo(helper::Comm &comm, int destRank);
 
     // Receive a message from another rank to populate this message
-    void RecvFrom(helper::Comm& comm, int srcRank);
+    void RecvFrom(helper::Comm &comm, int srcRank);
 
     MessageType m_MsgType;
     int m_SrcRank;
@@ -80,8 +80,9 @@ public:
     unsigned long m_Offset;
     unsigned long m_Size;
 
-    static const size_t REROUTE_MESSAGE_SIZE = sizeof(MessageType) + sizeof(int) +
-        sizeof(int) + sizeof(unsigned long) + sizeof(unsigned long) + sizeof(unsigned long);
+    static const size_t REROUTE_MESSAGE_SIZE = sizeof(MessageType) + sizeof(int) + sizeof(int) +
+                                               sizeof(unsigned long) + sizeof(unsigned long) +
+                                               sizeof(unsigned long);
 };
 
 } // end namespace helper

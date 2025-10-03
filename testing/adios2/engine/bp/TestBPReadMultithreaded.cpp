@@ -104,7 +104,7 @@ public:
         ioWrite.SetEngine(engineName);
         ioWrite.SetParameter("AggregationType", aggType);
 
-        const char* rrParam = (rerouting ? "true" : "false");
+        const char *rrParam = (rerouting ? "true" : "false");
         ioWrite.SetParameter("EnableWriterRerouting", rrParam);
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);

@@ -103,7 +103,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
         bpIO.SetParameter("verbose", verbose);
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         bpIO.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Variable<uint64_t> varGlobalArray =

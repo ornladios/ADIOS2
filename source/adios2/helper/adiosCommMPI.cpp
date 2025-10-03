@@ -18,8 +18,8 @@
 
 #include "adios2/common/ADIOSTypes.h"
 
-#include <mpi.h>
 #include <iostream>
+#include <mpi.h>
 
 namespace adios2
 {
@@ -402,9 +402,9 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype, int s
                                const std::string &hint) const
 {
     MPI_Status mpiStatus;
-    CheckMPIReturn(
-        MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype), GetMPISource(source), tag,
-                 m_MPIComm, &mpiStatus), hint);
+    CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype), GetMPISource(source),
+                            tag, m_MPIComm, &mpiStatus),
+                   hint);
 
     Comm::Status status;
     status.Source = mpiStatus.MPI_SOURCE;
@@ -485,7 +485,8 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
             int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position, batchSize,
-                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm, &mpiReq),
+                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm,
+                                     &mpiReq),
                            "in call to Irecv batch " + std::to_string(b) + " " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
 
@@ -498,7 +499,8 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
             int batchSize = static_cast<int>(remainder);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position, batchSize,
-                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm, &mpiReq),
+                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm,
+                                     &mpiReq),
                            "in call to Irecv remainder batch " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
         }
@@ -507,9 +509,9 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        CheckMPIReturn(
-            MPI_Irecv(buffer, batchSize, ToMPI(datatype), GetMPISource(source), tag, m_MPIComm, &mpiReq),
-            " in call to Isend with single batch " + hint + "\n");
+        CheckMPIReturn(MPI_Irecv(buffer, batchSize, ToMPI(datatype), GetMPISource(source), tag,
+                                 m_MPIComm, &mpiReq),
+                       " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
     }
 
