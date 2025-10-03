@@ -51,20 +51,23 @@ void BP5Writer::ReroutingCommunicationLoop()
     std::cout << "        subfile index: " << m_Aggregator->m_SubStreamIndex << std::endl;
     std::cout << "        total subfiles: " << m_Aggregator->m_SubStreams << std::endl;
 
-    if (iAmSubCoord && m_DataPosShared == true)
+    if (iAmSubCoord)
     {
-        // We are a subcoordinator and have shared data pos after a previous timestep,
-        // we should update our notion of m_DataPos
-        currentFilePos = m_SubstreamDataPos[m_Aggregator->m_SubStreamIndex];
-        m_DataPosShared = false;
-    }
+        // Pre-populate my queue with the ranks in my group/partition
+        const std::vector<size_t> &groupRanks = m_Partitioning.m_Partitions[m_Aggregator->m_SubStreamIndex];
+        for (auto rank : groupRanks)
+        {
+            writerQueue.push(static_cast<int>(rank));
+        }
 
-    // First send a message to the SC to get added to their writing queue
-    RerouteMessage submitMsg;
-    submitMsg.m_MsgType = RerouteMessage::MessageType::WRITE_SUBMISSION;
-    submitMsg.m_SrcRank = m_RankMPI;
-    submitMsg.m_DestRank = subCoord;
-    submitMsg.SendTo(m_Comm, subCoord);
+        if (m_DataPosShared)
+        {
+            // We have shared data pos after a previous timestep, we should update our
+            // notion of m_DataPos
+            currentFilePos = m_SubstreamDataPos[m_Aggregator->m_SubStreamIndex];
+            m_DataPosShared = false;
+        }
+    }
 
     while (true)
     {
@@ -73,17 +76,13 @@ void BP5Writer::ReroutingCommunicationLoop()
             static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
 
         // If there is a message ready, receive and handle it
-        // if (msgReady)
-        while (msgReady)
+        if (msgReady)
         {
             RerouteMessage message;
             message.RecvFrom(m_Comm, status.Source);
 
             switch ((RerouteMessage::MessageType) message.m_MsgType)
             {
-            case RerouteMessage::MessageType::WRITE_SUBMISSION:
-                writerQueue.push(message.m_SrcRank);
-                break;
             case RerouteMessage::MessageType::DO_WRITE:
                 {
                     std::unique_lock<std::mutex> lck(m_WriteMutex);
@@ -101,9 +100,6 @@ void BP5Writer::ReroutingCommunicationLoop()
             default:
                 break;
             }
-
-            msgReady = 0;
-            status = m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
         }
 
         // Check if writing has finished, and alert the target SC
@@ -157,7 +153,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 {
     // - start the communcation loop running in a thread
-    // - begin polling the write barrier variable, once it flips. write:
+    // - wait to be signalled by the communication thread, then write:
     //       - variables set by comm thread indicate subfile and offset
     // - attempt to join the comm thread
     // - return
