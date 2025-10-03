@@ -10,8 +10,8 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosRerouting.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/helper/adiosRerouting.h"
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -54,7 +54,8 @@ void BP5Writer::ReroutingCommunicationLoop()
     if (iAmSubCoord)
     {
         // Pre-populate my queue with the ranks in my group/partition
-        const std::vector<size_t> &groupRanks = m_Partitioning.m_Partitions[m_Aggregator->m_SubStreamIndex];
+        const std::vector<size_t> &groupRanks =
+            m_Partitioning.m_Partitions[m_Aggregator->m_SubStreamIndex];
         for (auto rank : groupRanks)
         {
             writerQueue.push(static_cast<int>(rank));
@@ -74,8 +75,8 @@ void BP5Writer::ReroutingCommunicationLoop()
     while (true)
     {
         int msgReady = 0;
-        helper::Comm::Status status = m_Comm.Iprobe(
-            static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
+        helper::Comm::Status status =
+            m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
 
         // If there is a message ready, receive and handle it
         if (msgReady)
@@ -83,18 +84,17 @@ void BP5Writer::ReroutingCommunicationLoop()
             RerouteMessage message;
             message.RecvFrom(m_Comm, status.Source);
 
-            switch ((RerouteMessage::MessageType) message.m_MsgType)
+            switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
-            case RerouteMessage::MessageType::DO_WRITE:
-                {
-                    std::unique_lock<std::mutex> lck(m_WriteMutex);
-                    m_TargetIndex = message.m_SubStreamIdx;
-                    m_DataPos = message.m_Offset;
-                    m_TargetCoordinator = message.m_SrcRank;
-                    m_ReadyToWrite = true;
-                    m_WriteCV.notify_one();
-                }
-                break;
+            case RerouteMessage::MessageType::DO_WRITE: {
+                std::unique_lock<std::mutex> lck(m_WriteMutex);
+                m_TargetIndex = message.m_SubStreamIdx;
+                m_DataPos = message.m_Offset;
+                m_TargetCoordinator = message.m_SrcRank;
+                m_ReadyToWrite = true;
+                m_WriteCV.notify_one();
+            }
+            break;
             case RerouteMessage::MessageType::WRITE_COMPLETION:
                 currentFilePos = message.m_Offset;
                 writingRank = -1;
@@ -118,7 +118,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeCompleteMsg.SendTo(m_Comm, m_TargetCoordinator);
                 sentFinished = true;
 
-                if (!iAmSubCoord /*&& !iAmGlobalCoord*/ )
+                if (!iAmSubCoord /*&& !iAmGlobalCoord*/)
                 {
                     // My only role was to write (no communication responsibility) so I am
                     // done at this point.
@@ -183,7 +183,7 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
     // wait until communication thread indicates it's our turn to write
     {
         std::unique_lock<std::mutex> lck(m_WriteMutex);
-        m_WriteCV.wait(lck, [this]{ return m_ReadyToWrite; });
+        m_WriteCV.wait(lck, [this] { return m_ReadyToWrite; });
     }
 
     // Do the writing

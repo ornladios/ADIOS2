@@ -88,7 +88,7 @@ public:
         ioWrite.SetEngine(engineName);
         ioWrite.SetParameter("AggregationType", aggType);
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         ioWrite.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = ioWrite.Open(OutputFileName, adios2::Mode::Write);
@@ -212,7 +212,7 @@ TEST_P(BPParameterSelectStepsP, Stream)
     ioWrite.SetEngine(engineName);
     ioWrite.SetParameter("AggregationType", aggType);
 
-    const char* rr = (rerouting ? "true" : "false");
+    const char *rr = (rerouting ? "true" : "false");
     ioWrite.SetParameter("EnableWriterRerouting", rr);
 
     adios2::Engine writer = ioWrite.Open(filename, adios2::Mode::Write);

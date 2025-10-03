@@ -21,7 +21,6 @@
 #include <utility>
 /// \endcond
 
-
 namespace adios2
 {
 namespace helper
@@ -39,7 +38,6 @@ void RerouteMessage::ToBuffer(std::vector<char> &buffer)
     helper::CopyToBuffer(buffer, pos, &this->m_Size);
 }
 
-
 void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
 {
     size_t pos = 0;
@@ -51,10 +49,10 @@ void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_Size);
 }
 
-void RerouteMessage::SendTo(helper::Comm& comm, int destRank)
+void RerouteMessage::SendTo(helper::Comm &comm, int destRank)
 {
-    std::cout << "Rank " << comm.Rank() << " sending "
-              << this->GetTypeString(this->m_MsgType) << " to " << destRank << std::endl;
+    std::cout << "Rank " << comm.Rank() << " sending " << this->GetTypeString(this->m_MsgType)
+              << " to " << destRank << std::endl;
 
     std::vector<char> sendBuf;
     this->ToBuffer(sendBuf);
@@ -70,7 +68,7 @@ void RerouteMessage::SendTo(helper::Comm& comm, int destRank)
     comm.Send(sendBuf.data(), sendBuf.size(), destRank, 0);
 }
 
-void RerouteMessage::RecvFrom(helper::Comm& comm, int srcRank)
+void RerouteMessage::RecvFrom(helper::Comm &comm, int srcRank)
 {
     std::vector<char> recvBuf;
     recvBuf.resize(REROUTE_MESSAGE_SIZE);
@@ -84,9 +82,8 @@ void RerouteMessage::RecvFrom(helper::Comm& comm, int srcRank)
 
     this->FromBuffer(recvBuf);
 
-    std::cout << "Rank " << comm.Rank() << " received "
-              << this->GetTypeString(this->m_MsgType) << " from " << status.Source
-              << std::endl;
+    std::cout << "Rank " << comm.Rank() << " received " << this->GetTypeString(this->m_MsgType)
+              << " from " << status.Source << std::endl;
 
     if (status.Source != this->m_SrcRank)
     {

@@ -67,7 +67,7 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
         io.SetParameter("AggregationType", aggregationType);
         io.SetParameter("NumAggregators", "0");
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         io.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Append);

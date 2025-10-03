@@ -100,7 +100,7 @@ TEST_P(BPAppendAfterStepsP, Test)
         ioWrite.SetEngine(engineName);
         ioWrite.SetParameter("AggregationType", aggType);
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         ioWrite.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
