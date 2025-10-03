@@ -19,7 +19,8 @@ int worldRank, worldSize;
 
 void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
 {
-    std::cout << "Sending to " << destRank << " and expecting to receive from: " << srcRank << std::endl;
+    std::cout << "Sending to " << destRank << " and expecting to receive from: " << srcRank
+              << std::endl;
 
     // Send a message to another rank
     adios2::helper::RerouteMessage origMsg;
@@ -54,7 +55,6 @@ class RerouteTest : public ::testing::Test
 public:
     RerouteTest() = default;
 };
-
 
 TEST_F(RerouteTest, TestMessageBuffer)
 {

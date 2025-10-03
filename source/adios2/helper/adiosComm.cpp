@@ -97,9 +97,9 @@ Comm::Status Comm::Probe(int source, int tag, const std::string &hint) const
     {
         if (source != static_cast<int>(Comm::Constants::CommRecvAny))
         {
-            throw std::runtime_error(
-                "Invalid MPI source rank in Probe: " + std::to_string(source) +
-                " for a communicator of size " + std::to_string(m_Impl->Size()));
+            throw std::runtime_error("Invalid MPI source rank in Probe: " + std::to_string(source) +
+                                     " for a communicator of size " +
+                                     std::to_string(m_Impl->Size()));
         }
     }
     return m_Impl->Probe(source, tag, hint);

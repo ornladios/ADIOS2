@@ -162,7 +162,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             io.SetParameter("AggregationType", aggType);
         }
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         io.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
@@ -385,8 +385,8 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 {
     const ReadMode readMode = GetReadMode();
     std::string fname_prefix = "BPStepsFileGlobalArray.NewVarPerStep." +
-                               ReadModeToString(readMode) + AggregationTypeAlias(aggType) +
-                               "_RR" + (rerouting ? "Y" : "N");
+                               ReadModeToString(readMode) + AggregationTypeAlias(aggType) + "_RR" +
+                               (rerouting ? "Y" : "N");
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -428,7 +428,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             io.SetParameter("AggregationType", aggType);
         }
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         io.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
@@ -677,8 +677,8 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     const ReadMode readMode = GetReadMode();
     std::string fname_prefix = "BPStepsFileGlobalArray.EveryOtherStep.Steps" +
                                std::to_string(NSteps) + ".Oddity" + std::to_string(Oddity) + "." +
-                               ReadModeToString(readMode) + AggregationTypeAlias(aggType) +
-                               "_RR" + (rerouting ? "Y" : "N");
+                               ReadModeToString(readMode) + AggregationTypeAlias(aggType) + "_RR" +
+                               (rerouting ? "Y" : "N");
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -721,7 +721,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             io.SetParameter("AggregationType", aggType);
         }
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         io.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);

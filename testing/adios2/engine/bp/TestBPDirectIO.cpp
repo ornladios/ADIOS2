@@ -60,7 +60,7 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
         // BufferChunkSize should be adjusted to 2*4096 by engine
         // StripeSize should be adjusted to 3*4096 by engine
 
-        const char* rr = (rerouting ? "true" : "false");
+        const char *rr = (rerouting ? "true" : "false");
         ioWrite.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
