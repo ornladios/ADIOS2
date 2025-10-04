@@ -14,6 +14,13 @@ struct DerivedData
     Dims Count;
     DataType Type;
 };
+
+struct ExprData
+{
+    std::vector<DerivedData> Data;
+    std::vector<std::string> Const;
+    DataType OutType;
+};
 }
 }
 #endif

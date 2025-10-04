@@ -93,13 +93,12 @@
 %{
   // A number symbol corresponding to the value in S.
   adios2::detail::parser::symbol_type
-  make_INT (const std::string &s, const adios2::detail::parser::location_type& loc);
+  make_NUM (const std::string &s, const adios2::detail::parser::location_type& loc);
 %}
 
-op    [-+*^]
 id    [a-zA-Z][a-zA-Z_0-9_]*
 path  [a-zA-Z][a-zA-Z0-9._\/]*
-int   [0-9]+
+num   [-+]?[0-9]+(\.[0-9]+)?
 blank [ \t\r]
 
 %{
@@ -124,8 +123,7 @@ blank [ \t\r]
 "["        return adios2::detail::parser::make_L_BRACE (loc);
 "]"        return adios2::detail::parser::make_R_BRACE (loc);
 
-{int}      return make_INT (yytext, loc);
-{op}       return adios2::detail::parser::make_OPERATOR (yytext, loc);
+{num}      return make_NUM (yytext, loc);
 {id}       return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 {path}     return adios2::detail::parser::make_VARNAME (yytext, loc);
 .          {
@@ -135,14 +133,12 @@ blank [ \t\r]
 <<EOF>>    return adios2::detail::parser::make_YYEOF (loc);
 %%
 
+
 adios2::detail::parser::symbol_type
-make_INT (const std::string &s, const adios2::detail::parser::location_type& loc)
+make_NUM (const std::string &s, const adios2::detail::parser::location_type& loc)
 {
-  errno = 0;
-  long n = strtol (s.c_str(), NULL, 10);
-  if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
-    throw adios2::detail::parser::syntax_error (loc, "integer is out of range: " + s);
-  return adios2::detail::parser::make_INT ((int) n, loc);
+  double n = std::stod (s);
+  return adios2::detail::parser::make_NUM (n, loc);
 }
 
 void

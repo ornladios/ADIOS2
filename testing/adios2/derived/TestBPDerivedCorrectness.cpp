@@ -25,13 +25,22 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+TEST_P(DerivedCorrectnessP, ErrorTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPDerivedError");
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n nofunction(x)", mode),
+                 std::invalid_argument);
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
+                 std::invalid_argument);
+}
+
 TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
 {
     adios2::DerivedVarType mode = GetParam();
     adios2::ADIOS adios;
     adios2::IO bpOut = adios.DeclareIO("BPNoData");
-    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
-                 std::invalid_argument);
 
     const size_t N = 10;
     std::default_random_engine generator;

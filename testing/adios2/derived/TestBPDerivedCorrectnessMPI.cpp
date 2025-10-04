@@ -40,8 +40,10 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
     std::vector<std::string> varname = {"sim/Ux", "sim/Uy", "sim/Uz"};
     const std::string derAgrAdd = "derived/agradd";
     const std::string derAddName = "derived/add";
+    const std::string derConstAdd = "derived/constadd";
     const std::string derSubtrName = "derived/subtr";
     const std::string derMultName = "derived/mult";
+    const std::string derConstMult = "derived/constmult";
     const std::string derDivName = "derived/div";
     const std::string derPowName = "derived/pow";
     const std::string derSqrtName = "derived/sqrt";
@@ -84,19 +86,27 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x+y+z",
+                                    "add(x, y, z)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derConstAdd,
+                                    "x =" + varname[0] + " \n"
+                                    "add(x, 6, -1)",
                                     mode);
         bpOut.DefineDerivedVariable(derSubtrName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x-y-z",
+                                    "SUBTRACT(x, y, z)",
                                     mode);
         bpOut.DefineDerivedVariable(derMultName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x*y*z",
+                                    "multiply(x, y, z)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derConstMult,
+                                    "x =" + varname[0] + " \n"
+                                    "multiply(x, 5, -2)",
                                     mode);
         bpOut.DefineDerivedVariable(derDivName,
                                     "x =" + varname[0] + " \n"
@@ -134,8 +144,10 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         std::vector<float> readUz(mpiSize * Nx * Ny * Nz);
         std::vector<float> readAdd(mpiSize * Nx * Ny * Nz);
         std::vector<float> readAgrAdd(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readConstAdd(mpiSize * Nx * Ny * Nz);
         std::vector<float> readSubtr(mpiSize * Nx * Ny * Nz);
         std::vector<float> readMult(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readConstMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readDiv(mpiSize * Nx * Ny * Nz);
         std::vector<double> readPow(mpiSize * Nx * Ny * Nz);
         std::vector<double> readSqrt(mpiSize * Nx * Ny * Nz);
@@ -149,8 +161,10 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         auto varUz = bpIn.InquireVariable<float>(varname[2]);
         auto varAdd = bpIn.InquireVariable<float>(derAddName);
         auto varAgrAdd = bpIn.InquireVariable<float>(derAgrAdd);
+        auto varConstAdd = bpIn.InquireVariable<float>(derConstAdd);
         auto varSubtr = bpIn.InquireVariable<float>(derSubtrName);
         auto varMult = bpIn.InquireVariable<float>(derMultName);
+        auto varConstMult = bpIn.InquireVariable<float>(derConstMult);
         auto varDiv = bpIn.InquireVariable<float>(derDivName);
         auto varPow = bpIn.InquireVariable<double>(derPowName);
         auto varSqrt = bpIn.InquireVariable<double>(derSqrtName);
@@ -160,9 +174,11 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(varUz, readUz);
         bpFileReader.Get(varAdd, readAdd);
         bpFileReader.Get(varAgrAdd, readAgrAdd);
+        bpFileReader.Get(varConstAdd, readConstAdd);
 
         bpFileReader.Get(varSubtr, readSubtr);
         bpFileReader.Get(varMult, readMult);
+        bpFileReader.Get(varConstMult, readConstMult);
         bpFileReader.Get(varDiv, readDiv);
         bpFileReader.Get(varPow, readPow);
         bpFileReader.Get(varSqrt, readSqrt);
@@ -173,11 +189,17 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
             calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
 
+            calcFloat = readUx[ind] + 5;
+            EXPECT_TRUE(fabs(calcFloat - readConstAdd[ind]) < epsilon);
+
             calcFloat = readUx[ind] - readUy[ind] - readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readSubtr[ind]) < epsilon);
 
             calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
+
+            calcFloat = readUx[ind] * (-10);
+            EXPECT_TRUE(fabs(calcFloat - readConstMult[ind]) < epsilon);
 
             calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
