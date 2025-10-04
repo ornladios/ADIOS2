@@ -90,7 +90,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     mode);
         bpOut.DefineDerivedVariable(derConstAdd,
                                     "x =" + varname[0] + " \n"
-                                    "add(x, 4, 1)",
+                                    "add(x, 6, -1)",
                                     mode);
         bpOut.DefineDerivedVariable(derSubtrName,
                                     "x =" + varname[0] + " \n"
@@ -106,7 +106,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     mode);
         bpOut.DefineDerivedVariable(derConstMult,
                                     "x =" + varname[0] + " \n"
-                                    "multiply(x, 5, 2)",
+                                    "multiply(x, 5, -2)",
                                     mode);
         bpOut.DefineDerivedVariable(derDivName,
                                     "x =" + varname[0] + " \n"
@@ -198,7 +198,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
             calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
 
-            calcFloat = readUx[ind] * 10;
+            calcFloat = readUx[ind] * (-10);
             EXPECT_TRUE(fabs(calcFloat - readConstMult[ind]) < epsilon);
 
             calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
