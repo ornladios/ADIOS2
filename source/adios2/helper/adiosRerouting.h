@@ -76,13 +76,13 @@ public:
     MessageType m_MsgType;
     int m_SrcRank;
     int m_DestRank;
-    unsigned long m_SubStreamIdx;
-    unsigned long m_Offset;
-    unsigned long m_Size;
+    int m_SubStreamIdx;
+    uint64_t m_Offset;
+    uint64_t m_Size;
 
     static const size_t REROUTE_MESSAGE_SIZE = sizeof(MessageType) + sizeof(int) + sizeof(int) +
-                                               sizeof(unsigned long) + sizeof(unsigned long) +
-                                               sizeof(unsigned long);
+                                               sizeof(int) + sizeof(uint64_t) +
+                                               sizeof(uint64_t);
 };
 
 } // end namespace helper

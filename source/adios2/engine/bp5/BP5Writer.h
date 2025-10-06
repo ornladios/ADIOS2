@@ -308,7 +308,7 @@ private:
     // Thread function for inter-rank communication when rerouting aggregation
     // is enabled
     void ReroutingCommunicationLoop();
-    size_t m_TargetIndex;
+    int m_TargetIndex;
     int m_TargetCoordinator;
     std::mutex m_WriteMutex;
     std::mutex m_NotifMutex;
