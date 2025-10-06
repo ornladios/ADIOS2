@@ -44,13 +44,6 @@ void BP5Writer::ReroutingCommunicationLoop()
     uint64_t currentFilePos = 0;
     bool sentFinished = false;
 
-    // Now start the
-    std::cout << "    Rank " << m_Comm.Rank() << " ReroutingCommunicationLoop()" << std::endl;
-    std::cout << "        SC: " << subCoord << std::endl;
-    std::cout << "        GC: " << m_Comm.Size() - 1 << std::endl;
-    std::cout << "        subfile index: " << m_Aggregator->m_SubStreamIndex << std::endl;
-    std::cout << "        total subfiles: " << m_Aggregator->m_SubStreams << std::endl;
-
     if (iAmSubCoord)
     {
         // Pre-populate my queue with the ranks in my group/partition
@@ -138,7 +131,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeMsg.m_MsgType = RerouteMessage::MessageType::DO_WRITE;
                 writeMsg.m_SrcRank = m_RankMPI;
                 writeMsg.m_DestRank = nextWriter;
-                writeMsg.m_SubStreamIdx = m_Aggregator->m_SubStreamIndex;
+                writeMsg.m_SubStreamIdx = static_cast<int>(m_Aggregator->m_SubStreamIndex);
                 writeMsg.m_Offset = currentFilePos;
                 writingRank = nextWriter;
                 writeMsg.SendTo(m_Comm, nextWriter);
@@ -178,7 +171,7 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     std::thread commThread(&BP5Writer::ReroutingCommunicationLoop, this);
 
-    std::cout << "Background thread for rank " << m_RankMPI << " is now running" << std::endl;
+    // std::cout << "Background thread for rank " << m_RankMPI << " is now running" << std::endl;
 
     // wait until communication thread indicates it's our turn to write
     {
@@ -207,7 +200,7 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     commThread.join();
 
-    std::cout << "Background thread for rank " << m_RankMPI << " is now finished" << std::endl;
+    // std::cout << "Background thread for rank " << m_RankMPI << " is now finished" << std::endl;
 }
 
 } // end namespace engine
