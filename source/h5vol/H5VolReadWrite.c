@@ -325,8 +325,8 @@ adios2_attribute *gLocateAttrFrom(H5VL_ObjDef_t *owner, const char *attrName)
     if ((GROUP == owner->m_ObjType) || (VAR == owner->m_ObjType))
     {
         size_t length = strlen(owner->m_Path) + strlen(attrName) + 4;
-        char* fullPath = (char*)malloc(length);
-        adios2_attribute*  result;
+        char *fullPath = (char *)malloc(length);
+        adios2_attribute *result;
         if (fullPath == NULL)
         {
             return NULL;
@@ -334,13 +334,13 @@ adios2_attribute *gLocateAttrFrom(H5VL_ObjDef_t *owner, const char *attrName)
         size_t ss = strlen(owner->m_Path);
         if ('/' == (owner->m_Path)[ss - 1])
         {
-	    sprintf(fullPath, "%s%s", owner->m_Path, attrName);
-	    result = adios2_inquire_attribute(owner->m_FileIO, fullPath);
+            sprintf(fullPath, "%s%s", owner->m_Path, attrName);
+            result = adios2_inquire_attribute(owner->m_FileIO, fullPath);
         }
         else
         {
             sprintf(fullPath, "%s/%s", owner->m_Path, attrName);
-            result =  adios2_inquire_attribute(owner->m_FileIO, fullPath);
+            result = adios2_inquire_attribute(owner->m_FileIO, fullPath);
         }
         free(fullPath);
         return result;
