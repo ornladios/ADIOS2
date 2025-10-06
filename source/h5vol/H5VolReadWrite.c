@@ -155,6 +155,7 @@ void gInitADIOS2(hid_t acc_tpl)
     }
     else
     {
+#if H5_HAVE_PARALLEL
         MPI_Comm comm = MPI_COMM_WORLD;
         if (H5Pget_driver(acc_tpl) == H5FD_MPIO)
         {
@@ -164,6 +165,9 @@ void gInitADIOS2(hid_t acc_tpl)
         }
         MPI_Comm_rank(comm, &m_MPIRank);
         m_ADIOS2 = adios2_init_mpi(comm);
+#else
+    m_ADIOS2 = adios2_init_serial();
+#endif
     }
 #else
     m_ADIOS2 = adios2_init_serial();
