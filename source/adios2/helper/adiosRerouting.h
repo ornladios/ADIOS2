@@ -81,8 +81,7 @@ public:
     uint64_t m_Size;
 
     static const size_t REROUTE_MESSAGE_SIZE = sizeof(MessageType) + sizeof(int) + sizeof(int) +
-                                               sizeof(int) + sizeof(uint64_t) +
-                                               sizeof(uint64_t);
+                                               sizeof(int) + sizeof(uint64_t) + sizeof(uint64_t);
 };
 
 } // end namespace helper
