@@ -166,7 +166,7 @@ void gInitADIOS2(hid_t acc_tpl)
         MPI_Comm_rank(comm, &m_MPIRank);
         m_ADIOS2 = adios2_init_mpi(comm);
 #else
-    m_ADIOS2 = adios2_init_serial();
+        m_ADIOS2 = adios2_init_serial();
 #endif
     }
 #else
