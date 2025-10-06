@@ -51,44 +51,28 @@ void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
 
 void RerouteMessage::SendTo(helper::Comm &comm, int destRank)
 {
-    std::cout << "Rank " << comm.Rank() << " sending " << this->GetTypeString(this->m_MsgType)
-              << " to " << destRank << std::endl;
+    // std::cout << "Rank " << comm.Rank() << " sending " << this->GetTypeString(this->m_MsgType)
+    //           << " to " << destRank << std::endl;
 
     std::vector<char> sendBuf;
     this->ToBuffer(sendBuf);
-
-    // You'd think send and/or recv should be non-blocking for this to work,
-    // especially when sending to ourselves, but somehow blocking send and recv
-    // seems to work.
-
-    // Non-blocking send
-    // comm.Isend(sendBuf.data(), sendBuf.size(), desinationtRank, 0);
-
-    // "Blocking" send
-    comm.Send(sendBuf.data(), sendBuf.size(), destRank, 0);
+    comm.Isend(sendBuf.data(), sendBuf.size(), destRank, 0);
 }
 
 void RerouteMessage::RecvFrom(helper::Comm &comm, int srcRank)
 {
     std::vector<char> recvBuf;
     recvBuf.resize(REROUTE_MESSAGE_SIZE);
-
-    // Non-blocking receive
-    // helper::Comm::Req req = comm.Irecv(recvBuf.data(), msgSize, recvFlag, 0);
-    // helper::Comm::Status status = req.Wait();
-
-    // "Blocking" receive
     helper::Comm::Status status = comm.Recv(recvBuf.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
-
     this->FromBuffer(recvBuf);
 
-    std::cout << "Rank " << comm.Rank() << " received " << this->GetTypeString(this->m_MsgType)
-              << " from " << status.Source << std::endl;
+    // std::cout << "Rank " << comm.Rank() << " received " << this->GetTypeString(this->m_MsgType)
+    //           << " from " << status.Source << std::endl;
 
-    if (status.Source != this->m_SrcRank)
-    {
-        std::cout << "   GAHHHHHHH!" << std::endl;
-    }
+    // if (status.Source != this->m_SrcRank)
+    // {
+    //     std::cout << "   GAHHHHHHH!" << std::endl;
+    // }
 }
 
 } // end namespace helper
