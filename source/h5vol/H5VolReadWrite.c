@@ -521,7 +521,6 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
         return gVarToVolObj(varDef, vol);
     }
 
-    //char fullPath[strlen(vol->m_Path) + 4 + strlen(name)];
     size_t fullLen = strlen(vol->m_Path) + 4 + strlen(name);
     char *fullPath = malloc(fullLen);
     if (!fullPath)
@@ -537,7 +536,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
     if (NULL == var)
     {
         SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable:: %s in file\n ", fullPath);
-	free(fullPath);
+        free(fullPath);
         return NULL;
     }
 
@@ -1027,17 +1026,17 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
                 return NULL;
             gUtilADIOS2GetShape(varDef->m_ShapeID, shape, varDim);
 
-	    size_t *start = malloc(varDim * sizeof(size_t));
+            size_t *start = malloc(varDim * sizeof(size_t));
             if (!start)
             {
-                free (shape);
+                free(shape);
                 return NULL;
             }
-	    size_t *count = malloc(varDim * sizeof(size_t));
+            size_t *count = malloc(varDim * sizeof(size_t));
             if (!count)
             {
-                free (start);
-                free (shape);
+                free(start);
+                free(shape);
                 return NULL;
             }
             if (H5VL_CODE_FAIL ==
@@ -1127,9 +1126,8 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
             return NULL;
         }
 
-        //size_t shape[attrDim];
-        size_t* shape = malloc(attrDim * sizeof(size_t));
-	if (!shape)
+        size_t *shape = malloc(attrDim * sizeof(size_t));
+        if (!shape)
             return NULL;
         gUtilADIOS2GetShape(input->m_SpaceID, shape, attrDim);
 
@@ -1143,10 +1141,10 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
             */
             if (isVariableSize)
             {
-                adios2_attribute *result =
-                    adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
-		free (shape);
-		return result;
+                adios2_attribute *result = adios2_define_attribute_array(io, fullPath, attrType,
+                                                                         (input->m_Data), shape[0]);
+                free(shape);
+                return result;
             }
             else
             {
