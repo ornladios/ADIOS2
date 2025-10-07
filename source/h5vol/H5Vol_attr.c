@@ -44,7 +44,7 @@ void *H5VL_adios2_attr_open(void *obj, const H5VL_loc_params_t *loc_params, cons
             {
                 return NULL;
             }
-            snprintf(withSlash, sizeof(withSlash), "/%s", name);
+            snprintf(withSlash, llen, "/%s", name);
             withSlash[strlen(name) + 1] = '\0';
             attr = gLocateAttrFrom(vol, withSlash);
             if (NULL == attr)
