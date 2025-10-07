@@ -24,7 +24,7 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
     {
         REQUIRE_SUCC((GROUP == vol->m_ObjType), NULL);
         size_t pathSize = strlen(vol->m_Path) + 1 + strlen(name);
-        char* fullPath = (char*)malloc(pathSize+1);
+        char *fullPath = (char *)malloc(pathSize + 1);
         if (fullPath == NULL)
         {
             return NULL;

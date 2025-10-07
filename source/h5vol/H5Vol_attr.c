@@ -38,12 +38,12 @@ void *H5VL_adios2_attr_open(void *obj, const H5VL_loc_params_t *loc_params, cons
         }
         else
         {
-            size_t llen = strlen(name)+2;
-            char* withSlash = (char*)malloc(llen);
+            size_t llen = strlen(name) + 2;
+            char *withSlash = (char*)malloc(llen);
             if (!withSlash)
             {
                 return NULL;
-	    }
+            }
             snprintf(withSlash, sizeof(withSlash), "/%s", name);
             withSlash[strlen(name) + 1] = '\0';
             attr = gLocateAttrFrom(vol, withSlash);
@@ -248,12 +248,12 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
             else
             {
                 size_t llen = strlen(vol->m_Path) + 4 + strlen(attr_name);
-                char* fullPath = (char*)malloc(llen);
+                char *fullPath = (char*)malloc(llen);
                 if (!fullPath)
                 {
                     return 0;
                 }
-                //char fullPath[strlen(vol->m_Path) + 4 + strlen(attr_name)];
+
                 gGenerateFullPath(fullPath, vol->m_Path, attr_name);
                 gADIOS2RemoveAttr(vol->m_FileIO, fullPath);
                 free(fullPath);

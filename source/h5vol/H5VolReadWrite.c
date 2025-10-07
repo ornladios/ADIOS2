@@ -370,12 +370,12 @@ htri_t gExistsUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
         return 0;
 
     size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
-    char* fullPath = (char*)malloc(len);
+    char *fullPath = (char*)malloc(len);
     if (!fullPath)
     {
         return 0;
     }
-    //char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
+
     sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
     if (NULL != adios2_inquire_attribute(owner->m_FileIO, fullPath))
@@ -430,17 +430,17 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     if (adios2_error_none == adios2_remove_attribute(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
         {
-            free (fullPath);
+            free(fullPath);
             return true;
         }
     if (adios2_error_none == adios2_remove_variable(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
         {
-            free (fullPath);
+            free(fullPath);
             return true;
         }
 
-    free (fullPath);
+    free(fullPath);
 #ifdef NEVER
     return false;
 #else
@@ -1072,18 +1072,18 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
                 int i;
 
                 size_t count = shape[0];
-                char **arrayOfStr = (char**)malloc(count * sizeof(char*));
+                char **arrayOfStr = (char **)malloc(count * sizeof(char *));
                 if (!arrayOfStr)
                 {
                     return NULL;
-		}
+                }
                 for (i = 0; i < shape[0]; i++)
                 {
-                    arrayOfStr[i] = (char*) malloc(sizeof(char) * strSize + 1);
+                    arrayOfStr[i] = (char *)malloc(sizeof(char) * strSize + 1);
                     if (!arrayOfStr[i])
                     {
                         for (size_t j = 0; j < i; j++)
-			     free(arrayOfStr[j]);
+                            free(arrayOfStr[j]);
 		        free(arrayOfStr);
 		        return NULL;
                     }
