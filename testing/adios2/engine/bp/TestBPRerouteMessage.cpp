@@ -43,7 +43,8 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
 
     // Receive a message from another (any) rank
     adios2::helper::RerouteMessage receivedMsg;
-    receivedMsg.BlockingRecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny), recvBuffer);
+    receivedMsg.BlockingRecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny),
+                                 recvBuffer);
 
     ASSERT_EQ(receivedMsg.m_MsgType, origMsg.m_MsgType);
     ASSERT_EQ(receivedMsg.m_SrcRank, srcRank);
