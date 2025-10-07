@@ -168,6 +168,17 @@ TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
         auto varmag = bpIn.InquireVariable<float>(derMagName);
         auto varcross = bpIn.InquireVariable<float>(derCrossName);
 
+        EXPECT_EQ(varmag.Shape().size(), 3);
+        EXPECT_EQ(varmag.Shape()[0], Nx);
+        EXPECT_EQ(varmag.Shape()[1], Ny);
+        EXPECT_EQ(varmag.Shape()[2], Nz);
+
+        EXPECT_EQ(varcross.Shape().size(), 4);
+        EXPECT_EQ(varcross.Shape()[0], Nx);
+        EXPECT_EQ(varcross.Shape()[1], Ny);
+        EXPECT_EQ(varcross.Shape()[2], Nz);
+        EXPECT_EQ(varcross.Shape()[3], 3);
+
         bpFileReader.Get(varUx, readUx);
         bpFileReader.Get(varUy, readUy);
         bpFileReader.Get(varUz, readUz);
@@ -282,6 +293,12 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
     auto varVY = bpIn.InquireVariable<float>(varname[1]);
     auto varVZ = bpIn.InquireVariable<float>(varname[2]);
     auto varCurl = bpIn.InquireVariable<float>(derivedname);
+
+    EXPECT_EQ(varCurl.Shape().size(), 4);
+    EXPECT_EQ(varCurl.Shape()[0], Nx);
+    EXPECT_EQ(varCurl.Shape()[1], Ny);
+    EXPECT_EQ(varCurl.Shape()[2], Nz);
+    EXPECT_EQ(varCurl.Shape()[3], 3);
 
     bpFileReader.Get(varVX, readVX);
     bpFileReader.Get(varVY, readVY);
