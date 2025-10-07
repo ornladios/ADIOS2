@@ -90,7 +90,7 @@ int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hs
     hsize_t npts = H5Sget_select_npoints(hyperSlab_id);
 
     if (0 == npts)
-        return npts;
+        return (int)npts;
     else
     {
         hsize_t *s = (hsize_t *)malloc(ndims * sizeof(hsize_t));

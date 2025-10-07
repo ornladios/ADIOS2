@@ -197,7 +197,7 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id
         {
             // The  number of attrs is from H5Oget_info(), then iterate each by
             // calling H5Aget_name_by_idx, to reach here
-            *ret_val = gGetNameOfNthAttr(vol, loc_params->loc_data.loc_by_idx.n, buf);
+            *ret_val = gGetNameOfNthAttr(vol, (uint32_t)(loc_params->loc_data.loc_by_idx.n), buf);
         }
         return 0;
     }
