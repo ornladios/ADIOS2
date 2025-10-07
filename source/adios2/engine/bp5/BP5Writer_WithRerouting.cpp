@@ -79,7 +79,8 @@ void BP5Writer::ReroutingCommunicationLoop()
 
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
-            case RerouteMessage::MessageType::DO_WRITE: {
+            case RerouteMessage::MessageType::DO_WRITE:
+            {
                 std::unique_lock<std::mutex> lck(m_WriteMutex);
                 m_TargetIndex = message.m_SubStreamIdx;
                 m_DataPos = message.m_Offset;
