@@ -369,15 +369,25 @@ htri_t gExistsUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     if (GROUP != owner->m_ObjType)
         return 0;
 
-    char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
+    size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
+    char* fullPath = (char*)malloc(len);
+    if (!fullPath)
+    {
+        return 0;
+    }
+    //char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
     sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
     if (NULL != adios2_inquire_attribute(owner->m_FileIO, fullPath))
+    {
+        free(fullPath);
         return 1;
-
+    }
     if (NULL != adios2_inquire_variable(owner->m_FileIO, fullPath))
+    {
+        free(fullPath);
         return 1;
-
+    }
     return 0;
 }
 
@@ -407,17 +417,30 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     if (GROUP != owner->m_ObjType)
         return false;
 
-    char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
+    size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
+    char *fullPath = (char *)malloc(len);
+    if (!fullPath)
+    {
+        // Handle allocation failure
+        return false;
+    }
+
     gGenerateFullPath(fullPath, owner->m_Path, obj_name);
-    // sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
     if (adios2_error_none == adios2_remove_attribute(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
+        {
+            free (fullPath);
             return true;
+        }
     if (adios2_error_none == adios2_remove_variable(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
+        {
+            free (fullPath);
             return true;
+        }
 
+    free (fullPath);
 #ifdef NEVER
     return false;
 #else
@@ -1048,10 +1071,22 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
             {
                 int i;
 
-                char *arrayOfStr[shape[0]];
+                size_t count = shape[0];
+                char **arrayOfStr = (char**)malloc(count * sizeof(char*));
+                if (!arrayOfStr)
+                {
+                    return NULL;
+		}
                 for (i = 0; i < shape[0]; i++)
                 {
-                    arrayOfStr[i] = malloc(sizeof(char) * strSize + 1);
+                    arrayOfStr[i] = (char*) malloc(sizeof(char) * strSize + 1);
+                    if (!arrayOfStr[i])
+                    {
+                        for (size_t j = 0; j < i; j++)
+			     free(arrayOfStr[j]);
+		        free(arrayOfStr);
+		        return NULL;
+                    }
                     strncpy(arrayOfStr[i], (char *)(input->m_Data) + strSize * i, strSize);
                     arrayOfStr[i][strSize] = '\0';
 

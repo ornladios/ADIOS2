@@ -65,7 +65,7 @@ herr_t H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
         {
             // so idx makes sense
-            *ret = gGetNameOfNthItem(vol, loc_params->loc_data.loc_by_idx.n, name);
+            *ret = (size_t) gGetNameOfNthItem(vol, loc_params->loc_data.loc_by_idx.n, name);
             return 0;
         }
         break;
