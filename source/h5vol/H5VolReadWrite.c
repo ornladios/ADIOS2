@@ -627,7 +627,7 @@ H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine, adios2_var
             return NULL;
         }
 
-        hid_t filespace = H5Screate_simple(nDims, (hsize_t *)shape, NULL);
+        hid_t filespace = H5Screate_simple((int)nDims, (hsize_t *)shape, NULL);
         varDef->m_ShapeID = filespace;
         free(shape);
     }
@@ -767,7 +767,7 @@ size_t gGetNameOfNthItem(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
     if (0 == vol->m_NumSubGroups)
         return 0;
 
-    uint32_t vIdx = idx - vol->m_NumVars;
+    uint32_t vIdx = idx - (uint32_t)(vol->m_NumVars);
     if (vIdx >= vol->m_NumSubGroups)
         return 0;
 
@@ -918,7 +918,7 @@ herr_t gADIOS2ReadVar(H5VL_VarDef_t *varDef)
     REQUIRE_NOT_NULL_ERR(varDef, -1);
     REQUIRE_NOT_NULL_ERR(varDef->m_Variable, -1);
 
-    int varDim = varDef->m_DimCount;
+    int varDim = (int)(varDef->m_DimCount);
     if (varDim < 0)
         return -1;
 

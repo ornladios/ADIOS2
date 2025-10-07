@@ -120,7 +120,7 @@ int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hs
         free(e);
 
         if (npts == numElements)
-            return npts; // ok got block
+            return (int)npts; // ok got block
     }
     return H5VL_CODE_FAIL; // slab has many blocks
 
