@@ -22,6 +22,9 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     std::cout << "Sending to " << destRank << " and expecting to receive from: " << srcRank
               << std::endl;
 
+    std::vector<char> sendBuffer;
+    std::vector<char> recvBuffer;
+
     // Send a message to another rank
     adios2::helper::RerouteMessage origMsg;
     origMsg.m_MsgType = adios2::helper::RerouteMessage::MessageType::WRITER_IDLE;
@@ -29,7 +32,7 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     origMsg.m_DestRank = destRank;
     origMsg.m_Offset = 2138;
     origMsg.m_Size = 1213;
-    origMsg.SendTo(comm, destRank);
+    origMsg.NonBlockingSendTo(comm, destRank, sendBuffer);
 
     int ready = 0;
 
@@ -40,7 +43,7 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
 
     // Receive a message from another (any) rank
     adios2::helper::RerouteMessage receivedMsg;
-    receivedMsg.RecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny));
+    receivedMsg.BlockingRecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny), recvBuffer);
 
     ASSERT_EQ(receivedMsg.m_MsgType, origMsg.m_MsgType);
     ASSERT_EQ(receivedMsg.m_SrcRank, srcRank);
@@ -55,31 +58,6 @@ class RerouteTest : public ::testing::Test
 public:
     RerouteTest() = default;
 };
-
-TEST_F(RerouteTest, TestMessageBuffer)
-{
-    adios2::helper::RerouteMessage origMsg;
-
-    origMsg.m_MsgType = adios2::helper::RerouteMessage::MessageType::WRITER_IDLE;
-    origMsg.m_SrcRank = 3;
-    origMsg.m_DestRank = 0;
-    origMsg.m_SubStreamIdx = 1;
-    origMsg.m_Offset = 2138;
-    origMsg.m_Size = 1213;
-
-    std::vector<char> buf;
-    origMsg.ToBuffer(buf);
-
-    adios2::helper::RerouteMessage newMsg;
-    newMsg.FromBuffer(buf);
-
-    ASSERT_EQ(newMsg.m_MsgType, origMsg.m_MsgType);
-    ASSERT_EQ(newMsg.m_SrcRank, origMsg.m_SrcRank);
-    ASSERT_EQ(newMsg.m_DestRank, origMsg.m_DestRank);
-    ASSERT_EQ(newMsg.m_SubStreamIdx, origMsg.m_SubStreamIdx);
-    ASSERT_EQ(newMsg.m_Offset, origMsg.m_Offset);
-    ASSERT_EQ(newMsg.m_Size, origMsg.m_Size);
-}
 
 TEST_F(RerouteTest, TestSendReceiveRoundRobin)
 {

@@ -26,7 +26,7 @@ namespace adios2
 namespace helper
 {
 
-void RerouteMessage::ToBuffer(std::vector<char> &buffer)
+void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer)
 {
     size_t pos = 0;
     buffer.resize(REROUTE_MESSAGE_SIZE);
@@ -36,10 +36,15 @@ void RerouteMessage::ToBuffer(std::vector<char> &buffer)
     helper::CopyToBuffer(buffer, pos, &this->m_SubStreamIdx);
     helper::CopyToBuffer(buffer, pos, &this->m_Offset);
     helper::CopyToBuffer(buffer, pos, &this->m_Size);
+
+    comm.Isend(buffer.data(), buffer.size(), destRank, 0);
 }
 
-void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
+void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vector<char> &buffer)
 {
+    buffer.resize(REROUTE_MESSAGE_SIZE);
+    comm.Recv(buffer.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
+
     size_t pos = 0;
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_MsgType);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_SrcRank);
@@ -47,21 +52,6 @@ void RerouteMessage::FromBuffer(const std::vector<char> &buffer)
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_SubStreamIdx);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_Offset);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_Size);
-}
-
-void RerouteMessage::SendTo(helper::Comm &comm, int destRank)
-{
-    std::vector<char> sendBuf;
-    this->ToBuffer(sendBuf);
-    comm.Isend(sendBuf.data(), sendBuf.size(), destRank, 0);
-}
-
-void RerouteMessage::RecvFrom(helper::Comm &comm, int srcRank)
-{
-    std::vector<char> recvBuf;
-    recvBuf.resize(REROUTE_MESSAGE_SIZE);
-    comm.Recv(recvBuf.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
-    this->FromBuffer(recvBuf);
 }
 
 } // end namespace helper
