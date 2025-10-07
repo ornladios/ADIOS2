@@ -35,16 +35,16 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     origMsg.NonBlockingSendTo(comm, destRank, sendBuffer);
 
     int ready = 0;
+    helper::Comm::Status status;
 
     while (!ready)
     {
-        comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &ready);
+        status = comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &ready);
     }
 
     // Receive a message from another (any) rank
     adios2::helper::RerouteMessage receivedMsg;
-    receivedMsg.BlockingRecvFrom(comm, static_cast<int>(helper::Comm::Constants::CommRecvAny),
-                                 recvBuffer);
+    receivedMsg.BlockingRecvFrom(comm, status.Source, recvBuffer);
 
     ASSERT_EQ(receivedMsg.m_MsgType, origMsg.m_MsgType);
     ASSERT_EQ(receivedMsg.m_SrcRank, srcRank);
