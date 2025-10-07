@@ -370,7 +370,7 @@ htri_t gExistsUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
         return 0;
 
     size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
-    char *fullPath = (char*)malloc(len);
+    char *fullPath = (char *)malloc(len);
     if (!fullPath)
     {
         return 0;
@@ -1084,8 +1084,8 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
                     {
                         for (size_t j = 0; j < i; j++)
                             free(arrayOfStr[j]);
-		        free(arrayOfStr);
-		        return NULL;
+                        free(arrayOfStr);
+                        return NULL;
                     }
                     strncpy(arrayOfStr[i], (char *)(input->m_Data) + strSize * i, strSize);
                     arrayOfStr[i][strSize] = '\0';

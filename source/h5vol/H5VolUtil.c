@@ -73,7 +73,7 @@ int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims)
     }
 
     // get num dimensions
-    hsize_t *h5Shape = (hsize_t*)malloc(ndims * sizeof(hsize_t));
+    hsize_t *h5Shape = (hsize_t *)malloc(ndims * sizeof(hsize_t));
     if (h5Shape == NULL)
     {
         return H5VL_CODE_FAIL;

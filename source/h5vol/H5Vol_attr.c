@@ -39,7 +39,7 @@ void *H5VL_adios2_attr_open(void *obj, const H5VL_loc_params_t *loc_params, cons
         else
         {
             size_t llen = strlen(name) + 2;
-            char *withSlash = (char*)malloc(llen);
+            char *withSlash = (char *)malloc(llen);
             if (!withSlash)
             {
                 return NULL;
@@ -248,7 +248,7 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
             else
             {
                 size_t llen = strlen(vol->m_Path) + 4 + strlen(attr_name);
-                char *fullPath = (char*)malloc(llen);
+                char *fullPath = (char *)malloc(llen);
                 if (!fullPath)
                 {
                     return 0;
