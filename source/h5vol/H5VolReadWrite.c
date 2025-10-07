@@ -1184,10 +1184,10 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
             // return adios2_define_attribute_array(io, fullPath, attrType,
             // &(input->m_Data), shape[0]);
             adios2_attribute *result =
-               adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
+                adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
             free(shape);
             return result;
-	}
+        }
     }
 }
 
