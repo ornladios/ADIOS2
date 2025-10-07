@@ -21,6 +21,38 @@
 #include <iostream>
 #include <thread>
 
+namespace
+{
+class BufferPool
+{
+public:
+    BufferPool(int size)
+    {
+        m_Pool.resize(size);
+    }
+
+    ~BufferPool() = default;
+
+    std::vector<char> &GetNextBuffer()
+    {
+        size_t bufferIdx = m_CurrentBufferIdx;
+
+        if (m_CurrentBufferIdx < m_Pool.size() - 1)
+        {
+            m_CurrentBufferIdx += 1;
+        }
+        else {
+            m_CurrentBufferIdx = 0;
+        }
+
+        return m_Pool[bufferIdx];
+    }
+
+    size_t m_CurrentBufferIdx = 0;
+    std::vector<std::vector<char>> m_Pool;
+};
+}
+
 namespace adios2
 {
 namespace core
@@ -40,6 +72,14 @@ void BP5Writer::ReroutingCommunicationLoop()
     // TODO: should the global coordinator role be assigned to a subcoordinator?
     // bool iAmGlobalCoord = m_RankMPI == m_Comm.Size() - 1;
     std::queue<int> writerQueue;
+
+    // Sends are non-blocking. We use the pool to avoid the situation where the
+    // buffer is destructed before the send is complete.  If we start seeing
+    // many Sends pending for a long time, that could cause us to exhaust the
+    // pool of buffers, at which point we would start overwriting buffers in the
+    // pool, potentially creating errors which are difficult to debug/diagnose.
+    BufferPool sendBuffers((iAmSubCoord ? 100 : 1));
+    std::vector<char> recvBuffer;
     int writingRank = -1;
     uint64_t currentFilePos = 0;
     bool sentFinished = false;
@@ -75,7 +115,7 @@ void BP5Writer::ReroutingCommunicationLoop()
         if (msgReady)
         {
             RerouteMessage message;
-            message.RecvFrom(m_Comm, status.Source);
+            message.BlockingRecvFrom(m_Comm, status.Source, recvBuffer);
 
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
@@ -109,7 +149,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeCompleteMsg.m_DestRank = m_TargetCoordinator;
                 writeCompleteMsg.m_SubStreamIdx = m_TargetIndex;
                 writeCompleteMsg.m_Offset = m_DataPos;
-                writeCompleteMsg.SendTo(m_Comm, m_TargetCoordinator);
+                writeCompleteMsg.NonBlockingSendTo(m_Comm, m_TargetCoordinator, sendBuffers.GetNextBuffer());
                 sentFinished = true;
 
                 if (!iAmSubCoord /*&& !iAmGlobalCoord*/)
@@ -135,7 +175,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeMsg.m_SubStreamIdx = static_cast<int>(m_Aggregator->m_SubStreamIndex);
                 writeMsg.m_Offset = currentFilePos;
                 writingRank = nextWriter;
-                writeMsg.SendTo(m_Comm, nextWriter);
+                writeMsg.NonBlockingSendTo(m_Comm, nextWriter, sendBuffers.GetNextBuffer());
             }
             else
             {
