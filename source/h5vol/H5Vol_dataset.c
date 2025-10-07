@@ -32,10 +32,10 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
         if (vol->m_Path[strlen(vol->m_Path) - 1] == '/')
         {
             pathSize = pathSize - 1;
-            snprintf(fullPath, pathSize+1, "%s%s", vol->m_Path, name);
+            snprintf(fullPath, pathSize + 1, "%s%s", vol->m_Path, name);
         }
         else
-            snprintf(fullPath, pathSize+1, "%s/%s", vol->m_Path, name);
+            snprintf(fullPath, pathSize + 1, "%s/%s", vol->m_Path, name);
 
         fullPath[pathSize] = '\0';
 
