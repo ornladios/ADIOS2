@@ -61,17 +61,11 @@ public:
         }
     }
 
-    // Store a RerouteMsg so it can sent/received over mpi
-    void ToBuffer(std::vector<char> &buffer);
-
-    // Reconstitute member fields from buffer
-    void FromBuffer(const std::vector<char> &buffer);
-
     // Send the contents of this message to another rank
-    void SendTo(helper::Comm &comm, int destRank);
+    void NonBlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer);
 
     // Receive a message from another rank to populate this message
-    void RecvFrom(helper::Comm &comm, int srcRank);
+    void BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vector<char> &buffer);
 
     MessageType m_MsgType;
     int m_SrcRank;
