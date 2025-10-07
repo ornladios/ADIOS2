@@ -684,6 +684,50 @@ DerivedData Curl3DFunc(const ExprData exprData)
     PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
     auto inputData = exprData.Data;
     auto type = exprData.OutType;
+
+    // if the data is aggregated into a single array
+    if (inputData.size() == 1)
+    {
+        // Curl is implemented for 3D arrays
+        if (inputData[0].Count.size() != 4 && inputData[0].Count[3] != 3)
+            helper::Throw<std::invalid_argument>(
+                "Derived", "Function", "Curl3DFunc",
+                "Invalid number of aggregated operands or operand dimentions for Curl");
+        size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
+        size_t dataSize =
+            std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count) - 1, 1,
+                            std::multiplies<size_t>());
+        DerivedData curl;
+        curl.Data = NULL;
+#define declare_type_curlagg(T)                                                                    \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *input1 = (T *)inputData[0].Data;                                                        \
+        T *input2 = (T *)inputData[0].Data + dataSize;                                             \
+        T *input3 = (T *)inputData[0].Data + 2 * dataSize;                                         \
+        curl.Data = detail::ApplyCurl(input1, input2, input3, dims);                               \
+        return curl;                                                                               \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_curlagg)
+        helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
+                                             "Invalid variable types");
+        return DerivedData();
+    }
+
+    // if the data is not aggregated, the function expects 3 3D operands
+    if (inputData.size() != 3)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
+                                             "Invalid number of operands for Curl, 3 expected, " +
+                                                 std::to_string(inputData.size()) + " provided");
+    }
+    if (inputData[0].Count.size() != 3)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
+                                             "Invalid operand dimensions for Curl, 3 expected, " +
+                                                 std::to_string(inputData[0].Count.size()) +
+                                                 " provided");
+    }
     size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
 
     DerivedData curl;
@@ -776,11 +820,29 @@ std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
             helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDimsFunc",
                                                  "Invalid variable dimensions");
     }
+
+    // if curl is computed on arrays aggregated into one array on the last dimension
+    // we need to remove this dimension and set the last dimension to 3 since we only
+    // support curl for 3D arrays
+    if (input.size() == 1)
+    {
+        Dims outStart(std::get<0>(input[0]).size() - 1);
+        Dims outCount(std::get<1>(input[0]).size() - 1);
+        Dims outShape(std::get<2>(input[0]).size() - 1);
+        std::copy(std::get<0>(input[0]).begin(), std::get<0>(input[0]).end() - 1, outStart.begin());
+        std::copy(std::get<1>(input[0]).begin(), std::get<1>(input[0]).end() - 1, outCount.begin());
+        std::copy(std::get<2>(input[0]).begin(), std::get<2>(input[0]).end() - 1, outShape.begin());
+        outStart.push_back(0);
+        outCount.push_back(3);
+        outShape.push_back(3);
+        return {outStart, outCount, outShape};
+    }
     // return original dimensions with added dimension of number of inputs
+    // since we only support curl for 3D arrays, the number of inputs is 3
     std::tuple<Dims, Dims, Dims> output = input[0];
     std::get<0>(output).push_back(0);
-    std::get<1>(output).push_back(input.size());
-    std::get<2>(output).push_back(input.size());
+    std::get<1>(output).push_back(3);
+    std::get<2>(output).push_back(3);
     return output;
 }
 
