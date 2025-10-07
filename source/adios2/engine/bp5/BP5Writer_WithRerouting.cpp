@@ -26,10 +26,7 @@ namespace
 class BufferPool
 {
 public:
-    BufferPool(int size)
-    {
-        m_Pool.resize(size);
-    }
+    BufferPool(int size) { m_Pool.resize(size); }
 
     ~BufferPool() = default;
 
@@ -41,7 +38,8 @@ public:
         {
             m_CurrentBufferIdx += 1;
         }
-        else {
+        else
+        {
             m_CurrentBufferIdx = 0;
         }
 
@@ -119,8 +117,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
-            case RerouteMessage::MessageType::DO_WRITE:
-            {
+            case RerouteMessage::MessageType::DO_WRITE: {
                 std::unique_lock<std::mutex> lck(m_WriteMutex);
                 m_TargetIndex = message.m_SubStreamIdx;
                 m_DataPos = message.m_Offset;
@@ -149,7 +146,8 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeCompleteMsg.m_DestRank = m_TargetCoordinator;
                 writeCompleteMsg.m_SubStreamIdx = m_TargetIndex;
                 writeCompleteMsg.m_Offset = m_DataPos;
-                writeCompleteMsg.NonBlockingSendTo(m_Comm, m_TargetCoordinator, sendBuffers.GetNextBuffer());
+                writeCompleteMsg.NonBlockingSendTo(m_Comm, m_TargetCoordinator,
+                                                   sendBuffers.GetNextBuffer());
                 sentFinished = true;
 
                 if (!iAmSubCoord /*&& !iAmGlobalCoord*/)
