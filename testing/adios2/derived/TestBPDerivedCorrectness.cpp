@@ -34,6 +34,52 @@ TEST_P(DerivedCorrectnessP, ErrorTest)
                  std::invalid_argument);
     EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
                  std::invalid_argument);
+    // check for too many constants
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n pow(x, 3, 2)", mode),
+                 std::invalid_argument);
+}
+
+TEST_P(DerivedCorrectnessP, ComposedExpressionTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPComposedWrite");
+
+    const size_t N = 10;
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0, 10.0);
+    std::vector<double> simArray(N);
+    for (size_t i = 0; i < N; ++i)
+        simArray[i] = distribution(generator);
+
+    auto U = bpOut.DefineVariable<double>("var1", {N}, {0}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(sum(pow(x), x, 2))", mode);
+    adios2::Engine bpFileWriter = bpOut.Open("BPDeriveCompose.bp", adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(U, simArray.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    double epsilon = (double)0.01;
+    adios2::IO bpIn = adios.DeclareIO("BPComposedRead");
+    adios2::Engine bpFileReader = bpIn.Open("BPDeriveCompose.bp", adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<double>("derived");
+    EXPECT_EQ(derVar.Shape().size(), 1);
+    EXPECT_EQ(derVar.Shape()[0], N);
+
+    std::vector<double> readCom;
+    bpFileReader.Get(derVar, readCom);
+    bpFileReader.EndStep();
+
+    for (size_t ind = 0; ind < N; ++ind)
+    {
+        double calcDerived = (double)sqrt(pow(simArray[ind], 2) + simArray[ind] + 2);
+        EXPECT_TRUE(fabs(calcDerived - readCom[ind]) < epsilon);
+    }
+
+    bpFileReader.Close();
 }
 
 TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
