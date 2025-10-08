@@ -46,6 +46,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
     const std::string derConstMult = "derived/constmult";
     const std::string derDivName = "derived/div";
     const std::string derPowName = "derived/pow";
+    const std::string derPow3Name = "derived/pow3";
     const std::string derSqrtName = "derived/sqrt";
 
     { // write distributed over mpiSize processes
@@ -106,7 +107,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     mode);
         bpOut.DefineDerivedVariable(derConstMult,
                                     "x =" + varname[0] + " \n"
-                                    "multiply(x, 5, -2)",
+                                    "mult(x, 5, -2)",
                                     mode);
         bpOut.DefineDerivedVariable(derDivName,
                                     "x =" + varname[0] + " \n"
@@ -117,6 +118,10 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         bpOut.DefineDerivedVariable(derPowName,
                                     "x =" + varname[0] + " \n"
                                     "pow(x)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derPow3Name,
+                                    "x =" + varname[0] + " \n"
+                                    "pow(x, 3)",
                                     mode);
         bpOut.DefineDerivedVariable(derSqrtName,
                                     "x =" + varname[0] + " \n"
@@ -150,6 +155,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         std::vector<float> readConstMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readDiv(mpiSize * Nx * Ny * Nz);
         std::vector<double> readPow(mpiSize * Nx * Ny * Nz);
+        std::vector<double> readPow3(mpiSize * Nx * Ny * Nz);
         std::vector<double> readSqrt(mpiSize * Nx * Ny * Nz);
 
         float calcFloat;
@@ -167,6 +173,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         auto varConstMult = bpIn.InquireVariable<float>(derConstMult);
         auto varDiv = bpIn.InquireVariable<float>(derDivName);
         auto varPow = bpIn.InquireVariable<double>(derPowName);
+        auto varPow3 = bpIn.InquireVariable<double>(derPow3Name);
         auto varSqrt = bpIn.InquireVariable<double>(derSqrtName);
 
         bpFileReader.Get(varUx, readUx);
@@ -181,6 +188,7 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(varConstMult, readConstMult);
         bpFileReader.Get(varDiv, readDiv);
         bpFileReader.Get(varPow, readPow);
+        bpFileReader.Get(varPow3, readPow3);
         bpFileReader.Get(varSqrt, readSqrt);
         bpFileReader.EndStep();
 
@@ -206,6 +214,9 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
 
             calcDouble = std::pow(readUx[ind], 2);
             EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
+
+            calcDouble = std::pow(readUx[ind], 3);
+            EXPECT_TRUE(fabs(calcDouble - readPow3[ind]) < epsilon);
 
             calcDouble = std::sqrt(readUx[ind]);
             EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
