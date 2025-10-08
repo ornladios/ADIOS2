@@ -17,6 +17,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 /// \endcond
@@ -37,6 +38,17 @@ void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::ve
     helper::CopyToBuffer(buffer, pos, &this->m_Offset);
     helper::CopyToBuffer(buffer, pos, &this->m_Size);
 
+    std::stringstream ss;
+
+    ss << "Rank " << comm.Rank() << " SEND buffer of length " << buffer.size() << ": [";
+    for (int i = 0; i < buffer.size(); ++i)
+    {
+        ss << " " << static_cast<int>(buffer[i]);
+    }
+    ss << " ]\n";
+
+    std::cout << ss.str();
+
     comm.Isend(buffer.data(), buffer.size(), destRank, 0);
 }
 
@@ -44,6 +56,17 @@ void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vect
 {
     buffer.resize(REROUTE_MESSAGE_SIZE);
     comm.Recv(buffer.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
+
+    std::stringstream ss;
+
+    ss << "Rank " << comm.Rank() << " RECV buffer of length " << buffer.size() << ": [";
+    for (int i = 0; i < buffer.size(); ++i)
+    {
+        ss << " " << static_cast<int>(buffer[i]);
+    }
+    ss << " ]\n";
+
+    std::cout << ss.str();
 
     size_t pos = 0;
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_MsgType);
