@@ -313,7 +313,7 @@ DerivedData PowFunc(ExprData exprData)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
     auto inputData = exprData.Data;
-    if (inputData.size() != 1)
+    if (inputData.size() != 1 || exprData.Const.size() > 1)
     {
         helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
                                              "Invalid number of arguments passed to PowFunc");
@@ -321,13 +321,16 @@ DerivedData PowFunc(ExprData exprData)
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
     DataType inputType = inputData[0].Type;
+    size_t base = 2;
+    if (exprData.Const.size() > 0)
+        base = static_cast<size_t>(std::stoull(exprData.Const[0]));
 
     if (inputType == DataType::LongDouble)
     {
         long double *powValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
-                       [](long double &a) { return std::pow(a, 2); });
+                       [base](long double &a) { return std::pow(a, base); });
         return DerivedData({(void *)powValues});
     }
 #define declare_type_pow(T)                                                                        \
@@ -336,7 +339,7 @@ DerivedData PowFunc(ExprData exprData)
         double *powValues = (double *)malloc(dataSize * sizeof(double));                           \
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
-                       [](T &a) { return std::pow(a, 2); });                                       \
+                       [base](T &a) { return std::pow(a, base); });                                \
         return DerivedData({(void *)powValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
