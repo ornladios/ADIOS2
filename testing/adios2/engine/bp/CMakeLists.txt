@@ -131,7 +131,7 @@ if (ADIOS2_HAVE_MPI)
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "2"
   )
   gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB.Rerouting
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "2" "1" "5" "WithRerouting"
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "5" "WithRerouting"
   )
 endif()
 
