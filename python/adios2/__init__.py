@@ -14,8 +14,19 @@ from adios2.operator import *
 from adios2.stream import *
 from adios2.variable import *
 from adios2.file_reader import *
-from adios2.bindings import LocalValueDim
+from adios2.bindings import (
+    LocalValueDim,
+    Mode,
+    ShapeID,
+    StepMode,
+    StepStatus,
+    DerivedVarType,
+    Accuracy,
+)
 
 __license__ = "Apache-2.0"
 __version__ = adios2.bindings.__version__
 is_built_with_mpi = adios2.bindings.is_built_with_mpi
+
+# JoinedDim = 2**64 - 2
+JoinedDim = 18446744073709551614

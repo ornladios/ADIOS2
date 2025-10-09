@@ -83,4 +83,4 @@ include = 'python/adios2/.*.py|testing/adios2/python/.*.py'
 
 [tool.pylint]
 disable = ['E0401', 'W0102', 'R0904', 'R0913', 'R0401']
-good-names = ['io']
+good-names = ['io', 'JoinedDim']

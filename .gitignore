@@ -49,7 +49,6 @@ CMakeSettings.json
 build/
 build.*/
 .idea/
-.vscode/
 
 # redis dump files
 *.rdb
