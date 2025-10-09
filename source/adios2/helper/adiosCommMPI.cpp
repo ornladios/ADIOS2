@@ -462,7 +462,10 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count, Datatype datatype
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        CheckMPIReturn(MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)), batchSize,
+        std::cout << "Isend " << count << " items of type " << static_cast<int>(datatype) << std::endl;
+        // CheckMPIReturn(MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)), batchSize,
+        //                          ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
+        CheckMPIReturn(MPI_Isend(const_cast<void *>(buffer), batchSize,
                                  ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
                        " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
