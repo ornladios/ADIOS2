@@ -32,8 +32,8 @@
 
 #ifdef ADIOS2_HAVE_MGARD
 #include "adios2/operator/compress/CompressMGARD.h"
-#include "adios2/operator/compress/CompressMGARDPlus.h"
 #include "adios2/operator/compress/CompressMGARDComplex.h"
+#include "adios2/operator/compress/CompressMGARDPlus.h"
 #endif
 
 #ifdef ADIOS2_HAVE_MGARD_MDR
