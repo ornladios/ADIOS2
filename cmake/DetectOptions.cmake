@@ -520,15 +520,21 @@ if(ADIOS2_USE_SST AND NOT WIN32)
 endif()
 
 # DAOS
-find_package(DAOS)
-if(DAOS_FOUND)
-  set(ADIOS2_HAVE_DAOS TRUE)
-
-  # Caliper  (currently on needed by DAOS code)
-  find_package(Caliper REQUIRED)
-  if(Caliper_FOUND)
+if(ADIOS2_USE_DAOS STREQUAL AUTO)
+  find_package(DAOS)
+  find_package(Caliper)
+  if(DAOS_FOUND AND Caliper_FOUND)
+     set(ADIOS2_HAVE_DAOS TRUE)
      set(ADIOS2_HAVE_Caliper TRUE)
   endif()
+elseif (ADIOS2_USE_DAOS)
+  find_package(DAOS REQUIRED)
+  find_package(Caliper REQUIRED)
+endif()
+
+if(DAOS_FOUND AND Caliper_FOUND)
+   set(ADIOS2_HAVE_DAOS TRUE)
+   set(ADIOS2_HAVE_Caliper TRUE)
 endif()
 
 #SysV IPC
