@@ -95,28 +95,50 @@ TEST_F(RerouteTest, TestSendReceiveSelf)
 
 TEST_F(RerouteTest, TestSendReceiveBare)
 {
-    helper::Comm comm = adios2::helper::CommDupMPI(MPI_COMM_WORLD);
+    helper::Comm comm = adios2::helper::CommWithMPI(MPI_COMM_WORLD);
 
     int sendToRank = worldRank >= worldSize - 1 ? 0 : worldRank + 1;
     int recvFromRank = worldRank <= 0 ? worldSize - 1 : worldRank - 1;
 
-    std::vector<char> sendBuffer;
-
-    sendBuffer.push_back(1);
-    sendBuffer.push_back(2);
-    sendBuffer.push_back(3);
+    std::vector<char> sendBuffer = {1, 2, 3};
 
     comm.Isend(sendBuffer.data(), sendBuffer.size(), sendToRank, 0);
 
     std::vector<char> recvBuffer;
     recvBuffer.resize(sendBuffer.size());
 
-    comm.Recv(recvBuffer.data(), recvBuffer.size(), recvFromRank, 0);
+    helper::Comm::Status status = comm.Recv(recvBuffer.data(), recvBuffer.size(), recvFromRank, 0);
 
-    ASSERT_EQ(recvBuffer.size(), 3);
-    ASSERT_EQ(static_cast<int>(recvBuffer[0]), 1);
-    ASSERT_EQ(static_cast<int>(recvBuffer[1]), 2);
-    ASSERT_EQ(static_cast<int>(recvBuffer[2]), 3);
+    std::cout << "Rank " << comm.Rank() << " received " << status.Count << " elts" << std::endl;
+
+    ASSERT_EQ(recvBuffer.size(), sendBuffer.size());
+
+    for (int i = 0; i < recvBuffer.size(); ++i)
+    {
+        ASSERT_EQ(static_cast<int>(recvBuffer[i]), static_cast<int>(sendBuffer[i]));
+    }
+}
+
+TEST_F(RerouteTest, TestSendReceiveMoreBare)
+{
+    int sendToRank = worldRank >= worldSize - 1 ? 0 : worldRank + 1;
+    int recvFromRank = worldRank <= 0 ? worldSize - 1 : worldRank - 1;
+    int count = 3;
+
+    // Send the buffer of chars (non-blocking)
+    MPI_Request request = MPI_REQUEST_NULL;
+    char sendBuffer[count] = {1, 2, 3};
+    MPI_Isend(&sendBuffer, count, MPI_CHAR, sendToRank, 0, MPI_COMM_WORLD, &request);
+
+    // Receive the buffer of chars (blocking)
+    MPI_Status status;
+    char recvBuffer[count];
+    MPI_Recv(&recvBuffer, count, MPI_CHAR, recvFromRank, 0, MPI_COMM_WORLD, &status);
+
+    for (int i = 0; i < count; ++i)
+    {
+        ASSERT_EQ(static_cast<int>(recvBuffer[i]), static_cast<int>(sendBuffer[i]));
+    }
 }
 
 int main(int argc, char **argv)
