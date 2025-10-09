@@ -90,15 +90,15 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
     int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
     m_Profiler.AddTimerWatch("PartitionRanks");
     m_Profiler.Start("PartitionRanks");
-    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+    m_Partitioning = helper::PartitionRanks(allsizes, numPartitions);
     m_Profiler.Stop("PartitionRanks");
 
     if (parentRank == 0 && m_Parameters.verbose > 0)
     {
-        partitioning.PrintSummary();
+        m_Partitioning.PrintSummary();
     }
 
-    return partitioning.FindPartition(parentRank);
+    return m_Partitioning.FindPartition(parentRank);
 }
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -369,8 +369,31 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_EveryoneWrites(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
-        case (int)AggregationType::DataSizeBased:
             WriteData_EveryoneWrites(Data, true);
+            break;
+        case (int)AggregationType::DataSizeBased:
+            // First initialize aggregator and transports if we haven't done it yet this step
+            if (!m_AggregatorInitializedThisStep)
+            {
+                // We can't allow ranks to change subfiles between calls to Put(), so we only
+                // do this initialization once per timestep. Consequently, partition decision
+                // could be based on incomplete step data.
+                InitAggregator(Data->Size());
+                InitTransports();
+                m_AggregatorInitializedThisStep = true;
+            }
+
+            // For rerouting to be useful, there must be multiple writers sending
+            // data to multiple subfiles.
+            if (m_Parameters.EnableWriterRerouting && m_Comm.Size() > 1 &&
+                m_Aggregator->m_SubStreams > 1)
+            {
+                WriteData_WithRerouting(Data);
+            }
+            else
+            {
+                WriteData_EveryoneWrites(Data, true);
+            }
             break;
         case (int)AggregationType::TwoLevelShm:
             WriteData_TwoLevelShm(Data);
@@ -389,19 +412,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
 {
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
-    {
-        if (!m_AggregatorInitializedThisStep)
-        {
-            // We can't allow ranks to change subfiles between calls to Put(), so we only
-            // do this initialization once per timestep. Consequently, partition decision
-            // could be based on incomplete step data.
-            InitAggregator(Data->Size());
-            InitTransports();
-            m_AggregatorInitializedThisStep = true;
-        }
-    }
-
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on aggregator
