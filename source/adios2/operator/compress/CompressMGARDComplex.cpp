@@ -11,8 +11,8 @@
 #include "CompressMGARDComplex.h"
 #include "CompressNull.h"
 #include "adios2/helper/adiosFunctions.h"
-#include <cstring>
 #include <complex>
+#include <cstring>
 #include <mgard/MGARDConfig.hpp>
 #include <mgard/compress_x.hpp>
 
@@ -28,8 +28,8 @@ CompressMGARDComplex::CompressMGARDComplex(const Params &parameters)
 {
 }
 
-size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
-                                     const DataType type, char *bufferOut)
+size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
+                                     const Dims &blockCount, const DataType type, char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -72,8 +72,9 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
     }
     else
     {
-        helper::Throw<std::invalid_argument>("Operator", "CompressMGARDComplex", "Operate",
-                                             "MGARD Complex only supports complex<float> and complex<double> types");
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressMGARDComplex", "Operate",
+            "MGARD Complex only supports complex<float> and complex<double> types");
     }
 
     // set mgard style dim info
@@ -148,7 +149,7 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
 
     mgard_x::Config config;
     config.lossless = mgard_x::lossless_type::Huffman_Zstd;
-    
+
     // Check for device parameter
     auto itDevice = m_Parameters.find("device");
     if (itDevice != m_Parameters.end())
@@ -164,19 +165,22 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
 
     // Store space for the compressed sizes in header first
     size_t realSizeOffset = bufferOutOffset;
-    PutParameter(bufferOut, bufferOutOffset, static_cast<size_t>(0)); // Placeholder for real compressed size
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<size_t>(0)); // Placeholder for real compressed size
     size_t imagSizeOffset = bufferOutOffset;
-    PutParameter(bufferOut, bufferOutOffset, static_cast<size_t>(0)); // Placeholder for imaginary compressed size
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<size_t>(0)); // Placeholder for imaginary compressed size
 
     // Copy complex data into std::vector<char> and separate into real and imaginary parts
     std::vector<char> combinedData(2 * realBytes); // Space for both real and imaginary parts
-    
+
     if (type == helper::GetDataType<std::complex<float>>())
     {
-        const std::complex<float>* complexData = reinterpret_cast<const std::complex<float>*>(dataIn);
-        float* realPtr = reinterpret_cast<float*>(combinedData.data());
-        float* imagPtr = reinterpret_cast<float*>(combinedData.data() + realBytes);
-        
+        const std::complex<float> *complexData =
+            reinterpret_cast<const std::complex<float> *>(dataIn);
+        float *realPtr = reinterpret_cast<float *>(combinedData.data());
+        float *imagPtr = reinterpret_cast<float *>(combinedData.data() + realBytes);
+
         for (size_t i = 0; i < totalElements; ++i)
         {
             realPtr[i] = complexData[i].real();
@@ -185,10 +189,11 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
     }
     else if (type == helper::GetDataType<std::complex<double>>())
     {
-        const std::complex<double>* complexData = reinterpret_cast<const std::complex<double>*>(dataIn);
-        double* realPtr = reinterpret_cast<double*>(combinedData.data());
-        double* imagPtr = reinterpret_cast<double*>(combinedData.data() + realBytes);
-        
+        const std::complex<double> *complexData =
+            reinterpret_cast<const std::complex<double> *>(dataIn);
+        double *realPtr = reinterpret_cast<double *>(combinedData.data());
+        double *imagPtr = reinterpret_cast<double *>(combinedData.data() + realBytes);
+
         for (size_t i = 0; i < totalElements; ++i)
         {
             realPtr[i] = complexData[i].real();
@@ -198,24 +203,25 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
     // Compress real part
     size_t realCompressedSize = realBytes;
     void *realCompressedData = bufferOut + bufferOutOffset;
-        
-    mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType, 
-                    combinedData.data(), realCompressedData, realCompressedSize, config, true);
+
+    mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType,
+                      combinedData.data(), realCompressedData, realCompressedSize, config, true);
     // std::cout << "realCompressedSize=" << realCompressedSize << "\n";
     // Update the actual compressed size of real part in header
-    *reinterpret_cast<size_t*>(bufferOut + realSizeOffset) = realCompressedSize;
+    *reinterpret_cast<size_t *>(bufferOut + realSizeOffset) = realCompressedSize;
     bufferOutOffset += realCompressedSize;
 
     // Compress imaginary part
     size_t imagCompressedSize = realBytes;
     void *imagCompressedData = bufferOut + bufferOutOffset;
-        
+
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType,
-                    combinedData.data() + realBytes, imagCompressedData, imagCompressedSize, config, true);
+                      combinedData.data() + realBytes, imagCompressedData, imagCompressedSize,
+                      config, true);
 
     // std::cout << "imagCompressedSize=" << imagCompressedSize << "\n";
     // Update the actual compressed size of imaginary part in header
-    *reinterpret_cast<size_t*>(bufferOut + imagSizeOffset) = imagCompressedSize;
+    *reinterpret_cast<size_t *>(bufferOut + imagSizeOffset) = imagCompressedSize;
     bufferOutOffset += imagCompressedSize;
 
     return bufferOutOffset;
@@ -254,7 +260,7 @@ size_t CompressMGARDComplex::DecompressV1(const char *bufferIn, const size_t siz
     {
         elementSize = sizeof(double);
     }
-    
+
     const size_t realBytes = totalElements * elementSize;
 
     if (isCompressed)
@@ -262,27 +268,33 @@ size_t CompressMGARDComplex::DecompressV1(const char *bufferIn, const size_t siz
         try
         {
             // Get compressed sizes from header
-            const size_t realCompressedSize = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
-            const size_t imagCompressedSize = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
-            
+            const size_t realCompressedSize =
+                GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+            const size_t imagCompressedSize =
+                GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+
             // Use std::vector<char> for unified data handling
-            std::vector<char> combinedData(2 * realBytes); // Space for both real and imaginary parts
+            std::vector<char> combinedData(2 *
+                                           realBytes); // Space for both real and imaginary parts
             if (type == helper::GetDataType<std::complex<float>>())
             {
                 // Decompress real part
                 void *realPartVoid = combinedData.data();
-                mgard_x::decompress(bufferIn + bufferInOffset, realCompressedSize, realPartVoid, true);
+                mgard_x::decompress(bufferIn + bufferInOffset, realCompressedSize, realPartVoid,
+                                    true);
                 bufferInOffset += realCompressedSize;
-                
+
                 // Decompress imaginary part
                 void *imagPartVoid = combinedData.data() + realBytes;
-                mgard_x::decompress(bufferIn + bufferInOffset, imagCompressedSize, imagPartVoid, true);
-                
+                mgard_x::decompress(bufferIn + bufferInOffset, imagCompressedSize, imagPartVoid,
+                                    true);
+
                 // Reconstruct complex data
-                const float* realPtr = reinterpret_cast<const float*>(combinedData.data());
-                const float* imagPtr = reinterpret_cast<const float*>(combinedData.data() + realBytes);
-                std::complex<float>* complexOut = reinterpret_cast<std::complex<float>*>(dataOut);
-                
+                const float *realPtr = reinterpret_cast<const float *>(combinedData.data());
+                const float *imagPtr =
+                    reinterpret_cast<const float *>(combinedData.data() + realBytes);
+                std::complex<float> *complexOut = reinterpret_cast<std::complex<float> *>(dataOut);
+
                 for (size_t i = 0; i < totalElements; ++i)
                 {
                     complexOut[i] = std::complex<float>(realPtr[i], imagPtr[i]);
@@ -292,18 +304,22 @@ size_t CompressMGARDComplex::DecompressV1(const char *bufferIn, const size_t siz
             {
                 // Decompress real part
                 void *realPartVoid = combinedData.data();
-                mgard_x::decompress(bufferIn + bufferInOffset, realCompressedSize, realPartVoid, true);
+                mgard_x::decompress(bufferIn + bufferInOffset, realCompressedSize, realPartVoid,
+                                    true);
                 bufferInOffset += realCompressedSize;
-                
+
                 // Decompress imaginary part
                 void *imagPartVoid = combinedData.data() + realBytes;
-                mgard_x::decompress(bufferIn + bufferInOffset, imagCompressedSize, imagPartVoid, true);
-                
+                mgard_x::decompress(bufferIn + bufferInOffset, imagCompressedSize, imagPartVoid,
+                                    true);
+
                 // Reconstruct complex data
-                const double* realPtr = reinterpret_cast<const double*>(combinedData.data());
-                const double* imagPtr = reinterpret_cast<const double*>(combinedData.data() + realBytes);
-                std::complex<double>* complexOut = reinterpret_cast<std::complex<double>*>(dataOut);
-                
+                const double *realPtr = reinterpret_cast<const double *>(combinedData.data());
+                const double *imagPtr =
+                    reinterpret_cast<const double *>(combinedData.data() + realBytes);
+                std::complex<double> *complexOut =
+                    reinterpret_cast<std::complex<double> *>(dataOut);
+
                 for (size_t i = 0; i < totalElements; ++i)
                 {
                     complexOut[i] = std::complex<double>(realPtr[i], imagPtr[i]);
@@ -322,7 +338,8 @@ size_t CompressMGARDComplex::DecompressV1(const char *bufferIn, const size_t siz
     return 0;
 }
 
-size_t CompressMGARDComplex::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
+size_t CompressMGARDComplex::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                            char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
