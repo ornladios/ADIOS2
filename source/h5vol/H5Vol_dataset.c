@@ -24,14 +24,18 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
     {
         REQUIRE_SUCC((GROUP == vol->m_ObjType), NULL);
         size_t pathSize = strlen(vol->m_Path) + 1 + strlen(name);
-        char fullPath[pathSize + 1];
+        char *fullPath = (char *)malloc(pathSize + 1);
+        if (fullPath == NULL)
+        {
+            return NULL;
+        }
         if (vol->m_Path[strlen(vol->m_Path) - 1] == '/')
         {
             pathSize = pathSize - 1;
-            snprintf(fullPath, sizeof(fullPath), "%s%s", vol->m_Path, name);
+            snprintf(fullPath, pathSize + 1, "%s%s", vol->m_Path, name);
         }
         else
-            snprintf(fullPath, sizeof(fullPath), "%s/%s", vol->m_Path, name);
+            snprintf(fullPath, pathSize + 1, "%s/%s", vol->m_Path, name);
 
         fullPath[pathSize] = '\0';
 
@@ -44,6 +48,7 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
                     gCreateVarDef(fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine, NULL,
                                   space_id, type_id);
                 gADIOS2DefineVar(vol->m_FileIO, varDef);
+                free(fullPath);
                 return gVarToVolObj(varDef, vol);
             }
             else
@@ -51,6 +56,7 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
                 curr = (H5VL_ObjDef_t *)(curr->m_Parent);
             }
         }
+        free(fullPath);
     }
     return NULL;
 }

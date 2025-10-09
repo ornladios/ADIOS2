@@ -155,6 +155,7 @@ void gInitADIOS2(hid_t acc_tpl)
     }
     else
     {
+#if H5_HAVE_PARALLEL
         MPI_Comm comm = MPI_COMM_WORLD;
         if (H5Pget_driver(acc_tpl) == H5FD_MPIO)
         {
@@ -164,6 +165,9 @@ void gInitADIOS2(hid_t acc_tpl)
         }
         MPI_Comm_rank(comm, &m_MPIRank);
         m_ADIOS2 = adios2_init_mpi(comm);
+#else
+        m_ADIOS2 = adios2_init_serial();
+#endif
     }
 #else
     m_ADIOS2 = adios2_init_serial();
@@ -320,19 +324,26 @@ adios2_attribute *gLocateAttrFrom(H5VL_ObjDef_t *owner, const char *attrName)
 
     if ((GROUP == owner->m_ObjType) || (VAR == owner->m_ObjType))
     {
+        size_t length = strlen(owner->m_Path) + strlen(attrName) + 4;
+        char *fullPath = (char *)malloc(length);
+        adios2_attribute *result;
+        if (fullPath == NULL)
+        {
+            return NULL;
+        }
         size_t ss = strlen(owner->m_Path);
         if ('/' == (owner->m_Path)[ss - 1])
         {
-            char fullPath[strlen(owner->m_Path) + 4 + strlen(attrName)];
             sprintf(fullPath, "%s%s", owner->m_Path, attrName);
-            return adios2_inquire_attribute(owner->m_FileIO, fullPath);
+            result = adios2_inquire_attribute(owner->m_FileIO, fullPath);
         }
         else
         {
-            char fullPath[strlen(owner->m_Path) + 4 + strlen(attrName)];
             sprintf(fullPath, "%s/%s", owner->m_Path, attrName);
-            return adios2_inquire_attribute(owner->m_FileIO, fullPath);
+            result = adios2_inquire_attribute(owner->m_FileIO, fullPath);
         }
+        free(fullPath);
+        return result;
     }
     return NULL;
 }
@@ -358,15 +369,25 @@ htri_t gExistsUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     if (GROUP != owner->m_ObjType)
         return 0;
 
-    char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
+    size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
+    char *fullPath = (char *)malloc(len);
+    if (!fullPath)
+    {
+        return 0;
+    }
+
     sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
     if (NULL != adios2_inquire_attribute(owner->m_FileIO, fullPath))
+    {
+        free(fullPath);
         return 1;
-
+    }
     if (NULL != adios2_inquire_variable(owner->m_FileIO, fullPath))
+    {
+        free(fullPath);
         return 1;
-
+    }
     return 0;
 }
 
@@ -396,17 +417,30 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     if (GROUP != owner->m_ObjType)
         return false;
 
-    char fullPath[strlen(owner->m_Path) + 4 + strlen(obj_name)];
+    size_t len = strlen(owner->m_Path) + 4 + strlen(obj_name);
+    char *fullPath = (char *)malloc(len);
+    if (!fullPath)
+    {
+        // Handle allocation failure
+        return false;
+    }
+
     gGenerateFullPath(fullPath, owner->m_Path, obj_name);
-    // sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
     if (adios2_error_none == adios2_remove_attribute(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
+        {
+            free(fullPath);
             return true;
+        }
     if (adios2_error_none == adios2_remove_variable(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
+        {
+            free(fullPath);
             return true;
+        }
 
+    free(fullPath);
 #ifdef NEVER
     return false;
 #else
@@ -487,7 +521,10 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
         return gVarToVolObj(varDef, vol);
     }
 
-    char fullPath[strlen(vol->m_Path) + 4 + strlen(name)];
+    size_t fullLen = strlen(vol->m_Path) + 4 + strlen(name);
+    char *fullPath = malloc(fullLen);
+    if (!fullPath)
+        return NULL;
     gGenerateFullPath(fullPath, vol->m_Path, name);
 
     if ('/' == name[strlen(name) - 1])
@@ -499,6 +536,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
     if (NULL == var)
     {
         SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable:: %s in file\n ", fullPath);
+        free(fullPath);
         return NULL;
     }
 
@@ -509,7 +547,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
         {
             H5VL_VarDef_t *varDef = gCreateVarDef(
                 fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine, var, -1, -1);
-
+            free(fullPath);
             return gVarToVolObj(varDef, vol);
         }
         else
@@ -578,15 +616,20 @@ H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine, adios2_var
 
         varDef->m_DimCount = nDims;
 
-        size_t shape[nDims];
+        size_t *shape = malloc(nDims * sizeof(size_t));
+        if (!shape)
+            return NULL;
+
         if (adios2_error_none != adios2_variable_shape(shape, var))
         {
+            free(shape);
             SAFE_FREE(varDef);
             return NULL;
         }
 
-        hid_t filespace = H5Screate_simple(nDims, (hsize_t *)shape, NULL);
+        hid_t filespace = H5Screate_simple((int)nDims, (hsize_t *)shape, NULL);
         varDef->m_ShapeID = filespace;
+        free(shape);
     }
 
     if (type_id != -1)
@@ -663,12 +706,16 @@ size_t gGetNameOfNthAttr(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
         adios2_attribute_name(name, &namelen, curr);
     else if (NULL != name)
     {
-        char fullPath[namelen + 1];
+        char *fullPath = malloc(namelen + 1);
+        if (!fullPath)
+            return 0;
+
         adios2_attribute_name(fullPath, &namelen, curr);
         fullPath[namelen] = '\0';
 
         gGetBranchName(vol, fullPath, name);
         // printf(".... [%s] vs [%s]\n", fullPath, name);
+        free(fullPath);
     }
 
     return gGetBranchNameLength(vol, namelen);
@@ -702,12 +749,16 @@ size_t gGetNameOfNthItem(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
             adios2_variable_name(name, &namelen, curr);
         else if (NULL != name)
         {
-            char fullPath[namelen + 1];
+            char *fullPath = malloc(namelen + 1);
+            if (fullPath)
+                return 0;
+
             adios2_variable_name(fullPath, &namelen, curr);
             fullPath[namelen] = '\0';
 
             gGetBranchName(vol, fullPath, name);
             // printf(".... [%s] vs [%s]\n", fullPath, name);
+            free(fullPath);
         }
         return gGetBranchNameLength(vol, namelen);
     }
@@ -716,7 +767,7 @@ size_t gGetNameOfNthItem(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
     if (0 == vol->m_NumSubGroups)
         return 0;
 
-    uint32_t vIdx = idx - vol->m_NumVars;
+    uint32_t vIdx = idx - (uint32_t)(vol->m_NumVars);
     if (vIdx >= vol->m_NumSubGroups)
         return 0;
 
@@ -867,17 +918,33 @@ herr_t gADIOS2ReadVar(H5VL_VarDef_t *varDef)
     REQUIRE_NOT_NULL_ERR(varDef, -1);
     REQUIRE_NOT_NULL_ERR(varDef->m_Variable, -1);
 
-    int varDim = varDef->m_DimCount;
+    int varDim = (int)(varDef->m_DimCount);
     if (varDim < 0)
         return -1;
 
     if (varDim > 0)
     {
-        size_t start[varDim], count[varDim];
-        if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
+        size_t *start = malloc(varDim * sizeof(size_t));
+        if (!start)
             return -1;
 
+        size_t *count = malloc(varDim * sizeof(size_t));
+        if (!count)
+        {
+            free(start);
+            return -1;
+        }
+
+        if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
+        {
+            free(start);
+            free(count);
+            return -1;
+        }
+
         adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start, count);
+        free(start);
+        free(count);
 
         if (varDef->m_MemSpaceID > 0)
         {
@@ -909,11 +976,17 @@ adios2_variable *gADIOS2DefineVar(adios2_io *io, H5VL_VarDef_t *varDef)
         {
             varDef->m_DimCount = varDim;
 
-            size_t shape[varDim];
+            size_t *shape = malloc(varDim * sizeof(size_t));
+            if (!shape)
+            {
+                return NULL;
+            }
+
             gUtilADIOS2GetShape(varDef->m_ShapeID, shape, varDim);
 
             variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, shape, NULL,
                                               NULL, adios2_constant_dims_false);
+            free(shape);
         }
     }
 
@@ -948,16 +1021,38 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
         {
             varDef->m_DimCount = varDim;
 
-            size_t shape[varDim];
+            size_t *shape = malloc(varDim * sizeof(size_t));
+            if (!shape)
+                return NULL;
             gUtilADIOS2GetShape(varDef->m_ShapeID, shape, varDim);
 
-            size_t start[varDim], count[varDim];
+            size_t *start = malloc(varDim * sizeof(size_t));
+            if (!start)
+            {
+                free(shape);
+                return NULL;
+            }
+            size_t *count = malloc(varDim * sizeof(size_t));
+            if (!count)
+            {
+                free(start);
+                free(shape);
+                return NULL;
+            }
             if (H5VL_CODE_FAIL ==
                 gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
+            {
+                free(start);
+                free(count);
+                free(shape);
                 return NULL;
+            }
 
             variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, shape, start,
                                               count, adios2_constant_dims_true);
+            free(start);
+            free(count);
+            free(shape);
         }
     }
 
@@ -966,12 +1061,24 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
         varDim = gUtilADIOS2GetDim(varDef->m_ShapeID);
         if (varDim > 0)
         {
-            size_t start[varDim], count[varDim];
+            size_t *start = malloc(varDim * sizeof(size_t));
+            size_t *count = malloc(varDim * sizeof(size_t));
+            if (!start || !count)
+            {
+                free(start);
+                free(count);
+                return NULL;
+            }
             if (H5VL_CODE_FAIL ==
                 gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
+            {
+                free(start);
+                free(count);
                 return NULL;
+            }
             adios2_set_selection(variable, varDim, start, count);
-
+            free(start);
+            free(count);
             if ((varDef->m_MemSpaceID > 0) && (varDef->m_MemSpaceID != varDef->m_ShapeID))
             {
                 RANK_ZERO_MSG("\n## No support of memory space for writing in ADIOS.\n");
@@ -1019,7 +1126,9 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
             return NULL;
         }
 
-        size_t shape[attrDim];
+        size_t *shape = malloc(attrDim * sizeof(size_t));
+        if (!shape)
+            return NULL;
         gUtilADIOS2GetShape(input->m_SpaceID, shape, attrDim);
 
         if (adios2_type_string == attrType)
@@ -1031,16 +1140,32 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
                    input->m_Name, isVariableSize, strSize);
             */
             if (isVariableSize)
-                return adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data),
-                                                     shape[0]);
+            {
+                adios2_attribute *result = adios2_define_attribute_array(io, fullPath, attrType,
+                                                                         (input->m_Data), shape[0]);
+                free(shape);
+                return result;
+            }
             else
             {
                 int i;
 
-                char *arrayOfStr[shape[0]];
+                size_t count = shape[0];
+                char **arrayOfStr = (char **)malloc(count * sizeof(char *));
+                if (!arrayOfStr)
+                {
+                    return NULL;
+                }
                 for (i = 0; i < shape[0]; i++)
                 {
-                    arrayOfStr[i] = malloc(sizeof(char) * strSize + 1);
+                    arrayOfStr[i] = (char *)malloc(sizeof(char) * strSize + 1);
+                    if (!arrayOfStr[i])
+                    {
+                        for (size_t j = 0; j < i; j++)
+                            free(arrayOfStr[j]);
+                        free(arrayOfStr);
+                        return NULL;
+                    }
                     strncpy(arrayOfStr[i], (char *)(input->m_Data) + strSize * i, strSize);
                     arrayOfStr[i][strSize] = '\0';
 
@@ -1050,13 +1175,19 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const 
                     adios2_define_attribute_array(io, fullPath, attrType, arrayOfStr, shape[0]);
                 for (i = 0; i < shape[0]; i++)
                     free(arrayOfStr[i]);
+                free(shape);
                 return result;
             }
         }
         else
+        {
             // return adios2_define_attribute_array(io, fullPath, attrType,
             // &(input->m_Data), shape[0]);
-            return adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
+            adios2_attribute *result =
+                adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
+            free(shape);
+            return result;
+        }
     }
 }
 
