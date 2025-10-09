@@ -33,6 +33,7 @@
 #ifdef ADIOS2_HAVE_MGARD
 #include "adios2/operator/compress/CompressMGARD.h"
 #include "adios2/operator/compress/CompressMGARDPlus.h"
+#include "adios2/operator/compress/CompressMGARDComplex.h"
 #endif
 
 #ifdef ADIOS2_HAVE_MGARD_MDR
@@ -84,6 +85,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sz";
     case Operator::COMPRESS_ZFP:
         return "zfp";
+    case Operator::COMPRESS_MGARDCOMPLEX:
+        return "mgard_complex";
     case Operator::REFACTOR_MDR:
         return "mdr";
     case Operator::PLUGIN_INTERFACE:
@@ -133,6 +136,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_MGARD
         ret = std::make_shared<compress::CompressMGARDPlus>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "mgard_complex")
+    {
+#ifdef ADIOS2_HAVE_MGARD
+        ret = std::make_shared<compress::CompressMGARDComplex>(parameters);
 #endif
     }
     else if (typeLowerCase == "png")
@@ -199,7 +208,8 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, Memo
     std::memcpy(&compressorType, bufferIn, 1);
     if (op == nullptr || op->m_TypeEnum != compressorType)
     {
-        op = MakeOperator(OperatorTypeToString(compressorType), {});
+        std::string opTypeString = OperatorTypeToString(compressorType);
+        op = MakeOperator(opTypeString, {});
     }
 
     if (engine && var)
