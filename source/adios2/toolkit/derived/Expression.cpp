@@ -45,10 +45,10 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},       {"+", ExpressionOperator::OP_ADD},
-    {"ADD", ExpressionOperator::OP_ADD},           {"-", ExpressionOperator::OP_SUBTRACT},
-    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT}, {"/", ExpressionOperator::OP_DIV},
-    {"DIVIDE", ExpressionOperator::OP_DIV},        {"*", ExpressionOperator::OP_MULT},
+    {"INDEX", ExpressionOperator::OP_INDEX},       {"SUM", ExpressionOperator::OP_ADD},
+    {"ADD", ExpressionOperator::OP_ADD},           {"MINUS", ExpressionOperator::OP_SUBTRACT},
+    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT}, {"DIV", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},        {"MULT", ExpressionOperator::OP_MULT},
     {"MULTIPLY", ExpressionOperator::OP_MULT},     {"SQRT", ExpressionOperator::OP_SQRT},
     {"POW", ExpressionOperator::OP_POW},           {"SIN", ExpressionOperator::OP_SIN},
     {"COS", ExpressionOperator::OP_COS},           {"^", ExpressionOperator::OP_POW},
@@ -200,8 +200,9 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
     // check that all types are the same
     for (size_t i = 1; i < exprType.size(); i++)
         if (exprType[i - 1] != exprType[i])
-            helper::Throw<std::invalid_argument>("Derived", "Expression", "GetType",
-                                                 "Derived expression operators are not the same");
+            helper::Throw<std::invalid_argument>(
+                "Derived", "Expression", "GetType",
+                "Derived expression operators are not the same type");
     // get the output type after applying the operator
     auto op_fct = OpFunctions.at(m_Operator);
     DataType opType = op_fct.TypeFct(exprType[0]);

@@ -1850,6 +1850,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                             // add to existing blocks info for this input variable
                                             (*nameToVarInfo)[varBase->m_Name]->BlocksInfo.push_back(
                                                 mvi->BlocksInfo[0]);
+                                            delete mvi;
                                         }
                                     }
 #endif

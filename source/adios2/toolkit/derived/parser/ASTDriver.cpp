@@ -24,7 +24,7 @@ ASTDriver::~ASTDriver()
 ASTNode *ASTDriver::getAST()
 {
     if (holding.size() == 0)
-        throw std::runtime_error("ERROR: derived expression cannot be parsed ");
+        throw std::runtime_error("ERROR: the derived expression is null");
     resolve(holding.top());
     return holding.top();
 }
@@ -80,8 +80,8 @@ void ASTDriver::add_number(double num)
 void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
 {
     ASTNode *node = new ASTNode(op_name, numsubexprs);
-    if (numsubexprs != holding.size())
-        throw std::runtime_error("ERROR: derived expression cannot be parsed ");
+    if (numsubexprs > holding.size())
+        throw std::runtime_error("ERROR: " + op_name + " cannot be parsed");
     for (size_t i = 1; i <= numsubexprs; ++i)
     {
         ASTNode *subexpr = holding.top();
