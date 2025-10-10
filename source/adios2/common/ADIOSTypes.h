@@ -227,13 +227,18 @@ struct MinVarInfo
     size_t Step;
     bool WasLocalValue; // writer: localValue -> reader: 1D global array
     int Dims;
-    const size_t *Shape;
+    std::vector<size_t> Shape;
     bool IsValue = false;
     bool IsReverseDims = false;
     std::vector<struct MinBlockInfo> BlocksInfo;
     MinVarInfo(const int D, const size_t *S)
-    : Dims(D), Shape(S), IsValue(false), IsReverseDims(false), BlocksInfo({})
+    : Dims(D), Shape(D), IsValue(false), IsReverseDims(false), BlocksInfo({})
     {
+        if (S)
+        {
+            for (int i = 0; i < D; i++)
+                Shape[i] = S[i];
+        }
     }
 };
 
