@@ -198,6 +198,12 @@ void BP5Writer::PerformPuts()
     return;
 }
 
+void BP5Writer::SetStepApplicationTime(const double ApplicationTime, const double PostStepIncrement)
+{
+    m_ApplicationTimeForNextStep = ApplicationTime;
+    m_ApplicationTimeIncrement = PostStepIncrement;
+}
+
 void BP5Writer::WriteMetaMetadata(
     const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks)
 {
@@ -501,7 +507,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
 
     // bufsize: Step record
     size_t bufsize =
-        1 + (4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
+        1 + (5 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
     if (MetaDataPos == 0)
     {
         //  First time, write the headers
@@ -552,8 +558,10 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
     size_t StepRecordStartPos = pos;
 #endif
     helper::CopyToBuffer(buf, pos, &record, 1); // record type
-    d = (3 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
+    d = (4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
     helper::CopyToBuffer(buf, pos, &d, 1); // record length
+    helper::CopyToBuffer(buf, pos, (uint64_t *)&m_ApplicationTimeForNextStep, 1);
+    m_ApplicationTimeForNextStep += m_ApplicationTimeIncrement;
     helper::CopyToBuffer(buf, pos, &MetaDataPos, 1);
     helper::CopyToBuffer(buf, pos, &MetaDataSize, 1);
     d = static_cast<uint64_t>(FlushPosSizeInfo.size());
@@ -1250,7 +1258,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             break;
         }
         case IndexRecord::StepRecord: {
-            position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
+            position += 3 * sizeof(uint64_t); // ApplicationTime, MetadataPos, MetadataSize
             const uint64_t FlushCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             // jump over the metadata positions
@@ -1339,6 +1347,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         case IndexRecord::StepRecord: {
             m_AppendMetadataIndexPos =
                 position - sizeof(unsigned char) - sizeof(uint64_t); // pos of RecordID
+            position += sizeof(uint64_t);                            // ApplicationTime
             const uint64_t MetadataPos =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             position += sizeof(uint64_t); // MetadataSize

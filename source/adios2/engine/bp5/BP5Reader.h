@@ -57,6 +57,9 @@ public:
 
     void EndStep() final;
 
+    double GetStepApplicationTime();
+    std::vector<double> AllStepsApplicationTime();
+
     void PerformGets() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
@@ -120,6 +123,7 @@ private:
     uint64_t m_LastMapStep = 0;     // remember last step that had writer map
     uint64_t m_LastWriterCount = 0; // remember writer count in that step
     bool m_FirstStep = true;
+    double m_NextStepApplicationTime = -1.0;
 
     /** used to filter steps */
     helper::RangeFilter m_SelectedSteps;
@@ -128,7 +132,7 @@ private:
     std::vector<std::pair<uint64_t, uint64_t>> m_FilteredMetadataInfo;
 
     Minifooter m_Minifooter;
-
+    int m_WriterMinorVersion;
     bool m_InitialWriterActiveCheckDone = false;
     bool m_ReadMetadataFromFile = true;
 
