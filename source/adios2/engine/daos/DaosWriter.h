@@ -24,8 +24,13 @@
 #include "adios2/toolkit/shm/Spinlock.h"
 #include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
+#if defined(ADIOS2_HAVE_Caliper)
 #include <caliper/cali-manager.h>
 #include <caliper/cali.h>
+#else
+#define CALI_MARK_BEGIN(x)
+#define CALI_MARK_END(x)
+#endif
 #include <daos.h>
 #include <daos_obj.h>
 

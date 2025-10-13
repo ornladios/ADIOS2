@@ -25,8 +25,13 @@
 #include <map>
 #include <vector>
 
+#if defined(ADIOS2_HAVE_Caliper)
 #include <caliper/cali-manager.h>
 #include <caliper/cali.h>
+#else
+#define CALI_MARK_BEGIN(x)
+#define CALI_MARK_END(x)
+#endif
 
 #define MAX_KV_GET_REQS 100
 
