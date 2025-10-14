@@ -130,14 +130,15 @@ int main(int argc, char **argv)
     {
         char buf[36];
         printf("chdir to %s\n", argv[1]);
-        chdir(argv[1]);
+        int ret = chdir(argv[1]);
+        if (ret)
+            perror("chdir");
         int fd = open("md.idx", O_WRONLY);
         if (fd == -1)
         {
             fprintf(stderr, "Open failed\n");
             exit(1);
         }
-        int ret;
         ret = lseek(fd, 0, SEEK_SET);
         if (ret == -1)
         {
