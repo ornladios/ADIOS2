@@ -255,6 +255,10 @@ bp5agg_gtest_add_tests(ReadMultithreaded MPI_NONE)
 bp5agg_gtest_add_tests(NewFileAppendMode MPI_NONE)
 bp5agg_gtest_add_tests(StepsFileGlobalArray MPI_ALLOW)
 
+if(ADIOS2_HAVE_MPI)
+  gtest_add_tests_helper(CharBufferMPI MPI_ONLY BP Send.Receive CharBuf)
+endif()
+
 # Only a single test is enough, pick the latest engine
 gtest_add_tests_helper(AccuracyDefaults MPI_NONE BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
