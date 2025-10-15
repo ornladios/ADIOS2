@@ -101,7 +101,7 @@ template <class T>
 T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3])
 {
     size_t dataSize = dims[0] * dims[1] * dims[2];
-    T *data = (T *)malloc(dataSize * sizeof(float) * 3);
+    T *data = (T *)malloc(dataSize * sizeof(T) * 3);
     size_t index = 0;
     for (int i = 0; i < (int)dims[0]; ++i)
     {
@@ -768,8 +768,14 @@ std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
             helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
                                                  "Invalid variable dimensions");
     }
-    // return the first dimension
-    return input[0];
+    if (input.size() >= 1)
+    {
+        // return the first dimension
+        return input[0];
+    }
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
+                                         "Geting dims for expression without operands");
+    return {{}, {}, {}};
 }
 
 std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
@@ -777,6 +783,12 @@ std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Di
 {
     if (input.size() > 1 || constants)
         return SameDimsFunc(input, constants);
+    if (input.size() == 0)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsAgrFunc",
+                                             "Geting dims for expression without operands");
+        return {{}, {}, {}};
+    }
     Dims outStart(std::get<0>(input[0]).size() - 1);
     Dims outCount(std::get<1>(input[0]).size() - 1);
     Dims outShape(std::get<2>(input[0]).size() - 1);
@@ -799,6 +811,12 @@ std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, 
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DDimsFunc",
                                                  "Invalid variable dimensions");
+    }
+    if (input.size() == 0)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DDims",
+                                             "Geting dims for expression without operands");
+        return {{}, {}, {}};
     }
     // return original dimensions with added dimension of number of inputs
     std::tuple<Dims, Dims, Dims> output = input[0];
@@ -839,6 +857,12 @@ std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
         outCount.push_back(3);
         outShape.push_back(3);
         return {outStart, outCount, outShape};
+    }
+    if (input.size() == 0)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDims",
+                                             "Geting dims for expression without operands");
+        return {{}, {}, {}};
     }
     // return original dimensions with added dimension of number of inputs
     // since we only support curl for 3D arrays, the number of inputs is 3

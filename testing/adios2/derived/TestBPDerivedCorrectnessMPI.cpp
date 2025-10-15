@@ -25,6 +25,64 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+TEST_P(DerivedCorrectnessMPIP, JoinedArrayTest)
+{
+    int mpiRank = 0, mpiSize = 1;
+    adios2::DerivedVarType mode = GetParam();
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string filename("ADIOS2BPWriteDerivedJoined_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string filename("ADIOS2BPWriteDerivedJoined.bp");
+    adios2::ADIOS adios;
+#endif
+
+    const size_t N = 10 * (mpiRank + 1);
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0, 10.0);
+    std::vector<double> simArray(N);
+    for (size_t i = 0; i < N; ++i)
+        simArray[i] = distribution(generator);
+
+    adios2::IO bpOut = adios.DeclareIO("BPJoinedWrite");
+    auto U = bpOut.DefineVariable<double>("var", {adios2::JoinedDim}, {}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var \n sqrt(sum(pow(x), x, 2))", mode);
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(U, simArray.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    double epsilon = (double)0.01;
+    adios2::IO bpIn = adios.DeclareIO("BPJoinedRead");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<double>("derived");
+    auto dataVar = bpIn.InquireVariable<double>("var");
+    EXPECT_EQ(derVar.Shape().size(), 1);
+    EXPECT_EQ(derVar.Shape()[0], 5 * (1 + mpiSize) * mpiSize);
+
+    std::vector<double> readArray;
+    std::vector<double> readDerived;
+    size_t start = 5 * mpiRank * (mpiRank + 1);
+    dataVar.SetSelection({{start}, {N}});
+    derVar.SetSelection({{start}, {N}});
+    bpFileReader.Get(dataVar, readArray);
+    bpFileReader.Get(derVar, readDerived);
+    bpFileReader.EndStep();
+
+    for (size_t ind = 0; ind < readArray.size(); ++ind)
+    {
+        double calcDerived = (double)sqrt(pow(readArray[ind], 2) + readArray[ind] + 2);
+        EXPECT_TRUE(fabs(calcDerived - readDerived[ind]) < epsilon);
+    }
+
+    bpFileReader.Close();
+}
+
 TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
 {
     int mpiRank = 0, mpiSize = 1;
