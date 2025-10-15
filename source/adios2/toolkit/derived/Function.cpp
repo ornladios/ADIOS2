@@ -101,7 +101,7 @@ template <class T>
 T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3])
 {
     size_t dataSize = dims[0] * dims[1] * dims[2];
-    T *data = (T *)malloc(dataSize * sizeof(float) * 3);
+    T *data = (T *)malloc(dataSize * sizeof(T) * 3);
     size_t index = 0;
     for (int i = 0; i < (int)dims[0]; ++i)
     {
