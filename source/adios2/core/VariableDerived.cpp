@@ -60,9 +60,12 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
             Dims start;
             Dims count;
             DataType type = m_NameToType[variable.first];
+            if (m_ShapeID == ShapeID::JoinedArray)
+                start = {};
             for (int d = 0; d < variable.second->Dims; d++)
             {
-                start.push_back(variable.second->BlocksInfo[i].Start[d]);
+                if (m_ShapeID != ShapeID::JoinedArray)
+                    start.push_back(variable.second->BlocksInfo[i].Start[d]);
                 count.push_back(variable.second->BlocksInfo[i].Count[d]);
             }
             varData.push_back(adios2::derived::DerivedData(
@@ -94,9 +97,12 @@ VariableDerived::CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInf
         {
             Dims start;
             Dims count;
+            if (m_ShapeID == ShapeID::JoinedArray)
+                start = {};
             for (int d = 0; d < variable.second->Dims; d++)
             {
-                start.push_back(variable.second->BlocksInfo[i].Start[d]);
+                if (m_ShapeID != ShapeID::JoinedArray)
+                    start.push_back(variable.second->BlocksInfo[i].Start[d]);
                 count.push_back(variable.second->BlocksInfo[i].Count[d]);
             }
             std::tuple<Dims, Dims, Dims> varDims({start, count, m_Shape});
