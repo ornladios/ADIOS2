@@ -114,7 +114,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
+      image: ghcr.io/scottwittenburg/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
@@ -130,33 +130,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu20.04]
-        compiler: [gcc8, gcc9, gcc10, clang6, clang10]
+        os: [ubuntu22.04]
+        compiler: [gcc9, gcc10, gcc12, clang11, clang14]
         parallel: [mpich]
         include:
-          - os: ubuntu20.04
-            compiler: gcc8
+          - os: ubuntu22.04
+            compiler: gcc9
             parallel: ompi
-          - os: ubuntu20.04
-            compiler: gcc8
+          - os: ubuntu22.04
+            compiler: gcc9
             parallel: serial
-          - os: ubuntu20.04
-            compiler: clang6
+          - os: ubuntu22.04
+            compiler: clang11
             parallel: ompi
-          - os: ubuntu20.04
-            compiler: clang6
+          - os: ubuntu22.04
+            compiler: clang11
             parallel: serial
-          - os: ubuntu20.04
-            compiler: gcc8
+          - os: ubuntu22.04
+            compiler: gcc9
             parallel: serial
             shared: static
-          - os: ubuntu20.04
-            compiler: gcc8
+          - os: ubuntu22.04
+            compiler: gcc9
             shared: static
             parallel: mpich
             constrains: build_only
-          - os: ubuntu20.04
-            compiler: clang6
+          - os: ubuntu22.04
+            compiler: clang11
             shared: static
             parallel: mpich
             constrains: build_only
@@ -535,12 +535,12 @@ jobs:
     name: CodeQL
     runs-on: ubuntu-latest
     container:
-      image: 'ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc8'
+      image: ghcr.io/scottwittenburg/adios2:ci-spack-ubuntu22.04-gcc9
       env:
-        GH_YML_JOBNAME: ubuntu20.04-gcc8-serial-codeql
+        GH_YML_JOBNAME: ubuntu22.04-gcc9-serial-codeql
         GH_YML_BASE_OS: Linux
-        GH_YML_MATRIX_OS: ubuntu20.04
-        GH_YML_MATRIX_COMPILER: gcc8
+        GH_YML_MATRIX_OS: ubuntu22.04
+        GH_YML_MATRIX_COMPILER: gcc9
         GH_YML_MATRIX_PARALLEL: serial
     permissions:
       actions: read

@@ -31,6 +31,8 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-serial/.spack-env/view/lib/libgomp.so.1
 ")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")

@@ -31,7 +31,14 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-ompi/.spack-env/view/lib/libgomp.so.1
+
+MPIEXEC_EXTRA_FLAGS:STRING=--oversubscribe
 ")
+
+# We have a dedicated build for this setup without MPI
+set(CTEST_TEST_ARGS EXCLUDE ".Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

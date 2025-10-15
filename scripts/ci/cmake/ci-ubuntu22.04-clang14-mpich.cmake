@@ -1,5 +1,9 @@
-set(ENV{CC}  clang-6.0)
-set(ENV{CXX} clang++-6.0)
+include(ProcessorCount)
+ProcessorCount(NCPUS)
+math(EXPR N2CPUS "${NCPUS}*2")
+
+set(ENV{CC}  clang-14)
+set(ENV{CXX} clang++-14)
 set(ENV{FC}  gfortran-11)
 
 execute_process(
@@ -8,16 +12,14 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(dashboard_cache "
-BUILD_SHARED_LIBS=OFF
-BUILD_TESTING:BOOL=OFF
+BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc2:BOOL=ON
+ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
-ADIOS2_USE_MGARD:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=ON
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
@@ -33,7 +35,14 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
+
+# TODO: The Kill* and PreciousTimeStep tests fail (due to timeout) when
+# TODO: adios2 is built "--with-device=ch3:sock:tcp".  Once this is fixed
+# TODO: in the mpi_dp, we can re-enable these tests.
+set(CTEST_TEST_ARGS EXCLUDE "KillReader|KillWriter|PreciousTimestep")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
