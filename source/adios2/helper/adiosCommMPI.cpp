@@ -252,8 +252,8 @@ std::unique_ptr<CommImpl> CommImplMPI::GroupByShm(const std::string &hint) const
     MPI_Info info;
     MPI_Info_create(&info);
     CheckMPIReturn(MPI_Comm_split_type(m_MPIComm, MPI_COMM_TYPE_SHARED, 0, info, &nodeComm), hint);
-    return std::unique_ptr<CommImpl>(new CommImplMPI(nodeComm));
     MPI_Info_free(&info);
+    return std::unique_ptr<CommImpl>(new CommImplMPI(nodeComm));
 }
 
 int CommImplMPI::Rank() const
