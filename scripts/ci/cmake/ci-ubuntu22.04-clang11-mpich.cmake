@@ -2,8 +2,8 @@ include(ProcessorCount)
 ProcessorCount(NCPUS)
 math(EXPR N2CPUS "${NCPUS}*2")
 
-set(ENV{CC}  clang-6.0)
-set(ENV{CXX} clang++-6.0)
+set(ENV{CC}  clang-11)
+set(ENV{CXX} clang++-11)
 set(ENV{FC}  gfortran-11)
 
 execute_process(
