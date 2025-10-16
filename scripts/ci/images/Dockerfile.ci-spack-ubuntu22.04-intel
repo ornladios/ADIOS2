@@ -1,4 +1,5 @@
-FROM ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base
+ARG BASE_IMAGE=ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-base
+FROM $BASE_IMAGE
 
 RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list && \
