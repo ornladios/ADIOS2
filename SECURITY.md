@@ -21,6 +21,6 @@ After the initial reply to your report, the security team will keep you informed
 ## Escalation
 
 If you do not receive an acknowledgement of your report within 6 business days,
-or if you cannot find a private security contact for the project, you may escalate to the ADIOS2 mailing list at `adios-ecp@kitware.com`.
+or if you cannot find a private security contact for the project, you may escalate to the ADIOS2 slack at `ADIOS2@slack.com`.
 
 If the project acknowledges your report but does not provide any further response or engagement within 14 days, escalation is also appropriate.
