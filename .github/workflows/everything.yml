@@ -36,6 +36,9 @@ on:
       - master
       - release*
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -48,6 +51,8 @@ jobs:
 
   git_checks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
@@ -76,6 +81,8 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
@@ -113,6 +120,9 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write  # for cache save
     container:
       image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
       options: --shm-size=1g
@@ -211,6 +221,9 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for cache save
     container:
       image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
       options: --shm-size=1g
@@ -275,6 +288,9 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
+    permissions:
+      contents: read
+      actions: write  # for cache save
     env:
       # Only way to source a file in a non interactive/non login shell.
       BASH_ENV: "/Users/runner/.bash_profile"
@@ -351,6 +367,8 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
+    permissions:
+      contents: read
     env:
       GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
       GH_YML_BASE_OS: Windows
@@ -414,6 +432,9 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
     strategy:
       fail-fast: false
       matrix:
@@ -479,6 +500,9 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read  # for download-artifact
     strategy:
       fail-fast: false
       matrix:
@@ -543,7 +567,7 @@ jobs:
         GH_YML_MATRIX_COMPILER: gcc8
         GH_YML_MATRIX_PARALLEL: serial
     permissions:
-      actions: read
+      actions: write  # for cache save and upload-artifact
       contents: read
       security-events: write
 
@@ -621,5 +645,7 @@ jobs:
   build_and_test:
     needs: [el8, ubuntu, macos, docker, contract]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - run: echo "All required jobs complete"

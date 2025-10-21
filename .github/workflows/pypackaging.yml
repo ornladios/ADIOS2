@@ -32,6 +32,9 @@ jobs:
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,6 +54,9 @@ jobs:
   build_wheels:
     name: Wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
     strategy:
       fail-fast: false
       matrix:
@@ -79,6 +85,8 @@ jobs:
     needs: [build_wheels, make_sdist]
     environment: pypi
     permissions:
+      contents: read
+      actions: read  # for download-artifact
       id-token: write
     runs-on: ubuntu-latest
     if: |
@@ -100,6 +108,8 @@ jobs:
     needs: [build_wheels, make_sdist]
     environment: testpypi
     permissions:
+      contents: read
+      actions: read  # for download-artifact
       id-token: write
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
