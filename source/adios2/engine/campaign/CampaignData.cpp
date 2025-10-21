@@ -89,6 +89,8 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
     ch.hostname = std::string(argv[0]);
     if (argv[1])
         ch.longhostname = std::string(argv[1]);
+    if (argv[2])
+        ch.defaultProtocol = std::string(argv[2]);
     cdp->hosts.push_back(ch);
     return 0;
 };
@@ -109,10 +111,19 @@ static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
 static int sqlcb_archivedirectory(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    size_t dirid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    size_t archiveid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    size_t dirid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
     size_t dirIdx = dirid - 1; // SQL rows start from 1, vector idx start from 0
     cdp->directory[dirIdx].archive = true;
-    cdp->directory[dirIdx].archiveSystemName = argv[1];
+    std::cout << "sqlcb_archivedirectory: archiveid = " << archiveid << " dirid = " << dirid
+              << " tarname = '" << std::string(argv[2]) << "'" << std::endl;
+    std::string tarname(argv[2]);
+    if (!tarname.empty())
+    {
+        cdp->tarnames[archiveid] = std::string(argv[2]);
+        cdp->directory[dirIdx].archiveIDs.push_back(archiveid);
+    }
+    cdp->directory[dirIdx].archiveSystemName = std::string(argv[3]);
     return 0;
 };
 
@@ -153,17 +164,19 @@ static int sqlcb_replica(void *p, int argc, char **argv, char **azColName)
     size_t dsid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
     size_t hostid = helper::StringToSizeT(std::string(argv[2]), hint_text_to_int);
     size_t dirid = helper::StringToSizeT(std::string(argv[3]), hint_text_to_int);
+    size_t archiveid = helper::StringToSizeT(std::string(argv[4]), hint_text_to_int);
     cdr.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cdr.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
     cdr.datasetIdx = dsid;
-    cdr.name = argv[4];
-    cdr.deleted = (std::strcmp("0", argv[5]) != 0);
+    cdr.archiveIdx = archiveid;
+    cdr.name = argv[5];
+    cdr.deleted = (std::strcmp("0", argv[6]) != 0);
     cdr.hasKey = false;
     cdr.keyIdx = 0;
-    size_t keyid = helper::StringToSizeT(std::string(argv[6]), hint_text_to_int);
+    size_t keyid = helper::StringToSizeT(std::string(argv[7]), hint_text_to_int);
     cdr.hasKey = (keyid); // keyid == 0 means there is no key used
     cdr.keyIdx = size_t(keyid - 1);
-    cdr.size = helper::StringToSizeT(std::string(argv[7]), hint_text_to_int);
+    cdr.size = helper::StringToSizeT(std::string(argv[8]), hint_text_to_int);
     cds->replicas[repid] = cdr;
     return 0;
 };
@@ -230,11 +243,11 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    if (version.version < 0.5)
+    if (version.version < 0.6)
     {
         helper::Throw<std::invalid_argument>(
             "Engine", "CampaignReader", "ReadCampaignData",
-            "Minimum ACA version supported is 0.5, this file has version:" + version.versionStr);
+            "Minimum ACA version supported is 0.6, this file has version:" + version.versionStr);
     }
 
     sqlcmd = "SELECT keyid FROM key";
@@ -248,7 +261,7 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT hostname, longhostname FROM host";
+    sqlcmd = "SELECT hostname, longhostname, default_protocol FROM host";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_host, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -270,7 +283,7 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT dirid, system FROM archive";
+    sqlcmd = "SELECT rowid, dirid, tarname, system FROM archive";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_archivedirectory, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -313,9 +326,11 @@ void CampaignData::ReadDatabase()
         CampaignDataset &ds = it.second;
 
         /* Get replicas of each dataset filtering out the deleted ones */
-        sqlcmd = "SELECT rowid, datasetid, hostid, dirid, name, deltime, keyid, size FROM replica "
-                 "where deltime = 0 and datasetid = " +
-                 std::to_string(dsIdx);
+        sqlcmd =
+            "SELECT rowid, datasetid, hostid, dirid, archiveid, name, deltime, keyid, size FROM "
+            "replica "
+            "where deltime = 0 and datasetid = " +
+            std::to_string(dsIdx);
         rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_replica, &ds, &zErrMsg);
         if (rc != SQLITE_OK)
         {
