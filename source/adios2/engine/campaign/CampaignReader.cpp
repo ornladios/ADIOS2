@@ -218,7 +218,7 @@ void CampaignReader::InitParameters()
 
 std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io)
 {
-    std::string localPath;
+    std::string localPath, cachePath; // same for BP, but for HDF5 localpath=cachepath/<filename>
     CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
     CampaignReplica &rep = ds.replicas[repIdx];
 
@@ -237,6 +237,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
     const std::string remoteURL = m_CampaignData.hosts[rep.hostIdx].hostname + ":" + remotePath;
     localPath =
         m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
+    cachePath = localPath;
     if (m_Options.verbose > 0)
     {
         std::cout << "Open remote file " << remoteURL << " \n";
@@ -289,9 +290,9 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
     {
         if (m_Options.verbose > 0)
         {
-            std::cout << "    use local cache for metadata at " << localPath << " \n";
+            std::cout << "    use local cache for metadata at " << cachePath << " \n";
         }
-        helper::CreateDirectory(localPath);
+        helper::CreateDirectory(cachePath);
     }
 
     // first file is HDF5's file to be opened as path
@@ -376,13 +377,12 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                     Params p;
                     p.emplace("Library", "awssdk");
                     p.emplace("endpoint", endpointURL);
-                    p.emplace("cache", m_Options.cachepath + PathSeparator +
-                                           m_CampaignData.hosts[rep.hostIdx].hostname +
-                                           PathSeparator + m_Name);
+                    p.emplace("cache", cachePath);
                     p.emplace("verbose", std::to_string(ho.verbose));
                     p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
                     io.AddTransport("File", p);
                     io.SetParameter("UUID", ds.uuid);
+                    io.SetEngine("BP5");
                     localPath =
                         m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
                     if (ho.isAWS_EC2)
@@ -408,24 +408,32 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         }
         else if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "https")
         {
+            std::string url = "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" +
+                              m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
             Params p;
             p.emplace("Library", "https");
-            p.emplace("host", m_CampaignData.hosts[rep.hostIdx].longhostname);
-            p.emplace("cache", m_Options.cachepath + PathSeparator +
-                                   m_CampaignData.hosts[rep.hostIdx].hostname + PathSeparator +
-                                   m_Name);
+            // p.emplace("hostname", m_CampaignData.hosts[rep.hostIdx].longhostname);
+            // p.emplace("path", m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath +
+            // rep.name);
+            p.emplace("cache", cachePath);
             p.emplace("verbose", std::to_string(m_Options.verbose));
             p.emplace("recheck_metadata", "false");
             io.AddTransport("File", p);
             io.SetParameter("UUID", ds.uuid);
-            localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
-            std::string url = "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" +
-                              m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
+            if (ds.format == FileFormat::HDF5)
+            {
+                io.SetEngine("HDF5");
+            }
+            else
+            {
+                io.SetEngine("BP5");
+            }
 
             if (m_Options.verbose > 0)
             {
                 std::cout << "Open remote URL " << url << " \n";
             }
+            newLocalPath = url;
         }
     }
     else

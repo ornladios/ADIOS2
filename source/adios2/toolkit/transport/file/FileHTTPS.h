@@ -8,6 +8,7 @@
 #include <winsock2.h>
 #endif
 #include "../Transport.h"
+#include "./FileFStream.h"
 #include "adios2/common/ADIOSConfig.h"
 #ifdef _MSC_VER
 #include <process.h>
@@ -44,6 +45,8 @@ public:
     FileHTTPS(helper::Comm const &comm);
 
     ~FileHTTPS();
+
+    void SetParameters(const Params &parameters);
 
     void Open(const std::string &name, const Mode openMode, const bool async = false,
               const bool directio = false) final;
@@ -92,6 +95,20 @@ private:
     void CheckFile(const std::string hint) const;
     void WaitForOpen();
     std::string SysErrMsg() const;
+
+    size_t m_SeekPos = 0;
+    size_t m_Size = 0;
+    int m_Verbose = 0;
+    bool m_RecheckMetadata = true; // always check if cached metadata is complete
+
+    void SetUpCache();
+    void CheckCache(const size_t fileSize);
+    std::string m_CachePath;        // local cache directory
+    bool m_CachingThisFile = false; // save content to local cache
+    FileFStream *m_CacheFileWrite;
+    bool m_IsCached = false; // true if file is already in cache
+    FileFStream *m_CacheFileRead;
+    std::string m_CacheFilePath; // full path to file in cache
 };
 
 } // end namespace transport

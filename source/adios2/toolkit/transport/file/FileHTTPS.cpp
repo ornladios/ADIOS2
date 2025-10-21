@@ -1,7 +1,14 @@
 #include "FileHTTPS.h"
+#include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosSystem.h"
+
+#include <arpa/inet.h>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace adios2
@@ -34,34 +41,51 @@ void ParseURL(const std::string &url, std::string &hostname, std::string &path)
 
 int ConnectTCP(const std::string &hostname, int port)
 {
-    struct hostent *host = gethostbyname(hostname.c_str());
-    if (!host)
+    struct addrinfo hints
     {
-        std::cerr << "gethostbyname failed\n";
-        exit(1);
+    };
+    struct addrinfo *res, *rp;
+    int sock = -1;
+    int ret;
+
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;     // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+
+    std::string portStr = std::to_string(port);
+    ret = getaddrinfo(hostname.c_str(), portStr.c_str(), &hints, &res);
+    if (ret != 0)
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "ConnectTCP",
+                                              "getaddrinfo failed :" +
+                                                  std::string(gai_strerror(ret)));
     }
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
+    // Try each address until we successfully connect
+    for (rp = res; rp != nullptr; rp = rp->ai_next)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileHTTPS", "ConnectTCP",
-            "cannot create a socket object when connecting to = " + hostname +
-                " port = " + std::to_string(port));
-    }
+        sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sock == -1)
+            continue; // Try next address
 
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = *(long *)(host->h_addr);
+        if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0)
+        {
+            break; // Success
+        }
 
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) != 0)
-    {
         close(sock);
+        sock = -1;
+    }
+
+    freeaddrinfo(res);
+
+    if (sock == -1)
+    {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "ConnectTCP",
                                               "cannot make TCP connection to host = " + hostname +
                                                   " port = " + std::to_string(port));
     }
+
     return sock;
 }
 
@@ -107,6 +131,28 @@ void FileHTTPS::CleanupSSL(SSL *ssl, SOCKET sock)
     close(sock);
 }
 
+void FileHTTPS::SetParameters(const Params &params)
+{
+    // Parameters are set from config parameters if present
+    // Otherwise, they remain at their default value
+
+    helper::SetParameterValue("cache", params, m_CachePath);
+    helper::SetParameterValue("hostname", params, m_hostname);
+    helper::SetParameterValue("path", params, m_path);
+    helper::SetParameterValueInt("verbose", params, m_Verbose, "");
+
+    std::string recheckStr = "true";
+    helper::SetParameterValue("recheck_metadata", params, recheckStr);
+    m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileHTTPS::SetParameters: HTTPS Transport created host =" << m_hostname
+                  << " path = " << m_path << " local cache = '" << m_CachePath << "'"
+                  << " recheck_metadata = " << m_RecheckMetadata << std::endl;
+    }
+}
+
 void FileHTTPS::WaitForOpen()
 {
     if (m_IsOpening)
@@ -117,12 +163,139 @@ void FileHTTPS::WaitForOpen()
     }
 }
 
+void FileHTTPS::SetUpCache()
+{
+    if (!m_CachePath.empty())
+    {
+        if (helper::EndsWith(m_path, "md.idx"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/md.idx";
+        }
+        else if (helper::EndsWith(m_path, "mmd.0"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/mmd.0";
+        }
+        else if (helper::EndsWith(m_path, "md.0"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/md.0";
+        }
+    }
+
+    if (m_CachingThisFile)
+    {
+        if (!m_RecheckMetadata)
+        {
+            m_CacheFileRead = new FileFStream(m_Comm);
+            try
+            {
+                m_CacheFileRead->Open(m_CacheFilePath, Mode::Read);
+                m_Size = m_CacheFileRead->GetSize();
+                m_IsCached = true;
+                m_CachingThisFile = false;
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileHTTPS::SetUpCache: Already cached " << m_CacheFilePath
+                              << ", size = " << m_Size << std::endl;
+                }
+            }
+            catch (std::ios_base::failure &)
+            {
+                delete m_CacheFileRead;
+                m_IsCached = false;
+            }
+        }
+    }
+}
+
+void FileHTTPS::CheckCache(const size_t fileSize)
+{
+    if (m_CachingThisFile)
+    {
+        /* Check if cache file exists and size equals the cloud version*/
+        m_CacheFileRead = new FileFStream(m_Comm);
+        try
+        {
+            m_CacheFileRead->Open(m_CacheFilePath, Mode::Read);
+            size_t cacheSize = m_CacheFileRead->GetSize();
+            if (cacheSize >= fileSize)
+            {
+                m_IsCached = true;
+                m_CachingThisFile = false;
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileHTTPS::CheckCache: Already cached " << m_CacheFilePath
+                              << ", full size = " << cacheSize << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "FileHTTPS::CheckCache: Partially cached " << m_CacheFilePath
+                          << ", cached size = " << cacheSize << " full size = " << fileSize
+                          << std::endl;
+            }
+        }
+        catch (std::ios_base::failure &)
+        {
+            delete m_CacheFileRead;
+        }
+
+        if (m_CachingThisFile)
+        {
+            /* Create output file for caching this data later */
+            const auto lastPathSeparator(m_CacheFilePath.find_last_of(PathSeparator));
+            if (lastPathSeparator != std::string::npos)
+            {
+                const std::string dirpath(m_CacheFilePath.substr(0, lastPathSeparator));
+                helper::CreateDirectory(dirpath);
+            }
+            m_CacheFileWrite = new FileFStream(m_Comm);
+            m_CacheFileWrite->Open(m_CacheFilePath, Mode::Write);
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileHTTPS::CheckCache: Caching turn on for " << m_CacheFilePath
+                          << std::endl;
+            }
+        }
+    }
+}
+
 void FileHTTPS::Open(const std::string &name, const Mode openMode, const bool async,
                      const bool directio)
 {
-    ParseURL(name, m_hostname, m_path);
-    std::cout << "FileHTTPS::Open( hostname = " << m_hostname << ", path = " << m_path << ")\n";
+    if (m_hostname.empty())
+    {
+        ParseURL(name, m_hostname, m_path);
+    }
+    if (m_Verbose)
+    {
+        std::cout << "FileHTTPS::Open( hostname = " << m_hostname << ", path = " << m_path << ")\n";
+    }
     // GetSize();
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+    case Mode::Read:
+    case Mode::ReadRandomAccess: {
+        ProfilerStart("open");
+        errno = 0;
+        SetUpCache();
+        // m_IsCached=true if already found in cache and m_RecheckMetadata=false
+        // m_CachingThisFile=true if we want caching and m_IsCached=false
+        // m_CacheFilePath is the path to the local file in cache
+        break;
+    }
+    case Mode::Write:
+    case Mode::Append:
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Open",
+                                              "does not support writing " + m_Name);
+        break;
+    default:
+        CheckFile("unknown open mode {" + std::to_string((int)openMode) + "} for file " + m_Name +
+                  ", in call to FileHTTPS open");
+    }
 }
 
 void FileHTTPS::OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
@@ -135,17 +308,19 @@ void FileHTTPS::Write(const char *buffer, size_t size, size_t start) { return; }
 
 void FileHTTPS::Read(char *buffer, size_t size, size_t start)
 {
-    const size_t BUF_SIZE = 8192;
-    /*        enum CONSTEXPR
+    if (m_IsCached)
+    {
+        m_SeekPos = start;
+        m_CacheFileRead->Read(buffer, size, m_SeekPos);
+        if (m_Verbose > 0)
         {
-            MAX_REQUEST_LEN = 1024
-        };
-        char request[MAX_REQUEST_LEN] = {'\0'};
+            std::cout << "FileHTTPS::Read: Read from cache " << m_CacheFileRead->m_Name
+                      << " start = " << m_SeekPos << " size = " << size << std::endl;
+        }
+        return;
+    }
 
-        int request_len = snprintf(request, MAX_REQUEST_LEN, request_template.c_str(),
-       m_path.c_str(), m_hostname.c_str(), start, start + size - 1);
-
-    */
+    const size_t BUF_SIZE = 8192;
     std::string request = "GET " + m_path + " HTTP/1.1\r\nHost: " + m_hostname +
                           "\r\nRange: bytes=" + std::to_string(start) + "-" +
                           std::to_string(start + size - 1) + "\r\n\r\n";
@@ -161,7 +336,10 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
                                               "SSL handshake failed");
     }
 
-    std::cout << "Request: [" << request << "]" << std::endl;
+    if (m_Verbose > 1)
+    {
+        std::cout << "Request: [" << request << "]" << std::endl;
+    }
     SSL_write(ssl, request.c_str(), (int)request.size());
 
     // first we have to read and parse the header to get to the actual data bytes
@@ -196,13 +374,20 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
         }
         bytes_recd += nbytes;
     }
-    std::cout << "Downloaded " << bytes_recd << " bytes into memory.\n";
-
-    std::ofstream out("dump.data", std::ios::binary);
-    if (out)
+    if (m_Verbose > 0)
     {
-        out.write(buffer, size);
-        out.close();
+        std::cout << "FileHTTPS::Read Downloaded " << bytes_recd << " bytes.\n";
+    }
+    /* Save to cache */
+    if (m_CachingThisFile)
+    {
+        m_CacheFileWrite->Write(buffer, size, m_SeekPos);
+        m_CacheFileWrite->Flush();
+        if (m_Verbose > 0)
+        {
+            std::cout << "FileHTTPS::Read: Written to cache " << m_CacheFileWrite->m_Name
+                      << " start = " << m_SeekPos << " size = " << size << std::endl;
+        }
     }
     CleanupSSL(ssl, sock);
 }
@@ -223,7 +408,10 @@ size_t FileHTTPS::GetSize()
     std::string request =
         "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_hostname + "\r\nConnection: close\r\n\r\n";
 
-    // std::cout << "Request: [" << request << "]" << std::endl;
+    if (m_Verbose > 1)
+    {
+        std::cout << "Request: [" << request << "]" << std::endl;
+    }
     SSL_write(ssl, request.c_str(), (int)request.size());
 
     char buffer[4096] = {0};
@@ -236,10 +424,16 @@ size_t FileHTTPS::GetSize()
     }
 
     std::string headers(buffer);
-    /// std::cout << "Headers: " << headers << "\n";
+    if (m_Verbose > 1)
+    {
+        std::cout << "Headers: " << headers << "\n";
+    }
     std::string cl = ExtractHeaderValue(headers, "Content-Length: ");
     m_fileSize = cl.empty() ? 0 : std::stoul(cl);
-    std::cout << "File size: " << m_fileSize << " bytes\n";
+    if (m_Verbose > 0)
+    {
+        std::cout << "File size: " << m_fileSize << " bytes\n";
+    }
 
     CleanupSSL(ssl, sock);
     return m_fileSize;
@@ -256,10 +450,24 @@ void FileHTTPS::Close()
 }
 
 void FileHTTPS::Delete() {}
-void FileHTTPS::SeekToEnd() {}
-void FileHTTPS::SeekToBegin() {}
-void FileHTTPS::Seek(const size_t start) {}
-void FileHTTPS::Truncate(const size_t length) {}
+void FileHTTPS::SeekToEnd() { m_SeekPos = MaxSizeT; }
+void FileHTTPS::SeekToBegin() { m_SeekPos = 0; }
+void FileHTTPS::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        m_SeekPos = start;
+    }
+    else
+    {
+        SeekToEnd();
+    }
+}
+void FileHTTPS::Truncate(const size_t length)
+{
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Truncate",
+                                          "does not support truncating " + m_Name);
+}
 void FileHTTPS::MkDir(const std::string &fileName) {}
 
 void FileHTTPS::CheckFile(const std::string hint) const
