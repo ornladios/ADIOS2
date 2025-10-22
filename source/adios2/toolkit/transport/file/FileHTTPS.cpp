@@ -2,14 +2,9 @@
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
 
-#include <arpa/inet.h>
-#include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <stdexcept>
 
 namespace adios2
 {
@@ -39,18 +34,20 @@ void ParseURL(const std::string &url, std::string &hostname, std::string &path)
     }
 }
 
-int ConnectTCP(const std::string &hostname, int port)
+socket_t ConnectTCP(const std::string &hostname, int port)
 {
     struct addrinfo hints
     {
     };
     struct addrinfo *res, *rp;
-    int sock = -1;
+    socket_t sock = INVALID_SOCKET;
     int ret;
 
     std::memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;     // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_ADDRCONFIG; // Prefer addresses that are configured
 
     std::string portStr = std::to_string(port);
     ret = getaddrinfo(hostname.c_str(), portStr.c_str(), &hints, &res);
@@ -64,22 +61,21 @@ int ConnectTCP(const std::string &hostname, int port)
     // Try each address until we successfully connect
     for (rp = res; rp != nullptr; rp = rp->ai_next)
     {
-        sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sock == -1)
+        socket_t s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (s == INVALID_SOCKET)
             continue; // Try next address
 
-        if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0)
+        if (connect(s, rp->ai_addr, static_cast<socklen_t>(rp->ai_addrlen)) == 0)
         {
-            break; // Success
+            sock = s; // Success
+            break;
         }
-
-        close(sock);
-        sock = -1;
+        close_socket(s);
     }
 
     freeaddrinfo(res);
 
-    if (sock == -1)
+    if (sock == INVALID_SOCKET)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "ConnectTCP",
                                               "cannot make TCP connection to host = " + hostname +
@@ -101,11 +97,14 @@ std::string ExtractHeaderValue(const std::string &headers, const std::string &ke
 
 FileHTTPS::FileHTTPS(helper::Comm const &comm) : Transport("File", "HTTPS", comm)
 {
+#ifdef _WIN32
+    // Ensure Winsock is initialized (runs only once thanks to static)
+    static WSAInit _wsa_guard;
+#endif
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-#warning "Using OpenSSL pre-1.1.0 version"
     SSL_library_init();
 #else
-#warning "Using OpenSSL post-1.1.0 version"
     OPENSSL_init_ssl(0, NULL);
 #endif
     SSL_load_error_strings();
@@ -121,14 +120,14 @@ FileHTTPS::FileHTTPS(helper::Comm const &comm) : Transport("File", "HTTPS", comm
 
 FileHTTPS::~FileHTTPS() { Close(); }
 
-void FileHTTPS::CleanupSSL(SSL *ssl, SOCKET sock)
+void FileHTTPS::CleanupSSL(SSL *ssl, socket_t sock)
 {
     if (ssl)
     {
         SSL_shutdown(ssl);
         SSL_free(ssl);
     }
-    close(sock);
+    close_socket(sock);
 }
 
 void FileHTTPS::SetParameters(const Params &params)
@@ -325,7 +324,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
                           "\r\nRange: bytes=" + std::to_string(start) + "-" +
                           std::to_string(start + size - 1) + "\r\n\r\n";
 
-    SOCKET sock = ConnectTCP(m_hostname, m_server_port);
+    socket_t sock = ConnectTCP(m_hostname, m_server_port);
     SSL *ssl = SSL_new(m_sslCtx);
     SSL_set_fd(ssl, sock);
 
@@ -394,7 +393,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
 
 size_t FileHTTPS::GetSize()
 {
-    SOCKET sock = ConnectTCP(m_hostname, m_server_port);
+    socket_t sock = ConnectTCP(m_hostname, m_server_port);
     SSL *ssl = SSL_new(m_sslCtx);
     SSL_set_fd(ssl, sock);
 
