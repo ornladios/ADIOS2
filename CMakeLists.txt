@@ -194,6 +194,7 @@ adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperabili
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
 adios_option(Campaign   "Enable support for Campaigns (requires SQLite3 and ZLIB)" AUTO)
+adios_option(OpenSSL      "Enable support for OpenSSL" AUTO)
 adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" OFF)
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
 adios_option(PIP        "Enable support for pip packaging" OFF)
@@ -274,7 +275,7 @@ endif()
 set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
-    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK XRootD GPU_Support CUDA Kokkos
+    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK OpenSSL XRootD GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE
 )
 

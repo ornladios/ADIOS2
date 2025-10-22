@@ -598,7 +598,20 @@ elseif(ADIOS2_USE_AWSSDK)
 endif()
 if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
-endif()
+    set(ADIOS2_HAVE_OpenSSL TRUE)
+else(AWSSDK_FOUND)
+  # OpenSSL
+  if(ADIOS2_USE_OpenSSL STREQUAL AUTO)
+      find_package(OpenSSL COMPONENTS SSL)
+  elseif(ADIOS2_USE_OpenSSL)
+      find_package(OpenSSL REQUIRED COMPONENTS SSL)
+  endif()
+  if(OpenSSL_FOUND)
+      set(ADIOS2_HAVE_OpenSSL TRUE)
+  endif()
+endif(AWSSDK_FOUND)
+
+
 
 # XRootD
 if(ADIOS2_USE_XRootD STREQUAL AUTO)

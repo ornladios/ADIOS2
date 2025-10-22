@@ -237,11 +237,15 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTP.cpp)
-target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTPS.cpp)
 
 if(ADIOS2_HAVE_AWSSDK)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileAWSSDK.cpp)
   target_link_libraries(adios2_core PRIVATE ${AWSSDK_LINK_LIBRARIES})
+endif()
+
+if(ADIOS2_HAVE_OpenSSL)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTPS.cpp)
+  target_link_libraries(adios2_core PRIVATE OpenSSL::Crypto OpenSSL::SSL)
 endif()
 
 if(ADIOS2_HAVE_XRootD)
