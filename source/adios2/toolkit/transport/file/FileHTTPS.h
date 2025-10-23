@@ -4,6 +4,7 @@
 #include "../Transport.h"
 #include "./FileFStream.h"
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosNetwork.h" // NetworkSocket
 
 #include <openssl/err.h>
