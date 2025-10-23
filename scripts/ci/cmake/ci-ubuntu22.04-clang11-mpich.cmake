@@ -2,9 +2,9 @@ include(ProcessorCount)
 ProcessorCount(NCPUS)
 math(EXPR N2CPUS "${NCPUS}*2")
 
-set(ENV{CC}  gcc)
-set(ENV{CXX} g++)
-set(ENV{FC}  gfortran)
+set(ENV{CC}  clang-11)
+set(ENV{CXX} clang++-11)
+set(ENV{FC}  gfortran-11)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -15,11 +15,12 @@ set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc2:BOOL=ON
+ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
+ADIOS2_USE_MGARD:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=ON
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
@@ -39,7 +40,7 @@ CMAKE_Fortran_FLAGS:STRING=-Wall
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
-# We have a dedicated build for gcc8 + serial, so we exclude ".Serial$"
+# We have a dedicated build for clang6 + serial, so we exclude ".Serial$"
 # TODO: The Kill* and PreciousTimeStep tests fail (due to timeout) when
 # TODO: adios2 is built "--with-device=ch3:sock:tcp".  Once this is fixed
 # TODO:  in the mpi_dp, we can re-enable these tests.

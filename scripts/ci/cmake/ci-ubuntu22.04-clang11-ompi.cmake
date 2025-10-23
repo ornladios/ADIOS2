@@ -1,5 +1,5 @@
-set(ENV{CC}  clang-6.0)
-set(ENV{CXX} clang++-6.0)
+set(ENV{CC}  clang-11)
+set(ENV{CXX} clang++-11)
 set(ENV{FC}  gfortran-11)
 
 execute_process(
@@ -32,6 +32,8 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+MPIEXEC_EXTRA_FLAGS:STRING=--oversubscribe
 ")
 
 # We have a dedicated build for this setup without MPI
