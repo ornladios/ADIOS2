@@ -6,6 +6,12 @@
 #include <fstream>
 #include <stdexcept>
 
+#ifdef _WIN32
+#ifdef CreateDirectoryA
+#undef CreateDirectoryA
+#endif
+#endif
+
 namespace adios2
 {
 namespace transport
