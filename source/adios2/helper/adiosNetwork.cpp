@@ -35,9 +35,6 @@ struct WSAInit
     ~WSAInit() { WSACleanup(); }
 };
 
-#ifndef FD_SETSIZE
-#define FD_SETSIZE 1024
-#endif
 #include <process.h>
 #include <time.h>
 #define getpid() _getpid()
