@@ -619,7 +619,7 @@ jobs:
 #######################################
 
   build_and_test:
-    needs: [el8, ubuntu, macos, docker, contract]
+    needs: [el8, ubuntu, macos, windows, docker, contract]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required jobs complete"
