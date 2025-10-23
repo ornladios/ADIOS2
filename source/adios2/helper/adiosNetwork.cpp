@@ -6,57 +6,73 @@
  *
  */
 
-#ifdef _WIN32
-#include <winsock2.h> // SOCKET struct
-#endif
+#include "adiosNetwork.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
-#include "adiosNetwork.h"
 
 #include <string.h> // memcpy
 
-#ifndef _WIN32
+#ifdef _WIN32
 
-#include <netinet/in.h>
-#include <sys/socket.h> //getFQDN
+inline void close_socket(socket_t s)
+{
+    if (s != INVALID_SOCKET)
+        closesocket(s);
+}
+inline bool is_valid_socket(socket_t s) { return (s != INVALID_SOCKET); }
+// Simple RAII to ensure WSA is initialized once
+struct WSAInit
+{
+    WSAInit()
+    {
+        WSADATA wsa{};
+        int r = WSAStartup(MAKEWORD(2, 2), &wsa);
+        if (r != 0)
+        {
+            throw std::runtime_error("WSAStartup failed: " + std::to_string(r));
+        }
+    }
+    ~WSAInit() { WSACleanup(); }
+};
 
-#include <arpa/inet.h>
-#include <netdb.h>     //getFQDN
-#include <sys/types.h> //getFQDN
-#include <unistd.h>    // gethostname
-#define SOCKET int
-
-#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
-
-#include <iostream>
-#include <thread>
-
-#include <arpa/inet.h>  //AvailableIpAddresses() inet_ntoa
-#include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
-#include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
-#include <nlohmann_json.hpp>
-#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
-
-#endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
-
-#else // _WIN32
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
 #endif
 #include <process.h>
 #include <time.h>
-#include <winsock2.h> // SOCKET struct
-
-#include <WS2tcpip.h>
 #define getpid() _getpid()
 #define read(fd, buf, len) recv(fd, (buf), (len), 0)
 #define write(fd, buf, len) send(fd, buf, (len), 0)
 #define close(x) closesocket(x)
 #define INST_ADDRSTRLEN 50
-
 #include <tchar.h>
 #include <windows.h> // GetComputerName
-#endif               // _WIN32
+
+#else // not _WIN32
+
+#include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
+#include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
+#include <netdb.h>
+#include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
+#include <nlohmann_json.hpp>
+#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+constexpr int INVALID_SOCKET = -1;
+inline void close_socket(socket_t s)
+{
+    if (s >= 0)
+        close(s);
+}
+inline bool is_valid_socket(socket_t s) { return (s >= 0); }
+
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
+#include <iostream>
+#include <thread>
+#endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
+
+#endif // _WIN32
 
 namespace adios2
 {
@@ -67,6 +83,8 @@ std::string GetFQDN() noexcept
 {
     char hostname[1024];
 #ifdef WIN32
+    // Ensure Winsock is initialized (runs only once thanks to static)
+    static WSAInit _wsa_guard;
     TCHAR infoBuf[1024];
     DWORD bufCharCount = sizeof(hostname);
     memset(hostname, 0, sizeof(hostname));
@@ -347,73 +365,71 @@ void HandshakeReader(Comm const &comm, size_t &appID, std::vector<std::string> &
 
 struct NetworkSocketData
 {
-    sockaddr_in m_Sockaddr;
-    SOCKET m_Socket;
+    socket_t m_Socket;
 };
 
 NetworkSocket::NetworkSocket()
 {
+#ifdef _WIN32
+    // Ensure Winsock is initialized (runs only once thanks to static)
+    static WSAInit _wsa_guard;
+#endif
+
     m_Data = new NetworkSocketData();
-    m_Data->m_Socket = -1;
+    m_Data->m_Socket = INVALID_SOCKET;
 };
 
 NetworkSocket::~NetworkSocket() { delete m_Data; };
 
-bool NetworkSocket::valid() const { return (m_Data->m_Socket > 0); }
-int NetworkSocket::GetSocket() { return (m_Data->m_Socket); }
+bool NetworkSocket::valid() const { return is_valid_socket(m_Data->m_Socket); }
+socket_t NetworkSocket::GetSocket() { return (m_Data->m_Socket); }
 
-static sockaddr_in ResolveHostName(std::string m_hostname, uint16_t m_server_port)
+void NetworkSocket::Connect(const std::string &hostname, uint16_t port, std::string protocol)
 {
-    sockaddr_in sockaddr;
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
-    struct hostent *hostent = gethostbyname(m_hostname.c_str());
-    if (hostent == NULL)
+    struct addrinfo hints
     {
-        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ResolveHostName",
-                                              "error: gethostbyname " + m_hostname);
+    };
+    struct addrinfo *res, *rp;
+    m_Data->m_Socket = INVALID_SOCKET;
+    int ret;
+
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;     // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_ADDRCONFIG; // Prefer addresses that are configured
+
+    std::string portStr = std::to_string(port);
+    ret = getaddrinfo(hostname.c_str(), portStr.c_str(), &hints, &res);
+    if (ret != 0)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork", "Connect",
+                                              "getaddrinfo failed :" +
+                                                  std::string(gai_strerror(ret)));
     }
 
-    uint32_t addr_tmp = inet_addr(inet_ntoa(*(struct in_addr *)*(hostent->h_addr_list)));
-    if (addr_tmp == INADDR_NONE)
+    // Try each address until we successfully connect
+    for (rp = res; rp != nullptr; rp = rp->ai_next)
     {
-        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ResolveHostName",
-                                              "error: inet_addr " +
-                                                  std::string(*(hostent->h_addr_list)));
+        socket_t s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (s == INVALID_SOCKET)
+            continue; // Try next address
+
+        if (connect(s, rp->ai_addr, static_cast<socklen_t>(rp->ai_addrlen)) == 0)
+        {
+            m_Data->m_Socket = s; // Success
+            break;
+        }
+        close_socket(s);
     }
 
-    sockaddr.sin_addr.s_addr = addr_tmp;
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = htons(m_server_port);
-    return sockaddr;
-}
+    freeaddrinfo(res);
 
-void NetworkSocket::Connect(std::string hostname, uint16_t port, std::string protocol)
-{
-    struct protoent *protoent = getprotobyname(protocol.c_str());
-    if (protoent == NULL)
+    if (m_Data->m_Socket == INVALID_SOCKET)
     {
-        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
-                                              "error: Cannot make getprotobyname \"" + protocol +
-                                                  "\"");
-    }
-
-    m_Data->m_Sockaddr = ResolveHostName(hostname, port);
-
-    m_Data->m_Socket = socket(AF_INET, SOCK_STREAM, protoent->p_proto);
-    if (m_Data->m_Socket == -1)
-    {
-        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
-                                              "error: Cannot create socket");
-    }
-
-    int result = connect(m_Data->m_Socket, (sockaddr *)&(m_Data->m_Sockaddr), sizeof(sockaddr));
-
-    if (result == -1)
-    {
-        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
-                                              "error: Cannot connect to server at " + hostname +
-                                                  ":" + std::to_string(port));
+        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork", "Connect",
+                                              "cannot make TCP connection to host = " + hostname +
+                                                  " port = " + std::to_string(port));
     }
 }
 

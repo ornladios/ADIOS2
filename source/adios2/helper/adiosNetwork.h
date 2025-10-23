@@ -18,6 +18,21 @@
 #include <vector>
 /// \endcond
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
+// Link with Ws2_32.lib (MSVC)
+#ifdef _MSC_VER
+#pragma comment(lib, "Ws2_32.lib")
+#endif
+using socket_t = SOCKET;
+#else  // not _WIN32
+using socket_t = int;
+#endif // _WIN32
+
 namespace adios2
 {
 namespace helper
@@ -71,10 +86,11 @@ public:
 
     bool valid() const;
 
-    void Connect(std::string hostname, uint16_t port, std::string protocol = "tcp");
+    void Connect(const std::string &hostname, uint16_t port, std::string protocol = "tcp");
+    // void ConnectOLD(std::string hostname, uint16_t port, std::string protocol = "tcp");
     void RequestResponse(const std::string &request, char *response, size_t maxResponseSize);
     void Close();
-    int GetSocket();
+    socket_t GetSocket();
 
 private:
     NetworkSocketData *m_Data;

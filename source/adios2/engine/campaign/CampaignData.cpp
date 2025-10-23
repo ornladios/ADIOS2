@@ -115,8 +115,6 @@ static int sqlcb_archivedirectory(void *p, int argc, char **argv, char **azColNa
     size_t dirid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
     size_t dirIdx = dirid - 1; // SQL rows start from 1, vector idx start from 0
     cdp->directory[dirIdx].archive = true;
-    std::cout << "sqlcb_archivedirectory: archiveid = " << archiveid << " dirid = " << dirid
-              << " tarname = '" << std::string(argv[2]) << "'" << std::endl;
     std::string tarname(argv[2]);
     if (!tarname.empty())
     {

@@ -4,54 +4,10 @@
 #include "../Transport.h"
 #include "./FileFStream.h"
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/helper/adiosNetwork.h" // NetworkSocket
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
-// Link with Ws2_32.lib (MSVC)
-#ifdef _MSC_VER
-#pragma comment(lib, "Ws2_32.lib")
-#endif
-using socket_t = SOCKET;
-inline void close_socket(socket_t s)
-{
-    if (s != INVALID_SOCKET)
-        closesocket(s);
-}
-// Simple RAII to ensure WSA is initialized once
-struct WSAInit
-{
-    WSAInit()
-    {
-        WSADATA wsa{};
-        int r = WSAStartup(MAKEWORD(2, 2), &wsa);
-        if (r != 0)
-        {
-            throw std::runtime_error("WSAStartup failed: " + std::to_string(r));
-        }
-    }
-    ~WSAInit() { WSACleanup(); }
-};
-#else // not _WIN32
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-using socket_t = int;
-constexpr int INVALID_SOCKET = -1;
-inline void close_socket(socket_t s)
-{
-    if (s >= 0)
-        close(s);
-}
-#endif // _WIN32
 
 namespace adios2
 {
@@ -105,7 +61,7 @@ public:
 
 private:
     std::string m_hostname, m_path;
-    int m_server_port = 443; // HTTPS default
+    uint16_t m_server_port = 443; // HTTPS default
 
     SSL_CTX *m_sslCtx = nullptr;
 
@@ -116,7 +72,7 @@ private:
 
     size_t m_fileSize = 0;
 
-    void CleanupSSL(SSL *ssl, socket_t sock);
+    void CleanupSSL(SSL *ssl, adios2::helper::NetworkSocket &sock);
     void CheckFile(const std::string hint) const;
     void WaitForOpen();
     std::string SysErrMsg() const;
