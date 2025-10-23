@@ -486,5 +486,84 @@ void NetworkSocket::Close()
     }
 }
 
+#ifdef ADIOS2_HAVE_OPENSSL
+
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
+struct SSLData
+{
+    NetworkSocket m_Socket;
+    SSL *m_SSL;
+    SSL_CTX *m_sslCtx = nullptr;
+};
+
+SSLSocket::SSLSocket()
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    SSL_library_init();
+#else
+    OPENSSL_init_ssl(0, NULL);
+#endif
+    SSL_load_error_strings();
+    OpenSSL_add_all_algorithms();
+
+    m_Data = new SSLData();
+    m_Data->m_sslCtx = SSL_CTX_new(TLS_client_method());
+    if (!m_Data->m_sslCtx)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork::SSLSocket",
+                                              "SSLSocket", "cannot create SSL context");
+    }
+};
+
+SSLSocket::~SSLSocket()
+{
+    if (m_Data->m_sslCtx)
+    {
+        SSL_CTX_free(m_Data->m_sslCtx);
+        m_Data->m_sslCtx = nullptr;
+    };
+    delete m_Data;
+};
+
+bool SSLSocket::valid() const
+{
+    return (m_Data->m_Socket.valid() && m_Data->m_sslCtx != nullptr && m_Data->m_SSL != nullptr);
+};
+
+void SSLSocket::Connect(const std::string &hostname, uint16_t port, std::string protocol)
+{
+    m_Data->m_Socket.Connect(hostname, port);
+    m_Data->m_SSL = SSL_new(m_Data->m_sslCtx);
+    SSL_set_fd(m_Data->m_SSL, m_Data->m_Socket.GetSocket());
+
+    if (SSL_connect(m_Data->m_SSL) <= 0)
+    {
+        ERR_print_errors_fp(stderr);
+        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork::SSLSocket",
+                                              "Connect", "SSL handshake failed");
+    }
+}
+
+int SSLSocket::Write(const char *buffer, int size)
+{
+    return SSL_write(m_Data->m_SSL, buffer, size);
+}
+int SSLSocket::Read(char *buffer, int size) { return SSL_read(m_Data->m_SSL, buffer, size); }
+
+void SSLSocket::Close()
+{
+    if (m_Data->m_SSL)
+    {
+        SSL_shutdown(m_Data->m_SSL);
+        SSL_free(m_Data->m_SSL);
+        m_Data->m_SSL = nullptr;
+    }
+    m_Data->m_Socket.Close();
+};
+
+#endif // ADIOS2_HAVE_OPENSSL
+
 } // end namespace helper
 } // end namespace adios2

@@ -6,9 +6,6 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosNetwork.h" // NetworkSocket
 
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-
 namespace adios2
 {
 namespace helper
@@ -41,11 +38,11 @@ public:
 
     size_t GetSize() final;
 
-    void Flush() final;
+    void Flush() final{};
 
-    void Close() final;
+    void Close() final{};
 
-    void Delete() final;
+    void Delete() final{};
 
     void SeekToEnd() final;
 
@@ -62,8 +59,7 @@ public:
 private:
     std::string m_hostname, m_path;
     uint16_t m_server_port = 443; // HTTPS default
-
-    SSL_CTX *m_sslCtx = nullptr;
+    helper::SSLSocket m_ssl;
 
     int m_Errno = 0;
     bool m_IsOpening = false;
@@ -72,7 +68,6 @@ private:
 
     size_t m_fileSize = 0;
 
-    void CleanupSSL(SSL *ssl, adios2::helper::NetworkSocket &sock);
     void CheckFile(const std::string hint) const;
     void WaitForOpen();
     std::string SysErrMsg() const;

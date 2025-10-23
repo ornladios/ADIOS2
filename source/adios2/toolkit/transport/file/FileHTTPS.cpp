@@ -44,35 +44,9 @@ std::string ExtractHeaderValue(const std::string &headers, const std::string &ke
     return headers.substr(pos, end - pos);
 }
 
-FileHTTPS::FileHTTPS(helper::Comm const &comm) : Transport("File", "HTTPS", comm)
-{
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-    SSL_library_init();
-#else
-    OPENSSL_init_ssl(0, NULL);
-#endif
-    SSL_load_error_strings();
-    OpenSSL_add_all_algorithms();
-
-    m_sslCtx = SSL_CTX_new(TLS_client_method());
-    if (!m_sslCtx)
-    {
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "InitSSL",
-                                              "cannot create SSL context");
-    }
-}
+FileHTTPS::FileHTTPS(helper::Comm const &comm) : Transport("File", "HTTPS", comm) {}
 
 FileHTTPS::~FileHTTPS() { Close(); }
-
-void FileHTTPS::CleanupSSL(SSL *ssl, adios2::helper::NetworkSocket &sock)
-{
-    if (ssl)
-    {
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-    }
-    sock.Close();
-}
 
 void FileHTTPS::SetParameters(const Params &params)
 {
@@ -270,23 +244,14 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
                           "\r\nRange: bytes=" + std::to_string(start) + "-" +
                           std::to_string(start + size - 1) + "\r\n\r\n";
 
-    adios2::helper::NetworkSocket sock;
-    sock.Connect(m_hostname, m_server_port);
-    SSL *ssl = SSL_new(m_sslCtx);
-    SSL_set_fd(ssl, sock.GetSocket());
-
-    if (SSL_connect(ssl) <= 0)
-    {
-        ERR_print_errors_fp(stderr);
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Read",
-                                              "SSL handshake failed");
-    }
+    m_ssl.Connect(m_hostname, m_server_port);
 
     if (m_Verbose > 1)
     {
         std::cout << "Request: [" << request << "]" << std::endl;
     }
-    SSL_write(ssl, request.c_str(), (int)request.size());
+
+    m_ssl.Write(request.c_str(), (int)request.size());
 
     // first we have to read and parse the header to get to the actual data bytes
     bool headerParsed = false;
@@ -296,7 +261,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
     size_t bytes_recd = 0;
     while (!headerParsed)
     {
-        bytes = SSL_read(ssl, buf, sizeof(buf));
+        bytes = m_ssl.Read(buf, sizeof(buf));
         response.append(buf, bytes);
         size_t headerEnd = response.find("\r\n\r\n");
         if (headerEnd != std::string::npos)
@@ -312,7 +277,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
     while (bytes_recd < size)
     {
         int read_len = (int)((size - bytes_recd) < BUF_SIZE ? (size - bytes_recd) : BUF_SIZE);
-        int nbytes = SSL_read(ssl, buffer + bytes_recd, read_len);
+        int nbytes = m_ssl.Read(buffer + bytes_recd, read_len);
         if (nbytes <= 0)
         {
             helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Read",
@@ -335,22 +300,12 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
                       << " start = " << m_SeekPos << " size = " << size << std::endl;
         }
     }
-    CleanupSSL(ssl, sock);
+    m_ssl.Close();
 }
 
 size_t FileHTTPS::GetSize()
 {
-    adios2::helper::NetworkSocket sock;
-    sock.Connect(m_hostname, m_server_port);
-    SSL *ssl = SSL_new(m_sslCtx);
-    SSL_set_fd(ssl, sock.GetSocket());
-
-    if (SSL_connect(ssl) <= 0)
-    {
-        ERR_print_errors_fp(stderr);
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "GetSize",
-                                              "SSL handshake failed");
-    }
+    m_ssl.Connect(m_hostname, m_server_port);
 
     std::string request =
         "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_hostname + "\r\nConnection: close\r\n\r\n";
@@ -359,10 +314,10 @@ size_t FileHTTPS::GetSize()
     {
         std::cout << "Request: [" << request << "]" << std::endl;
     }
-    SSL_write(ssl, request.c_str(), (int)request.size());
+    m_ssl.Write(request.c_str(), (int)request.size());
 
     char buffer[4096] = {0};
-    int nbytes = SSL_read(ssl, buffer, sizeof(buffer) - 1);
+    int nbytes = m_ssl.Read(buffer, sizeof(buffer) - 1);
     buffer[nbytes] = '\0';
     if (nbytes <= 0)
     {
@@ -382,21 +337,13 @@ size_t FileHTTPS::GetSize()
         std::cout << "File size: " << m_fileSize << " bytes\n";
     }
 
-    CleanupSSL(ssl, sock);
+    m_ssl.Close();
     return m_fileSize;
 }
 
-void FileHTTPS::Flush() {}
-void FileHTTPS::Close()
-{
-    if (m_sslCtx)
-    {
-        SSL_CTX_free(m_sslCtx);
-        m_sslCtx = nullptr;
-    }
-}
-
-void FileHTTPS::Delete() {}
+// void FileHTTPS::Flush() {}
+// void FileHTTPS::Close() {}
+// void FileHTTPS::Delete() {}
 void FileHTTPS::SeekToEnd() { m_SeekPos = MaxSizeT; }
 void FileHTTPS::SeekToBegin() { m_SeekPos = 0; }
 void FileHTTPS::Seek(const size_t start)
