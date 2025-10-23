@@ -1,40 +1,42 @@
-From dfe014d1eea8b0d0533b7519b4a4f58785e43298 Mon Sep 17 00:00:00 2001
-From: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
-Date: Tue, 18 Jun 2024 18:23:06 -0400
+From f6096d97e31f3a0d2b34f0ec74a39f7a9bca9d99 Mon Sep 17 00:00:00 2001
+From: Scott Wittenburg <scott.wittenburg@kitware.com>
+Date: Tue, 14 Oct 2025 15:59:47 -0600
 Subject: [PATCH] adios2: add xrootd variant
 
 ---
- var/spack/repos/builtin/packages/adios2/package.py | 3 +++
- 1 file changed, 3 insertions(+)
+ var/spack/repos/builtin/packages/adios2/package.py | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/var/spack/repos/builtin/packages/adios2/package.py b/var/spack/repos/builtin/packages/adios2/package.py
-index f6a5aba446..97f8322ff3 100644
+index 8870366397..b3668c7e7b 100644
 --- a/var/spack/repos/builtin/packages/adios2/package.py
 +++ b/var/spack/repos/builtin/packages/adios2/package.py
-@@ -95,6 +95,7 @@ class Adios2(CMakePackage, CudaPackage):
-     variant("cuda", default=False, when="@2.8:", description="Enable CUDA support")
-     variant("python", default=False, description="Enable the Python bindings")
-     variant("fortran", default=True, description="Enable the Fortran bindings")
-+    variant("xrootd", default=True, description="Enable the XRootD")
+@@ -107,6 +107,8 @@ class Adios2(CMakePackage, CudaPackage, ROCmPackage):
+         description="Enable support for in situ visualization plugin using ParaView Catalyst",
+     )
  
-     # Requires mature C++11 implementations
-     conflicts("%gcc@:4.7")
-@@ -148,6 +149,7 @@ class Adios2(CMakePackage, CudaPackage):
-     depends_on("py-mpi4py@2.0.0:", when="+mpi +python", type=("build", "run"))
++    variant("xrootd", default=True, description="Enable the XRootD")
++
+     # Optional language bindings, C++11 and C always provided
+     variant("kokkos", default=False, when="@2.9:", description="Enable Kokkos support")
+     variant("sycl", default=False, when="@2.10:", description="Enable SYCL support")
+@@ -207,6 +209,8 @@ class Adios2(CMakePackage, CudaPackage, ROCmPackage):
      depends_on("aws-sdk-cpp", when="+aws")
      depends_on("libcatalyst@2", when="+libcatalyst")
-+    depends_on("xrootd~davix", when="+xrootd")
  
-     # Fix findmpi when called by dependees
-     # See https://github.com/ornladios/ADIOS2/pull/1632
-@@ -197,6 +199,7 @@ def cmake_args(self):
++    depends_on("xrootd~davix", when="+xrootd")
++
+     # error: invalid use of incomplete type 'PyFrameObject' {aka 'struct _frame'}
+     conflicts("^python@3.11:", when="@:2.7")
+ 
+@@ -273,6 +277,7 @@ def cmake_args(self):
              from_variant("CMAKE_POSITION_INDEPENDENT_CODE", "pic"),
              from_variant("BUILD_SHARED_LIBS", "shared"),
              from_variant("ADIOS2_USE_AWSSDK", "aws"),
 +            from_variant("ADIOS2_USE_XRootD", "xrootd"),
              from_variant("ADIOS2_USE_Blosc", "blosc"),
+             from_variant("ADIOS2_USE_Blosc2", "blosc2"),
              from_variant("ADIOS2_USE_BZip2", "bzip2"),
-             from_variant("ADIOS2_USE_DataMan", "dataman"),
 -- 
-2.35.3
+2.34.1
 

@@ -1,5 +1,5 @@
-set(ENV{CC}  clang-6.0)
-set(ENV{CXX} clang++-6.0)
+set(ENV{CC}  clang-14)
+set(ENV{CXX} clang++-14)
 set(ENV{FC}  gfortran-11)
 
 execute_process(
@@ -16,7 +16,6 @@ ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
-ADIOS2_USE_MGARD:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON

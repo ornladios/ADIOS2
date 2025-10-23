@@ -1,5 +1,6 @@
-FROM ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base
-ARG GCC_VERSION=8
+ARG BASE_IMAGE=ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-base
+FROM $BASE_IMAGE
+ARG GCC_VERSION=9
 
 RUN apt-get update && apt-get install -y \
     gcc-${GCC_VERSION} \
