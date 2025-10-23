@@ -271,7 +271,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
     adios2::helper::NetworkSocket sock;
     sock.Connect(m_hostname, m_server_port);
     SSL *ssl = SSL_new(m_sslCtx);
-    SSL_set_fd(ssl, static_cast<int>(sock.GetSocket()));
+    SSL_set_fd(ssl, sock.GetSocket());
 
     if (SSL_connect(ssl) <= 0)
     {
@@ -341,7 +341,7 @@ size_t FileHTTPS::GetSize()
     adios2::helper::NetworkSocket sock;
     sock.Connect(m_hostname, m_server_port);
     SSL *ssl = SSL_new(m_sslCtx);
-    SSL_set_fd(ssl, static_cast<int>(sock.GetSocket()));
+    SSL_set_fd(ssl, sock.GetSocket());
 
     if (SSL_connect(ssl) <= 0)
     {

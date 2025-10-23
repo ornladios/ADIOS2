@@ -14,6 +14,23 @@
 
 #ifdef _WIN32
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 1024
+#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
+// Link with Ws2_32.lib (MSVC)
+#ifdef _MSC_VER
+#pragma comment(lib, "Ws2_32.lib")
+#endif
+using socket_t = SOCKET;
+
 inline void close_socket(socket_t s)
 {
     if (s != INVALID_SOCKET)
@@ -56,6 +73,7 @@ struct WSAInit
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+using socket_t = int;
 constexpr int INVALID_SOCKET = -1;
 inline void close_socket(socket_t s)
 {
@@ -379,7 +397,7 @@ NetworkSocket::NetworkSocket()
 NetworkSocket::~NetworkSocket() { delete m_Data; };
 
 bool NetworkSocket::valid() const { return is_valid_socket(m_Data->m_Socket); }
-socket_t NetworkSocket::GetSocket() { return (m_Data->m_Socket); }
+int NetworkSocket::GetSocket() { return static_cast<int>(m_Data->m_Socket); }
 
 void NetworkSocket::Connect(const std::string &hostname, uint16_t port, std::string protocol)
 {
