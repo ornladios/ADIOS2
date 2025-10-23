@@ -1,4 +1,4 @@
-from python:3.6.15
+from python:3.14.0
 
 # run apt install without asking user
 RUN DEBIAN_FRONTEND=noninteractive apt update && \
