@@ -383,8 +383,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                     io.AddTransport("File", p);
                     io.SetParameter("UUID", ds.uuid);
                     io.SetEngine("BP5");
-                    localPath =
-                        m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                    newLocalPath = remotePath;
                     if (ho.isAWS_EC2)
                     {
                         adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
