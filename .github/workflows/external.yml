@@ -14,7 +14,7 @@ jobs:
       contents: read
       statuses: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: Kitware/cdash-status@release
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: Kitware/cdash-status@697751fc655b300a9e16e285f2e2ee981f59e45a # release
         with:
           project: ADIOS
