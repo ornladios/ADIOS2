@@ -69,12 +69,8 @@ pthread_mutex_t ts_mutex = PTHREAD_MUTEX_INITIALIZER;
  * These are used internally to avoid compiler warnings.
  */
 
-#define ADIOS_FI_MR_UNSPEC 0
 #define ADIOS_FI_MR_BASIC (1 << 0)
-#define ADIOS_FI_MR_SCALABLE (1 << 1)
-
 #define ADIOS_FI_LOCAL_MR (1ULL << 55)
-#define ADIOS_FI_REG_MR (1ULL << 59)
 
 /*
  * Wrapper for fi_mr_reg() with additional parameters endpoint and mr_mode.
@@ -2542,6 +2538,23 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
     }
     else
     {
+        /*
+         * Oct 23, 2025 - eisen@cc.gatech.edu
+         *
+         * For non-CXI providers, we are currently relying upon
+         * libfabric version 1.5 behavior, which includes using macros
+         * like FI_MR_BASIC and FI_LOCAL_MR that are deprecated in
+         * libfabric 2.x.  However, at the time of this writing, those
+         * bitpositions are still examined in some libfabric
+         * providers, so we use our own macros (without the deprecated
+         * spec) to avoid compiler warnings.  At some point when these
+         * macros are no longer used in any supported provider this
+         * can be removed and cleaned up. Of the supported providers
+         * "gni" has disappeared from libfabric 2.x.  "cxi" support is
+         * newly written and shouldn't require these macros.  "psm2"
+         * still references those bit positions, but those machines
+         * may be disappearing.
+         */
         Svcs->verbose(CP_Stream, DPSummaryVerbose,
                       "RDMA Dataplane trying to check for an available non-CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
