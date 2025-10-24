@@ -37,6 +37,9 @@
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FileHTTP.h"
 #endif
+#ifdef ADIOS2_HAVE_OPENSSL
+#include "adios2/toolkit/transport/file/FileHTTPS.h"
+#endif
 #include "adios2/toolkit/transport/file/FileStdio.h"
 #include "adios2/toolkit/transport/null/NullTransport.h"
 
@@ -632,6 +635,18 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
         else if (library == "http")
         {
             transport = std::make_shared<transport::FileHTTP>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "TransportMan", "OpenFileTransport",
+                    library + " transport does not support buffered I/O.");
+            }
+        }
+#endif
+#ifdef ADIOS2_HAVE_OPENSSL
+        else if (library == "https")
+        {
+            transport = std::make_shared<transport::FileHTTPS>(m_Comm);
             if (lf_GetBuffered("false"))
             {
                 helper::Throw<std::invalid_argument>(

@@ -243,6 +243,11 @@ if(ADIOS2_HAVE_AWSSDK)
   target_link_libraries(adios2_core PRIVATE ${AWSSDK_LINK_LIBRARIES})
 endif()
 
+if(ADIOS2_HAVE_OpenSSL)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTPS.cpp)
+  target_link_libraries(adios2_core PRIVATE OpenSSL::Crypto OpenSSL::SSL)
+endif()
+
 if(ADIOS2_HAVE_XRootD)
   target_sources(adios2_core PRIVATE toolkit/remote/XrootdRemote.cpp)
   target_include_directories(adios2_core PRIVATE ${XROOTD_INCLUDE_DIRS})
