@@ -65,6 +65,14 @@ pthread_mutex_t wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
+ * Internal version of deprecated APIs.
+ * These are used internally to avoid compiler warnings.
+ */
+
+#define ADIOS_FI_MR_BASIC (1 << 0)
+#define ADIOS_FI_LOCAL_MR (1ULL << 55)
+
+/*
  * Wrapper for fi_mr_reg() with additional parameters endpoint and mr_mode.
  * If mr_mode includes FI_MR_ENDPOINT, the memory region must be bound to the
  * endpoint and enabled before use.
@@ -400,7 +408,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     hints->caps =
         FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ | FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
     hints->mode =
-        FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
+        FI_CONTEXT | ADIOS_FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->ep_attr->type = FI_EP_RDM;
     hints->domain_attr->threading = FI_THREAD_SAFE;
 
@@ -564,7 +572,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
         fabric->ctx = NULL;
     }
 
-    if (info->mode & FI_LOCAL_MR)
+    if (info->mode & ADIOS_FI_LOCAL_MR)
     {
         fabric->local_mr_req = 1;
     }
@@ -605,7 +613,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
      * So we propagate the bit value currently contained in the mr_mode
      * for these flags.
      */
-    if (info->domain_attr->mr_mode != FI_MR_BASIC)
+    if (info->domain_attr->mr_mode != ADIOS_FI_MR_BASIC)
     {
         info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
                                      (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
@@ -2507,7 +2515,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
     hints->caps =
         FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ | FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
     hints->mode =
-        FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
+        FI_CONTEXT | ADIOS_FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->ep_attr->type = FI_EP_RDM;
 
     char const *vni_env_str = getenv("SLINGSHOT_VNIS");
@@ -2530,6 +2538,23 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
     }
     else
     {
+        /*
+         * Oct 23, 2025 - eisen@cc.gatech.edu
+         *
+         * For non-CXI providers, we are currently relying upon
+         * libfabric version 1.5 behavior, which includes using macros
+         * like FI_MR_BASIC and FI_LOCAL_MR that are deprecated in
+         * libfabric 2.x.  However, at the time of this writing, those
+         * bitpositions are still examined in some libfabric
+         * providers, so we use our own macros (without the deprecated
+         * spec) to avoid compiler warnings.  At some point when these
+         * macros are no longer used in any supported provider this
+         * can be removed and cleaned up. Of the supported providers
+         * "gni" has disappeared from libfabric 2.x.  "cxi" support is
+         * newly written and shouldn't require these macros.  "psm2"
+         * still references those bit positions, but those machines
+         * may be disappearing.
+         */
         Svcs->verbose(CP_Stream, DPSummaryVerbose,
                       "RDMA Dataplane trying to check for an available non-CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
@@ -2537,7 +2562,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
         fi_version = FI_VERSION(1, 5);
 
-        hints->domain_attr->mr_mode = FI_MR_BASIC;
+        hints->domain_attr->mr_mode = ADIOS_FI_MR_BASIC;
         hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
         // data progress unspecified, both are fine
         // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
