@@ -330,7 +330,8 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
 {
     std::promise<bool> *p = (std::promise<bool> *)handle;
     bool result = p->get_future().get();
-    if (!result)  throw std::runtime_error("XRootD - Get failed for file " + m_Filename);
+    if (!result)
+        throw std::runtime_error("XRootD - Get failed for file " + m_Filename);
     delete p;
     return true;
 }
