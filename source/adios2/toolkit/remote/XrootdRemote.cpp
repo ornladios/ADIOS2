@@ -103,7 +103,7 @@ public:
     char *responseBuffer;
     int responseBufferLen;
     char *dest;
-    std::promise<void> *promise;
+    std::promise<bool> *promise;
 
 private:
     XrdSsiResource rSpec;
@@ -237,7 +237,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
                 "%s@%s; %s\n",
                 rName, GetEndPoint().c_str(), eInfo.Get().c_str());
         Finished();
-        promise->set_value();
+        promise->set_value(false);
         delete this;
         return;
     }
@@ -258,7 +258,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     // We are done with our request. We avoid calling Finished if we got here
     // because we were cancelled.
     //
-    promise->set_value();
+    promise->set_value(true);
     Finished();
     delete this;
 }
@@ -328,8 +328,9 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
 
 bool XrootdRemote::WaitForGet(GetHandle handle)
 {
-    std::promise<void> *p = (std::promise<void> *)handle;
-    p->get_future().wait();
+    std::promise<bool> *p = (std::promise<bool> *)handle;
+    bool result = p->get_future().get();
+    if (!result)  throw std::runtime_error("XRootD - Get failed for file " + m_Filename);
     delete p;
     return true;
 }
@@ -382,7 +383,7 @@ Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t Ste
     reqP = new myRequest(clUI, rName, GetReqID(), reqDataStr, reqLen);
     reqP->SetResource(rSpec);
     reqP->dest = (char *)dest;
-    reqP->promise = new std::promise<void>();
+    reqP->promise = new std::promise<bool>();
     // We simply hand off the request to the service to deal with it. When a
     // response is ready or an error occured our callback is invoked.
     //
