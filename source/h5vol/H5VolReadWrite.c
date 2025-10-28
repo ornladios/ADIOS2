@@ -440,13 +440,9 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
             return true;
         }
 
-    free(fullPath);
-#ifdef NEVER
-    return false;
-#else
     printf("\n......... NOTE: unable to remove GROUP %s \n\n", fullPath);
-    return true;
-#endif
+    free(fullPath);
+    return false;
 }
 
 void gLoadAttrDef(H5VL_AttrDef_t *attrDef)
