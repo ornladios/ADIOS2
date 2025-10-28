@@ -1715,7 +1715,7 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
 
 bool BP5Reader::CheckWriterActive()
 {
-    if (m_ReadMetadataFromFile)
+    if (m_ReadMetadataFromFile && m_WriterIsActive)
     {
         size_t flag = 1;
         if (m_Comm.Rank() == 0)
