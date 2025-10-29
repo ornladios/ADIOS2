@@ -3,9 +3,9 @@
  * accompanying file Copyright.txt for details.
  */
 
+#include "adios2/helper/adiosMemory.h"
 #include <adios2.h>
 #include <adios2/helper/adiosCommMPI.h>
-#include "adios2/helper/adiosMemory.h"
 #include <adios2/helper/adiosRerouting.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -51,7 +51,7 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     std::stringstream ss;
 
     ss << "m_MsgType, orig = " << static_cast<int>(origMsg.m_MsgType)
-              << ", rcvd = " << static_cast<int>(receivedMsg.m_MsgType) << "\n";
+       << ", rcvd = " << static_cast<int>(receivedMsg.m_MsgType) << "\n";
     ss << "m_SrcRank, orig = " << srcRank << ", rcvd = " << receivedMsg.m_SrcRank << "\n";
     ss << "m_DestRank, orig = " << worldRank << ", rcvd = " << receivedMsg.m_DestRank << "\n";
     ss << "m_Offset, orig = " << origMsg.m_Offset << ", rcvd = " << receivedMsg.m_Offset << "\n";
