@@ -1,4 +1,4 @@
-FROM almalinux:8
+FROM almalinux:9
 
 RUN dnf upgrade -y && \
     dnf install -y glibc-langpack-en
