@@ -113,7 +113,7 @@ TEST_F(RerouteTest, TestSendReceiveBare)
 
     ASSERT_EQ(recvBuffer.size(), sendBuffer.size());
 
-    for (int i = 0; i < recvBuffer.size(); ++i)
+    for (size_t i = 0; i < recvBuffer.size(); ++i)
     {
         ASSERT_EQ(static_cast<int>(recvBuffer[i]), static_cast<int>(sendBuffer[i]));
     }
@@ -123,7 +123,7 @@ TEST_F(RerouteTest, TestSendReceiveMoreBare)
 {
     int sendToRank = worldRank >= worldSize - 1 ? 0 : worldRank + 1;
     int recvFromRank = worldRank <= 0 ? worldSize - 1 : worldRank - 1;
-    int count = 3;
+    const int count = 3;
 
     // Send the buffer of chars (non-blocking)
     MPI_Request request = MPI_REQUEST_NULL;

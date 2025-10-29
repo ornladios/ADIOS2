@@ -41,7 +41,7 @@ void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::ve
     std::stringstream ss;
 
     ss << "Rank " << comm.Rank() << " SEND buffer of length " << buffer.size() << ": [";
-    for (int i = 0; i < buffer.size(); ++i)
+    for (size_t i = 0; i < buffer.size(); ++i)
     {
         ss << " " << static_cast<int>(buffer[i]);
     }
@@ -60,7 +60,7 @@ void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vect
     std::stringstream ss;
 
     ss << "Rank " << comm.Rank() << " RECV buffer of length " << buffer.size() << ": [";
-    for (int i = 0; i < buffer.size(); ++i)
+    for (size_t i = 0; i < buffer.size(); ++i)
     {
         ss << " " << static_cast<int>(buffer[i]);
     }
