@@ -200,6 +200,11 @@ std::string RemoveTrailingSlash(const std::string &name) noexcept;
  */
 std::string RandomString(const size_t length);
 
+/**
+ * Split a string into a vector of strings using the delimiter character.
+ */
+std::vector<std::string> StringToVector(const std::string &s, const char delimiter = ';');
+
 } // end namespace helper
 } // end namespace adios2
 

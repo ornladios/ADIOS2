@@ -20,6 +20,8 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/remote/Remote.h"
 
+#include <regex>
+
 namespace adios2
 {
 namespace core
@@ -55,7 +57,11 @@ public:
 
 private:
     UserOptions::Campaign m_Options;
-    int m_ReaderRank; // my rank in the readers' comm
+    std::vector<std::string> m_IncludePatterns;  // reg.expr. include datasets
+    std::vector<std::regex> m_IncludePatternsRe; // reg.expr. include datasets, compiled
+    std::vector<std::string> m_ExcludePatterns;  // reg.expr. exclude datasets
+    std::vector<std::regex> m_ExcludePatternsRe; // reg.expr. exclude datasets, compiled
+    int m_ReaderRank;                            // my rank in the readers' comm
 
     int m_CurrentStep = 0;
 
@@ -191,6 +197,9 @@ private:
     // for reading individual remote file
     void ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
                         const size_t size, void *data);
+
+    // check if name is included and not excluded by patterns
+    bool Matches(const std::string &dsname);
 };
 
 } // end namespace engine
