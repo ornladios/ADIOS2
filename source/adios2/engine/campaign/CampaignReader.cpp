@@ -188,17 +188,33 @@ void CampaignReader::InitParameters()
                                                      "integer in the range [0,5], in call to "
                                                      "Open or Engine constructor");
         }
-        if (key == "hostname")
+        else if (key == "hostname")
         {
             m_Options.hostname = pair.second;
         }
-        if (key == "campaignstorepath")
+        else if (key == "campaignstorepath")
         {
             m_Options.campaignstorepath = pair.second;
         }
-        if (key == "cachepath")
+        else if (key == "cachepath")
         {
             m_Options.cachepath = pair.second;
+        }
+        else if (key == "include-dataset")
+        {
+            m_IncludePatterns = helper::StringToVector(pair.second, ';');
+            for (auto &s : m_IncludePatterns)
+            {
+                m_IncludePatternsRe.push_back(std::regex(s));
+            }
+        }
+        else if (key == "exclude-dataset")
+        {
+            m_ExcludePatterns = helper::StringToVector(pair.second, ';');
+            for (auto &s : m_ExcludePatterns)
+            {
+                m_ExcludePatternsRe.push_back(std::regex(s));
+            }
         }
     }
 
@@ -213,6 +229,28 @@ void CampaignReader::InitParameters()
         std::cout << "  Hostname = " << m_Options.hostname << std::endl;
         std::cout << "  Campaign Store Path = " << m_Options.campaignstorepath << std::endl;
         std::cout << "  Cache Path = " << m_Options.cachepath << std::endl;
+        if (!m_IncludePatterns.empty())
+        {
+            std::cout << "  Include patterns = [";
+            for (size_t idx = 0; idx < m_IncludePatterns.size(); ++idx)
+            {
+                std::cout << m_IncludePatterns[idx];
+                if (idx < m_IncludePatterns.size() - 1)
+                    std::cout << ", ";
+            }
+            std::cout << "]" << std::endl;
+        }
+        if (!m_ExcludePatterns.empty())
+        {
+            std::cout << "  Exclude patterns = [";
+            for (size_t idx = 0; idx < m_ExcludePatterns.size(); ++idx)
+            {
+                std::cout << m_ExcludePatterns[idx];
+                if (idx < m_ExcludePatterns.size() - 1)
+                    std::cout << ", ";
+            }
+            std::cout << "]" << std::endl;
+        }
     }
 }
 
@@ -605,6 +643,7 @@ void CampaignReader::InitTransports()
             std::cout << "    " << tsIdx << ". " << ts.name << "  --> " << atsFilePath << std::endl;
         }
         std::ofstream atsfile(atsFilePath);
+        size_t atsLines = 0;
 
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader-TS-" + std::to_string(tsIdx));
         for (auto &itDS : ts.datasets)
@@ -612,6 +651,8 @@ void CampaignReader::InitTransports()
             size_t tsorder = itDS.first;
             size_t dsIdx = itDS.second;
             CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
+            if (!Matches(ds.name))
+                continue;
             std::string localPath;
             size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
             if (!repIdx)
@@ -633,6 +674,7 @@ void CampaignReader::InitTransports()
                             << m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name
                             << "\n  remotehost: " << m_CampaignData.hosts[rep.hostIdx].hostname
                             << "\n  uuid: " << ds.uuid << std::endl;
+                    ++atsLines;
                 }
                 else
                 {
@@ -652,11 +694,13 @@ void CampaignReader::InitTransports()
                               << localPath << "\n";
                 }
                 atsfile << "- " << localPath << std::endl;
+                ++atsLines;
             }
         }
         atsfile << "- end" << std::endl;
         atsfile.close();
-        OpenDatasetWithADIOS(ts.name, ds.format, io, atsFilePath);
+        if (atsLines > 0)
+            OpenDatasetWithADIOS(ts.name, ds.format, io, atsFilePath);
     }
 
     // process individual datasets not in any time-series (and all images/texts)
@@ -668,6 +712,9 @@ void CampaignReader::InitTransports()
             continue;
         if (ds.format == FileFormat::IMAGE)
             continue;
+        if (!Matches(ds.name))
+            continue;
+
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
         std::string localPath;
         size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
@@ -730,6 +777,8 @@ void CampaignReader::InitTransports()
         size_t dsIdx = it.first;
         CampaignDataset &ds = it.second;
         if (ds.format != FileFormat::IMAGE)
+            continue;
+        if (!Matches(ds.name))
             continue;
         std::string localPath;
         if (m_Options.verbose > 1)
@@ -921,6 +970,33 @@ void CampaignReader::CreateImageVariable(const std::string &name, const size_t l
 }
 
 void CampaignReader::DestructorClose(bool Verbose) noexcept { m_CampaignData.Close(); }
+
+bool CampaignReader::Matches(const std::string &dsname)
+{
+    for (const auto &re : m_ExcludePatternsRe)
+    {
+        if (std::regex_match(dsname, re))
+        {
+            return false;
+        }
+    }
+
+    if (!m_IncludePatternsRe.empty())
+    {
+        for (const auto &re : m_IncludePatternsRe)
+        {
+            if (std::regex_match(dsname, re))
+            {
+                return true;
+            }
+        }
+        // If no match in include patterns and the list is not empty, return false
+        return false;
+    }
+
+    // If no match in exclude list while include list is empty, return true
+    return true;
+}
 
 // Remove the engine name from the var name, which must be of pattern
 // <engineName>/<original var name>
