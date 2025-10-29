@@ -5,7 +5,6 @@ on:
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
   generate_statuses:
