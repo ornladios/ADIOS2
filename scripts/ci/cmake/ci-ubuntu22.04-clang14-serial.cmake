@@ -1,6 +1,6 @@
-set(ENV{CC}  gcc)
-set(ENV{CXX} g++)
-set(ENV{FC}  gfortran)
+set(ENV{CC}  clang-14)
+set(ENV{CXX} clang++-14)
+set(ENV{FC}  gfortran-11)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -11,12 +11,12 @@ set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc2:BOOL=ON
+ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
-ADIOS2_USE_MPI:BOOL=ON
+ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
@@ -32,9 +32,6 @@ CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
-
-# We have a dedicated build for this setup without MPI
-set(CTEST_TEST_ARGS EXCLUDE ".Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
