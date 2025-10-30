@@ -25,6 +25,9 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 env:
   ADIOS2_CUSTOM_VERSION_OVERRIDE: ${{ github.event.inputs.overrideVersion }}
 
