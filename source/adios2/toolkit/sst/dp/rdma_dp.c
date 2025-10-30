@@ -273,6 +273,9 @@ static void *make_progress(void *params_)
     return NULL;
 }
 
+static int global_fabric_refcount = 0;
+static struct fid_fabric *global_fabric = NULL;
+
 struct fabric_state
 {
     struct fi_context *ctx;
@@ -490,7 +493,12 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     }
 
     pthread_mutex_lock(&fabric_mutex);
-    fi_getinfo(fi_version, NULL, NULL, 0, hints, &info);
+    result = fi_getinfo(fi_version, NULL, NULL, 0, hints, &info);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "opening fi_getinfo() failed with %d (%s).\n",
+                      result, fi_strerror(result));
+    }
     pthread_mutex_unlock(&fabric_mutex);
     if (!info)
     {
@@ -642,14 +650,31 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
                   "Fabric parameters to use at fabric initialization: %s\n",
                   fi_tostr(fabric->info, FI_TYPE_INFO));
 
-    result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
-    if (result != FI_SUCCESS)
+    pthread_mutex_lock(&fabric_mutex);
+    if (global_fabric_refcount == 0)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "opening fabric access failed with %d (%s). This is fatal.\n", result,
-                      fi_strerror(result));
-        return;
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "opening fabric with provider %s\n",
+                      info->fabric_attr->prov_name);
+        result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
+        if (result != FI_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "opening fabric access failed with %d (%s). This is fatal.\n", result,
+                          fi_strerror(result));
+            return;
+        }
+        global_fabric_refcount = 1;
+        global_fabric = fabric->fabric;
     }
+    else
+    {
+        Svcs->verbose(CP_Stream, DPSummaryVerbose, "Reusing open fabric with provider %s\n",
+                      info->fabric_attr->prov_name);
+        fabric->fabric = global_fabric;
+        global_fabric_refcount++;
+    }
+    pthread_mutex_unlock(&fabric_mutex);
+
     result = fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
     if (result != FI_SUCCESS)
     {
@@ -824,13 +849,28 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         return;
     }
 
-    res = fi_close((struct fid *)fabric->fabric);
-    if (res != FI_SUCCESS)
+    pthread_mutex_lock(&fabric_mutex);
+    global_fabric_refcount--;
+    if (global_fabric_refcount == 0)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "could not close fabric, failed with %d (%s).\n", res, fi_strerror(res));
-        return;
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "Calling fi_close() on fabric with zero reference count.\n");
+        res = fi_close((struct fid *)global_fabric);
+        if (res != FI_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "could not close fabric, failed with %d (%s).\n", res, fi_strerror(res));
+            return;
+        }
+        global_fabric = NULL;
     }
+    else
+    {
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "Skipping fi_close() on fabric because reference count is still %d.\n",
+                      global_fabric_refcount);
+    }
+    pthread_mutex_unlock(&fabric_mutex);
 
     fi_freeinfo(fabric->info);
 
