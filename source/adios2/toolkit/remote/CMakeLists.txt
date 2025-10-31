@@ -7,7 +7,7 @@ if (NOT ADIOS2_USE_PIP)
   add_executable(adios2_remote_server ./remote_server.cpp)
 
   target_link_libraries(adios2_remote_server
-                        PUBLIC EVPath::EVPath adios2_core adios2sys
+                        PUBLIC adios2::thirdparty::EVPath adios2_core adios2sys
                         PRIVATE adios2::thirdparty::pugixml $<$<PLATFORM_ID:Windows>:shlwapi>)
 
   target_include_directories(adios2_remote_server PRIVATE ${PROJECT_BINARY_DIR})
