@@ -43,6 +43,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    advanced/campaign_management
    advanced/ecp_hardware
    advanced/derived_variables
+   advanced/performance
 
 .. toctree::
    :caption: Tutorials
