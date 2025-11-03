@@ -1,24 +1,21 @@
-# Caitlin's stuff
+*.bash @ornladios/infrastructure
+*.json @ornladios/infrastructure
+*.toml @ornladios/infrastructure
+*.sh @ornladios/infrastructure
+*.yaml @ornladios/infrastructure
+*.yml @ornladios/infrastructure
+
+.gitlab/ @ornladios/infrastructure
+.github/ @ornladios/infrastructure
+.shellcheck_exclude_paths @ornladios/infrastructure
+
+cmake/ @ornladios/infrastructure
+python/ @ornladios/infrastructure
+scripts/ @ornladios/infrastructure
+thirdparty/ @ornladios/infrastructure
+
 plugins/ @caitlinross
-
-# Vicente's stuff
-*.bash @vicentebolea
-*.json @vicentebolea
-*.toml @vicentebolea
-*.sh @vicentebolea
-*.yaml @vicentebolea
-*.yml @vicentebolea
-
-.gitlab/ @vicentebolea
-.github/ @vicentebolea
-.circleci/ @vicentebolea
-.shellcheck_exclude_paths @vicentebolea
-
-cmake/ @vicentebolea
-python/ @vicentebolea
-scripts/ @vicentebolea
 source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
-thirdparty/ @vicentebolea
 
 # GPU-aware specific files
 source/adios2/helper/kokkos/ @anagainaru
