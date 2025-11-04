@@ -32,11 +32,11 @@ endif()
 
 if (ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_CppWriter CppWriter.cpp)
-  target_link_libraries(adios2_hello_CppWriter adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_hello_CppWriter adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_CppWriter RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_CppReader CppReader.cpp)
-  target_link_libraries(adios2_hello_CppReader adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_hello_CppReader adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_CppReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   if(ADIOS2_HAVE_Fortran)

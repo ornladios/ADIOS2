@@ -111,7 +111,7 @@ ADIOS2 supports GPU buffers provided in the form of ``Kokkos::View`` directly in
    Kokkos::View<float *, Kokkos::CudaSpace> gpuSimData("data", N);
    bpWriter.Put(data, gpuSimData);
 
-If the CUDA backend is being used (and not Kokkos) to enable GPU support in ADIOS2, Kokkos applications can still directly pass ``Kokkos::View`` as long as the correct external header is included: ``#include <adios2/cxx11/KokkosView.h>``.
+If the CUDA backend is being used (and not Kokkos) to enable GPU support in ADIOS2, Kokkos applications can still directly pass ``Kokkos::View`` as long as the correct external header is included: ``#include <adios2/cxx/KokkosView.h>``.
 
 *******************
 Reading GPU buffers

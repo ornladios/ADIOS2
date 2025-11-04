@@ -27,7 +27,7 @@ if(ADIOS2_HAVE_Fortran)
   FortranCInterface_VERIFY(CXX QUIET)
 
   add_library(adios2_hello_inlineMixedLang inlineMixedLang.cpp)
-  target_link_libraries(adios2_hello_inlineMixedLang adios2::cxx11)
+  target_link_libraries(adios2_hello_inlineMixedLang adios2::cxx)
   target_include_directories(adios2_hello_inlineMixedLang PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   install(TARGETS adios2_hello_inlineMixedLang RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

@@ -1,6 +1,6 @@
 add_executable(Test.Utils.BPcmp TestUtilsBPcmp.cpp)
 
-target_link_libraries(Test.Utils.BPcmp adios2::cxx11)
+target_link_libraries(Test.Utils.BPcmp adios2::cxx)
 
 add_test(NAME Utils.BPcmp
   COMMAND $<TARGET_FILE:Test.Utils.BPcmp>
