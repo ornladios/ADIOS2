@@ -35,8 +35,8 @@
  ** Define the adios2::detail::location class.
  */
 
-#ifndef YY_YY_LOCATION_HH_INCLUDED
-# define YY_YY_LOCATION_HH_INCLUDED
+#ifndef YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED
+# define YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED
 
 # include <iostream>
 # include <string>
@@ -303,4 +303,4 @@ namespace adios2 { namespace detail {
 } } // adios2::detail
 #line 305 "location.hh"
 
-#endif // !YY_YY_LOCATION_HH_INCLUDED
+#endif // !YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED

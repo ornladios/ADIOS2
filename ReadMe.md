@@ -2,7 +2,8 @@
 [![Documentation](https://readthedocs.org/projects/adios2/badge/?version=latest)](https://adios2.readthedocs.io/en/latest/?badge=latest)
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
 [![GitHub release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
-[![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions) 
+[![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11410/badge)](https://www.bestpractices.dev/projects/11410)
 
 # ADIOS2 : The Adaptable Input Output System version 2
 

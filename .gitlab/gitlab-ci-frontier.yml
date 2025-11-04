@@ -11,10 +11,17 @@ stages:
   - build
   - post
 
-.setup_env_ecpci: &setup_env_ecpci |
+
+.checkout_commit: &checkout_commit |
   git fetch
   source scripts/ci/gitlab-ci/setup-vars.sh
   git checkout "$CI_COMMIT_REF"
+  module purge
+  module load ${JOB_MODULES}
+  module list
+  export PATH="${CCACHE_INSTALL_DIR}/ccache:$PATH"
+
+.load_modules: &load_modules |
   module purge
   module load ${JOB_MODULES}
   module list
@@ -61,7 +68,8 @@ stages:
   stage: setup
   tags: [ shell ]
   before_script:
-    - *setup_env_ecpci
+    - *checkout_commit
+    - *load_modules
     - *install_ccache
   script:
     - bash scripts/ci/gitlab-ci/run.sh -s update
@@ -78,13 +86,13 @@ stages:
   variables:
     SCHEDULER_PARAMETERS: "-AUMS029 -pbatch -t 00:30:00 --nice=0 -c48 --threads-per-core=2 --gpus=8 -N 1"
   before_script:
-    - *setup_env_ecpci
+    - *load_modules
   script:
     - bash scripts/ci/gitlab-ci/run.sh -s configure
     - bash scripts/ci/gitlab-ci/run.sh -s build
     - bash scripts/ci/gitlab-ci/run.sh -s test
   after_script:
-    - *setup_env_ecpci
+    - *load_modules
     - bash scripts/ci/gitlab-ci/run.sh submit
     - ccache -s
 
@@ -123,7 +131,8 @@ setup:frontier-kokkos-hip:
     - .setup-common
     - .kokkos-hip-common
   before_script:
-    - *setup_env_ecpci
+    - *checkout_commit
+    - *load_modules
     - *install_ccache
     - .gitlab/config/kokkos.sh "$CI_PROJECT_DIR/deps" "$KOKKOS_VER" $KOKKOS_OPTS
 
@@ -132,8 +141,6 @@ build:frontier-kokkos-hip:
     - .frontier-cmake-common
     - .build-common
     - .kokkos-hip-common
-  before_script:
-    - *setup_env_ecpci
   needs:
     - setup:frontier-kokkos-hip
   dependencies:

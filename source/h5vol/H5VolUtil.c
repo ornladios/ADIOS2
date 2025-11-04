@@ -73,10 +73,15 @@ int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims)
     }
 
     // get num dimensions
-    hsize_t h5Shape[ndims];
+    hsize_t *h5Shape = (hsize_t *)malloc(ndims * sizeof(hsize_t));
+    if (h5Shape == NULL)
+    {
+        return H5VL_CODE_FAIL;
+    }
     H5Sget_simple_extent_dims(space_id, h5Shape, NULL);
 
     gUtilConvert(h5Shape, shape, ndims);
+    free(h5Shape);
     return H5VL_CODE_SUCC;
 }
 
@@ -85,10 +90,20 @@ int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hs
     hsize_t npts = H5Sget_select_npoints(hyperSlab_id);
 
     if (0 == npts)
-        return npts;
+        return (int)npts;
     else
     {
-        hsize_t s[ndims], e[ndims];
+        hsize_t *s = (hsize_t *)malloc(ndims * sizeof(hsize_t));
+        if (s == NULL)
+        {
+            return H5VL_CODE_FAIL;
+        }
+        hsize_t *e = (hsize_t *)malloc(ndims * sizeof(hsize_t));
+        if (e == NULL)
+        {
+            free(s);
+            return H5VL_CODE_FAIL;
+        }
 
         H5Sget_select_bounds(hyperSlab_id, s, e);
 
@@ -101,8 +116,11 @@ int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hs
             numElements *= count[k];
         }
 
+        free(s);
+        free(e);
+
         if (npts == numElements)
-            return npts; // ok got block
+            return (int)npts; // ok got block
     }
     return H5VL_CODE_FAIL; // slab has many blocks
 

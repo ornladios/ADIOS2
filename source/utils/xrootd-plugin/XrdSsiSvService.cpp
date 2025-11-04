@@ -497,14 +497,14 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         //  small gets to avoid malloc overhead. There is only one filePool object that is ever
         //  used, that of the original XrdSsiSvService object for ADIOS.  Each "child" of this
         //  object has a pointer to the parent's object.
-        auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
-        pthread_t tid;
-        auto engine = poolEntry->m_engine;
-        auto io = poolEntry->m_io;
-        adios2::Box<adios2::Dims> varSel(Start, Count);
-        adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
         try
         {
+            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
+            pthread_t tid;
+            auto engine = poolEntry->m_engine;
+            auto io = poolEntry->m_io;
+            adios2::Box<adios2::Dims> varSel(Start, Count);
+            adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
             if (TypeOfVar == adios2::DataType::None)
             {
             }
@@ -534,7 +534,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             RespondErr("Returning exception for Get ", EINVAL);
         }
         // detached thread. Memory should not be deallocated yet,
-        // olnly of a thread is finished
+        // only if a thread is finished
         return;
     }
     // Ok we don't know what this is

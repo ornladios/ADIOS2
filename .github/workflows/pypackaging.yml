@@ -25,6 +25,9 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 env:
   ADIOS2_CUSTOM_VERSION_OVERRIDE: ${{ github.event.inputs.overrideVersion }}
 
@@ -32,8 +35,11 @@ jobs:
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
@@ -43,7 +49,7 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: artifact_sdist
           path: dist/*.tar.gz
@@ -51,6 +57,9 @@ jobs:
   build_wheels:
     name: Wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
     strategy:
       fail-fast: false
       matrix:
@@ -58,19 +67,19 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
 
-      - uses: pypa/cibuildwheel@v2.16
+      - uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd # v2.16
         env:
           CIBW_BUILD: cp*-manylinux_x86_64
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: artifact_wheels
           path: wheelhouse/*.whl
@@ -79,6 +88,8 @@ jobs:
     needs: [build_wheels, make_sdist]
     environment: pypi
     permissions:
+      contents: read
+      actions: read  # for download-artifact
       id-token: write
     runs-on: ubuntu-latest
     if: |
@@ -88,28 +99,30 @@ jobs:
         github.event.action == 'published'
       )
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: dist
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1
 
   upload_test_pypi:
     needs: [build_wheels, make_sdist]
     environment: testpypi
     permissions:
+      contents: read
+      actions: read  # for download-artifact
       id-token: write
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: dist
           merge-multiple: true
       - run: ls -R dist
       - name: Publish package distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1
         with:
           repository-url: https://test.pypi.org/legacy/

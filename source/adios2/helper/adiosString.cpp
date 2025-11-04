@@ -503,5 +503,22 @@ std::string RandomString(const size_t length)
     return str.substr(0, len);
 }
 
+std::vector<std::string> StringToVector(const std::string &s, const char delimiter)
+{
+    std::vector<std::string> result;
+    std::string::size_type start = 0;
+    std::string::size_type end;
+
+    while ((end = s.find(delimiter, start)) != std::string::npos)
+    {
+        result.emplace_back(s.substr(start, end - start));
+        start = end + 1;
+    }
+
+    // Add the last segment
+    result.emplace_back(s.substr(start));
+    return result;
+}
+
 } // end namespace helper
 } // end namespace adios2

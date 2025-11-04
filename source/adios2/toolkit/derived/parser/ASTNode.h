@@ -16,6 +16,7 @@ public:
     ASTNode(std::string);
     ASTNode(std::string, size_t);
     ASTNode(std::string, std::string);
+    ASTNode(std::string, double);
     ASTNode(std::string, std::vector<std::tuple<int, int, int>>);
     ~ASTNode();
 
@@ -29,7 +30,7 @@ public:
     std::string get_alias();
     std::string get_varname();
     std::vector<std::tuple<int, int, int>> get_indices();
-    double get_value();
+    std::string get_number();
 
     void set_varname(const std::string);
     void set_indices(const std::vector<std::tuple<int, int, int>>);
@@ -40,7 +41,7 @@ private:
     std::string alias;
     std::string varname;
     std::vector<std::tuple<int, int, int>> indices;
-    double value;
+    std::string value;
 };
 
 }

@@ -6,4 +6,4 @@ packages:
   mpich:
     require: 'device=ch3:sock'
   openmpi:
-    require: '@4.1'
+    require: '@4.1.8'

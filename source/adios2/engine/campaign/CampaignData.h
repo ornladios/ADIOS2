@@ -30,7 +30,8 @@ struct CampaignHost
 {
     std::string hostname;
     std::string longhostname;
-    std::vector<size_t> dirIdx; // index in CampaignData.directory global list of dirs
+    std::string defaultProtocol; // empty, or "https" or "s3"
+    std::vector<size_t> dirIdx;  // index in CampaignData.directory global list of dirs
 };
 
 struct CampaignDirectory
@@ -39,6 +40,7 @@ struct CampaignDirectory
     std::string path;
     bool archive; // true if this is on an archival storage
     std::string archiveSystemName;
+    std::vector<size_t> archiveIDs;
 };
 
 struct CampaignKey
@@ -97,6 +99,7 @@ struct CampaignReplica
     std::string name;
     size_t hostIdx;
     size_t dirIdx;
+    size_t archiveIdx; // > 0 means an archived replica
     size_t datasetIdx; // index of parent CampaignDataset in the map
     bool deleted;
     bool hasKey;
@@ -159,6 +162,7 @@ public:
     std::vector<CampaignDirectory> directory;
     std::map<size_t, CampaignDataset> datasets;      // indexed by datasetID, 1..n, not contiguous
     std::map<size_t, CampaignTimeSeries> timeseries; // indexed by tsid, 1..n, not contiguous
+    std::map<size_t, std::string> tarnames;          // indexed by rowid of archive table
 
     CampaignData() = default;
     ~CampaignData() = default;

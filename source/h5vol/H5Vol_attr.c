@@ -38,8 +38,13 @@ void *H5VL_adios2_attr_open(void *obj, const H5VL_loc_params_t *loc_params, cons
         }
         else
         {
-            char withSlash[strlen(name) + 2];
-            snprintf(withSlash, sizeof(withSlash), "/%s", name);
+            size_t llen = strlen(name) + 2;
+            char *withSlash = (char *)malloc(llen);
+            if (!withSlash)
+            {
+                return NULL;
+            }
+            snprintf(withSlash, llen, "/%s", name);
             withSlash[strlen(name) + 1] = '\0';
             attr = gLocateAttrFrom(vol, withSlash);
             if (NULL == attr)
@@ -47,9 +52,11 @@ void *H5VL_adios2_attr_open(void *obj, const H5VL_loc_params_t *loc_params, cons
                 SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such ATTRIBUTE: [%s] "
                                "found in file\n ",
                                withSlash);
+                free(withSlash);
                 return NULL;
             }
             attrDef = gCreateAttrDef(withSlash, -1, -1);
+            free(withSlash);
         }
     }
     else
@@ -190,7 +197,7 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id
         {
             // The  number of attrs is from H5Oget_info(), then iterate each by
             // calling H5Aget_name_by_idx, to reach here
-            *ret_val = gGetNameOfNthAttr(vol, loc_params->loc_data.loc_by_idx.n, buf);
+            *ret_val = gGetNameOfNthAttr(vol, (uint32_t)(loc_params->loc_data.loc_by_idx.n), buf);
         }
         return 0;
     }
@@ -240,9 +247,16 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
                 gADIOS2RemoveAttr(vol->m_FileIO, attr_name);
             else
             {
-                char fullPath[strlen(vol->m_Path) + 4 + strlen(attr_name)];
+                size_t llen = strlen(vol->m_Path) + 4 + strlen(attr_name);
+                char *fullPath = (char *)malloc(llen);
+                if (!fullPath)
+                {
+                    return 0;
+                }
+
                 gGenerateFullPath(fullPath, vol->m_Path, attr_name);
                 gADIOS2RemoveAttr(vol->m_FileIO, fullPath);
+                free(fullPath);
             }
             return 0;
         }

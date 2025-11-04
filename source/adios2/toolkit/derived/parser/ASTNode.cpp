@@ -21,6 +21,12 @@ ASTNode::ASTNode(std::string op, std::string a)
     alias = a;
 }
 
+ASTNode::ASTNode(std::string op, double a)
+{
+    opname = op;
+    alias = std::to_string(a);
+}
+
 ASTNode::ASTNode(std::string op, std::vector<std::tuple<int, int, int>> i)
 {
     opname = op;
@@ -86,7 +92,7 @@ std::string ASTNode::get_varname() { return varname; }
 
 std::vector<std::tuple<int, int, int>> ASTNode::get_indices() { return indices; }
 
-double ASTNode::get_value() { return value; }
+std::string ASTNode::get_number() { return alias; }
 
 void ASTNode::set_varname(const std::string s) { varname = s; }
 

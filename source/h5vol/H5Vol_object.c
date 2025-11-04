@@ -85,7 +85,7 @@ herr_t H5VL_adios2_object_get(void *obj, const H5VL_loc_params_t *loc_params,
         else if (loc_params->type == H5VL_OBJECT_BY_IDX)
         {
             oinfo->fileno = 1;
-            int idx = loc_params->loc_data.loc_by_idx.n;
+            size_t idx = (size_t)(loc_params->loc_data.loc_by_idx.n);
             if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
             {
                 gLoadContent(vol);

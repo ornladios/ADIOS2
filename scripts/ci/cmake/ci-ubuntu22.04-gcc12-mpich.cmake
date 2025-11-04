@@ -1,3 +1,7 @@
+include(ProcessorCount)
+ProcessorCount(NCPUS)
+math(EXPR N2CPUS "${NCPUS}*2")
+
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
@@ -31,7 +35,17 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-mpich/.spack-env/view/lib/libgomp.so.1
+
+MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
+
+# We have a dedicated build for gcc8 + serial, so we exclude ".Serial$"
+# TODO: The Kill* and PreciousTimeStep tests fail (due to timeout) when
+# TODO: adios2 is built "--with-device=ch3:sock:tcp".  Once this is fixed
+# TODO:  in the mpi_dp, we can re-enable these tests.
+set(CTEST_TEST_ARGS EXCLUDE "KillReader|KillWriter|PreciousTimestep|.Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

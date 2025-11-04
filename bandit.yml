@@ -1,2 +1,0 @@
-# tell codacy / bandit to accept assert in python
-skips: ['B101']

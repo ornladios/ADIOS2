@@ -504,8 +504,29 @@ void BP5Reader::PerformGets()
 #ifdef ADIOS2_HAVE_XROOTD
         if (getenv("DoXRootD"))
         {
+            std::string XRootDHost = "localhost";
+            int XRootDPort = 1094;
+            char *Env = getenv("XRootDHost");
+            if (Env)
+            {
+                const std::string XEnv = std::string(Env);
+                auto colon_pos = XEnv.find(':');
+                if (colon_pos == std::string::npos)
+                    XRootDHost = XEnv;
+                else
+                {
+                    XRootDHost = XEnv.substr(0, colon_pos);
+                    try
+                    {
+                        XRootDPort = std::stoi(XEnv.substr(colon_pos + 1));
+                    }
+                    catch (...)
+                    {
+                    }
+                }
+            }
             m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
-            m_Remote->Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
+            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering);
         }
         else
 #endif
@@ -1694,7 +1715,7 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
 
 bool BP5Reader::CheckWriterActive()
 {
-    if (m_ReadMetadataFromFile)
+    if (m_ReadMetadataFromFile && m_WriterIsActive)
     {
         size_t flag = 1;
         if (m_Comm.Rank() == 0)

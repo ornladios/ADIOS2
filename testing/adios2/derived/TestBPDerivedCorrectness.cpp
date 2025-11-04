@@ -25,13 +25,68 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+TEST_P(DerivedCorrectnessP, ErrorTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPDerivedError");
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n nofunction(x)", mode),
+                 std::invalid_argument);
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
+                 std::invalid_argument);
+    // check for too many constants
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n pow(x, 3, 2)", mode),
+                 std::invalid_argument);
+}
+
+TEST_P(DerivedCorrectnessP, ComposedExpressionTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPComposedWrite");
+
+    const size_t N = 10;
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0, 10.0);
+    std::vector<double> simArray(N);
+    for (size_t i = 0; i < N; ++i)
+        simArray[i] = distribution(generator);
+
+    auto U = bpOut.DefineVariable<double>("var1", {N}, {0}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(sum(pow(x), x, 2))", mode);
+    adios2::Engine bpFileWriter = bpOut.Open("BPDeriveCompose.bp", adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(U, simArray.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    double epsilon = (double)0.01;
+    adios2::IO bpIn = adios.DeclareIO("BPComposedRead");
+    adios2::Engine bpFileReader = bpIn.Open("BPDeriveCompose.bp", adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<double>("derived");
+    EXPECT_EQ(derVar.Shape().size(), 1);
+    EXPECT_EQ(derVar.Shape()[0], N);
+
+    std::vector<double> readCom;
+    bpFileReader.Get(derVar, readCom);
+    bpFileReader.EndStep();
+
+    for (size_t ind = 0; ind < N; ++ind)
+    {
+        double calcDerived = (double)sqrt(pow(simArray[ind], 2) + simArray[ind] + 2);
+        EXPECT_TRUE(fabs(calcDerived - readCom[ind]) < epsilon);
+    }
+
+    bpFileReader.Close();
+}
+
 TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
 {
     adios2::DerivedVarType mode = GetParam();
     adios2::ADIOS adios;
     adios2::IO bpOut = adios.DeclareIO("BPNoData");
-    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
-                 std::invalid_argument);
 
     const size_t N = 10;
     std::default_random_engine generator;
@@ -159,6 +214,17 @@ TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
         auto varmag = bpIn.InquireVariable<float>(derMagName);
         auto varcross = bpIn.InquireVariable<float>(derCrossName);
 
+        EXPECT_EQ(varmag.Shape().size(), 3);
+        EXPECT_EQ(varmag.Shape()[0], Nx);
+        EXPECT_EQ(varmag.Shape()[1], Ny);
+        EXPECT_EQ(varmag.Shape()[2], Nz);
+
+        EXPECT_EQ(varcross.Shape().size(), 4);
+        EXPECT_EQ(varcross.Shape()[0], Nx);
+        EXPECT_EQ(varcross.Shape()[1], Ny);
+        EXPECT_EQ(varcross.Shape()[2], Nz);
+        EXPECT_EQ(varcross.Shape()[3], 3);
+
         bpFileReader.Get(varUx, readUx);
         bpFileReader.Get(varUy, readUy);
         bpFileReader.Get(varUz, readUz);
@@ -274,6 +340,12 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
     auto varVZ = bpIn.InquireVariable<float>(varname[2]);
     auto varCurl = bpIn.InquireVariable<float>(derivedname);
 
+    EXPECT_EQ(varCurl.Shape().size(), 4);
+    EXPECT_EQ(varCurl.Shape()[0], Nx);
+    EXPECT_EQ(varCurl.Shape()[1], Ny);
+    EXPECT_EQ(varCurl.Shape()[2], Nz);
+    EXPECT_EQ(varCurl.Shape()[3], 3);
+
     bpFileReader.Get(varVX, readVX);
     bpFileReader.Get(varVY, readVY);
     bpFileReader.Get(varVZ, readVZ);
@@ -306,6 +378,131 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                 curl_y = -2 * x * sinf(y);
                 curl_z = -sqrtf(z + 1) * sinf(x) - (2 * expf(2 * y) * sinf(x));
                 */
+                if (fabs(curl_x) < 1)
+                {
+                    err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));
+                }
+                else
+                {
+                    err_x = fabs(curl_x - readCurl[3 * idx]) / fabs(curl_x);
+                }
+                if (fabs(curl_y) < 1)
+                {
+                    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / (1 + fabs(curl_y));
+                }
+                else
+                {
+                    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / fabs(curl_y);
+                }
+                if (fabs(curl_z) < 1)
+                {
+                    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / (1 + fabs(curl_z));
+                }
+                else
+                {
+                    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / fabs(curl_z);
+                }
+                sum_x += err_x;
+                sum_y += err_y;
+                sum_z += err_z;
+            }
+        }
+    }
+    bpFileReader.Close();
+    EXPECT_LT((sum_x + sum_y + sum_z) / (3 * Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_x / (Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_y / (Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_z / (Nx * Ny * Nz), error_limit);
+}
+
+TEST_P(DerivedCorrectnessP, CurlAggCorrectnessTest)
+{
+    const size_t Nx = 25, Ny = 70, Nz = 13;
+    const size_t dataSize = Nx * Ny * Nz;
+    float error_limit = 0.0000001f;
+
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
+
+    // Application variable
+    std::vector<float> simArray(dataSize * 3);
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                // Linear curl example
+                simArray[idx] = (6 * x * y) + (7 * z);
+                simArray[idx + dataSize] = (4 * x * z) + powf(y, 2);
+                simArray[idx + 2 * dataSize] = sqrtf(z) + (2 * x * y);
+            }
+        }
+    }
+
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPWriteExpression");
+    std::string derivedname = "derived/curlV";
+
+    auto VX = bpOut.DefineVariable<float>("sim/V", {Nx, Ny, Nz, 3}, {0, 0, 0, 0}, {Nx, Ny, Nz, 3});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derivedname,
+                                "V=sim/V \n"
+                                "curl(V)",
+                                mode);
+    // clang-format on
+    std::string filename = "ADIOS2BPWriteDerivedCurlAgg.bp";
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(VX, simArray.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    adios2::IO bpIn = adios.DeclareIO("BPReadCurlExpression");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+
+    std::vector<float> readV;
+    std::vector<float> readCurl;
+
+    std::vector<std::vector<float>> calcCurl;
+    double sum_x = 0;
+    double sum_y = 0;
+    double sum_z = 0;
+    bpFileReader.BeginStep();
+    auto varV = bpIn.InquireVariable<float>("sim/V");
+    auto varCurl = bpIn.InquireVariable<float>(derivedname);
+
+    EXPECT_EQ(varCurl.Shape().size(), 4);
+    EXPECT_EQ(varCurl.Shape()[0], Nx);
+    EXPECT_EQ(varCurl.Shape()[1], Ny);
+    EXPECT_EQ(varCurl.Shape()[2], Nz);
+    EXPECT_EQ(varCurl.Shape()[3], 3);
+
+    bpFileReader.Get(varV, readV);
+    bpFileReader.Get(varCurl, readCurl);
+    bpFileReader.EndStep();
+
+    float curl_x, curl_y, curl_z;
+    float err_x, err_y, err_z;
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                // Linear example
+                curl_x = -(2 * x);
+                curl_y = 7 - (2 * y);
+                curl_z = (4 * z) - (6 * x);
                 if (fabs(curl_x) < 1)
                 {
                     err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));

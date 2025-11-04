@@ -25,6 +25,64 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+TEST_P(DerivedCorrectnessMPIP, JoinedArrayTest)
+{
+    int mpiRank = 0, mpiSize = 1;
+    adios2::DerivedVarType mode = GetParam();
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string filename("ADIOS2BPWriteDerivedJoined_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string filename("ADIOS2BPWriteDerivedJoined.bp");
+    adios2::ADIOS adios;
+#endif
+
+    const size_t N = 10 * (mpiRank + 1);
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0, 10.0);
+    std::vector<double> simArray(N);
+    for (size_t i = 0; i < N; ++i)
+        simArray[i] = distribution(generator);
+
+    adios2::IO bpOut = adios.DeclareIO("BPJoinedWrite");
+    auto U = bpOut.DefineVariable<double>("var", {adios2::JoinedDim}, {}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var \n sqrt(sum(pow(x), x, 2))", mode);
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(U, simArray.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    double epsilon = (double)0.01;
+    adios2::IO bpIn = adios.DeclareIO("BPJoinedRead");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<double>("derived");
+    auto dataVar = bpIn.InquireVariable<double>("var");
+    EXPECT_EQ(derVar.Shape().size(), 1);
+    EXPECT_EQ(derVar.Shape()[0], 5 * (1 + mpiSize) * mpiSize);
+
+    std::vector<double> readArray;
+    std::vector<double> readDerived;
+    size_t start = 5 * mpiRank * (mpiRank + 1);
+    dataVar.SetSelection({{start}, {N}});
+    derVar.SetSelection({{start}, {N}});
+    bpFileReader.Get(dataVar, readArray);
+    bpFileReader.Get(derVar, readDerived);
+    bpFileReader.EndStep();
+
+    for (size_t ind = 0; ind < readArray.size(); ++ind)
+    {
+        double calcDerived = (double)sqrt(pow(readArray[ind], 2) + readArray[ind] + 2);
+        EXPECT_TRUE(fabs(calcDerived - readDerived[ind]) < epsilon);
+    }
+
+    bpFileReader.Close();
+}
+
 TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
 {
     int mpiRank = 0, mpiSize = 1;
@@ -40,10 +98,13 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
     std::vector<std::string> varname = {"sim/Ux", "sim/Uy", "sim/Uz"};
     const std::string derAgrAdd = "derived/agradd";
     const std::string derAddName = "derived/add";
+    const std::string derConstAdd = "derived/constadd";
     const std::string derSubtrName = "derived/subtr";
     const std::string derMultName = "derived/mult";
+    const std::string derConstMult = "derived/constmult";
     const std::string derDivName = "derived/div";
     const std::string derPowName = "derived/pow";
+    const std::string derPow3Name = "derived/pow3";
     const std::string derSqrtName = "derived/sqrt";
 
     { // write distributed over mpiSize processes
@@ -84,19 +145,27 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x+y+z",
+                                    "add(x, y, z)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derConstAdd,
+                                    "x =" + varname[0] + " \n"
+                                    "add(x, 6, -1)",
                                     mode);
         bpOut.DefineDerivedVariable(derSubtrName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x-y-z",
+                                    "SUBTRACT(x, y, z)",
                                     mode);
         bpOut.DefineDerivedVariable(derMultName,
                                     "x =" + varname[0] + " \n"
                                     "y =" + varname[1] + " \n"
                                     "z =" + varname[2] + " \n"
-                                    "x*y*z",
+                                    "multiply(x, y, z)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derConstMult,
+                                    "x =" + varname[0] + " \n"
+                                    "mult(x, 5, -2)",
                                     mode);
         bpOut.DefineDerivedVariable(derDivName,
                                     "x =" + varname[0] + " \n"
@@ -107,6 +176,10 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         bpOut.DefineDerivedVariable(derPowName,
                                     "x =" + varname[0] + " \n"
                                     "pow(x)",
+                                    mode);
+        bpOut.DefineDerivedVariable(derPow3Name,
+                                    "x =" + varname[0] + " \n"
+                                    "pow(x, 3)",
                                     mode);
         bpOut.DefineDerivedVariable(derSqrtName,
                                     "x =" + varname[0] + " \n"
@@ -134,10 +207,13 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         std::vector<float> readUz(mpiSize * Nx * Ny * Nz);
         std::vector<float> readAdd(mpiSize * Nx * Ny * Nz);
         std::vector<float> readAgrAdd(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readConstAdd(mpiSize * Nx * Ny * Nz);
         std::vector<float> readSubtr(mpiSize * Nx * Ny * Nz);
         std::vector<float> readMult(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readConstMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readDiv(mpiSize * Nx * Ny * Nz);
         std::vector<double> readPow(mpiSize * Nx * Ny * Nz);
+        std::vector<double> readPow3(mpiSize * Nx * Ny * Nz);
         std::vector<double> readSqrt(mpiSize * Nx * Ny * Nz);
 
         float calcFloat;
@@ -149,10 +225,13 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         auto varUz = bpIn.InquireVariable<float>(varname[2]);
         auto varAdd = bpIn.InquireVariable<float>(derAddName);
         auto varAgrAdd = bpIn.InquireVariable<float>(derAgrAdd);
+        auto varConstAdd = bpIn.InquireVariable<float>(derConstAdd);
         auto varSubtr = bpIn.InquireVariable<float>(derSubtrName);
         auto varMult = bpIn.InquireVariable<float>(derMultName);
+        auto varConstMult = bpIn.InquireVariable<float>(derConstMult);
         auto varDiv = bpIn.InquireVariable<float>(derDivName);
         auto varPow = bpIn.InquireVariable<double>(derPowName);
+        auto varPow3 = bpIn.InquireVariable<double>(derPow3Name);
         auto varSqrt = bpIn.InquireVariable<double>(derSqrtName);
 
         bpFileReader.Get(varUx, readUx);
@@ -160,11 +239,14 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(varUz, readUz);
         bpFileReader.Get(varAdd, readAdd);
         bpFileReader.Get(varAgrAdd, readAgrAdd);
+        bpFileReader.Get(varConstAdd, readConstAdd);
 
         bpFileReader.Get(varSubtr, readSubtr);
         bpFileReader.Get(varMult, readMult);
+        bpFileReader.Get(varConstMult, readConstMult);
         bpFileReader.Get(varDiv, readDiv);
         bpFileReader.Get(varPow, readPow);
+        bpFileReader.Get(varPow3, readPow3);
         bpFileReader.Get(varSqrt, readSqrt);
         bpFileReader.EndStep();
 
@@ -173,17 +255,26 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
             calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
 
+            calcFloat = readUx[ind] + 5;
+            EXPECT_TRUE(fabs(calcFloat - readConstAdd[ind]) < epsilon);
+
             calcFloat = readUx[ind] - readUy[ind] - readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readSubtr[ind]) < epsilon);
 
             calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
 
+            calcFloat = readUx[ind] * (-10);
+            EXPECT_TRUE(fabs(calcFloat - readConstMult[ind]) < epsilon);
+
             calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
 
             calcDouble = std::pow(readUx[ind], 2);
             EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
+
+            calcDouble = std::pow(readUx[ind], 3);
+            EXPECT_TRUE(fabs(calcDouble - readPow3[ind]) < epsilon);
 
             calcDouble = std::sqrt(readUx[ind]);
             EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);

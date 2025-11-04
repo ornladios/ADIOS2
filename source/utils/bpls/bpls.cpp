@@ -1675,8 +1675,9 @@ int doList(std::string path)
     const adios2::UserOptions userOptions = adios.GetUserOptions();
 
     std::string tpl = helper::LowerCase(transport_params);
-    bool remoteFile =
-        (tpl.find("awssdk") != std::string::npos) || (tpl.find("daos") != std::string::npos);
+    bool remoteFile = (tpl.find("awssdk") != std::string::npos) ||
+                      (tpl.find("daos") != std::string::npos) ||
+                      (tpl.find("http") != std::string::npos);
     if (remoteFile)
     {
         if (engine_name.empty())

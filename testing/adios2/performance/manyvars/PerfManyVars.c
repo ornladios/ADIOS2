@@ -91,7 +91,7 @@ void alloc_vars()
     }
 
     char fmt[16];
-    snprintf(fmt, sizeof(fmt), "v%%%d.%dd", digit, digit);
+    snprintf(fmt, sizeof(fmt), "v%%%d.%dd", digit % 333, digit % 333);
     printf("fmt=[%s]\n", fmt);
     for (i = 0; i < NVARS; i++)
     {

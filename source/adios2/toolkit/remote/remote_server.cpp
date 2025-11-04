@@ -1007,9 +1007,10 @@ int main(int argc, char **argv)
                     f = fopen(final_filename, "r");
                 }
                 char buffer[256];
-                fread(buffer, 1, 256, f);
+                size_t ret = fread(buffer, 1, 256, f);
                 // Note: printf("%s", buffer); does not seem to flush properly
-                fprintf(stdout, "%s", buffer);
+                if (ret)
+                    fprintf(stdout, "%s", buffer);
                 fflush(stdout);
             }
             std::cout << "calling exit 0" << std::endl;
@@ -1025,8 +1026,12 @@ int main(int argc, char **argv)
         //  close them to make sure we disassociate from the CTest parent (or else fixture
         //  startup hangs). It doesn't seem to work to close them before the fork, so we close
         //  them afterwards.
-        freopen("/tmp/server_stdout", "a", stdout);
-        freopen("/tmp/server_stderr", "a", stderr);
+        auto file = freopen("/tmp/server_stdout", "a", stdout);
+        if (!file)
+            perror("freopen");
+        file = freopen("/tmp/server_stderr", "a", stderr);
+        if (!file)
+            perror("freopen");
         for (int fd = 0; fd <= 16; fd++)
         {
             if (fd_is_valid(fd))

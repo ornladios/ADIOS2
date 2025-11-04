@@ -1,40 +1,67 @@
 #!/bin/bash
 
+###
+### To run with docker instead of podman, and push to your own repo rather than
+### the main one, eg:
+###
+### IMAGE_BUILD_TOOL=docker IMAGE_TAG_PREFIX=ghcr.io/scottwittenburg/adios2 ./build-ubuntu.sh
+###
+
 set -ex
 
+# Some overridable defaults
+BUILD_TOOL="${IMAGE_BUILD_TOOL:-podman}"
+TAG_PREFIX="${IMAGE_TAG_PREFIX:-ghcr.io/ornladios/adios2}"
+
 # Build the base image
-podman build --progress=plain \
-  --build-arg EXTRA_VARIANTS="+blosc+ssc ^mgard@2023-01-10" \
+${BUILD_TOOL} build --progress=plain \
   --build-arg PATCH_VARIANT_XROOTD=ON \
-  --rm -f ./Dockerfile.ci-spack-ubuntu20.04-base \
-  -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base \
+  --rm -f ./Dockerfile.ci-spack-ubuntu22.04-base \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
   .
 
-# Build the gcc8, gcc9, and gcc10 images
-podman build --rm --build-arg GCC_VERSION=8 -f ./Dockerfile.ci-spack-ubuntu20.04-gcc -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc8 .
-podman build --rm --build-arg GCC_VERSION=10 -f ./Dockerfile.ci-spack-ubuntu20.04-gcc -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc10 .
-podman build --rm --build-arg GCC_VERSION=9 -f ./Dockerfile.ci-spack-ubuntu20.04-gcc -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc9 .
-
-# Build the clang6 and clang10 images
-podman build --rm --build-arg CLANG_VERSION=6.0 -f ./Dockerfile.ci-spack-ubuntu20.04-clang -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-clang6 .
-podman build --rm --build-arg CLANG_VERSION=10 -f ./Dockerfile.ci-spack-ubuntu20.04-clang -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-clang10 .
-
-# Build the ubuntu 22.04 img
-podman build \
-  --progress=plain \
-  --rm \
-  --build-arg BASE_IMAGE="ecpe4s/ubuntu22.04-runner-amd64-gcc-11.4:2024.04.19" \
-  --build-arg E4S_VERSION="24.05" \
-  --build-arg EXTRA_VARIANTS="+blosc2" \
-  -f ./Dockerfile.ci-spack-ubuntu20.04-base \
-  -t ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc11 \
+# Build the gcc9, gcc10, and gcc12 images
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
+  --build-arg GCC_VERSION=12 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12" \
   .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
+  --build-arg GCC_VERSION=10 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc10" \
+  .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
+  --build-arg GCC_VERSION=9 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc9" \
+  .
+
+# Build the clang11 and clang14 images
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
+  --build-arg CLANG_VERSION=11 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang11" \
+  .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
+  --build-arg CLANG_VERSION=14 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14" \
+  .
+
+# Tag the ubuntu 22.04 gcc11 img
+${BUILD_TOOL} tag "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
 
 # Push images to github container registry
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc8
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc9
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc10
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-clang6
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-clang10
-podman push ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc11
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-base"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc9"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc10"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang11"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12"

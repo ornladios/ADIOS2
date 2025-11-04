@@ -596,7 +596,7 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         bool NeverMinMax = false;
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
         if (VD && (VD->GetDerivedType() != DerivedVarType::StoreData))
-            ExprString = VD->m_Expr.ExprString.c_str();
+            ExprString = VD->m_Expr.m_ExprString.c_str();
         if (VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString))
             NeverMinMax = true;
 #endif
