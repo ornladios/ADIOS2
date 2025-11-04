@@ -37,6 +37,9 @@ public:
         REROUTE_REQUEST,
         REROUTE_ACK,
         REROUTE_REJECT,
+        GROUP_CLOSE,
+        STATUS_INQUIRY,
+        STATUS_REPLY,
     };
 
     std::string GetTypeString(MessageType mtype)

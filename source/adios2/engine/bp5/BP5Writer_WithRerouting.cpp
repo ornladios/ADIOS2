@@ -66,10 +66,20 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     int subCoord = m_Aggregator->m_AggregatorRank;
     bool iAmSubCoord = m_RankMPI == subCoord;
-    // Arbitrarily make the last rank the global coordinator
-    // TODO: should the global coordinator role be assigned to a subcoordinator?
-    // bool iAmGlobalCoord = m_RankMPI == m_Comm.Size() - 1;
+
+    // Arbitrarily decide that the sub coordinator of the first partition is also
+    // the global coordinator
+    int globalCoord = m_Partitioning.m_Partitions[0][0];
+    bool iAmGlobalCoord = m_RankMPI == globalCoord;
+
+    // Some containers only used by augmented roles:
+
+    // sub coordinators maintain a queue of writers
     std::queue<int> writerQueue;
+
+    // global coordinator keeps track of queue sizes of each subcoord
+    std::vector<int> queueSizes;
+    std::vector<int> subCoordRanks;
 
     // Sends are non-blocking. We use the pool to avoid the situation where the
     // buffer is destructed before the send is complete.  If we start seeing
@@ -81,6 +91,20 @@ void BP5Writer::ReroutingCommunicationLoop()
     int writingRank = -1;
     uint64_t currentFilePos = 0;
     bool sentFinished = false;
+    bool commThreadFinished = false;
+    bool firstIdleMsg = true;
+
+    if (iAmGlobalCoord)
+    {
+        queueSizes.resize(m_CommAggregators.Size());
+        subCoordRanks.resize(m_CommAggregators.Size());
+
+        for (size_t i = 0; i < m_Partitioning.m_Partitions.size(); ++i)
+        {
+            queueSizes[i] = -1; // indicates we don't know the size of that queue
+            subCoordRanks[i] = m_Partitioning.m_Partitions[i][0];
+        }
+    }
 
     if (iAmSubCoord)
     {
@@ -103,7 +127,7 @@ void BP5Writer::ReroutingCommunicationLoop()
         }
     }
 
-    while (true)
+    while (!commThreadFinished)
     {
         int msgReady = 0;
         helper::Comm::Status status =
@@ -117,18 +141,64 @@ void BP5Writer::ReroutingCommunicationLoop()
 
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
-            case RerouteMessage::MessageType::DO_WRITE: {
-                std::unique_lock<std::mutex> lck(m_WriteMutex);
-                m_TargetIndex = message.m_SubStreamIdx;
-                m_DataPos = message.m_Offset;
-                m_TargetCoordinator = message.m_SrcRank;
-                m_ReadyToWrite = true;
-                m_WriteCV.notify_one();
-            }
-            break;
+            case RerouteMessage::MessageType::DO_WRITE:
+                {
+                    std::unique_lock<std::mutex> lck(m_WriteMutex);
+                    m_TargetIndex = message.m_SubStreamIdx;
+                    m_DataPos = message.m_Offset;
+                    m_TargetCoordinator = message.m_SrcRank;
+                    m_ReadyToWrite = true;
+                    m_WriteCV.notify_one();
+                }
+                break;
             case RerouteMessage::MessageType::WRITE_COMPLETION:
                 currentFilePos = message.m_Offset;
                 writingRank = -1;
+                break;
+            case RerouteMessage::MessageType::GROUP_CLOSE:
+                m_DataPos = currentFilePos;
+                commThreadFinished = true;
+                continue;
+            case RerouteMessage::MessageType::WRITER_IDLE:
+                {
+                    int idleWriter = message.m_SrcRank;
+                    size_t idleGroup = static_cast<size_t>(message.m_SubStreamIdx);
+                    queueSizes[idleGroup] = 0;
+
+                    if (firstIdleMsg)
+                    {
+                        for (size_t i = 0; i < subCoordRanks.size(); ++i)
+                        {
+                            int scRank = subCoordRanks[i];
+                            // No need to ask the sender of the WRITER_IDLE msg how big their queue is
+                            if (scRank != idleWriter)
+                            {
+                                adios2::helper::RerouteMessage inquiryMsg;
+                                inquiryMsg.m_MsgType = RerouteMessage::MessageType::STATUS_INQUIRY;
+                                inquiryMsg.m_SrcRank = m_RankMPI;
+                                inquiryMsg.m_DestRank = scRank;
+                                inquiryMsg.NonBlockingSendTo(m_Comm, scRank, sendBuffers.GetNextBuffer());
+                            }
+                        }
+
+                        firstIdleMsg = false;
+                    }
+                }
+                break;
+            case RerouteMessage::MessageType::STATUS_INQUIRY:
+                adios2::helper::RerouteMessage replyMsg;
+                replyMsg.m_MsgType = RerouteMessage::MessageType::STATUS_REPLY;
+                replyMsg.m_SrcRank = m_RankMPI;
+                replyMsg.m_DestRank = globalCoord;
+                replyMsg.m_SubStreamIdx = static_cast<int>(m_Aggregator->m_SubStreamIndex);
+                replyMsg.m_Size = static_cast<uint64_t>(writerQueue.size());
+                replyMsg.NonBlockingSendTo(m_Comm, globalCoord, sendBuffers.GetNextBuffer());
+                break;
+            case RerouteMessage::MessageType::STATUS_REPLY:
+                {
+                    size_t idx = static_cast<size_t>(message.m_SubStreamIdx);
+                    queueSizes[idx] = static_cast<int>(message.m_Size);
+                }
                 break;
             default:
                 break;
@@ -150,11 +220,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                                                    sendBuffers.GetNextBuffer());
                 sentFinished = true;
 
-                if (!iAmSubCoord /*&& !iAmGlobalCoord*/)
+                if (!iAmSubCoord && !iAmGlobalCoord)
                 {
                     // My only role was to write (no communication responsibility) so I am
                     // done at this point.
-                    break;
+                    commThreadFinished = true;
+                    continue;
                 }
             }
         }
@@ -164,6 +235,7 @@ void BP5Writer::ReroutingCommunicationLoop()
         {
             if (!writerQueue.empty())
             {
+                // Pop the queue and send DO_WRITE
                 int nextWriter = writerQueue.front();
                 writerQueue.pop();
                 adios2::helper::RerouteMessage writeMsg;
@@ -177,9 +249,15 @@ void BP5Writer::ReroutingCommunicationLoop()
             }
             else
             {
-                // TODO: Send WRITE_IDLE to the GC instead of ending the loop here
-                m_DataPos = currentFilePos;
-                break;
+                // Writer queue now empty, send WRITE_IDLE to the GC
+                // TODO: If this group is already over the threshold ratio, send
+                // TODO: GROUP_CLOSE instead of WRITER_IDLE
+                adios2::helper::RerouteMessage idleMsg;
+                idleMsg.m_MsgType = RerouteMessage::MessageType::WRITER_IDLE;
+                idleMsg.m_SrcRank = m_RankMPI;
+                idleMsg.m_DestRank = globalCoord;
+                idleMsg.m_SubStreamIdx = static_cast<int>(m_Aggregator->m_SubStreamIndex);
+                idleMsg.NonBlockingSendTo(m_Comm, globalCoord, sendBuffers.GetNextBuffer());
             }
         }
     }
