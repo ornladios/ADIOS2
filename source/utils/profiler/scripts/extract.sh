@@ -27,12 +27,12 @@ processFile() {
     if [[ "$filePath" == *"async"* ]]; then
 	asyncKey="async"
     fi
-	
+
     echo "Processing $filePath, $attrName key= ${asyncKey}${key}"
-    
+
     if [[ $attrName == *bytes* ]]; then
 	jq -r ".[] | .$attrName"  "$filePath" | awk '{print $1/1048576}' > "${outDir}/${asyncKey}${key}_MB_${attrName}"
-    else    
+    else
 	local attrMus="${attrName}_mus"
 	local attrNCalls="${attrName}.nCalls"
 
@@ -58,13 +58,13 @@ else
     fi
     echo "Attributes: ${knownAttrs[*]}"
 
-    args=("$@")  
-    for ((i = 2; i <= $#; i++ )); do
+    args=("$@")
+    for ((i = 1; i < $#; i++ )); do
 	#currFile=$argv[i]
 	currFile="${args[$((i))]}"
 	for currAttr in "${knownAttrs[@]}"; do
 	    processFile "$currFile" "$currAttr"
-	done	
+    done
 	if [[ $currFile == *async* ]]; then
 	    for tmp in "${asyncAttrs[@]}"; do
 		echo "async file: currFile = $currFile, $tmp"
