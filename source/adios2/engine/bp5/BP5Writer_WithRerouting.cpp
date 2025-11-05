@@ -49,6 +49,63 @@ public:
     size_t m_CurrentBufferIdx = 0;
     std::vector<std::vector<char>> m_Pool;
 };
+
+struct WriterGroupState
+{
+    enum class Status
+    {
+        UNKNOWN,
+        WRITING,
+        IDLE,
+        PENDING,
+        CAPACITY,
+    };
+
+    Status m_currentStatus;
+    int m_queueSize;
+    size_t m_subFileIndex;
+    // We could also keep track of number of times rerouted to/from
+};
+
+/// Avoid visiting the same rerouting source or destination groups
+/// repeatedly
+struct StateTraversal
+{
+    StateTraversal()
+    {
+        m_currentIndex = 0;
+    }
+
+    int GetNext(WriterGroupState::Status status, const std::vector<WriterGroupState> &state)
+    {
+        if (state.size() == 0)
+        {
+            return -1;
+        }
+
+        size_t checkedCount = 0;
+
+        while (checkedCount < state.size())
+        {
+            checkedCount++;
+            m_currentIndex++;
+
+            if (m_currentIndex >= state.size())
+            {
+                m_currentIndex = 0;
+            }
+
+            if (state[m_currentIndex].m_currentStatus == status)
+            {
+                return m_currentIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    size_t m_currentIndex;
+};
 }
 
 namespace adios2
@@ -77,8 +134,9 @@ void BP5Writer::ReroutingCommunicationLoop()
     // sub coordinators maintain a queue of writers
     std::queue<int> writerQueue;
 
-    // global coordinator keeps track of queue sizes of each subcoord
-    std::vector<int> queueSizes;
+    // global coordinator keeps track of state of each subcoord
+    std::vector<WriterGroupState> groupState;
+    StateTraversal idlers, writers;
     std::vector<int> subCoordRanks;
 
     // Sends are non-blocking. We use the pool to avoid the situation where the
@@ -96,12 +154,15 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     if (iAmGlobalCoord)
     {
-        queueSizes.resize(m_CommAggregators.Size());
+        groupState.resize(m_CommAggregators.Size());
         subCoordRanks.resize(m_CommAggregators.Size());
 
         for (size_t i = 0; i < m_Partitioning.m_Partitions.size(); ++i)
         {
-            queueSizes[i] = -1; // indicates we don't know the size of that queue
+            // Status remains unknown until we hear something specific (i.e. idle
+            // message or status inquiry response)
+            groupState[i].m_currentStatus = WriterGroupState::Status::UNKNOWN;
+            groupState[i].m_subFileIndex = i;
             subCoordRanks[i] = m_Partitioning.m_Partitions[i][0];
         }
     }
@@ -163,7 +224,8 @@ void BP5Writer::ReroutingCommunicationLoop()
                 {
                     int idleWriter = message.m_SrcRank;
                     size_t idleGroup = static_cast<size_t>(message.m_SubStreamIdx);
-                    queueSizes[idleGroup] = 0;
+                    groupState[idleGroup].m_currentStatus = WriterGroupState::Status::IDLE;
+                    groupState[idleGroup].m_queueSize = 0;
 
                     if (firstIdleMsg)
                     {
@@ -197,7 +259,9 @@ void BP5Writer::ReroutingCommunicationLoop()
             case RerouteMessage::MessageType::STATUS_REPLY:
                 {
                     size_t idx = static_cast<size_t>(message.m_SubStreamIdx);
-                    queueSizes[idx] = static_cast<int>(message.m_Size);
+                    int qSize = static_cast<int>(message.m_Size);
+                    groupState[idx].m_queueSize = qSize;
+                    groupState[idx].m_currentStatus = qSize > 0 ? WriterGroupState::Status::WRITING : WriterGroupState::Status::IDLE;
                 }
                 break;
             default:
