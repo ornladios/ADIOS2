@@ -54,7 +54,7 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           fetch-depth: 0
       - name: Check for appropriately named topic branch
@@ -83,10 +83,10 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           path: gha
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -175,10 +175,10 @@ jobs:
             parallel: mpich
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           path: gha
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -243,10 +243,10 @@ jobs:
         parallel: [mpich]
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           path: gha
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -318,10 +318,10 @@ jobs:
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           path: gha
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -395,10 +395,10 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           path: gha
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -432,7 +432,7 @@ jobs:
         baseos: [ubuntu-bionic]
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ci-source
@@ -456,7 +456,7 @@ jobs:
             docker save -o ci-docker.tar ornladios/adios2:ci-tmp
             ls -lah ci-docker.tar
       - name: Upload
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         with:
           retention-days: 1
           name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
@@ -509,14 +509,14 @@ jobs:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         if: ${{ matrix.repo != '' }}
         with:
           repository: ${{ matrix.repo }}
           ref: ${{ matrix.ref }}
           path: source
       - name: Download CI docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v4
         with:
           name: ci-docker ubuntu-bionic ${{ github.sha }}
       - name: Initialize containers
@@ -568,10 +568,10 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
       with:
         path: gha
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
@@ -584,7 +584,7 @@ jobs:
           ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@42213152a85ae7569bdb6bec7bcd74cd691bfe41 # v3
+      uses: github/codeql-action/init@0499de31b99561a6d14a36a5f662c2a54f91beee # v3
       with:
         languages: ${{ matrix.language }}
         source-root: source
@@ -597,7 +597,7 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@42213152a85ae7569bdb6bec7bcd74cd691bfe41 # v3
+      uses: github/codeql-action/analyze@0499de31b99561a6d14a36a5f662c2a54f91beee # v3
       with:
         category: "/language:${{matrix.language}}"
         output: sarif-results
@@ -612,11 +612,11 @@ jobs:
         input: sarif-results/cpp.sarif
         output: sarif-results/cpp.sarif
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@42213152a85ae7569bdb6bec7bcd74cd691bfe41 # v3
+      uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v3
       with:
         sarif_file: sarif-results/cpp.sarif
     - name: Upload loc as a Build Artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
       with:
         name: sarif-results
         path: sarif-results
