@@ -39,7 +39,7 @@ jobs:
       contents: read
       actions: write  # for upload-artifact
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         with:
           name: artifact_sdist
           path: dist/*.tar.gz
@@ -67,19 +67,19 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
         with:
           fetch-depth: 0
 
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
 
-      - uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd # v2.16
+      - uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v2.16
         env:
           CIBW_BUILD: cp*-manylinux_x86_64
 
       - name: Upload wheels
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         with:
           name: artifact_wheels
           path: wheelhouse/*.whl
@@ -99,7 +99,7 @@ jobs:
         github.event.action == 'published'
       )
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v4
         with:
           path: dist
           merge-multiple: true
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v4
         with:
           path: dist
           merge-multiple: true
