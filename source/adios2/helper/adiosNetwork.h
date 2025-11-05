@@ -15,6 +15,7 @@
 #include "adios2/common/ADIOSConfig.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
