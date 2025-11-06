@@ -34,7 +34,7 @@ void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::ve
     helper::CopyToBuffer(buffer, pos, &this->m_MsgType);
     helper::CopyToBuffer(buffer, pos, &this->m_SrcRank);
     helper::CopyToBuffer(buffer, pos, &this->m_DestRank);
-    helper::CopyToBuffer(buffer, pos, &this->m_SubStreamIdx);
+    helper::CopyToBuffer(buffer, pos, &this->m_WildCard);
     helper::CopyToBuffer(buffer, pos, &this->m_Offset);
     helper::CopyToBuffer(buffer, pos, &this->m_Size);
 
@@ -72,7 +72,7 @@ void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vect
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_MsgType);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_SrcRank);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_DestRank);
-    helper::CopyFromBuffer(buffer.data(), pos, &this->m_SubStreamIdx);
+    helper::CopyFromBuffer(buffer.data(), pos, &this->m_WildCard);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_Offset);
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_Size);
 }
