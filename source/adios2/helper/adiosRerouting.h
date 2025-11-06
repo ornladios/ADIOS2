@@ -31,8 +31,9 @@ public:
     enum class MessageType
     {
         DO_WRITE,
+        WRITER_CAPACITY,
         WRITER_IDLE,
-        WRITE_SUBMISSION,
+        WRITE_MORE,
         WRITE_COMPLETION,
         REROUTE_REQUEST,
         REROUTE_ACK,
@@ -52,8 +53,8 @@ public:
         case MessageType::WRITER_IDLE:
             return std::string("WRITER_IDLE");
             break;
-        case MessageType::WRITE_SUBMISSION:
-            return std::string("WRITE_SUBMISSION");
+        case MessageType::WRITE_MORE:
+            return std::string("WRITE_MORE");
             break;
         case MessageType::WRITE_COMPLETION:
             return std::string("WRITE_COMPLETION");
@@ -73,7 +74,7 @@ public:
     MessageType m_MsgType;
     int m_SrcRank;
     int m_DestRank;
-    int m_SubStreamIdx;
+    int m_WildCard;
     uint64_t m_Offset;
     uint64_t m_Size;
 
