@@ -1636,29 +1636,9 @@ void BP5Writer::InitMetadataTransports()
 
 void BP5Writer::InitTransports()
 {
-    std::string cacheKey = GetCacheKey(m_Aggregator);
-    auto search = m_AggregatorSpecifics.find(cacheKey);
-    bool cacheHit = false;
+    OpenSubfile();
 
-    if (search != m_AggregatorSpecifics.end())
-    {
-        if (m_Parameters.verbose > 2)
-        {
-            std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
-                      << std::endl;
-        }
-        cacheHit = true;
-    }
-    else
-    {
-        // Didn't have one in the cache, add it now
-        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
-    }
-
-    AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
-
-    // /path/name.bp.dir/name.bp.rank
-    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
 
     if (m_IAmDraining)
     {
@@ -1685,9 +1665,49 @@ void BP5Writer::InitTransports()
             aggData.m_DrainSubStreamNames, m_IO.m_TransportsParameters, m_Parameters.NodeLocal);
     }
 
+    if (m_IAmDraining)
+    {
+        if (m_DrainBB)
+        {
+            for (const auto &name : aggData.m_DrainSubStreamNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
+        }
+    }
+
+    InitBPBuffer();
+}
+
+void BP5Writer::OpenSubfile(bool useComm)
+{
+    std::string cacheKey = GetCacheKey(m_Aggregator);
+    auto search = m_AggregatorSpecifics.find(cacheKey);
+    bool cacheHit = false;
+
+    if (search != m_AggregatorSpecifics.end())
+    {
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
+                      << std::endl;
+        }
+        cacheHit = true;
+    }
+    else
+    {
+        // Didn't have one in the cache, add it now
+        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
+    }
+
+    AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
+
+    // /path/name.bp.dir/name.bp.rank
+    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+
     helper::Comm openSyncComm;
 
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased && useComm)
     {
         // Split my writer chain so only ranks that actually need to open a
         // file can do so in an ordered fashion.
@@ -1718,29 +1738,24 @@ void BP5Writer::InitTransports()
             {
                 std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
             }
-            aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                m_IO.m_TransportsParameters, true,
-                                                *DataWritingComm);
-        }
-    }
-
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
-    {
-        openSyncComm.Free();
-    }
-
-    if (m_IAmDraining)
-    {
-        if (m_DrainBB)
-        {
-            for (const auto &name : aggData.m_DrainSubStreamNames)
+            if (useComm)
             {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
+                                                    m_IO.m_TransportsParameters, true,
+                                                    *DataWritingComm);
+            }
+            else
+            {
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
+                                                    m_IO.m_TransportsParameters, true);
             }
         }
     }
 
-    this->InitBPBuffer();
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased && useComm)
+    {
+        openSyncComm.Free();
+    }
 }
 
 /*generate the header for the metadata index file*/
