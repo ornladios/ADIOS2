@@ -69,7 +69,8 @@ struct WriterGroupState
 
 bool IsFinished(const WriterGroupState &state)
 {
-    return state.m_currentStatus == WriterGroupState::Status::CAPACITY || state.m_currentStatus == WriterGroupState::Status::IDLE;
+    return state.m_currentStatus == WriterGroupState::Status::CAPACITY ||
+           state.m_currentStatus == WriterGroupState::Status::IDLE;
 }
 
 /// Avoid visiting the same rerouting source or destination groups
@@ -77,7 +78,6 @@ bool IsFinished(const WriterGroupState &state)
 class StateTraversal
 {
 public:
-
     StateTraversal()
     {
         m_idlerIndex = 0;
@@ -91,7 +91,8 @@ public:
         FINISHED,
     };
 
-    SearchResult FindNextPair(const std::vector<WriterGroupState> &state, std::pair<size_t, size_t> &nextPair)
+    SearchResult FindNextPair(const std::vector<WriterGroupState> &state,
+                              std::pair<size_t, size_t> &nextPair)
     {
         auto isIdle = [](WriterGroupState s) {
             return s.m_currentStatus == WriterGroupState::Status::IDLE;
@@ -112,8 +113,9 @@ public:
     }
 
 private:
-
-    SearchResult GetNext(bool(*checkFn)(WriterGroupState), const std::vector<WriterGroupState> &state, size_t &searchIndex, size_t &foundIndex)
+    SearchResult GetNext(bool (*checkFn)(WriterGroupState),
+                         const std::vector<WriterGroupState> &state, size_t &searchIndex,
+                         size_t &foundIndex)
     {
         if (state.size() == 0)
         {
@@ -211,7 +213,6 @@ void BP5Writer::ReroutingCommunicationLoop()
     bool sentFinished = false;
     bool commThreadFinished = false;
 
-
     if (iAmGlobalCoord)
     {
         groupState.resize(m_CommAggregators.Size());
@@ -300,14 +301,16 @@ void BP5Writer::ReroutingCommunicationLoop()
                         for (size_t i = 0; i < subCoordRanks.size(); ++i)
                         {
                             int scRank = subCoordRanks[i];
-                            // No need to ask the sender of the WRITER_IDLE msg how big their queue is
+                            // No need to ask the sender of the WRITER_IDLE msg how big their queue
+                            // is
                             if (scRank != idleWriter)
                             {
                                 adios2::helper::RerouteMessage inquiryMsg;
                                 inquiryMsg.m_MsgType = RerouteMessage::MessageType::STATUS_INQUIRY;
                                 inquiryMsg.m_SrcRank = m_RankMPI;
                                 inquiryMsg.m_DestRank = scRank;
-                                inquiryMsg.NonBlockingSendTo(m_Comm, scRank, sendBuffers.GetNextBuffer());
+                                inquiryMsg.NonBlockingSendTo(m_Comm, scRank,
+                                                             sendBuffers.GetNextBuffer());
                             }
                         }
 
@@ -341,7 +344,9 @@ void BP5Writer::ReroutingCommunicationLoop()
                     size_t subStreamIdx = static_cast<size_t>(message.m_WildCard);
                     int qSize = static_cast<int>(message.m_Size);
                     groupState[subStreamIdx].m_queueSize = qSize;
-                    groupState[subStreamIdx].m_currentStatus = qSize > 0 ? WriterGroupState::Status::WRITING : WriterGroupState::Status::IDLE;
+                    groupState[subStreamIdx].m_currentStatus =
+                        qSize > 0 ? WriterGroupState::Status::WRITING
+                                  : WriterGroupState::Status::IDLE;
                     needStateCheck = true;
                 }
                 break;
@@ -387,9 +392,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 adios2::helper::RerouteMessage writeMoreMsg;
                 writeMoreMsg.m_MsgType = RerouteMessage::MessageType::WRITE_MORE;
                 writeMoreMsg.m_WildCard = message.m_WildCard; // i.e. the rerouted writer rank
-                writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank, sendBuffers.GetNextBuffer());
+                writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank,
+                                               sendBuffers.GetNextBuffer());
 
-                // Src subcoord state is returned to writing, dest subcoord state is now writing as well
+                // Src subcoord state is returned to writing, dest subcoord state is now writing as
+                // well
                 groupState[message.m_SrcRank].m_currentStatus = WriterGroupState::Status::WRITING;
                 groupState[message.m_SrcRank].m_queueSize -= 1;
                 groupState[message.m_DestRank].m_currentStatus = WriterGroupState::Status::WRITING;
@@ -496,7 +503,8 @@ void BP5Writer::ReroutingCommunicationLoop()
                 rerouteReqMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_REQUEST;
                 rerouteReqMsg.m_SrcRank = writerSubcoordRank;
                 rerouteReqMsg.m_DestRank = idleSubcoordRank;
-                rerouteReqMsg.NonBlockingSendTo(m_Comm, writerSubcoordRank, sendBuffers.GetNextBuffer());
+                rerouteReqMsg.NonBlockingSendTo(m_Comm, writerSubcoordRank,
+                                                sendBuffers.GetNextBuffer());
 
                 groupState[idleIdx].m_currentStatus = WriterGroupState::Status::PENDING;
                 groupState[writerIdx].m_currentStatus = WriterGroupState::Status::PENDING;
