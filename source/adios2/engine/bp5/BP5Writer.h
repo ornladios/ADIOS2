@@ -78,6 +78,7 @@ private:
     std::map<std::string, AggTransportData> m_AggregatorSpecifics;
     helper::RankPartition GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
                                            helper::Comm const &parentComm);
+    void OpenSubfile(const bool useComm = true);
 
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
