@@ -1068,6 +1068,33 @@ void BP5Writer::EndStep()
 
     m_Profiler.Stop("ES_WriteData");
 
+    if (m_Parameters.verbose > 2)
+    {
+        std::cout << "Rank " << m_Comm.Rank() << " deciding whether new writer map is needed"
+                  << std::endl;
+        std::cout << "  m_WriterStep: " << m_WriterStep << std::endl;
+        std::cout << "  m_AppendWriterCount: " << m_AppendWriterCount
+                  << ", m_Comm.Size(): " << m_Comm.Size() << std::endl;
+        std::cout << "  m_AppendAggregatorCount: " << m_AppendAggregatorCount
+                  << ", m_Aggregator->m_NumAggregators: " << m_Aggregator->m_NumAggregators
+                  << std::endl;
+        std::cout << "  m_AppendSubfileCount: " << m_AppendSubfileCount
+                  << ", m_Aggregator->m_SubStreams: " << m_Aggregator->m_SubStreams << std::endl;
+    }
+
+    if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
+        m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
+        m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams))
+    {
+        // new Writer Map is needed
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed" << std::endl;
+        }
+        const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
+        m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
+    }
+
     if (m_Parameters.UseSelectiveMetadataAggregation)
     {
         SelectiveAggregationMetadata(TSInfo);
@@ -2010,33 +2037,6 @@ void BP5Writer::InitBPBuffer()
     if (m_Comm.Rank() == 0)
     {
         m_WriterDataPos.resize(m_Comm.Size());
-    }
-
-    if (m_Parameters.verbose > 2)
-    {
-        std::cout << "Rank " << m_Comm.Rank() << " deciding whether new writer map is needed"
-                  << std::endl;
-        std::cout << "  m_WriterStep: " << m_WriterStep << std::endl;
-        std::cout << "  m_AppendWriterCount: " << m_AppendWriterCount
-                  << ", m_Comm.Size(): " << m_Comm.Size() << std::endl;
-        std::cout << "  m_AppendAggregatorCount: " << m_AppendAggregatorCount
-                  << ", m_Aggregator->m_NumAggregators: " << m_Aggregator->m_NumAggregators
-                  << std::endl;
-        std::cout << "  m_AppendSubfileCount: " << m_AppendSubfileCount
-                  << ", m_Aggregator->m_SubStreams: " << m_Aggregator->m_SubStreams << std::endl;
-    }
-
-    if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
-        m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
-        m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams))
-    {
-        // new Writer Map is needed, generate now, write later
-        if (m_Parameters.verbose > 2)
-        {
-            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed" << std::endl;
-        }
-        const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
-        m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
     }
 }
 
