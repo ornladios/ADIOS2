@@ -41,9 +41,9 @@ extensions = [
 
 # generate doxygen xml outputs
 subprocess.call("cd ../../api_doxygen/C; doxygen", shell=True)
-subprocess.call("cd ../../api_doxygen/CXX11; doxygen", shell=True)
+subprocess.call("cd ../../api_doxygen/CXX; doxygen", shell=True)
 
-breathe_projects = {"C": "../../api_doxygen/C/xml", "CXX11": "../../api_doxygen/CXX11/xml"}
+breathe_projects = {"C": "../../api_doxygen/C/xml", "CXX": "../../api_doxygen/CXX/xml"}
 
 blockdiag_fontpath = "/usr/share/fonts/truetype/freefont/FreeMono.ttf"
 
@@ -107,7 +107,7 @@ exclude_patterns = [
     "setting_up/package.rst",
     "setting_up/linking.rst",
     "api_full/fortran.rst",
-    "api_full/cxx11.rst",
+    "api_full/cxx.rst",
     # 'api_full/api_full.rst',
     "api_full/c.rst",
     "components/adios.rst",
@@ -120,7 +120,7 @@ exclude_patterns = [
     # 'components/components.rst',
     "components/overview.rst",
     "api_high/matlab.rst",
-    "api_high/cxx11.rst",
+    "api_high/cxx.rst",
     "api_python/python_example.rst",
     "api_python/python.rst",
     "api_python/python_bindings.rst",

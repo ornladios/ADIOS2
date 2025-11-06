@@ -24,7 +24,7 @@ endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_HDF5 AND HDF5_VERSION VERSION_GREATER_EQUAL 1.14)
   add_executable(adios2_hello_hdf5Subfile hdf5SubFile.cpp)
-  target_link_libraries(adios2_hello_hdf5Subfile adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_hello_hdf5Subfile adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_hdf5Subfile RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

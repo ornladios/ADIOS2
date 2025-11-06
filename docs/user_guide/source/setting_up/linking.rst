@@ -17,7 +17,7 @@ ADIOS exports a CMake package configuration file that allows its targets to be d
     find_package(ADIOS2 REQUIRED)
     #...
     add_library(my_library src1.cxx src2.cxx)
-    target_link_libraries(my_library PRIVATE adios2::cxx11_mpi MPI::MPI_CXX)
+    target_link_libraries(my_library PRIVATE adios2::cxx_mpi MPI::MPI_CXX)
 
 When configuring your project you can then set the ``ADIOS2_ROOT`` or ``ADIOS2_DIR`` environment variables to the install prefix of ADIOS2.
 

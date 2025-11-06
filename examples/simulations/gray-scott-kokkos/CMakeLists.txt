@@ -42,6 +42,6 @@ if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_Kokkos)
     restart.cpp
   )
   kokkos_compilation(SOURCE gray-scott.cpp)
-  target_link_libraries(adios2_simulations_gray-scott-kokkos adios2::cxx11_mpi MPI::MPI_CXX Kokkos::kokkos)
+  target_link_libraries(adios2_simulations_gray-scott-kokkos adios2::cxx_mpi MPI::MPI_CXX Kokkos::kokkos)
   install(TARGETS adios2_simulations_gray-scott-kokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

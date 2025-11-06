@@ -16,10 +16,10 @@ endif()
 
 if(ADIOS2_HAVE_Sodium)
   add_executable(adios2_plugins_exampleOperatorPluginWrite examplePluginOperatorWrite.cpp)
-  target_link_libraries(adios2_plugins_exampleOperatorPluginWrite adios2::cxx11)
+  target_link_libraries(adios2_plugins_exampleOperatorPluginWrite adios2::cxx)
   install(TARGETS adios2_plugins_exampleOperatorPluginWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_plugins_exampleOperatorPluginRead examplePluginOperatorRead.cpp)
-  target_link_libraries(adios2_plugins_exampleOperatorPluginRead adios2::cxx11)
+  target_link_libraries(adios2_plugins_exampleOperatorPluginRead adios2::cxx)
   install(TARGETS adios2_plugins_exampleOperatorPluginRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
