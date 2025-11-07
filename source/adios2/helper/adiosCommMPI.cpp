@@ -402,9 +402,9 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype, int s
                                const std::string &hint) const
 {
     MPI_Status mpiStatus;
-    int msrc = GetMPISource(source);
-    std::cout << "Recv " << count << " items of type " << static_cast<int>(datatype) << " from "
-              << msrc << std::endl;
+    // int msrc = GetMPISource(source);
+    // std::cout << "Recv " << count << " items of type " << static_cast<int>(datatype) << " from "
+    //           << msrc << std::endl;
     CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype), GetMPISource(source),
                             tag, m_MPIComm, &mpiStatus),
                    hint);
@@ -465,9 +465,9 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count, Datatype datatype
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        std::cout << "Isend " << count << " items" << std::endl;
-        // CheckMPIReturn(MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)), batchSize,
-        //                          ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
+        // std::cout << "Isend " << count << " items" << std::endl;
+        // // CheckMPIReturn(MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)), batchSize,
+        // //                          ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
         CheckMPIReturn(MPI_Isend(const_cast<void *>(buffer), batchSize, ToMPI(datatype), dest, tag,
                                  m_MPIComm, &mpiReq),
                        " in call to Isend with single batch " + hint + "\n");

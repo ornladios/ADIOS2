@@ -38,18 +38,43 @@ void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::ve
     helper::CopyToBuffer(buffer, pos, &this->m_Offset);
     helper::CopyToBuffer(buffer, pos, &this->m_Size);
 
-    std::stringstream ss;
+    // std::stringstream ss;
 
-    ss << "Rank " << comm.Rank() << " SEND buffer of length " << buffer.size() << ": [";
-    for (size_t i = 0; i < buffer.size(); ++i)
-    {
-        ss << " " << static_cast<int>(buffer[i]);
-    }
-    ss << " ]\n";
+    // ss << "Rank " << comm.Rank() << " SEND buffer of length " << buffer.size() << ": [";
+    // for (size_t i = 0; i < buffer.size(); ++i)
+    // {
+    //     ss << " " << static_cast<int>(buffer[i]);
+    // }
+    // ss << " ]\n";
 
-    std::cout << ss.str();
+    // std::cout << ss.str();
 
     comm.Isend(buffer.data(), buffer.size(), destRank, 0);
+}
+
+void RerouteMessage::BlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer)
+{
+    size_t pos = 0;
+    buffer.resize(REROUTE_MESSAGE_SIZE);
+    helper::CopyToBuffer(buffer, pos, &this->m_MsgType);
+    helper::CopyToBuffer(buffer, pos, &this->m_SrcRank);
+    helper::CopyToBuffer(buffer, pos, &this->m_DestRank);
+    helper::CopyToBuffer(buffer, pos, &this->m_WildCard);
+    helper::CopyToBuffer(buffer, pos, &this->m_Offset);
+    helper::CopyToBuffer(buffer, pos, &this->m_Size);
+
+    // std::stringstream ss;
+
+    // ss << "Rank " << comm.Rank() << " SEND buffer of length " << buffer.size() << ": [";
+    // for (size_t i = 0; i < buffer.size(); ++i)
+    // {
+    //     ss << " " << static_cast<int>(buffer[i]);
+    // }
+    // ss << " ]\n";
+
+    // std::cout << ss.str();
+
+    comm.Send(buffer.data(), buffer.size(), destRank, 0);
 }
 
 void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vector<char> &buffer)
@@ -57,16 +82,16 @@ void RerouteMessage::BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vect
     buffer.resize(REROUTE_MESSAGE_SIZE);
     comm.Recv(buffer.data(), REROUTE_MESSAGE_SIZE, srcRank, 0);
 
-    std::stringstream ss;
+    // std::stringstream ss;
 
-    ss << "Rank " << comm.Rank() << " RECV buffer of length " << buffer.size() << ": [";
-    for (size_t i = 0; i < buffer.size(); ++i)
-    {
-        ss << " " << static_cast<int>(buffer[i]);
-    }
-    ss << " ]\n";
+    // ss << "Rank " << comm.Rank() << " RECV buffer of length " << buffer.size() << ": [";
+    // for (size_t i = 0; i < buffer.size(); ++i)
+    // {
+    //     ss << " " << static_cast<int>(buffer[i]);
+    // }
+    // ss << " ]\n";
 
-    std::cout << ss.str();
+    // std::cout << ss.str();
 
     size_t pos = 0;
     helper::CopyFromBuffer(buffer.data(), pos, &this->m_MsgType);

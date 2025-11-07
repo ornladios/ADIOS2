@@ -142,7 +142,7 @@ public:
     MACRO(BurstBufferDrain, Bool, bool, true)                                                      \
     MACRO(BurstBufferPath, String, std::string, "")                                                \
     MACRO(NodeLocal, Bool, bool, false)                                                            \
-    MACRO(verbose, Int, int, 0)                                                                    \
+    MACRO(verbose, Int, int, 5)                                                                    \
     MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
     MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
     MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \

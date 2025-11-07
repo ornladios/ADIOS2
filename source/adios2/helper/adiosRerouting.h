@@ -67,6 +67,7 @@ public:
 
     // Send the contents of this message to another rank
     void NonBlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer);
+    void BlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer);
 
     // Receive a message from another rank to populate this message
     void BlockingRecvFrom(helper::Comm &comm, int srcRank, std::vector<char> &buffer);
