@@ -1,4 +1,59 @@
 ===================
+What's new in 2.11?
+===================
+
+This is a major release with new features and lots of bug fixes. The main
+highlights include enhanced derived variables, remote data access, GPU
+improvements, campaign management overhaul, and advanced compression operators.
+
+Summary
+=======
+
+Derived Variables
+-----------------
+
+Support for reader-side computed variables with expression evaluation. This
+release adds comprehensive functionality including new mathematical operations
+(trigonometric functions, multiplication, division, power) and the
+ability to apply derived variables to aggregated arrays.
+
+Remote Data Access Infrastructure
+----------------------------------
+
+Implementation of XRootD and remote server capabilities enabling distributed
+file access. This includes support for remote streaming, metadata caching, and
+optimized query handling across networked systems.
+
+GPU and Memory Space Improvements
+----------------------------------
+
+Enhanced GPU backend support with memory selection adjustments, Kokkos
+integration improvements, and bindings for cuPy pointers and torch tensors.
+Addresses layout mismatches between user code and device memory.
+
+Campaign Management System Overhaul
+------------------------------------
+
+Significant updates to campaign tracking using SQLite databases replacing JSON
+files, configuration file support, and attribute handling. Includes multi-host
+support and improved metadata organization.
+
+Compression and Data Format Advances
+-------------------------------------
+
+New operators including BigWhoop compression and Complex MGARD support. ZFP now
+supports 4D arrays, and improved MGARD efficiency through zstd compression of
+lossless data portions.
+
+OpenSSF Best Practices
+-----------------------
+
+ADIOS2 now adopts OpenSSF (Open Source Security Foundation) best practices
+including enhanced security measures, automated vulnerability scanning, and
+adherence to industry-standard development practices.
+
+
+===================
 What's new in 2.10?
 ===================
 
