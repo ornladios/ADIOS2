@@ -14,7 +14,7 @@ To build ADIOS v2.x, clone the repository and invoke the canonical CMake build s
     ...
 
     ADIOS2 build configuration:
-      ADIOS Version: 2.10.0
+      ADIOS Version: 2.11.0
       C++ Compiler : GNU 9.4.0
         /usr/bin/c++
 
