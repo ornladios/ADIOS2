@@ -5,5 +5,5 @@
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_useCases_ensembleRead ensembleRead.cpp)
-  target_link_libraries(adios2_useCases_ensembleRead adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_useCases_ensembleRead adios2::cxx_mpi MPI::MPI_C)
 endif()

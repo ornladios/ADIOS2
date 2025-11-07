@@ -189,16 +189,8 @@ class Stream:
 
     def available_variables(self):
         """
-
         Returns a 2-level dictionary with variable information.
         Read mode only.
-
-        Parameters
-            keys
-               list of variable information keys to be extracted (case insensitive)
-               keys=['AvailableStepsCount','Type','Max','Min','SingleValue','Shape']
-               keys=['Name'] returns only the variable names as 1st-level keys
-               leave empty to return all possible keys
 
         Returns
             variables dictionary

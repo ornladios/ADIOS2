@@ -31,12 +31,12 @@ TEST(ADIOSInterface, BADConfigFile)
                  io.Open("test.bp", adios2::Mode::Write);, std::logic_error);
 }
 
-/** ADIOS2_CXX11_API
+/** ADIOS2_CXX_API
  */
-class ADIOS2_CXX11_API : public ::testing::Test
+class ADIOS2_CXX_API : public ::testing::Test
 {
 public:
-    ADIOS2_CXX11_API()
+    ADIOS2_CXX_API()
 #if ADIOS2_USE_MPI
     : m_Ad(MPI_COMM_WORLD)
 #else
@@ -54,7 +54,7 @@ public:
     int m_MpiSize = 1;
 };
 
-TEST_F(ADIOS2_CXX11_API, ToString)
+TEST_F(ADIOS2_CXX_API, ToString)
 {
     EXPECT_EQ(ToString(adios2::ShapeID::Unknown), "ShapeID::Unknown");
     EXPECT_EQ(ToString(adios2::ShapeID::GlobalValue), "ShapeID::GlobalValue");
@@ -107,10 +107,10 @@ TEST_F(ADIOS2_CXX11_API, ToString)
     EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock), "SelectionType::WriteBlock");
 }
 
-TEST_F(ADIOS2_CXX11_API, APIToString)
+TEST_F(ADIOS2_CXX_API, APIToString)
 {
-    auto io = m_Ad.DeclareIO("CXX11_API_TestIO");
-    EXPECT_EQ(ToString(io), "IO(Name: \"CXX11_API_TestIO\")");
+    auto io = m_Ad.DeclareIO("CXX_API_TestIO");
+    EXPECT_EQ(ToString(io), "IO(Name: \"CXX_API_TestIO\")");
 
     auto variable = io.DefineVariable<double>("var_double");
     EXPECT_EQ(ToString(variable), "Variable<double>(Name: \"var_double\")");
@@ -123,24 +123,24 @@ TEST_F(ADIOS2_CXX11_API, APIToString)
     EXPECT_EQ(ToString(engine), "Engine(Name: \"test.bp\", Type: \"BP5Writer\")");
 }
 
-TEST_F(ADIOS2_CXX11_API, operatorLL)
+TEST_F(ADIOS2_CXX_API, operatorLL)
 {
     std::stringstream result;
     result << adios2::Mode::Write;
     EXPECT_EQ(result.str(), "Mode::Write");
 }
 
-/** ADIOS2_CXX11_API_IO
+/** ADIOS2_CXX_API_IO
  */
-class ADIOS2_CXX11_API_IO : public ADIOS2_CXX11_API
+class ADIOS2_CXX_API_IO : public ADIOS2_CXX_API
 {
 public:
-    ADIOS2_CXX11_API_IO() : m_Io(m_Ad.DeclareIO("CXX11_API_TestIO")) {}
+    ADIOS2_CXX_API_IO() : m_Io(m_Ad.DeclareIO("CXX_API_TestIO")) {}
 
     adios2::IO m_Io;
 };
 
-TEST_F(ADIOS2_CXX11_API_IO, Engine)
+TEST_F(ADIOS2_CXX_API_IO, Engine)
 {
     m_Io.SetEngine("file");
     EXPECT_EQ(m_Io.EngineType(), "file");
@@ -152,7 +152,7 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
     engine.Close();
 }
 
-TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
+TEST_F(ADIOS2_CXX_API_IO, EngineDefault)
 {
     m_Io.SetEngine("");
     EXPECT_EQ(m_Io.EngineType(), "");
@@ -218,7 +218,7 @@ private:
 };
 
 // ----------------------------------------------------------------------
-// ADIOS2_CXX11_API_MultiBlock
+// ADIOS2_CXX_API_MultiBlock
 
 template <typename _DataType, adios2::Mode _PutMode>
 struct CaseMultiBlock
@@ -233,13 +233,13 @@ using MultiBlockTypes = ::testing::Types<CaseMultiBlock<double, adios2::Mode::Sy
                                          CaseMultiBlock<int64_t, adios2::Mode::Deferred>>;
 
 template <typename TypeParam>
-class ADIOS2_CXX11_API_MultiBlock : public ADIOS2_CXX11_API_IO
+class ADIOS2_CXX_API_MultiBlock : public ADIOS2_CXX_API_IO
 {
 public:
     using DataType = typename TypeParam::DataType;
     using Box = adios2::Box<adios2::Dims>;
 
-    using ADIOS2_CXX11_API_IO::ADIOS2_CXX11_API_IO;
+    using ADIOS2_CXX_API_IO::ADIOS2_CXX_API_IO;
 
     void SetUp() override
     {
@@ -256,7 +256,7 @@ public:
 
     void GenerateOutput(std::string filename, std::string enginename)
     {
-        auto io = m_Ad.DeclareIO("CXX11_API_GenerateOutput");
+        auto io = m_Ad.DeclareIO("CXX_API_GenerateOutput");
         io.SetEngine(enginename);
         auto engine = io.Open(filename, adios2::Mode::Write);
         auto var = io.template DefineVariable<DataType>("var", m_Shape);
@@ -272,7 +272,7 @@ public:
         }
         engine.Close();
 
-        m_Ad.RemoveIO("CXX11_API_GenerateOutput");
+        m_Ad.RemoveIO("CXX_API_GenerateOutput");
     }
 
     void CheckOutput(std::string filename)
@@ -281,7 +281,7 @@ public:
         {
             return;
         }
-        auto io = m_Ad.DeclareIO("CXX11_API_CheckOutput");
+        auto io = m_Ad.DeclareIO("CXX_API_CheckOutput");
 #if ADIOS2_USE_MPI
         auto engine = io.Open(filename, adios2::Mode::Read, MPI_COMM_SELF);
 #else
@@ -294,7 +294,7 @@ public:
         engine.Get(var, data, adios2::Mode::Sync);
         engine.EndStep();
         engine.Close();
-        m_Ad.RemoveIO("CXX11_API_CheckOutput");
+        m_Ad.RemoveIO("CXX_API_CheckOutput");
 
         std::vector<DataType> ref(shape[0]);
         std::iota(ref.begin(), ref.end(), DataType());
@@ -306,9 +306,9 @@ public:
     std::vector<Box> m_Selections;
 };
 
-TYPED_TEST_SUITE(ADIOS2_CXX11_API_MultiBlock, MultiBlockTypes);
+TYPED_TEST_SUITE(ADIOS2_CXX_API_MultiBlock, MultiBlockTypes);
 
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, Put)
 {
     using T = typename TypeParam::DataType;
 
@@ -328,7 +328,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put)
     this->CheckOutput(filename);
 }
 
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutMixed)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, PutMixed)
 {
     using T = typename TestFixture::DataType;
 
@@ -358,7 +358,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutMixed)
 }
 
 // this one doesn't actually use the PutMode param
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopy)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, PutZeroCopy)
 {
     using T = typename TestFixture::DataType;
 
@@ -398,7 +398,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopy)
 }
 
 // writes last block using regular Put(Sync/Deferred)
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, PutZeroCopyMixed)
 {
     using T = typename TestFixture::DataType;
 
@@ -435,7 +435,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
     this->CheckOutput(filename);
 }
 
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, Put2File)
 {
     using T = typename TypeParam::DataType;
 
@@ -467,7 +467,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
 // would write different data into the two files, but this is enough to
 // show a problem)
 #if 0
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2Writers)
+TYPED_TEST(ADIOS2_CXX_API_MultiBlock, Put2Writers)
 {
     using T = typename TypeParam::DataType;
 

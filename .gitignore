@@ -29,7 +29,7 @@ build/
 # Doxygen generated files
 html/
 *.html
-docs/api_doxygen/CXX11/xml/
+docs/api_doxygen/CXX/xml/
 docs/api_doxygen/C/xml/
 
 # readthedocs generated:

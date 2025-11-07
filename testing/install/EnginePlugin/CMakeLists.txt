@@ -18,7 +18,7 @@ include(GenerateExportHeader)
 add_library(PluginEngineWrite
   ../../../examples/plugins/engine/ExampleWritePlugin.cpp
 )
-target_link_libraries(PluginEngineWrite adios2::cxx11 adios2::core)
+target_link_libraries(PluginEngineWrite adios2::cxx adios2::core)
 generate_export_header(PluginEngineWrite BASE_NAME plugin_engine_write)
 target_include_directories(PluginEngineWrite PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -28,7 +28,7 @@ target_include_directories(PluginEngineWrite PUBLIC
 add_library(PluginEngineRead
   ../../../examples/plugins/engine/ExampleReadPlugin.cpp
 )
-target_link_libraries(PluginEngineRead adios2::cxx11 adios2::core)
+target_link_libraries(PluginEngineRead adios2::cxx adios2::core)
 generate_export_header(PluginEngineRead BASE_NAME plugin_engine_read)
 target_include_directories(PluginEngineRead PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -45,7 +45,7 @@ endif()
 add_executable(adios_plugin_engine_write_test
   ../../../examples/plugins/engine/examplePluginEngineWrite.cpp
 )
-target_link_libraries(adios_plugin_engine_write_test adios2::cxx11)
+target_link_libraries(adios_plugin_engine_write_test adios2::cxx)
 add_test(NAME adios_plugin_engine_write_test COMMAND adios_plugin_engine_write_test)
 set_tests_properties(adios_plugin_engine_write_test PROPERTIES
   ENVIRONMENT ADIOS2_PLUGIN_PATH=${plugin_path}
@@ -55,7 +55,7 @@ set_tests_properties(adios_plugin_engine_write_test PROPERTIES
 add_executable(adios_plugin_engine_read_test
   ../../../examples/plugins/engine/examplePluginEngineRead.cpp
 )
-target_link_libraries(adios_plugin_engine_read_test adios2::cxx11)
+target_link_libraries(adios_plugin_engine_read_test adios2::cxx)
 add_test(NAME adios_plugin_engine_read_test COMMAND adios_plugin_engine_read_test)
 set_tests_properties(adios_plugin_engine_read_test PROPERTIES
   ENVIRONMENT ADIOS2_PLUGIN_PATH=${plugin_path}

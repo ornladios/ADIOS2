@@ -16,6 +16,6 @@ enable_language(HIP)
 find_package(hip REQUIRED)
 
 add_executable(adios2_hello_bpStepsWriteReadHip bpStepsWriteReadHip.cpp)
-target_link_libraries(adios2_hello_bpStepsWriteReadHip adios2::cxx11 hip::device)
+target_link_libraries(adios2_hello_bpStepsWriteReadHip adios2::cxx hip::device)
 set_source_files_properties(bpStepsWriteReadHip.cpp PROPERTIES LANGUAGE HIP)
 install(TARGETS adios2_hello_bpStepsWriteReadHip RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

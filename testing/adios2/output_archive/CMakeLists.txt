@@ -34,10 +34,10 @@ endif()
 foreach (TestSet ${TestSets})
 
     add_executable(Read${TestSet} Read${TestSet}.cpp)
-    target_link_libraries(Read${TestSet} adios2::cxx11 adios2::c adios2_core adios2::thirdparty::gtest)
+    target_link_libraries(Read${TestSet} adios2::cxx adios2::c adios2_core adios2::thirdparty::gtest)
     if(ADIOS2_HAVE_MPI)
         add_executable(Write${TestSet} Write${TestSet}.cpp)
-        target_link_libraries(Write${TestSet} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_CXX adios2::thirdparty::gtest)
+        target_link_libraries(Write${TestSet} adios2::cxx_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_CXX adios2::thirdparty::gtest)
     endif()
 
     file(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)

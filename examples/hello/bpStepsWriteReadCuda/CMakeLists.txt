@@ -24,7 +24,7 @@ if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
   install(TARGETS adios2_hello_bpStepsWriteReadCuda_c RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_bpStepsWriteReadCuda bpStepsWriteReadCuda.cu)
-  target_link_libraries(adios2_hello_bpStepsWriteReadCuda PUBLIC adios2::cxx11 CUDA::cudart)
+  target_link_libraries(adios2_hello_bpStepsWriteReadCuda PUBLIC adios2::cxx CUDA::cudart)
   set_target_properties(adios2_hello_bpStepsWriteReadCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
   install(TARGETS adios2_hello_bpStepsWriteReadCuda RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

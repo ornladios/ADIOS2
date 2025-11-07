@@ -26,6 +26,6 @@ if(ADIOS2_HAVE_MPI)
     PrintDataStep.h
     ReadSettings.cpp
   )
-  target_link_libraries(adios2_simulations_heatTransferRead adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_simulations_heatTransferRead adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_simulations_heatTransferRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
