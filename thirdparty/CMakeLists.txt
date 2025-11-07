@@ -97,19 +97,19 @@ cmake_dependent_option(ADIOS2_USE_EXTERNAL_EVPATH
 )
 cmake_dependent_option(ADIOS2_USE_EXTERNAL_ATL
   "Use an externally supplied ATL library" OFF
-  "ADIOS2_USE_EXTERNAL_EVPATH" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" ON
 )
 cmake_dependent_option(ADIOS2_USE_EXTERNAL_FFS
   "Use an externally supplied FFS library" OFF
-  "ADIOS2_USE_EXTERNAL_EVPATH" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" ON
 )
 cmake_dependent_option(ADIOS2_USE_EXTERNAL_DILL
   "Use an externally supplied DILL library" OFF
-  "ADIOS2_USE_EXTERNAL_FFS" OFF
+  "NOT ADIOS2_USE_EXTERNAL_FFS" ON
 )
 cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
   "Use an externally supplied ENET library" OFF
-  "ADIOS2_USE_EXTERNAL_EVPATH" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" ON
 )
 
 if(NOT ADIOS2_USE_EXTERNAL_FFS)
