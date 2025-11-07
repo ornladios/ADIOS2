@@ -27,7 +27,7 @@ getBaseName()
     if [[ "$filePath" == *"joined"* ]]; then
         key="joined"
     fi
-    echo ${key}
+    echo "${key}"
 }
 
 # Validate files
