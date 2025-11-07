@@ -1,7 +1,6 @@
 # Client maintainer: vicente.bolea@kitware.com
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
-set(ENV{FC}  gfortran-12)
 
 set(dashboard_cache "
 BUILD_SHARED_LIBS=OFF
@@ -39,7 +38,6 @@ CMAKE_C_COMPILER_LAUNCHER=ccache
 CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
-CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(ENV{MACOSX_DEPLOYMENT_TARGET} "14.5")
