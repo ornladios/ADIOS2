@@ -59,6 +59,7 @@ struct WriterGroupState
         IDLE,
         PENDING,
         CAPACITY,
+        CLOSED,
     };
 
     Status m_currentStatus;
@@ -193,6 +194,9 @@ void BP5Writer::ReroutingCommunicationLoop()
     StateTraversal pairFinder;
     std::vector<int> subCoordRanks;
     bool firstIdleMsg = true;
+    std::set<int> closeAcksNeeded;
+    std::set<int> groupIdlesNeeded;
+    bool waitingForCloseAcks = false;
 
     // Sends are non-blocking. We use the pool to avoid the situation where the
     // buffer is destructed before the send is complete.  If we start seeing
@@ -229,6 +233,8 @@ void BP5Writer::ReroutingCommunicationLoop()
             groupState[i].m_currentStatus = WriterGroupState::Status::UNKNOWN;
             groupState[i].m_subFileIndex = i;
             subCoordRanks[i] = m_Partitioning.m_Partitions[i][0];
+            closeAcksNeeded.insert(subCoordRanks[i]);
+            groupIdlesNeeded.insert(subCoordRanks[i]);
         }
     }
 
@@ -257,7 +263,7 @@ void BP5Writer::ReroutingCommunicationLoop()
     {
         if (iAmSubCoord)
         {
-            return !receivedGroupClose || expectingWriteCompletion;
+            return !receivedGroupClose || expectingWriteCompletion || waitingForCloseAcks;
         }
 
         return !receivedGroupClose;
@@ -308,7 +314,42 @@ void BP5Writer::ReroutingCommunicationLoop()
                 // msg for sub coordinator
                 m_DataPos = currentFilePos;
                 receivedGroupClose = true;
-                continue;
+
+                std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE_ACK to rank "
+                    << globalCoord << std::endl;
+                adios2::helper::RerouteMessage closeAckMsg;
+                closeAckMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE_ACK;
+                closeAckMsg.m_SrcRank = m_RankMPI;
+                closeAckMsg.m_DestRank = globalCoord;
+                closeAckMsg.m_WildCard = m_Aggregator->m_SubStreamIndex;
+                closeAckMsg.BlockingSendTo(m_Comm, globalCoord,
+                                            sendBuffers.GetNextBuffer());
+                break;
+            case RerouteMessage::MessageType::GROUP_CLOSE_ACK:
+                // msg for global coordinator
+                {
+                    std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE_ACK from rank "
+                              << status.Source << std::endl;
+
+                    size_t ackGroupIdx = static_cast<size_t>(message.m_WildCard);
+                    groupState[ackGroupIdx].m_currentStatus = WriterGroupState::Status::CLOSED;
+                    closeAcksNeeded.erase(status.Source);
+
+                    if (!closeAcksNeeded.empty())
+                    {
+                        std::stringstream ss;
+
+                        ss << "Rank " << m_RankMPI << " still awaiting close acks from: [ ";
+                        for (int n : closeAcksNeeded)
+                        {
+                            ss << n << " ";
+                        }
+                        ss << " ]\n";
+
+                        std::cout << ss.str();
+                    }
+                }
+                break;
             case RerouteMessage::MessageType::WRITER_IDLE:
                 std::cout << "Rank " << m_RankMPI << " received WRITER_IDLE from rank "
                           << status.Source << std::endl;
@@ -319,6 +360,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                     size_t idleGroup = static_cast<size_t>(message.m_WildCard);
                     groupState[idleGroup].m_currentStatus = WriterGroupState::Status::IDLE;
                     groupState[idleGroup].m_queueSize = 0;
+                    groupIdlesNeeded.erase(idleWriter);
 
                     if (firstIdleMsg)
                     {
@@ -448,6 +490,8 @@ void BP5Writer::ReroutingCommunicationLoop()
                 writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank,
                                                sendBuffers.GetNextBuffer());
 
+                groupIdlesNeeded.insert(message.m_DestRank);
+
                 // Src subcoord state is returned to writing, dest subcoord state is now writing as
                 // well
                 groupState[message.m_SrcRank].m_currentStatus = WriterGroupState::Status::WRITING;
@@ -474,9 +518,11 @@ void BP5Writer::ReroutingCommunicationLoop()
 
         // All processes
         // Check if writing has finished, and alert the target SC
+        if (!sentFinished)
         {
+            // std::cout << "Rank " << m_RankMPI << " attempting to get lock on m_NotifMutex" << std::endl;
             std::lock_guard<std::mutex> lck(m_NotifMutex);
-            if (m_FinishedWriting && !sentFinished)
+            if (m_FinishedWriting)
             {
                 adios2::helper::RerouteMessage writeCompleteMsg;
                 writeCompleteMsg.m_MsgType = RerouteMessage::MessageType::WRITE_COMPLETION;
@@ -488,13 +534,13 @@ void BP5Writer::ReroutingCommunicationLoop()
                 if (!iAmSubCoord && !iAmGlobalCoord)
                 {
                     std::cout << "Rank " << m_RankMPI << " notifying SC (" << m_TargetCoordinator
-                              << ") of write completion -- BLOCKING" << std::endl;
+                            << ") of write completion -- BLOCKING" << std::endl;
                     // My only role was to write (no communication responsibility) so I am
                     // done at this point. However, I need to do a blocking send because I
                     // am about to return from this function, at which point my buffer pool
                     // goes away.
                     writeCompleteMsg.BlockingSendTo(m_Comm, m_TargetCoordinator,
-                                                       sendBuffers.GetNextBuffer());
+                                                    sendBuffers.GetNextBuffer());
 
                     receivedGroupClose = true;
                     continue;
@@ -502,9 +548,9 @@ void BP5Writer::ReroutingCommunicationLoop()
                 else
                 {
                     std::cout << "Rank " << m_RankMPI << " notifying SC (" << m_TargetCoordinator
-                              << ") of write completion -- NONBLOCKING" << std::endl;
+                            << ") of write completion -- NONBLOCKING" << std::endl;
                     writeCompleteMsg.NonBlockingSendTo(m_Comm, m_TargetCoordinator,
-                                                       sendBuffers.GetNextBuffer());
+                                                    sendBuffers.GetNextBuffer());
                 }
 
                 sentFinished = true;
@@ -557,7 +603,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
         // Global coordinator process
         // Look for possible reroute-to / reroute-from pairs
-        if (iAmGlobalCoord && needStateCheck)
+        if (iAmGlobalCoord && needStateCheck && !waitingForCloseAcks)
         {
             std:: cout << "GC (" << m_RankMPI << ") looking for reroute candidate pair" << std::endl;
             std::pair<size_t, size_t> nextPair;
@@ -585,9 +631,9 @@ void BP5Writer::ReroutingCommunicationLoop()
                 groupState[idleIdx].m_currentStatus = WriterGroupState::Status::PENDING;
                 groupState[writerIdx].m_currentStatus = WriterGroupState::Status::PENDING;
             }
-            else if (result == StateTraversal::SearchResult::FINISHED)
+            else if (result == StateTraversal::SearchResult::FINISHED && groupIdlesNeeded.empty())
             {
-                std:: cout << "GC (" << m_RankMPI << ") all work finished, sending GROUP_CLOSE" << std::endl;
+
                 for (size_t i = 0; i < groupState.size(); ++i)
                 {
                     std::cout << "  group " << i << " status: " << static_cast<int>(groupState[i].m_currentStatus)
@@ -599,10 +645,39 @@ void BP5Writer::ReroutingCommunicationLoop()
                 // comm loop.
                 for (size_t scIdx = 0; scIdx < subCoordRanks.size(); ++scIdx)
                 {
-                    adios2::helper::RerouteMessage closeMsg;
-                    closeMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE;
-                    closeMsg.NonBlockingSendTo(m_Comm, scIdx, sendBuffers.GetNextBuffer());
+                    if (subCoordRanks[scIdx] != globalCoord)
+                    {
+                        std:: cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE to rank " << subCoordRanks[scIdx] << std::endl;
+                        adios2::helper::RerouteMessage closeMsg;
+                        closeMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE;
+                        closeMsg.NonBlockingSendTo(m_Comm, subCoordRanks[scIdx], sendBuffers.GetNextBuffer());
+                    }
                 }
+
+                std::cout << "Rank " << m_RankMPI << " marking my own close ack as received" << std::endl;
+                receivedGroupClose = true;
+                closeAcksNeeded.erase(globalCoord);
+
+                waitingForCloseAcks = true;
+            }
+        }
+
+        if (iAmGlobalCoord)
+        {
+            if (waitingForCloseAcks && closeAcksNeeded.empty())
+            {
+                std::cout << "Rank " << m_RankMPI << " got all my close acks" << std::endl;
+                // global coordinator received the final close ack, now it can leave
+                waitingForCloseAcks = false;
+            }
+            else
+            {
+                std::cout << "Rank " << m_RankMPI << " still need " << closeAcksNeeded.size() << " close acks [ ";
+                for (int n : closeAcksNeeded)
+                {
+                    std::cout << " " << n;
+                }
+                std::cout << " ]" << std::endl;
             }
         }
     }

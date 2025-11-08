@@ -39,6 +39,7 @@ public:
         REROUTE_ACK,
         REROUTE_REJECT,
         GROUP_CLOSE,
+        GROUP_CLOSE_ACK,
         STATUS_INQUIRY,
         STATUS_REPLY,
     };
