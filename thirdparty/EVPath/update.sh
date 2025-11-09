@@ -10,6 +10,7 @@ readonly subtree="thirdparty/EVPath/EVPath"
 readonly repo="https://github.com/GTkorvo/EVPath.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 
