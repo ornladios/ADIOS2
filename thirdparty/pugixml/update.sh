@@ -10,6 +10,7 @@ readonly subtree="thirdparty/pugixml/pugixml"
 readonly repo="https://github.com/zeux/pugixml.git"
 readonly tag="v1.15"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 src/pugiconfig.hpp
 src/pugixml.hpp

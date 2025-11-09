@@ -10,6 +10,7 @@ readonly subtree="thirdparty/pybind11/pybind11"
 readonly repo="https://github.com/pybind/pybind11.git"
 readonly tag="stable"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
   include/pybind11
 "
