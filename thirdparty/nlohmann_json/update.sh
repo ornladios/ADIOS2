@@ -10,6 +10,7 @@ readonly subtree="thirdparty/nlohmann_json/nlohmann_json_wrapper/"
 readonly repo="https://github.com/nlohmann/json.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
   single_include/nlohmann/json.hpp
 "
