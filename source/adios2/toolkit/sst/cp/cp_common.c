@@ -1582,9 +1582,13 @@ static void DP_verbose(SstStream s, int Level, char *Format, ...)
         {
             Role = "Reader";
         }
+        // on TraceDupVerbose, we don't want that for higher ranks because it's too much
+        if ((Level == TraceDupVerbose) && (s->Rank > 2))
+            return;
         switch (s->CPVerbosityLevel)
         {
         case TraceVerbose:
+        case TraceDupVerbose:
         case PerRankVerbose:
         case CriticalVerbose:
             fprintf(stderr, "DP %s %d (%p): ", Role, s->Rank, s);

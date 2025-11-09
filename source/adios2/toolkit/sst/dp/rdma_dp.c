@@ -1678,7 +1678,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
         }
         else
         {
-            Svcs->verbose(CP_Stream, DPTraceVerbose, "DRC acquired credential id %d.\n",
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose, "DRC acquired credential id %d.\n",
                           Fabric->credential);
         }
     }
@@ -1702,7 +1702,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, DPTraceVerbose, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
     long attr_cred = Fabric->credential;
     set_long_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_CRED"), attr_cred);
@@ -1716,11 +1716,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, DPTraceVerbose, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Could not find a valid transport fabric.\n");
         goto err_out;
     }
 
-    Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     if (init_progress_thread(Fabric, Svcs, CP_Stream, /* is_reader = */ 0) == EXIT_FAILURE)
@@ -1780,7 +1780,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
                           "into vector\n");
             return NULL;
         }
-        Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+        Svcs->verbose(WS_Stream->CP_Stream, DPTraceDupVerbose,
                       "Received contact info for RS_Stream %p, WSR Rank %d\n",
                       providedReaderInfo[i]->RS_Stream, i);
     }
@@ -1876,7 +1876,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stre
             return;
         }
         RS_Stream->WriterRoll[i] = providedWriterInfo[i]->ReaderRollHandle;
-        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceDupVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
                       RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
@@ -2500,7 +2500,7 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     }
     pthread_mutex_unlock(&ts_mutex);
 
-    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceDupVerbose, "Tearing down RDMA state on writer.\n");
     if (WS_Stream->Fabric)
     {
         fini_fabric(WS_Stream->Fabric, Svcs, WS_Stream->CP_Stream);
@@ -2564,7 +2564,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
     if (vni_env_str)
     {
         // try fishing for the CXI provider
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane trying to check for an available CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
                       "defined (value: '%s').\n",
@@ -2595,7 +2595,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
          * still references those bit positions, but those machines
          * may be disappearing.
          */
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane trying to check for an available non-CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
                       "not defined.\n");
@@ -2631,7 +2631,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
     if (!info)
     {
-        Svcs->verbose(CP_Stream, DPTraceVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane could not find any viable fabrics.\n");
     }
 
@@ -2643,13 +2643,13 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
         prov_name = info->fabric_attr->prov_name;
         domain_name = info->domain_attr->name;
-        Svcs->verbose(CP_Stream, DPPerStepVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "[RdmaGetPriority] Seeing and evaluating fabric with "
                       "provider: '%s', domain: '%s'\n",
                       prov_name, domain_name);
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                           "RDMA Dataplane found the requested "
                           "interface %s, provider type %s.\n",
                           ifname, prov_name);
@@ -2660,7 +2660,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
             strstr(prov_name, "psm2") || strstr(prov_name, "cxi"))
         {
 
-            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                           "RDMA Dataplane sees interface %s, "
                           "provider type %s, which should work.\n",
                           domain_name, prov_name);
@@ -2671,7 +2671,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
     if (Ret == -1)
     {
-        Svcs->verbose(CP_Stream, DPPerStepVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
     }
 
@@ -2680,7 +2680,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
         fi_freeinfo(originfo);
     }
 
-    Svcs->verbose(CP_Stream, DPPerStepVerbose,
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                   "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
     return Ret;
 }
@@ -2691,7 +2691,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
  */
 static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    Svcs->verbose(CP_Stream, DPPerStepVerbose, "RDMA Dataplane unloading\n");
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "RDMA Dataplane unloading\n");
 }
 
 static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step, int BufferSlot)
