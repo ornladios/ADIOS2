@@ -116,7 +116,7 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_ATL)
     add_subdirectory(atl)
   endif()
-  find_package(atl REQUIRED)
+  find_package(atl REQUIRED GLOBAL)
 
   if(NOT ADIOS2_USE_EXTERNAL_DILL)
     add_subdirectory(dill)
@@ -125,18 +125,19 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
 
   add_subdirectory(ffs)
 endif()
-find_package(ffs REQUIRED)
+find_package(ffs REQUIRED GLOBAL)
+adios2_add_thirdparty_target(atl atl::atl)
 adios2_add_thirdparty_target(ffs ffs::ffs)
 
 if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
   if(NOT ADIOS2_USE_EXTERNAL_ENET)
     add_subdirectory(enet)
   endif()
-  find_package(enet REQUIRED)
+  find_package(enet REQUIRED GLOBAL)
 
   add_subdirectory(EVPath)
 endif()
-find_package(EVPath REQUIRED)
+find_package(EVPath REQUIRED GLOBAL)
 adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 
 # Keep this at the end so we see the verbose messages at least once
