@@ -856,6 +856,8 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         Svcs->verbose(CP_Stream, DPSummaryVerbose,
                       "Calling fi_close() on fabric with zero reference count.\n");
         res = fi_close((struct fid *)global_fabric);
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "Return fi_close() is %d\n", res);
         if (res != FI_SUCCESS)
         {
             Svcs->verbose(CP_Stream, DPCriticalVerbose,
@@ -891,6 +893,8 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         free(Fabric->auth_key);
     }
 #endif /* SST_HAVE_CRAY_DRC */
+    Svcs->verbose(CP_Stream, DPSummaryVerbose,
+		  "Returning from fini_fabric()\n");
 }
 
 typedef struct fabric_state *FabricState;
@@ -2372,6 +2376,7 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     RdmaStepLogEntry StepLog = RS_Stream->StepLog;
     RdmaStepLogEntry tStepLog;
 
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "RDMADestroyReader.\n");
     if (RS_Stream->PreloadStep > -1)
     {
         Svcs->verbose(RS_Stream->CP_Stream, DPSummaryVerbose,
@@ -2396,7 +2401,7 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
         free(tStepLog);
     }
 
-    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Done with Destroy Step \n");
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Done with Destroy Step in RDMA destroy reader\n");
     free(RS_Stream->WriterContactInfo);
     free(RS_Stream->WriterAddr);
     free(RS_Stream->WriterRoll);
