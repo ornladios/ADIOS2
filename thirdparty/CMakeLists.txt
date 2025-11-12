@@ -140,13 +140,6 @@ endif()
 find_package(EVPath REQUIRED)
 adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 
-get_target_property(_property EVPath::EVPath INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(adios2::thirdparty::EVPath PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_property})
-get_target_property(_property atl::atl INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(adios2::thirdparty::atl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_property})
-get_target_property(_property ffs::ffs INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(adios2::thirdparty::ffs PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_property})
-
 # Keep this at the end so we see the verbose messages at least once
 set(ADIOS2_THIRDPARTY_VERBOSE_DISABLE TRUE CACHE INTERNAL "" FORCE)
 message("")
