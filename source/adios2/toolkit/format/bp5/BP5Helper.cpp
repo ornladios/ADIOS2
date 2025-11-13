@@ -476,9 +476,13 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
             mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
         }
     }
-    uint64_t MMASummary = std::accumulate(BcastInfo.begin(), BcastInfo.end(), size_t(0));
 
-    if (MMASummary == 0)
+    // BCastInfo[node] will be zero if node has nothing new we need.  If all are zero, we an skip
+    // the last step which would gather that info
+    bool CanSkipFinalStep =
+        std::all_of(BcastInfo.begin(), BcastInfo.end(), [](size_t i) { return i == 0; });
+
+    if (CanSkipFinalStep)
     {
         // Nobody has anything new to contribute WRT attributes or metametadata
         // All mpiranks have the same info and will make the same decision
