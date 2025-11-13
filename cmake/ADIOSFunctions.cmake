@@ -163,10 +163,13 @@ function(adios2_add_thirdparty_target PackageName TargetName)
   target_link_libraries(adios2::thirdparty::${PackageName}
     INTERFACE ${TargetName}
   )
-  get_target_property(interface_include_directories ${TargetName} INTERFACE_INCLUDE_DIRECTORIES)
-  if (interface_include_directories)
-    set_target_properties(adios2::thirdparty::${PackageName} PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${interface_include_directories}")
+
+  if (TargetName)
+    get_target_property(interface_include_directories ${TargetName} INTERFACE_INCLUDE_DIRECTORIES)
+    if (interface_include_directories)
+      set_target_properties(adios2::thirdparty::${PackageName} PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${interface_include_directories}")
+    endif()
   endif()
 endfunction()
 

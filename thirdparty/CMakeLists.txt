@@ -69,13 +69,17 @@ adios2_add_thirdparty_target(pugixml pugixml)
 add_subdirectory(nlohmann_json)
 adios2_add_thirdparty_target(nlohmann_json nlohmann_json_wrapper)
 
+set(yaml_cpp_target "yaml-cpp")
 if(ADIOS2_USE_EXTERNAL_YAMLCPP)
   find_package(yaml-cpp 0.7.0 REQUIRED)
+  if (yaml-cpp_VERSION VERSION_GREATER_EQUAL 0.8)
+    set(yaml_cpp_target "yaml-cpp::yaml-cpp")
+  endif()
 else()
   add_subdirectory(yaml-cpp)
 endif()
 
-adios2_add_thirdparty_target(yaml-cpp yaml-cpp)
+adios2_add_thirdparty_target(yaml-cpp ${yaml_cpp_target})
 
 # YAML-cpp does not add the incdir/libdir to its target rather it exposes it
 # through the cmake variables YAML_CPP_INCLUDE_DIR and YAML_CPP_LIBRARY_DIR
