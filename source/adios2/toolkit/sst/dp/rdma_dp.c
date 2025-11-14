@@ -273,6 +273,9 @@ static void *make_progress(void *params_)
     return NULL;
 }
 
+static int global_fabric_refcount = 0;
+static struct fid_fabric *global_fabric = NULL;
+
 struct fabric_state
 {
     struct fi_context *ctx;
@@ -490,7 +493,12 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     }
 
     pthread_mutex_lock(&fabric_mutex);
-    fi_getinfo(fi_version, NULL, NULL, 0, hints, &info);
+    result = fi_getinfo(fi_version, NULL, NULL, 0, hints, &info);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "opening fi_getinfo() failed with %d (%s).\n",
+                      result, fi_strerror(result));
+    }
     pthread_mutex_unlock(&fabric_mutex);
     if (!info)
     {
@@ -642,14 +650,31 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
                   "Fabric parameters to use at fabric initialization: %s\n",
                   fi_tostr(fabric->info, FI_TYPE_INFO));
 
-    result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
-    if (result != FI_SUCCESS)
+    pthread_mutex_lock(&fabric_mutex);
+    if (global_fabric_refcount == 0)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "opening fabric access failed with %d (%s). This is fatal.\n", result,
-                      fi_strerror(result));
-        return;
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "opening fabric with provider %s\n",
+                      info->fabric_attr->prov_name);
+        result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
+        if (result != FI_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "opening fabric access failed with %d (%s). This is fatal.\n", result,
+                          fi_strerror(result));
+            return;
+        }
+        global_fabric_refcount = 1;
+        global_fabric = fabric->fabric;
     }
+    else
+    {
+        Svcs->verbose(CP_Stream, DPSummaryVerbose, "Reusing open fabric with provider %s\n",
+                      info->fabric_attr->prov_name);
+        fabric->fabric = global_fabric;
+        global_fabric_refcount++;
+    }
+    pthread_mutex_unlock(&fabric_mutex);
+
     result = fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
     if (result != FI_SUCCESS)
     {
@@ -824,13 +849,29 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         return;
     }
 
-    res = fi_close((struct fid *)fabric->fabric);
-    if (res != FI_SUCCESS)
+    pthread_mutex_lock(&fabric_mutex);
+    global_fabric_refcount--;
+    if (global_fabric_refcount == 0)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "could not close fabric, failed with %d (%s).\n", res, fi_strerror(res));
-        return;
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "Calling fi_close() on fabric with zero reference count.\n");
+        res = fi_close((struct fid *)global_fabric);
+        Svcs->verbose(CP_Stream, DPSummaryVerbose, "Return fi_close() is %d\n", res);
+        if (res != FI_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "could not close fabric, failed with %d (%s).\n", res, fi_strerror(res));
+            return;
+        }
+        global_fabric = NULL;
     }
+    else
+    {
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "Skipping fi_close() on fabric because reference count is still %d.\n",
+                      global_fabric_refcount);
+    }
+    pthread_mutex_unlock(&fabric_mutex);
 
     fi_freeinfo(fabric->info);
 
@@ -851,6 +892,7 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         free(Fabric->auth_key);
     }
 #endif /* SST_HAVE_CRAY_DRC */
+    Svcs->verbose(CP_Stream, DPSummaryVerbose, "Returning from fini_fabric()\n");
 }
 
 typedef struct fabric_state *FabricState;
@@ -1638,7 +1680,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
         }
         else
         {
-            Svcs->verbose(CP_Stream, DPTraceVerbose, "DRC acquired credential id %d.\n",
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose, "DRC acquired credential id %d.\n",
                           Fabric->credential);
         }
     }
@@ -1662,7 +1704,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, DPTraceVerbose, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
     long attr_cred = Fabric->credential;
     set_long_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_CRED"), attr_cred);
@@ -1676,11 +1718,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, DPTraceVerbose, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Could not find a valid transport fabric.\n");
         goto err_out;
     }
 
-    Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     if (init_progress_thread(Fabric, Svcs, CP_Stream, /* is_reader = */ 0) == EXIT_FAILURE)
@@ -1740,7 +1782,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
                           "into vector\n");
             return NULL;
         }
-        Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+        Svcs->verbose(WS_Stream->CP_Stream, DPTraceDupVerbose,
                       "Received contact info for RS_Stream %p, WSR Rank %d\n",
                       providedReaderInfo[i]->RS_Stream, i);
     }
@@ -1836,7 +1878,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stre
             return;
         }
         RS_Stream->WriterRoll[i] = providedWriterInfo[i]->ReaderRollHandle;
-        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceDupVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
                       RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
@@ -2332,6 +2374,7 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     RdmaStepLogEntry StepLog = RS_Stream->StepLog;
     RdmaStepLogEntry tStepLog;
 
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "RDMADestroyReader.\n");
     if (RS_Stream->PreloadStep > -1)
     {
         Svcs->verbose(RS_Stream->CP_Stream, DPSummaryVerbose,
@@ -2356,7 +2399,8 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
         free(tStepLog);
     }
 
-    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Done with Destroy Step \n");
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Done with Destroy Step in RDMA destroy reader\n");
     free(RS_Stream->WriterContactInfo);
     free(RS_Stream->WriterAddr);
     free(RS_Stream->WriterRoll);
@@ -2460,7 +2504,7 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     }
     pthread_mutex_unlock(&ts_mutex);
 
-    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceDupVerbose, "Tearing down RDMA state on writer.\n");
     if (WS_Stream->Fabric)
     {
         fini_fabric(WS_Stream->Fabric, Svcs, WS_Stream->CP_Stream);
@@ -2524,7 +2568,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
     if (vni_env_str)
     {
         // try fishing for the CXI provider
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane trying to check for an available CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
                       "defined (value: '%s').\n",
@@ -2555,7 +2599,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
          * still references those bit positions, but those machines
          * may be disappearing.
          */
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane trying to check for an available non-CXI "
                       "provider since environment variable SLINGSHOT_VNIS is "
                       "not defined.\n");
@@ -2591,7 +2635,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
     if (!info)
     {
-        Svcs->verbose(CP_Stream, DPTraceVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane could not find any viable fabrics.\n");
     }
 
@@ -2603,13 +2647,13 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
         prov_name = info->fabric_attr->prov_name;
         domain_name = info->domain_attr->name;
-        Svcs->verbose(CP_Stream, DPPerStepVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "[RdmaGetPriority] Seeing and evaluating fabric with "
                       "provider: '%s', domain: '%s'\n",
                       prov_name, domain_name);
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                           "RDMA Dataplane found the requested "
                           "interface %s, provider type %s.\n",
                           ifname, prov_name);
@@ -2620,7 +2664,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
             strstr(prov_name, "psm2") || strstr(prov_name, "cxi"))
         {
 
-            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+            Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                           "RDMA Dataplane sees interface %s, "
                           "provider type %s, which should work.\n",
                           domain_name, prov_name);
@@ -2631,7 +2675,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
     if (Ret == -1)
     {
-        Svcs->verbose(CP_Stream, DPPerStepVerbose,
+        Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                       "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
     }
 
@@ -2640,7 +2684,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
         fi_freeinfo(originfo);
     }
 
-    Svcs->verbose(CP_Stream, DPPerStepVerbose,
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose,
                   "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
     return Ret;
 }
@@ -2651,7 +2695,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
  */
 static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    Svcs->verbose(CP_Stream, DPPerStepVerbose, "RDMA Dataplane unloading\n");
+    Svcs->verbose(CP_Stream, DPTraceDupVerbose, "RDMA Dataplane unloading\n");
 }
 
 static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step, int BufferSlot)
