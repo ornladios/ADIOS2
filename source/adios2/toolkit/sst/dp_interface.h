@@ -359,7 +359,8 @@ struct _CP_DP_Interface
     CP_DP_GetPriorityFunc getPriority; // both sides, part of DP selection process.
     CP_DP_UnGetPriorityFunc unGetPriority;
 };
-#define DPTraceVerbose 5
+#define DPTraceVerbose 6
+#define DPTraceDupVerbose 5
 #define DPPerRankVerbose 4
 #define DPPerStepVerbose 3
 #define DPSummaryVerbose 2

@@ -328,6 +328,9 @@ void ParseArgs(int argc, char **argv)
             // someone else should have eaten this arg, but if it gets here,
             // ignore it
         }
+#ifdef TEST_SPECIFIC_ARGS
+        TEST_SPECIFIC_ARGS
+#endif
         else
         {
             if (bare_arg == 0)
