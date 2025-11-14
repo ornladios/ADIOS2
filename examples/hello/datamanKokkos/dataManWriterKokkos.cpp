@@ -6,7 +6,7 @@
  * through ADIOS2 DataMan
  */
 #include <adios2.h>
-#include <adios2/cxx11/KokkosView.h>
+#include <adios2/cxx/KokkosView.h>
 #include <iostream>
 #include <mpi.h>
 #include <numeric>

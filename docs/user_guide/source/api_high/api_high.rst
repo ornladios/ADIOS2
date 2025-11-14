@@ -33,6 +33,6 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 
-.. include:: cxx11.rst
+.. include:: cxx.rst
 .. include:: matlab.rst
 

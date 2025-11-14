@@ -16,6 +16,6 @@ endif()
 
 if(Threads_FOUND)
   add_executable(adios2_hello_bpThreadWrite bpThreadWrite.cpp)
-  target_link_libraries(adios2_hello_bpThreadWrite adios2::cxx11 ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(adios2_hello_bpThreadWrite adios2::cxx ${CMAKE_THREAD_LIBS_INIT})
   install(TARGETS adios2_hello_bpThreadWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

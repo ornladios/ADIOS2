@@ -29,7 +29,7 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
     Settings.cpp
     IO_adios2.cpp
   )
-  target_link_libraries(adios2_simulations_heatTransferWrite adios2::cxx11_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(adios2_simulations_heatTransferWrite adios2::cxx_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
   install(TARGETS adios2_simulations_heatTransferWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_simulations_heatTransferWrite_ascii
@@ -74,7 +74,7 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
         IO_h5mixer.cpp
       )
       target_link_libraries(adios2_simulations_heatTransferWrite_h5mixer
-        adios2::cxx11_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
+        adios2::cxx_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
       install(TARGETS adios2_simulations_heatTransferWrite_h5mixer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif()
   endif()

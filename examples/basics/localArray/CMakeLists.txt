@@ -21,15 +21,15 @@ if(NOT TARGET adios2_core)
 endif()
 
 add_executable(adios2_basics_localArrayWrite localArrayWrite.cpp)
-target_link_libraries(adios2_basics_localArrayWrite adios2::cxx11)
+target_link_libraries(adios2_basics_localArrayWrite adios2::cxx)
 install(TARGETS adios2_basics_localArrayWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(adios2_basics_localArrayRead localArrayRead.cpp)
-target_link_libraries(adios2_basics_localArrayRead adios2::cxx11)
+target_link_libraries(adios2_basics_localArrayRead adios2::cxx)
 install(TARGETS adios2_basics_localArrayRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_localArrayWrite_mpi localArrayWrite.cpp)
-  target_link_libraries(adios2_basics_localArrayWrite_mpi adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_basics_localArrayWrite_mpi adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_localArrayWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

@@ -21,19 +21,19 @@ if(NOT TARGET adios2_core)
 endif()
 
 add_executable(adios2_hello_skeletonWriter skeletonWriter.cpp SkeletonArgs.cpp)
-target_link_libraries(adios2_hello_skeletonWriter adios2::cxx11)
+target_link_libraries(adios2_hello_skeletonWriter adios2::cxx)
 install(TARGETS adios2_hello_skeletonWriter RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(adios2_hello_skeletonReader skeletonReader.cpp SkeletonArgs.cpp)
-target_link_libraries(adios2_hello_skeletonReader adios2::cxx11)
+target_link_libraries(adios2_hello_skeletonReader adios2::cxx)
 install(TARGETS adios2_hello_skeletonReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_skeletonWriter_mpi skeletonWriter.cpp SkeletonArgs.cpp)
-  target_link_libraries(adios2_hello_skeletonWriter_mpi adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_hello_skeletonWriter_mpi adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_skeletonWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_skeletonReader_mpi skeletonReader.cpp SkeletonArgs.cpp)
-  target_link_libraries(adios2_hello_skeletonReader_mpi adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_hello_skeletonReader_mpi adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_skeletonReader_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

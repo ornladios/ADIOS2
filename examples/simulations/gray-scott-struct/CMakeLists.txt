@@ -28,11 +28,11 @@ if(ADIOS2_HAVE_MPI)
     simulation/writer.cpp
     simulation/restart.cpp
   )
-  target_link_libraries(adios2_simulations_gray-scott-struct adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_simulations_gray-scott-struct adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_simulations_gray-scott-struct RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_simulations_gray-scott-struct_pdf-calc analysis/pdf-calc.cpp)
-  target_link_libraries(adios2_simulations_gray-scott-struct_pdf-calc adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(adios2_simulations_gray-scott-struct_pdf-calc adios2::cxx_mpi MPI::MPI_CXX)
   install(TARGETS adios2_simulations_gray-scott-struct_pdf-calc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   install(FILES "adios2.xml" "adios2-inline-plugin.xml"

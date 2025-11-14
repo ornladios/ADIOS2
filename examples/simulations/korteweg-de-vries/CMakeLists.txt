@@ -13,5 +13,5 @@ if(NOT TARGET adios2_core)
 endif()
 
 add_executable(adios2_simulations_kortewegDeVries KdV.cpp)
-target_link_libraries(adios2_simulations_kortewegDeVries adios2::cxx11)
+target_link_libraries(adios2_simulations_kortewegDeVries adios2::cxx)
 install(TARGETS adios2_simulations_kortewegDeVries RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

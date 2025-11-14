@@ -20,7 +20,7 @@ message("adios2 lib dir: ${adios2_LIBRARY_DIRS}")
 add_executable(adios_plugin_engine_catalyst_test
     testCatalystEngine.cpp
 )
-target_link_libraries(adios_plugin_engine_catalyst_test adios2::cxx11)
+target_link_libraries(adios_plugin_engine_catalyst_test adios2::cxx)
 set(ENV{ADIOS2_PLUGIN_PATH} ${adios2_DIR}/../../)
 configure_file(test-catalyst-config.xml ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 add_test(NAME adios_plugin_engine_catalyst_test COMMAND

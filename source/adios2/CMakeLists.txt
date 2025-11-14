@@ -519,12 +519,12 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   set(maybe_adios2_c_mpi adios2_c_mpi)
-  set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
+  set(maybe_adios2_cxx_mpi adios2_cxx_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
   set(maybe_adios2_core_mpi_c adios2_core_mpi_c)
 else()
   set(maybe_adios2_c_mpi)
-  set(maybe_adios2_cxx11_mpi)
+  set(maybe_adios2_cxx_mpi)
   set(maybe_adios2_core_mpi)
   set(maybe_adios2_core_mpi_c)
 endif()
@@ -533,7 +533,7 @@ endif()
 add_library(adios2 INTERFACE)
 target_link_libraries(adios2 INTERFACE
   ${maybe_adios2_c_mpi} adios2_c
-  ${maybe_adios2_cxx11_mpi} adios2_cxx11
+  ${maybe_adios2_cxx_mpi} adios2_cxx
 )
 
 # Set library version information

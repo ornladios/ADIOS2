@@ -16,16 +16,16 @@ if(ADIOS2_HAVE_MPI)
     py11ADIOSMPI.cpp
     py11IOMPI.cpp
   )
-  set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
+  set(maybe_adios2_cxx_mpi adios2_cxx_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
   set(maybe_mpi4py Python::mpi4py)
 else()
-  set(maybe_adios2_cxx11_mpi)
+  set(maybe_adios2_cxx_mpi)
   set(maybe_adios2_core_mpi)
   set(maybe_mpi4py)
 endif()
 target_link_libraries(adios2_py PRIVATE
-  ${maybe_adios2_cxx11_mpi} adios2_cxx11
+  ${maybe_adios2_cxx_mpi} adios2_cxx
   ${maybe_adios2_core_mpi} adios2_core
   adios2::thirdparty::pybind11
   ${maybe_mpi4py}

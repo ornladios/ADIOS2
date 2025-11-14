@@ -10,7 +10,7 @@
 #include <vector>
 
 #include <adios2.h>
-#include <adios2/cxx11/KokkosView.h>
+#include <adios2/cxx/KokkosView.h>
 
 #include <Kokkos_Core.hpp>
 

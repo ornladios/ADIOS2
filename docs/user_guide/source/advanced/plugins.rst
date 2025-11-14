@@ -123,7 +123,7 @@ To build your plugin, your CMake should look something like the following (using
     add_library(PluginEngineWrite
       ExampleWritePlugin.cpp
     )
-    target_link_libraries(PluginEngineWrite adios2::cxx11 adios2::core)
+    target_link_libraries(PluginEngineWrite adios2::cxx adios2::core)
 
 When using the Plugin Engine, ADIOS will check for your plugin at the path specified in the ``ADIOS2_PLUGIN_PATH`` environment variable.
 If ``ADIOS2_PLUGIN_PATH`` is not set, and a path is not specified when loading your plugin (see below steps for using a plugin in your application), then the usual ``dlopen`` search is performed (see the `dlopen man page <https://man7.org/linux/man-pages/man3/dlopen.3.html>`_).

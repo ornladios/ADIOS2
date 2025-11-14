@@ -6,7 +6,7 @@
 #include <adios2.h>
 
 #include <Kokkos_Core.hpp>
-#include <adios2/cxx11/KokkosView.h>
+#include <adios2/cxx/KokkosView.h>
 #include <algorithm>
 #include <array>
 #include <gtest/gtest.h>

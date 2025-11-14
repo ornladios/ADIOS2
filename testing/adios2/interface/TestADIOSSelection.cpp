@@ -194,23 +194,23 @@ TEST(MultiArray, Make)
 }
 
 /**
- * ADIOS2_CXX11_API
+ * ADIOS2_CXX_API
  */
-class ADIOS2_CXX11_API : public ::testing::Test
+class ADIOS2_CXX_API : public ::testing::Test
 {
 public:
-    ADIOS2_CXX11_API() : m_Ad() {}
+    ADIOS2_CXX_API() : m_Ad() {}
 
     adios2::ADIOS m_Ad;
 };
 
 /**
- * ADIOS2_CXX11_API_IO
+ * ADIOS2_CXX_API_IO
  */
-class ADIOS2_CXX11_API_IO : public ADIOS2_CXX11_API
+class ADIOS2_CXX_API_IO : public ADIOS2_CXX_API
 {
 public:
-    ADIOS2_CXX11_API_IO() : m_Io(m_Ad.DeclareIO("CXX11_API_TestIO")) {}
+    ADIOS2_CXX_API_IO() : m_Io(m_Ad.DeclareIO("CXX_API_TestIO")) {}
 
     adios2::IO m_Io;
 };
@@ -219,15 +219,15 @@ public:
  * Selection Tests
  */
 
-class ADIOS2_CXX11_API_Selection : public ADIOS2_CXX11_API_IO
+class ADIOS2_CXX_API_Selection : public ADIOS2_CXX_API_IO
 {
 public:
     using DataType = double;
     using MultiArrayT = MultiArray<DataType, 2>;
     using MultiIndex = MultiArrayT::Index;
 
-    ADIOS2_CXX11_API_Selection()
-    : m_IOWriter(m_Ad.DeclareIO("CXX11_API_Writer")), m_IOReader(m_Ad.DeclareIO("CXX11_API_Reader"))
+    ADIOS2_CXX_API_Selection()
+    : m_IOWriter(m_Ad.DeclareIO("CXX_API_Writer")), m_IOReader(m_Ad.DeclareIO("CXX_API_Reader"))
     {
     }
 
@@ -235,7 +235,7 @@ public:
     adios2::IO m_IOReader;
 };
 
-TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
+TEST_F(ADIOS2_CXX_API_Selection, SelectionNone)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.,  2.,  3.},
@@ -267,7 +267,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
+TEST_F(ADIOS2_CXX_API_Selection, SelectionWrite)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.},
@@ -299,7 +299,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
+TEST_F(ADIOS2_CXX_API_Selection, SelectionWriteStart)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.},
@@ -331,7 +331,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
+TEST_F(ADIOS2_CXX_API_Selection, SelectionRead)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.,  2.,  3.},
@@ -362,7 +362,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
+TEST_F(ADIOS2_CXX_API_Selection, SelectionReadStart)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.,  2.,  3.},
@@ -394,7 +394,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionNone)
 {
     // clang-format off
     auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
@@ -429,7 +429,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionWrite)
 {
     // clang-format off
     auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
@@ -464,7 +464,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionWriteStart)
 {
     // clang-format off
     auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
@@ -499,7 +499,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionRead)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.,  2.,  3.},
@@ -533,7 +533,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionReadStart)
 {
     // clang-format off
     auto arr = makeArray({{ 0.,  1.,  2.,  3.},
@@ -566,7 +566,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
     EXPECT_EQ(arr_read, ref);
 }
 
-TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
+TEST_F(ADIOS2_CXX_API_Selection, MemorySelectionComplex)
 {
     // clang-format off
     auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},

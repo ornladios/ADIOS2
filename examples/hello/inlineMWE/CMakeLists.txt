@@ -13,5 +13,5 @@ if(NOT TARGET adios2_core)
 endif()
 
 add_executable(adios2_hello_inlineMWE inlineMWE.cpp)
-target_link_libraries(adios2_hello_inlineMWE adios2::cxx11)
+target_link_libraries(adios2_hello_inlineMWE adios2::cxx)
 install(TARGETS adios2_hello_inlineMWE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
