@@ -181,11 +181,16 @@ if(NOT @BUILD_SHARED_LIBS@)
     target_link_libraries(adios2::thirdparty::pugixml INTERFACE pugixml)
   endif()
 
-  adios2_add_thirdparty_target(yaml-cpp)
   set(ADIOS2_USE_EXTERNAL_YAMLCPP @ADIOS2_USE_EXTERNAL_YAMLCPP@)
+  set(yaml_cpp_target "yaml-cpp")
   if(ADIOS2_USE_EXTERNAL_YAMLCPP)
     find_dependency(yaml-cpp)
-    target_link_libraries(adios2::thirdparty::yaml-cpp INTERFACE yaml-cpp)
+    if (yaml-cpp_VERSION VERSION_GREATER_EQUAL 0.8)
+      set(yaml_cpp_target "yaml-cpp::yaml-cpp")
+    endif()
+    adios2_add_thirdparty_target(yaml-cpp ${yaml_cpp_target})
+  else()
+    adios2_add_thirdparty_target(yaml-cpp)
   endif()
 
   # No concrete implementation, just put this here to satisfy quasi-dependency
