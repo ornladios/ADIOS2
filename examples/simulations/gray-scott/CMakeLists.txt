@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2SimulationsGrayScottExample)
 
+set(maybe_standalone_project OFF)
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -28,24 +30,27 @@ if(ADIOS2_HAVE_MPI)
     simulation/writer.cpp
     simulation/restart.cpp
   )
-  target_link_libraries(adios2_simulations_gray-scott adios2::cxx_mpi MPI::MPI_CXX)
-  install(TARGETS adios2_simulations_gray-scott RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
   add_executable(adios2_simulations_gray-scott_pdf-calc analysis/pdf-calc.cpp)
+  target_link_libraries(adios2_simulations_gray-scott adios2::cxx_mpi MPI::MPI_CXX)
   target_link_libraries(adios2_simulations_gray-scott_pdf-calc adios2::cxx_mpi MPI::MPI_CXX)
-  install(TARGETS adios2_simulations_gray-scott_pdf-calc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  install(FILES "adios2.xml" "adios2-inline-plugin.xml"
-    "visit-bp4.session" "visit-bp4.session.gui"
-    "visit-sst.session" "visit-sst.session.gui"
-    "simulation/settings-files.json"
-    "simulation/settings-staging.json"
-    "simulation/settings-inline.json"
-    "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
-    "ReadMe.md"
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
+  if (maybe_standalone_project)
+    install(TARGETS adios2_simulations_gray-scott RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS adios2_simulations_gray-scott_pdf-calc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 
-  install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
+  if (maybe_standalone_project)
+    install(FILES "adios2.xml" "adios2-inline-plugin.xml"
+      "visit-bp4.session" "visit-bp4.session.gui"
+      "visit-sst.session" "visit-sst.session.gui"
+      "simulation/settings-files.json"
+      "simulation/settings-staging.json"
+      "simulation/settings-inline.json"
+      "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
+      "ReadMe.md"
+      DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
-  install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
+    install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
+    install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
+  endif()
 endif()

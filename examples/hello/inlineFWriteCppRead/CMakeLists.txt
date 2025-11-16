@@ -6,7 +6,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloFWriteCppReadExample)
 
+set(maybe_standalone_project OFF)
+
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   include(CheckLanguage)
@@ -29,10 +32,14 @@ if(ADIOS2_HAVE_Fortran)
   add_library(adios2_hello_inlineMixedLang inlineMixedLang.cpp)
   target_link_libraries(adios2_hello_inlineMixedLang adios2::cxx)
   target_include_directories(adios2_hello_inlineMixedLang PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_inlineMixedLang RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 
   add_executable(adios2_hello_inlineMixedLang_f inlineMixedLang.f90)
   target_link_libraries(adios2_hello_inlineMixedLang_f adios2_hello_inlineMixedLang adios2::fortran)
   set_target_properties(adios2_hello_inlineMixedLang_f PROPERTIES LINKER_LANGUAGE Fortran)
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_inlineMixedLang_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()

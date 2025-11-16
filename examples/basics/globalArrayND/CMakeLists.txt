@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2BasicsGlobalArrayNDExample)
 
+set(maybe_standalone_project OFF)
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -22,10 +24,14 @@ endif()
 
 add_executable(adios2_basics_globalArrayNDWrite globalArrayNDWrite.cpp)
 target_link_libraries(adios2_basics_globalArrayNDWrite adios2::cxx)
-install(TARGETS adios2_basics_globalArrayNDWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+if (maybe_standalone_project)
+  install(TARGETS adios2_basics_globalArrayNDWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_globalArrayNDWrite_mpi globalArrayNDWrite.cpp)
   target_link_libraries(adios2_basics_globalArrayNDWrite_mpi adios2::cxx_mpi MPI::MPI_CXX)
-  install(TARGETS adios2_basics_globalArrayNDWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (maybe_standalone_project)
+    install(TARGETS adios2_basics_globalArrayNDWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()
