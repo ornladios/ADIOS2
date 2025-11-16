@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2BasicsValuesExample)
 
+set(maybe_standalone_project OFF)
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components C)
 
   include(CheckLanguage)
@@ -32,22 +34,30 @@ endif()
 
 add_executable(adios2_basics_valuesWrite valuesWrite.cpp)
 target_link_libraries(adios2_basics_valuesWrite adios2::cxx)
-install(TARGETS adios2_basics_valuesWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+if (maybe_standalone_project)
+  install(TARGETS adios2_basics_valuesWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_valuesWrite_mpi valuesWrite.cpp)
   target_link_libraries(adios2_basics_valuesWrite_mpi adios2::cxx_mpi MPI::MPI_CXX)
-  install(TARGETS adios2_basics_valuesWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (maybe_standalone_project)
+    install(TARGETS adios2_basics_valuesWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 
   if(ADIOS2_HAVE_Fortran)
     add_library(adios2_basics_values_mpivars_f OBJECT mpivars.F90)
     target_link_libraries(adios2_basics_values_mpivars_f MPI::MPI_Fortran)
-    install(TARGETS adios2_basics_values_mpivars_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if (maybe_standalone_project)
+      install(TARGETS adios2_basics_values_mpivars_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
 
     add_executable(adios2_basics_values_f values.F90)
     target_link_libraries(adios2_basics_values_f
       adios2_basics_values_mpivars_f
       adios2::fortran_mpi MPI::MPI_Fortran)
-    install(TARGETS adios2_basics_values_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if (maybe_standalone_project)
+      install(TARGETS adios2_basics_values_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
   endif()
 endif()
