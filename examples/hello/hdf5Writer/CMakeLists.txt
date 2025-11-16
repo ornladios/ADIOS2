@@ -6,7 +6,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloHDF5WriterExample)
 
+set(maybe_standalone_project OFF)
+
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -25,11 +28,15 @@ endif()
 if(ADIOS2_HAVE_HDF5)
   add_executable(adios2_hello_hdf5Writer hdf5Writer_nompi.cpp)
   target_link_libraries(adios2_hello_hdf5Writer adios2::cxx)
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_hdf5Writer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 
   if(ADIOS2_HAVE_MPI)
     add_executable(adios2_hello_hdf5Writer_mpi hdf5Writer.cpp)
     target_link_libraries(adios2_hello_hdf5Writer_mpi adios2::cxx_mpi MPI::MPI_CXX)
+    if (maybe_standalone_project)
     install(TARGETS adios2_hello_hdf5Writer_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
   endif()
 endif()

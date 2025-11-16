@@ -6,11 +6,14 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloBPStepsWriteReadKokkosExample)
 
+set(maybe_standalone_project OFF)
+
 # CXX Compiler settings only in for this example
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(Kokkos 3.7 QUIET)
@@ -53,7 +56,9 @@ if(ADIOS2_HAVE_MPI)
 else()
   target_link_libraries(adios2_hello_bpStepsWriteReadKokkos adios2::cxx Kokkos::kokkos)
 endif()
+if (maybe_standalone_project)
 install(TARGETS adios2_hello_bpStepsWriteReadKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 # C++ Kokkos example using default memory space and layouts
 add_executable(adios2_hello_bpWriteReadKokkosView bpWriteReadKokkosView.cpp)
@@ -63,7 +68,9 @@ if(ADIOS2_HAVE_MPI)
 else()
   target_link_libraries(adios2_hello_bpWriteReadKokkosView adios2::cxx Kokkos::kokkos)
 endif()
+if (maybe_standalone_project)
 install(TARGETS adios2_hello_bpWriteReadKokkosView RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 # Fortran Kokkos example using default layouts and different memory spaces
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_Fortran AND flcl_FOUND)
@@ -75,5 +82,7 @@ if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_Fortran AND flcl_FOUND)
   if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set_target_properties(adios2_hello_bpStepsWriteReadKokkos_f PROPERTIES LINKER_LANGUAGE Fortran)
   endif()
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_bpStepsWriteReadKokkos_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()

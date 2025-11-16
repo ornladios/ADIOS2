@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2SimulationsHeatTransferWriteExample)
 
+set(maybe_standalone_project OFF)
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components C CXX)
 
   find_package(MPI COMPONENTS ${_components})
@@ -29,18 +31,20 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
     Settings.cpp
     IO_adios2.cpp
   )
-  target_link_libraries(adios2_simulations_heatTransferWrite adios2::cxx_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
-  install(TARGETS adios2_simulations_heatTransferWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
   add_executable(adios2_simulations_heatTransferWrite_ascii
     main.cpp
     HeatTransfer.cpp
     Settings.cpp
     IO_ascii.cpp
   )
-  target_link_libraries(adios2_simulations_heatTransferWrite_ascii MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
-  install(TARGETS adios2_simulations_heatTransferWrite_ascii RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+  target_link_libraries(adios2_simulations_heatTransferWrite adios2::cxx_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(adios2_simulations_heatTransferWrite_ascii MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
+
+  if (maybe_standalone_project)
+    install(TARGETS adios2_simulations_heatTransferWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS adios2_simulations_heatTransferWrite_ascii RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
   if(ADIOS2_HAVE_HDF5)
     add_executable(adios2_simulations_heatTransferWrite_hdf5
       main.cpp
@@ -51,7 +55,9 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
     target_include_directories(adios2_simulations_heatTransferWrite_hdf5 PRIVATE ${HDF5_C_INCLUDE_DIRS})
     target_link_libraries(adios2_simulations_heatTransferWrite_hdf5
       ${HDF5_C_LIBRARIES} MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
-    install(TARGETS adios2_simulations_heatTransferWrite_hdf5 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if (maybe_standalone_project)
+      install(TARGETS adios2_simulations_heatTransferWrite_hdf5 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
 
     if(HDF5_IS_PARALLEL)
       add_executable(adios2_simulations_heatTransferWrite_ph5
@@ -63,7 +69,9 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
       target_include_directories(adios2_simulations_heatTransferWrite_ph5 PRIVATE ${HDF5_C_INCLUDE_DIRS})
       target_link_libraries(adios2_simulations_heatTransferWrite_ph5
         ${HDF5_C_LIBRARIES} MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
-      install(TARGETS adios2_simulations_heatTransferWrite_ph5 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+      if (maybe_standalone_project)
+        install(TARGETS adios2_simulations_heatTransferWrite_ph5 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+      endif()
     endif()
 
     if(NOT (HDF5_VERSION VERSION_LESS 1.11))
@@ -75,7 +83,9 @@ if (ADIOS2_HAVE_MPI AND Threads_FOUND)
       )
       target_link_libraries(adios2_simulations_heatTransferWrite_h5mixer
         adios2::cxx_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
-      install(TARGETS adios2_simulations_heatTransferWrite_h5mixer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+      if (maybe_standalone_project)
+        install(TARGETS adios2_simulations_heatTransferWrite_h5mixer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+      endif()
     endif()
   endif()
 endif()

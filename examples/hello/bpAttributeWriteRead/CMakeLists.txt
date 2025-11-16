@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloBPAttributeWriteReadExample)
 
+set(maybe_standalone_project OFF)
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -22,10 +24,14 @@ endif()
 
 add_executable(adios2_hello_bpAttributeWriteRead bpAttributeWriteRead.cpp)
 target_link_libraries(adios2_hello_bpAttributeWriteRead adios2::cxx)
-install(TARGETS adios2_hello_bpAttributeWriteRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+if (maybe_standalone_project)
+  install(TARGETS adios2_hello_bpAttributeWriteRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_bpAttributeWriteRead_mpi bpAttributeWriteRead.cpp)
   target_link_libraries(adios2_hello_bpAttributeWriteRead_mpi adios2::cxx_mpi MPI::MPI_CXX)
-  install(TARGETS adios2_hello_bpAttributeWriteRead_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (maybe_standalone_project)
+    install(TARGETS adios2_hello_bpAttributeWriteRead_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()
