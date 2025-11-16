@@ -30,11 +30,11 @@ on:
   push:
     branches:
       - master
-      - release*
+      - 'release*'
   pull_request:
     branches:
       - master
-      - release*
+      - 'release*'
 
 permissions:
   contents: read
