@@ -6,7 +6,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloSstReaderExample)
 
+set(maybe_standalone_project OFF)
+
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -31,5 +34,7 @@ if(ADIOS2_HAVE_SST)
   else()
     target_link_libraries(adios2_hello_sstReader adios2::cxx)
   endif()
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_sstReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()
