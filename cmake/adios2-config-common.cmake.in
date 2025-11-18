@@ -257,23 +257,23 @@ if(NOT TARGET adios2::core)
     set_property(TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
     unset(_adios2_link_libs)
   endif()
-endif()
 
-if(${CMAKE_FIND_PACKAGE_NAME}_CXX_FOUND)
-  add_library(adios2::cxx11 INTERFACE IMPORTED)
-  target_link_libraries(adios2::cxx11 INTERFACE adios2::cxx)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
-    set_target_properties(adios2::cxx11 PROPERTIES
-      DEPRECATION "adios2::cxx11 target has been deprecated, please use adios2::cxx")
-  endif()
+  if(${CMAKE_FIND_PACKAGE_NAME}_CXX_FOUND)
+    add_library(adios2::cxx11 INTERFACE IMPORTED)
+    target_link_libraries(adios2::cxx11 INTERFACE adios2::cxx)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+      set_target_properties(adios2::cxx11 PROPERTIES
+        DEPRECATION "adios2::cxx11 target has been deprecated, please use adios2::cxx")
+    endif()
 
-  if(${CMAKE_FIND_PACKAGE_NAME}_MPI_FOUND)
-     add_library(adios2::cxx11_mpi INTERFACE IMPORTED)
-     target_link_libraries(adios2::cxx11_mpi INTERFACE adios2::cxx_mpi)
-     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
-       set_target_properties(adios2::cxx11_mpi PROPERTIES
-         DEPRECATION "adios2::cxx11_mpi target has been deprecated, please use adios2::cxx_mpi")
-     endif()
+    if(${CMAKE_FIND_PACKAGE_NAME}_MPI_FOUND)
+       add_library(adios2::cxx11_mpi INTERFACE IMPORTED)
+       target_link_libraries(adios2::cxx11_mpi INTERFACE adios2::cxx_mpi)
+       if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+         set_target_properties(adios2::cxx11_mpi PROPERTIES
+           DEPRECATION "adios2::cxx11_mpi target has been deprecated, please use adios2::cxx_mpi")
+       endif()
+    endif()
   endif()
 endif()
 
