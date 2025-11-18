@@ -2978,6 +2978,7 @@ x86_64_flush(void* base, void* limit)
     DWORD dummy;
     size_t size = ((intptr_t)limit - (intptr_t)base);
     result = VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy);
+    (void) result;
 #endif
 }
 extern void

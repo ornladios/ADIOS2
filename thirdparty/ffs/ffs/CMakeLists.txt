@@ -318,7 +318,7 @@ if(NOT HAS_IOV_BASE_IOVEC)
   set(NEED_IOVEC_DEFINE TRUE)
 endif()
 
-TRY_RUN(RUN_RESULT COMPILE_RESULT
+try_run(FFS_FLOAT_FORMAT_TEST COMPILE_RESULT
         # Binary directory:
         ${CMAKE_CURRENT_BINARY_DIR}/
         # source file

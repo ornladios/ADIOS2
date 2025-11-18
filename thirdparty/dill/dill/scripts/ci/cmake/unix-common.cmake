@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: eisen@cc.gatech.edu
 
 string(APPEND dashboard_cache "
 ")
