@@ -94,6 +94,7 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     DWORD dummy;
     result =
         VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
+    (void) result;
 #endif
     return tmp + pkg->entry_offset;
 }
