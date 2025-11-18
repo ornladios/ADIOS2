@@ -8,10 +8,12 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 #include <mutex>
 #include <random>
 #include <string>
+#include <thread>
 #include <vector>
 /// \endcond
 
@@ -75,11 +77,11 @@ private:
     }
 };
 
+// singleton
 class ADIOSFilePool
 {
-
 public:
-    ADIOSFilePool();
+    static ADIOSFilePool &getInstance();
     ~ADIOSFilePool();
 
     AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays);
@@ -87,6 +89,23 @@ public:
     void FlushUnused();
 
 private:
+    static ADIOSFilePool *instance;
+
+    // Private constructor
+    ADIOSFilePool();
+
+    // Delete copy constructor and assignment
+    ADIOSFilePool(const ADIOSFilePool &) = delete;
+    ADIOSFilePool &operator=(const ADIOSFilePool &) = delete;
+
+    void PeriodicTask(std::chrono::milliseconds interval);
+    void DoTimeoutTasks();
+    std::atomic<bool> m_ShutdownFlag{false};
+    std::thread periodicWorker()
+    {
+        return std::thread([=] { PeriodicTask(std::chrono::milliseconds(1000)); });
+    }
+    std::thread periodicThread;
     class SubPool
     {
 
