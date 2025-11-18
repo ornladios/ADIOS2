@@ -7,6 +7,7 @@
 
 int main(int argc, char **argv) 
 { 
+#ifdef VERBOSE_OUTPUT
     int verbose = 0;
     int i;
     for (i=1; i < argc; i++) {
@@ -14,7 +15,7 @@ int main(int argc, char **argv)
 	    verbose++;
 	}
     }
-
+#endif
     {
 	dill_stream s = dill_create_stream();
 	int (*func1)();

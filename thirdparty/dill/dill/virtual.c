@@ -526,6 +526,19 @@ dump_bbs(dill_stream c)
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#if defined __GNUC__ && defined __GNUC_MINOR__
+# define __GNUC_PREREQ(maj, min) \
+        ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+#else
+# define __GNUC_PREREQ(maj, min) 0
+#endif
+#  if __GNUC_PREREQ(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#  endif
+#endif
+/* overflow is confused about operation on bit_vec->vec, suppress warning */
 static int
 add_regs(bit_vec dest, bit_vec src)
 {
@@ -553,6 +566,11 @@ remove_regs(bit_vec dest, bit_vec src)
         dest->vec[i] = (dest->vec[i] & ~src->vec[i]);
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#  if __GNUC_PREREQ(4,6)
+#pragma GCC diagnostic pop
+#  endif
+#endif
 
 static void
 clear_bit_vec(bit_vec b)
