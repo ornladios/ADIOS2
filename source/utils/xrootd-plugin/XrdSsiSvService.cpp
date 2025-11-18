@@ -238,7 +238,7 @@ void XrdSsiSvService::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resR
     // efficient ways of doing this (e.g. a dedicated task object) but this is OK.
     // The agent will delete itself when the request is actually finished.
     //
-    agent = new XrdSsiSvService(resRef.rName.c_str(), &m_ParentFilePool);
+    agent = new XrdSsiSvService(resRef.rName.c_str());
     agent->ProcessRequest4Me(&reqRef);
 }
 XrdSsiSvService::~XrdSsiSvService()

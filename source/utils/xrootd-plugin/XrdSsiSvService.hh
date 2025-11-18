@@ -74,13 +74,6 @@ public:
         *m_respMeta = 0;
     }
 
-    XrdSsiSvService(const char *sname, ADIOSFilePool *parentPoolPointer = NULL)
-    {
-        sName = strdup(sname ? sname : "");
-        *m_respMeta = 0;
-        m_FilePoolPtr = parentPoolPointer;
-    }
-
 protected:
     //-----------------------------------------------------------------------------
     //! Notify a service that a request either completed or was canceled. This
@@ -114,7 +107,6 @@ private:
     char m_respData[1024];
     int streamRdSz;
     bool streamActv;
-    adios2::ADIOSFilePool m_ParentFilePool; // unused except in parent object
-    adios2::ADIOSFilePool *m_FilePoolPtr;   // pointer to parent object pool
+    adios2::ADIOSFilePool *m_FilePoolPtr = &adios2::ADIOSFilePool::getInstance();
 };
 #endif
