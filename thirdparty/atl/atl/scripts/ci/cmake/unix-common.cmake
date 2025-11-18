@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: eisen@cc.gatech.edu
 
 if(NOT CTEST_CMAKE_GENERATOR)
   set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

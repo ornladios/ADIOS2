@@ -1,9 +1,6 @@
 # Client maintainer: eisen@cc.gatech.edu
 
-set(dashboard_cache "
-")
-
-set(CTEST_CMAKE_GENERATOR "Visual Studio 16")
+set(CTEST_CMAKE_GENERATOR "Visual Studio 16 2019")
 set(CTEST_CMAKE_GENERATOR_PLATFORM x64)
 set(CTEST_CMAKE_GENERATOR_TOOLSET ClangCL)
 
