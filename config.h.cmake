@@ -156,3 +156,7 @@
 
 /* set to 1 if bigendian, 0 otherwise */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
+
+/* set to one of Format_IEEE_754_{bigendian, littleendian, mixedendian} */
+#define FFS_FLOAT_FORMAT @FFS_FLOAT_FORMAT@
+

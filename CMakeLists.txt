@@ -1,13 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat FFS as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS FFS)
 
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-project(FFS VERSION 3.1.5)
+project(FFS VERSION 3.1.9)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -110,7 +106,11 @@ CHECK_TYPE_SIZE("long" SIZEOF_LONG)
 CHECK_TYPE_SIZE("long double" SIZEOF_LONG_DOUBLE)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+if (${CMAKE_C_BYTE_ORDER} STREQUAL "BIG_ENDIAN")
+set (WORDS_BIGENDIAN 1)
+else()
+set (WORDS_BIGENDIAN 0)
+endif()
 
 if(NOT (DEFINED NO_SOCKETS))
   check_function_exists(socket SOCKETS_FOUND)
@@ -245,7 +245,7 @@ target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/ffs>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-find_package(dill 3.0.0)
+find_package(dill 3.0.0 QUIET)
 
 option(FFS_USE_DILL "Enable Dill code generation" ${DILL_FOUND})
 
@@ -317,6 +317,14 @@ CHECK_STRUCT_HAS_MEMBER("struct iovec" iov_base sys/uio.h HAS_IOV_BASE_IOVEC)
 if(NOT HAS_IOV_BASE_IOVEC)
   set(NEED_IOVEC_DEFINE TRUE)
 endif()
+
+try_run(FFS_FLOAT_FORMAT_TEST COMPILE_RESULT
+        # Binary directory:
+        ${CMAKE_CURRENT_BINARY_DIR}/
+        # source file
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/float_format_test.c
+	RUN_OUTPUT_VARIABLE FFS_FLOAT_FORMAT)
+message(STATUS "Float format is ${FFS_FLOAT_FORMAT}")
 
 if(NOT DEFINED FORMAT_SERVER_HOST)
   set(FORMAT_SERVER_HOST "formathost.cercs.gatech.edu")

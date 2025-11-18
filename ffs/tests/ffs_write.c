@@ -61,6 +61,7 @@ main(int argc, char **argv)
 	    /* argument */
 	    if (argv[i][1] == 'v') {
 		verbose++;
+                (void)verbose;
 	    } else if (argv[i][1] == 'i') {
 		indexed++;
 	    } else if (argv[i][1] == 'a') {

@@ -340,9 +340,7 @@ static void check_strbuf()
 #define yyconst
 #endif 
 
-#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus)
 #define YY_USE_PROTOS
-#endif
 
 #ifndef YY_PROTO
 #ifdef YY_USE_PROTOS
