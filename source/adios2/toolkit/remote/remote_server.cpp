@@ -12,6 +12,7 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosNetwork.h"
 #include "adios2/operator/OperatorFactory.h"
+#include "adios2/toolkit/remote/Remote.h" // EncodedStringToParams
 #include <evpath.h>
 
 #include <cstdio>  // remove
@@ -164,7 +165,7 @@ public:
     size_t m_OperationCount = 0;
     RemoteFileMode m_mode = EVPathRemoteCommon::RemoteFileMode::RemoteOpen;
     AnonADIOSFile(std::string FileName, EVPathRemoteCommon::RemoteFileMode mode,
-                  bool RowMajorArrays)
+                  bool RowMajorArrays, std::string EngineParameters)
     {
         Mode adios_read_mode = adios2::Mode::Read;
         m_FileName = FileName;
@@ -175,6 +176,11 @@ public:
         m_mode = mode;
         if (m_mode == RemoteOpenRandomAccess)
             adios_read_mode = adios2::Mode::ReadRandomAccess;
+        auto params = EncodedStringToParams(EngineParameters);
+        for (const auto &p : params)
+        {
+            m_io->SetParameter(p.first, p.second);
+        }
         m_engine = &m_io->Open(FileName, adios_read_mode);
         memcpy(&m_ID, m_IOname.c_str(), sizeof(m_ID));
     }
@@ -266,7 +272,9 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
         strMode = "RandomAccess";
     try
     {
-        f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
+        log_output("OpenHandler params = [" + std::string(open_msg->EngineParameters) + "]");
+        f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder,
+                              open_msg->EngineParameters);
         open_response_msg.FileHandle = f->m_ID;
     }
     catch (...)

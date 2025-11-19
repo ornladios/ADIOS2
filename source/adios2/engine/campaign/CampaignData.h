@@ -179,6 +179,8 @@ public:
     // return 0 if there is no replica found for 'hostname', otherwise the replica index
     size_t FindReplicaOnHost(const size_t datasetIdx, std::string hostname);
 
+    std::string GetTarIdx(const size_t dsIdx, const size_t repIdx);
+
 private:
     void DumpToFileOrMemory(const CampaignFile &file, std::string &keyHex, const std::string &path,
                             char *data);

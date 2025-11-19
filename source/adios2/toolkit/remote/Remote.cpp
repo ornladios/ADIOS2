@@ -24,7 +24,7 @@ namespace adios2
 {
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode, bool RowMajorOrdering)
+                  const Mode mode, bool RowMajorOrdering, const adios2::Params &params)
 {
     ThrowUp(("RemoteOpen"));
 };
@@ -208,6 +208,33 @@ std::string Remote::GetKeyFromConnectionManager(const std::string keyID)
 
     socket.Close();
     return keyhex;
+}
+
+std::string ParamsToEncodedString(const adios2::Params &params)
+{
+    std::string pstr;
+    if (params.size() > 0)
+    {
+        for (const auto &p : params)
+        {
+            if (!pstr.empty())
+                pstr += EVPathRemoteCommon::EngineParametersSeparator;
+            pstr += p.first + "=" + p.second;
+        }
+    }
+    return pstr;
+}
+
+adios2::Params EncodedStringToParams(const std::string &pstr)
+{
+    adios2::Params p;
+    auto entries = helper::StringToVector(pstr, EVPathRemoteCommon::EngineParametersSeparator);
+    for (auto const &e : entries)
+    {
+        auto pair = helper::StringToVector(e, '=');
+        p.emplace(pair[0], pair[1]);
+    }
+    return p;
 }
 
 } // end namespace adios2

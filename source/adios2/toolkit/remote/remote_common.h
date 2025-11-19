@@ -24,7 +24,10 @@ typedef struct _OpenFileMsg
     char *FileName;
     RemoteFileMode Mode;
     int RowMajorOrder;
+    char *EngineParameters;
 } *OpenFileMsg;
+
+const char EngineParametersSeparator = char(9); // TAB
 
 typedef struct _OpenResponseMsg
 {
@@ -172,6 +175,7 @@ struct Remote_evpath_state
 };
 
 void RegisterFormats(struct Remote_evpath_state &ev_state);
+
 #endif
 
 }; // end of namespace remote_common

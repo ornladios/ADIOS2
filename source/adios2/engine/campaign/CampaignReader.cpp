@@ -260,18 +260,33 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
     CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
     CampaignReplica &rep = ds.replicas[repIdx];
 
-    std::string tarpath;
+    std::string remotePath = m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
+
     if (rep.archiveIdx > 0)
     {
         auto itTarName = m_CampaignData.tarnames.find(rep.archiveIdx);
         if (itTarName != m_CampaignData.tarnames.end())
         {
-            tarpath = itTarName->second + "/";
+            std::string tarpath = itTarName->second;
+            remotePath = m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath;
+            std::string taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+            if (taropt.empty())
+            {
+                std::cout << "ERROR: Remote file " << remotePath
+                          << " is in a TAR file but without offset info. Skip" << std::endl;
+                return "";
+            }
+            if (m_Options.verbose > 0)
+            {
+
+                std::cout << "Open remote file in TAR file " << remotePath << " with tar indices "
+                          << taropt << "\n";
+            }
+            io.SetParameter("TarInfo", taropt);
+            io.SetEngine("BP5");
         }
     }
 
-    const std::string remotePath =
-        m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
     const std::string remoteURL = m_CampaignData.hosts[rep.hostIdx].hostname + ":" + remotePath;
     localPath =
         m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
@@ -445,8 +460,8 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         }
         else if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "https")
         {
-            std::string url = "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" +
-                              m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
+            std::string url =
+                "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" + remotePath;
             Params p;
             p.emplace("Library", "https");
             // p.emplace("hostname", m_CampaignData.hosts[rep.hostIdx].longhostname);
@@ -743,11 +758,49 @@ void CampaignReader::InitTransports()
         else
         {
             CampaignReplica &rep = ds.replicas[repIdx];
-            localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
-            if (m_Options.verbose > 0)
+            if (rep.archiveIdx == 0)
             {
-                std::cout << "Open local file " << localPath << "\n";
+                localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                if (m_Options.verbose > 0)
+                {
+                    std::cout << "Open local file " << localPath << "\n";
+                }
             }
+            else
+            {
+                std::string taropt;
+                auto itTarName = m_CampaignData.tarnames.find(rep.archiveIdx);
+                if (itTarName != m_CampaignData.tarnames.end())
+                {
+                    std::string tarpath = itTarName->second;
+                    localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + tarpath;
+                    taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+                    if (taropt.empty())
+                    {
+                        std::cout << "ERROR: Local file " << localPath
+                                  << " is in a TAR file but without offset info. Skip" << std::endl;
+                        continue;
+                    }
+                    if (m_Options.verbose > 0)
+                    {
+
+                        std::cout << "Open local file in TAR file " << localPath
+                                  << " with tar indices " << taropt << "\n";
+                    }
+                    io.SetParameter("TarInfo", taropt);
+                    io.SetEngine("BP5");
+                }
+                else
+                {
+                    localPath =
+                        m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "Open local file in archive dir " << localPath << "\n";
+                    }
+                }
+            }
+
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable

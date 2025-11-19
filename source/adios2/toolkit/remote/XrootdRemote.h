@@ -101,7 +101,7 @@ public:
     explicit operator bool() const { return m_OpenSuccess; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode, bool RowMajorOrdering);
+              const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
                   Dims &Start, Accuracy &accuracy, void *dest);
