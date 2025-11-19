@@ -87,14 +87,18 @@ private:
         void *originalVar; // Variable<T> in m_IO
         size_t dsIdx;      // in m_CampaignData.datasets
         size_t repIdx;     // in m_CampaignData.datasets.replicas
-        std::string path;  // local file path, empty for in-DB data
-        CampaignVarInternalInfo(void *p, size_t i, size_t j) : originalVar(p), dsIdx(i), repIdx(j)
+        std::string path;  // local/remote file path, empty for in-DB data
+        bool local;        // local or remote?
+        CampaignVarInternalInfo(void *p, size_t i, size_t j, bool local)
+        : originalVar(p), dsIdx(i), repIdx(j), local(local), taroffset(0), tarsize(0)
         {
         }
-        CampaignVarInternalInfo(void *p, size_t i, size_t j, const std::string &path)
-        : originalVar(p), dsIdx(i), repIdx(j), path(path)
+        CampaignVarInternalInfo(void *p, size_t i, size_t j, bool local, const std::string &path)
+        : originalVar(p), dsIdx(i), repIdx(j), path(path), local(local), taroffset(0), tarsize(0)
         {
         }
+        size_t taroffset; // location in a TAR file
+        size_t tarsize;   // >0 means the data is in a TAR file at taroffset
     };
     std::unordered_map<std::string, CampaignVarInternalInfo> m_CampaignVarInternalInfo;
 
@@ -140,9 +144,11 @@ private:
                                  const size_t dsIdx, const size_t repIdx,
                                  const std::string localPath);
     void CreateTextVariable(const std::string &name, const size_t len, const size_t dsIdx,
-                            const size_t repIdx, const std::string localPath = "");
+                            const size_t repIdx, const bool local, const std::string &path = "",
+                            const std::string &taropt = "");
     void CreateImageVariable(const std::string &name, const size_t len, const size_t dsIdx,
-                             const size_t repIdx, const std::string localPath = "");
+                             const size_t repIdx, const bool local, const std::string &path = "",
+                             const std::string &taropt = "");
 
     void GetVariableFromDB(std::string name, size_t dsIdx, size_t repIdx, DataType type,
                            void *data);
@@ -196,7 +202,7 @@ private:
 
     // for reading individual remote file
     void ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
-                        const size_t size, void *data);
+                        const size_t offset, const size_t size, void *data);
 
     // check if name is included and not excluded by patterns
     bool Matches(const std::string &dsname);

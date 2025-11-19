@@ -173,6 +173,7 @@ public:
     MACRO(RemoteDataPath, String, std::string, "")                                                 \
     MACRO(RemoteHost, String, std::string, "")                                                     \
     MACRO(UUID, String, std::string, "")                                                           \
+    MACRO(TarInfo, String, std::string, "")                                                        \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
     struct BP5Params

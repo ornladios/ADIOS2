@@ -13,6 +13,7 @@ FMField OpenFileList[] = {
     {"FileName", "string", sizeof(char *), FMOffset(OpenFileMsg, FileName)},
     {"Mode", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, Mode)},
     {"RowMajorOrder", "integer", sizeof(int), FMOffset(OpenFileMsg, RowMajorOrder)},
+    {"EngineParameters", "string", sizeof(char *), FMOffset(OpenFileMsg, EngineParameters)},
     {NULL, NULL, 0, 0}};
 
 FMStructDescRec OpenFileStructs[] = {{"OpenFile", OpenFileList, sizeof(struct _OpenFileMsg), NULL},
