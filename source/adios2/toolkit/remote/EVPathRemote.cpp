@@ -119,7 +119,7 @@ void EVPathRemote::InitCMData()
 }
 
 void EVPathRemote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                        const Mode mode, bool RowMajorOrdering)
+                        const Mode mode, bool RowMajorOrdering, const Params &params)
 {
 
     EVPathRemoteCommon::_OpenFileMsg open_msg;
@@ -163,6 +163,11 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     }
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
     open_msg.RowMajorOrder = RowMajorOrdering;
+    std::string pstr = ParamsToEncodedString(params);
+    std::vector<char> buffer(pstr.size() + 1);
+    std::memcpy(buffer.data(), pstr.c_str(), pstr.size() + 1);
+    open_msg.EngineParameters = buffer.data(); // pstr.c_str();
+
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
     if (CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition) != 1)

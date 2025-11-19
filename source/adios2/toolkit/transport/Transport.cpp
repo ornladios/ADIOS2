@@ -18,7 +18,7 @@ namespace adios2
 {
 
 Transport::Transport(const std::string type, const std::string library, helper::Comm const &comm)
-: m_Type(type), m_Library(library), m_Comm(comm)
+: m_Type(type), m_Library(library), m_Comm(comm), m_BaseOffset(0), m_BaseSize(0)
 {
 }
 

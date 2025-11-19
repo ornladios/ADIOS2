@@ -12,9 +12,9 @@
 #define ADIOS2_HELPER_ADIOSSTRING_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -179,6 +179,13 @@ size_t StringToByteUnits(const std::string &input, const std::string &hint);
 Params LowerCaseParams(const Params &params);
 
 /**
+ * pretty-print format a parameter map.
+ * @param params parameter map
+ * @return String for printing the map.
+ */
+std::string ParamsToString(const Params &params);
+
+/**
  * Extract inputs subset that matches a prefix input
  * @param prefix input prefix
  * @param inputs input names
@@ -204,6 +211,12 @@ std::string RandomString(const size_t length);
  * Split a string into a vector of strings using the delimiter character.
  */
 std::vector<std::string> StringToVector(const std::string &s, const char delimiter = ';');
+
+/**
+ * Split a tar info string  (name,offset,size;name,offset,size;...) into a map.
+ */
+using TarInfoMap = std::unordered_map<std::string, std::tuple<size_t, size_t>>;
+TarInfoMap StringToTarInfo(const std::string &s);
 
 } // end namespace helper
 } // end namespace adios2

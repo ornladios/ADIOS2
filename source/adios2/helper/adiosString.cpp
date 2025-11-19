@@ -16,6 +16,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
 #include <ios> //std::ios_base::failure
+#include <iostream>
 #include <random>
 #include <sstream>
 #include <stdexcept> // std::invalid_argument
@@ -452,6 +453,18 @@ Params LowerCaseParams(const Params &params)
     return lower_case_params;
 }
 
+std::string ParamsToString(const Params &params)
+{
+    std::ostringstream mapSS;
+    mapSS << "\n{\n";
+    for (const auto &p : params)
+    {
+        mapSS << "  " << p.first << " = " << p.second << "\n";
+    }
+    mapSS << "}";
+    return mapSS.str();
+}
+
 std::set<std::string> PrefixMatches(const std::string &prefix,
                                     const std::set<std::string> &inputs) noexcept
 {
@@ -518,6 +531,28 @@ std::vector<std::string> StringToVector(const std::string &s, const char delimit
     // Add the last segment
     result.emplace_back(s.substr(start));
     return result;
+}
+
+TarInfoMap StringToTarInfo(const std::string &s)
+{
+    TarInfoMap m;
+    auto entries = StringToVector(s, ';');
+    for (auto &e : entries)
+    {
+        auto triplet = StringToVector(e, ',');
+        if (triplet.size() == 1 && triplet[0].empty())
+            continue;
+        if (triplet.size() != 3)
+        {
+            helper::Throw<std::runtime_error>(
+                "Helper", "adiosString", "StringToTarInfo",
+                "Entry " + e + " is not a triplet of name,offset,size in the tar info string " + s);
+        }
+        m.emplace(triplet[0],
+                  std::make_tuple(helper::StringToSizeT(triplet[1], "tar info string offset"),
+                                  helper::StringToSizeT(triplet[2], "tar info string size")));
+    }
+    return m;
 }
 
 } // end namespace helper

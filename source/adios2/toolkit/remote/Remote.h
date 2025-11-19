@@ -15,6 +15,7 @@
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {
@@ -36,7 +37,7 @@ public:
     virtual explicit operator bool() const { return false; }
 
     virtual void Open(const std::string hostname, const int32_t port, const std::string filename,
-                      const Mode mode, bool RowMajorOrdering);
+                      const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
     virtual void OpenSimpleFile(const std::string hostname, const int32_t port,
                                 const std::string filename);
@@ -60,6 +61,9 @@ public:
 private:
     const std::shared_ptr<adios2::HostOptions> m_HostOptions;
 };
+
+std::string ParamsToEncodedString(const adios2::Params &params);
+adios2::Params EncodedStringToParams(const std::string &pstr);
 
 } // end namespace adios2
 

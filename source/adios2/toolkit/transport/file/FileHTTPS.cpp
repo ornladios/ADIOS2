@@ -57,6 +57,7 @@ void FileHTTPS::SetParameters(const Params &params)
     helper::SetParameterValue("hostname", params, m_hostname);
     helper::SetParameterValue("path", params, m_path);
     helper::SetParameterValueInt("verbose", params, m_Verbose, "");
+    helper::SetParameterValue("filenameintar", params, m_FileNameInTar);
 
     std::string recheckStr = "true";
     helper::SetParameterValue("recheck_metadata", params, recheckStr);
@@ -84,17 +85,21 @@ void FileHTTPS::SetUpCache()
 {
     if (!m_CachePath.empty())
     {
-        if (helper::EndsWith(m_path, "md.idx"))
+        std::string path = m_path;
+        if (!m_FileNameInTar.empty())
+            path = m_FileNameInTar;
+
+        if (helper::EndsWith(path, "md.idx"))
         {
             m_CachingThisFile = true;
             m_CacheFilePath = m_CachePath + "/md.idx";
         }
-        else if (helper::EndsWith(m_path, "mmd.0"))
+        else if (helper::EndsWith(path, "mmd.0"))
         {
             m_CachingThisFile = true;
             m_CacheFilePath = m_CachePath + "/mmd.0";
         }
-        else if (helper::EndsWith(m_path, "md.0"))
+        else if (helper::EndsWith(path, "md.0"))
         {
             m_CachingThisFile = true;
             m_CacheFilePath = m_CachePath + "/md.0";
@@ -241,14 +246,14 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
 
     const size_t BUF_SIZE = 8192;
     std::string request = "GET " + m_path + " HTTP/1.1\r\nHost: " + m_hostname +
-                          "\r\nRange: bytes=" + std::to_string(start) + "-" +
-                          std::to_string(start + size - 1) + "\r\n\r\n";
+                          "\r\nRange: bytes=" + std::to_string(start + m_BaseOffset) + "-" +
+                          std::to_string(start + m_BaseOffset + size - 1) + "\r\n\r\n";
 
     m_ssl.Connect(m_hostname, m_server_port);
 
     if (m_Verbose > 1)
     {
-        std::cout << "Request: [" << request << "]" << std::endl;
+        std::cout << "FileHTTPS::Read Request: [" << request << "]" << std::endl;
     }
 
     m_ssl.Write(request.c_str(), (int)request.size());
@@ -305,6 +310,17 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
 
 size_t FileHTTPS::GetSize()
 {
+
+    if (m_IsCached && !m_RecheckMetadata)
+    {
+        return m_Size;
+    }
+
+    if (m_BaseSize > 0)
+    {
+        return m_BaseSize;
+    }
+
     m_ssl.Connect(m_hostname, m_server_port);
 
     std::string request =
@@ -312,7 +328,7 @@ size_t FileHTTPS::GetSize()
 
     if (m_Verbose > 1)
     {
-        std::cout << "Request: [" << request << "]" << std::endl;
+        std::cout << "FileHTTPS::GetSize Request: [" << request << "]" << std::endl;
     }
     m_ssl.Write(request.c_str(), (int)request.size());
 

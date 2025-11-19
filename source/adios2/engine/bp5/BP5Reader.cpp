@@ -403,6 +403,36 @@ void BP5Reader::EndStep()
     MinBlocksInfoMap.clear();
 }
 
+std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params)
+{
+    if (m_dataIsRemote)
+        return path;
+    auto fileName = adios2sys::SystemTools::GetFilenameName(path);
+    std::string retval = path;
+    if (m_Parameters.verbose > 1)
+    {
+        std::cout << "--- UpdateWithTarInfo path = " << path << ", fileName = " << fileName
+                  << "  map size = " << m_TarInfoMap.size() << std::endl;
+    }
+    auto it = m_TarInfoMap.find(fileName);
+    if (it != m_TarInfoMap.end())
+    {
+        std::string offset = std::to_string(std::get<0>(it->second));
+        std::string size = std::to_string(std::get<1>(it->second));
+        params["taroffset"] = offset;
+        params["tarsize"] = size;
+        params["filenameintar"] = fileName;
+        // Do not use this for URLs: retval = adios2sys::SystemTools::GetFilenamePath(path);
+        retval = path.substr(0, path.length() - fileName.length() - 1);
+        if (m_Parameters.verbose > 1)
+        {
+            std::cout << "--- UpdateWithTarInfo Add params taroffset = " << offset
+                      << ", tarsize = " << size << " for file " << retval << std::endl;
+        }
+    }
+    return retval;
+}
+
 std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
                                               const size_t maxOpenFiles, const size_t WriterRank,
                                               const size_t Timestep, const size_t StartOffset,
@@ -420,13 +450,14 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
     TP startSubfile = NOW();
     if (FileManager.m_Transports.count(SubfileNum) == 0)
     {
-        const std::string subFileName =
+        std::string subFileName =
             GetBPSubStreamName(m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
         if (FileManager.m_Transports.size() >= maxOpenFiles)
         {
             auto m = FileManager.m_Transports.begin();
             FileManager.CloseFiles((int)m->first);
         }
+        subFileName = UpdateWithTarInfo(subFileName, m_IO.m_TransportsParameters[0]);
         FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read, m_IO.m_TransportsParameters[0],
                                /*{{"transport", "File"}},*/ true);
         if (!m_WriterIsActive)
@@ -536,7 +567,15 @@ void BP5Reader::PerformGets()
             int localPort = pair.second;
             if (m_Remote && localPort > -1)
             {
-                m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
+                Params p;
+                if (!m_Parameters.TarInfo.empty())
+                    p.emplace("TarInfo", m_Parameters.TarInfo);
+                if (!m_Parameters.SelectSteps.empty())
+                    p.emplace("SelectSteps", m_Parameters.SelectSteps);
+                if (m_Parameters.IgnoreFlattenSteps)
+                    p.emplace("IgnoreFlattenSteps", "true");
+
+                m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering, p);
             }
         }
 #endif
@@ -1029,6 +1068,12 @@ void BP5Reader::Init()
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
     }
 
+    // Don't try to open the remote file when we open local metadata.  Do that on demand.
+    if (!m_Parameters.RemoteDataPath.empty())
+        m_dataIsRemote = true;
+    if (getenv("DoRemote") || getenv("DoXRootD"))
+        m_dataIsRemote = true;
+
     if (m_ReadMetadataFromFile)
     {
         /* Do a collective wait for the file(s) to appear within timeout.
@@ -1044,12 +1089,6 @@ void BP5Reader::Init()
         TimePoint timeoutInstant = Now() + timeoutSeconds;
         OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
         UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
-
-        // Don't try to open the remote file when we open local metadata.  Do that on demand.
-        if (!m_Parameters.RemoteDataPath.empty())
-            m_dataIsRemote = true;
-        if (getenv("DoRemote") || getenv("DoXRootD"))
-            m_dataIsRemote = true;
     }
 }
 
@@ -1128,7 +1167,8 @@ size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::s
         {
             errno = 0;
             const bool profile = true;
-            file = m_TransportFactory.OpenFileTransport(fileName, adios2::Mode::Read,
+            std::string newFileName = UpdateWithTarInfo(fileName, m_IO.m_TransportsParameters[0]);
+            file = m_TransportFactory.OpenFileTransport(newFileName, adios2::Mode::Read,
                                                         m_IO.m_TransportsParameters[0], profile,
                                                         false, m_Comm);
             flag = 0; // found file
@@ -1160,14 +1200,14 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
     if (m_Comm.Rank() == 0)
     {
         /* Open the metadata index table */
-        const std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
+        std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
 
         flag = OpenWithTimeout(m_MDIndexFile, metadataIndexFile, timeoutInstant, pollSeconds,
                                lasterrmsg);
         if (flag == 0)
         {
             /* Open the metadata file */
-            const std::string metadataFile(GetBPMetadataFileName(m_Name));
+            std::string metadataFile(GetBPMetadataFileName(m_Name));
 
             /* We found md.idx. If we don't find md.0 immediately  we should
              * wait a little bit hoping for the file system to catch up.
@@ -1292,6 +1332,15 @@ void BP5Reader::InitTransports()
         Params defaultTransportParameters;
         defaultTransportParameters["transport"] = "File";
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
+    }
+    if (!m_Parameters.TarInfo.empty())
+    {
+        m_TarInfoMap = helper::StringToTarInfo(m_Parameters.TarInfo);
+        if (m_Parameters.verbose > 1)
+        {
+            std::cout << "--- BP5Reader TarInfo = " << m_Parameters.TarInfo
+                      << "\n    map size = " << m_TarInfoMap.size() << std::endl;
+        }
     }
 }
 

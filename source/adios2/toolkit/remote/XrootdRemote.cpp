@@ -306,7 +306,7 @@ namespace adios2
 XrootdRemote::XrootdRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
 XrootdRemote::~XrootdRemote() {}
 void XrootdRemote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                        const Mode mode, bool RowMajorOrdering)
+                        const Mode mode, bool RowMajorOrdering, const Params &params)
 {
 #ifdef ADIOS2_HAVE_XROOTD
     m_Filename = filename;

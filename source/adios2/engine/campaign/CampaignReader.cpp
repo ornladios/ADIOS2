@@ -16,6 +16,7 @@
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
+#include "adios2/toolkit/transportman/TransportMan.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
@@ -260,18 +261,35 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
     CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
     CampaignReplica &rep = ds.replicas[repIdx];
 
-    std::string tarpath;
+    std::string remotePath = m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
+    std::string taropt;
+    CampaignVarInternalInfo *cvii = nullptr;
+
     if (rep.archiveIdx > 0)
     {
         auto itTarName = m_CampaignData.tarnames.find(rep.archiveIdx);
         if (itTarName != m_CampaignData.tarnames.end())
         {
-            tarpath = itTarName->second + "/";
+            std::string tarpath = itTarName->second;
+            remotePath = m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath;
+            taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+            if (taropt.empty())
+            {
+                std::cout << "ERROR: Remote file " << remotePath
+                          << " is in a TAR file but without offset info. Skip" << std::endl;
+                return "";
+            }
+            if (m_Options.verbose > 0)
+            {
+
+                std::cout << "Open remote file in TAR file " << remotePath << " with tar indices "
+                          << taropt << "\n";
+            }
+            io.SetParameter("TarInfo", taropt);
+            io.SetEngine("BP5");
         }
     }
 
-    const std::string remotePath =
-        m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
     const std::string remoteURL = m_CampaignData.hosts[rep.hostIdx].hostname + ":" + remotePath;
     localPath =
         m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
@@ -333,10 +351,11 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         helper::CreateDirectory(cachePath);
     }
 
+    std::string newLocalPath = localPath;
+
     // first file is HDF5's file to be opened as path
     // second file is min/max data if available
     // first file if TEXT's file to be opened as path
-    std::string newLocalPath = localPath;
     bool setHDF5FilePath = true;
     if (rep.files.size())
     {
@@ -347,7 +366,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable, will read from DB directly, no local path
-                CreateTextVariable(ds.name, f.lengthOriginal, dsIdx, repIdx);
+                CreateTextVariable(ds.name, f.lengthOriginal, dsIdx, repIdx, false);
                 continue;
             }
             else if (ds.format == FileFormat::IMAGE)
@@ -355,7 +374,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 // IMAGE -> create a variable, will read from DB directly, no local path
                 std::string imgName =
                     ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
-                CreateImageVariable(imgName, f.lengthOriginal, dsIdx, repIdx);
+                CreateImageVariable(imgName, f.lengthOriginal, dsIdx, repIdx, false);
                 continue;
             }
             else
@@ -379,14 +398,14 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         if (ds.format == FileFormat::TEXT)
         {
             // TEXT -> create a variable, will read from remote
-            CreateTextVariable(ds.name, rep.size, dsIdx, repIdx);
+            cvii = CreateTextVariable(ds.name, rep.size, dsIdx, repIdx, false, remotePath, taropt);
         }
         else if (ds.format == FileFormat::IMAGE)
         {
             // IMAGE -> create a variable, will read from remote
             std::string imgName =
                 ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
-            CreateImageVariable(imgName, rep.size, dsIdx, repIdx);
+            cvii = CreateImageVariable(imgName, rep.size, dsIdx, repIdx, false, remotePath, taropt);
         }
         else
         {
@@ -413,14 +432,22 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                     const std::string objPath =
                         m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
                     Params p;
-                    p.emplace("Library", "awssdk");
+                    p.emplace("library", "awssdk");
                     p.emplace("endpoint", endpointURL);
                     p.emplace("cache", cachePath);
                     p.emplace("verbose", std::to_string(ho.verbose));
                     p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
-                    io.AddTransport("File", p);
-                    io.SetParameter("UUID", ds.uuid);
-                    io.SetEngine("BP5");
+                    if (cvii)
+                    {
+                        cvii->params = p;
+                        cvii->path = objPath;
+                    }
+                    else
+                    {
+                        io.AddTransport("File", p);
+                        io.SetParameter("UUID", ds.uuid);
+                        io.SetEngine("BP5");
+                    }
                     newLocalPath = remotePath;
                     if (ho.isAWS_EC2)
                     {
@@ -445,27 +472,35 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         }
         else if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "https")
         {
-            std::string url = "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" +
-                              m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath + rep.name;
+            std::string url =
+                "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" + remotePath;
             Params p;
-            p.emplace("Library", "https");
+            p.emplace("library", "https");
             // p.emplace("hostname", m_CampaignData.hosts[rep.hostIdx].longhostname);
             // p.emplace("path", m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath +
             // rep.name);
             p.emplace("cache", cachePath);
             p.emplace("verbose", std::to_string(m_Options.verbose));
             p.emplace("recheck_metadata", "false");
-            io.AddTransport("File", p);
-            io.SetParameter("UUID", ds.uuid);
-            if (ds.format == FileFormat::HDF5)
+            if (cvii)
             {
-                io.SetEngine("HDF5");
+                cvii->params = p;
+                cvii->path = url;
             }
             else
             {
-                io.SetEngine("BP5");
-            }
+                io.AddTransport("File", p);
+                io.SetParameter("UUID", ds.uuid);
 
+                if (ds.format == FileFormat::HDF5)
+                {
+                    io.SetEngine("HDF5");
+                }
+                else
+                {
+                    io.SetEngine("BP5");
+                }
+            }
             if (m_Options.verbose > 0)
             {
                 std::cout << "Open remote URL " << url << " \n";
@@ -717,6 +752,7 @@ void CampaignReader::InitTransports()
 
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
         std::string localPath;
+        std::string taropt;
         size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
         if (!repIdx)
         {
@@ -743,16 +779,53 @@ void CampaignReader::InitTransports()
         else
         {
             CampaignReplica &rep = ds.replicas[repIdx];
-            localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
-            if (m_Options.verbose > 0)
+            if (rep.archiveIdx == 0)
             {
-                std::cout << "Open local file " << localPath << "\n";
+                localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                if (m_Options.verbose > 0)
+                {
+                    std::cout << "Open local file " << localPath << "\n";
+                }
             }
+            else
+            {
+                auto itTarName = m_CampaignData.tarnames.find(rep.archiveIdx);
+                if (itTarName != m_CampaignData.tarnames.end())
+                {
+                    std::string tarpath = itTarName->second;
+                    localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + tarpath;
+                    taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+                    if (taropt.empty())
+                    {
+                        std::cout << "ERROR: Local file " << localPath
+                                  << " is in a TAR file but without offset info. Skip" << std::endl;
+                        continue;
+                    }
+                    if (m_Options.verbose > 0)
+                    {
+
+                        std::cout << "Open local file in TAR file " << localPath
+                                  << " with tar indices " << taropt << "\n";
+                    }
+                    io.SetParameter("TarInfo", taropt);
+                    io.SetEngine("BP5");
+                }
+                else
+                {
+                    localPath =
+                        m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "Open local file in archive dir " << localPath << "\n";
+                    }
+                }
+            }
+
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable
                 CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                   repIdx, localPath);
+                                   repIdx, true, localPath, taropt);
             }
         }
 
@@ -795,48 +868,104 @@ void CampaignReader::InitTransports()
                           << m_CampaignData.directory[rep.dirIdx].path << PathSeparator << rep.name
                           << "\n";
             }
-            if (m_CampaignData.directory[rep.dirIdx].archive)
+
+            // need to check if we already defined this image with this resolution in this loop
+            std::string imgName =
+                ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+            auto v = m_IO.InquireVariable<uint8_t>(imgName);
+            if (v)
             {
-                // this is an image in an archived place, skip
                 continue;
             }
-            else if (rep.files.size())
+
+            if (rep.files.size())
             {
                 // this replica has embedded image
                 // IMAGE -> create a variable, will read from DB directly, no local path
-                std::string imgName =
-                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
                 if (m_Options.verbose > 1)
                 {
                     std::cout << "        --- embedded image " << imgName << "\n";
                 }
                 auto f = rep.files.begin();
-                CreateImageVariable(imgName, f->lengthOriginal, dsIdx, repIdx);
+                CreateImageVariable(imgName, f->lengthOriginal, dsIdx, repIdx, true);
             }
             else if (m_CampaignData.hosts[rep.hostIdx].hostname == m_Options.hostname)
             {
                 // this replica is local
-                localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
-                if (m_Options.verbose > 1)
+                std::string taropt;
+                if (rep.archiveIdx == 0)
                 {
-                    std::cout << "        --- local image " << localPath << " and resolution "
-                              << rep.x << "x" << rep.y << std::endl;
+                    localPath =
+                        m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "Open local file " << localPath << "\n";
+                    }
                 }
-                std::string imgName =
-                    ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
+                else
+                {
+                    auto itTarName = m_CampaignData.tarnames.find(rep.archiveIdx);
+                    if (itTarName != m_CampaignData.tarnames.end())
+                    {
+                        std::string tarpath = itTarName->second;
+                        localPath =
+                            m_CampaignData.directory[rep.dirIdx].path + PathSeparator + tarpath;
+                        taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+                        if (taropt.empty())
+                        {
+                            std::cout << "ERROR: Local image " << localPath
+                                      << " is in a TAR file but without offset info. Skip"
+                                      << std::endl;
+                            continue;
+                        }
+                        if (m_Options.verbose > 0)
+                        {
+
+                            std::cout << "Open local image in TAR file " << localPath
+                                      << " with tar indices " << taropt << "\n";
+                        }
+                    }
+                    else
+                    {
+                        localPath =
+                            m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
+                        if (m_Options.verbose > 1)
+                        {
+                            std::cout << "        --- local image " << localPath
+                                      << " and resolution " << rep.x << "x" << rep.y << std::endl;
+                        }
+                    }
+                }
                 CreateImageVariable(imgName, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                    repIdx, localPath);
+                                    repIdx, true, localPath, taropt);
             }
             else
             {
                 // this is a remote image
-                std::string imgName =
+                adios2::core::IO &io =
+                    m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
+                localPath = SaveRemoteMD(dsIdx, repIdx, io);
+                if (!localPath.empty())
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "    " << ds.name << " local file " << localPath << "\n";
+                    }
+                }
+                else
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "    " << ds.name << " Skipping \n";
+                    }
+                }
+                /*std::string imgName =
                     ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
                 if (m_Options.verbose > 1)
                 {
                     std::cout << "        --- remote image " << imgName << "\n";
                 }
-                CreateImageVariable(imgName, rep.size, dsIdx, repIdx);
+                CreateImageVariable(imgName, rep.size, dsIdx, repIdx, false);*/
             }
         }
     }
@@ -942,31 +1071,68 @@ void CampaignReader::CreateDatasetAttributes(const std::string type, const std::
     m_IO.DefineAttribute<std::string>("__dataset_location__", (isLocal ? "local" : "remote"), name);
 }
 
-void CampaignReader::CreateTextVariable(const std::string &name, const size_t len,
-                                        const size_t dsIdx, const size_t repIdx,
-                                        const std::string localPath)
+CampaignReader::CampaignVarInternalInfo *
+CampaignReader::CreateTextVariable(const std::string &name, const size_t len, const size_t dsIdx,
+                                   const size_t repIdx, const bool local, const std::string &path,
+                                   const std::string &taropt)
 {
-    // TEXT -> create a variable, will read from DB directly, no local path
-    Variable<char> &v = m_IO.DefineVariable<char>(name, Dims{len}, Dims{0ULL}, Dims{len}, false);
+    // embedded TEXT -> create a variable, will read from DB directly, no local path
+    // local TEXT in file or in a TAR file
+    // remote TEXT not in DB: read it from remote place, either file or from TAR
+    size_t taroffset = 0;
+    size_t tarsize = 0;
+    if (!taropt.empty())
+    {
+        helper::TarInfoMap tim = helper::StringToTarInfo(taropt);
+        for (const auto &ti : tim)
+        {
+            taroffset = std::get<0>(ti.second);
+            tarsize = std::get<1>(ti.second);
+        }
+    }
+    size_t fileSize = (tarsize > 0 ? tarsize : len);
+    Variable<char> &v =
+        m_IO.DefineVariable<char>(name, Dims{fileSize}, Dims{0ULL}, Dims{fileSize}, false);
     v.m_AvailableStepsCount = 1;
     v.m_AvailableStepsStart = 0;
-    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, localPath);
-    m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
-    CreateDatasetAttributes("text", name, dsIdx, repIdx, localPath);
+    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, local, path);
+    internalInfo.taroffset = taroffset;
+    internalInfo.tarsize = tarsize;
+    auto pair = m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
+    CreateDatasetAttributes("text", name, dsIdx, repIdx, (local ? path : ""));
+    return &(pair.first->second);
 }
 
-void CampaignReader::CreateImageVariable(const std::string &name, const size_t len,
-                                         const size_t dsIdx, const size_t repIdx,
-                                         const std::string localPath)
+CampaignReader::CampaignVarInternalInfo *
+CampaignReader::CreateImageVariable(const std::string &name, const size_t len, const size_t dsIdx,
+                                    const size_t repIdx, const bool local, const std::string &path,
+                                    const std::string &taropt)
 {
-    // TEXT -> create a variable, will read from DB directly, no local path
+    // IMAGE -> create a variable, will read from DB directly, no local path
+    // local IMAGE in file or in a TAR file
+    // remote IMAGE not in DB: read it from remote place, either file or from TAR
+    size_t taroffset = 0;
+    size_t tarsize = 0;
+    if (!taropt.empty())
+    {
+        helper::TarInfoMap tim = helper::StringToTarInfo(taropt);
+        for (const auto &ti : tim)
+        {
+            taroffset = std::get<0>(ti.second);
+            tarsize = std::get<1>(ti.second);
+        }
+    }
+    size_t fileSize = (tarsize > 0 ? tarsize : len);
     Variable<uint8_t> &v =
-        m_IO.DefineVariable<uint8_t>(name, Dims{len}, Dims{0ULL}, Dims{len}, false);
+        m_IO.DefineVariable<uint8_t>(name, Dims{fileSize}, Dims{0ULL}, Dims{fileSize}, false);
     v.m_AvailableStepsCount = 1;
     v.m_AvailableStepsStart = 0;
-    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, localPath);
-    m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
-    CreateDatasetAttributes("image", name, dsIdx, repIdx, localPath);
+    CampaignVarInternalInfo internalInfo(&v, dsIdx, repIdx, local, path);
+    internalInfo.taroffset = taroffset;
+    internalInfo.tarsize = tarsize;
+    auto pair = m_CampaignVarInternalInfo.emplace(v.m_Name, internalInfo);
+    CreateDatasetAttributes("image", name, dsIdx, repIdx, (local ? path : ""));
+    return &(pair.first->second);
 }
 
 void CampaignReader::DestructorClose(bool Verbose) noexcept { m_CampaignData.Close(); }
@@ -1150,7 +1316,7 @@ void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, size_t re
 }
 
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
-                                    const size_t size, void *data)
+                                    const size_t offset, const size_t size, void *data)
 {
     std::unique_ptr<Remote> remote = nullptr;
 #ifdef ADIOS2_HAVE_XROOTD
@@ -1177,7 +1343,19 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
                 ". Make sure connection manager is running, and the server specification for the "
                 "host is valid.");
     }
-    remote->Read(0, size, data);
+    remote->Read(offset, size, data);
+}
+
+void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
+                                    const Params &params, const size_t offset, const size_t size,
+                                    char *data)
+{
+    std::string library = params.at("library");
+    helper::Comm comm;
+    transportman::TransportMan tm(m_IO, comm);
+    auto transport = tm.OpenFileTransport(remotePath, Mode::Read, params, false, false, comm);
+    transport->Read(data, size, offset);
+    transport->Close();
 }
 
 #define declare_type(T)                                                                            \

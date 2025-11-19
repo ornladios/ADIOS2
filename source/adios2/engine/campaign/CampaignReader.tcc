@@ -105,6 +105,18 @@ Variable<T> *CampaignReader::CopyPropertiesToActualVariable(Variable<T> &campaig
 template <class T>
 void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
 {
+    auto lf_CheckStartCount = [&](const std::string &name, const size_t length, const size_t start,
+                                  const size_t count) {
+        if (start + count > length)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Engine", "CampaignReader", "Get(Sync)",
+                "Asking for reading too many elements of variable " + name + " of size = " +
+                    std::to_string(length) + " with count = " + std::to_string(count) +
+                    " from start = " + std::to_string(start));
+        }
+    };
+
     PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");
     std::pair<Variable<T> *, Engine *> p = FindActualVariable(variable);
     if (p.first != nullptr)
@@ -119,19 +131,30 @@ void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
         if (it != m_CampaignVarInternalInfo.end())
         {
             // FIXME: Selection support for TEXT/IMAGE variables
-            if (!it->second.path.empty())
+            if (it->second.local && !it->second.path.empty())
             {
                 // local file
                 std::ifstream is(it->second.path, std::ios::binary);
-                is.seekg(0, std::ios::end);
-                size_t length = is.tellg();
-                is.seekg(0, std::ios::beg);
+                size_t length = it->second.tarsize;
+                if (length == 0)
+                {
+                    is.seekg(0, std::ios::end);
+                    length = is.tellg();
+                    is.seekg(0, std::ios::beg);
+                }
+                else
+                {
+                    is.seekg(it->second.taroffset, std::ios::beg);
+                }
                 if (m_Options.verbose > 1)
                 {
                     std::cout << "---- Read local file " << it->second.path << "  size = " << length
                               << std::endl;
                 }
-                is.read((char *)data, length);
+                lf_CheckStartCount(variable.m_Name, length, variable.m_Start[0],
+                                   variable.m_Count[0]);
+                is.seekg(variable.m_Start[0], std::ios::cur);
+                is.read((char *)data, variable.m_Count[0]);
                 is.close();
             }
             else if (m_CampaignData.datasets[it->second.dsIdx]
@@ -145,19 +168,34 @@ void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
             else
             {
                 // remote file
+                std::string remotePath = it->second.path;
                 auto &ds = m_CampaignData.datasets[it->second.dsIdx];
                 auto &rep = ds.replicas[it->second.repIdx];
                 if (m_Options.verbose > 0)
                 {
                     std::cout << " -- Read remote file "
-                              << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
-                              << m_CampaignData.directory[rep.dirIdx].path << PathSeparator
-                              << rep.name << "  of size " << rep.size << "\n";
+                              << m_CampaignData.hosts[rep.hostIdx].hostname << ":" << remotePath
+                              << "  of size " << rep.size << "\n";
                 }
-                std::string remotePath =
-                    m_CampaignData.directory[rep.dirIdx].path + PathSeparator + rep.name;
-                ReadRemoteFile(m_CampaignData.hosts[rep.hostIdx].hostname, remotePath, rep.size,
-                               (void *)data);
+                size_t length = rep.size;
+                size_t offset = variable.m_Start[0];
+                if (it->second.tarsize > 0)
+                {
+                    offset = it->second.taroffset + variable.m_Start[0];
+                    length = it->second.tarsize;
+                }
+                lf_CheckStartCount(variable.m_Name, length, variable.m_Start[0],
+                                   variable.m_Count[0]);
+                if (!it->second.params.empty())
+                {
+                    ReadRemoteFile(m_CampaignData.hosts[rep.hostIdx].hostname, remotePath,
+                                   it->second.params, offset, variable.m_Count[0], (char *)data);
+                }
+                else
+                {
+                    ReadRemoteFile(m_CampaignData.hosts[rep.hostIdx].hostname, remotePath, offset,
+                                   variable.m_Count[0], (void *)data);
+                }
             }
         }
     }
