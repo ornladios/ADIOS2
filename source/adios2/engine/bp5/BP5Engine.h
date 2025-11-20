@@ -142,7 +142,7 @@ public:
     MACRO(BurstBufferDrain, Bool, bool, true)                                                      \
     MACRO(BurstBufferPath, String, std::string, "")                                                \
     MACRO(NodeLocal, Bool, bool, false)                                                            \
-    MACRO(verbose, Int, int, 0)                                                                    \
+    MACRO(verbose, Int, int, 5)                                                                    \
     MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
     MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
     MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
@@ -150,7 +150,8 @@ public:
     MACRO(DirectIO, Bool, bool, false)                                                             \
     MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
     MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                                              \
-    MACRO(AggregationType, AggregationType, int, (int)AggregationType::TwoLevelShm)                \
+    MACRO(AggregationType, AggregationType, int, (int)AggregationType::DataSizeBased)              \
+    MACRO(EnableWriterRerouting, Bool, bool, true)                                                 \
     MACRO(AsyncOpen, Bool, bool, true)                                                             \
     MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                                      \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)                                   \
