@@ -228,11 +228,14 @@ std::string ParamsToEncodedString(const adios2::Params &params)
 adios2::Params EncodedStringToParams(const std::string &pstr)
 {
     adios2::Params p;
+    if (pstr.empty())
+        return p;
     auto entries = helper::StringToVector(pstr, EVPathRemoteCommon::EngineParametersSeparator);
     for (auto const &e : entries)
     {
         auto pair = helper::StringToVector(e, '=');
-        p.emplace(pair[0], pair[1]);
+        if (pair.size() == 2 && !pair[0].empty())
+            p.emplace(pair[0], pair[1]);
     }
     return p;
 }
