@@ -10,6 +10,7 @@ readonly subtree="thirdparty/enet/enet"
 readonly repo="https://github.com/GTkorvo/enet.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 

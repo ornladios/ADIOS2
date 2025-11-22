@@ -10,6 +10,7 @@ readonly subtree="thirdparty/atl/atl"
 readonly repo="https://github.com/GTkorvo/atl.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 
