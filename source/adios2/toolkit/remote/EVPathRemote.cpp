@@ -167,8 +167,6 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     std::vector<char> buffer(pstr.size() + 1);
     std::memcpy(buffer.data(), pstr.c_str(), pstr.size() + 1);
     open_msg.EngineParameters = buffer.data(); // pstr.c_str();
-    std::cout << "EVPathRemote::Open parameters = [" << open_msg.EngineParameters << "]"
-              << std::endl;
 
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
