@@ -9,6 +9,7 @@ namespace EVPathRemoteCommon
 {
 
 const int ServerPort = 26200;
+const char EngineParametersSeparator = char(9); // TAB
 
 #ifdef ADIOS2_HAVE_SST
 enum RemoteFileMode
@@ -24,6 +25,7 @@ typedef struct _OpenFileMsg
     char *FileName;
     RemoteFileMode Mode;
     int RowMajorOrder;
+    char *EngineParameters;
 } *OpenFileMsg;
 
 typedef struct _OpenResponseMsg
@@ -172,6 +174,7 @@ struct Remote_evpath_state
 };
 
 void RegisterFormats(struct Remote_evpath_state &ev_state);
+
 #endif
 
 }; // end of namespace remote_common

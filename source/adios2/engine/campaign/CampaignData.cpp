@@ -86,11 +86,11 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
     }
     std::cout << std::endl;
     */
-    ch.hostname = std::string(argv[0]);
-    if (argv[1])
-        ch.longhostname = std::string(argv[1]);
+    ch.hostname = std::string(argv[1]);
     if (argv[2])
-        ch.defaultProtocol = std::string(argv[2]);
+        ch.longhostname = std::string(argv[2]);
+    if (argv[3])
+        ch.defaultProtocol = std::string(argv[3]);
     cdp->hosts.push_back(ch);
     return 0;
 };
@@ -99,9 +99,9 @@ static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignDirectory cd;
-    size_t hostid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    size_t hostid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
     cd.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
-    cd.path = argv[1];
+    cd.path = argv[2];
     cd.archive = false;
     cdp->directory.push_back(cd);
     cdp->hosts[cd.hostIdx].dirIdx.push_back(cdp->directory.size() - 1);
@@ -259,7 +259,7 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT hostname, longhostname, default_protocol FROM host";
+    sqlcmd = "SELECT rowid, hostname, longhostname, default_protocol FROM host ORDER BY rowid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_host, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -270,7 +270,7 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT hostid, name FROM directory";
+    sqlcmd = "SELECT rowid, hostid, name FROM directory ORDER BY rowid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_directory, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -281,7 +281,7 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT rowid, dirid, tarname, system FROM archive";
+    sqlcmd = "SELECT rowid, dirid, tarname, system FROM archive ORDER BY rowid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_archivedirectory, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -294,7 +294,7 @@ void CampaignData::ReadDatabase()
     }
 
     /* Get time-series */
-    sqlcmd = "SELECT tsid, name FROM timeseries";
+    sqlcmd = "SELECT tsid, name FROM timeseries ORDER BY tsid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_timeseries, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -307,7 +307,7 @@ void CampaignData::ReadDatabase()
 
     /* Get datasets filtering out the deleted ones */
     sqlcmd = "SELECT rowid, name, uuid, deltime, fileformat, tsid, tsorder FROM dataset where "
-             "deltime = 0";
+             "deltime = 0 ORDER BY rowid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_dataset, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -328,7 +328,7 @@ void CampaignData::ReadDatabase()
             "SELECT rowid, datasetid, hostid, dirid, archiveid, name, deltime, keyid, size FROM "
             "replica "
             "where deltime = 0 and datasetid = " +
-            std::to_string(dsIdx);
+            std::to_string(dsIdx) + " ORDER BY rowid";
         rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_replica, &ds, &zErrMsg);
         if (rc != SQLITE_OK)
         {
@@ -346,7 +346,7 @@ void CampaignData::ReadDatabase()
             sqlcmd =
                 "SELECT replicaid, name, compression, lenorig, lencompressed, modtime, checksum "
                 "FROM file where replicaid = " +
-                std::to_string(repIdx);
+                std::to_string(repIdx) + " ORDER BY replicaid";
 
             rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_file, &ds, &zErrMsg);
             if (rc != SQLITE_OK)
@@ -361,7 +361,7 @@ void CampaignData::ReadDatabase()
             if (ds.format == FileFormat::IMAGE)
             {
                 sqlcmd = "SELECT replicaid, x, y FROM resolution where replicaid = " +
-                         std::to_string(repIdx);
+                         std::to_string(repIdx) + " ORDER BY replicaid";
                 rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_resolution, &ds, &zErrMsg);
                 if (rc != SQLITE_OK)
                 {
@@ -375,6 +375,39 @@ void CampaignData::ReadDatabase()
             }
         }
     }
+}
+
+static int sqlcb_tarinfo(void *p, int argc, char **argv, char **azColName)
+{
+    std::stringstream *ss = reinterpret_cast<std::stringstream *>(p);
+    *ss << argv[0] << "," << argv[1] << "," << argv[2] << ";";
+    return 0;
+};
+
+std::string CampaignData::GetTarIdx(const size_t dsIdx, const size_t repIdx)
+{
+    std::stringstream ss;
+    CampaignReplica &rep = datasets[dsIdx].replicas[repIdx];
+    std::string taropt;
+
+    /* Get files' offset info for a replica */
+    sqlite3 *db = get_impl(m_DB);
+    std::string sqlcmd;
+    char *zErrMsg;
+    sqlcmd = "SELECT filename, offset_data, size FROM archiveidx where archiveid = " +
+             std::to_string(rep.archiveIdx) + " AND replicaid = " + std::to_string(repIdx);
+
+    int rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_tarinfo, &ss, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        std::string m(zErrMsg);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading 'file' records:" + m);
+        sqlite3_free(zErrMsg);
+    }
+
+    return ss.str();
 }
 
 void CampaignData::Close()

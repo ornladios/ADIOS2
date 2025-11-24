@@ -16,6 +16,7 @@
 
 #include "Remote.h"
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSTypes.h"
 
 #include "remote_common.h"
 
@@ -48,7 +49,7 @@ public:
      * EVPathRemote object.
      */
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode, bool RowMajorOrdering);
+              const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
 
