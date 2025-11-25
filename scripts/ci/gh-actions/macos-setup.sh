@@ -49,6 +49,7 @@ conda update --all -y
 
 conda env create --verbose -f "gha/scripts/ci/gh-actions/conda-env-macos.yml"
 
-conda list -n adios2
+conda list
+conda list --export > ./conda-env.txt
 conda info --verbose
 echo 'conda activate adios2' >> /Users/runner/.bash_profile
