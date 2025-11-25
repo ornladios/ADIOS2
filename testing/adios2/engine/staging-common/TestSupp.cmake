@@ -56,8 +56,6 @@
 # resulting _CMD strings until add_common_test() which removes it.
 #
 
-find_package(Python3 REQUIRED)
-
 # Change the STAGING_COMMON_TEST_SUPP_VERBOSE value to ON for debugging output
 #
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
