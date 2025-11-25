@@ -82,13 +82,11 @@ private:
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
 
-    /** Manages the optional collective metadata files */
-    transportman::TransportMan m_FileMetadataManager;
+    transportman::TransportMan m_TransportFactory;
 
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetadataIndexManager;
-
-    transportman::TransportMan m_FileMetaMetadataManager;
+    std::shared_ptr<Transport> m_MetadataIndexFile;
+    std::shared_ptr<Transport> m_MetaMetadataFile;
+    std::shared_ptr<Transport> m_MetadataFile;
 
     int64_t m_WriterStep = 0;
     bool m_IsFirstStep = true; // might not be 0 for append
@@ -107,14 +105,11 @@ private:
      */
     std::string m_BBName;
 
-    std::vector<std::string> m_TransportNames;
-
-    std::vector<std::string> m_MetadataFileNames;
+    std::string m_MetadataFileName;
+    std::string m_MetaMetadataFileName;
+    std::string m_MetadataIndexFileName;
     std::vector<std::string> m_DrainMetadataFileNames;
-    std::vector<std::string> m_MetaMetadataFileNames;
-    std::vector<std::string> m_MetadataIndexFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;
-    std::vector<std::string> m_ActiveFlagFileNames;
 
     void Init() final;
 

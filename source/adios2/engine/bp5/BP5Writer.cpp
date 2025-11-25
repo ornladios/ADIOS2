@@ -37,8 +37,7 @@ using namespace adios2::format;
 
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_FileMetadataManager(io, m_Comm), m_FileMetadataIndexManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
+  m_TransportFactory(io, m_Comm), m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
@@ -203,12 +202,12 @@ void BP5Writer::WriteMetaMetadata(
 {
     for (auto &b : MetaMetaBlocks)
     {
-        m_FileMetaMetadataManager.WriteFiles((char *)&b.MetaMetaIDLen, sizeof(size_t));
-        m_FileMetaMetadataManager.WriteFiles((char *)&b.MetaMetaInfoLen, sizeof(size_t));
-        m_FileMetaMetadataManager.WriteFiles((char *)b.MetaMetaID, b.MetaMetaIDLen);
-        m_FileMetaMetadataManager.WriteFiles((char *)b.MetaMetaInfo, b.MetaMetaInfoLen);
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaIDLen, sizeof(size_t));
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaInfoLen, sizeof(size_t));
+        m_MetaMetadataFile->Write((char *)b.MetaMetaID, b.MetaMetaIDLen);
+        m_MetaMetadataFile->Write((char *)b.MetaMetaInfo, b.MetaMetaInfoLen);
     }
-    m_FileMetaMetadataManager.FlushFiles();
+    m_MetaMetadataFile->Flush();
 }
 
 uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
@@ -230,20 +229,18 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks
         AttrSizeVector.push_back(b.iov_len);
     }
     MetaDataSize = 0;
-    m_FileMetadataManager.WriteFiles((char *)&MDataTotalSize, sizeof(uint64_t));
+    m_MetadataFile->Write((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
-    m_FileMetadataManager.WriteFiles((char *)SizeVector.data(),
-                                     sizeof(uint64_t) * SizeVector.size());
+    m_MetadataFile->Write((char *)SizeVector.data(), sizeof(uint64_t) * SizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    m_FileMetadataManager.WriteFiles((char *)AttrSizeVector.data(),
-                                     sizeof(uint64_t) * AttrSizeVector.size());
+    m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
     m_Profiler.Start("MetadataBlockWrite");
     for (auto &b : MetaDataBlocks)
     {
         if (!b.iov_base)
             continue;
-        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
+        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
     }
     m_Profiler.Stop("MetadataBlockWrite");
@@ -252,11 +249,11 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks
     {
         if (!b.iov_base)
             continue;
-        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
+        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
     }
 
-    m_FileMetadataManager.FlushFiles();
+    m_MetadataFile->Flush();
 
     m_MetaDataPos += MetaDataSize;
     return MetaDataSize;
@@ -286,16 +283,14 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
         }
     }
     MetaDataSize = 0;
-    m_FileMetadataManager.WriteFiles((char *)&MDataTotalSize, sizeof(uint64_t));
+    m_MetadataFile->Write((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
-    m_FileMetadataManager.WriteFiles((char *)SizeVector.data(),
-                                     sizeof(uint64_t) * SizeVector.size());
+    m_MetadataFile->Write((char *)SizeVector.data(), sizeof(uint64_t) * SizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    m_FileMetadataManager.WriteFiles((char *)AttrSizeVector.data(),
-                                     sizeof(uint64_t) * AttrSizeVector.size());
+    m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
     m_Profiler.Start("MetadataBlockWrite");
-    m_FileMetadataManager.WriteFiles(ContigMetaData.data(), ContigMetaData.size());
+    m_MetadataFile->Write(ContigMetaData.data(), ContigMetaData.size());
     m_Profiler.Stop("MetadataBlockWrite");
     MetaDataSize += ContigMetaData.size();
 
@@ -303,11 +298,11 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
     {
         if (!b.iov_base)
             continue;
-        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
+        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
     }
 
-    m_FileMetadataManager.FlushFiles();
+    m_MetadataFile->Flush();
 
     m_MetaDataPos += MetaDataSize;
     return MetaDataSize;
@@ -569,7 +564,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
         helper::CopyToBuffer(buf, pos, &m_WriterDataPos[writer], 1);
     }
 
-    m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
+    m_MetadataIndexFile->Write((char *)buf.data(), buf.size());
 #ifdef DUMPDATALOCINFO
     std::cout << "WriterMapRecordType is: " << (buf.data() + StepRecordStartPos)[0] << std::endl;
     size_t *BufPtr = (size_t *)(buf.data() + StepRecordStartPos + 1);
@@ -592,7 +587,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSi
     }
     std::cout << "}" << std::endl;
 #endif
-    m_FileMetadataIndexManager.FlushFiles();
+    m_MetadataIndexFile->Flush();
 
     /* reset for next timestep */
     FlushPosSizeInfo.clear();
@@ -1020,9 +1015,9 @@ void BP5Writer::EndStep()
             m_AsyncWriteLock.unlock();
         }
     }
-    m_FileMetadataIndexManager.FlushFiles();
-    m_FileMetadataManager.FlushFiles();
-    m_FileMetaMetadataManager.FlushFiles();
+    m_MetadataIndexFile->Flush();
+    m_MetadataFile->Flush();
+    m_MetaMetadataFile->Flush();
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
     aggData.m_FileDataManager.FlushFiles();
 
@@ -1513,22 +1508,16 @@ void BP5Writer::InitMetadataTransports()
         should write if BB is turned on
     */
 
-    // Names passed to IO AddTransport option with key "Name"
-    m_TransportNames =
-        transportman::TransportMan::GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
-
     /* Create the directories either on target or burst buffer if used */
-    //    m_BP4Serializer.m_Profiler.Start("mkdir");
-
     if (m_Comm.Rank() == 0)
     {
-        m_MetadataFileNames = GetBPMetadataFileNames(m_TransportNames);
-        m_MetaMetadataFileNames = GetBPMetaMetadataFileNames(m_TransportNames);
-        m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(m_TransportNames);
+        m_MetadataFileName = GetBPMetadataFileName(m_Name);
+        m_MetaMetadataFileName = GetBPMetaMetadataFileName(m_Name);
+        m_MetadataIndexFileName = GetBPMetadataIndexFileName(m_Name);
     }
 
-    m_FileMetadataManager.MkDirsBarrier(m_MetadataFileNames, m_IO.m_TransportsParameters,
-                                        m_Parameters.NodeLocal || m_WriteToBB);
+    m_TransportFactory.MkDirsBarrier({m_MetadataFileName}, m_IO.m_TransportsParameters,
+                                     m_Parameters.NodeLocal || m_WriteToBB);
 
     /* Everyone opens its data file. Each aggregation chain opens
        one data file and does so in chain, not everyone at once */
@@ -1558,14 +1547,16 @@ void BP5Writer::InitMetadataTransports()
         {
             m_IO.m_TransportsParameters[i]["DirectIO"] = "false";
         }
-        m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
-                                            m_IO.m_TransportsParameters, true);
+        m_MetaMetadataFile = m_TransportFactory.OpenFileTransport(
+            m_MetaMetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
+            m_Comm);
 
-        m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters, true);
+        m_MetadataFile = m_TransportFactory.OpenFileTransport(
+            m_MetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false, m_Comm);
 
-        m_FileMetadataIndexManager.OpenFiles(m_MetadataIndexFileNames, m_OpenMode,
-                                             m_IO.m_TransportsParameters, true);
+        m_MetadataIndexFile = m_TransportFactory.OpenFileTransport(
+            m_MetadataIndexFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
+            m_Comm);
 
         if (m_DrainBB)
         {
@@ -1610,8 +1601,7 @@ void BP5Writer::InitTransports()
     AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
 
     // /path/name.bp.dir/name.bp.rank
-    aggData.m_SubStreamNames =
-        GetBPSubStreamNames(m_TransportNames, m_Aggregator->m_SubStreamIndex);
+    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
 
     if (m_IAmDraining)
     {
@@ -1822,12 +1812,12 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
 void BP5Writer::UpdateActiveFlag(const bool active)
 {
     const char activeChar = (active ? '\1' : '\0');
-    m_FileMetadataIndexManager.WriteFileAt(&activeChar, 1, m_ActiveFlagPosition);
-    m_FileMetadataIndexManager.FlushFiles();
-    m_FileMetadataIndexManager.SeekToFileEnd();
+    m_MetadataIndexFile->Write(&activeChar, 1, m_ActiveFlagPosition);
+    m_MetadataIndexFile->Flush();
+    m_MetadataIndexFile->SeekToEnd();
     if (m_DrainBB)
     {
-        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        for (size_t i = 0; i < m_DrainMetadataIndexFileNames.size(); ++i)
         {
             m_FileDrainer.AddOperationWriteAt(m_DrainMetadataIndexFileNames[i],
                                               m_ActiveFlagPosition, 1, &activeChar);
@@ -1847,12 +1837,11 @@ void BP5Writer::InitBPBuffer()
 
         if (m_Comm.Rank() == 0)
         {
-            preMetadataIndexFileSize = m_FileMetadataIndexManager.GetFileSize(0);
+            preMetadataIndexFileSize = m_MetadataIndexFile->GetSize();
             preMetadataIndex.m_Buffer.resize(preMetadataIndexFileSize);
             preMetadataIndex.m_Buffer.assign(preMetadataIndex.m_Buffer.size(), '\0');
             preMetadataIndex.m_Position = 0;
-            m_FileMetadataIndexManager.ReadFile(preMetadataIndex.m_Buffer.data(),
-                                                preMetadataIndexFileSize);
+            m_MetadataIndexFile->Read(preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
         }
         m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
         m_WriterStep = CountStepsInMetadataIndex(preMetadataIndex);
@@ -1882,24 +1871,24 @@ void BP5Writer::InitBPBuffer()
             if (m_AppendMetadataPos < MaxSizeT)
             {
                 m_MetaDataPos = m_AppendMetadataPos;
-                m_FileMetadataManager.Truncate(m_MetaDataPos);
-                m_FileMetadataManager.SeekTo(m_MetaDataPos);
+                m_MetadataFile->Truncate(m_MetaDataPos);
+                m_MetadataFile->Seek(m_MetaDataPos);
             }
             else
             {
-                m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
-                m_FileMetadataManager.SeekToFileEnd();
+                m_MetaDataPos = m_MetadataFile->GetSize();
+                m_MetadataFile->SeekToEnd();
             }
 
             // Truncate existing meta-meta file
             if (m_AppendMetaMetadataPos < MaxSizeT)
             {
-                m_FileMetaMetadataManager.Truncate(m_AppendMetaMetadataPos);
-                m_FileMetaMetadataManager.SeekTo(m_AppendMetaMetadataPos);
+                m_MetaMetadataFile->Truncate(m_AppendMetaMetadataPos);
+                m_MetaMetadataFile->Seek(m_AppendMetaMetadataPos);
             }
             else
             {
-                m_FileMetadataIndexManager.SeekToFileEnd();
+                m_MetadataIndexFile->SeekToEnd();
             }
 
             // Set the flag in the header of metadata index table to 1 again
@@ -1909,12 +1898,12 @@ void BP5Writer::InitBPBuffer()
             // Truncate existing index file
             if (m_AppendMetadataIndexPos < MaxSizeT)
             {
-                m_FileMetadataIndexManager.Truncate(m_AppendMetadataIndexPos);
-                m_FileMetadataIndexManager.SeekTo(m_AppendMetadataIndexPos);
+                m_MetadataIndexFile->Truncate(m_AppendMetadataIndexPos);
+                m_MetadataIndexFile->Seek(m_AppendMetadataIndexPos);
             }
             else
             {
-                m_FileMetadataIndexManager.SeekToFileEnd();
+                m_MetadataIndexFile->SeekToEnd();
             }
         }
         m_AppendDataPos.clear();
@@ -1928,9 +1917,9 @@ void BP5Writer::InitBPBuffer()
          */
         if (m_Comm.Rank() == 0)
         {
-            m_FileMetadataIndexManager.SeekToFileBegin();
-            m_FileMetadataManager.SeekToFileBegin();
-            m_FileMetaMetadataManager.SeekToFileBegin();
+            m_MetadataIndexFile->SeekToBegin();
+            m_MetadataFile->SeekToBegin();
+            m_MetaMetadataFile->SeekToBegin();
         }
         // last attempt to clean up datafile if called with append mode,
         // data existed but index was missing
@@ -2120,10 +2109,10 @@ void BP5Writer::DoClose(const int transportIndex)
     if (m_Comm.Rank() == 0)
     {
         // close metadata file
-        m_FileMetadataManager.CloseFiles();
+        m_MetadataFile->Close();
 
         // close metametadata file
-        m_FileMetaMetadataManager.CloseFiles();
+        m_MetaMetadataFile->Close();
     }
 
     if (m_Parameters.AsyncWrite)
@@ -2150,7 +2139,7 @@ void BP5Writer::DoClose(const int transportIndex)
         }
         // close metadata index file
         UpdateActiveFlag(false);
-        m_FileMetadataIndexManager.CloseFiles();
+        m_MetadataIndexFile->Close();
     }
 
     FlushProfiler();
@@ -2173,13 +2162,8 @@ void BP5Writer::FlushProfiler()
 
     auto transportProfilers = aggData.m_FileDataManager.GetTransportsProfilers();
 
-    auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
-    auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
-
-    transportTypes.insert(transportTypes.end(), transportTypesMD.begin(), transportTypesMD.end());
-
-    transportProfilers.insert(transportProfilers.end(), transportProfilersMD.begin(),
-                              transportProfilersMD.end());
+    transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
+    transportProfilers.push_back(&m_MetadataFile->m_Profiler);
 
     // m_Profiler.WriteOut(transportTypes, transportProfilers);
 
