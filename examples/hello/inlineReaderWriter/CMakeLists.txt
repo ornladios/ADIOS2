@@ -6,7 +6,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloInlineReaderWriterExample)
 
+set(maybe_standalone_project OFF)
+
 if(NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(MPI COMPONENTS C)
@@ -22,10 +25,14 @@ endif()
 
 add_executable(adios2_hello_inlineReaderWriter inlineReaderWriter.cpp)
 target_link_libraries(adios2_hello_inlineReaderWriter adios2::cxx)
+if (maybe_standalone_project)
 install(TARGETS adios2_hello_inlineReaderWriter RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_inlineReaderWriter_mpi inlineReaderWriter.cpp)
   target_link_libraries(adios2_hello_inlineReaderWriter_mpi adios2::cxx_mpi MPI::MPI_CXX)
+  if (maybe_standalone_project)
   install(TARGETS adios2_hello_inlineReaderWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()

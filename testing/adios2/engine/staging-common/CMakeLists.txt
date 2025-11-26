@@ -39,7 +39,9 @@ set (PROGS TestCommonWrite TestShapeChangingWrite
     TestWriteJoined
     TestReadJoined
     TestOnDemandWrite
-    TestOnDemandRead)
+    TestOnDemandRead
+    TestBiDir
+)
 
 foreach(helper ${PROGS} )
   add_executable(${helper} ${helper}.cpp)
@@ -156,7 +158,7 @@ list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDist
 if (ADIOS2_HAVE_MPI)
   import_bp_test(WriteMemorySelectionRead 3 3)
   list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.3x3")
-  list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;")
+  list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;3x5BiDir")
 endif()
 
 #
@@ -177,7 +179,6 @@ MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
-MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP5_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 

@@ -1,4 +1,6 @@
 #include "AdiosFilePool.h"
+#include <iostream>
+#include <thread>
 
 namespace adios2
 {
@@ -64,23 +66,61 @@ void ADIOSFilePool::SubPool::Return(adios2::AnonADIOSFile *to_free)
     std::cerr << "Return FAILED " << std::endl;
 }
 
-ADIOSFilePool::ADIOSFilePool() {}
+void ADIOSFilePool::DoTimeoutTasks() { FlushUnused(); }
+
+void ADIOSFilePool::PeriodicTask(std::chrono::milliseconds interval)
+{
+    while (!(m_ShutdownFlag))
+    {
+        DoTimeoutTasks();
+        std::this_thread::sleep_for(interval);
+    }
+    std::cout << "Clean shutdown of ADIOSFilePool periodic thread" << std::endl;
+}
+
+ADIOSFilePool::ADIOSFilePool()
+{
+    std::cout << "Singleton ADIOSFilePool instance created.\n";
+    periodicThread = periodicWorker();
+}
+
+ADIOSFilePool &ADIOSFilePool::getInstance()
+{
+    static ADIOSFilePool instance; // Guaranteed to be destroyed.
+    // Instantiated on first use.
+    return instance;
+}
 
 void ADIOSFilePool::FlushUnused()
 {
+    auto now = std::chrono::steady_clock::now();
     for (auto it = map.cbegin(), next_it = it; it != map.cend(); it = next_it)
     {
         ++next_it;
         auto subpool = it->second.get();
-        bool should_delete = (subpool->in_use_count == 0);
-
+        auto unused_duration = now - subpool->last_used;
+        auto elapsed_seconds =
+            std::chrono::duration_cast<std::chrono::seconds>(unused_duration).count();
+        bool should_delete = (elapsed_seconds > 15) && (subpool->in_use_count == 0);
+        std::string fname = "";
+        if (subpool->m_list.size() > 0)
+            fname = subpool->m_list[0]->m_FileName;
         if (should_delete)
         {
-            std::cout << "Releasing subpool" << std::endl;
+            if (subpool->m_list.size() > 0)
+                std::cout << "Releasing subpool for file \"" << subpool->m_list[0]->m_FileName
+                          << "\" unused for " << elapsed_seconds << " seconds" << std::endl;
             map.erase(it);
         }
     }
 }
 
-ADIOSFilePool::~ADIOSFilePool() {}
+ADIOSFilePool::~ADIOSFilePool()
+{
+    m_ShutdownFlag = true;
+    if (periodicThread.joinable())
+    {
+        periodicThread.join();
+    }
+}
 } // end of namespace adios2

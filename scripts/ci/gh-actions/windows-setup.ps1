@@ -15,4 +15,5 @@ conda.bat config --system --remove channels defaults
 conda.bat config --show channels
 conda.bat config --set channel_priority strict
 conda.bat env create -f "gha\scripts\ci\gh-actions\conda-env-win.yml"
+conda.bat list --export > "conda-env.txt"
 Write-Host "::endgroup::"

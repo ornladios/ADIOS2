@@ -52,7 +52,7 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 
 ## Releases
 
-* Latest release: [v2.10.2](https://github.com/ornladios/ADIOS2/releases/tag/v2.10.2)
+* Latest release: [v2.11.0](https://github.com/ornladios/ADIOS2/releases/tag/v2.11.0)
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 
 ## Packages

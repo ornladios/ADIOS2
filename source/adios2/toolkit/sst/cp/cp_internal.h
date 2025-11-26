@@ -590,7 +590,8 @@ enum VerbosityLevel
                          // read, Begin/EndStep verbosity, etc.)
     PerRankVerbose = 4,  // Per-step info from each rank (for those things that
                          // might be different per rank).
-    TraceVerbose = 5,    // All debugging available
+    TraceDupVerbose = 5, // Stuff that is going to be the same everywhere, elided for compactness
+    TraceVerbose = 6,    // All debugging available
 };
 
 extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level, char *Format, ...);

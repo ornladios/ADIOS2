@@ -6,11 +6,13 @@
 cmake_minimum_required(VERSION 3.12)
 project(ADIOS2HelloSSTKokkosExample)
 
+set(maybe_standalone_project OFF)
 #CXX Compiler settings only in for this example
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (NOT TARGET adios2_core)
+  set(maybe_standalone_project ON)
   set(_components CXX)
 
   find_package(Kokkos 3.7 QUIET)
@@ -31,7 +33,11 @@ if (ADIOS2_HAVE_Kokkos)
   kokkos_compilation(SOURCE sstWriterKokkos.cpp)
   kokkos_compilation(SOURCE sstReaderKokkos.cpp)
   target_link_libraries(adios2_hello_sstWriterKokkos adios2::cxx Kokkos::kokkos)
-  install(TARGETS adios2_hello_sstWriterKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (maybe_standalone_project)
+    install(TARGETS adios2_hello_sstWriterKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
   target_link_libraries(adios2_hello_sstReaderKokkos adios2::cxx Kokkos::kokkos)
-  install(TARGETS adios2_hello_sstReaderKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (maybe_standalone_project)
+    install(TARGETS adios2_hello_sstReaderKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()

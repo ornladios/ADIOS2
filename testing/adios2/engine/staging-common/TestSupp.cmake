@@ -56,8 +56,6 @@
 # resulting _CMD strings until add_common_test() which removes it.
 #
 
-find_package(Python3 REQUIRED)
-
 # Change the STAGING_COMMON_TEST_SUPP_VERBOSE value to ON for debugging output
 #
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
@@ -90,6 +88,7 @@ set (2x3.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=PreloadMode=
 set (2x3.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x2_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2")
 set (3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5")
+set (3x5BiDir_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 -w $<TARGET_FILE:TestBiDir> -r $<TARGET_FILE:TestBiDir> --warg=--writer_first")
 set (3x5LockGeometry_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=--num_steps --warg=50 --warg=--ms_delay --warg=10 --rarg=--num_steps --rarg=50 --warg=--lock_geometry --rarg=--lock_geometry")
 set (1x1EarlyExit_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--num_steps --warg=50 --rarg=--num_steps --rarg=5 --rarg=--early_exit")
 set (3x5EarlyExit_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=--num_steps --warg=50 --rarg=--num_steps --rarg=5 --rarg=--early_exit")
