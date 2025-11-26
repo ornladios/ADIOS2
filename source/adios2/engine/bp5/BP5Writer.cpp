@@ -1015,9 +1015,12 @@ void BP5Writer::EndStep()
             m_AsyncWriteLock.unlock();
         }
     }
-    m_MetadataIndexFile->Flush();
-    m_MetadataFile->Flush();
-    m_MetaMetadataFile->Flush();
+    if (m_Comm.Rank() == 0)
+    {
+        m_MetadataIndexFile->Flush();
+        m_MetadataFile->Flush();
+        m_MetaMetadataFile->Flush();
+    }
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
     aggData.m_FileDataManager.FlushFiles();
 
@@ -2058,7 +2061,8 @@ void BP5Writer::DestructorClose(bool Verbose) noexcept
         std::cerr << "This may result in corrupt output." << std::endl;
     }
     // close metadata index file
-    UpdateActiveFlag(false);
+    if (m_Comm.Rank() == 0)
+        UpdateActiveFlag(false);
     m_IsOpen = false;
 }
 
@@ -2162,8 +2166,11 @@ void BP5Writer::FlushProfiler()
 
     auto transportProfilers = aggData.m_FileDataManager.GetTransportsProfilers();
 
-    transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
-    transportProfilers.push_back(&m_MetadataFile->m_Profiler);
+    if (m_RankMPI == 0)
+    {
+        transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
+        transportProfilers.push_back(&m_MetadataFile->m_Profiler);
+    }
 
     // m_Profiler.WriteOut(transportTypes, transportProfilers);
 
