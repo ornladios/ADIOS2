@@ -75,12 +75,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
 #ifdef ADIOS2_HAVE_DAOS
                     auto transport = std::make_shared<transport::FileDaos>(m_Comm);
                     transport->SetParameters({{"SingleProcess", "true"}});
-                    // int rank = m_Comm.Rank();
-                    // std::cout << "rank " << rank << ": start
-                    // transport->MkDir(" << path << ")..." << std::endl;
                     transport->MkDir(path);
-                    // std::cout << "rank " << rank << ": transport->MkDir(" <<
-                    // path << ") succeeded!" << std::endl;
 #endif
                 }
                 else

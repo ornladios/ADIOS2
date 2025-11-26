@@ -217,13 +217,13 @@ public:
      */
     void SetParameters(const Params &params, const int transportIndex = -1);
 
-protected:
-    core::IO &m_IO;
-    helper::Comm const &m_Comm;
-
     std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName, const Mode openMode,
                                                  const Params &parameters, const bool profile,
                                                  const bool useComm, const helper::Comm &chainComm);
+
+protected:
+    core::IO &m_IO;
+    helper::Comm const &m_Comm;
 
     void
     CheckFile(std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator itTransport,

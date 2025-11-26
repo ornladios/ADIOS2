@@ -127,7 +127,6 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
-        io.AddTransport("NULL");
         io.SetParameter("Profile", "OFF");
 
         // Write with Sync

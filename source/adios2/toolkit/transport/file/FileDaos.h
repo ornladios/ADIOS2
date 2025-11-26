@@ -41,7 +41,7 @@ public:
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
-    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
+    void Read(char *buffer, size_t size, size_t start = 0) final;
 
     size_t GetSize() final;
 

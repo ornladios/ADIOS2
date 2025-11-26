@@ -35,10 +35,8 @@ namespace engine
 {
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
-  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_DataFileManager(io, m_Comm),
+  m_TransportFactory(io, m_Comm), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -47,10 +45,8 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
                      const char *md, const size_t mdsize)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
-  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_DataFileManager(io, m_Comm),
+  m_TransportFactory(io, m_Comm), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     m_ReadMetadataFromFile = false;
@@ -85,10 +81,10 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     /* BP5 modifies the metadata block in memory during processing
        so we have to read it from file again
     */
-    auto currentPos = m_MDFileManager.CurrentPos(0);
+    auto currentPos = m_MDFile->CurrentPos();
     std::vector<char> mdbuf(sizes[0]);
-    m_MDFileManager.ReadFile(mdbuf.data(), sizes[0], 0);
-    m_MDFileManager.SeekTo(currentPos, 0);
+    m_MDFile->Read(mdbuf.data(), sizes[0], 0);
+    m_MDFile->Seek(currentPos);
 
     size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
     *md = (char *)malloc(mdsize);
@@ -1121,8 +1117,7 @@ bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &poll
     return true;
 }
 
-size_t BP5Reader::OpenWithTimeout(transportman::TransportMan &tm,
-                                  const std::vector<std::string> &fileNames,
+size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
                                   const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                                   std::string &lasterrmsg /*INOUT*/)
 {
@@ -1132,8 +1127,10 @@ size_t BP5Reader::OpenWithTimeout(transportman::TransportMan &tm,
         try
         {
             errno = 0;
-            const bool profile = true; // m_BP4Deserializer.m_Profiler.m_IsActive;
-            tm.OpenFiles(fileNames, adios2::Mode::Read, m_IO.m_TransportsParameters, profile);
+            const bool profile = true;
+            file = m_TransportFactory.OpenFileTransport(fileName, adios2::Mode::Read,
+                                                        m_IO.m_TransportsParameters[0], profile,
+                                                        false, m_Comm);
             flag = 0; // found file
             break;
         }
@@ -1165,8 +1162,8 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
         /* Open the metadata index table */
         const std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
 
-        flag = OpenWithTimeout(m_MDIndexFileManager, {metadataIndexFile}, timeoutInstant,
-                               pollSeconds, lasterrmsg);
+        flag = OpenWithTimeout(m_MDIndexFile, metadataIndexFile, timeoutInstant, pollSeconds,
+                               lasterrmsg);
         if (flag == 0)
         {
             /* Open the metadata file */
@@ -1182,12 +1179,11 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFileManager, {metadataFile}, timeoutInstant, pollSeconds,
-                                   lasterrmsg);
+            flag = OpenWithTimeout(m_MDFile, metadataFile, timeoutInstant, pollSeconds, lasterrmsg);
             if (flag != 0)
             {
                 /* Close the metadata index table */
-                m_MDIndexFileManager.CloseFiles();
+                m_MDIndexFile->Close();
             }
             else
             {
@@ -1204,13 +1200,13 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                     timeoutInstant += Seconds(5.0);
                 }
 
-                flag = OpenWithTimeout(m_FileMetaMetadataManager, {metametadataFile},
-                                       timeoutInstant, pollSeconds, lasterrmsg);
+                flag = OpenWithTimeout(m_MetaMetadataFile, metametadataFile, timeoutInstant,
+                                       pollSeconds, lasterrmsg);
                 if (flag != 0)
                 {
                     /* Close the metametadata index table */
-                    m_MDIndexFileManager.CloseFiles();
-                    m_MDFileManager.CloseFiles();
+                    m_MDIndexFile->Close();
+                    m_MDFile->Close();
                 }
             }
         }
@@ -1326,13 +1322,13 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
     if (m_Comm.Rank() == 0)
     {
         /* Read metadata index table into memory */
-        const size_t metadataIndexFileSize = m_MDIndexFileManager.GetFileSize(0);
+        const size_t metadataIndexFileSize = m_MDIndexFile->GetSize();
         newIdxSize = metadataIndexFileSize - m_MDIndexFileAlreadyReadSize;
         if (metadataIndexFileSize > m_MDIndexFileAlreadyReadSize)
         {
             m_MetadataIndex.m_Buffer.resize(newIdxSize);
-            m_MDIndexFileManager.ReadFile(m_MetadataIndex.m_Buffer.data(), newIdxSize,
-                                          m_MDIndexFileAlreadyReadSize);
+            m_MDIndexFile->Read(m_MetadataIndex.m_Buffer.data(), newIdxSize,
+                                m_MDIndexFileAlreadyReadSize);
         }
         else
         {
@@ -1392,7 +1388,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             size_t actualFileSize = 0;
             do
             {
-                actualFileSize = m_MDFileManager.GetFileSize(0);
+                actualFileSize = m_MDFile->GetSize();
                 if (actualFileSize >= expectedMinFileSize)
                 {
                     break;
@@ -1408,7 +1404,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                 for (auto p : m_FilteredMetadataInfo)
                 {
                     m_JSONProfiler.AddBytes("metadataread", p.second);
-                    m_MDFileManager.ReadFile(m_Metadata.Data() + mempos, p.second, p.first);
+                    m_MDFile->Read(m_Metadata.Data() + mempos, p.second, p.first);
                     mempos += p.second;
                 }
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
@@ -1434,7 +1430,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 
             /* Read new meta-meta-data into memory and append to existing one in
              * memory */
-            const size_t metametadataFileSize = m_FileMetaMetadataManager.GetFileSize(0);
+            const size_t metametadataFileSize = m_MetaMetadataFile->GetSize();
             if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
             {
                 const size_t newMMDSize = metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
@@ -1442,9 +1438,9 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                 m_JSONProfiler.AddBytes("metametadataread", newMMDSize);
                 m_MetaMetadata.Resize(metametadataFileSize, "(re)allocating meta-meta-data buffer, "
                                                             "in call to BP5Reader Open");
-                m_FileMetaMetadataManager.ReadFile(m_MetaMetadata.m_Buffer.data() +
-                                                       m_MetaMetaDataFileAlreadyReadSize,
-                                                   newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
+                m_MetaMetadataFile->Read(m_MetaMetadata.m_Buffer.data() +
+                                             m_MetaMetaDataFileAlreadyReadSize,
+                                         newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
                 m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
                 m_JSONProfiler.Stop("MetaMetaDataRead");
             }
@@ -1720,11 +1716,11 @@ bool BP5Reader::CheckWriterActive()
         size_t flag = 1;
         if (m_Comm.Rank() == 0)
         {
-            auto fsize = m_MDIndexFileManager.GetFileSize(0);
+            auto fsize = m_MDIndexFile->GetSize();
             if (fsize >= m_IndexHeaderSize)
             {
                 std::vector<char> header(m_IndexHeaderSize, '\0');
-                m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
+                m_MDIndexFile->Read(header.data(), m_IndexHeaderSize, 0);
                 bool active = ReadActiveFlag(header);
                 flag = (active ? 1 : 0);
             }
@@ -1842,9 +1838,12 @@ void BP5Reader::DoClose(const int transportIndex)
     }
     FlushProfiler();
     m_DataFileManager.CloseFiles();
-    m_MDFileManager.CloseFiles();
-    m_MDIndexFileManager.CloseFiles();
-    m_FileMetaMetadataManager.CloseFiles();
+    if (m_MDFile)
+        m_MDFile->Close();
+    if (m_MDIndexFile)
+        m_MDIndexFile->Close();
+    if (m_MetaMetadataFile)
+        m_MetaMetadataFile->Close();
     for (unsigned int i = 1; i < m_Threads; ++i)
     {
         fileManagers[i].CloseFiles();
@@ -1878,9 +1877,17 @@ void BP5Reader::FlushProfiler()
         }
     };
 
-    lf_AddMe(m_MDFileManager);
-    lf_AddMe(m_MDIndexFileManager);
-    lf_AddMe(m_FileMetaMetadataManager);
+    auto lf_AddMeT = [&](std::shared_ptr<Transport> &tm) -> void {
+        if (tm)
+        {
+            transportTypes.push_back(tm->m_Type + "_" + tm->m_Library);
+            transportProfilers.push_back(&tm->m_Profiler);
+        }
+    };
+
+    lf_AddMeT(m_MDFile);
+    lf_AddMeT(m_MDIndexFile);
+    lf_AddMeT(m_MetaMetadataFile);
 
     for (unsigned int i = 0; i < m_Threads; ++i)
     {
