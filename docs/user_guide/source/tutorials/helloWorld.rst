@@ -72,21 +72,20 @@ Start editing the skeleton file `ADIOS2/examples/hello/helloWorld/hello-world_tu
     ...
   }
 
-6. In this reader function, we define an IO object and inquire a string variable for the message as follows:
+6. In this reader function, we define an IO object and open the file with the name "hello-world-cpp.bp" as follows:
 
 .. code-block:: c++
 
   adios2::IO io = adios.DeclareIO("hello-world-reader");
-  reader.BeginStep();
-  adios2::Variable<std::string> varGreeting = io.InquireVariable<std::string>("Greeting");
+  adios2::Engine reader = io.Open("hello-world-cpp.bp", adios2::Mode::Read);
 
-7. Then we open the file with the name "hello-world-cpp.bp", read the greeting message from it and return it as follows:
+7. Then we inquire a string variable, read the greeting message from it and return it as follows:
 
 .. code-block:: c++
 
-  adios2::Engine reader = io.Open("hello-world-cpp.bp", adios2::Mode::Read);
-  std::string greeting;
   reader.BeginStep();
+  adios2::Variable<std::string> varGreeting = io.InquireVariable<std::string>("Greeting");
+  std::string greeting;
   reader.Get(varGreeting, greeting);
   reader.EndStep();
   reader.Close();
@@ -95,7 +94,7 @@ Start editing the skeleton file `ADIOS2/examples/hello/helloWorld/hello-world_tu
 .. note::
 
   In Mode::Read, the ``BeginStep`` and ``EndStep`` calls are required when **reading** one step and multiple steps. We will see in
-  another tutorial how to read multiple steps. It's important to note that the ``BeginStep`` should be called **before**
+  another tutorial how to read multiple steps. It's important to note that the ``BeginStep`` must be called **before**
   all ``Inquire*`` / ``Available*`` function calls.
 
 8. Finally, we call the writer and reader functions in our main function as follows:
