@@ -1,0 +1,37 @@
+name: Backport PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull Request number
+        required: true
+      target_branch:
+        description: Branch to where backport the PR
+        required: true
+
+permissions: read-all
+
+jobs:
+  backport:
+    runs-on: ubuntu-latest
+    name: Backport
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4
+        with:
+          fetch-depth: 0
+      - name: Create backport
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          export BRANCH=${{ github.event.inputs.target_branch }}
+          export PR=${{ github.event.inputs.pr }}
+          git checkout --track "origin/${BRANCH}"
+          git checkout -b "backport-to-${BRANCH}-${PR}"
+          commit_hash=$(gh pr view --json mergeCommit --jq '.mergeCommit.oid' "${PR}")
+          git cherry-pick --mainline 1 -x "${commit_hash}"
+          git push origin "backport-to-${BRANCH}-${PR}"
+          gh pr create --base "${BRANCH}" --title "Backport ${PR} to ${BRANCH}" --body "backports: ${PR}"
