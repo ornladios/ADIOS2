@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Backport
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
