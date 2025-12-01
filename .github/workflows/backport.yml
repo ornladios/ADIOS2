@@ -1,0 +1,45 @@
+name: Backport PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull Request number
+        required: true
+      target_branch:
+        description: Branch to where backport the PR
+        required: true
+
+permissions: read-all
+
+jobs:
+  backport:
+    environment: backport
+    runs-on: ubuntu-latest
+    name: Backport
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BACKPORT_TOKEN }}
+      - name: Configure Git
+        run: |
+          git config user.name "ornladios-robot"
+          git config user.email "ornladios-robot[bot]@users.noreply.github.com"
+          git remote add fork "https://github.com/ornladios-robot/ADIOS2.git"
+      - name: Create backport
+        env:
+          GH_TOKEN: ${{ secrets.BACKPORT_TOKEN }}
+        run: |
+          export BRANCH=${{ github.event.inputs.target_branch }}
+          export PR=${{ github.event.inputs.pr }}
+          git checkout --track "origin/${BRANCH}"
+          git checkout -b "backport-to-${BRANCH}-${PR}"
+          commit_hash=$(gh pr view "${PR}" --repo ornladios/ADIOS2 --json mergeCommit --jq '.mergeCommit.oid')
+          if [ -z "$commit_hash" ] || [ "$commit_hash" = "null" ]; then
+            echo "Error: PR ${PR} is not merged yet"
+            exit 1
+          fi
+          git cherry-pick --mainline 1 -x "${commit_hash}"
+          git push -f fork "backport-to-${BRANCH}-${PR}"
+          gh pr create --repo ornladios/ADIOS2 --head ornladios-robot:backport-to-${BRANCH}-${PR} --base "${BRANCH}" --title "Backport ${PR} to ${BRANCH}" --body "backports: ${PR}"
