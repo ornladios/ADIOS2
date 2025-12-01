@@ -65,7 +65,34 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
                                                   helper::Comm const &parentComm)
 {
     int parentRank = parentComm.Rank();
-    int parentSize = parentComm.Size();
+    int numPartitions = subStreams;
+
+    if (numPartitions == 0)
+    {
+        // Neither NumAggregators nor NumSubFiles were specified, so the default should
+        // be equal to the number of nodes, which we compute here.
+        adios2::helper::Comm tempComm =
+            parentComm.GroupByShm("Get number of subfiles for partitioning (dsb 1)");
+        int tempRank = tempComm.Rank();
+        int color = (tempRank == 0 ? 0 : 1);
+        adios2::helper::Comm onePerNodeComm =
+            parentComm.Split(color, 0, "Get number of subfiles for partitioning (dsb 2)");
+
+        if (tempRank == 0)
+        {
+            numPartitions = onePerNodeComm.Size();
+        }
+        numPartitions = tempComm.BroadcastValue<int>(numPartitions, 0);
+
+        tempComm.Free();
+        onePerNodeComm.Free();
+
+        if (m_RankMPI == 0 && m_Parameters.verbose > 2)
+        {
+            std::cout << "InitAggregator() - DataSizeBased: Defaulting number of substreams to "
+                      << "the number of nodes, which is: " << numPartitions << std::endl;
+        }
+    }
 
     m_Profiler.AddTimerWatch("AllGatherRankData");
     m_Profiler.Start("AllGatherRankData");
@@ -86,7 +113,6 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
         std::cout << "]" << std::endl;
     }
 
-    int numPartitions = subStreams <= 0 ? std::max(parentSize / 2, 1) : subStreams;
     m_Profiler.AddTimerWatch("PartitionRanks");
     m_Profiler.Start("PartitionRanks");
     helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
@@ -1425,7 +1451,8 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         // Partition ranks based on data size
         m_Profiler.AddTimerWatch("GetPartitionInfo");
         m_Profiler.Start("GetPartitionInfo");
-        helper::RankPartition myPart = GetPartitionInfo(DataSize, m_Parameters.NumSubFiles, m_Comm);
+        helper::RankPartition myPart =
+            GetPartitionInfo(DataSize, m_Parameters.NumAggregators, m_Comm);
         m_Profiler.Stop("GetPartitionInfo");
 
         // Close the aggregator and re-initialize with the partitioning details for this rank
