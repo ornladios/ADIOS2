@@ -193,6 +193,7 @@ void BP5Writer::ReroutingCommunicationLoop()
     bool needStateCheck = false;
     StateTraversal pairFinder;
     std::vector<int> subCoordRanks;
+    std::map<int, size_t> scRankToIndex;
     bool firstIdleMsg = true;
     std::set<int> closeAcksNeeded;
     std::set<int> groupIdlesNeeded;
@@ -233,6 +234,7 @@ void BP5Writer::ReroutingCommunicationLoop()
             groupState[i].m_currentStatus = WriterGroupState::Status::UNKNOWN;
             groupState[i].m_subFileIndex = i;
             subCoordRanks[i] = m_Partitioning.m_Partitions[i][0];
+            scRankToIndex[m_Partitioning.m_Partitions[i][0]] = i;
             closeAcksNeeded.insert(subCoordRanks[i]);
             groupIdlesNeeded.insert(subCoordRanks[i]);
         }
@@ -332,20 +334,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                     size_t ackGroupIdx = static_cast<size_t>(message.m_WildCard);
                     groupState[ackGroupIdx].m_currentStatus = WriterGroupState::Status::CLOSED;
                     closeAcksNeeded.erase(status.Source);
-
-                    if (!closeAcksNeeded.empty())
-                    {
-                        std::stringstream ss;
-
-                        ss << "Rank " << m_RankMPI << " still awaiting close acks from: [ ";
-                        for (int n : closeAcksNeeded)
-                        {
-                            ss << n << " ";
-                        }
-                        ss << " ]\n";
-
-                        std::cout << ss.str();
-                    }
                 }
                 break;
             case RerouteMessage::MessageType::WRITER_IDLE:
@@ -455,56 +443,65 @@ void BP5Writer::ReroutingCommunicationLoop()
             case RerouteMessage::MessageType::REROUTE_REJECT:
                 std::cout << "Rank " << m_RankMPI << " received REROUTE_REJECT from rank "
                           << status.Source << std::endl;
-                // msg for global coordinator
-
-                // Both the src and target subcoord states return from PENDING to their prior state
-                if (groupState[message.m_SrcRank].m_currentStatus ==
-                    WriterGroupState::Status::PENDING)
                 {
-                    groupState[message.m_SrcRank].m_currentStatus =
-                        WriterGroupState::Status::WRITING;
-                    groupState[message.m_SrcRank].m_queueSize = 0;
-                }
+                    // msg for global coordinator
 
-                if (groupState[message.m_DestRank].m_currentStatus ==
-                    WriterGroupState::Status::PENDING)
-                {
-                    groupState[message.m_DestRank].m_currentStatus = WriterGroupState::Status::IDLE;
-                }
+                    size_t srcIdx = scRankToIndex[message.m_SrcRank];
+                    size_t destIdx = scRankToIndex[message.m_DestRank];
 
-                // The reason to check here is that global coord triggers at most
-                // one reroute sequence per iteration through the loop. Otherwise
-                // we probably don't need a state check upon receipt of rejection.
-                needStateCheck = true;
+                    // Both the src and target subcoord states return from PENDING to their prior state
+                    if (groupState[srcIdx].m_currentStatus ==
+                        WriterGroupState::Status::PENDING)
+                    {
+                        groupState[srcIdx].m_currentStatus =
+                            WriterGroupState::Status::WRITING;
+                        groupState[srcIdx].m_queueSize = 0;
+                    }
+
+                    if (groupState[destIdx].m_currentStatus ==
+                        WriterGroupState::Status::PENDING)
+                    {
+                        groupState[destIdx].m_currentStatus = WriterGroupState::Status::IDLE;
+                    }
+
+                    // The reason to check here is that global coord triggers at most
+                    // one reroute sequence per iteration through the loop. Otherwise
+                    // we probably don't need a state check upon receipt of rejection.
+                    needStateCheck = true;
+                }
                 break;
             case RerouteMessage::MessageType::REROUTE_ACK:
                 std::cout << "Rank " << m_RankMPI << " received REROUTE_ACK from rank "
                           << status.Source << std::endl;
                 // msg for global coordinator
+                {
 
-                std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
-                          << message.m_DestRank << std::endl;
+                    std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
+                            << message.m_DestRank << std::endl;
 
-                // Send the lucky volunteer another writer
-                adios2::helper::RerouteMessage writeMoreMsg;
-                writeMoreMsg.m_MsgType = RerouteMessage::MessageType::WRITE_MORE;
-                writeMoreMsg.m_WildCard = message.m_WildCard; // i.e. the rerouted writer rank
-                writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank,
-                                               sendBuffers.GetNextBuffer());
+                    // Send the lucky volunteer another writer
+                    adios2::helper::RerouteMessage writeMoreMsg;
+                    writeMoreMsg.m_MsgType = RerouteMessage::MessageType::WRITE_MORE;
+                    writeMoreMsg.m_WildCard = message.m_WildCard; // i.e. the rerouted writer rank
+                    writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank,
+                                                sendBuffers.GetNextBuffer());
 
-                groupIdlesNeeded.insert(message.m_DestRank);
+                    groupIdlesNeeded.insert(message.m_DestRank);
 
-                // Src subcoord state is returned to writing, dest subcoord state is now writing as
-                // well
-                groupState[message.m_SrcRank].m_currentStatus = WriterGroupState::Status::WRITING;
-                groupState[message.m_SrcRank].m_queueSize -= 1;
-                groupState[message.m_DestRank].m_currentStatus = WriterGroupState::Status::WRITING;
-                // groupState[message.m_DestRank].m_queueSize += 1;
+                    // Src subcoord state is returned to writing, dest subcoord state is now writing as
+                    // well
+                    size_t srcIdx = scRankToIndex[message.m_SrcRank];
+                    size_t destIdx = scRankToIndex[message.m_DestRank];
+                    groupState[srcIdx].m_currentStatus = WriterGroupState::Status::WRITING;
+                    groupState[srcIdx].m_queueSize -= 1;
+                    groupState[destIdx].m_currentStatus = WriterGroupState::Status::WRITING;
+                    // groupState[destIdx].m_queueSize += 1;
 
-                // The reason to check here is that global coord triggers at most
-                // one reroute sequence per iteration through the loop. Otherwise
-                // we probably don't need a state check upon receiving reroute ack.
-                needStateCheck = true;
+                    // The reason to check here is that global coord triggers at most
+                    // one reroute sequence per iteration through the loop. Otherwise
+                    // we probably don't need a state check upon receiving reroute ack.
+                    needStateCheck = true;
+                }
                 break;
             case RerouteMessage::MessageType::WRITE_MORE:
                 std::cout << "Rank " << m_RankMPI << " received WRITE_MORE from rank "
@@ -608,7 +605,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
         // Global coordinator process
         // Look for possible reroute-to / reroute-from pairs
-        if (iAmGlobalCoord && needStateCheck && !waitingForCloseAcks)
+        if (iAmGlobalCoord /*&& needStateCheck*/ && !waitingForCloseAcks)
         {
             std::cout << "GC (" << m_RankMPI << ") looking for reroute candidate pair" << std::endl;
             std::pair<size_t, size_t> nextPair;
@@ -670,25 +667,51 @@ void BP5Writer::ReroutingCommunicationLoop()
 
                 waitingForCloseAcks = true;
             }
+            else
+            {
+                std::cout << "candidate pair search returned ";
+
+                switch (result)
+                {
+                case StateTraversal::SearchResult::NOT_FOUND:
+                    std::cout << "NOT FOUND" << std::endl;
+                    std::cout << "  states: [ ";
+                    for (size_t i = 0; i < groupState.size(); ++i)
+                    {
+                        std::cout << static_cast<int>(groupState[i].m_currentStatus) << " ";
+                    }
+                    std::cout << "]" << std::endl;
+                    break;
+                case StateTraversal::SearchResult::FOUND:
+                    std::cout << "FOUND" << std::endl;
+                    break;
+                case StateTraversal::SearchResult::FINISHED:
+                    std::cout << "FINISHED" << std::endl;
+                    break;
+                }
+            }
         }
 
         if (iAmGlobalCoord)
         {
-            if (waitingForCloseAcks && closeAcksNeeded.empty())
+            if (waitingForCloseAcks)
             {
-                std::cout << "Rank " << m_RankMPI << " got all my close acks" << std::endl;
-                // global coordinator received the final close ack, now it can leave
-                waitingForCloseAcks = false;
-            }
-            else
-            {
-                std::cout << "Rank " << m_RankMPI << " still need " << closeAcksNeeded.size()
-                          << " close acks [ ";
-                for (int n : closeAcksNeeded)
+                if (closeAcksNeeded.empty())
                 {
-                    std::cout << " " << n;
+                    std::cout << "Rank " << m_RankMPI << " got all my close acks" << std::endl;
+                    // global coordinator received the final close ack, now it can leave
+                    waitingForCloseAcks = false;
                 }
-                std::cout << " ]" << std::endl;
+                else
+                {
+                    std::cout << "Rank " << m_RankMPI << " still need " << closeAcksNeeded.size()
+                            << " close acks [ ";
+                    for (int n : closeAcksNeeded)
+                    {
+                        std::cout << " " << n;
+                    }
+                    std::cout << " ]" << std::endl;
+                }
             }
         }
     }
@@ -742,8 +765,11 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
         m_Aggregator->m_SubStreamIndex = m_TargetIndex;
 
         // Open the subfile without doing any collective communications, since the global
-        // coordinator ensures only one rerouted rank opens this file at a time.
-        OpenSubfile(false);
+        // coordinator ensures only one rerouted rank opens this file at a time. Also,
+        // be sure to open in append mode because another rank already wrote to this file,
+        // and open without append mode in that case can result in a block of zeros getting
+        // written.
+        OpenSubfile(false, true);
     }
 
     // align to PAGE_SIZE
