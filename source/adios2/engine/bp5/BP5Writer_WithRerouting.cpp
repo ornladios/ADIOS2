@@ -313,7 +313,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                 std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE from rank "
                           << status.Source << std::endl;
                 // msg for sub coordinator
-                m_DataPos = currentFilePos;
                 receivedGroupClose = true;
 
                 std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE_ACK to rank "
@@ -714,6 +713,13 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
             }
         }
+    }
+
+    // Before leaving this method, subcoordinators need to update the variable tracking
+    // the current file position for their particular subfile
+    if (iAmSubCoord)
+    {
+        m_DataPos = currentFilePos;
     }
 
     std::cout << "Rank " << m_RankMPI << " Exit ReroutingCommunicationLoop" << std::endl;
