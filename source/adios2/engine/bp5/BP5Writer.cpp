@@ -1689,7 +1689,7 @@ void BP5Writer::InitTransports()
     InitBPBuffer();
 }
 
-void BP5Writer::OpenSubfile(bool useComm)
+void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
 {
     std::string cacheKey = GetCacheKey(m_Aggregator);
     auto search = m_AggregatorSpecifics.find(cacheKey);
@@ -1736,7 +1736,7 @@ void BP5Writer::OpenSubfile(bool useComm)
 
             if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
             {
-                if (m_WriterStep > 0)
+                if (m_WriterStep > 0 || forceAppend)
                 {
                     // override the mode to be append if we're opening a file that
                     // was already opened by another rank.

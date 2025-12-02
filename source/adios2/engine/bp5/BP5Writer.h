@@ -78,7 +78,7 @@ private:
     std::map<std::string, AggTransportData> m_AggregatorSpecifics;
     helper::RankPartition GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
                                            helper::Comm const &parentComm);
-    void OpenSubfile(const bool useComm = true);
+    void OpenSubfile(const bool useComm = true, const bool forceAppend = false);
     helper::Partitioning m_Partitioning;
 
     /** Single object controlling BP buffering */
