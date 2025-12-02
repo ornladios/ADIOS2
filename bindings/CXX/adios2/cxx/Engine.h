@@ -82,8 +82,7 @@ public:
     /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
      * and mode = Read
-     * Check each engine documentation for MPI collective/non-collective
-     * behavior.
+     * For most engines, this should be treated as MPI collective function.
      * @return current step status
      */
     StepStatus BeginStep();
@@ -91,8 +90,7 @@ public:
     /**
      * Begin a logical adios2 step, overloaded version for advanced stream
      * control
-     * Check each engine documentation for MPI collective/non-collective
-     * behavior.
+     * For most engines, this should be treated as MPI collective function.
      * @param mode see enum adios2::StepMode for options, Read is the
      * common use case
      * @param timeoutSeconds
@@ -432,8 +430,7 @@ public:
 
     /**
      * Ends current step, by default calls PerformsPut/Get internally
-     * Check each engine documentation for MPI collective/non-collective
-     * behavior.
+     * For most engines, this is an MPI collective function.
      */
     void EndStep();
 
