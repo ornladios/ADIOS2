@@ -448,17 +448,15 @@ void BP5Writer::ReroutingCommunicationLoop()
                     size_t srcIdx = scRankToIndex[message.m_SrcRank];
                     size_t destIdx = scRankToIndex[message.m_DestRank];
 
-                    // Both the src and target subcoord states return from PENDING to their prior state
-                    if (groupState[srcIdx].m_currentStatus ==
-                        WriterGroupState::Status::PENDING)
+                    // Both the src and target subcoord states return from PENDING to their prior
+                    // state
+                    if (groupState[srcIdx].m_currentStatus == WriterGroupState::Status::PENDING)
                     {
-                        groupState[srcIdx].m_currentStatus =
-                            WriterGroupState::Status::WRITING;
+                        groupState[srcIdx].m_currentStatus = WriterGroupState::Status::WRITING;
                         groupState[srcIdx].m_queueSize = 0;
                     }
 
-                    if (groupState[destIdx].m_currentStatus ==
-                        WriterGroupState::Status::PENDING)
+                    if (groupState[destIdx].m_currentStatus == WriterGroupState::Status::PENDING)
                     {
                         groupState[destIdx].m_currentStatus = WriterGroupState::Status::IDLE;
                     }
@@ -476,19 +474,19 @@ void BP5Writer::ReroutingCommunicationLoop()
                 {
 
                     std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
-                            << message.m_DestRank << std::endl;
+                              << message.m_DestRank << std::endl;
 
                     // Send the lucky volunteer another writer
                     adios2::helper::RerouteMessage writeMoreMsg;
                     writeMoreMsg.m_MsgType = RerouteMessage::MessageType::WRITE_MORE;
                     writeMoreMsg.m_WildCard = message.m_WildCard; // i.e. the rerouted writer rank
                     writeMoreMsg.NonBlockingSendTo(m_Comm, message.m_DestRank,
-                                                sendBuffers.GetNextBuffer());
+                                                   sendBuffers.GetNextBuffer());
 
                     groupIdlesNeeded.insert(message.m_DestRank);
 
-                    // Src subcoord state is returned to writing, dest subcoord state is now writing as
-                    // well
+                    // Src subcoord state is returned to writing, dest subcoord state is now writing
+                    // as well
                     size_t srcIdx = scRankToIndex[message.m_SrcRank];
                     size_t destIdx = scRankToIndex[message.m_DestRank];
                     groupState[srcIdx].m_currentStatus = WriterGroupState::Status::WRITING;
@@ -704,7 +702,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 else
                 {
                     std::cout << "Rank " << m_RankMPI << " still need " << closeAcksNeeded.size()
-                            << " close acks [ ";
+                              << " close acks [ ";
                     for (int n : closeAcksNeeded)
                     {
                         std::cout << " " << n;
