@@ -190,7 +190,6 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     // global coordinator keeps track of state of each subcoord
     std::vector<WriterGroupState> groupState;
-    bool needStateCheck = false;
     StateTraversal pairFinder;
     std::vector<int> subCoordRanks;
     std::map<int, size_t> scRankToIndex;
@@ -204,16 +203,7 @@ void BP5Writer::ReroutingCommunicationLoop()
     // many Sends pending for a long time, that could cause us to exhaust the
     // pool of buffers, at which point we would start overwriting buffers in the
     // pool, potentially creating errors which are difficult to debug/diagnose.
-    int bufferSize = 1;
-    if (iAmGlobalCoord)
-    {
-        bufferSize = subCoordRanks.size();
-    }
-    else if (iAmSubCoord)
-    {
-        bufferSize = 100;
-    }
-    BufferPool sendBuffers((iAmSubCoord ? 100 : 1));
+    BufferPool sendBuffers(100);
     std::vector<char> recvBuffer;
     int writingRank = -1;
     uint64_t currentFilePos = 0;
@@ -275,10 +265,6 @@ void BP5Writer::ReroutingCommunicationLoop()
         int msgReady = 0;
         helper::Comm::Status status =
             m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
-
-        // Many messages may not result in a state change for the global coordinator,
-        // so set this flag if a check is needed
-        needStateCheck = false;
 
         // If there is a message ready, receive and handle it
         if (msgReady)
@@ -370,8 +356,6 @@ void BP5Writer::ReroutingCommunicationLoop()
 
                         firstIdleMsg = false;
                     }
-
-                    needStateCheck = true;
                 }
                 break;
             case RerouteMessage::MessageType::WRITER_CAPACITY:
@@ -381,7 +365,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                 {
                     int capacityGroup = message.m_WildCard;
                     groupState[capacityGroup].m_currentStatus = WriterGroupState::Status::CAPACITY;
-                    needStateCheck = true;
                 }
                 break;
             case RerouteMessage::MessageType::STATUS_INQUIRY:
@@ -407,7 +390,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                     groupState[subStreamIdx].m_currentStatus =
                         qSize > 0 ? WriterGroupState::Status::WRITING
                                   : WriterGroupState::Status::IDLE;
-                    needStateCheck = true;
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_REQUEST:
@@ -460,11 +442,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                     {
                         groupState[destIdx].m_currentStatus = WriterGroupState::Status::IDLE;
                     }
-
-                    // The reason to check here is that global coord triggers at most
-                    // one reroute sequence per iteration through the loop. Otherwise
-                    // we probably don't need a state check upon receipt of rejection.
-                    needStateCheck = true;
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_ACK:
@@ -493,11 +470,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                     groupState[srcIdx].m_queueSize -= 1;
                     groupState[destIdx].m_currentStatus = WriterGroupState::Status::WRITING;
                     // groupState[destIdx].m_queueSize += 1;
-
-                    // The reason to check here is that global coord triggers at most
-                    // one reroute sequence per iteration through the loop. Otherwise
-                    // we probably don't need a state check upon receiving reroute ack.
-                    needStateCheck = true;
                 }
                 break;
             case RerouteMessage::MessageType::WRITE_MORE:
@@ -602,7 +574,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
         // Global coordinator process
         // Look for possible reroute-to / reroute-from pairs
-        if (iAmGlobalCoord /*&& needStateCheck*/ && !waitingForCloseAcks)
+        if (iAmGlobalCoord && !waitingForCloseAcks)
         {
             std::cout << "GC (" << m_RankMPI << ") looking for reroute candidate pair" << std::endl;
             std::pair<size_t, size_t> nextPair;
@@ -760,13 +732,15 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     std::cout << "Rank " << m_RankMPI << " signaled to write" << std::endl;
 
+    size_t substreamIdx = static_cast<size_t>(m_TargetIndex);
+
     // Check if we need to update which file we are writing to
-    if (m_TargetIndex != m_Aggregator->m_SubStreamIndex)
+    if (substreamIdx != m_Aggregator->m_SubStreamIndex)
     {
         // We were rerouted! Our aggregator subfile index is later exchanged with other
         // ranks to be written to metadata, so update it here or the metadata will be
         // wrong.
-        m_Aggregator->m_SubStreamIndex = m_TargetIndex;
+        m_Aggregator->m_SubStreamIndex = substreamIdx;
 
         // Open the subfile without doing any collective communications, since the global
         // coordinator ensures only one rerouted rank opens this file at a time. Also,
