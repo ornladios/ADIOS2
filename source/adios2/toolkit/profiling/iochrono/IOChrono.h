@@ -85,6 +85,20 @@ private:
     helper::Comm const &m_Comm;
 };
 
+class ProfilerGuard
+{
+public:
+    explicit ProfilerGuard(JSONProfiler &host, const std::string &tag)
+    : m_HostProfiler(host), m_Tag(tag)
+    {
+        m_HostProfiler.Start(tag);
+    }
+    ~ProfilerGuard() { m_HostProfiler.Stop(m_Tag); }
+
+private:
+    JSONProfiler &m_HostProfiler;
+    std::string m_Tag;
+};
 } // end namespace profiling
 } // end namespace adios
 

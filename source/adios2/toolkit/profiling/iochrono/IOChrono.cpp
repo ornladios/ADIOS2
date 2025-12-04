@@ -56,35 +56,32 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     m_Profiler.m_IsActive = true; // default is true
 
     AddTimerWatch("buffering");
-    AddTimerWatch("ES");
-    AddTimerWatch("PP");
     AddTimerWatch("ES_meta1_gather", false);
     AddTimerWatch("ES_meta2_gather", false);
-    AddTimerWatch("ES_write_metadata", false);
-    AddTimerWatch("MetadataBlockWrite", false);
-    AddTimerWatch("ES_AGG1", false);
-    AddTimerWatch("ES_GatherMetadataBlocks", false);
-    AddTimerWatch("ES_simple_meta", false);
-    AddTimerWatch("ES_simple_gather", false);
-
     AddTimerWatch("ES_meta1");
     AddTimerWatch("ES_meta2");
 
-    AddTimerWatch("ES_aggregate_info", false);
-    AddTimerWatch("ES_gather_write_meta", false);
-    AddTimerWatch("FixedMetaInfoGather", false);
-    AddTimerWatch("MetaInfoBcast", false);
-    AddTimerWatch("SelectMetaInfoGather", false);
+    AddTimerWatch("ES");
+    AddTimerWatch("ES_MDAgg"); // either type: Selective & TwoLevel
+    AddTimerWatch("ES_DeriveVars");
+    AddTimerWatch("ES_CloseTS");
+    AddTimerWatch("ES_WriteData");
 
-    AddTimerWatch("ES_close");
-    AddTimerWatch("ES_AWD");
-    AddTimerWatch("WaitOnAsync");
+    AddTimerWatch("BS");
     AddTimerWatch("BS_WaitOnAsync");
+
+    AddTimerWatch("WriteData"); // called by Flush and EndStep
+
+    AddTimerWatch("WriteMD", false); // for BP5's two WriteMetadata()
+    AddTimerWatch("WriteMmD", false);
+    AddTimerWatch("WriteMD_Blocks", false); // in both BP5's WriteMetadata() calls
+
+    AddTimerWatch("DC");
     AddTimerWatch("DC_WaitOnAsync1");
     AddTimerWatch("DC_WaitOnAsync2");
-    AddTimerWatch("PDW");
 
-    AddTimerWatch("DeriveVars");
+    AddTimerWatch("PDW");
+    AddTimerWatch("PP");
 
     m_Profiler.m_Bytes.emplace("buffering", 0);
     AddTimerWatch("DataRead");
