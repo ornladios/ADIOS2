@@ -27,6 +27,9 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "Wunused-command-line-argument"
   "ld: warning: -undefined dynamic_lookup may not work with chained fixups"
   "ld: warning: ignoring duplicate libraries:"
+  # CMake>=4 add this flag that some compilers do not understand
+  "icpc: command line warning #10006: ignoring unknown option '-fstack-clash-protection'"
+  "icc: command line warning #10006: ignoring unknown option '-fstack-clash-protection'"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"
