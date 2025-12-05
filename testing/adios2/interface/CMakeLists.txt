@@ -17,8 +17,6 @@ file(MAKE_DIRECTORY ${BP5_DIR})
 file(MAKE_DIRECTORY ${BPfile_DIR})
 file(MAKE_DIRECTORY ${FS_DIR})
 
-gtest_add_tests_helper(Interface MPI_ALLOW ADIOS Interface.  .BP3
-    WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3")
 gtest_add_tests_helper(Interface MPI_ALLOW ADIOS Interface.  .BPfile
     WORKING_DIRECTORY ${BPfile_DIR} EXTRA_ARGS "BPfile")
 gtest_add_tests_helper(Write MPI_ALLOW ADIOSInterface Interface. "")
