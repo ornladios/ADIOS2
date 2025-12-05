@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 #define str_helper(X) #X
 #define mystr(X) str_helper(X)
 
@@ -64,6 +66,11 @@ void ZfpRate1D(const std::string configFile)
 
         (void)var_r32;
         (void)var_r64;
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -182,6 +189,11 @@ void ZfpRate2D(const std::string configFile)
         (void)var_r32;
         (void)var_r64;
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -298,6 +310,11 @@ void ZfpRate3D(const std::string configFile)
 
         (void)var_r32;
         (void)var_r64;
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -416,6 +433,11 @@ void ZfpRate1DSel(const std::string configFile)
         (void)var_r32;
         (void)var_r64;
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -532,6 +554,11 @@ void ZfpRate2DSel(const std::string configFile)
 
         (void)var_r32;
         (void)var_r64;
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -650,6 +677,11 @@ void ZfpRate3DSel(const std::string configFile)
         (void)var_r32;
         (void)var_r64;
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -767,6 +799,11 @@ void ZfpRate2DSmallSel(const std::string configFile)
         (void)var_r32;
         (void)var_r64;
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -871,6 +908,10 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI

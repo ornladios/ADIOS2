@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 class ADIOSInquireDefineTest : public ::testing::Test
 {
 public:
@@ -32,9 +34,9 @@ TEST_F(ADIOSInquireDefineTest, Read)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    std::string filename = "ADIOSInquireDefine_MPI.bp";
+    std::string filename = "ADIOSInquireDefine_" + engineName + "_MPI.bp";
 #else
-    std::string filename = "ADIOSInquireDefine.bp";
+    std::string filename = "ADIOSInquireDefine_" + engineName + ".bp";
 #endif
 
     // Write test data using BP
@@ -54,6 +56,10 @@ TEST_F(ADIOSInquireDefineTest, Read)
         try
         {
             adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
+            if (!engineName.empty())
+            {
+                ioWrite.SetEngine(engineName);
+            }
             adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
             adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
@@ -231,6 +237,10 @@ int main(int argc, char **argv)
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     int result = RUN_ALL_TESTS();
 #if ADIOS2_USE_MPI
     MPI_Finalize();

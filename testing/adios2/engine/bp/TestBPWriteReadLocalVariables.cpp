@@ -1763,6 +1763,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
         bpWriter.Put(var_r32, data.data());
         bpWriter.Close();
@@ -1854,6 +1859,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 #else
     adios2::ADIOS adios;
 #endif
+    std::string ActualEngineName;
     {
         adios2::IO io = adios.DeclareIO("TestIO");
         const adios2::Dims shape{};
@@ -1862,7 +1868,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        ActualEngineName = bpWriter.Type();
 
         for (int step = 0; step < NSTEPS; ++step)
         {
@@ -1889,7 +1902,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (!mpiRank)
+    if ((!mpiRank) && (ActualEngineName != "BP4Writer") && (ActualEngineName != "BP3Writer"))
+    // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
+    // do not produce a step
     {
         adios2::IO io = adios.DeclareIO("ReaderIO");
 #if ADIOS2_USE_MPI
@@ -1940,7 +1955,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (!mpiRank)
+    if ((!mpiRank) && (engineName != "BP4Writer") && (engineName != "BP3Writer"))
+    // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
+    // do not produce a step
     {
         adios2::IO io = adios.DeclareIO("ReaderIORRA");
 #if ADIOS2_USE_MPI
