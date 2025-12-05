@@ -2,17 +2,17 @@ These are the script I use to plot json profilers.
 In the ADIOS proflier, the important keys are:
    PP PDW ES ES_AWD ES_aggregate_info MetaInfoBcast FixedMetaInfoGather transport_0.wbytes
 
-Therelationship is
+The relationship of the sections  is
    BS (BeginStep)   
    PDW (PerformDataWrite) | PP(PerformPut)
-   ES: (EndStep)
+   ES: (EndStep), main subsections are:
     - [ ES_DSD ] optional, if using DataSizeBased Aggregation
     - ES_WriteData 
     - ES_MDAgg
     - ES_CloseTS
    DC (DoClose)
 
-Each section may contain one or more sections.
+Each sub/section may contain one or more subsections.
     
 Bytes are reported in "transport_0.wbytes"
 
