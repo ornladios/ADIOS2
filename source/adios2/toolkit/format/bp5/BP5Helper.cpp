@@ -293,11 +293,19 @@ void BP5Helper::GathervArraysTwoLevel(helper::Comm &groupComm, helper::Comm &gro
     /*
      * Two-step aggregation of data that requires no intermediate processing
      */
-    Profiler.Start("ES_meta1");
+    std::string tag_str = "GathervArraysTwoLevel";
+    std::string stepOne = tag_str + "_step1";
+    std::string stepTwo = tag_str + "_step2";
+    Profiler.AddTimerWatch(stepOne);
+    Profiler.AddTimerWatch(stepTwo);
+
+    Profiler.Start(stepOne);
     std::vector<uint64_t> RecvBuffer;
     if (groupComm.Size() > 1)
     { // level 1
-        Profiler.Start("ES_meta1_gather");
+        std::string gather_str = stepOne + "_gather" + std::to_string(groupComm.Size());
+        Profiler.AddTimerWatch(gather_str);
+        profiling::ProfilerGuard g(Profiler, gather_str);
         std::vector<size_t> RecvCounts = groupComm.GatherValues(LocalSize, 0);
         if (groupComm.Rank() == 0)
         {
@@ -311,10 +319,11 @@ void BP5Helper::GathervArraysTwoLevel(helper::Comm &groupComm, helper::Comm &gro
         }
         groupComm.GathervArrays(MyContrib, LocalSize, RecvCounts.data(), RecvCounts.size(),
                                 RecvBuffer.data(), 0);
-        Profiler.Stop("ES_meta1_gather");
     } // level 1
-    Profiler.Stop("ES_meta1");
-    Profiler.Start("ES_meta2");
+    // Profiler.Stop("ES_meta1");
+    Profiler.Stop(stepOne);
+
+    Profiler.Start(stepTwo);
     // level 2
     if (groupComm.Rank() == 0)
     {
@@ -322,18 +331,22 @@ void BP5Helper::GathervArraysTwoLevel(helper::Comm &groupComm, helper::Comm &gro
         size_t LocalSize = RecvBuffer.size();
         if (groupLeaderComm.Size() > 1)
         {
-            Profiler.Start("ES_meta2_gather");
+            std::string gather_str = stepTwo + "_gather" + std::to_string(groupComm.Size());
+            Profiler.AddTimerWatch(gather_str);
+            adios2::profiling::ProfilerGuard g(Profiler, gather_str);
+
+            // Profiler.Start("ES_meta2_gather");
             RecvCounts = groupLeaderComm.GatherValues(LocalSize, 0);
             groupLeaderComm.GathervArrays(RecvBuffer.data(), LocalSize, RecvCounts.data(),
                                           RecvCounts.size(), OverallRecvBuffer, 0);
-            Profiler.Stop("ES_meta2_gather");
+            // Profiler.Stop("ES_meta2_gather");
         }
         else
         {
             std::cout << "This should never happen" << std::endl;
         }
     } // level 2
-    Profiler.Stop("ES_meta2");
+    Profiler.Stop(stepTwo);
 }
 
 // clang-format off
@@ -390,6 +403,16 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
                                         std::vector<size_t> &MetaEncodeSize,
                                         std::vector<uint64_t> &WriterDataPositions)
 {
+    std::string tag_str = "ES_MDAgg_AggInfo"; // from caller SelectiveAggregationMetadata
+    std::string fixed_gather_str = tag_str + "_FixedMetaInfoGather";
+    std::string select_gather_str = tag_str + "_SelectMetaInfoGather";
+    std::string bcast_str = tag_str + "_MetaInfoBcast";
+    std::string dynamic_str = tag_str + "_DynamicInfo";
+
+    Profiler.AddTimerWatch(fixed_gather_str);
+    Profiler.AddTimerWatch(bcast_str);
+    Profiler.AddTimerWatch(dynamic_str);
+    Profiler.AddTimerWatch(select_gather_str);
     /*
      * Incoming param info: We expect potentially many
      * NewMetaMetaBlocks if structures are used heavily, but if not,
@@ -423,25 +446,31 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
     if (mpiComm.Rank() == 0)
     {
         RecvBuffer.resize(mpiComm.Size() * sizeof(node_contrib));
-        Profiler.Start("FixedMetaInfoGather");
-        mpiComm.GatherArrays(myFixedContrib.data(), myFixedContrib.size(), RecvBuffer.data(), 0);
-        Profiler.Stop("FixedMetaInfoGather");
+        {
+            profiling::ProfilerGuard g(Profiler, fixed_gather_str);
+            mpiComm.GatherArrays(myFixedContrib.data(), myFixedContrib.size(), RecvBuffer.data(),
+                                 0);
+        }
         BreakdownFixedIncomingMInfo(mpiComm.Size(), RecvBuffer, SecondRecvCounts, BcastInfo,
                                     WriterDataPositions, MetaEncodeSize, AttrSize, MMBSizes,
                                     MMBIDs);
-        Profiler.Start("MetaInfoBcast");
-        mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
-        Profiler.Stop("MetaInfoBcast");
+        {
+            profiling::ProfilerGuard g(Profiler, bcast_str);
+            mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
+        }
     }
     else
     {
-        Profiler.Start("FixedMetaInfoGather");
-        mpiComm.GatherArrays(myFixedContrib.data(), myFixedContrib.size(), RecvBuffer.data(), 0);
-        Profiler.Stop("FixedMetaInfoGather");
+        {
+            profiling::ProfilerGuard g(Profiler, fixed_gather_str);
+            mpiComm.GatherArrays(myFixedContrib.data(), myFixedContrib.size(), RecvBuffer.data(),
+                                 0);
+        }
         BcastInfo.resize(mpiComm.Size());
-        Profiler.Start("MetaInfoBcast");
-        mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
-        Profiler.Stop("MetaInfoBcast");
+        {
+            profiling::ProfilerGuard g(Profiler, bcast_str);
+            mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
+        }
     }
 
     NeedDynamic = BcastInfo[0] == (size_t)-1;
@@ -460,13 +489,16 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
             uint64_t TotalSize = 0;
             TotalSize = std::accumulate(RecvCounts.begin(), RecvCounts.end(), size_t(0));
             RecvBuffer.resize(TotalSize);
-            Profiler.Start("DynamicInfo");
-            mpiComm.GathervArrays(myContrib.data(), myContrib.size(), RecvCounts.data(),
-                                  RecvCounts.size(), RecvBuffer.data(), 0);
-            BreakdownIncomingMInfo(RecvCounts, RecvBuffer, SecondRecvCounts, BcastInfo,
-                                   WriterDataPositions, MetaEncodeSize, AttrSize, MMBSizes, MMBIDs);
-            mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
-            Profiler.Stop("DynamicInfo");
+
+            {
+                profiling::ProfilerGuard g(Profiler, dynamic_str);
+                mpiComm.GathervArrays(myContrib.data(), myContrib.size(), RecvCounts.data(),
+                                      RecvCounts.size(), RecvBuffer.data(), 0);
+                BreakdownIncomingMInfo(RecvCounts, RecvBuffer, SecondRecvCounts, BcastInfo,
+                                       WriterDataPositions, MetaEncodeSize, AttrSize, MMBSizes,
+                                       MMBIDs);
+                mpiComm.Bcast(BcastInfo.data(), BcastInfo.size(), 0, "");
+            }
         }
         else
         {
@@ -533,19 +565,19 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
     {
         std::vector<char> IncomingMMA(TotalSize);
         uint64_t *AlignedIncomingData = reinterpret_cast<uint64_t *>(IncomingMMA.data());
-        Profiler.Start("SelectMetaInfoGather");
-        mpiComm.GathervArrays(AlignedContrib, AlignedContribCount, AlignedCounts.data(),
-                              AlignedCounts.size(), AlignedIncomingData, 0);
-        Profiler.Stop("SelectMetaInfoGather");
+        {
+            profiling::ProfilerGuard g(Profiler, select_gather_str);
+            mpiComm.GathervArrays(AlignedContrib, AlignedContribCount, AlignedCounts.data(),
+                                  AlignedCounts.size(), AlignedIncomingData, 0);
+        }
         BreakdownIncomingMData(SecondRecvCounts, BcastInfo, IncomingMMA, NewMetaMetaBlocks,
                                AttributeEncodeBuffers, AttrSize, MMBSizes, MMBIDs);
     }
     else
     {
-        Profiler.Start("SelectMetaInfoGather");
+        profiling::ProfilerGuard g(Profiler, select_gather_str);
         mpiComm.GathervArrays(AlignedContrib, AlignedContribCount, AlignedCounts.data(),
                               AlignedCounts.size(), (uint64_t *)nullptr, 0);
-        Profiler.Stop("SelectMetaInfoGather");
     }
 }
 

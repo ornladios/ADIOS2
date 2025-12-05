@@ -645,7 +645,7 @@ void DaosWriter::EndStep()
     PERFSTUBS_SCOPED_TIMER("DaosWriter::EndStep");
     m_Profiler.Start("ES");
 
-    m_Profiler.Start("ES_close");
+    m_Profiler.Start("ES_CloseTS");
     MarshalAttributes();
 
     // true: advances step
@@ -656,9 +656,9 @@ void DaosWriter::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
-    m_Profiler.Stop("ES_close");
+    m_Profiler.Stop("ES_CloseTS");
 
-    m_Profiler.Start("ES_AWD");
+    m_Profiler.Start("ES_WriteData");
 
     // TSInfo destructor would delete the DataBuffer so we need to save it
     // for async IO and let the writer free it up when not needed anymore
@@ -677,7 +677,7 @@ void DaosWriter::EndStep()
     else
         delete databuf;
 
-    m_Profiler.Stop("ES_AWD");
+    m_Profiler.Stop("ES_WriteData");
 
     /*
      * Two-step metadata aggregation

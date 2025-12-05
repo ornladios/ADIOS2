@@ -620,6 +620,59 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
     AddSingleString(io, name, datasetId, ts);
 }
 
+void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
+                              unsigned int ts)
+{
+    core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
+    if (v != NULL)
+    {
+        v->m_AvailableStepsCount++;
+        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
+        return;
+    }
+
+    // create a new string var if it is a single value
+    hid_t dspace = H5Dget_space(datasetId);
+    const int ndims = H5Sget_simple_extent_ndims(dspace);
+    std::vector<hsize_t> dims(ndims);
+    H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
+    H5Sclose(dspace);
+
+    if ((ndims > 1) || ((ndims == 1) && (dims[0] > 1)))
+    {
+        printf("WARNING: IO is not accepting definition of array string "
+               "variable: %s. dim: %d "
+               "Skipping. \n",
+               name.c_str(), ndims);
+        return;
+    }
+
+    // Dims shape;
+    // shape.resize(ndims);
+
+    try
+    {
+        auto &foo = io.DefineVariable<std::string>(name);
+        // 0 is a dummy holder. Just to make sure the ts entry is in there
+        foo.m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
+        foo.m_AvailableStepsStart = ts;
+        // default was set to 0 while m_AvailabelStepsStart is 1.
+        // correcting
+
+        if (0 == foo.m_AvailableStepsCount)
+        {
+            foo.m_AvailableStepsCount++;
+        }
+    }
+    catch (std::exception &e)
+    {
+        // invalid variable, do not define
+        printf("%s, WARNING: IO is not accepting definition of variable: %s. "
+               "Skipping. \n",
+               e.what(), name.c_str());
+    }
+}
+
 template <class T>
 void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, size_t ts)
 {

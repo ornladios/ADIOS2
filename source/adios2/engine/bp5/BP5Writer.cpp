@@ -64,6 +64,10 @@ std::string BP5Writer::GetCacheKey(aggregator::MPIAggregator *aggregator)
 helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
                                                   helper::Comm const &parentComm)
 {
+    std::string gpi_str = "InitAgg-dsb_GPI";
+    m_Profiler.AddTimerWatch(gpi_str);
+    profiling::ProfilerGuard g(m_Profiler, gpi_str);
+
     int parentRank = parentComm.Rank();
     int numPartitions = subStreams;
 
@@ -94,10 +98,11 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
         }
     }
 
-    m_Profiler.AddTimerWatch("AllGatherRankData");
-    m_Profiler.Start("AllGatherRankData");
+    std::string gather_str = gpi_str + "_AllGather";
+    m_Profiler.AddTimerWatch(gather_str);
+    m_Profiler.Start(gather_str);
     std::vector<uint64_t> allsizes = parentComm.AllGatherValues(rankDataSize);
-    m_Profiler.Stop("AllGatherRankData");
+    m_Profiler.Stop(gather_str);
 
     if (parentRank == 0 && m_Parameters.verbose > 0)
     {
@@ -113,10 +118,11 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
         std::cout << "]" << std::endl;
     }
 
-    m_Profiler.AddTimerWatch("PartitionRanks");
-    m_Profiler.Start("PartitionRanks");
+    std::string p_str = gpi_str + "_partition";
+    m_Profiler.AddTimerWatch(p_str);
+    m_Profiler.Start(p_str);
     helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
-    m_Profiler.Stop("PartitionRanks");
+    m_Profiler.Stop(p_str);
 
     if (parentRank == 0 && m_Parameters.verbose > 0)
     {
@@ -128,6 +134,7 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    profiling::ProfilerGuard bs(m_Profiler, "BS");
     if (m_BetweenStepPairs)
     {
         helper::Throw<std::logic_error>("Engine", "BP5Writer", "BeginStep",
@@ -173,7 +180,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
-            m_Profiler.Start("BS_WaitOnAsync");
+            profiling::ProfilerGuard g(m_Profiler, "BS_WaitOnAsync");
+
             m_WriteFuture.get();
             m_Comm.Barrier();
             AsyncWriteDataCleanup();
@@ -189,7 +197,6 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                               << std::endl;
                 }
             }
-            m_Profiler.Stop("BS_WaitOnAsync");
         }
     }
 
@@ -217,15 +224,18 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 void BP5Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
-    m_Profiler.Start("PP");
+    profiling::ProfilerGuard g(m_Profiler, "PP");
+
     m_BP5Serializer.PerformPuts(m_Parameters.AsyncWrite || m_Parameters.DirectIO);
-    m_Profiler.Stop("PP");
     return;
 }
 
 void BP5Writer::WriteMetaMetadata(
     const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks)
 {
+    std::string mm_str = "WriteMmD";
+    profiling::ProfilerGuard g(m_Profiler, mm_str);
+
     for (auto &b : MetaMetaBlocks)
     {
         m_MetaMetadataFile->Write((char *)&b.MetaMetaIDLen, sizeof(size_t));
@@ -239,6 +249,9 @@ void BP5Writer::WriteMetaMetadata(
 uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
                                   const std::vector<core::iovec> &AttributeBlocks)
 {
+    // this function is called by TwoLevelAggregationMetadata
+    profiling::ProfilerGuard g(m_Profiler, "WriteMD");
+
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
     std::vector<uint64_t> SizeVector;
@@ -261,16 +274,16 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
     m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    m_Profiler.Start("MetadataBlockWrite");
-    for (auto &b : MetaDataBlocks)
     {
-        if (!b.iov_base)
-            continue;
-        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
-        MetaDataSize += b.iov_len;
+        profiling::ProfilerGuard g(m_Profiler, "WriteMD_Blocks");
+        for (auto &b : MetaDataBlocks)
+        {
+            if (!b.iov_base)
+                continue;
+            m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
+            MetaDataSize += b.iov_len;
+        }
     }
-    m_Profiler.Stop("MetadataBlockWrite");
-
     for (auto &b : AttributeBlocks)
     {
         if (!b.iov_base)
@@ -289,6 +302,8 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
                                   const std::vector<size_t> &SizeVector,
                                   const std::vector<core::iovec> &AttributeBlocks)
 {
+    // this function is called by SelectiveAggregationMetadata
+    profiling::ProfilerGuard g(m_Profiler, "WriteMD");
     size_t MDataTotalSize = std::accumulate(SizeVector.begin(), SizeVector.end(), size_t(0));
     uint64_t MetaDataSize = 0;
     std::vector<uint64_t> AttrSizeVector;
@@ -315,9 +330,11 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
     m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    m_Profiler.Start("MetadataBlockWrite");
-    m_MetadataFile->Write(ContigMetaData.data(), ContigMetaData.size());
-    m_Profiler.Stop("MetadataBlockWrite");
+    {
+        profiling::ProfilerGuard g(m_Profiler, "WriteMD_Blocks");
+        m_MetadataFile->Write(ContigMetaData.data(), ContigMetaData.size());
+    }
+
     MetaDataSize += ContigMetaData.size();
 
     for (auto &b : AttributeBlocks)
@@ -356,6 +373,9 @@ void BP5Writer::AsyncWriteDataCleanup()
 
 void BP5Writer::WriteData(format::BufferV *Data)
 {
+    std::string wd_str = "WriteData";
+    profiling::ProfilerGuard g(m_Profiler, wd_str);
+
     if (m_Parameters.verbose > 1)
     {
         std::cout << " BP5Writer::" << m_Comm.Rank() << "::WriteData() " << std::endl;
@@ -719,7 +739,6 @@ void BP5Writer::ComputeDerivedVariables()
     auto const &m_VariablesDerived = m_IO.GetDerivedVariables();
     auto const &m_Variables = m_IO.GetVariables();
     // parse all derived variables
-    m_Profiler.Start("DeriveVars");
     for (auto it = m_VariablesDerived.begin(); it != m_VariablesDerived.end(); it++)
     {
         // identify the variables used in the derived variable
@@ -770,12 +789,14 @@ void BP5Writer::ComputeDerivedVariables()
                 free(std::get<0>(derivedBlock));
         }
     }
-    m_Profiler.Stop("DeriveVars");
 }
 #endif
 
 void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo TSInfo)
 {
+    std::string agg_str = "ES_MDAgg";
+    profiling::ProfilerGuard g(m_Profiler, agg_str);
+
     std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
     std::vector<uint64_t> DataSizes;
     std::vector<core::iovec> AttributeBlocks;
@@ -789,54 +810,66 @@ void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo
     size_t AlignedMetadataSize = (TSInfo.MetaEncodeBuffer->m_FixedSize + 7) & ~0x7;
     MetaEncodeSize.push_back(AlignedMetadataSize);
 
-    m_Profiler.Start("ES_aggregate_info");
-    BP5Helper::BP5AggregateInformation(m_Comm, m_Profiler, UniqueMetaMetaBlocks, AttributeBlocks,
-                                       MetaEncodeSize, m_WriterDataPos);
+    {
+        std::string aggInfo_str = agg_str + "_AggInfo";
+        m_Profiler.AddTimerWatch(aggInfo_str);
+        profiling::ProfilerGuard aggInfoGuard(m_Profiler, aggInfo_str);
+        BP5Helper::BP5AggregateInformation(m_Comm, m_Profiler, UniqueMetaMetaBlocks,
+                                           AttributeBlocks, MetaEncodeSize, m_WriterDataPos);
+    }
 
-    m_Profiler.Stop("ES_aggregate_info");
-    m_Profiler.Start("ES_gather_write_meta");
+    std::string gwm_str = agg_str + "_GatherWriteMeta";
+    m_Profiler.AddTimerWatch(gwm_str);
+    profiling::ProfilerGuard gwmGuard(m_Profiler, gwm_str);
+
     if (m_Comm.Rank() == 0)
     {
         if (m_Parameters.verbose > 2)
         {
             std::cout << "Performing selective metadata aggregation" << std::endl;
         }
-        m_Profiler.Start("ES_AGG1");
+
         size_t MetadataTotalSize =
             std::accumulate(MetaEncodeSize.begin(), MetaEncodeSize.end(), size_t(0));
         assert(m_WriterDataPos.size() == static_cast<size_t>(m_Comm.Size()));
+
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         for (auto &mm : UniqueMetaMetaBlocks)
         {
             free((void *)mm.MetaMetaInfo);
             free((void *)mm.MetaMetaID);
         }
+
         m_LatestMetaDataPos = m_MetaDataPos;
         std::vector<char> ContigMetadata;
         ContigMetadata.resize(MetadataTotalSize);
         auto AlignedCounts = MetaEncodeSize;
         for (auto &C : AlignedCounts)
             C /= 8;
-        m_Profiler.Stop("ES_AGG1");
-        m_Profiler.Start("ES_GatherMetadataBlocks");
-        if (m_Comm.Size() > m_Parameters.OneLevelGatherRanksLimit)
+
         {
-            BP5Helper::GathervArraysTwoLevel(
-                m_AggregatorMetadata.m_Comm, m_CommMetadataAggregators, m_Profiler,
-                (uint64_t *)TSInfo.MetaEncodeBuffer->Data(), AlignedMetadataSize / 8,
-                AlignedCounts.data(), AlignedCounts.size(), (uint64_t *)ContigMetadata.data(), 0);
+            std::string gmb_str = gwm_str + "_MDBlocks";
+            m_Profiler.AddTimerWatch(gmb_str);
+            profiling::ProfilerGuard g(m_Profiler, gmb_str);
+
+            if (m_Comm.Size() > m_Parameters.OneLevelGatherRanksLimit)
+            {
+                BP5Helper::GathervArraysTwoLevel(
+                    m_AggregatorMetadata.m_Comm, m_CommMetadataAggregators, m_Profiler,
+                    (uint64_t *)TSInfo.MetaEncodeBuffer->Data(), AlignedMetadataSize / 8,
+                    AlignedCounts.data(), AlignedCounts.size(), (uint64_t *)ContigMetadata.data(),
+                    0);
+            }
+            else
+            {
+                m_Comm.GathervArrays((uint64_t *)TSInfo.MetaEncodeBuffer->Data(),
+                                     AlignedMetadataSize / 8, AlignedCounts.data(),
+                                     AlignedCounts.size(), (uint64_t *)ContigMetadata.data(), 0);
+            }
         }
-        else
-        {
-            m_Comm.GathervArrays((uint64_t *)TSInfo.MetaEncodeBuffer->Data(),
-                                 AlignedMetadataSize / 8, AlignedCounts.data(),
-                                 AlignedCounts.size(), (uint64_t *)ContigMetadata.data(), 0);
-        }
-        m_Profiler.Stop("ES_GatherMetadataBlocks");
-        m_Profiler.Start("ES_write_metadata");
+
         m_LatestMetaDataSize = WriteMetadata(ContigMetadata, MetaEncodeSize, AttributeBlocks);
 
-        m_Profiler.Stop("ES_write_metadata");
         for (auto &a : AttributeBlocks)
             free((void *)a.iov_base);
         if (!m_Parameters.AsyncWrite)
@@ -860,124 +893,136 @@ void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo
                                  MetaEncodeSize.data(), MetaEncodeSize.size(), (char *)nullptr, 0);
         }
     }
-    m_Profiler.Stop("ES_gather_write_meta");
 }
 
 void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo TSInfo)
 {
+    std::string agg_str = "ES_MDAgg";
+    profiling::ProfilerGuard g(m_Profiler, agg_str);
+
     /*
      * Two-step metadata aggregation
      */
-    m_Profiler.Start("ES_meta1");
     std::vector<char> MetaBuffer;
-    core::iovec m{TSInfo.MetaEncodeBuffer->Data(), TSInfo.MetaEncodeBuffer->m_FixedSize};
-    core::iovec a{nullptr, 0};
-    if (TSInfo.AttributeEncodeBuffer)
     {
-        a = {TSInfo.AttributeEncodeBuffer->Data(), TSInfo.AttributeEncodeBuffer->m_FixedSize};
-    }
-    MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-        TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
+        std::string level1_str = agg_str + "_lv1";
+        m_Profiler.AddTimerWatch(level1_str);
+        profiling::ProfilerGuard g(m_Profiler, level1_str);
 
-    std::string meta1_gather_str =
-        "ES_meta1_gather_" + std::to_string(m_AggregatorMetadata.m_Comm.Size());
-    m_Profiler.AddTimerWatch(meta1_gather_str, true);
+        core::iovec m{TSInfo.MetaEncodeBuffer->Data(), TSInfo.MetaEncodeBuffer->m_FixedSize};
+        core::iovec a{nullptr, 0};
+        if (TSInfo.AttributeEncodeBuffer)
+        {
+            a = {TSInfo.AttributeEncodeBuffer->Data(), TSInfo.AttributeEncodeBuffer->m_FixedSize};
+        }
+        MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
+            TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
 
-    if (m_AggregatorMetadata.m_Comm.Size() > 1)
-    { // level 1
-        m_Profiler.Start(meta1_gather_str);
-        size_t LocalSize = MetaBuffer.size();
-        std::vector<size_t> RecvCounts = m_AggregatorMetadata.m_Comm.GatherValues(LocalSize, 0);
-        std::vector<char> RecvBuffer;
-        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
-        {
-            uint64_t TotalSize = 0;
-            for (auto &n : RecvCounts)
-                TotalSize += n;
-            RecvBuffer.resize(TotalSize);
-        }
-        m_AggregatorMetadata.m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                                  RecvCounts.size(), RecvBuffer.data(), 0);
-        m_Profiler.Stop(meta1_gather_str);
-        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
-        {
-            std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
-            std::vector<uint64_t> DataSizes;
-            std::vector<uint64_t> WriterDataPositions;
-            std::vector<core::iovec> AttributeBlocks;
-            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-                RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
-                WriterDataPositions);
+        std::string meta1_gather_str =
+            level1_str + "_" + std::to_string(m_AggregatorMetadata.m_Comm.Size());
+        m_Profiler.AddTimerWatch(meta1_gather_str, true);
 
-            MetaBuffer.clear();
-            MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-                UniqueMetaMetaBlocks, Metadata, AttributeBlocks, DataSizes, WriterDataPositions);
-        }
-    } // level 1
-    m_Profiler.Stop("ES_meta1");
-    m_Profiler.Start("ES_meta2");
-    // level 2
-    if (m_AggregatorMetadata.m_Comm.Rank() == 0)
-    {
-        if (m_Parameters.verbose > 2)
-        {
-            std::cout << "Performing two-level metadata aggregation" << std::endl;
-        }
-        std::vector<char> RecvBuffer;
-        std::vector<char> *buf;
-        std::vector<size_t> RecvCounts;
-        size_t LocalSize = MetaBuffer.size();
-        std::string meta2_gather_str =
-            "ES_meta2_gather_" + std::to_string(m_CommMetadataAggregators.Size());
-        m_Profiler.AddTimerWatch(meta2_gather_str, true);
-        if (m_CommMetadataAggregators.Size() > 1)
-        {
-            m_Profiler.Start(meta2_gather_str);
-            RecvCounts = m_CommMetadataAggregators.GatherValues(LocalSize, 0);
-            if (m_CommMetadataAggregators.Rank() == 0)
+        if (m_AggregatorMetadata.m_Comm.Size() > 1)
+        { // level 1
+            m_Profiler.Start(meta1_gather_str);
+            size_t LocalSize = MetaBuffer.size();
+            std::vector<size_t> RecvCounts = m_AggregatorMetadata.m_Comm.GatherValues(LocalSize, 0);
+            std::vector<char> RecvBuffer;
+            if (m_AggregatorMetadata.m_Comm.Rank() == 0)
             {
                 uint64_t TotalSize = 0;
                 for (auto &n : RecvCounts)
                     TotalSize += n;
                 RecvBuffer.resize(TotalSize);
-                /*std::cout << "MD Lvl-2: rank " << m_Comm.Rank() << " gather "
-                          << TotalSize << " bytes from aggregator group"
-                          << std::endl;*/
             }
-
-            m_CommMetadataAggregators.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                                    RecvCounts.size(), RecvBuffer.data(), 0);
-            buf = &RecvBuffer;
-            m_Profiler.Stop(meta2_gather_str);
-        }
-        else
-        {
-            buf = &MetaBuffer;
-            RecvCounts.push_back(LocalSize);
-        }
-
-        if (m_CommMetadataAggregators.Rank() == 0)
-        {
-            std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
-            std::vector<uint64_t> DataSizes;
-            std::vector<core::iovec> AttributeBlocks;
-            m_WriterDataPos.resize(0);
-            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-                *buf, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
-                m_WriterDataPos);
-            assert(m_WriterDataPos.size() == static_cast<size_t>(m_Comm.Size()));
-            WriteMetaMetadata(UniqueMetaMetaBlocks);
-            m_LatestMetaDataPos = m_MetaDataPos;
-            m_Profiler.Start("ES_write_metadata");
-            m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
-            m_Profiler.Stop("ES_write_metadata");
-            if (!m_Parameters.AsyncWrite)
+            m_AggregatorMetadata.m_Comm.GathervArrays(MetaBuffer.data(), LocalSize,
+                                                      RecvCounts.data(), RecvCounts.size(),
+                                                      RecvBuffer.data(), 0);
+            m_Profiler.Stop(meta1_gather_str);
+            if (m_AggregatorMetadata.m_Comm.Rank() == 0)
             {
-                WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+                std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
+                std::vector<uint64_t> DataSizes;
+                std::vector<uint64_t> WriterDataPositions;
+                std::vector<core::iovec> AttributeBlocks;
+                auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
+                    RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
+                    WriterDataPositions);
+
+                MetaBuffer.clear();
+                MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
+                    UniqueMetaMetaBlocks, Metadata, AttributeBlocks, DataSizes,
+                    WriterDataPositions);
             }
-        }
-    } // level 2
-    m_Profiler.Stop("ES_meta2");
+        } // level 1
+    }
+
+    {
+        // level 2
+        std::string level2_str = agg_str + "_lv2";
+        m_Profiler.AddTimerWatch(level2_str);
+        profiling::ProfilerGuard g(m_Profiler, level2_str);
+
+        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
+        {
+            if (m_Parameters.verbose > 2)
+            {
+                std::cout << "Performing two-level metadata aggregation" << std::endl;
+            }
+            std::vector<char> RecvBuffer;
+            std::vector<char> *buf;
+            std::vector<size_t> RecvCounts;
+            size_t LocalSize = MetaBuffer.size();
+            std::string meta2_gather_str =
+                level2_str + "_" + std::to_string(m_CommMetadataAggregators.Size());
+            m_Profiler.AddTimerWatch(meta2_gather_str, true);
+            if (m_CommMetadataAggregators.Size() > 1)
+            {
+                profiling::ProfilerGuard g(m_Profiler, meta2_gather_str);
+                m_Profiler.Start(meta2_gather_str);
+                RecvCounts = m_CommMetadataAggregators.GatherValues(LocalSize, 0);
+                if (m_CommMetadataAggregators.Rank() == 0)
+                {
+                    uint64_t TotalSize = 0;
+                    for (auto &n : RecvCounts)
+                        TotalSize += n;
+                    RecvBuffer.resize(TotalSize);
+                    /*std::cout << "MD Lvl-2: rank " << m_Comm.Rank() << " gather "
+                              << TotalSize << " bytes from aggregator group"
+                              << std::endl;*/
+                }
+
+                m_CommMetadataAggregators.GathervArrays(MetaBuffer.data(), LocalSize,
+                                                        RecvCounts.data(), RecvCounts.size(),
+                                                        RecvBuffer.data(), 0);
+                buf = &RecvBuffer;
+            }
+            else
+            {
+                buf = &MetaBuffer;
+                RecvCounts.push_back(LocalSize);
+            }
+
+            if (m_CommMetadataAggregators.Rank() == 0)
+            {
+                std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
+                std::vector<uint64_t> DataSizes;
+                std::vector<core::iovec> AttributeBlocks;
+                m_WriterDataPos.resize(0);
+                auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
+                    *buf, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
+                    m_WriterDataPos);
+                assert(m_WriterDataPos.size() == static_cast<size_t>(m_Comm.Size()));
+                WriteMetaMetadata(UniqueMetaMetaBlocks);
+                m_LatestMetaDataPos = m_MetaDataPos;
+                m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
+                if (!m_Parameters.AsyncWrite)
+                {
+                    WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+                }
+            }
+        } // level 2
+    }
 }
 
 void BP5Writer::EndStep()
@@ -988,13 +1033,16 @@ void BP5Writer::EndStep()
     }
 
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    ComputeDerivedVariables();
+    {
+        profiling::ProfilerGuard g(m_Profiler, "ES_DeriveVars");
+        ComputeDerivedVariables();
+    }
 #endif
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("ES");
 
-    m_Profiler.Start("ES_close");
+    m_Profiler.Start("ES_CloseTS");
     MarshalAttributes();
 
     // true: advances step
@@ -1005,9 +1053,9 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
-    m_Profiler.Stop("ES_close");
+    m_Profiler.Stop("ES_CloseTS");
 
-    m_Profiler.Start("ES_AWD");
+    m_Profiler.Start("ES_WriteData");
     // TSInfo destructor would delete the DataBuffer so we need to save it
     // for async IO and let the writer free it up when not needed anymore
     m_AsyncWriteLock.lock();
@@ -1018,7 +1066,7 @@ void BP5Writer::EndStep()
     WriteData(TSInfo.DataBuffer);
     TSInfo.DataBuffer = NULL;
 
-    m_Profiler.Stop("ES_AWD");
+    m_Profiler.Stop("ES_WriteData");
 
     if (m_Parameters.UseSelectiveMetadataAggregation)
     {
@@ -1052,12 +1100,15 @@ void BP5Writer::EndStep()
 
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
-        m_Profiler.AddTimerWatch("ShareFilePos");
-        m_Profiler.Start("ShareFilePos");
+        std::string dsb_tag_str = "ES_DSB";
+        m_Profiler.AddTimerWatch(dsb_tag_str);
+        profiling::ProfilerGuard g(m_Profiler, dsb_tag_str);
+
         if (m_Aggregator->m_Comm.Rank() == 0)
         {
-            m_Profiler.AddTimerWatch("ShareFilePos_AG");
-            m_Profiler.Start("ShareFilePos_AG");
+            std::string ag_str = "ES_DSB_AllGather";
+            m_Profiler.AddTimerWatch(ag_str);
+            profiling::ProfilerGuard g(m_Profiler, ag_str);
             // Need all aggregator chains rank 0 processes to know the m_DataPos
             // of each substream
             std::vector<uint64_t> subStreamPos = m_CommAggregators.AllGatherValues(m_DataPos);
@@ -1066,16 +1117,17 @@ void BP5Writer::EndStep()
             {
                 m_SubstreamDataPos[i] = subStreamPos[i];
             }
-            m_Profiler.Stop("ShareFilePos_AG");
         }
 
         // Broadcast substream data positions to all ranks, since any
         // of them could become a substream rank 0 on the next time step
-        m_Profiler.AddTimerWatch("ShareFilePos_BC");
-        m_Profiler.Start("ShareFilePos_BC");
+
+        std::string bc_str = "ES_DSB_Broadcast";
+        m_Profiler.AddTimerWatch(bc_str);
+        m_Profiler.Start(bc_str);
         m_Aggregator->m_Comm.BroadcastVector(m_SubstreamDataPos, 0);
         m_DataPosShared = true;
-        m_Profiler.Stop("ShareFilePos_BC");
+        m_Profiler.Stop(bc_str);
 
         if (m_Parameters.verbose > 2)
         {
@@ -1086,7 +1138,6 @@ void BP5Writer::EndStep()
             }
             std::cout << "]" << std::endl;
         }
-        m_Profiler.Stop("ShareFilePos");
     }
 
     m_Profiler.Stop("ES");
@@ -1449,11 +1500,8 @@ void BP5Writer::InitAggregator(const uint64_t DataSize)
         }
 
         // Partition ranks based on data size
-        m_Profiler.AddTimerWatch("GetPartitionInfo");
-        m_Profiler.Start("GetPartitionInfo");
-        helper::RankPartition myPart =
-            GetPartitionInfo(DataSize, m_Parameters.NumAggregators, m_Comm);
-        m_Profiler.Stop("GetPartitionInfo");
+
+        helper::RankPartition myPart = GetPartitionInfo(DataSize, m_Parameters.NumSubFiles, m_Comm);
 
         // Close the aggregator and re-initialize with the partitioning details for this rank
         m_AggregatorDataSizeBased.Close();
@@ -2074,9 +2122,8 @@ void BP5Writer::Flush(const int transportIndex) {}
 
 void BP5Writer::PerformDataWrite()
 {
-    m_Profiler.Start("PDW");
+    profiling::ProfilerGuard g(m_Profiler, "PDW");
     FlushData(false);
-    m_Profiler.Stop("PDW");
 }
 
 void BP5Writer::DestructorClose(bool Verbose) noexcept
@@ -2104,75 +2151,77 @@ BP5Writer::~BP5Writer()
 
 void BP5Writer::DoClose(const int transportIndex)
 {
-    PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
 
-    if ((m_WriterStep == 0) && !m_BetweenStepPairs)
     {
-        /* never did begin step, do one now */
-        BeginStep(StepMode::Update);
-    }
-    if (m_BetweenStepPairs)
-    {
-        EndStep();
-    }
+        profiling::ProfilerGuard g(m_Profiler, "DC");
 
-    TimePoint wait_start = Now();
-    Seconds wait(0.0);
-    if (m_WriteFuture.valid())
-    {
-        m_Profiler.Start("DC_WaitOnAsync1");
-        m_AsyncWriteLock.lock();
-        m_flagRush = true;
-        m_AsyncWriteLock.unlock();
-        m_WriteFuture.get();
-        wait += Now() - wait_start;
-        m_Profiler.Stop("DC_WaitOnAsync1");
-    }
+        PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
 
-    // However many AggTransportData we created, we need to close them all
-    for (auto it = m_AggregatorSpecifics.begin(); it != m_AggregatorSpecifics.end(); ++it)
-    {
-        it->second.m_FileDataManager.CloseFiles(transportIndex);
-    }
-
-    // Delete files from temporary storage if draining was on
-
-    if (m_Comm.Rank() == 0)
-    {
-        // close metadata file
-        m_MetadataFile->Close();
-
-        // close metametadata file
-        m_MetaMetadataFile->Close();
-    }
-
-    if (m_Parameters.AsyncWrite)
-    {
-        // wait until all process' writing thread completes
-        m_Profiler.Start("DC_WaitOnAsync2");
-        wait_start = Now();
-        m_Comm.Barrier();
-        AsyncWriteDataCleanup();
-        wait += Now() - wait_start;
-        if (m_Comm.Rank() == 0 && m_Parameters.verbose > 0)
+        if ((m_WriterStep == 0) && !m_BetweenStepPairs)
         {
-            std::cout << "Close waited " << wait.count() << " seconds on async threads"
-                      << std::endl;
+            /* never did begin step, do one now */
+            BeginStep(StepMode::Update);
         }
-        m_Profiler.Stop("DC_WaitOnAsync2");
-    }
+        if (m_BetweenStepPairs)
+        {
+            EndStep();
+        }
 
-    if (m_Comm.Rank() == 0)
-    {
+        TimePoint wait_start = Now();
+        Seconds wait(0.0);
+        if (m_WriteFuture.valid())
+        {
+            profiling::ProfilerGuard g(m_Profiler, "DC_WaitOnAsync1");
+            m_AsyncWriteLock.lock();
+            m_flagRush = true;
+            m_AsyncWriteLock.unlock();
+            m_WriteFuture.get();
+            wait += Now() - wait_start;
+        }
+
+        // However many AggTransportData we created, we need to close them all
+        for (auto it = m_AggregatorSpecifics.begin(); it != m_AggregatorSpecifics.end(); ++it)
+        {
+            it->second.m_FileDataManager.CloseFiles(transportIndex);
+        }
+
+        // Delete files from temporary storage if draining was on
+
+        if (m_Comm.Rank() == 0)
+        {
+            // close metadata file
+            m_MetadataFile->Close();
+
+            // close metametadata file
+            m_MetaMetadataFile->Close();
+        }
+
         if (m_Parameters.AsyncWrite)
         {
-            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+            // wait until all process' writing thread completes
+            profiling::ProfilerGuard g(m_Profiler, "DC_WaitOnAsync2");
+            wait_start = Now();
+            m_Comm.Barrier();
+            AsyncWriteDataCleanup();
+            wait += Now() - wait_start;
+            if (m_Comm.Rank() == 0 && m_Parameters.verbose > 0)
+            {
+                std::cout << "Close waited " << wait.count() << " seconds on async threads"
+                          << std::endl;
+            }
         }
-        // close metadata index file
-        UpdateActiveFlag(false);
-        m_MetadataIndexFile->Close();
-    }
 
+        if (m_Comm.Rank() == 0)
+        {
+            if (m_Parameters.AsyncWrite)
+            {
+                WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+            }
+            // close metadata index file
+            UpdateActiveFlag(false);
+            m_MetadataIndexFile->Close();
+        }
+    }
     FlushProfiler();
 }
 
