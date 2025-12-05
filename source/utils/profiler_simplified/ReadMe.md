@@ -18,7 +18,21 @@ Bytes are reported in "transport_0.wbytes"
 
 For how to plot a json file, see test/commands
 
-* ./writeSummary.sh <f1.json> [<f2.json> .. ]   – produces a high-level summary of write metrics for each JSON file provided.
+* ./writeSummary.sh <f1.json> [<f2.json> .. ]   – produces a high-level summary of write metrics for each JSON file provided. e.g.
+
+```bash
+ ./writeSummary.sh data/v/v.json
+=======  High level Summary of data/v/v.json =======
+Num Ranks: 4. NumSteps: 10
+   DataSizeBased + SelectiveAggregationMetadata
+      t1  bytes: 202.56 KiB
+      t0  bytes: 12.50 GiB
+   Max [ES + PDW]: = 1.602 sec at rank: 3
+   Min [ES + PDW]: = 1.592 sec at rank: 2
+```
+
+
+
 * python3 plot_json.py <f1.json> [<f2.json> .. ]  - generates quick, informative plots for top level time-measurement tags in the provided JSON files.
 
 The example plots are in ``python_plots/`. All plots reflect per-rank measurements with the BP5 engine. Other engines may omit some or all of these metrics.
