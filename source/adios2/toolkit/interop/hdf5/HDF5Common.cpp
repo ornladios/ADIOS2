@@ -620,8 +620,8 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
     AddSingleString(io, name, datasetId, ts);
 }
 
-void HDF5Common::AddVarString(core::IO &io, std::string const &name,
-                              hid_t datasetId, unsigned int ts)
+void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
+                              unsigned int ts)
 {
     core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
     if (v != NULL)
