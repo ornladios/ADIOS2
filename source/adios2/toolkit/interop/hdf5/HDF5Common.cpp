@@ -667,9 +667,9 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
     catch (std::exception &e)
     {
         // invalid variable, do not define
-        printf("WARNING: IO is not accepting definition of variable: %s. "
+        printf("%s, WARNING: IO is not accepting definition of variable: %s. "
                "Skipping. \n",
-               name.c_str());
+               e.what(), name.c_str());
     }
 }
 
