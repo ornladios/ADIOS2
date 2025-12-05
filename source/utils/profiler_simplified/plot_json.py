@@ -131,25 +131,25 @@ def getProfilerComponents(key, data):
     return matches
 
 
-## plot data size written on each rank
+# plot data size written on each rank
 plotKey("dataSize")
 
-## plot metadata size written on each rank
+# plot metadata size written on each rank
 plotKey("metadataSize")
 
-## plot end step times on each rank
+# plot end step times on each rank
 plotKey("ES")
-## plot PDW/PP  times on each rank
+# plot PDW/PP  times on each rank
 plotKey(["PDW", "PP"])
-## plot indepent time blocks  on each rank
+# plot indepent time blocks  on each rank
 plotKey(["ES", "PDW", "PP", "BS", "DC"])
 
 
-######################################################
-## one can replace ES with other tags of interest.  ##
-## we will find all next level subcomponents        ##
-## and plot out if there is any valid entries       ##
-######################################################
+####################################################
+# one can replace ES with other tags of interest.  #
+# we will find all next level subcomponents        #
+# and plot out if there is any valid entries       #
+####################################################
 
 if len(json_files) == 1:
     print("Exploring different  ES components ")
