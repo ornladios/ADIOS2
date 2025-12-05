@@ -121,7 +121,7 @@ public:
      * @param start starting position for read, if not passed then start at
      * current stream position
      */
-    virtual void Read(char *buffer, size_t size, size_t start = MaxSizeT) = 0;
+    virtual void Read(char *buffer, size_t size, size_t start = 0) = 0;
 
     /**
      * Returns the size of current data in transport

@@ -69,8 +69,6 @@ public:
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
-    /* transport manager for metadata file */
-    transportman::TransportMan m_MDFileManager;
     /* How many bytes of metadata have we already read in? */
     size_t m_MDFileAlreadyReadSize = 0;
     /* How many bytes of metadata have we already processed?
@@ -87,10 +85,12 @@ private:
     /* transport manager for managing data file(s) */
     transportman::TransportMan m_DataFileManager;
 
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_MDIndexFileManager;
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetaMetadataManager;
+    transportman::TransportMan m_TransportFactory;
+
+    std::shared_ptr<Transport> m_MDIndexFile;
+    std::shared_ptr<Transport> m_MDFile;
+    std::shared_ptr<Transport> m_MetaMetadataFile;
+
     /* How many bytes of metadata index have we already read in? */
     size_t m_MDIndexFileAlreadyReadSize = 0;
 
@@ -99,8 +99,6 @@ private:
     /* How many bytes of meta-metadata have we already processed? */
     size_t m_MetaMetaDataFileAlreadyProcessedSize = 0;
 
-    /* transport manager for managing the active flag file */
-    transportman::TransportMan m_ActiveFlagFileManager;
     bool m_dataIsRemote = false;
     std::shared_ptr<Remote> m_Remote;
     bool m_WriterIsActive = true;
@@ -146,8 +144,7 @@ private:
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
-    size_t OpenWithTimeout(transportman::TransportMan &tm,
-                           const std::vector<std::string> &fileNames,
+    size_t OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
                            const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 

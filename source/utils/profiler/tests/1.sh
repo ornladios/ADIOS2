@@ -13,6 +13,23 @@ script_home=$1
 time_deco=$2
 file_name=$3
 
+getBaseName()
+{
+    local filePath="$1"
+    BASE_NAME=$(basename "$filePath" | cut -d. -f1)
+    local key=${BASE_NAME}
+    if [[ "$filePath" == *"flatten"* ]]; then
+        key="flatten"
+    fi
+    if [[ "$filePath" == *"default"* ]]; then
+        key="default"
+    fi
+    if [[ "$filePath" == *"joined"* ]]; then
+        key="joined"
+    fi
+    echo "${key}"
+}
+
 # Validate files
 if [ ! -f "${script_home}/extract.sh" ]; then
     echo "Error: extract.sh not found in ${script_home}"
@@ -43,12 +60,17 @@ if grep -q "InitAgg-ews" "${file_name}"; then
     aggType="ews"
 fi
 
+if grep -q "InitAgg-dsb" "${file_name}"; then
+    aggType="dsb"
+fi
+
 mkdir outs/"${time_deco}"
 mv outs/*_* outs/"${time_deco}"
 
-base_name=$(basename "${file_name}" | cut -d. -f1)
 
-echo "Data extracted, now plotting.."
+base_name=$(getBaseName "${file_name}")
+
+echo "Data extracted, now plotting...${base_name}"
 # shellcheck source=/dev/null
 source "${script_home}"/draw.sh "${job_id}" "${script_home}"  outs "${time_deco}" "${aggType}" "${base_name}" || {
     echo "Error: Failed to source ${script_home}/draw.sh"

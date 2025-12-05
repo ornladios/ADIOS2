@@ -77,10 +77,18 @@ add_test(NAME Install.Setup COMMAND "${CMAKE_COMMAND}"
   "-DADIOS2_BINARY_DIR=${CMAKE_BINARY_DIR}"
   "-DBUILD_TYPE=$<CONFIG>"
   -P "${CMAKE_CURRENT_SOURCE_DIR}/run_install.cmake"
-  )
+)
 set_tests_properties(Install.Setup PROPERTIES
   FIXTURES_SETUP Install
-  )
+)
+
+add_test(NAME Install.CleanUp COMMAND
+  "${CMAKE_COMMAND}" -E rm -rf "${ADIOS2_BINARY_DIR}/testing/install/install"
+)
+
+set_tests_properties(Install.CleanUp PROPERTIES
+  FIXTURES_CLEANUP Install
+)
 
 # Remove -Wall -Werror in this scope
 if(CMAKE_C_FLAGS)

@@ -42,11 +42,19 @@ BeginStep
    // Simplified signature
    StepStatus BeginStep();
 
+.. note::
+
+   For most engines, this should be treated as a ``collective`` function.
+
 EndStep
 -------
         
    Ends logical step, flush to transports depending on IO parameters and engine default behavior.
 
+
+.. note::
+
+   For most engines, this is a ``collective`` function.
 
 .. tip::
    
@@ -63,6 +71,10 @@ Close
 
    Close current engine and underlying transports.
    An ``Engine`` object can't be used after this call.
+
+.. note::
+
+   For most engines, this is a ``collective`` function.
 
 
 Put: modes and memory contracts
