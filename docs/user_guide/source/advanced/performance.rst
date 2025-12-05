@@ -15,8 +15,9 @@ The structure of the ``profiling.json`` file is a JSON array, where each element
 
 .. code-block:: json
 
-   { "rank":0, "start":"Wed_Dec_06_10:53:10_2023","ES_meta1_gather_mus": 1198, "ES_meta1_gather":{"mus":1198, "nCalls":100},"ES_mus": 357129, "ES":{"mus":357129, "nCalls":100},"Marshal_mus": 189057, "Marshal":{"mus":189057, "nCalls":300},"ES_meta1_mus": 1824, "ES_meta1":{"mus":1824, "nCalls":100},"ES_meta2_mus": 3190, "ES_meta2":{"mus":3190, "nCalls":100},"ES_close_mus": 1126, "ES_close":{"mus":1126, "nCalls":100},"ES_AWD_mus": 350717, "ES_AWD":{"mus":350717, "nCalls":100}, "databytes":0, "metadatabytes":0, "metametadatabytes":0, "transport_0":{"type":"File_POSIX", "wbytes":419430400, "close":{"mus":444, "nCalls":1}, "write":{"mus":233151, "nCalls":400}, "open":{"mus":1654, "nCalls":1}}, "transport_1":{"type":"File_POSIX", "wbytes":178720, "close":{"mus":364, "nCalls":1}, "write":{"mus":1807, "nCalls":704}, "open":{"mus":831, "nCalls":1}} },
-   { "rank":1, "start":"Wed_Dec_06_10:53:10_2023","ES_meta1_gather_mus": 248, "ES_meta1_gather":{"mus":248, "nCalls":100},"ES_mus": 355382, "ES":{"mus":355382, "nCalls":100},"Marshal_mus": 190353, "Marshal":{"mus":190353, "nCalls":300},"ES_meta1_mus": 431, "ES_meta1":{"mus":431, "nCalls":100},"ES_meta2_mus": 0, "ES_meta2":{"mus":0, "nCalls":100},"ES_close_mus": 739, "ES_close":{"mus":739, "nCalls":100},"ES_AWD_mus": 353988, "ES_AWD":{"mus":353988, "nCalls":100}, "databytes":0, "metadatabytes":0, "metametadatabytes":0 },
+   { "rank":0, "start":"Wed_Dec_03_22:24:44_2025","ES_DSB_Broadcast_mus": 0, "ES_DSB_Broadcast":{"mus":0, "nCalls":1},"ES_DSB_mus": 5, "ES_DSB":{"mus":5, "nCalls":1},"ES_DSB_AllGather_mus": 2, "ES_DSB_AllGather":{"mus":2, "nCalls":1},"ES_MDAgg_GatherWriteMeta_mus": 255, "ES_MDAgg_GatherWriteMeta":{"mus":255, "nCalls":1},"ES_MDAgg_AggInfo_MetaInfoBcast_mus": 2, "ES_MDAgg_AggInfo_MetaInfoBcast":{"mus":2, "nCalls":1},"ES_MDAgg_AggInfo_FixedMetaInfoGather_mus": 13428, "ES_MDAgg_AggInfo_FixedMetaInfoGather":{"mus":13428, "nCalls":1},"InitAgg-dsb_GPI_partition_mus": 14, "InitAgg-dsb_GPI_partition":{"mus":14, "nCalls":1},"InitAgg-dsb_GPI_AllGather_mus": 2, "InitAgg-dsb_GPI_AllGather":{"mus":2, "nCalls":1},"InitAgg-dsb_mus": 46, "InitAgg-dsb":{"mus":46, "nCalls":1},"InitAgg-dsb_GPI_mus": 23, "InitAgg-dsb_GPI":{"mus":23, "nCalls":1},"ES_MDAgg_GatherWriteMeta_MDBlocks_mus": 4, "ES_MDAgg_GatherWriteMeta_MDBlocks":{"mus":4, "nCalls":1},"DC_mus": 493, "DC":{"mus":493, "nCalls":1},"WriteMD_Blocks_mus": 10, "WriteMD_Blocks":{"mus":10, "nCalls":1},"WriteMD_mus": 64, "WriteMD":{"mus":64, "nCalls":1},"WriteData_mus": 150467, "WriteData":{"mus":150467, "nCalls":2},"ES_WriteData_mus": 150208, "ES_WriteData":{"mus":150208, "nCalls":1},"BS_mus": 1, "BS":{"mus":1, "nCalls":1},"ES_MDAgg_AggInfo_mus": 13693, "ES_MDAgg_AggInfo":{"mus":13693, "nCalls":1},"ES_MDAgg_mus": 13967, "ES_MDAgg":{"mus":13967, "nCalls":1},"PDW_mus": 264, "PDW":{"mus":264, "nCalls":1},"ES_MDAgg_AggInfo_SelectMetaInfoGather_mus": 3, "ES_MDAgg_AggInfo_SelectMetaInfoGather":{"mus":3, "nCalls":1},"ES_CloseTS_mus": 122, "ES_CloseTS":{"mus":122, "nCalls":1},"ES_mus": 164310, "ES":{"mus":164310, "nCalls":1},"WriteMmD_mus": 88, "WriteMmD":{"mus":88, "nCalls":1}, "databytes":0, "metadatabytes":0, "metametadatabytes":0, "transport_0":{"type":"File_POSIX", "wbytes":335544320, "close":{"mus":186, "nCalls":1}, "write":{"mus":150145, "nCalls":10}, "open":{"mus":90, "nCalls":1}}, "transport_1":{"type":"File_POSIX", "wbytes":10480, "close":{"mus":276, "nCalls":1}, "write":{"mus":54, "nCalls":5}, "open":{"mus":50, "nCalls":1}} },
+   { "rank":1, "start":"Wed_Dec_03_22:24:44_2025","ES_DSB_Broadcast_mus": 0, "ES_DSB_Broadcast":{"mus":0, "nCalls":1},"ES_DSB_mus": 134, "ES_DSB":{"mus":134, "nCalls":1},"ES_DSB_AllGather_mus": 131, "ES_DSB_AllGather":{"mus":131, "nCalls":1},"ES_MDAgg_GatherWriteMeta_mus": 324, "ES_MDAgg_GatherWriteMeta":{"mus":324, "nCalls":1},"ES_MDAgg_AggInfo_MetaInfoBcast_mus": 17, "ES_MDAgg_AggInfo_MetaInfoBcast":{"mus":17, "nCalls":1},"ES_MDAgg_AggInfo_FixedMetaInfoGather_mus": 3, "ES_MDAgg_AggInfo_FixedMetaInfoGather":{"mus":3, "nCalls":1},"InitAgg-dsb_GPI_partition_mus": 14, "InitAgg-dsb_GPI_partition":{"mus":14, "nCalls":1},"InitAgg-dsb_GPI_AllGather_mus": 85, "InitAgg-dsb_GPI_AllGather":{"mus":85, "nCalls":1},"InitAgg-dsb_mus": 129, "InitAgg-dsb":{"mus":129, "nCalls":1},"InitAgg-dsb_GPI_mus": 106, "InitAgg-dsb_GPI":{"mus":106, "nCalls":1},"DC_mus": 2297, "DC":{"mus":2297, "nCalls":1},"WriteData_mus": 163332, "WriteData":{"mus":163332, "nCalls":2},"ES_WriteData_mus": 162999, "ES_WriteData":{"mus":162999, "nCalls":1},"BS_mus": 2, "BS":{"mus":2, "nCalls":1},"ES_MDAgg_AggInfo_mus": 74, "ES_MDAgg_AggInfo":{"mus":74, "nCalls":1},"ES_MDAgg_mus": 411, "ES_MDAgg":{"mus":411, "nCalls":1},"PDW_mus": 337, "PDW":{"mus":337, "nCalls":1},"ES_MDAgg_AggInfo_SelectMetaInfoGather_mus": 1, "ES_MDAgg_AggInfo_SelectMetaInfoGather":{"mus":1, "nCalls":1},"ES_CloseTS_mus": 105, "ES_CloseTS":{"mus":105, "nCalls":1},"ES_mus": 163667, "ES":{"mus":163667, "nCalls":1}, "databytes":0, "metadatabytes":0, "metametadatabytes":0, "transport_0":{"type":"File_POSIX", "wbytes":335544320, "close":{"mus":2295, "nCalls":1}, "write":{"mus":162966, "nCalls":10}, "open":{"mus":114, "nCalls":1}} },
+
 
 
 Each JSON object within the array provides profiling information for a specific rank and includes details such as:
@@ -33,25 +34,38 @@ Each JSON object within the array provides profiling information for a specific 
 
 **Note:** The specific ADIOS2 library code regions and operations tracked within the ``profiling.json`` file can vary between different versions of ADIOS2. The keys and the level of detail provided in the JSON output might be subject to change as the library evolves.
 
-To aid in the visual analysis of I/O performance, ADIOS provides a utility script designed for plotting the data contained within these JSON profile files. This script, located in the ``source/utils/profiler/scripts`` directory of the source tree, offer simple command-line interfaces to generate visualizations for common output metrics for each rank for a given step. 
+To aid in the visual analysis of I/O performance, ADIOS provides a utility script designed for plotting the data contained within these JSON profile files. This script, located in the ``source/utils/profiler_simplified/`` directory of the source tree, offer simple command-line interfaces to generate visualizations for common output metrics for each rank for a given step. Example json files are in ``data/``.  The command line options are here:
 
-The common metrics covered by the plotting scripts include **PP** (PerformPut), **PDW** (PerformDataWrite), and the EndStep (**ES**) components: **ES\_AWD**, **ES\_aggregate\_info**, **FixedMetaInfoGather**, and **MetaInfoBcast**. Volume metrics, representing the total bytes written to storage by the primary transport layer, are reported under ``transport\_0.wbytes``.
+* **./writeSummary.sh <f1.json> [<f2.json> .. ] **  – produces a high-level summary of write metrics for each JSON file provided.
+* **python3 plot_json.py <f1.json> [<f2.json> .. ] ** - generates quick, informative plots for top level time-measurement tags in the provided JSON files.
 
-Examples of how to run the scripts and the resulting output files are available in the ADIOS source directory under ``source/utils/profiler/tests``. A typical execution example plotting the first step for a profile file generated by a run of 512 ranks is shown below, demonstrating how the scripts process the attributes and generate individual rank plots (via ``plotRanks.py``) and aggregated stack plots (via ``plotStack.py``):
+The common metrics covered by the plotting scripts include **PP** (PerformPut), **PDW** (PerformDataWrite), and the EndStep (**ES**) components: **ES\_WriteData**, **ES\_MDAgg**, **ES\_CloseTS**,  etc. Volume metrics, representing the total bytes written to storage by the primary transport layer, are reported under ``transport\_0.wbytes``.
 
-.. code-block:: sh
+The example plots are in ``python_plots/`. All plots reflect per-rank measurements with the BP5 engine. Other engines may omit some or all of these metrics.
 
-   $ source 1.sh ../scripts zero ../sample_data/t0/t0.json
-   Attributes: PP PDW ES ES_AWD ES_aggregate_info MetaInfoBcast FixedMetaInfoGather transport_0.wbytes
-   Processing ../sample_data/t0/t0.json, PP key= t0
-   ... (processing details truncated) ...
-   outs/t0_secs_PP -> outs/zero/t0_secs_PP
-   Data extracted, now plotting..
-   ... (plotting details truncated) ...
-   ==> plot all the times spent on rank 0: python3 ../scripts/plotStack.py  t0  --set dataDir=outs/zero  whichRank=0 plotPrefix=plots/single/ews/zero/t0
-   Script name: ../scripts/plotStack.py
-   async counter = 0, false false false
-   Finished. plots are in: plots/single/ews/zero
+* ** ES.png ** shows ** EndStep ** times
+* ** PDW+PP_ong ** shows the time spent on  ** PerformDataWrite ** or ** PerformPut ** calls
+* ** dataSize.png ** volume of data written using transport_0 (data)
+* ** meatadataSize.png ** volume of data written using transport_1 (md.0)
+* ** ES+PDW+PP+BS+DC.png ** breaks down of time spent in  ADIOS calls: ** EndStep ** ** PerformDataWrite **  ** PeformPut **  ** BeginStep **  ** DoClose **  (Total ADIOS I/O impact)
+* ** ES_DSB+ES_WriteData+ES_MDAgg+ES_CloseTS.png ** visualizes how the total EndStep time is broken down, showing the relative contribution of each component/sub-stage.
+
+
+#Examples of how to run the scripts and the resulting output files are available in the ADIOS source directory under ``source/utils/profiler/tests``. A typical execution example plotting the first step for a profile file generated by a run of 512 ranks is shown below, demonstrating how the scripts process the attributes and generate individual rank plots (via ``plotRanks.py``) and aggregated stack plots (via ``plotStack.py``):
+
+#.. code-block:: sh
+#
+#   $ source 1.sh ../scripts zero ../sample_data/t0/t0.json
+#   Attributes: PP PDW ES ES_AWD ES_aggregate_info MetaInfoBcast FixedMetaInfoGather transport_0.wbytes
+#   Processing ../sample_data/t0/t0.json, PP key= t0
+#   ... (processing details truncated) ...
+#   outs/t0_secs_PP -> outs/zero/t0_secs_PP
+#   Data extracted, now plotting..
+#   ... (plotting details truncated) ...
+#   ==> plot all the times spent on rank 0: python3 ../scripts/plotStack.py  t0  --set dataDir=outs/zero  whichRank=0 plotPrefix=plots/single/ews/zero/t0
+#   Script name: ../scripts/plotStack.py
+#   async counter = 0, false false false
+#   Finished. plots are in: plots/single/ews/zero
 
 
 External Profiling Libraries
