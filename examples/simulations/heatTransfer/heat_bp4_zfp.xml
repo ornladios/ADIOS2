@@ -98,7 +98,7 @@
         =======================================-->
     
     <io name="readerOutput">
-        <engine type="BPFile">
+        <engine type="BP4">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
