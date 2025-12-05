@@ -1859,6 +1859,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 #else
     adios2::ADIOS adios;
 #endif
+    std::string ActualEngineName;
     {
         adios2::IO io = adios.DeclareIO("TestIO");
         const adios2::Dims shape{};
@@ -1873,6 +1874,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        ActualEngineName = bpWriter.Type();
 
         for (int step = 0; step < NSTEPS; ++step)
         {
@@ -1899,7 +1902,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if ((!mpiRank) && (engineName != "BP4") && (engineName != "BP3"))
+    if ((!mpiRank) && (ActualEngineName != "BP4Writer") && (ActualEngineName != "BP3Writer"))
     // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
     // do not produce a step
     {
@@ -1952,7 +1955,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if ((!mpiRank) && (engineName != "BP4") && (engineName != "BP3"))
+    if ((!mpiRank) && (engineName != "BP4Writer") && (engineName != "BP3Writer"))
     // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
     // do not produce a step
     {
