@@ -14,23 +14,25 @@ json_files = sys.argv[1:]
 
 ranks = []
 
+
 def getJsonKey(key):
     unit = "MB"
-    if (key == "dataSize"):
+    if key == "dataSize":
         jsonKey = "transport_0"
-    elif (key == "metadataSize"):
+    elif key == "metadataSize":
         jsonKey = "transport_1"
     else:
         if key.endswith("_mus"):
             jsonKey = key
         else:
-            jsonKey = key+"_mus";
+            jsonKey = key + "_mus"
         unit = "Sec"
     return jsonKey, unit
-    
+
+
 def getValue(obj, jsonKey):
     unitSize = 1000000
-        
+
     if "_mus" in jsonKey:
         w = obj.get(jsonKey)
     elif "transport" in jsonKey:
@@ -40,26 +42,27 @@ def getValue(obj, jsonKey):
             w = 0
         unitSize = 1048576
     else:
-        print ("Unable to process: ", jsonKey)
+        print("Unable to process: ", jsonKey)
 
-    if (w):
-        return float(w/unitSize)
+    if w:
+        return float(w / unitSize)
     else:
         return 0
-                
+
 
 def retrieve(data, key):
     values = []
     jsonKey, unit = getJsonKey(key)
     for obj in data:
-        values.append( getValue(obj, jsonKey) )
+        values.append(getValue(obj, jsonKey))
     return unit, values
-    
+
+
 def plotKey(key):
     global json_files
     global ranks
 
-    label=key
+    label = key
     for filename in json_files:
         plt.figure(figsize=(10, 4))
         try:
@@ -68,35 +71,35 @@ def plotKey(key):
         except Exception as e:
             print(f"Skipping {filename}: {e}")
             continue
-        
-        label_name = filename;
-        if (len(filename) > 100):
-            label_name = os.path.basename(filename); 
-        if isinstance(key, str):        
+
+        label_name = filename
+        if len(filename) > 100:
+            label_name = os.path.basename(filename)
+        if isinstance(key, str):
             unit, values = retrieve(data, key)
             if len(ranks) == 0:
                 ranks = list(range(0, len(values)))
-            plt.ylabel(label + " (" + unit + ")")                
-            plt.plot(ranks, values, marker="o", linestyle='--', label=label_name)            
+            plt.ylabel(label + " (" + unit + ")")
+            plt.plot(ranks, values, marker="o", linestyle="--", label=label_name)
 
         if isinstance(key, (list, tuple)) and all(isinstance(item, str) for item in key):
             label = ""
             val = np.array([])
             for item in key:
                 unit, values = retrieve(data, item)
-                if (len(val) == 0):
-                    val = np.array(values);
+                if len(val) == 0:
+                    val = np.array(values)
                     label = item
                     if len(ranks) == 0:
-                        ranks = list(range(0, len(values)))          
+                        ranks = list(range(0, len(values)))
                 else:
-                    val += values;
-                    label += "+"+item;
-                plt.plot(ranks, val, marker="o", linestyle='--', label=label_name+"_"+label)
-            #plt.ylabel(label + " (" + unit + ")") ## label can be tooo long
-            plt.ylabel( "(" + unit + ")")
+                    val += values
+                    label += "+" + item
+                plt.plot(ranks, val, marker="o", linestyle="--", label=label_name + "_" + label)
+            # plt.ylabel(label + " (" + unit + ")") ## label can be tooo long
+            plt.ylabel("(" + unit + ")")
         plt.xlabel("Ranks")
-        plt.title(" Values Across Ranks")    
+        plt.title(" Values Across Ranks")
         plt.xticks(ranks)
         plt.grid(True)
         plt.tight_layout()
@@ -110,19 +113,19 @@ def plotKey(key):
         print(f"Figure saved to {output_path}")
 
         plt.show()
-    
+
 
 def getProfilerComponents(key, data):
     # pattern = re.compile(r"^abc_[^_]+_mus$")
     pattern = re.compile(rf"^{key}_[^_]+_mus$")
 
     matches = []
-        
+
     for obj in data:
         if isinstance(obj, dict):
             for key in obj:
                 if pattern.match(key):
-                    matches.append(key[:-4]) # remove _mus
+                    matches.append(key[:-4])  # remove _mus
         break
 
     return matches
@@ -134,27 +137,25 @@ plotKey("dataSize")
 ## plot metadata size written on each rank
 plotKey("metadataSize")
 
-## plot end step times on each rank 
+## plot end step times on each rank
 plotKey("ES")
-## plot PDW/PP  times on each rank 
+## plot PDW/PP  times on each rank
 plotKey(["PDW", "PP"])
-## plot indepent time blocks  on each rank 
+## plot indepent time blocks  on each rank
 plotKey(["ES", "PDW", "PP", "BS", "DC"])
-
 
 
 ######################################################
 ## one can replace ES with other tags of interest.  ##
 ## we will find all next level subcomponents        ##
 ## and plot out if there is any valid entries       ##
-###################################################### 
+######################################################
 
-if (len(json_files) == 1):
-    print ("Exploring different  ES components ")
-    testFile=json_files[0];
+if len(json_files) == 1:
+    print("Exploring different  ES components ")
+    testFile = json_files[0]
     with open(testFile) as f:
         data = json.load(f)
-    m=getProfilerComponents("ES", data)
-    if (len(m) > 0):
+    m = getProfilerComponents("ES", data)
+    if len(m) > 0:
         plotKey(m)
-
