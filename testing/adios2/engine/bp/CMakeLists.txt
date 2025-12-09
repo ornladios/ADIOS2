@@ -205,7 +205,8 @@ set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
 
 bp_gtest_add_tests_helper(MultiSpan MPI_NONE)
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
-bp_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
+# test hadn't been run with bp3/4, needs adapting
+bp5_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariablesSel MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariablesSelHighLevel MPI_ALLOW)
 bp_gtest_add_tests_helper(ChangingShape MPI_ALLOW)

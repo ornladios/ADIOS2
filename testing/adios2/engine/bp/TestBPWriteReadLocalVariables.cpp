@@ -1763,6 +1763,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
         bpWriter.Put(var_r32, data.data());
         bpWriter.Close();
@@ -1862,6 +1867,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; ++step)
@@ -1888,8 +1898,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-    if (!mpiRank)
+    // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
+    // do not produce a step
     {
         adios2::IO io = adios.DeclareIO("ReaderIO");
 #if ADIOS2_USE_MPI
@@ -1940,7 +1950,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (!mpiRank)
+    // this test doesn't work for BP3/4 because if there are no Puts between begin and endstep, they
+    // do not produce a step
     {
         adios2::IO io = adios.DeclareIO("ReaderIORRA");
 #if ADIOS2_USE_MPI

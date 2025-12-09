@@ -48,7 +48,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("TestIO");
-        io.SetEngine("BPFile");
+        io.SetEngine(engineName);
 
         io.AddTransport("file");
         adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
@@ -83,11 +83,11 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
             engine.EndStep();
         }
-        auto EngineName = engine.Type();
+        auto ActualEngineName = engine.Type();
 
         engine.Close();
 
-        if (EngineName == "BP5Writer")
+        if (ActualEngineName == "BP5Writer")
         {
             engine = io.Open(filename, adios2::Mode::Read);
             EXPECT_THROW(engine.BeginStep(), std::logic_error);
