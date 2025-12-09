@@ -25,16 +25,18 @@
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
+#define _FILE_OFFSET_BITS = 64
 #else
 #include <io.h>
 #include <iostream>
 #include <windows.h>
 #define close _close
 #define open _open
-#define lseek(a, b, c) _lseek(a, (long)b, c)
+#define off_t __int64
+#define lseek(a, b, c) _lseeki64(a, static_cast<__int64>(b), c)
 #define write(a, b, c) _write(a, b, (unsigned int)c)
 #define read(a, b, c) _read(a, b, (unsigned int)c)
-#define ftruncate _chsize
+#define ftruncate(a, b) _chsize_s(a, static_cast<__int64>(b))
 
 static int64_t pread(int fd, void *buffer, size_t size, uint64_t start)
 {
@@ -152,7 +154,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
         errno = 0;
         m_FileDescriptor =
             open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT | O_BINARY, directio), 0777);
-        lseek(m_FileDescriptor, 0, SEEK_END);
+        SeekToEnd();
         m_Errno = errno;
         ProfilerStop("open");
         break;
@@ -162,6 +164,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
         errno = 0;
         m_FileDescriptor = open(m_Name.c_str(), O_RDONLY | O_BINARY);
         m_Errno = errno;
+        SeekToBegin(); // needed in case BaseOffset > 0
         ProfilerStop("open");
         break;
 
@@ -225,7 +228,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
             {
                 m_FileDescriptor =
                     open(m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_BINARY, directio), 0666);
-                lseek(m_FileDescriptor, 0, SEEK_SET);
+                SeekToBegin();
             }
             m_Errno = errno;
             ProfilerStop("open");
@@ -244,7 +247,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
         {
             m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_BINARY, directio));
         }
-        lseek(m_FileDescriptor, 0, SEEK_END);
+        SeekToEnd();
         m_Errno = errno;
         ProfilerStop("open");
         break;
@@ -254,6 +257,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
         errno = 0;
         m_FileDescriptor = open(m_Name.c_str(), O_RDONLY | O_BINARY);
         m_Errno = errno;
+        SeekToBegin(); // needed in case BaseOffset > 0
         ProfilerStop("open");
         break;
 
@@ -510,20 +514,25 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-            lf_PRead(&buffer[position], DefaultMaxFileBatchSize, start);
+            lf_PRead(&buffer[position], DefaultMaxFileBatchSize, start + m_BaseOffset);
             position += DefaultMaxFileBatchSize;
             start += DefaultMaxFileBatchSize;
         }
-        lf_PRead(&buffer[position], remainder, start);
+        lf_PRead(&buffer[position], remainder, start + m_BaseOffset);
     }
     else
     {
-        lf_PRead(buffer, size, start);
+        lf_PRead(buffer, size, start + m_BaseOffset);
     }
 }
 
 size_t FilePOSIX::GetSize()
 {
+    if (m_BaseSize > 0)
+    {
+        return m_BaseSize;
+    }
+
     struct stat fileStat;
     WaitForOpen();
     errno = 0;
@@ -596,9 +605,17 @@ void FilePOSIX::SeekToEnd()
 {
     WaitForOpen();
     errno = 0;
-    const int status = lseek(m_FileDescriptor, 0, SEEK_END);
+    off_t status;
+    if (m_BaseOffset == 0 && m_BaseSize == 0)
+    {
+        status = lseek(m_FileDescriptor, 0, SEEK_END);
+    }
+    else
+    {
+        status = lseek(m_FileDescriptor, m_BaseOffset + m_BaseSize, SEEK_SET);
+    }
     m_Errno = 0;
-    if (status == -1)
+    if (status == static_cast<off_t>(-1))
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "SeekToEnd",
                                               "couldn't seek to the end of file " + m_Name + " " +
@@ -608,11 +625,15 @@ void FilePOSIX::SeekToEnd()
 
 void FilePOSIX::SeekToBegin()
 {
+    if (m_FileDescriptor == -1)
+    {
+        return;
+    }
     WaitForOpen();
     errno = 0;
-    const int status = lseek(m_FileDescriptor, 0, SEEK_SET);
+    const off_t status = lseek(m_FileDescriptor, m_BaseOffset, SEEK_SET);
     m_Errno = errno;
-    if (status == -1)
+    if (status == static_cast<off_t>(-1))
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FilePOSIX", "SeekToBegin",
@@ -622,18 +643,18 @@ void FilePOSIX::SeekToBegin()
 
 void FilePOSIX::Seek(const size_t start)
 {
-    if (start != MaxSizeT)
+    if (start + m_BaseOffset != MaxSizeT)
     {
         WaitForOpen();
         errno = 0;
-        const int status = lseek(m_FileDescriptor, start, SEEK_SET);
+        const off_t status = lseek(m_FileDescriptor, start + m_BaseOffset, SEEK_SET);
         m_Errno = errno;
-        if (status == -1)
+        if (status == static_cast<off_t>(-1))
         {
             helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Seek",
                                                   "couldn't seek to offset " +
-                                                      std::to_string(start) + " of file " + m_Name +
-                                                      " " + SysErrMsg());
+                                                      std::to_string(start + m_BaseOffset) +
+                                                      " of file " + m_Name + " " + SysErrMsg());
         }
     }
     else
@@ -642,7 +663,10 @@ void FilePOSIX::Seek(const size_t start)
     }
 }
 
-size_t FilePOSIX::CurrentPos() { return static_cast<size_t>(lseek(m_FileDescriptor, 0, SEEK_CUR)); }
+size_t FilePOSIX::CurrentPos()
+{
+    return static_cast<size_t>(lseek(m_FileDescriptor, 0, SEEK_CUR)) - m_BaseOffset;
+}
 
 void FilePOSIX::Truncate(const size_t length)
 {

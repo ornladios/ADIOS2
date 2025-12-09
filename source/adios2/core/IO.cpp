@@ -536,6 +536,23 @@ void IO::AddOperation(const std::string &variable, const std::string &operatorTy
 Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, const char *md,
                  const size_t mdsize)
 {
+    auto lf_GuessEngineFromTAR = [&](const std::string tarinfo) -> std::string {
+        std::string engineType;
+        if (tarinfo.find("mmd.0") != std::string::npos)
+            engineType = "bp5";
+        else if (tarinfo.find("md.idx") != std::string::npos)
+            engineType = "bp4";
+        else if (tarinfo.find(".h5") != std::string::npos ||
+                 tarinfo.find(".hdf5") != std::string::npos ||
+                 tarinfo.find(".nc") != std::string::npos)
+            engineType = "h5";
+        else
+            helper::Throw<std::runtime_error>(
+                "Core", "IO", "Open",
+                "Cannot guess engine type from TAR info. Set the engine manually");
+        return engineType;
+    };
+
     PERFSTUBS_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
     const bool isEngineFound = (itEngineFound != m_Engines.end());
@@ -596,7 +613,13 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         }
         else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
-            if (adios2sys::SystemTools::FileIsDirectory(name))
+            // Check if TarInfo parameter indicates a TAR file
+            auto it = m_Parameters.find("TarInfo");
+            if (it != m_Parameters.end())
+            {
+                engineTypeLC = lf_GuessEngineFromTAR(it->second);
+            }
+            else if (adios2sys::SystemTools::FileIsDirectory(name))
             {
                 char v = helper::BPVersion(name, comm, m_TransportsParameters);
                 engineTypeLC = "bp";

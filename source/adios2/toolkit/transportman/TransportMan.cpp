@@ -539,11 +539,12 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
 // PRIVATE
 std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fileName,
                                                            const Mode openMode,
-                                                           const Params &parameters,
+                                                           const Params &parameters_,
                                                            const bool profile, const bool useComm,
                                                            const helper::Comm &chainComm)
 {
     // This function expects Params with lower case keys!!!
+    const Params &parameters = helper::LowerCaseParams(parameters_);
 
     auto lf_GetBuffered = [&](const std::string bufferedDefault) -> bool {
         bool bufferedValue;
@@ -693,6 +694,16 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
         return helper::StringTo<bool>(directio, "");
     };
 
+    auto lf_GetTarInfo = [&](const Params &parameters) -> std::tuple<size_t, size_t> {
+        std::string baseOffset = "0";
+        std::string baseSize = "0";
+        helper::SetParameterValue("taroffset", parameters, baseOffset);
+        helper::SetParameterValue("tarsize", parameters, baseSize);
+        return std::make_tuple<size_t, size_t>(
+            helper::StringToSizeT(baseOffset, "convert tar offset string to size_t"),
+            helper::StringToSizeT(baseSize, "convert tar size string to size_t"));
+    };
+
     // BODY OF FUNCTION starts here
     std::shared_ptr<Transport> transport;
     const std::string library = helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
@@ -707,6 +718,10 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
         transport->InitProfiler(openMode, lf_GetTimeUnits(DefaultTimeUnit, parameters));
     }
 
+    // If "file" is actually in a TAR file, set BaseOffset and BaseSize
+    auto pair = lf_GetTarInfo(parameters);
+    transport->m_BaseOffset = std::get<0>(pair);
+    transport->m_BaseSize = std::get<1>(pair);
     transport->SetParameters(parameters);
 
     // open
