@@ -10,6 +10,7 @@ readonly subtree="thirdparty/yaml-cpp/yaml-cpp"
 readonly repo="https://github.com/jbeder/yaml-cpp.git"
 readonly tag="yaml-cpp-0.7.0"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
   LICENSE
   include/
