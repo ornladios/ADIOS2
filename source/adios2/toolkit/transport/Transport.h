@@ -38,6 +38,7 @@ public:
     profiling::IOChrono m_Profiler;    ///< profiles Open, Write/Read, Close
     size_t m_BaseOffset; ///< Starting offset in a larger container if exists, usually 0
     size_t m_BaseSize;   ///< Actual size of file in a larger container if exists, usually 0
+    bool m_ReentrantRead = false; ///< true: Read() method contains no state, in kernel or otherwise
 
     struct Status
     {

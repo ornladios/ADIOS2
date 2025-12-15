@@ -16,6 +16,7 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosRangeFilter.h"
 #include "adios2/helper/adiosString.h"
+#include "adios2/toolkit/filepool/FilePool.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
 #include "adios2/toolkit/kvcache/KVCacheCommon.h"
@@ -84,7 +85,7 @@ private:
      */
 
     /* transport manager for managing data file(s) */
-    transportman::TransportMan m_DataFileManager;
+    std::shared_ptr<FilePool> m_DataFiles;
 
     transportman::TransportMan m_TransportFactory;
 
@@ -247,10 +248,8 @@ private:
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
     void ParallelInstallMetadataForTimestep(size_t Step);
-    std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
-                                       const size_t maxOpenFiles, const size_t WriterRank,
-                                       const size_t Timestep, const size_t StartOffset,
-                                       const size_t Length, char *Destination);
+    double ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
+                    const size_t StartOffset, const size_t Length, char *Destination);
 
     struct WriterMapStruct
     {
@@ -278,8 +277,6 @@ private:
     helper::Comm m_NodeComm;
     helper::Comm singleComm;
     unsigned int m_Threads;
-    std::vector<transportman::TransportMan> fileManagers; // manager per thread
-
     helper::TarInfoMap m_TarInfoMap;
     std::string UpdateWithTarInfo(const std::string &path, Params &params);
 };

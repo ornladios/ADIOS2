@@ -73,7 +73,10 @@ namespace adios2
 namespace transport
 {
 
-FilePOSIX::FilePOSIX(helper::Comm const &comm) : Transport("File", "POSIX", comm) {}
+FilePOSIX::FilePOSIX(helper::Comm const &comm) : Transport("File", "POSIX", comm)
+{
+    m_ReentrantRead = true;
+}
 
 FilePOSIX::~FilePOSIX()
 {
