@@ -13,7 +13,13 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <random>
+#ifndef _MSC_VER
 #include <unistd.h>
+#else
+#include <windows.h>
+#define unlink _unlink
+#endif
+
 #include <vector>
 
 namespace adios2

@@ -26,7 +26,7 @@ class PoolEntry
 {
 public:
     PoolEntry(const std::string &name, std::shared_ptr<adios2::Transport> file)
-    : m_Name(name), m_File(file)
+    : m_File(file), m_Name(name)
     {
     }
     ~PoolEntry() {}
@@ -44,12 +44,12 @@ class PoolableFile
 {
 public:
     PoolableFile(FilePool *pool, PoolEntry *entry)
-    : m_entry(entry), file(entry->m_File), owning_pool(pool){};
+    : file(entry->m_File), m_Entry(entry), m_OwningPool(pool){};
     ~PoolableFile();
     std::shared_ptr<adios2::Transport> file;
     void Read(char *buffer, size_t size, size_t start = 0);
-    PoolEntry *m_entry;
-    FilePool *owning_pool;
+    PoolEntry *m_Entry;
+    FilePool *m_OwningPool;
 };
 
 class FilePool
@@ -62,6 +62,7 @@ public:
     std::unique_ptr<PoolableFile> Acquire(const std::string &filename);
     void Release(PoolEntry *obj);
     void SetParameters(const adios2::Params &params);
+    std::vector<std::shared_ptr<adios2::Transport>> ListOfTransports();
 
     // testing only
     size_t GetMax() { return m_MaxFileCount; }

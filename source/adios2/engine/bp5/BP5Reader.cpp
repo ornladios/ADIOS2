@@ -956,7 +956,7 @@ void BP5Reader::PerformLocalGets()
             // if we're on the same subfile, DataFile is already valid
             // (We're Acquiring the datafile here rather than in ReadData to increase reuse in case
             // multiple consecutive requests target the same subfile
-            if (SubfileNum == LastSubfileNum)
+            if (SubfileNum != LastSubfileNum)
             {
                 TP startSubfile = NOW();
                 const std::string subFileName =
@@ -1047,6 +1047,7 @@ void BP5Reader::PerformLocalGets()
 
                 TP endSubfile = NOW();
                 double timeSubfile = DURATION(startSubfile, endSubfile);
+                (void)timeSubfile;
             }
             ReadData(DataFile.get(), Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
                      Req.DestinationAddr);
@@ -1155,7 +1156,7 @@ void BP5Reader::InitParameters()
                       << ") greater than max open files(" << m_Parameters.MaxOpenFilesAtOnce
                       << "), lowering threads limit" << std::endl;
         }
-        m_Threads = maxOpenFiles;
+        m_Threads = (unsigned int)maxOpenFiles;
     }
 
     m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
@@ -1938,18 +1939,7 @@ void BP5Reader::FlushProfiler()
     std::vector<std::string> transportTypes;
     std::vector<profiling::IOChrono *> transportProfilers;
 
-    auto lf_AddMe = [&](transportman::TransportMan &tm) -> void {
-        auto tmpT = tm.GetTransportsTypes();
-        auto tmpP = tm.GetTransportsProfilers();
-
-        if (tmpT.size() > 0)
-        {
-            transportTypes.insert(transportTypes.end(), tmpT.begin(), tmpT.end());
-            transportProfilers.insert(transportProfilers.end(), tmpP.begin(), tmpP.end());
-        }
-    };
-
-    auto lf_AddMeT = [&](std::shared_ptr<Transport> &tm) -> void {
+    auto lf_AddMe = [&](const std::shared_ptr<Transport> &tm) -> void {
         if (tm)
         {
             transportTypes.push_back(tm->m_Type + "_" + tm->m_Library);
@@ -1957,14 +1947,15 @@ void BP5Reader::FlushProfiler()
         }
     };
 
-    lf_AddMeT(m_MDFile);
-    lf_AddMeT(m_MDIndexFile);
-    lf_AddMeT(m_MetaMetadataFile);
+    lf_AddMe(m_MDFile);
+    lf_AddMe(m_MDIndexFile);
+    lf_AddMe(m_MetaMetadataFile);
 
-    //    for (unsigned int i = 0; i < m_Threads; ++i)
-    //    {
-    //        lf_AddMe(fileManagers[i]);
-    //    }
+    auto PoolList = m_DataFiles->ListOfTransports();
+    for (auto const &Trans : PoolList)
+    {
+        lf_AddMe(Trans);
+    }
 
     const std::string LineJSON(
         m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportProfilers) + ",\n");

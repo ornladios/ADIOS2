@@ -1,10 +1,10 @@
 #include "adios2/toolkit/filepool/FilePool.h"
 
-PoolableFile::~PoolableFile() { owning_pool->Release(m_entry); }
+PoolableFile::~PoolableFile() { m_OwningPool->Release(m_Entry); }
 
 void PoolableFile::Read(char *buffer, size_t size, size_t start)
 {
-    m_entry->m_File->Read(buffer, size, start);
+    m_Entry->m_File->Read(buffer, size, start);
 }
 
 void FilePool::Release(PoolEntry *obj)
@@ -13,13 +13,21 @@ void FilePool::Release(PoolEntry *obj)
     obj->m_InUseCount--;
 }
 
+std::vector<std::shared_ptr<adios2::Transport>> FilePool::ListOfTransports()
+{
+    std::vector<std::shared_ptr<adios2::Transport>> Ret;
+    for (auto it = m_Pool.begin(); it != m_Pool.end(); ++it)
+    {
+        Ret.push_back(it->second->m_File);
+    }
+    return Ret;
+}
 std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
 {
     std::lock_guard<std::mutex> lockGuard(PoolMutex);
     // Use a custom deleter to return the object to the pool
 
     auto range = m_Pool.equal_range(filename);
-    int iter = 0;
     for (auto it = range.first; it != range.second; ++it)
     {
         if ((it->second->m_InUseCount == 0) || m_CanShare)
