@@ -57,7 +57,7 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
     }
 
     std::shared_ptr<adios2::Transport> file = m_Factory->OpenFileTransport(
-        filename, adios2::Mode::Read, m_TransportParams, true, false, adios2::helper::CommDummy());
+        filename, adios2::Mode::Read, m_TransportParams, false, false, adios2::helper::CommDummy());
     auto entry = std::make_shared<PoolEntry>(filename, file);
     entry->m_InUseCount = 1;
     m_Pool.insert({filename, entry});

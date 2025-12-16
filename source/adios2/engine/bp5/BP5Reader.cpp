@@ -893,9 +893,12 @@ void BP5Reader::PerformLocalGets()
             Params transportParameters;
             transportParameters["FailOnEOF"] = "true";
             m_DataFiles->SetParameters(transportParameters);
-            m_MDIndexFile->SetParameters(transportParameters);
-            m_MDFile->SetParameters(transportParameters);
-            m_MetaMetadataFile->SetParameters(transportParameters);
+            if (m_MDIndexFile)
+                m_MDIndexFile->SetParameters(transportParameters);
+            if (m_MDFile)
+                m_MDFile->SetParameters(transportParameters);
+            if (m_MetaMetadataFile)
+                m_MetaMetadataFile->SetParameters(transportParameters);
         }
     }
     // TP start = NOW();
@@ -1038,7 +1041,7 @@ void BP5Reader::PerformLocalGets()
             // if we're on the same subfile, DataFile is already valid
             // (We're Acquiring the datafile here rather than in ReadData to increase reuse in case
             // multiple consecutive requests target the same subfile
-            if (SubfileNum == LastSubfileNum)
+            if (SubfileNum != LastSubfileNum)
             {
                 TP startSubfile = NOW();
                 const std::string subFileName =
@@ -1443,7 +1446,8 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         {
             // if the file isn't active when we open, assume it isn't going to be later.  Close so
             // we don't hold the FD open forever.
-            m_MDIndexFile->Close();
+            if (m_MDIndexFile)
+                m_MDIndexFile->Close();
         }
     }
     if (m_StepsCount > stepsBefore)
