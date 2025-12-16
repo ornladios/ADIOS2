@@ -1442,13 +1442,6 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                                             (m_OpenMode != Mode::Read), (m_FlattenSteps));
             m_BP5Deserializer->m_Engine = this;
         }
-        if (!m_WriterIsActive)
-        {
-            // if the file isn't active when we open, assume it isn't going to be later.  Close so
-            // we don't hold the FD open forever.
-            if (m_MDIndexFile)
-                m_MDIndexFile->Close();
-        }
     }
     if (m_StepsCount > stepsBefore)
     {
