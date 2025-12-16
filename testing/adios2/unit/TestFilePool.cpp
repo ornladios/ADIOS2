@@ -200,9 +200,11 @@ TEST_P(FilePoolTest, ConcurrentRead)
         std::uniform_int_distribution<int> uni(0, file_count - 1);
         int file0_num = uni(rng);
         int file1_num = uni(rng);
+#ifdef ThreadUnsafeVerbosity
         std::cout << "thread " << n << " running, will read from files "
                   << std::to_string(file0_num) + " and " << std::to_string(file1_num)
                   << " using transport " << param << std::endl;
+#endif
         do
         {
             auto file0 = pool.Acquire(filename(file0_num, prefix));
