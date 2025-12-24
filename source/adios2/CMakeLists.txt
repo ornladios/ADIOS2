@@ -420,6 +420,11 @@ if(ADIOS2_HAVE_MGARD)
   target_link_libraries(adios2_core PRIVATE mgard::mgard)
 endif()
 
+if(ADIOS2_HAVE_PRODM)
+  target_sources(adios2_core PRIVATE operator/refactor/RefactorProDM.cpp)
+  target_link_libraries(adios2_core PRIVATE ProDM::ProDM)
+endif()
+
 if(ADIOS2_HAVE_PNG)
   target_sources(adios2_core PRIVATE operator/compress/CompressPNG.cpp)
   target_link_libraries(adios2_core PRIVATE PNG::PNG)

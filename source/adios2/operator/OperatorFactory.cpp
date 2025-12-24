@@ -40,6 +40,10 @@
 #include "adios2/operator/refactor/RefactorMDR.h"
 #endif
 
+#ifdef ADIOS2_HAVE_PRODM
+#include "adios2/operator/refactor/RefactorProDM.h"
+#endif
+
 #ifdef ADIOS2_HAVE_PNG
 #include "adios2/operator/compress/CompressPNG.h"
 #endif
@@ -89,6 +93,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "mgard_complex";
     case Operator::REFACTOR_MDR:
         return "mdr";
+    case Operator::REFACTOR_PRODM:
+        return "prodm";
     case Operator::PLUGIN_INTERFACE:
         return "plugin";
     default:
@@ -174,6 +180,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
         ret = std::make_shared<refactor::RefactorMDR>(parameters);
 #endif
     }
+    else if (typeLowerCase == "prodm")
+    {
+#ifdef ADIOS2_HAVE_PRODM
+        ret = std::make_shared<refactor::RefactorProDM>(parameters);
+#endif
+    }
     else if (typeLowerCase == "plugin")
     {
         ret = std::make_shared<plugin::PluginOperator>(parameters);
@@ -185,7 +197,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     else
     {
         helper::Throw<std::invalid_argument>("Operator", "OperatorFactory", "MakeOperator",
-                                             "ADIOS2 does not support " + typeLowerCase +
+                                             "ADIOS2 (test) does not support " + typeLowerCase +
                                                  " operation");
     }
 

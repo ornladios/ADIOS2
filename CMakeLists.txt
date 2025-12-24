@@ -172,6 +172,7 @@ adios_option(ZFP        "Enable support for ZFP transforms" AUTO)
 adios_option(SZ         "Enable support for SZ transforms" AUTO)
 adios_option(LIBPRESSIO "Enable support for LIBPRESSIO transforms" AUTO)
 adios_option(MGARD      "Enable support for MGARD transforms" AUTO)
+adios_option(PRODM      "Enable support for ProDM transforms" AUTO)
 adios_option(PNG        "Enable support for PNG transforms" AUTO)
 adios_option(CUDA       "Enable support for Cuda" OFF)
 adios_option(Kokkos     "Enable support for Kokkos" OFF)
@@ -274,7 +275,7 @@ endif()
 
 set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
-    LIBPRESSIO MGARD MGARD_MDR PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
+    LIBPRESSIO MGARD MGARD_MDR PRODM PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
     ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK OpenSSL XRootD GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE
 )
