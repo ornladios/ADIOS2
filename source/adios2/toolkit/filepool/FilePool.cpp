@@ -1,10 +1,11 @@
 #include "adios2/toolkit/filepool/FilePool.h"
+#include "adios2sys/SystemTools.hxx"
 
 PoolableFile::~PoolableFile() { m_OwningPool->Release(m_Entry); }
 
 void PoolableFile::Read(char *buffer, size_t size, size_t start)
 {
-    m_Entry->m_File->Read(buffer, size, start);
+    m_Entry->m_File->Read(buffer, size, start + m_BaseOffset);
 }
 
 void FilePool::Release(PoolEntry *obj)
@@ -27,13 +28,25 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
     std::lock_guard<std::mutex> lockGuard(PoolMutex);
     // Use a custom deleter to return the object to the pool
 
-    auto range = m_Pool.equal_range(filename);
+    auto finalFileName = filename;
+    size_t offset = 0;
+    if (m_TarInfoMap && m_TarInfoMap->size())
+    {
+        auto FilenameInTar = adios2sys::SystemTools::GetFilenameName(filename);
+        auto it = m_TarInfoMap->find(FilenameInTar);
+        if (it != m_TarInfoMap->end())
+        {
+            offset = std::get<0>(it->second);
+            finalFileName = filename.substr(0, filename.length() - FilenameInTar.length() - 1);
+        }
+    }
+    auto range = m_Pool.equal_range(finalFileName);
     for (auto it = range.first; it != range.second; ++it)
     {
         if ((it->second->m_InUseCount == 0) || m_CanShare)
         {
             it->second->m_InUseCount++;
-            return std::make_unique<PoolableFile>(this, it->second.get());
+            return std::make_unique<PoolableFile>(this, it->second.get(), offset);
         }
     }
     // PoolEntry not found or can't be reused, we need to create, first check limit
@@ -52,16 +65,17 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
         if (m_OpenFileCount == m_OpenFileLimit)
             adios2::helper::Throw<std::runtime_error>(
                 "Toolkit", "FilePool", "Acquire",
-                "Tried to open more files than file limit, requested file is \"" + filename +
+                "Tried to open more files than file limit, requested file is \"" + finalFileName +
                     "\" limit is " + std::to_string(m_OpenFileLimit));
     }
 
-    std::shared_ptr<adios2::Transport> file = m_Factory->OpenFileTransport(
-        filename, adios2::Mode::Read, m_TransportParams, false, false, adios2::helper::CommDummy());
-    auto entry = std::make_shared<PoolEntry>(filename, file);
+    std::shared_ptr<adios2::Transport> file =
+        m_Factory->OpenFileTransport(finalFileName, adios2::Mode::Read, m_TransportParams, false,
+                                     false, adios2::helper::CommDummy());
+    auto entry = std::make_shared<PoolEntry>(finalFileName, file);
     entry->m_InUseCount = 1;
-    m_Pool.insert({filename, entry});
-    std::unique_ptr<PoolableFile> ptr = std::make_unique<PoolableFile>(this, entry.get());
+    m_Pool.insert({finalFileName, entry});
+    std::unique_ptr<PoolableFile> ptr = std::make_unique<PoolableFile>(this, entry.get(), offset);
 
     if (!m_ShareTestDone)
     {

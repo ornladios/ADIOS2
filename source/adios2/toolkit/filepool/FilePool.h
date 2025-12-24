@@ -19,6 +19,7 @@
 #define ADIOS2_FILEPOOL_H_
 
 #include "adios2/helper/adiosCommDummy.h"
+#include "adios2/helper/adiosString.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 #include <mutex>
 
@@ -43,21 +44,24 @@ class FilePool;
 class PoolableFile
 {
 public:
-    PoolableFile(FilePool *pool, PoolEntry *entry)
-    : file(entry->m_File), m_Entry(entry), m_OwningPool(pool){};
+    PoolableFile(FilePool *pool, PoolEntry *entry, size_t offset)
+    : file(entry->m_File), m_Entry(entry), m_OwningPool(pool), m_BaseOffset(offset){};
     ~PoolableFile();
     std::shared_ptr<adios2::Transport> file;
     void Read(char *buffer, size_t size, size_t start = 0);
     PoolEntry *m_Entry;
     FilePool *m_OwningPool;
+    size_t m_BaseOffset; ///< Starting offset in a larger container if exists, usually 0
+    size_t m_BaseSize;   ///< Actual size of file in a larger container if exists, usually 0
 };
 
 class FilePool
 {
 public:
     FilePool(adios2::transportman::TransportMan *factory, adios2::Params transportParams,
-             size_t OpenFileLimit)
-    : m_Factory(factory), m_TransportParams(transportParams), m_OpenFileLimit(OpenFileLimit){};
+             size_t OpenFileLimit, adios2::helper::TarInfoMap *TarInfoMap)
+    : m_Factory(factory), m_TransportParams(transportParams), m_TarInfoMap(TarInfoMap),
+      m_OpenFileLimit(OpenFileLimit){};
     // Acquire an object from the pool, creating it if necessary
     std::unique_ptr<PoolableFile> Acquire(const std::string &filename);
     void Release(PoolEntry *obj);
@@ -72,6 +76,7 @@ private:
     std::mutex PoolMutex;
     adios2::transportman::TransportMan *m_Factory;
     adios2::Params m_TransportParams;
+    adios2::helper::TarInfoMap *m_TarInfoMap;
     std::unordered_multimap<std::string, std::shared_ptr<PoolEntry>> m_Pool;
     size_t m_OpenFileLimit;
     size_t m_OpenFileCount = 0;

@@ -64,7 +64,7 @@ TEST(FilePool, FileLimit)
 
     {
         // Check that reuse works for POSIX where ReentrantRead is true
-        FilePool pool(&factory, {{"library", "posix"}}, 10);
+        FilePool pool(&factory, {{"library", "posix"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(0, prefix));
         auto handle2 = pool.Acquire(filename(0, prefix));
@@ -75,7 +75,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // Mostly not the same file
-        FilePool pool(&factory, {{"library", "posix"}}, 10);
+        FilePool pool(&factory, {{"library", "posix"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(1, prefix));
         auto handle2 = pool.Acquire(filename(2, prefix));
@@ -86,7 +86,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // Files are considered destroyable when they go out of scope
-        FilePool pool(&factory, {{"library", "posix"}}, 3);
+        FilePool pool(&factory, {{"library", "posix"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -101,7 +101,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // We get an exception of we try to open more concurrent files than allowed
-        FilePool pool(&factory, {{"library", "posix"}}, 3);
+        FilePool pool(&factory, {{"library", "posix"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -113,7 +113,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // stdio does not allow reuse, check results
-        FilePool pool(&factory, {{"library", "stdio"}}, 10);
+        FilePool pool(&factory, {{"library", "stdio"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(0, prefix));
         auto handle2 = pool.Acquire(filename(0, prefix));
@@ -124,7 +124,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // stdio does not allow reuse, check results when some go out of scope
-        FilePool pool(&factory, {{"library", "stdio"}}, 3);
+        FilePool pool(&factory, {{"library", "stdio"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -155,7 +155,7 @@ TEST_P(FilePoolTest, SimpleRead)
 
     adios2::transportman::TransportMan factory(io, comm);
     std::string prefix = "SimpleRead";
-    FilePool pool(&factory, {{"library", param}}, 1024);
+    FilePool pool(&factory, {{"library", param}}, 1024, nullptr);
     const int file_count = 1;
 
     create_test_files(file_count, prefix);
@@ -187,7 +187,7 @@ TEST_P(FilePoolTest, ConcurrentRead)
 
     adios2::transportman::TransportMan factory(io, comm);
     std::string prefix = "ConcurrentRead-" + param;
-    FilePool pool(&factory, {{"library", param}}, 1024);
+    FilePool pool(&factory, {{"library", param}}, 1024, nullptr);
     const int file_count = 5;
 
     create_test_files(file_count, prefix);
@@ -231,6 +231,89 @@ TEST_P(FilePoolTest, ConcurrentRead)
     for (int i = 0; i < 4; i++)
     {
         myThreads[i].join();
+    }
+    remove_test_files(file_count, prefix);
+}
+
+TEST_P(FilePoolTest, ConcurrentTarInfoRead)
+{
+    std::string param = GetParam(); // Access the current parameter, which is the transport to use
+    core::ADIOS adios("C++");
+    core::IO io(adios, "name", false, "C++");
+    helper::Comm comm = adios2::helper::CommDummy();
+
+    adios2::transportman::TransportMan factory(io, comm);
+    std::string prefix = "ConcurrentTarInfoRead-" + param;
+    std::string SubFileNames[] = {"SubFile0", "SubFile1", "SubFile2"};
+    size_t SubFileStarts[] = {20, 30, 40};
+    size_t SubFileLengths[] = {80, 70, 60};
+
+    TarInfoMap TarInfo = {
+        {SubFileNames[0], {SubFileStarts[0] * sizeof(size_t), SubFileLengths[0] * sizeof(size_t)}},
+        {SubFileNames[1], {SubFileStarts[1] * sizeof(size_t), SubFileLengths[1] * sizeof(size_t)}},
+        {SubFileNames[2], {SubFileStarts[2] * sizeof(size_t), SubFileLengths[2] * sizeof(size_t)}}};
+    FilePool pool(&factory, {{"library", param}}, 1024, &TarInfo);
+    const int file_count = 3;
+
+    create_test_files(file_count, prefix);
+
+    auto thread_body = [&](int n) {
+        auto start = std::chrono::high_resolution_clock::now();
+        std::chrono::milliseconds duration;
+        std::random_device rd;
+        std::mt19937 rng(rd());
+        std::uniform_int_distribution<int> uni(0, file_count - 1);
+        std::uniform_int_distribution<int> unisub(
+            0, sizeof(SubFileNames) / sizeof(SubFileNames[0]) - 1);
+        int file0_num = uni(rng);
+        int file1_num = uni(rng);
+        int subfile0_num = unisub(rng);
+        int subfile1_num = unisub(rng);
+#ifdef ThreadUnsafeVerbosity
+        std::cout << "thread " << n << " running, will read from files "
+                  << std::to_string(file0_num) + " and " << std::to_string(file1_num)
+                  << " using transport " << param << std::endl;
+#endif
+        do
+        {
+            auto file0 =
+                pool.Acquire(filename(file0_num, prefix) + "/" + SubFileNames[subfile0_num]);
+            auto file1 =
+                pool.Acquire(filename(file1_num, prefix) + "/" + SubFileNames[subfile1_num]);
+            auto now = std::chrono::high_resolution_clock::now();
+            std::uniform_int_distribution<int> elementuni0(0,
+                                                           (int)SubFileLengths[subfile0_num] - 1);
+            std::uniform_int_distribution<int> elementuni1(1,
+                                                           (int)SubFileLengths[subfile1_num] - 1);
+            size_t file0_element = elementuni0(rng);
+            size_t file1_element = elementuni1(rng);
+            size_t file0_result;
+            size_t file1_result;
+            file0->Read((char *)&file0_result, sizeof(size_t), file0_element * sizeof(size_t));
+            file1->Read((char *)&file1_result, sizeof(size_t), file1_element * sizeof(size_t));
+            EXPECT_EQ(file0_element + SubFileStarts[subfile0_num] + file0_num * 1000, file0_result);
+            EXPECT_EQ(file1_element + SubFileStarts[subfile1_num] + file1_num * 1000, file1_result);
+            duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+        } while (duration < std::chrono::milliseconds(1000));
+    };
+    std::thread myThreads[4];
+
+    for (size_t i = 0; i < sizeof(myThreads) / sizeof(myThreads[0]); i++)
+    {
+        myThreads[i] = std::thread(thread_body, (int)i);
+    }
+    for (size_t i = 0; i < sizeof(myThreads) / sizeof(myThreads[0]); i++)
+    {
+        myThreads[i].join();
+    }
+    std::cout << "For transport " << param << " max files opened is " << pool.GetMax() << std::endl;
+    if (param == "posix")
+    {
+        EXPECT_LE(pool.GetMax(), 3);
+    }
+    else
+    {
+        EXPECT_LE(pool.GetMax(), sizeof(myThreads) / sizeof(myThreads[0]) * 2);
     }
     remove_test_files(file_count, prefix);
 }

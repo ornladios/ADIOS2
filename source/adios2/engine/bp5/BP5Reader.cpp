@@ -1082,8 +1082,8 @@ void BP5Reader::Init()
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
     m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
-    InitTransports();
     InitParameters();
+    InitTransports();
     if (!m_Parameters.SelectSteps.empty())
     {
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
@@ -1144,8 +1144,8 @@ void BP5Reader::InitParameters()
         }
     }
 
-    size_t maxOpenFiles =
-        helper::SetWithinLimit((size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
+    m_Parameters.MaxOpenFilesAtOnce = (unsigned int)helper::SetWithinLimit(
+        (size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
     size_t limit = helper::RaiseLimitNoFile();
     if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int)limit - 8)
     {
@@ -1159,11 +1159,8 @@ void BP5Reader::InitParameters()
                       << ") greater than max open files(" << m_Parameters.MaxOpenFilesAtOnce
                       << "), lowering threads limit" << std::endl;
         }
-        m_Threads = (unsigned int)maxOpenFiles;
+        m_Threads = (unsigned int)m_Parameters.MaxOpenFilesAtOnce;
     }
-
-    m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                             maxOpenFiles);
 }
 
 bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
@@ -1369,6 +1366,8 @@ void BP5Reader::InitTransports()
                       << "\n    map size = " << m_TarInfoMap.size() << std::endl;
         }
     }
+    m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
+                                             m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 }
 
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
