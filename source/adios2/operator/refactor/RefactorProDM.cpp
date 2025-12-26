@@ -20,8 +20,8 @@
 #include <cstring>
 #include <iostream>
 
-#include "MDR/Refactor/Refactor.hpp"
 #include "MDR/Reconstructor/Reconstructor.hpp"
+#include "MDR/Refactor/Refactor.hpp"
 
 namespace adios2
 {
@@ -37,7 +37,7 @@ const uint8_t ProDMVersionMajor = 1;
 const uint8_t ProDMVersionMinor = 0;
 const uint8_t ProDMVersionPatch = 0;
 
-template<class T>
+template <class T>
 struct ProDMTypes
 {
     using Decomposer = MDR::MGARDHierarchicalDecomposer<T>;
@@ -73,7 +73,7 @@ inline uint8_t ProDMComputeTargetLevel(const std::vector<uint32_t> &dims)
     return static_cast<uint8_t>(maxLevel);
 }
 
-template<class T>
+template <class T>
 size_t ProDMRefactorToBufferImpl(const char *dataIn, const Dims &blockCount, char *bufferOut)
 {
     using Traits = ProDMTypes<T>;
@@ -94,15 +94,11 @@ size_t ProDMRefactorToBufferImpl(const char *dataIn, const Dims &blockCount, cha
     typename Traits::Compressor compressor(64);
     typename Traits::ErrorCollector collector;
     typename Traits::ErrorEstimator estimator;
-    typename Traits::Writer writer("", ""); 
+    typename Traits::Writer writer("", "");
 
-    MDR::OrderedRefactor<T,
-                         typename Traits::Decomposer,
-                         typename Traits::Interleaver,
-                         typename Traits::Encoder,
-                         typename Traits::Compressor,
-                         typename Traits::ErrorCollector,
-                         typename Traits::ErrorEstimator,
+    MDR::OrderedRefactor<T, typename Traits::Decomposer, typename Traits::Interleaver,
+                         typename Traits::Encoder, typename Traits::Compressor,
+                         typename Traits::ErrorCollector, typename Traits::ErrorEstimator,
                          typename Traits::Writer>
         refactor(decomposer, interleaver, encoder, compressor, collector, estimator, writer);
 
@@ -117,11 +113,9 @@ size_t ProDMRefactorToBufferImpl(const char *dataIn, const Dims &blockCount, cha
     return bufferSize;
 }
 
-template<class T>
-size_t ProDMReconstructFromBufferImpl(double tolerance,
-                                       const char *bufferIn,
-                                       const size_t /*bufferSize*/,
-                                       char *dataOut)
+template <class T>
+size_t ProDMReconstructFromBufferImpl(double tolerance, const char *bufferIn,
+                                      const size_t /*bufferSize*/, char *dataOut)
 {
     using Traits = ProDMTypes<T>;
 
@@ -133,13 +127,9 @@ size_t ProDMReconstructFromBufferImpl(double tolerance,
     typename Traits::SizeInterpreter interpreter(estimator);
     typename Traits::Retriever retriever("", "");
 
-    MDR::OrderedReconstructor<T,
-                              typename Traits::Decomposer,
-                              typename Traits::Interleaver,
-                              typename Traits::Encoder,
-                              typename Traits::Compressor,
-                              typename Traits::SizeInterpreter,
-                              typename Traits::ErrorEstimator,
+    MDR::OrderedReconstructor<T, typename Traits::Decomposer, typename Traits::Interleaver,
+                              typename Traits::Encoder, typename Traits::Compressor,
+                              typename Traits::SizeInterpreter, typename Traits::ErrorEstimator,
                               typename Traits::Retriever>
         reconstructor(decomposer, interleaver, encoder, compressor, interpreter, retriever);
 
@@ -148,8 +138,8 @@ size_t ProDMReconstructFromBufferImpl(double tolerance,
     T *reconstructed = reconstructor.reconstruct_from_buffer(tolerance, mdrBuffer);
     if (reconstructed == nullptr)
     {
-        helper::Throw<std::runtime_error>("Operator", "RefactorProDM",
-                                          "Reconstruct", "ProDM reconstruction failed");
+        helper::Throw<std::runtime_error>("Operator", "RefactorProDM", "Reconstruct",
+                                          "ProDM reconstruction failed");
     }
 
     // get output size
@@ -168,20 +158,21 @@ size_t ProDMReconstructFromBufferImpl(double tolerance,
 
 } // end anonymous namespace
 
-
 RefactorProDM::RefactorProDM(const Params &parameters)
-: Operator("prodm", REFACTOR_PRODM, "refactor", parameters) {}
-
+: Operator("prodm", REFACTOR_PRODM, "refactor", parameters)
+{
+}
 
 size_t RefactorProDM::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
-                                        const size_t ndims, const size_t *dims) const
+                                       const size_t ndims, const size_t *dims) const
 {
     std::cout << "RefactorProDM::GetEstimatedSize() called \n";
 
     DataType datatype = (ElemSize == 8 ? DataType::Double : DataType::Float);
 
     Dims dimsV(ndims);
-    for (size_t i = 0; i < ndims; ++i) {
+    for (size_t i = 0; i < ndims; ++i)
+    {
         dimsV[i] = dims[i];
     }
     Dims convertedDims = ConvertDims(dimsV, datatype, 3);
@@ -190,9 +181,8 @@ size_t RefactorProDM::GetEstimatedSize(const size_t ElemCount, const size_t Elem
     return sizeIn * 2 + 1024; // ensure memory space
 }
 
-
-size_t RefactorProDM::Operate(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type, char *bufferOut)
+size_t RefactorProDM::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                              const DataType type, char *bufferOut)
 {
     (void)blockStart; // not used
 
@@ -206,9 +196,9 @@ size_t RefactorProDM::Operate(const char *dataIn, const Dims &blockStart,
     const size_t ndims = convertedDims.size();
     if (ndims > 3)
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "RefactorProDM", "Operate",
-            "ProDM does not support data in " + std::to_string(ndims) + " dimensions");
+        helper::Throw<std::invalid_argument>("Operator", "RefactorProDM", "Operate",
+                                             "ProDM does not support data in " +
+                                                 std::to_string(ndims) + " dimensions");
     }
 
     // metadata
@@ -257,7 +247,6 @@ size_t RefactorProDM::Operate(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
-
 size_t RefactorProDM::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // get accuracy parameter
@@ -293,7 +282,6 @@ size_t RefactorProDM::InverseOperate(const char *bufferIn, const size_t sizeIn, 
     return 0;
 }
 
-
 size_t RefactorProDM::Reconstruct(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // same as RefactorMDR, read ndims/dims/type/version/wasRefactored
@@ -318,7 +306,7 @@ size_t RefactorProDM::Reconstruct(const char *bufferIn, const size_t sizeIn, cha
     const bool isRefactored = GetParameter<bool>(bufferIn, bufferInOffset);
     if (!isRefactored)
     {
-        headerSize += bufferInOffset;    
+        headerSize += bufferInOffset;
         m_AccuracyProvided.error = m_AccuracyRequested.error;
         m_AccuracyProvided.norm = m_AccuracyRequested.norm;
         m_AccuracyProvided.relative = false;
@@ -352,7 +340,6 @@ size_t RefactorProDM::Reconstruct(const char *bufferIn, const size_t sizeIn, cha
 
     return sizeOut;
 }
-
 
 size_t RefactorProDM::GetHeaderSize() const { return headerSize; }
 
