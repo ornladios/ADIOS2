@@ -197,7 +197,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     else
     {
         helper::Throw<std::invalid_argument>("Operator", "OperatorFactory", "MakeOperator",
-                                             "ADIOS2 (test) does not support " + typeLowerCase +
+                                             "ADIOS2 does not support " + typeLowerCase +
                                                  " operation");
     }
 
