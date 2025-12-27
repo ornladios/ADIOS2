@@ -196,6 +196,17 @@ if(mgard_FOUND)
  endif()
 endif()
 
+# PRODM
+set(ADIOS2_HAVE_PRODM FALSE)
+if(ADIOS2_USE_PRODM STREQUAL AUTO)
+  find_package(ProDM CONFIG)
+elseif(ADIOS2_USE_PRODM)
+  find_package(ProDM REQUIRED CONFIG)
+endif()
+if(ProDM_FOUND)
+  set(ADIOS2_HAVE_PRODM TRUE)
+endif()
+
 # PNG
 if(ADIOS2_USE_PNG STREQUAL AUTO)
   find_package(PNG 1.6.0)
