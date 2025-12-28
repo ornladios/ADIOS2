@@ -89,9 +89,9 @@ private:
 
     transportman::TransportMan m_TransportFactory;
 
-    std::shared_ptr<Transport> m_MDIndexFile;
-    std::shared_ptr<Transport> m_MDFile;
-    std::shared_ptr<Transport> m_MetaMetadataFile;
+    std::unique_ptr<PoolableFile> m_MDIndexFile;
+    std::unique_ptr<PoolableFile> m_MDFile;
+    std::unique_ptr<PoolableFile> m_MetaMetadataFile;
 
     /* How many bytes of metadata index have we already read in? */
     size_t m_MDIndexFileAlreadyReadSize = 0;
@@ -146,7 +146,7 @@ private:
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
-    size_t OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
+    size_t OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                            const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 

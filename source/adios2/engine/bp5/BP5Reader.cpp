@@ -83,10 +83,8 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     /* BP5 modifies the metadata block in memory during processing
        so we have to read it from file again
     */
-    auto currentPos = m_MDFile->CurrentPos();
     std::vector<char> mdbuf(sizes[0]);
     m_MDFile->Read(mdbuf.data(), sizes[0], 0);
-    m_MDFile->Seek(currentPos);
 
     size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
     *md = (char *)malloc(mdsize);
@@ -1180,7 +1178,7 @@ bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &poll
     return true;
 }
 
-size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
+size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                                   const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                                   std::string &lasterrmsg /*INOUT*/)
 {
@@ -1192,9 +1190,7 @@ size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::s
             errno = 0;
             const bool profile = true;
             std::string newFileName = UpdateWithTarInfo(fileName, m_IO.m_TransportsParameters[0]);
-            file = m_TransportFactory.OpenFileTransport(newFileName, adios2::Mode::Read,
-                                                        m_IO.m_TransportsParameters[0], profile,
-                                                        false, m_Comm);
+            file = m_DataFiles->Acquire(newFileName);
             flag = 0; // found file
             break;
         }
@@ -1943,9 +1939,9 @@ void BP5Reader::FlushProfiler()
         }
     };
 
-    lf_AddMe(m_MDFile);
-    lf_AddMe(m_MDIndexFile);
-    lf_AddMe(m_MetaMetadataFile);
+    //    lf_AddMe(m_MDFile);
+    //    lf_AddMe(m_MDIndexFile);
+    //    lf_AddMe(m_MetaMetadataFile);
 
     auto PoolList = m_DataFiles->ListOfTransports();
     for (auto const &Trans : PoolList)
