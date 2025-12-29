@@ -29,10 +29,19 @@ void SZ3Accuracy1D(const std::string accuracy)
 
     std::vector<float> r32s(Nx);
     std::vector<double> r64s(Nx);
+    std::vector<std::complex<float>> c32s(Nx);
+    std::vector<std::complex<double>> c64s(Nx);
 
     // range 0 to 999
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
+
+    // Initialize complex arrays with both real and imaginary parts
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        c32s[i] = std::complex<float>(static_cast<float>(i), static_cast<float>(i) + 0.5f);
+        c64s[i] = std::complex<double>(static_cast<double>(i), static_cast<double>(i) + 0.5);
+    }
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -68,12 +77,20 @@ void SZ3Accuracy1D(const std::string accuracy)
             io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
         adios2::Variable<double> var_r64 =
             io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<std::complex<float>> var_c32 =
+            io.DefineVariable<std::complex<float>>("c32", shape, start, count,
+                                                    adios2::ConstantDims);
+        adios2::Variable<std::complex<double>> var_c64 =
+            io.DefineVariable<std::complex<double>>("c64", shape, start, count,
+                                                     adios2::ConstantDims);
 
         // add operations
         adios2::Operator sz3Op = adios.DefineOperator("sz3Compressor", "sz3");
 
         var_r32.AddOperation(sz3Op, {{"accuracy", accuracy}});
         var_r64.AddOperation(sz3Op, {{"accuracy", accuracy}});
+        var_c32.AddOperation(sz3Op, {{"accuracy", accuracy}});
+        var_c64.AddOperation(sz3Op, {{"accuracy", accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -82,6 +99,8 @@ void SZ3Accuracy1D(const std::string accuracy)
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
             bpWriter.Put<double>("r64", r64s.data());
+            bpWriter.Put<std::complex<float>>("c32", c32s.data());
+            bpWriter.Put<std::complex<double>>("c64", c64s.data());
             bpWriter.EndStep();
         }
 
@@ -106,6 +125,8 @@ void SZ3Accuracy1D(const std::string accuracy)
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
+        std::vector<std::complex<float>> decompressedC32s;
+        std::vector<std::complex<double>> decompressedC64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -121,14 +142,30 @@ void SZ3Accuracy1D(const std::string accuracy)
             ASSERT_EQ(var_r64.Steps(), NSteps);
             ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+            auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+            EXPECT_TRUE(var_c32);
+            ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c32.Steps(), NSteps);
+            ASSERT_EQ(var_c32.Shape()[0], mpiSize * Nx);
+
+            auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+            EXPECT_TRUE(var_c64);
+            ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c64.Steps(), NSteps);
+            ASSERT_EQ(var_c64.Shape()[0], mpiSize * Nx);
+
             const adios2::Dims start{mpiRank * Nx};
             const adios2::Dims count{Nx};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
+            var_c32.SetSelection(sel);
+            var_c64.SetSelection(sel);
 
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
+            bpReader.Get(var_c32, decompressedC32s);
+            bpReader.Get(var_c64, decompressedC64s);
             bpReader.EndStep();
 
             for (size_t i = 0; i < Nx; ++i)
@@ -139,6 +176,19 @@ void SZ3Accuracy1D(const std::string accuracy)
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), std::stod(accuracy)) << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), std::stod(accuracy)) << msg;
+                // For complex, check both real and imaginary parts
+                ASSERT_LT(std::abs(decompressedC32s[i].real() - c32s[i].real()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC32s[i].imag() - c32s[i].imag()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC64s[i].real() - c64s[i].real()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC64s[i].imag() - c64s[i].imag()),
+                          std::stod(accuracy))
+                    << msg;
             }
             ++t;
         }
@@ -158,9 +208,18 @@ void SZ3Accuracy2D(const std::string accuracy)
 
     std::vector<float> r32s(Nx * Ny);
     std::vector<double> r64s(Nx * Ny);
+    std::vector<std::complex<float>> c32s(Nx * Ny);
+    std::vector<std::complex<double>> c64s(Nx * Ny);
 
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
+
+    // Initialize complex arrays with both real and imaginary parts
+    for (size_t i = 0; i < Nx * Ny; ++i)
+    {
+        c32s[i] = std::complex<float>(static_cast<float>(i), static_cast<float>(i) + 0.5f);
+        c64s[i] = std::complex<double>(static_cast<double>(i), static_cast<double>(i) + 0.5);
+    }
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -193,11 +252,17 @@ void SZ3Accuracy2D(const std::string accuracy)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_c32 =
+            io.DefineVariable<std::complex<float>>("c32", shape, start, count, adios2::ConstantDims);
+        auto var_c64 = io.DefineVariable<std::complex<double>>("c64", shape, start, count,
+                                                                 adios2::ConstantDims);
 
         adios2::Operator sz3Op = adios.DefineOperator("sz3Compressor", "sz3");
 
         var_r32.AddOperation(sz3Op, {{"accuracy", accuracy}});
         var_r64.AddOperation(sz3Op, {{"accuracy", accuracy}});
+        var_c32.AddOperation(sz3Op, {{"accuracy", accuracy}});
+        var_c64.AddOperation(sz3Op, {{"accuracy", accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -206,6 +271,8 @@ void SZ3Accuracy2D(const std::string accuracy)
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
             bpWriter.Put<double>("r64", r64s.data());
+            bpWriter.Put<std::complex<float>>("c32", c32s.data());
+            bpWriter.Put<std::complex<double>>("c64", c64s.data());
             bpWriter.EndStep();
         }
 
@@ -229,6 +296,8 @@ void SZ3Accuracy2D(const std::string accuracy)
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
+        std::vector<std::complex<float>> decompressedC32s;
+        std::vector<std::complex<double>> decompressedC64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -246,14 +315,32 @@ void SZ3Accuracy2D(const std::string accuracy)
             ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
             ASSERT_EQ(var_r64.Shape()[1], Ny);
 
+            auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+            EXPECT_TRUE(var_c32);
+            ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c32.Steps(), NSteps);
+            ASSERT_EQ(var_c32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_c32.Shape()[1], Ny);
+
+            auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+            EXPECT_TRUE(var_c64);
+            ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c64.Steps(), NSteps);
+            ASSERT_EQ(var_c64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_c64.Shape()[1], Ny);
+
             const adios2::Dims start{mpiRank * Nx, 0};
             const adios2::Dims count{Nx, Ny};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
+            var_c32.SetSelection(sel);
+            var_c64.SetSelection(sel);
 
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
+            bpReader.Get(var_c32, decompressedC32s);
+            bpReader.Get(var_c64, decompressedC64s);
             bpReader.EndStep();
 
             for (size_t i = 0; i < Nx * Ny; ++i)
@@ -264,6 +351,19 @@ void SZ3Accuracy2D(const std::string accuracy)
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), std::stod(accuracy)) << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), std::stod(accuracy)) << msg;
+                // For complex, check both real and imaginary parts
+                ASSERT_LT(std::abs(decompressedC32s[i].real() - c32s[i].real()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC32s[i].imag() - c32s[i].imag()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC64s[i].real() - c64s[i].real()),
+                          std::stod(accuracy))
+                    << msg;
+                ASSERT_LT(std::abs(decompressedC64s[i].imag() - c64s[i].imag()),
+                          std::stod(accuracy))
+                    << msg;
             }
             ++t;
         }
