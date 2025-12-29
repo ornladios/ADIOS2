@@ -403,6 +403,11 @@ if(ADIOS2_HAVE_SZ)
   target_link_libraries(adios2_core PRIVATE SZ::SZ)
 endif()
 
+if(ADIOS2_HAVE_SZ3)
+  target_sources(adios2_core PRIVATE operator/compress/CompressSZ3.cpp)
+  target_link_libraries(adios2_core PRIVATE SZ3::SZ3)
+endif()
+
 if(ADIOS2_HAVE_LIBPRESSIO)
   target_sources(adios2_core PRIVATE operator/compress/CompressLibPressio.cpp)
   target_link_libraries(adios2_core PRIVATE LibPressio::libpressio)
