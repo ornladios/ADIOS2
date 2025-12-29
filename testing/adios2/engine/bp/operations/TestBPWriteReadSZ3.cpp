@@ -77,12 +77,10 @@ void SZ3Accuracy1D(const std::string accuracy)
             io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
         adios2::Variable<double> var_r64 =
             io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
-        adios2::Variable<std::complex<float>> var_c32 =
-            io.DefineVariable<std::complex<float>>("c32", shape, start, count,
-                                                    adios2::ConstantDims);
-        adios2::Variable<std::complex<double>> var_c64 =
-            io.DefineVariable<std::complex<double>>("c64", shape, start, count,
-                                                     adios2::ConstantDims);
+        adios2::Variable<std::complex<float>> var_c32 = io.DefineVariable<std::complex<float>>(
+            "c32", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<std::complex<double>> var_c64 = io.DefineVariable<std::complex<double>>(
+            "c64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator sz3Op = adios.DefineOperator("sz3Compressor", "sz3");
@@ -252,10 +250,10 @@ void SZ3Accuracy2D(const std::string accuracy)
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
-        auto var_c32 =
-            io.DefineVariable<std::complex<float>>("c32", shape, start, count, adios2::ConstantDims);
+        auto var_c32 = io.DefineVariable<std::complex<float>>("c32", shape, start, count,
+                                                              adios2::ConstantDims);
         auto var_c64 = io.DefineVariable<std::complex<double>>("c64", shape, start, count,
-                                                                 adios2::ConstantDims);
+                                                               adios2::ConstantDims);
 
         adios2::Operator sz3Op = adios.DefineOperator("sz3Compressor", "sz3");
 
