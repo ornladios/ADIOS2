@@ -285,8 +285,7 @@ public:
 TEST_P(BPWriteReadSZ3, BPWRSZ3_1D) { SZ3Accuracy1D(GetParam()); }
 TEST_P(BPWriteReadSZ3, BPWRSZ3_2D) { SZ3Accuracy2D(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(SZ3Accuracy, BPWriteReadSZ3,
-                         ::testing::Values("0.01", "0.001", "0.0001"));
+INSTANTIATE_TEST_SUITE_P(SZ3Accuracy, BPWriteReadSZ3, ::testing::Values("0.01", "0.001", "0.0001"));
 
 int main(int argc, char **argv)
 {

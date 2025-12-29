@@ -40,9 +40,9 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
 
     if (ndims > 4)
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressSZ3", "Operate",
-            "SZ3 only supports up to 4 dimensions, requested " + std::to_string(ndims));
+        helper::Throw<std::invalid_argument>("Operator", "CompressSZ3", "Operate",
+                                             "SZ3 only supports up to 4 dimensions, requested " +
+                                                 std::to_string(ndims));
     }
 
     // sz3 V3 metadata
@@ -149,20 +149,19 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
         // Compress based on data type
         if (varType == helper::GetDataType<float>())
         {
-            szBuffer = SZ_compress<float>(conf, reinterpret_cast<const float *>(dataIn),
-                                          szBufferSize);
+            szBuffer =
+                SZ_compress<float>(conf, reinterpret_cast<const float *>(dataIn), szBufferSize);
         }
         else if (varType == helper::GetDataType<double>())
         {
-            szBuffer = SZ_compress<double>(conf, reinterpret_cast<const double *>(dataIn),
-                                           szBufferSize);
+            szBuffer =
+                SZ_compress<double>(conf, reinterpret_cast<const double *>(dataIn), szBufferSize);
         }
         else if (varType == helper::GetDataType<std::complex<float>>())
         {
             // Compress complex as two separate arrays (real and imaginary)
             const size_t numElements = helper::GetTotalSize(convertedDims);
-            const auto *complexData =
-                reinterpret_cast<const std::complex<float> *>(dataIn);
+            const auto *complexData = reinterpret_cast<const std::complex<float> *>(dataIn);
             std::vector<float> realPart(numElements);
             for (size_t i = 0; i < numElements; ++i)
             {
@@ -174,8 +173,7 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
         {
             // Compress complex as two separate arrays (real and imaginary)
             const size_t numElements = helper::GetTotalSize(convertedDims);
-            const auto *complexData =
-                reinterpret_cast<const std::complex<double> *>(dataIn);
+            const auto *complexData = reinterpret_cast<const std::complex<double> *>(dataIn);
             std::vector<double> realPart(numElements);
             for (size_t i = 0; i < numElements; ++i)
             {
@@ -239,8 +237,8 @@ size_t CompressSZ3::InverseOperate(const char *bufferIn, const size_t sizeIn, ch
 
 bool CompressSZ3::IsDataTypeValid(const DataType type) const
 {
-    if (type == DataType::Float || type == DataType::Double ||
-        type == DataType::FloatComplex || type == DataType::DoubleComplex)
+    if (type == DataType::Float || type == DataType::Double || type == DataType::FloatComplex ||
+        type == DataType::DoubleComplex)
     {
         return true;
     }
@@ -272,20 +270,19 @@ size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char
         if (type == helper::GetDataType<float>())
         {
             dataTypeSize = sizeof(float);
-            result = SZ_decompress<float>(conf, bufferIn + bufferInOffset,
-                                          sizeIn - bufferInOffset);
+            result = SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<double>())
         {
             dataTypeSize = sizeof(double);
-            result = SZ_decompress<double>(conf, bufferIn + bufferInOffset,
-                                           sizeIn - bufferInOffset);
+            result =
+                SZ_decompress<double>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<std::complex<float>>())
         {
             dataTypeSize = sizeof(std::complex<float>);
-            float *realData = SZ_decompress<float>(conf, bufferIn + bufferInOffset,
-                                                   sizeIn - bufferInOffset);
+            float *realData =
+                SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
             const size_t numElements = helper::GetTotalSize(blockCount);
             auto *complexOut = reinterpret_cast<std::complex<float> *>(dataOut);
             for (size_t i = 0; i < numElements; ++i)
@@ -298,8 +295,8 @@ size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char
         else if (type == helper::GetDataType<std::complex<double>>())
         {
             dataTypeSize = sizeof(std::complex<double>);
-            double *realData = SZ_decompress<double>(conf, bufferIn + bufferInOffset,
-                                                     sizeIn - bufferInOffset);
+            double *realData =
+                SZ_decompress<double>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
             const size_t numElements = helper::GetTotalSize(blockCount);
             auto *complexOut = reinterpret_cast<std::complex<double> *>(dataOut);
             for (size_t i = 0; i < numElements; ++i)
