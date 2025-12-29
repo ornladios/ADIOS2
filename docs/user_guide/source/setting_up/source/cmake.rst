@@ -139,6 +139,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_BZip2``           **ON**/OFF      `BZIP2 <http://www.bzip.org>`_ compression.
 ``ADIOS2_USE_ZFP``             **ON**/OFF      `ZFP <https://github.com/LLNL/zfp>`_ compression (experimental).
 ``ADIOS2_USE_SZ``              **ON**/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental - SZ2 only!).
+``ADIOS2_USE_SZ3``             **ON**/OFF      `SZ3 <https://github.com/szcompressor/SZ3>`_ compression.
 ``ADIOS2_USE_MGARD``           **ON**/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Blosc2``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
