@@ -34,8 +34,9 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
 
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
-    // Use dimensions directly - SZ3 supports up to 4 dimensions
-    const Dims &convertedDims = blockCount;
+    // ConvertDims expands the last dimension by 2 for complex types
+    // to handle real and imaginary parts as separate elements
+    Dims convertedDims = ConvertDims(blockCount, varType, blockCount.size());
     const size_t ndims = convertedDims.size();
 
     if (ndims > 4)
@@ -159,27 +160,17 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
         }
         else if (varType == helper::GetDataType<std::complex<float>>())
         {
-            // Compress complex as two separate arrays (real and imaginary)
-            const size_t numElements = helper::GetTotalSize(convertedDims);
-            const auto *complexData = reinterpret_cast<const std::complex<float> *>(dataIn);
-            std::vector<float> realPart(numElements);
-            for (size_t i = 0; i < numElements; ++i)
-            {
-                realPart[i] = complexData[i].real();
-            }
-            szBuffer = SZ_compress<float>(conf, realPart.data(), szBufferSize);
+            // Complex data is compressed as float with expanded dimensions
+            // ConvertDims already expanded the last dimension by 2
+            szBuffer =
+                SZ_compress<float>(conf, reinterpret_cast<const float *>(dataIn), szBufferSize);
         }
         else if (varType == helper::GetDataType<std::complex<double>>())
         {
-            // Compress complex as two separate arrays (real and imaginary)
-            const size_t numElements = helper::GetTotalSize(convertedDims);
-            const auto *complexData = reinterpret_cast<const std::complex<double> *>(dataIn);
-            std::vector<double> realPart(numElements);
-            for (size_t i = 0; i < numElements; ++i)
-            {
-                realPart[i] = complexData[i].real();
-            }
-            szBuffer = SZ_compress<double>(conf, realPart.data(), szBufferSize);
+            // Complex data is compressed as double with expanded dimensions
+            // ConvertDims already expanded the last dimension by 2
+            szBuffer =
+                SZ_compress<double>(conf, reinterpret_cast<const double *>(dataIn), szBufferSize);
         }
         else
         {
@@ -280,31 +271,18 @@ size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char
         }
         else if (type == helper::GetDataType<std::complex<float>>())
         {
-            dataTypeSize = sizeof(std::complex<float>);
-            float *realData =
-                SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
-            const size_t numElements = helper::GetTotalSize(blockCount);
-            auto *complexOut = reinterpret_cast<std::complex<float> *>(dataOut);
-            for (size_t i = 0; i < numElements; ++i)
-            {
-                complexOut[i] = std::complex<float>(realData[i], 0.0f);
-            }
-            delete[] realData;
-            return numElements * dataTypeSize;
+            // Complex data was compressed as float with expanded dimensions
+            // Decompress directly into output buffer cast as float
+            dataTypeSize = sizeof(float);
+            result = SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<std::complex<double>>())
         {
-            dataTypeSize = sizeof(std::complex<double>);
-            double *realData =
+            // Complex data was compressed as double with expanded dimensions
+            // Decompress directly into output buffer cast as double
+            dataTypeSize = sizeof(double);
+            result =
                 SZ_decompress<double>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
-            const size_t numElements = helper::GetTotalSize(blockCount);
-            auto *complexOut = reinterpret_cast<std::complex<double> *>(dataOut);
-            for (size_t i = 0; i < numElements; ++i)
-            {
-                complexOut[i] = std::complex<double>(realData[i], 0.0);
-            }
-            delete[] realData;
-            return numElements * dataTypeSize;
         }
         else
         {
