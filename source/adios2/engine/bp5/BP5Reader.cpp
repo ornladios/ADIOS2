@@ -1188,7 +1188,6 @@ size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std
         try
         {
             errno = 0;
-            const bool profile = true;
             std::string newFileName = UpdateWithTarInfo(fileName, m_IO.m_TransportsParameters[0]);
             file = m_DataFiles->Acquire(newFileName);
             flag = 0; // found file
