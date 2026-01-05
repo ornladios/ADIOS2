@@ -411,21 +411,16 @@ std::string BPBase::ReadBPString(const std::vector<char> &buffer, size_t &positi
 
 // static members
 const std::set<std::string> BPBase::m_TransformTypes = {{"unknown", "none", "identity", "bzip2",
-                                                         "sz", "zfp", "mgard", "png", "blosc",
-                                                         "sirius", "mgardplus", "plugin"}};
+                                                         "sz", "sz3", "zfp", "mgard", "png",
+                                                         "blosc", "sirius", "mgardplus", "plugin"}};
 
 const std::map<int, std::string> BPBase::m_TransformTypesToNames = {
-    {transform_unknown, "unknown"},
-    {transform_none, "none"},
-    {transform_identity, "identity"},
-    {transform_sz, "sz"},
-    {transform_zfp, "zfp"},
-    {transform_mgard, "mgard"},
-    {transform_png, "png"},
-    {transform_bzip2, "bzip2"},
-    {transform_blosc, "blosc"},
-    {transform_sirius, "sirius"},
-    {transform_mgardplus, "mgardplus"},
+    {transform_unknown, "unknown"},   {transform_none, "none"},
+    {transform_identity, "identity"}, {transform_sz, "sz"},
+    {transform_sz3, "sz3"},           {transform_zfp, "zfp"},
+    {transform_mgard, "mgard"},       {transform_png, "png"},
+    {transform_bzip2, "bzip2"},       {transform_blosc, "blosc"},
+    {transform_sirius, "sirius"},     {transform_mgardplus, "mgardplus"},
     {transform_plugin, "plugin"}};
 
 BPBase::TransformTypes BPBase::TransformTypeEnum(const std::string transformType) const noexcept

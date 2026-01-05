@@ -34,10 +34,8 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
 
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
-    // ConvertDims with target 5 like SZ for compatibility
     // This expands the last dimension by 2 for complex types
-    // and pads to 5 dimensions for consistency
-    Dims convertedDims = ConvertDims(blockCount, varType, 5);
+    Dims convertedDims = ConvertDims(blockCount, varType, blockCount.size());
     const size_t ndims = convertedDims.size();
 
     // sz3 V1 metadata
@@ -250,8 +248,13 @@ size_t CompressSZ3::DecompressV1(const char *bufferIn, const size_t sizeIn, char
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 
     // Read SZ3 version marker (4 bytes: SZ3_VER_MAJ.SZ3_VER_MIN.SZ3_VER_PATCH.0)
-    m_VersionInfo = " Data is compressed using SZ3 Version " +
-                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+    int majorVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    if (majorVersion != 3)
+    {
+        helper::Throw<std::invalid_argument>("Operator", "CompressSZ3", "DecompressV1",
+                                             "SZ3 compressor only supports version 3 sz data");
+    }
+    m_VersionInfo = " Data is compressed using SZ3 Version " + std::to_string(majorVersion) + "." +
                     std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
                     std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
                     std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
