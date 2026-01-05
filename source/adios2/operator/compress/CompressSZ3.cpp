@@ -29,31 +29,31 @@ CompressSZ3::CompressSZ3(const Params &parameters)
 size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
                             const DataType varType, char *bufferOut)
 {
-    const uint8_t bufferVersion = 3;
+    const uint8_t bufferVersion = 1; // buffer layout versioning for future-proofing
     size_t bufferOutOffset = 0;
 
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
-    // ConvertDims expands the last dimension by 2 for complex types
-    // to handle real and imaginary parts as separate elements
-    Dims convertedDims = ConvertDims(blockCount, varType, blockCount.size());
+    // ConvertDims with target 5 like SZ for compatibility
+    // This expands the last dimension by 2 for complex types
+    // and pads to 5 dimensions for consistency
+    Dims convertedDims = ConvertDims(blockCount, varType, 5);
     const size_t ndims = convertedDims.size();
 
-    if (ndims > 4)
-    {
-        helper::Throw<std::invalid_argument>("Operator", "CompressSZ3", "Operate",
-                                             "SZ3 only supports up to 4 dimensions, requested " +
-                                                 std::to_string(ndims));
-    }
-
-    // sz3 V3 metadata
+    // sz3 V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
     for (const auto &d : convertedDims)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, varType);
-    // sz3 V3 metadata end
+    // Add SZ3 version marker (3.0.0.0) to distinguish from SZ2
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(SZ3_VER_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(SZ3_VER_MINOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(SZ3_VER_PATCH));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(0)); // Tweak not set in SZ3 version.hpp
+    // sz3 V1
 
     // Create SZ3 configuration based on dimensions
     SZ3::Config conf;
@@ -212,14 +212,14 @@ size_t CompressSZ3::InverseOperate(const char *bufferIn, const size_t sizeIn, ch
     const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
-    if (bufferVersion == 3)
+    if (bufferVersion == 1)
     {
-        return DecompressV3(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else
     {
         helper::Throw<std::runtime_error>("Operator", "CompressSZ3", "InverseOperate",
-                                          "invalid sz3 buffer version (expected 3, got " +
+                                          "invalid sz3 buffer version (expected 1, got " +
                                               std::to_string(bufferVersion) + ")");
     }
 
@@ -236,9 +236,9 @@ bool CompressSZ3::IsDataTypeValid(const DataType type) const
     return false;
 }
 
-size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char *dataOut)
+size_t CompressSZ3::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
-    // Current decompression format for SZ3 (version 3)
+    // Decompression format for SZ3 using buffer version 1 (versioning for future-proofing)
     size_t bufferInOffset = 0;
 
     const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
@@ -248,6 +248,14 @@ size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+
+    // Read SZ3 version marker (4 bytes: SZ3_VER_MAJ.SZ3_VER_MIN.SZ3_VER_PATCH.0)
+    m_VersionInfo = " Data is compressed using SZ3 Version " +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                    ". Please make sure a compatible version is used for decompression.";
 
     // Create SZ3 configuration
     SZ3::Config conf;
@@ -287,19 +295,19 @@ size_t CompressSZ3::DecompressV3(const char *bufferIn, const size_t sizeIn, char
         else
         {
             helper::Throw<std::invalid_argument>(
-                "Operator", "CompressSZ3", "DecompressV3",
+                "Operator", "CompressSZ3", "DecompressV1",
                 "SZ3 compressor only supports float or double types");
         }
     }
     catch (const std::exception &e)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressSZ3", "DecompressV3",
+        helper::Throw<std::runtime_error>("Operator", "CompressSZ3", "DecompressV1",
                                           std::string("SZ3 decompression failed: ") + e.what());
     }
 
     if (result == nullptr)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressSZ3", "DecompressV3",
+        helper::Throw<std::runtime_error>("Operator", "CompressSZ3", "DecompressV1",
                                           "SZ3 decompression returned null");
     }
 

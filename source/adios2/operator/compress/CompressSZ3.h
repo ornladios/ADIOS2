@@ -51,13 +51,13 @@ public:
 
 private:
     /**
-     * Decompress function for V3 buffer.
-     * @param bufferIn : compressed data buffer (V3)
+     * Decompress function for V1 buffer (BP3/BP4/BP5 compatible).
+     * @param bufferIn : compressed data buffer (V2)
      * @param sizeIn : number of bytes in bufferIn
      * @param dataOut : decompressed data buffer
      * @return : number of bytes in dataOut
      */
-    size_t DecompressV3(const char *bufferIn, const size_t sizeIn, char *dataOut);
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut);
 
     std::string m_VersionInfo;
 };
