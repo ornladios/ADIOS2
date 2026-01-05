@@ -5,16 +5,18 @@ Operators
 
 In the previous tutorial we learned how to write and read attributes.
 
-For this example to work, you would need to have the SZ compression library installed, which ADIOS automatically detects.
-The easiest way to install SZ is with Spack, and you can do that as follows:
+For this example to work, you would need to have a compression library installed, which ADIOS automatically detects.
+The easiest way to install SZ or SZ3 is with Spack, and you can do that as follows:
 
 .. code-block:: bash
 
    git clone https://github.com/spack/spack.git ~/spack
    cd ~/spack
    . share/spack/setup-env.sh
-   spack install sz
-   spack load sz
+   spack install sz  # for SZ (SZ2)
+   # or
+   spack install sz3  # for SZ3
+   spack load sz  # or sz3
 
 In this tutorial we will learn how to use operators. Operators are used for Data compression/decompression, lossy and
 lossless. They act upon the user application data, either from a variable or a set of variables in a IO object.
@@ -82,7 +84,7 @@ Start editing the skeleton file `ADIOS2/examples/hello/bpOperatorSZWriter/bpOper
 
 .. note::
 
-   ``DefineOperator()'`` s second parameter can be either zfp or sz. For more information regarding operators and their
+   ``DefineOperator()``'s second parameter can be ``zfp``, ``sz``, or ``sz3``. For more information regarding operators and their
    properties you can look at :ref:`Basics: Interface Components: Operator <sec:basics_interface_components_operator>`.
 
 7. Let's also create an attribute to store the accuracy value.

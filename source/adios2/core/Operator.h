@@ -39,6 +39,7 @@ public:
         COMPRESS_MGARDPLUS = 8,
         COMPRESS_BIGWHOOP = 9,
         COMPRESS_MGARDCOMPLEX = 10,
+        COMPRESS_SZ3 = 11,
         REFACTOR_MDR = 41,
         REFACTOR_PRODM = 42,
         CALLBACK_SIGNATURE1 = 51,
