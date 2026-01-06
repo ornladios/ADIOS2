@@ -18,6 +18,9 @@ if(ADIOS2_HAVE_SZ)
   gtest_add_tests_helper(SzComplex MPI_ALLOW BPWriteRead Engine. "")
 endif()
 
+if(ADIOS2_HAVE_SZ3)
+  bp_gtest_add_tests_helper(WriteReadSZ3 MPI_ALLOW)
+endif()
 
 if(ADIOS2_HAVE_ZFP)
   bp_gtest_add_tests_helper(WriteReadZfp MPI_ALLOW)

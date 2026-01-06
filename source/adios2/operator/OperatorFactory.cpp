@@ -56,6 +56,10 @@
 #include "adios2/operator/compress/CompressSZ.h"
 #endif
 
+#ifdef ADIOS2_HAVE_SZ3
+#include "adios2/operator/compress/CompressSZ3.h"
+#endif
+
 #ifdef ADIOS2_HAVE_ZFP
 #include "adios2/operator/compress/CompressZFP.h"
 #endif
@@ -87,6 +91,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sirius";
     case Operator::COMPRESS_SZ:
         return "sz";
+    case Operator::COMPRESS_SZ3:
+        return "sz3";
     case Operator::COMPRESS_ZFP:
         return "zfp";
     case Operator::COMPRESS_MGARDCOMPLEX:
@@ -166,6 +172,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_SZ
         ret = std::make_shared<compress::CompressSZ>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "sz3")
+    {
+#ifdef ADIOS2_HAVE_SZ3
+        ret = std::make_shared<compress::CompressSZ3>(parameters);
 #endif
     }
     else if (typeLowerCase == "zfp")

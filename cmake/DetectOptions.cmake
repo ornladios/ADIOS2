@@ -170,6 +170,22 @@ if(SZ_FOUND)
   set(ADIOS2_HAVE_SZ TRUE)
 endif()
 
+# SZ3
+if(ADIOS2_USE_SZ3 STREQUAL AUTO)
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(ZSTD QUIET IMPORTED_TARGET libzstd)
+  endif()
+  find_package(SZ3 QUIET CONFIG)
+elseif(ADIOS2_USE_SZ3)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
+  find_package(SZ3 REQUIRED CONFIG)
+endif()
+if(SZ3_FOUND)
+  set(ADIOS2_HAVE_SZ3 TRUE)
+endif()
+
 # LIBPRESSIO
 if(ADIOS2_USE_LIBPRESSIO STREQUAL AUTO)
  find_package(LibPressio QUIET CONFIG)
