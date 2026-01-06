@@ -272,7 +272,8 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
         strMode = "RandomAccess";
     try
     {
-        log_output("OpenHandler params = [" + std::string(open_msg->EngineParameters) + "]");
+        log_output("OpenHandler file = " + std::string(open_msg->FileName) + ", params = [" +
+                   std::string(open_msg->EngineParameters) + "]");
         f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder,
                               open_msg->EngineParameters);
         open_response_msg.FileHandle = f->m_ID;
@@ -280,6 +281,7 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     catch (...)
     {
         open_response_msg.FileHandle = -1;
+        log_output("Open failed, returning error!");
         CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
         return;
     }

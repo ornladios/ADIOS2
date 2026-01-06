@@ -6,8 +6,12 @@
  *
  */
 
-#include "BP5Reader.h"
-#include "BP5Reader.tcc"
+#include <chrono>
+#include <cstdio>
+#include <errno.h>
+#include <iostream>
+#include <mutex>
+#include <thread>
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
@@ -16,12 +20,10 @@
 #include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
 
-#include <chrono>
-#include <cstdio>
-#include <errno.h>
-#include <iostream>
-#include <mutex>
-#include <thread>
+#include "adios2/toolkit/filepool/FilePool.h"
+
+#include "BP5Reader.h"
+#include "BP5Reader.tcc"
 
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
@@ -35,8 +37,8 @@ namespace engine
 {
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_DataFileManager(io, m_Comm),
-  m_TransportFactory(io, m_Comm), m_Remote(), m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_TransportFactory(io, m_Comm), m_Remote(),
+  m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -45,8 +47,8 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
                      const char *md, const size_t mdsize)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_DataFileManager(io, m_Comm),
-  m_TransportFactory(io, m_Comm), m_Remote(), m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_TransportFactory(io, m_Comm), m_Remote(),
+  m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     m_ReadMetadataFromFile = false;
@@ -81,10 +83,8 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     /* BP5 modifies the metadata block in memory during processing
        so we have to read it from file again
     */
-    auto currentPos = m_MDFile->CurrentPos();
     std::vector<char> mdbuf(sizes[0]);
     m_MDFile->Read(mdbuf.data(), sizes[0], 0);
-    m_MDFile->Seek(currentPos);
 
     size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
     *md = (char *)malloc(mdsize);
@@ -433,42 +433,14 @@ std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params
     return retval;
 }
 
-std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
-                                              const size_t maxOpenFiles, const size_t WriterRank,
-                                              const size_t Timestep, const size_t StartOffset,
-                                              const size_t Length, char *Destination)
+double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
+                           const size_t StartOffset, const size_t Length, char *Destination)
 {
     /*
      * Warning: this function is called by multiple threads
      */
     size_t FlushCount = m_MetadataIndexTable[Timestep][2];
     size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
-    size_t SubfileNum =
-        static_cast<size_t>(m_WriterMap[m_WriterMapIndex[Timestep]].RankToSubfile[WriterRank]);
-
-    // check if subfile is already opened
-    TP startSubfile = NOW();
-    if (FileManager.m_Transports.count(SubfileNum) == 0)
-    {
-        std::string subFileName =
-            GetBPSubStreamName(m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
-        if (FileManager.m_Transports.size() >= maxOpenFiles)
-        {
-            auto m = FileManager.m_Transports.begin();
-            FileManager.CloseFiles((int)m->first);
-        }
-        subFileName = UpdateWithTarInfo(subFileName, m_IO.m_TransportsParameters[0]);
-        FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read, m_IO.m_TransportsParameters[0],
-                               /*{{"transport", "File"}},*/ true);
-        if (!m_WriterIsActive)
-        {
-            Params transportParameters;
-            transportParameters["FailOnEOF"] = "true";
-            FileManager.SetParameters(transportParameters, -1);
-        }
-    }
-    TP endSubfile = NOW();
-    double timeSubfile = DURATION(startSubfile, endSubfile);
 
     /* Each block is in exactly one flush. The StartOffset was calculated
        as if all the flushes were in a single contiguous block in file.
@@ -487,10 +459,10 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
         {
             // discount offsets of skipped flushes
             size_t Offset = StartOffset - SumDataSize;
-            FileManager.ReadFile(Destination, Length, ThisDataPos + Offset, SubfileNum);
+            DataFile->Read(Destination, Length, ThisDataPos + Offset);
             TP endRead = NOW();
             double timeRead = DURATION(startRead, endRead);
-            return std::make_pair(timeSubfile, timeRead);
+            return timeRead;
         }
         SumDataSize += ThisDataSize;
     }
@@ -498,11 +470,11 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
     size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                                      m_Minifooter.IsLittleEndian);
     size_t Offset = StartOffset - SumDataSize;
-    FileManager.ReadFile(Destination, Length, ThisDataPos + Offset, SubfileNum);
+    DataFile->Read(Destination, Length, ThisDataPos + Offset);
 
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);
-    return std::make_pair(timeSubfile, timeRead);
+    return timeRead;
 }
 
 void BP5Reader::PerformGets()
@@ -914,6 +886,18 @@ void BP5Reader::PerformLocalGets()
     {
         CheckWriterActive();
         m_InitialWriterActiveCheckDone = true;
+        if (!m_WriterIsActive)
+        {
+            Params transportParameters;
+            transportParameters["FailOnEOF"] = "true";
+            m_DataFiles->SetParameters(transportParameters);
+            if (m_MDIndexFile)
+                m_MDIndexFile->SetParameters(transportParameters);
+            if (m_MDFile)
+                m_MDFile->SetParameters(transportParameters);
+            if (m_MetaMetadataFile)
+                m_MetaMetadataFile->SetParameters(transportParameters);
+        }
     }
     // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
@@ -952,8 +936,11 @@ void BP5Reader::PerformLocalGets()
         size_t nReads = 0;
         std::vector<char> buf(maxReadSize);
 
+        std::unique_ptr<PoolableFile> DataFile = nullptr;
+        size_t LastSubfileNum = -1;
         while (true)
         {
+            double timeSubfile = 0.0;
             const auto reqidx = lf_GetNextRequest();
             if (reqidx > nRequest)
             {
@@ -964,15 +951,30 @@ void BP5Reader::PerformLocalGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-            std::pair<double, double> t =
-                ReadData(fileManagers[FileManagerID], maxOpenFiles, Req.WriterRank, Req.Timestep,
-                         Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
+            size_t SubfileNum = static_cast<size_t>(
+                m_WriterMap[m_WriterMapIndex[Req.Timestep]].RankToSubfile[Req.WriterRank]);
+
+            // if we're on the same subfile, DataFile is already valid
+            // (We're Acquiring the datafile here rather than in ReadData to increase reuse in case
+            // multiple consecutive requests target the same subfile
+            if (SubfileNum != LastSubfileNum)
+            {
+                TP startSubfile = NOW();
+                const std::string subFileName =
+                    GetBPSubStreamName(m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
+                DataFile = m_DataFiles->Acquire(subFileName);
+
+                TP endSubfile = NOW();
+                timeSubfile += DURATION(startSubfile, endSubfile);
+            }
+            double timeRead = ReadData(DataFile.get(), Req.WriterRank, Req.Timestep,
+                                       Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
 
             TP startCopy = NOW();
             m_BP5Deserializer->FinalizeGet(Req, false);
             TP endCopy = NOW();
-            subfileTotal += t.first;
-            readTotal += t.second;
+            subfileTotal += timeSubfile;
+            readTotal += timeRead;
             copyTotal += DURATION(startCopy, endCopy);
             ++nReads;
         }
@@ -1021,9 +1023,9 @@ void BP5Reader::PerformLocalGets()
     }
     else
     {
-        size_t maxOpenFiles =
-            helper::SetWithinLimit((size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
         std::vector<char> buf(maxReadSize);
+        std::unique_ptr<PoolableFile> DataFile = nullptr;
+        size_t LastSubfileNum = -1;
         for (auto &Req : ReadRequests)
         {
             if (!Req.DestinationAddr)
@@ -1031,8 +1033,25 @@ void BP5Reader::PerformLocalGets()
                 Req.DestinationAddr = buf.data();
             }
             m_JSONProfiler.AddBytes("dataread", Req.ReadLength);
-            ReadData(m_DataFileManager, maxOpenFiles, Req.WriterRank, Req.Timestep, Req.StartOffset,
-                     Req.ReadLength, Req.DestinationAddr);
+            size_t SubfileNum = static_cast<size_t>(
+                m_WriterMap[m_WriterMapIndex[Req.Timestep]].RankToSubfile[Req.WriterRank]);
+
+            // if we're on the same subfile, DataFile is already valid
+            // (We're Acquiring the datafile here rather than in ReadData to increase reuse in case
+            // multiple consecutive requests target the same subfile
+            if (SubfileNum != LastSubfileNum)
+            {
+                TP startSubfile = NOW();
+                const std::string subFileName =
+                    GetBPSubStreamName(m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
+                DataFile = m_DataFiles->Acquire(subFileName);
+
+                TP endSubfile = NOW();
+                double timeSubfile = DURATION(startSubfile, endSubfile);
+                (void)timeSubfile;
+            }
+            ReadData(DataFile.get(), Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
+                     Req.DestinationAddr);
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
@@ -1123,19 +1142,22 @@ void BP5Reader::InitParameters()
         }
     }
 
-    // Create m_Threads-1  extra file managers to be used by threads
-    // The main thread uses the DataFileManager pushed here to vector[0]
-    fileManagers.push_back(m_DataFileManager);
-    for (unsigned int i = 0; i < m_Threads - 1; ++i)
-    {
-        fileManagers.push_back(
-            transportman::TransportMan(transportman::TransportMan(m_IO, singleComm)));
-    }
-
+    m_Parameters.MaxOpenFilesAtOnce = (unsigned int)helper::SetWithinLimit(
+        (size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
     size_t limit = helper::RaiseLimitNoFile();
     if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int)limit - 8)
     {
         m_Parameters.MaxOpenFilesAtOnce = (unsigned int)limit - 8;
+    }
+    if (m_Parameters.MaxOpenFilesAtOnce < m_Threads)
+    {
+        if (m_Comm.Rank() == 0)
+        {
+            std::cerr << "Warning, Read threads count (" << m_Threads
+                      << ") greater than max open files(" << m_Parameters.MaxOpenFilesAtOnce
+                      << "), lowering threads limit" << std::endl;
+        }
+        m_Threads = (unsigned int)m_Parameters.MaxOpenFilesAtOnce;
     }
 }
 
@@ -1156,7 +1178,7 @@ bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &poll
     return true;
 }
 
-size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
+size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                                   const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                                   std::string &lasterrmsg /*INOUT*/)
 {
@@ -1166,11 +1188,9 @@ size_t BP5Reader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::s
         try
         {
             errno = 0;
-            const bool profile = true;
-            std::string newFileName = UpdateWithTarInfo(fileName, m_IO.m_TransportsParameters[0]);
-            file = m_TransportFactory.OpenFileTransport(newFileName, adios2::Mode::Read,
-                                                        m_IO.m_TransportsParameters[0], profile,
-                                                        false, m_Comm);
+            // if dataIsRemote, our filename is real and not in a tar file
+            bool skipTarInfoParameter = m_dataIsRemote;
+            file = m_DataFiles->Acquire(fileName, skipTarInfoParameter);
             flag = 0; // found file
             break;
         }
@@ -1342,6 +1362,8 @@ void BP5Reader::InitTransports()
                       << "\n    map size = " << m_TarInfoMap.size() << std::endl;
         }
     }
+    m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
+                                             m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 }
 
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
@@ -1416,7 +1438,6 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             m_BP5Deserializer->m_Engine = this;
         }
     }
-
     if (m_StepsCount > stepsBefore)
     {
         m_Metadata.Reset(true, false);
@@ -1886,17 +1907,12 @@ void BP5Reader::DoClose(const int transportIndex)
         EndStep();
     }
     FlushProfiler();
-    m_DataFileManager.CloseFiles();
     if (m_MDFile)
         m_MDFile->Close();
     if (m_MDIndexFile)
         m_MDIndexFile->Close();
     if (m_MetaMetadataFile)
         m_MetaMetadataFile->Close();
-    for (unsigned int i = 1; i < m_Threads; ++i)
-    {
-        fileManagers[i].CloseFiles();
-    }
 }
 
 #if defined(_WIN32)
@@ -1912,21 +1928,10 @@ void BP5Reader::DoClose(const int transportIndex)
 
 void BP5Reader::FlushProfiler()
 {
-    auto transportTypes = m_DataFileManager.GetTransportsTypes();
-    auto transportProfilers = m_DataFileManager.GetTransportsProfilers();
+    std::vector<std::string> transportTypes;
+    std::vector<profiling::IOChrono *> transportProfilers;
 
-    auto lf_AddMe = [&](transportman::TransportMan &tm) -> void {
-        auto tmpT = tm.GetTransportsTypes();
-        auto tmpP = tm.GetTransportsProfilers();
-
-        if (tmpT.size() > 0)
-        {
-            transportTypes.insert(transportTypes.end(), tmpT.begin(), tmpT.end());
-            transportProfilers.insert(transportProfilers.end(), tmpP.begin(), tmpP.end());
-        }
-    };
-
-    auto lf_AddMeT = [&](std::shared_ptr<Transport> &tm) -> void {
+    auto lf_AddMe = [&](const std::shared_ptr<Transport> &tm) -> void {
         if (tm)
         {
             transportTypes.push_back(tm->m_Type + "_" + tm->m_Library);
@@ -1934,13 +1939,14 @@ void BP5Reader::FlushProfiler()
         }
     };
 
-    lf_AddMeT(m_MDFile);
-    lf_AddMeT(m_MDIndexFile);
-    lf_AddMeT(m_MetaMetadataFile);
+    //    lf_AddMe(m_MDFile);
+    //    lf_AddMe(m_MDIndexFile);
+    //    lf_AddMe(m_MetaMetadataFile);
 
-    for (unsigned int i = 0; i < m_Threads; ++i)
+    auto PoolList = m_DataFiles->ListOfTransports();
+    for (auto const &Trans : PoolList)
     {
-        lf_AddMe(fileManagers[i]);
+        lf_AddMe(Trans);
     }
 
     const std::string LineJSON(

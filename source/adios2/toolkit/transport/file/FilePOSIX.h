@@ -73,19 +73,18 @@ public:
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
-    int m_Errno = 0;
     bool m_FailOnEOF = false; // default to false for historic reasons
     bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
+    std::future<std::pair<int, int>> m_OpenFuture;
     bool m_DirectIO = false;
 
     /**
      * Check if m_FileDescriptor is -1 after an operation
      * @param hint exception message
      */
-    void CheckFile(const std::string hint) const;
+    void CheckFile(const std::string hint, const int localErrno) const;
     void WaitForOpen();
-    std::string SysErrMsg() const;
+    std::string SysErrMsg(const int localErrno) const;
 };
 
 } // end namespace transport
