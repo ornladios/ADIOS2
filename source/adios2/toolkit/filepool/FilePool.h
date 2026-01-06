@@ -106,7 +106,8 @@ public:
     : m_Factory(factory), m_TransportParams(transportParams), m_TarInfoMap(TarInfoMap),
       m_OpenFileLimit(OpenFileLimit){};
     // Acquire a Poolablefile object from the pool, creating it if necessary
-    std::unique_ptr<PoolableFile> Acquire(const std::string &filename);
+    std::unique_ptr<PoolableFile> Acquire(const std::string &filename,
+                                          const bool skipTarInfo = false);
     void Release(PoolEntry *obj);
     void SetParameters(const adios2::Params &params);
     std::vector<std::shared_ptr<adios2::Transport>> ListOfTransports();

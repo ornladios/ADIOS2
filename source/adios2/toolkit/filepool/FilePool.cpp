@@ -25,7 +25,7 @@ void PoolableFile::SetParameters(const adios2::Params &params)
     m_Entry->m_File->SetParameters(params);
 }
 
-void PoolableFile::Close() { m_Entry->m_File->Close(); }
+void PoolableFile::Close() {}
 
 void FilePool::Release(PoolEntry *obj)
 {
@@ -42,7 +42,7 @@ std::vector<std::shared_ptr<adios2::Transport>> FilePool::ListOfTransports()
     }
     return Ret;
 }
-std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
+std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, const bool skipTarInfo)
 {
     std::lock_guard<std::mutex> lockGuard(PoolMutex);
     // Use a custom deleter to return the object to the pool
@@ -50,7 +50,7 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename)
     auto finalFileName = filename;
     size_t offset = 0;
     size_t size = (size_t)-1;
-    if (m_TarInfoMap && m_TarInfoMap->size())
+    if (!skipTarInfo && m_TarInfoMap && m_TarInfoMap->size())
     {
         auto FilenameInTar = adios2sys::SystemTools::GetFilenameName(filename);
         auto it = m_TarInfoMap->find(FilenameInTar);
