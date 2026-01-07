@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class TimeSeries : public ::testing::Test
@@ -236,6 +238,26 @@ TEST_F(TimeSeries, WriteReadShape2D)
         }
 
         reader.Close();
+    }
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname + ".ats");
+
+        // Clean up all numbered .bp or .h5 files
+        size_t numFiles = (nsteps + stepsPerFile - 1) / stepsPerFile;
+        for (size_t i = 0; i < numFiles; i++)
+        {
+            if (engineName == "HDF5")
+            {
+                CleanupTestFiles(fname + "_" + std::to_string(i) + ".h5");
+            }
+            else
+            {
+                CleanupTestFiles(fname + "_" + std::to_string(i) + ".bp");
+            }
+        }
     }
 }
 
