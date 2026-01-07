@@ -13,7 +13,6 @@
 
 #include <gtest/gtest.h>
 
-#include "../TestHelpers.h"
 #include "TestData.h"
 
 #include "ParseArgs.h"
@@ -173,12 +172,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     // Close the file
     engine.Close();
-
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
 }
 
 int main(int argc, char **argv)
