@@ -40,6 +40,10 @@
 #include "adios2/operator/refactor/RefactorMDR.h"
 #endif
 
+#ifdef ADIOS2_HAVE_PRODM
+#include "adios2/operator/refactor/RefactorProDM.h"
+#endif
+
 #ifdef ADIOS2_HAVE_PNG
 #include "adios2/operator/compress/CompressPNG.h"
 #endif
@@ -50,6 +54,10 @@
 
 #ifdef ADIOS2_HAVE_SZ
 #include "adios2/operator/compress/CompressSZ.h"
+#endif
+
+#ifdef ADIOS2_HAVE_SZ3
+#include "adios2/operator/compress/CompressSZ3.h"
 #endif
 
 #ifdef ADIOS2_HAVE_ZFP
@@ -83,12 +91,16 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sirius";
     case Operator::COMPRESS_SZ:
         return "sz";
+    case Operator::COMPRESS_SZ3:
+        return "sz3";
     case Operator::COMPRESS_ZFP:
         return "zfp";
     case Operator::COMPRESS_MGARDCOMPLEX:
         return "mgard_complex";
     case Operator::REFACTOR_MDR:
         return "mdr";
+    case Operator::REFACTOR_PRODM:
+        return "prodm";
     case Operator::PLUGIN_INTERFACE:
         return "plugin";
     default:
@@ -162,6 +174,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
         ret = std::make_shared<compress::CompressSZ>(parameters);
 #endif
     }
+    else if (typeLowerCase == "sz3")
+    {
+#ifdef ADIOS2_HAVE_SZ3
+        ret = std::make_shared<compress::CompressSZ3>(parameters);
+#endif
+    }
     else if (typeLowerCase == "zfp")
     {
 #ifdef ADIOS2_HAVE_ZFP
@@ -172,6 +190,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_MGARD_MDR
         ret = std::make_shared<refactor::RefactorMDR>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "prodm")
+    {
+#ifdef ADIOS2_HAVE_PRODM
+        ret = std::make_shared<refactor::RefactorProDM>(parameters);
 #endif
     }
     else if (typeLowerCase == "plugin")

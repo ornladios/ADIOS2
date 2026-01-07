@@ -118,6 +118,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(MGARD)
   endif()
 
+  set(ADIOS2_HAVE_PRODM @ADIOS2_HAVE_PRODM@)
+  if(ADIOS2_HAVE_PRODM)
+    find_dependency(ProDM)
+  endif()
+
   set(ADIOS2_HAVE_PNG @ADIOS2_HAVE_PNG@)
   if(ADIOS2_HAVE_PNG)
     find_dependency(PNG)

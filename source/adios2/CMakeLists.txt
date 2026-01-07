@@ -76,6 +76,8 @@ add_library(adios2_core
   toolkit/burstbuffer/FileDrainer.cpp
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
 
+  toolkit/filepool/FilePool.cpp
+
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
   toolkit/format/buffer/chunk/ChunkV.cpp
@@ -403,6 +405,11 @@ if(ADIOS2_HAVE_SZ)
   target_link_libraries(adios2_core PRIVATE SZ::SZ)
 endif()
 
+if(ADIOS2_HAVE_SZ3)
+  target_sources(adios2_core PRIVATE operator/compress/CompressSZ3.cpp)
+  target_link_libraries(adios2_core PRIVATE SZ3::SZ3)
+endif()
+
 if(ADIOS2_HAVE_LIBPRESSIO)
   target_sources(adios2_core PRIVATE operator/compress/CompressLibPressio.cpp)
   target_link_libraries(adios2_core PRIVATE LibPressio::libpressio)
@@ -418,6 +425,11 @@ if(ADIOS2_HAVE_MGARD)
   endif()
 
   target_link_libraries(adios2_core PRIVATE mgard::mgard)
+endif()
+
+if(ADIOS2_HAVE_PRODM)
+  target_sources(adios2_core PRIVATE operator/refactor/RefactorProDM.cpp)
+  target_link_libraries(adios2_core PRIVATE ProDM::ProDM)
 endif()
 
 if(ADIOS2_HAVE_PNG)
