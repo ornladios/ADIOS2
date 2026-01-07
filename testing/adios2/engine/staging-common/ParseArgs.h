@@ -46,6 +46,7 @@ bool ModifiableAttributes = false;
 bool RoundRobin = false;
 bool OnDemand = false;
 bool DontClose = false;
+bool Cleanup = false;
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
@@ -322,6 +323,10 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--dont_close")
         {
             DontClose = true;
+        }
+        else if (std::string(argv[1]) == "--cleanup")
+        {
+            Cleanup = true;
         }
         else if (std::string(argv[1]) == "--disable_mpmd")
         {

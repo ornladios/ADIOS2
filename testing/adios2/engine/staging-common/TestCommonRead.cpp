@@ -465,9 +465,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
 
     // Cleanup generated files (only for file engines, not streaming engines)
-    if (mpiRank == 0)
+    if (mpiRank == 0 && Cleanup)
     {
-        CleanupTestFiles(fname, ::engine);
+        CleanupTestFiles(fname);
     }
 }
 

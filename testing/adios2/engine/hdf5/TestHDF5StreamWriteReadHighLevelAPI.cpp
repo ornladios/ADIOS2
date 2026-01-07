@@ -12,7 +12,6 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
 #include "../TestHelpers.h"
 
 class StreamWriteReadHighLevelAPI_HDF5 : public ::testing::Test

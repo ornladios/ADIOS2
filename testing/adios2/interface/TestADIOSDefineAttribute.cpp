@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../engine/SmallTestData.h"
+#include "../engine/TestHelpers.h"
 
 class ADIOSDefineAttributeTest : public ::testing::Test
 {

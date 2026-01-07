@@ -21,7 +21,6 @@
 #include <gtest/gtest.h>
 #include <nlohmann_json.hpp>
 
-#include "../SmallTestData.h"
 #include "../TestHelpers.h"
 
 using json = nlohmann::json;

@@ -21,7 +21,7 @@
 
 #include <adios2.h>
 
-#include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 int numprocs, wrank;
 std::string engineName;           // comes from command line
@@ -257,6 +257,13 @@ TEST_F(Common, NewAttributeEveryStep)
         {
             MPI_Barrier(MPI_COMM_WORLD);
         }
+    }
+
+    // Cleanup generated files
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (wrank == 0)
+    {
+        CleanupTestFiles(streamName);
     }
 
     // Separate each individual test with a big gap in time

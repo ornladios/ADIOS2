@@ -1,0 +1,37 @@
+260107 12:53:06 515 Starting on Darwin 25.1.0 arm64
+260107 12:53:06 515 /opt/xrootd/bin/xrootd -c /Users/eisen/prog/ADIOS2-clean/testing/adios2/engine/bp/xroot/etc/xrootd/xrootd-ssi.cfg -l /Users/eisen/prog/ADIOS2-clean/testing/adios2/engine/bp/xroot/var/xrootd.log -b -n xrootd_test
+Copr.  2004-2012 Stanford University, xrd version v5.6.2
+++++++ xrootd xrootd_test@endor.local initialization started.
+Config using configuration file /Users/eisen/prog/ADIOS2-clean/testing/adios2/engine/bp/xroot/etc/xrootd/xrootd-ssi.cfg
+=====> xrd.protocol http:8443 libXrdHttp.so 
+260107 12:53:06 515 XrdSetIF: Skipping duplicate private interface [::192.168.1.249]
+Config maximum number of connections restricted to 10240
+Plugin loaded xrdhttp v5.6.2 from protocol libXrdHttp-5.so
+Copr.  2012 Stanford University, xroot protocol 5.1.0 version v5.6.2
+++++++ xroot protocol initialization started.
+=====> xrootd.fslib libXrdSsi.so
+=====> all.export /etc nolock r/w
+Config exporting /etc
+Config warning: 'xrootd.seclib' not specified; strong authentication disabled!
+Config Routing for [::1]: local pub4 prv4 pub6 prv6
+Config Route all4: 127.0.0.1 Dest=[::127.0.0.1]:1094
+Config Route all6: [::1] Dest=[::1]:1094
+++++++ ssi initialization started.
+=====> ssi.svclib /Users/eisen/prog/ADIOS2-clean/build-sz3-test/lib/libadios2_xrootd.dylib 
+Config Configuring standalone server.
+------ ssi initialization completed.
+Config sendfile has been disabled by OS kernel.
+------ xroot protocol initialization completed.
+Copr. 2012 CERN IT, an HTTP implementation for the XRootD framework.
+++++++ HTTP protocol initialization started.
+=====> http.cadir /etc/ssl/certs
+=====> http.cert /Users/eisen/prog/ADIOS2-clean/testing/adios2/engine/bp/xroot/etc/certs/server.crt
+=====> http.key /Users/eisen/prog/ADIOS2-clean/testing/adios2/engine/bp/xroot/etc/certs/server.key
+=====> http.gridmap /dev/null
+++++++ HTTPS initialization started.
+------ HTTPS initialization completed.
+260107 12:53:07 515 sysConfig: No XRDROLE specified.
+------ HTTP protocol initialization completed.
+------ xrootd xrootd_test@endor.local:8443 initialization completed.
+260107 12:53:53 3843 XrootdBridge: unknown.1:9@localhost login as nobody
+260107 12:53:53 3843 XrootdXeq: unknown.1:9@localhost disc 0:00:00 (send failure)

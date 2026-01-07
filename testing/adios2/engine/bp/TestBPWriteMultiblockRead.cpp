@@ -12,7 +12,6 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
 #include "../TestHelpers.h"
 
 std::string engineName; // comes from command line

@@ -12,7 +12,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 class NullWriteReadTests : public ::testing::Test
 {
