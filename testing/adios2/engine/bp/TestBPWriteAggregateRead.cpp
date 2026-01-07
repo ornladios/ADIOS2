@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -326,6 +327,12 @@ void WriteAggRead1D8(const std::string substreams)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -641,6 +648,12 @@ void WriteAggRead2D4x2(const std::string substreams)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void WriteAggRead2D2x4(const std::string substreams)
@@ -941,6 +954,12 @@ void WriteAggRead2D2x4(const std::string substreams)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

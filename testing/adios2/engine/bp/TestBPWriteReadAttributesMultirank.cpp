@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class BPWriteReadAttributeTestMultirank : public ::testing::Test
@@ -109,6 +111,12 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
         ASSERT_EQ(attr.Type(), "string");
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fName);
     }
 }
 

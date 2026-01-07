@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void SZAccuracy1D(const std::string accuracy)
@@ -146,6 +148,12 @@ void SZAccuracy1D(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -281,6 +289,12 @@ void SZAccuracy2D(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -420,6 +434,12 @@ void SZAccuracy3D(const std::string accuracy)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void SZAccuracy1DSel(const std::string accuracy)
@@ -553,6 +573,12 @@ void SZAccuracy1DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -692,6 +718,12 @@ void SZAccuracy2DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -835,6 +867,12 @@ void SZAccuracy3DSel(const std::string accuracy)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void SZAccuracy2DSmallSel(const std::string accuracy)
@@ -971,6 +1009,12 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

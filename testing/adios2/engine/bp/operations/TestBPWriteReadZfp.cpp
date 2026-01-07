@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void ZFPRate1D(const std::string rate)
@@ -147,6 +149,12 @@ void ZFPRate1D(const std::string rate)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZFPRate2D(const std::string rate)
@@ -278,6 +286,12 @@ void ZFPRate2D(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -414,6 +428,12 @@ void ZFPRate3D(const std::string rate)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZFPRate1DSel(const std::string rate)
@@ -542,6 +562,12 @@ void ZFPRate1DSel(const std::string rate)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZFPRate2DSel(const std::string rate)
@@ -667,6 +693,12 @@ void ZFPRate2DSel(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -796,6 +828,12 @@ void ZFPRate3DSel(const std::string rate)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZFPRate2DSmallSel(const std::string rate)
@@ -923,6 +961,12 @@ void ZFPRate2DSmallSel(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

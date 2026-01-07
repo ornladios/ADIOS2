@@ -13,6 +13,8 @@
 #include <adios2.h>
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class BPBufferSizeTest : public ::testing::Test
@@ -251,6 +253,14 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
             EXPECT_LT(bufsize_deferred_pp_v2[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_pp_v3[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_pp_endstep[step], TotalDataSize + MaxExtra);
+        }
+
+        // Cleanup generated files
+        if (mpiRank == 0)
+        {
+            CleanupTestFiles(fnameSync);
+            CleanupTestFiles(fnameDeferred);
+            CleanupTestFiles(fnameDeferredPP);
         }
     }
 }

@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class BPWriteReadProDM : public ::testing::TestWithParam<std::string>
@@ -201,6 +203,12 @@ TEST_F(BPWriteReadProDM, BPWRProDM1D)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

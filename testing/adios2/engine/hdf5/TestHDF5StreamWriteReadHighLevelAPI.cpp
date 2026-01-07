@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 class StreamWriteReadHighLevelAPI_HDF5 : public ::testing::Test
 {
@@ -245,6 +246,12 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
         }
 
         iStream.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

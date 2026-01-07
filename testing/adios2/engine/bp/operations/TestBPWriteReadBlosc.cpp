@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void BloscAccuracy1D(const std::string accuracy, const std::string threshold,
@@ -155,6 +157,12 @@ void BloscAccuracy1D(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -298,6 +306,12 @@ void BloscAccuracy2D(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -445,6 +459,12 @@ void BloscAccuracy3D(const std::string accuracy, const std::string threshold,
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void BloscAccuracy1DSel(const std::string accuracy, const std::string threshold,
@@ -584,6 +604,12 @@ void BloscAccuracy1DSel(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -727,6 +753,12 @@ void BloscAccuracy2DSel(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -873,6 +905,12 @@ void BloscAccuracy3DSel(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

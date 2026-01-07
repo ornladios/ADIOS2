@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 class BPWriteReadAttributeTestADIOS2 : public ::testing::Test
 {
@@ -182,6 +183,16 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         ASSERT_EQ(attr_r64.Data().front(), currentTestData.R64.front());
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 
@@ -363,6 +374,14 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
         bpRead.Close();
     }
+
+    // Cleanup generated files
+#ifdef TEST_HDF5_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
+    }
 }
 
 TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
@@ -514,6 +533,16 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
         ASSERT_EQ(attr_r64.Data().front(), currentTestData.R64.front());
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 
@@ -697,6 +726,14 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         }
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+#ifdef TEST_HDF5_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 

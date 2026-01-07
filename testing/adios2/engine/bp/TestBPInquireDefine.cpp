@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class ADIOSInquireDefineTest : public ::testing::Test
@@ -225,6 +227,12 @@ TEST_F(ADIOSInquireDefineTest, Read)
             std::cout << "Exception " << e.what() << std::endl;
             EXPECT_TRUE(false);
         }
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
     }
 }
 

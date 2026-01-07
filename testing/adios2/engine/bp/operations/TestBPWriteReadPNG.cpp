@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 template <class T>
@@ -271,6 +273,12 @@ void PNGAccuracy2D(const std::string compressionLevel)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void PNGAccuracy2DSel(const std::string accuracy)
@@ -404,6 +412,12 @@ void PNGAccuracy2DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

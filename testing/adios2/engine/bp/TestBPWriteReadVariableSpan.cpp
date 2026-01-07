@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -312,6 +313,12 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -628,6 +635,12 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
@@ -876,6 +889,12 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1157,6 +1176,12 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1474,6 +1499,12 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 #ifdef ADIOS2_HAVE_BZIP2
@@ -1547,6 +1578,12 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
         }
 
         bpWriter.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 #endif

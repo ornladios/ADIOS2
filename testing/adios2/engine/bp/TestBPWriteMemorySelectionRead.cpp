@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 std::string UniqName;   // comes from command line
@@ -385,6 +386,12 @@ void BPSteps1D(const size_t ghostCells)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void BPSteps2D4x2(const size_t ghostCells)
@@ -612,6 +619,12 @@ void BPSteps2D4x2(const size_t ghostCells)
         }
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -877,6 +890,12 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         }
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

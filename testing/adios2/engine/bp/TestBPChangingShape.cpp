@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class BPChangingShape : public ::testing::Test
@@ -170,6 +172,12 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
         }
 
         reader.Close();
+    }
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

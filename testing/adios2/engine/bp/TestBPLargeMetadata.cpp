@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -97,6 +98,12 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
         }
         bpWriter.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPLargeMetadata, ManyLongStrings)
@@ -154,6 +161,19 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
         }
 
         reader.Close();
+    }
+
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+#else
+    int mpiRank = 0;
+#endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

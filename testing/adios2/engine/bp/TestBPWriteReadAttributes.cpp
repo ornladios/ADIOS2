@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -223,6 +224,16 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
         ASSERT_EQ(attr_cr64.Data().front(), currentTestData.CR64.front());
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 
@@ -444,6 +455,14 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
 
         bpRead.Close();
     }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
+    }
 }
 
 TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
@@ -631,6 +650,16 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
         ASSERT_EQ(attr_cr64.Data().front(), currentTestData.CR64.front());
 
         bpRead.Close();
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 
@@ -855,6 +884,14 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 
         bpRead.Close();
     }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
+    }
 }
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
@@ -1012,6 +1049,14 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
             bpReader.EndStep();
         }
     }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
+    }
 }
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
@@ -1163,6 +1208,14 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 
             bpReader.EndStep();
         }
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
     }
 }
 

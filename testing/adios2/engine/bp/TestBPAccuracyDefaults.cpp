@@ -19,6 +19,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName;       // comes from command line
 std::string engineParameters; // comes from command line
 
@@ -123,6 +125,12 @@ TEST_F(AccuracyTests, DefaultAccuracy)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

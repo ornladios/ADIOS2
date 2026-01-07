@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -361,6 +362,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -705,6 +712,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -1037,6 +1050,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
@@ -1366,6 +1385,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
@@ -1570,6 +1595,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         EXPECT_THROW(bpReader.Get(var_r32, R32.data()), std::invalid_argument);
         EXPECT_THROW(bpReader.Get(var_r64, R64.data()), std::invalid_argument);
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2fstream, OpenEngineTwice)
@@ -1600,6 +1631,9 @@ TEST_F(BPWriteReadTestADIOS2fstream, OpenEngineTwice)
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
         EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::invalid_argument);
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(fname);
 }
 
 int main(int argc, char **argv)

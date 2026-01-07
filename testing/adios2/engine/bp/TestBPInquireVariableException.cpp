@@ -8,6 +8,8 @@
 #include <limits>
 #include <stdexcept>
 
+#include "../TestHelpers.h"
+
 std::string engineName;
 
 class ADIOSInquireVariableException : public ::testing::Test
@@ -75,6 +77,12 @@ TEST_F(ADIOSInquireVariableException, Read)
             reader.EndStep();
         }
         reader.Close();
+    }
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(filename);
     }
 }
 int main(int argc, char **argv)

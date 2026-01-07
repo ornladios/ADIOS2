@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 // Number of elements per process
@@ -220,6 +222,12 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
     }
     writer.Close();
     reader.Close();
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // A new variable is created and written every step
@@ -346,6 +354,12 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     }
     writer.Close();
     reader.Close();
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayReaders,
@@ -498,6 +512,12 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     }
     writer.Close();
     reader.Close();
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayParameters,

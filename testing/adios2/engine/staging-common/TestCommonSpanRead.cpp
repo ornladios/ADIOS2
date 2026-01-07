@@ -12,6 +12,7 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
 #include "TestData.h"
 
 #include "ParseArgs.h"
@@ -110,6 +111,12 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     // Close the file
     engine.Close();
+
+    // Cleanup generated files (only for file engines, not streaming engines)
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname, ::engine);
+    }
 }
 
 //******************************************************************************

@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName;       // comes from command line
 std::string engineParameters; // comes from command line
 
@@ -104,6 +106,9 @@ TEST_F(SpanTests, MultiSpan)
         std::cout << std::endl;
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(fname);
 }
 
 int main(int argc, char **argv)

@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName;   // comes from command line
 std::string aggType = ""; // overridden on command line
 
@@ -373,6 +375,12 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Variable written every other step from 2nd step
@@ -642,6 +650,12 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsFileGlobalArray, BPStepsFileGlobalArrayReaders,
@@ -937,6 +951,12 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

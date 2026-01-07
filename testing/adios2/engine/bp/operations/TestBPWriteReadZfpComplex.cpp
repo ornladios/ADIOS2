@@ -14,6 +14,8 @@
 #include <numeric>
 #include <thread>
 
+#include "../../TestHelpers.h"
+
 using namespace adios2;
 
 std::string ioName = "TestIO";
@@ -321,6 +323,12 @@ TEST_F(BPEngineTest, ZfpComplex)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     Reader(shape, start, count, steps);
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fileName);
+    }
 }
 
 int main(int argc, char **argv)

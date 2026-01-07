@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 
+#include "../../engine/TestHelpers.h"
 #include "SmallTestData_c.h"
 
 class ADIOS2_C_API : public ::testing::Test
@@ -360,6 +361,12 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         }
         delete[] dataArray;
     }
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 class ADIOS2_C_API_IO : public ADIOS2_C_API
@@ -431,6 +438,14 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, fname);
+
+    adios2_close(engineH);
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(ADIOS2_C_API_IO, EngineDefault)
@@ -450,6 +465,14 @@ TEST_F(ADIOS2_C_API_IO, EngineDefault)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, fname);
+
+    adios2_close(engineH);
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)

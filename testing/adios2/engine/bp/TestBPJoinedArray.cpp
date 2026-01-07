@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -189,6 +190,12 @@ TEST_F(BPJoinedArray, MultiBlock)
         }
         reader.Close();
         EXPECT_EQ(step, nsteps);
+    }
+
+    // Cleanup generated files
+    if (!rank)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

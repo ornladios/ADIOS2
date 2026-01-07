@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void SZ3Accuracy1D(const std::string accuracy)
@@ -195,6 +197,12 @@ void SZ3Accuracy1D(const std::string accuracy)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void SZ3Accuracy2D(const std::string accuracy)
@@ -369,6 +377,12 @@ void SZ3Accuracy2D(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

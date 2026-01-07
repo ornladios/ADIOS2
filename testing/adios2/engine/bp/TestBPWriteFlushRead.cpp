@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -476,6 +477,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
         bpWriter1D.Close();
         bpWriter2D.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+#if ADIOS2_USE_MPI
+        CleanupTestFiles("Flush1D_MPI.bp");
+        CleanupTestFiles("Flush2D_MPI.bp");
+#else
+        CleanupTestFiles("Flush1D.bp");
+        CleanupTestFiles("Flush2D.bp");
+#endif
+    }
 }
 
 TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
@@ -929,6 +942,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
         bpWriter1D.Close();
         bpWriter2D.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+#if ADIOS2_USE_MPI
+        CleanupTestFiles("Flush1Dstdio_MPI.bp");
+        CleanupTestFiles("Flush2Dstdio_MPI.bp");
+#else
+        CleanupTestFiles("Flush1Dstdio.bp");
+        CleanupTestFiles("Flush2Dstdio.bp");
+#endif
     }
 }
 
@@ -1384,6 +1409,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
         bpWriter1D.Close();
         bpWriter2D.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+#if ADIOS2_USE_MPI
+        CleanupTestFiles("Flush1Dfstream_MPI.bp");
+        CleanupTestFiles("Flush2Dfstream_MPI.bp");
+#else
+        CleanupTestFiles("Flush1Dfstream.bp");
+        CleanupTestFiles("Flush2Dfstream.bp");
+#endif
     }
 }
 
