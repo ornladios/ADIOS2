@@ -464,10 +464,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         EXPECT_FALSE(io.InquireVariable<std::complex<float>>("c32"));
     }
 
-    // Cleanup generated files
+    // Cleanup generated files (only for file engines, not streaming engines)
     if (mpiRank == 0)
     {
-        CleanupTestFiles(fname);
+        CleanupTestFiles(fname, ::engine);
     }
 }
 

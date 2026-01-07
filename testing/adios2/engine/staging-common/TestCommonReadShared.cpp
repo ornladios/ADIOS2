@@ -133,11 +133,11 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     engine1.Close();
     engine2.Close();
 
-    // Cleanup generated files
+    // Cleanup generated files (only for file engines, not streaming engines)
     if (mpiRank == 0)
     {
-        CleanupTestFiles(fname1);
-        CleanupTestFiles(fname2);
+        CleanupTestFiles(fname1, ::engine);
+        CleanupTestFiles(fname2, ::engine);
     }
 }
 
