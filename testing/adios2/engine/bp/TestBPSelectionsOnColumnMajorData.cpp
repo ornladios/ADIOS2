@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class ADIOSSelectionColumnMajorTest : public ::testing::Test
@@ -443,6 +445,9 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         engine.EndStep();
         engine.Close();
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(filename);
 }
 
 void copySelection3D_CM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
@@ -941,6 +946,9 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         engine.EndStep();
         engine.Close();
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(filename);
 }
 
 int main(int argc, char **argv)

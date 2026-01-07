@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName;       // comes from command line
 std::string engineParameters; // comes from command line
@@ -414,6 +415,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -737,6 +744,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -1049,6 +1062,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
@@ -1232,6 +1251,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1542,6 +1567,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
@@ -1761,6 +1792,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         EXPECT_THROW(bpReader.Get(var_r32, R32.data()), std::invalid_argument);
         EXPECT_THROW(bpReader.Get(var_r64, R64.data()), std::invalid_argument);
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
@@ -1769,7 +1806,9 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
     const std::string fname("OpenTwice.bp");
 
+    int mpiRank = 0;
 #if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -1799,6 +1838,12 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
 
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
         EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::invalid_argument);
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1882,6 +1927,12 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -2037,6 +2088,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 #else
     return;
 #endif
@@ -2110,6 +2167,12 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInClose)
             EXPECT_EQ(localData[j], readData[j]);
         }
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
@@ -2180,6 +2243,12 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
             EXPECT_EQ(localData[j], readData[j]);
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -2252,6 +2321,12 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
         {
             EXPECT_EQ(localData[j], readData[j]);
         }
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

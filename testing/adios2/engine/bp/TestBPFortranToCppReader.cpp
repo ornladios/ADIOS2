@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -125,6 +126,12 @@ TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
 
     EXPECT_EQ(step, 3);
     bpReader.Close();
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 int main(int argc, char **argv)

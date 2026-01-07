@@ -13,6 +13,8 @@
 #include <iostream>
 #include <numeric> //std::iota
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 const float EPSILON = std::numeric_limits<float>::epsilon();
@@ -136,6 +138,12 @@ void ZFPRateCUDA(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

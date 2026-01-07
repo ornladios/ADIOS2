@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -167,6 +168,12 @@ TEST_F(BPWriteNullTest, BPWrite1D1x8)
         // Close the file
         bpWriter.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -309,6 +316,12 @@ TEST_F(BPWriteNullTest, BPWrite2D2x4)
         // Close the file
         bpWriter.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -447,6 +460,12 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2)
         // Close the file
         bpWriter.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteNullTest, BPWrite2D4x2_MultiSteps)
@@ -576,6 +595,12 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2_MultiSteps)
 
         // Close the file
         bpWriter.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

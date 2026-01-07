@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName;       // comes from command line
 std::string engineParameters; // comes from command line
@@ -183,6 +184,9 @@ TEST_F(BPOpenWithMetadata, ADIOS2BPOpenWithMetadata)
     {
         free(md);
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(fname);
 }
 
 //******************************************************************************

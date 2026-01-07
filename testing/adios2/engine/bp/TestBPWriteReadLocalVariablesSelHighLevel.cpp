@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -165,6 +166,12 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
             }         // blockID
             ++t;
         } // step
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -330,6 +337,12 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
             ++t;
         } // step
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
@@ -473,6 +486,12 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
 
         } // selection
     }     // blockID
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 int main(int argc, char **argv)

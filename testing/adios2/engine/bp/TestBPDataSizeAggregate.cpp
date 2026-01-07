@@ -9,6 +9,8 @@
 #include <numeric>
 #include <thread>
 
+#include "../TestHelpers.h"
+
 using namespace adios2;
 
 namespace
@@ -188,6 +190,12 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         }
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (worldRank == 0)
+    {
+        CleanupTestFiles("unbalanced_output.bp");
     }
 }
 

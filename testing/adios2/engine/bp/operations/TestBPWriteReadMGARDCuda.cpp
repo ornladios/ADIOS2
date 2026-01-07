@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void MGARDAccuracy2D(const std::string tolerance)
@@ -135,6 +137,12 @@ void MGARDAccuracy2D(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -261,6 +269,12 @@ void MGARDAccuracySmall(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

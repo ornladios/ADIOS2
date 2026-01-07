@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 /// Test suit that only compresses on odd steps to test
@@ -164,6 +166,12 @@ void ZFPRate1D(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -316,6 +324,12 @@ void ZFPRate2D(const std::string rate)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZFPRate3D(const std::string rate)
@@ -466,6 +480,12 @@ void ZFPRate3D(const std::string rate)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

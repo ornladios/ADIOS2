@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
@@ -155,6 +157,12 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -298,6 +306,12 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -445,6 +459,12 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold,
@@ -584,6 +604,12 @@ void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -727,6 +753,12 @@ void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -990,6 +1022,12 @@ void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 class BPWriteReadBlosc2

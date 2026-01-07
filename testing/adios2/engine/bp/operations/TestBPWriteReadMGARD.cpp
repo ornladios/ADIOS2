@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void MGARDAccuracy1D(const std::string tolerance)
@@ -170,6 +172,12 @@ void MGARDAccuracy1D(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -333,6 +341,12 @@ void MGARDAccuracy2D(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -498,6 +512,12 @@ void MGARDAccuracy3D(const std::string tolerance)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void MGARDAccuracy1DSel(const std::string tolerance)
@@ -628,6 +648,12 @@ void MGARDAccuracy1DSel(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -762,6 +788,12 @@ void MGARDAccuracy2DSel(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -901,6 +933,12 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void MGARDNullBlocks(const std::string tolerance)
@@ -1016,6 +1054,12 @@ void MGARDNullBlocks(const std::string tolerance)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

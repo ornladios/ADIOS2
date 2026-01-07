@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName;       // comes from command line
 std::string engineParameters; // comes from command line
@@ -80,6 +81,12 @@ TEST_F(BPWriteStatsOnly, BPReadException)
         ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
         ASSERT_THROW(bpReader.Get(var_r32, R32.data(), adios2::Mode::Sync), std::runtime_error);
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

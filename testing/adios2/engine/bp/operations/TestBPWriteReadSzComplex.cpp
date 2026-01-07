@@ -14,6 +14,8 @@
 #include <numeric>
 #include <thread>
 
+#include "../../TestHelpers.h"
+
 using namespace adios2;
 
 std::string ioName = "TestIO";
@@ -194,7 +196,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_
 
 void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps)
 {
+    int mpiRank = 0;
 #if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -305,6 +309,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_
     ASSERT_EQ(complexCompressed, true);
     ASSERT_EQ(dcomplexCompressed, true);
     readerEngine.Close();
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fileName);
+    }
 }
 
 TEST_F(BPEngineTest, SzComplex)

@@ -22,6 +22,7 @@
 #include <nlohmann_json.hpp>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 using json = nlohmann::json;
 
@@ -176,6 +177,12 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
         const auto transportType = profilingJSON[mpiRank]["transport_0"].value("type", "0");
         ASSERT_EQ(transportType, "File_POSIX");
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
@@ -295,6 +302,12 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
     {
         std::ifstream profilingJSONFile(fname + ".dir/profiling.json");
         EXPECT_EQ(profilingJSONFile.good(), false);
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

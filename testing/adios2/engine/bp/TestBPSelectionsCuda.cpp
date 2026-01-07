@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 class ADIOSSelectionCUDATest : public ::testing::Test
@@ -269,6 +271,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
         engine.EndStep();
         engine.Close();
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(filename);
 }
 
 int main(int argc, char **argv)

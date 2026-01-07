@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 using ParamType = std::tuple<std::string, adios2::Params, double>;
@@ -228,6 +230,12 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
             EXPECT_THROW(reader.EndStep(), std::logic_error);
         }
+    }
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

@@ -12,6 +12,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName;                               // comes from command line
 std::string aggregationType = "EveryoneWritesSerial"; // comes from command line
 
@@ -68,6 +70,9 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
 
         engine.Close();
     }
+
+    // Cleanup generated files
+    CleanupTestFiles(fname);
 }
 
 int main(int argc, char **argv)

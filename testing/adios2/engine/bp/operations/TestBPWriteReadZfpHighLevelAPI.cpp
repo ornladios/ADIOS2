@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void ZfpRate1D(const double rate)
@@ -98,6 +100,12 @@ void ZfpRate1D(const double rate)
 
         fr.close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate2D(const double rate)
@@ -179,6 +187,12 @@ void ZfpRate2D(const double rate)
         EXPECT_EQ(t, NSteps);
 
         fr.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -262,6 +276,12 @@ void ZfpRate3D(const double rate)
         EXPECT_EQ(t, NSteps);
 
         fr.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -350,6 +370,12 @@ void ZfpRate1DSel(const double rate)
         EXPECT_EQ(t, NSteps);
 
         fr.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -440,6 +466,12 @@ void ZfpRate2DSel(const double rate)
 
         fr.close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate3DSel(const double rate)
@@ -529,6 +561,12 @@ void ZfpRate3DSel(const double rate)
         EXPECT_EQ(t, NSteps);
 
         fr.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -621,6 +659,12 @@ void ZfpRate2DSmallSel(const double rate)
         EXPECT_EQ(t, NSteps);
 
         fr.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

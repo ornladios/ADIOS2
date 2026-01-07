@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -334,6 +335,12 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -649,6 +656,12 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -952,6 +965,12 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D4x2)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadVector, ADIOS2BPWriteReadVector2D4x2_MultiSteps)
@@ -1251,6 +1270,12 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteReadVector2D4x2_MultiSteps)
         }
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 // Number of elements per process
@@ -227,6 +229,12 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Variable written every other step from 2nd step
@@ -379,6 +387,12 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsFileLocalArray, BPStepsFileLocalArrayReaders,
@@ -562,6 +576,12 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

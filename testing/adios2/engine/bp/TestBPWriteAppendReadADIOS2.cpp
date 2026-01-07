@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -640,6 +641,12 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         }
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Write with append combined with aggregation, same aggregation ratio
@@ -738,6 +745,12 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -854,6 +867,12 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
             }
         }
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

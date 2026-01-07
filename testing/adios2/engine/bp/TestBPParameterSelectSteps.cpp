@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // overridden on command line
@@ -179,6 +180,12 @@ TEST_P(BPParameterSelectStepsP, Read)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
+    }
 }
 
 TEST_P(BPParameterSelectStepsP, Stream)
@@ -285,6 +292,12 @@ TEST_P(BPParameterSelectStepsP, Stream)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
+    }
 }
 
 const std::vector<size_t> s_0n1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};

@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -406,6 +407,12 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 
         iStream.close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 //******************************************************************************
@@ -527,6 +534,12 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
             ++t;
         }
         iStream.close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -652,12 +665,23 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
         }
         iStream.close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
+
+    int mpiRank = 0;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+#endif
 
     {
 #if ADIOS2_USE_MPI
@@ -674,6 +698,17 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
         EXPECT_THROW(oStream.open("second", adios2::fstream::out, engineName),
                      std::invalid_argument);
 #endif
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    const std::string fname("ADIOS2BP_hl_exception_MPI.bp");
+#else
+    const std::string fname("ADIOS2BP_hl_exception.bp");
+#endif
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 #define str_helper(X) #X
@@ -137,6 +139,12 @@ void ZfpRate1D(const std::string configFile)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate2D(const std::string configFile)
@@ -257,6 +265,12 @@ void ZfpRate2D(const std::string configFile)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -382,6 +396,12 @@ void ZfpRate3D(const std::string configFile)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate1DSel(const std::string configFile)
@@ -503,6 +523,12 @@ void ZfpRate1DSel(const std::string configFile)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate2DSel(const std::string configFile)
@@ -623,6 +649,12 @@ void ZfpRate2DSel(const std::string configFile)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -748,6 +780,12 @@ void ZfpRate3DSel(const std::string configFile)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void ZfpRate2DSmallSel(const std::string configFile)
@@ -870,6 +908,12 @@ void ZfpRate2DSmallSel(const std::string configFile)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

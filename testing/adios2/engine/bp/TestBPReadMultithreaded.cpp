@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // overridden on command line
@@ -209,6 +210,12 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
+    }
 }
 
 TEST_P(BPReadMultithreadedTestP, ReadStream)
@@ -278,6 +285,12 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(BPReadMultithreadedTest, BPReadMultithreadedTestP,

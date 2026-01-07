@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../TestHelpers.h"
+
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // comes from command line
 
@@ -122,6 +124,12 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
             std::cout << "Exception " << e.what() << std::endl;
         }
         engine_s.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(filename);
     }
 }
 

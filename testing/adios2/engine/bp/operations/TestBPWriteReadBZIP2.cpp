@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../../TestHelpers.h"
+
 std::string engineName; // comes from command line
 
 void BZIP2Accuracy1D(const std::string accuracy)
@@ -148,6 +150,12 @@ void BZIP2Accuracy1D(const std::string accuracy)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void BZIP2Accuracy1DLocal(const std::string accuracy)
@@ -277,6 +285,12 @@ void BZIP2Accuracy1DLocal(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -413,6 +427,12 @@ void BZIP2Accuracy2D(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -553,6 +573,12 @@ void BZIP2Accuracy3D(const std::string accuracy)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void BZIP2Accuracy1DSel(const std::string accuracy)
@@ -685,6 +711,12 @@ void BZIP2Accuracy1DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -821,6 +853,12 @@ void BZIP2Accuracy2DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -960,6 +998,12 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 

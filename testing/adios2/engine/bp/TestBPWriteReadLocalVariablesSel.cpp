@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -435,6 +436,12 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
         EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -897,6 +904,12 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
@@ -1357,6 +1370,12 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
 
         bpReader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
@@ -1659,6 +1678,12 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
         }
 
         bpReader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
