@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 class HDF5WriteReadTest : public ::testing::Test
 {
@@ -698,6 +699,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hdf5Reader.Advance();
         }
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // ADIOS2 write, ADIOS2 read
@@ -982,6 +989,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
         }
         hdf5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Native HDF5 write, ADIOS2 read
@@ -1235,6 +1248,12 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
             }
         }
         hdf5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1515,6 +1534,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             }
             hdf5Reader.Advance();
         }
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -1817,6 +1842,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
         }
         hdf5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Native HDF5 write, ADIOS2 read
@@ -2065,6 +2096,12 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
             }
         }
         hdf5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -2342,6 +2379,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             }
             hdf5Reader.Advance();
         }
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -2641,6 +2684,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
         }
         hdf5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 // Native HDF5 write, ADIOS2 read
@@ -2889,6 +2938,12 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
             }
         }
         hdf5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -3152,6 +3207,13 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
         hdf5Reader.GetNumAttributes(); // expects 4
         */
         hdf5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(h5name);
+        CleanupTestFiles(bpname);
     }
 }
 

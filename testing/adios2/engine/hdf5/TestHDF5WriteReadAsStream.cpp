@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 class HDF5WriteReadAsStreamTestADIOS2 : public ::testing::Test
 {
@@ -391,6 +392,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
 
         h5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
@@ -631,6 +638,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
         EXPECT_EQ(t, NSteps);
 
         h5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -876,6 +889,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
         EXPECT_EQ(t, NSteps);
         h5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
@@ -979,6 +998,13 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             reader.EndStep();
         }
         reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fnameFloat);
+        CleanupTestFiles(fname);
     }
 }
 

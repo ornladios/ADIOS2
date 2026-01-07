@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
+#include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
 
@@ -330,6 +331,12 @@ void HDF5Steps1D(const size_t ghostCells)
 
         h5Reader.Close();
     }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
+    }
 }
 
 void HDF5Steps2D4x2(const size_t ghostCells)
@@ -561,6 +568,12 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         }
 
         h5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
@@ -836,6 +849,12 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         }
 
         h5Reader.Close();
+    }
+
+    // Cleanup generated files
+    if (mpiRank == 0)
+    {
+        CleanupTestFiles(fname);
     }
 }
 
