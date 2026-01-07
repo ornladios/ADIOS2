@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include "../../engine/TestHelpers.h"
 #include "SmallTestData_c.h"
 
 class BPWriteReadMultiblockCC : public ::testing::Test
@@ -255,6 +256,16 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
     }
     // deallocate adiosH
     adios2_finalize(adiosH);
+
+    // Cleanup generated files
+    if (rank == 0)
+    {
+#if ADIOS2_USE_MPI
+        CleanupTestFiles("cmblocks_MPI.bp");
+#else
+        CleanupTestFiles("cmblocks.bp");
+#endif
+    }
 }
 
 //******************************************************************************
