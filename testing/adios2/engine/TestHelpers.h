@@ -25,11 +25,11 @@ inline void CleanupTestFiles(const std::string &path, const std::string &engine 
 
         // File engines: bpfile, file, bp, bp3, bp4, bp5, hdfmixer, hdf5, skeleton, null
         // Streaming engines: filestream, bp4_stream, dataman, ssc, sst, effis, insitumpi, inline
-        bool isFileEngine = (engineLower == "bpfile" || engineLower == "file" ||
-                             engineLower == "bp" || engineLower == "bp3" ||
-                             engineLower == "bp4" || engineLower == "bp5" ||
-                             engineLower == "hdfmixer" || engineLower == "hdf5" ||
-                             engineLower == "skeleton" || engineLower == "null");
+        bool isFileEngine =
+            (engineLower == "bpfile" || engineLower == "file" || engineLower == "bp" ||
+             engineLower == "bp3" || engineLower == "bp4" || engineLower == "bp5" ||
+             engineLower == "hdfmixer" || engineLower == "hdf5" || engineLower == "skeleton" ||
+             engineLower == "null");
 
         if (!isFileEngine)
         {
