@@ -1632,17 +1632,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, OpenEngineTwice)
         EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::invalid_argument);
     }
 
-    // Cleanup generated files - note: no mpiRank in this test
-#if ADIOS2_USE_MPI
-    int mpiRank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-#else
-    int mpiRank = 0;
-#endif
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+    // Cleanup generated files
+    CleanupTestFiles(fname);
 }
 
 int main(int argc, char **argv)
