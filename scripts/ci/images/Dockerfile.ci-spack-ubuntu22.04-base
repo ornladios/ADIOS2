@@ -7,6 +7,7 @@ ARG SPACK_MIRROR="https://binaries.spack.io/v2025.07.0"
 ARG ENABLED_ENVS="serial,ompi,mpich"
 ARG EXTERNAL_PACKAGES
 ARG EXTRA_VARIANTS
+ARG EXTRA_SPECS
 ARG PATCH_VARIANT_XROOTD
 
 
@@ -38,7 +39,7 @@ RUN . /spack/share/spack/setup-env.sh && \
     spack config add "concretizer:unify:true" && \
     if echo "$ENABLED_ENVS" | grep -q serial; then \
     spack env create adios2-ci-serial && \
-    spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} && \
+    spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} ${EXTRA_SPECS} && \
     spack -e adios2-ci-serial concretize && \
     spack -e adios2-ci-serial install \
       --include-build-deps \
@@ -48,7 +49,7 @@ RUN . /spack/share/spack/setup-env.sh && \
     fi && \
     if echo "$ENABLED_ENVS" | grep -q ompi ; then \
     spack env create adios2-ci-ompi && \
-    spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} && \
+    spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} ${EXTRA_SPECS} && \
     spack -e adios2-ci-ompi concretize && \
     spack -e adios2-ci-ompi install \
       --include-build-deps \
@@ -58,7 +59,7 @@ RUN . /spack/share/spack/setup-env.sh && \
     fi && \
     if echo "$ENABLED_ENVS" | grep -q mpich; then \
     spack env create adios2-ci-mpich && \
-    spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
+    spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} ${EXTRA_SPECS} && \
     spack -e adios2-ci-mpich concretize && \
     spack -e adios2-ci-mpich install \
       --include-build-deps \

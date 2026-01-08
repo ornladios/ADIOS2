@@ -16,6 +16,7 @@ TAG_PREFIX="${IMAGE_TAG_PREFIX:-ghcr.io/ornladios/adios2}"
 # Build the base image
 ${BUILD_TOOL} build --progress=plain \
   --build-arg PATCH_VARIANT_XROOTD=ON \
+  --build-arg EXTRA_SPECS="sz3" \
   --rm -f ./Dockerfile.ci-spack-ubuntu22.04-base \
   -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
   .
