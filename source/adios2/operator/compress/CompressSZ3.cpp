@@ -272,28 +272,30 @@ size_t CompressSZ3::DecompressV1(const char *bufferIn, const size_t sizeIn, char
         if (type == helper::GetDataType<float>())
         {
             dataTypeSize = sizeof(float);
-            result = SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
+            result = SZ_decompress<float>(conf, const_cast<char *>(bufferIn + bufferInOffset),
+                                          sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<double>())
         {
             dataTypeSize = sizeof(double);
-            result =
-                SZ_decompress<double>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
+            result = SZ_decompress<double>(conf, const_cast<char *>(bufferIn + bufferInOffset),
+                                           sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<std::complex<float>>())
         {
             // Complex data was compressed as float with expanded dimensions
             // Decompress directly into output buffer cast as float
             dataTypeSize = sizeof(float);
-            result = SZ_decompress<float>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
+            result = SZ_decompress<float>(conf, const_cast<char *>(bufferIn + bufferInOffset),
+                                          sizeIn - bufferInOffset);
         }
         else if (type == helper::GetDataType<std::complex<double>>())
         {
             // Complex data was compressed as double with expanded dimensions
             // Decompress directly into output buffer cast as double
             dataTypeSize = sizeof(double);
-            result =
-                SZ_decompress<double>(conf, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
+            result = SZ_decompress<double>(conf, const_cast<char *>(bufferIn + bufferInOffset),
+                                           sizeIn - bufferInOffset);
         }
         else
         {
