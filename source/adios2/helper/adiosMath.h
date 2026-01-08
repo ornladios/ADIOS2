@@ -201,7 +201,7 @@ size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point, const bool i
  * std::norm(input2), false otherwise
  */
 template <class T>
-bool LessThan(const T input1, const T input2) noexcept;
+constexpr bool LessThan(const T input1, const T input2) noexcept;
 
 /**
  * Specialized for std::complex types to do a comparison by std::norm.
@@ -212,7 +212,7 @@ bool LessThan(const T input1, const T input2) noexcept;
  * std::norm(input2), false otherwise
  */
 template <class T>
-bool GreaterThan(const T input1, const T input2) noexcept;
+constexpr bool GreaterThan(const T input1, const T input2) noexcept;
 
 /**
  * Transform "typed" dimensions to payload dimensions based on ordering.
@@ -320,7 +320,7 @@ void GetMinMaxSubblocks(const T *values, const Dims &count, const BlockDivisionI
  * @return A value withing the limits.
  */
 template <class T>
-T SetWithinLimit(const T value, const T minValue, const T maxValue);
+constexpr T SetWithinLimit(const T value, const T minValue, const T maxValue);
 
 } // end namespace helper
 } // end namespace adios2

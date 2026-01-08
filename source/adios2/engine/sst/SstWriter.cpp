@@ -145,7 +145,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
-        m_BP3Serializer = std::unique_ptr<format::BP3Serializer>(new format::BP3Serializer(m_Comm));
+        m_BP3Serializer = std::make_unique<format::BP3Serializer>(m_Comm);
         m_BP3Serializer->Init(m_IO.m_Parameters, "in call to BP3::Open for writing", "sst");
         m_BP3Serializer->ResizeBuffer(m_BP3Serializer->m_Parameters.InitialBufferSize,
                                       "in call to BP3::Open for writing by SST engine");
@@ -156,7 +156,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         if (!m_BP5Serializer)
         {
-            m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
+            m_BP5Serializer = std::make_unique<format::BP5Serializer>();
             m_BP5Serializer->m_StatsLevel = Params.StatsLevel;
         }
         m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));

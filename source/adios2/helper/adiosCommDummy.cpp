@@ -129,22 +129,22 @@ void CommImplDummy::Free(const std::string &) {}
 
 std::unique_ptr<CommImpl> CommImplDummy::Duplicate(const std::string &) const
 {
-    return std::unique_ptr<CommImpl>(new CommImplDummy());
+    return std::make_unique<CommImplDummy>();
 }
 
 std::unique_ptr<CommImpl> CommImplDummy::Split(int, int, const std::string &) const
 {
-    return std::unique_ptr<CommImpl>(new CommImplDummy());
+    return std::make_unique<CommImplDummy>();
 }
 
 std::unique_ptr<CommImpl> CommImplDummy::World(const std::string &) const
 {
-    return std::unique_ptr<CommImpl>(new CommImplDummy());
+    return std::make_unique<CommImplDummy>();
 }
 
 std::unique_ptr<CommImpl> CommImplDummy::GroupByShm(const std::string &) const
 {
-    return std::unique_ptr<CommImpl>(new CommImplDummy());
+    return std::make_unique<CommImplDummy>();
 }
 
 int CommImplDummy::Rank() const { return 0; }
@@ -270,20 +270,20 @@ void CommImplDummy::Scatter(const void *sendbuf, size_t sendcount, Datatype send
 
 Comm::Req CommImplDummy::Isend(const void *, size_t, Datatype, int, int, const std::string &) const
 {
-    auto req = std::unique_ptr<CommReqImplDummy>(new CommReqImplDummy());
+    auto req = std::make_unique<CommReqImplDummy>();
     return MakeReq(std::move(req));
 }
 
 Comm::Req CommImplDummy::Irecv(void *, size_t, Datatype, int, int, const std::string &) const
 {
-    auto req = std::unique_ptr<CommReqImplDummy>(new CommReqImplDummy());
+    auto req = std::make_unique<CommReqImplDummy>();
     return MakeReq(std::move(req));
 }
 
 Comm::Win CommImplDummy::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                              const std::string &) const
 {
-    auto win = std::unique_ptr<CommWinImplDummy>(new CommWinImplDummy());
+    auto win = std::make_unique<CommWinImplDummy>();
     // TODO: How do you set the out pointer to NULL? baseptr = nullptr;
     return MakeWin(std::move(win));
 }
@@ -323,7 +323,7 @@ int CommWinImplDummy::Free(const std::string &hint) { return 0; }
 
 Comm CommDummy()
 {
-    auto comm = std::unique_ptr<CommImpl>(new CommImplDummy());
+    auto comm = std::make_unique<CommImplDummy>();
     return CommImpl::MakeComm(std::move(comm));
 }
 

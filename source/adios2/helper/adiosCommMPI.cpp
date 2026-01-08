@@ -231,19 +231,19 @@ std::unique_ptr<CommImpl> CommImplMPI::Duplicate(const std::string &hint) const
 {
     MPI_Comm newComm;
     CheckMPIReturn(MPI_Comm_dup(m_MPIComm, &newComm), hint);
-    return std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
+    return std::make_unique<CommImplMPI>(newComm);
 }
 
 std::unique_ptr<CommImpl> CommImplMPI::Split(int color, int key, const std::string &hint) const
 {
     MPI_Comm newComm;
     CheckMPIReturn(MPI_Comm_split(m_MPIComm, color, key, &newComm), hint);
-    return std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
+    return std::make_unique<CommImplMPI>(newComm);
 }
 
 std::unique_ptr<CommImpl> CommImplMPI::World(const std::string &) const
 {
-    return std::unique_ptr<CommImpl>(new CommImplMPI(MPI_COMM_WORLD));
+    return std::make_unique<CommImplMPI>(MPI_COMM_WORLD);
 }
 
 std::unique_ptr<CommImpl> CommImplMPI::GroupByShm(const std::string &hint) const
@@ -253,7 +253,7 @@ std::unique_ptr<CommImpl> CommImplMPI::GroupByShm(const std::string &hint) const
     MPI_Info_create(&info);
     CheckMPIReturn(MPI_Comm_split_type(m_MPIComm, MPI_COMM_TYPE_SHARED, 0, info, &nodeComm), hint);
     MPI_Info_free(&info);
-    return std::unique_ptr<CommImpl>(new CommImplMPI(nodeComm));
+    return std::make_unique<CommImplMPI>(nodeComm);
 }
 
 int CommImplMPI::Rank() const
@@ -414,7 +414,7 @@ void CommImplMPI::Scatter(const void *sendbuf, size_t sendcount, Datatype sendty
 Comm::Req CommImplMPI::Isend(const void *buffer, size_t count, Datatype datatype, int dest, int tag,
                              const std::string &hint) const
 {
-    auto req = std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(ToMPI(datatype)));
+    auto req = std::make_unique<CommReqImplMPI>(ToMPI(datatype));
 
     if (count > DefaultMaxFileBatchSize)
     {
@@ -459,7 +459,7 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count, Datatype datatype
 Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                              const std::string &hint) const
 {
-    auto req = std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(ToMPI(datatype)));
+    auto req = std::make_unique<CommReqImplMPI>(ToMPI(datatype));
 
     if (count > DefaultMaxFileBatchSize)
     {
@@ -504,7 +504,7 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
 Comm::Win CommImplMPI::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                            const std::string &hint) const
 {
-    auto w = std::unique_ptr<CommWinImplMPI>(new CommWinImplMPI());
+    auto w = std::make_unique<CommWinImplMPI>();
     MPI_Aint asize = static_cast<MPI_Aint>(size);
     CheckMPIReturn(
         MPI_Win_allocate_shared(asize, disp_unit, MPI_INFO_NULL, m_MPIComm, baseptr, &w->m_Win),
@@ -632,7 +632,7 @@ Comm CommWithMPI(MPI_Comm mpiComm)
     {
         return CommDummy();
     }
-    auto comm = std::unique_ptr<CommImpl>(new CommImplMPI(mpiComm));
+    auto comm = std::make_unique<CommImplMPI>(mpiComm);
     return CommImpl::MakeComm(std::move(comm));
 }
 

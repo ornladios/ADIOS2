@@ -39,7 +39,7 @@ Group::Group(std::string path, char delimiter, IO &io)
 {
     if (mapPtr == nullptr)
     {
-        mapPtr = std::shared_ptr<TreeMap>(new TreeMap());
+        mapPtr = std::make_shared<TreeMap>();
     }
 }
 // copy constructor

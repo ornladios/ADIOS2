@@ -18,7 +18,7 @@ AnonADIOSFile *ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays)
     }
     else
     {
-        std::unique_ptr<SubPool> tmp(new SubPool());
+        auto tmp = std::make_unique<SubPool>();
         subpool = tmp.get();
         map.insert(std::make_pair(index, std::move(tmp)));
     }
@@ -46,7 +46,7 @@ AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMaj
         }
     }
     // no free files
-    m_list.push_back(std::unique_ptr<AnonADIOSFile>(new AnonADIOSFile(Filename, RowMajorArrays)));
+    m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays));
     m_busy.push_back(true);
     in_use_count++;
     return m_list[m_list.size() - 1].get();

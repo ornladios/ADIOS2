@@ -29,7 +29,7 @@ size_t BufferSTL::Align() const noexcept
 {
     // std::align implementation from llvm libc++
     // needed due to bug in gcc 4.8
-    auto lf_align = [](const size_t alignment, const size_t size, void *&ptr, size_t &space) {
+    auto lf_align = [](const auto alignment, const auto size, auto *&ptr, auto &space) {
         if (size <= space)
         {
             const char *p1 = static_cast<char *>(ptr);

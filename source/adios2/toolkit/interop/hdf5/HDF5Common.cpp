@@ -1358,7 +1358,7 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName, hid
     //
     if (H5S_SCALAR == stype)
     {
-        auto val = std::unique_ptr<char[]>(new char[typeSize]);
+        auto val = std::make_unique<char[]>(typeSize);
         H5Aread(attrId, h5Type, &val[0]);
 
         auto strValue = std::string(&val[0], typeSize);
@@ -1375,7 +1375,7 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName, hid
         hsize_t dims[1];
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
         CHECK_H5_RETURN(ret, "ReadInStringAttr");
-        auto val = std::unique_ptr<char[]>(new char[typeSize * dims[0]]);
+        auto val = std::make_unique<char[]>(typeSize * dims[0]);
         H5Aread(attrId, h5Type, val.get());
 
         std::vector<std::string> stringArray;

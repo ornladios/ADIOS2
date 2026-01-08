@@ -524,7 +524,7 @@ void BP5Reader::PerformGets()
                     }
                 }
             }
-            m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
+            m_Remote = std::make_unique<XrootdRemote>(m_HostOptions);
             m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering);
         }
         else

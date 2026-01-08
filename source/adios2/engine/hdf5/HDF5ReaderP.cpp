@@ -434,14 +434,14 @@ bool HDF5ReaderP::CheckRemote()
 #ifdef ADIOS2_HAVE_XROOTD
         if (getenv("DoXRootD"))
         {
-            m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
+            m_Remote = std::make_unique<XrootdRemote>(m_HostOptions);
             m_Remote->Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
         }
         else
 #endif
 #ifdef ADIOS2_HAVE_SST
         {
-            m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
+            m_Remote = std::make_unique<EVPathRemote>(m_HostOptions);
             int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(m_H5File.m_RemoteHost);
             m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
         }

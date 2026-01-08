@@ -16,6 +16,7 @@ cd "${build_dir}"
 
 cmake \
   -DCMAKE_INSTALL_PREFIX="${install_dir}" \
+  -DCMAKE_CXX_STANDARD=14 \
   -DBUILD_MPI=yes \
   -DBUILD_EXE=yes \
   -DBUILD_LIB=no \

@@ -45,7 +45,7 @@ std::string FileToString(const std::string &fileName, const std::string hint)
 
 Params BuildParametersMap(const std::vector<std::string> &parameters, const char delimKeyValue)
 {
-    auto lf_Trim = [](std::string &input) {
+    auto lf_Trim = [](auto &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
         input.erase(input.find_last_not_of(" \n\r\t") + 1); // suffixing spaces
     };
@@ -98,7 +98,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters, const char
 
 Params BuildParametersMap(const std::string &input, const char delimKeyValue, const char delimItem)
 {
-    auto lf_Trim = [](std::string &input) {
+    auto lf_Trim = [](auto &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
         input.erase(input.find_last_not_of(" \n\r\t") + 1); // suffixing spaces
     };

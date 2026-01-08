@@ -118,8 +118,7 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
 
     case Mode::Read: {
         ProfilerStart("open");
-        m_Remote =
-            std::unique_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+        m_Remote = std::make_unique<EVPathRemote>(core::ADIOS::StaticGetHostOptions());
         int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(m_Hostname);
         m_Remote->OpenSimpleFile("localhost", localPort, m_Name);
         ProfilerStop("open");
