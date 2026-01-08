@@ -721,6 +721,75 @@ size_t CampaignData::FindReplicaOnHost(const size_t datasetIdx, std::string host
     return 0;
 }
 
+std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
+                                                     const HostOptions &hostOptions)
+{
+    auto lf_KnownHost = [&](const std::string &hostname) -> bool {
+        if (hostOptions.find(hostname) != hostOptions.end())
+            return true;
+        if (hostname == "localhost")
+            return true;
+        return false;
+    };
+
+    std::vector<size_t> replicas;
+    // hosts that are known in host config and not archives
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+        if (lf_KnownHost(hosts[rep.hostIdx].hostname) && !directory[rep.dirIdx].archive)
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
+    // s3 hosts that are known in host config
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+        if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
+            hosts[rep.hostIdx].defaultProtocol == "s3")
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
+    // https hosts
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+        if (directory[rep.dirIdx].archive && hosts[rep.hostIdx].defaultProtocol == "https")
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
+    // "fs" archive locations on known hosts
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+
+        if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
+            directory[rep.dirIdx].archiveSystemName == "fs")
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
+    // unknown, non-archive hosts
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+        if (!lf_KnownHost(hosts[rep.hostIdx].hostname) && !directory[rep.dirIdx].archive)
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
+    // skipping HPSS/KRONOS locations for now
+    return replicas;
+}
+
 std::string FileFormat::ToString()
 {
     switch (value)

@@ -692,9 +692,8 @@ void CampaignReader::InitTransports()
             size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
             if (!repIdx)
             {
-                // pick the first replica. FIXME: need a smart way to pick a replica
-                auto itRep = ds.replicas.begin();
-                repIdx = itRep->first;
+                auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+                size_t repIdx = reps.front();
                 std::string localPath = SaveRemoteMD(dsIdx, repIdx, io);
                 if (!localPath.empty())
                 {
@@ -756,10 +755,8 @@ void CampaignReader::InitTransports()
         size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
         if (!repIdx)
         {
-            /* FIXME: For now we only consider the first remote replica */
-            size_t repIdx;
-            auto itRep = ds.replicas.begin();
-            repIdx = itRep->first;
+            auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+            size_t repIdx = reps.front();
             localPath = SaveRemoteMD(dsIdx, repIdx, io);
             if (!localPath.empty())
             {
@@ -858,10 +855,17 @@ void CampaignReader::InitTransports()
         {
             std::cout << "-- Image " << ds.name << ":\n";
         }
-        for (auto &itRep : ds.replicas)
+
+        size_t localRepIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+        auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+        if (localRepIdx)
         {
-            size_t repIdx = itRep.first;
-            CampaignReplica &rep = itRep.second;
+            reps.insert(reps.begin(), localRepIdx);
+        }
+
+        for (auto repIdx : reps)
+        {
+            CampaignReplica &rep = ds.replicas[repIdx];
             if (m_Options.verbose > 1)
             {
                 std::cout << "      " << m_CampaignData.hosts[rep.hostIdx].hostname << ":"

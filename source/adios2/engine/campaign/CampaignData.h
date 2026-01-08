@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "adios2/common/ADIOSTypes.h" // HostOptions
+
 namespace adios2
 {
 namespace core
@@ -178,6 +180,15 @@ public:
 
     // return 0 if there is no replica found for 'hostname', otherwise the replica index
     size_t FindReplicaOnHost(const size_t datasetIdx, std::string hostname);
+
+    /* return remote replicas in order of
+     * 1. known remote host (has an entry in the hosts config) and not archive directory
+     * 2. known s3 host
+     * 3. https host
+     * 4. other "fs" archive locations on known hosts (but not HPSS, Kronos)
+     * 5. unknown hosts (not in hosts config)
+     */
+    std::vector<size_t> FindRemoteReplicas(const size_t datasetIdx, const HostOptions &hostOptions);
 
     std::string GetTarIdx(const size_t dsIdx, const size_t repIdx);
 
