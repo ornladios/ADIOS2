@@ -13,7 +13,6 @@
 #include <gtest/gtest.h>
 
 #include "../../TestHelpers.h"
-#include "../SmallTestData.h"
 
 class BPWriteReadLocalVariables : public ::testing::Test
 {

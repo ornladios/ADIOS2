@@ -12,7 +12,6 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
 #include "../TestHelpers.h"
 
 class HDF5WriteReadAsStreamTestADIOS2 : public ::testing::Test

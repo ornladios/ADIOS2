@@ -347,6 +347,10 @@ reader_executable = os.path.abspath(
 reader_command_line = reader_exec_cmd
 reader_command_line.extend([reader_executable, canonical_engine, args.filename])
 
+# Add --cleanup flag for file engines to cleanup test files
+if is_file_engine[args.engine.lower()]:
+    reader_command_line.append('--cleanup')
+
 if args.rarg is not None:
     reader_command_line.extend(args.rarg)
 

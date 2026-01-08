@@ -14,7 +14,6 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
 #include "../TestHelpers.h"
 
 class HDF5WriteReadTest : public ::testing::Test

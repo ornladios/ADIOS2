@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../adios2/engine/SmallTestData.h"
+#include "../adios2/engine/TestHelpers.h"
 #include <h5vol/H5Vol.h>
 
 class H5VolWriteReadTest : public ::testing::Test
