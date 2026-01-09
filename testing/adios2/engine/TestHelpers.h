@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -21,16 +22,50 @@
 #define NOMINMAX
 #endif
 
+// Include appropriate headers based on the operating system
+#ifdef _WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
+std::string get_current_dir()
+{
+    char buff[FILENAME_MAX]; // FILENAME_MAX is a platform-specific macro for buffer size
+    if (GetCurrentDir(buff, FILENAME_MAX) != NULL)
+    {
+        return std::string(buff);
+    }
+    else
+    {
+        // Handle error (e.g., buffer too small)
+        return std::string("");
+    }
+}
+
 // Helper function to cleanup test files/directories
 inline void CleanupTestFiles(const std::string &path)
 {
+    // CWD is the build_dir, we will only remove child dirs of the build_dir
+    if (path.find(get_current_dir()) == std::string::npos)
+    {
+        return;
+    }
+
+    // Allows: alphanumeric, spaces, hyphens, underscores, periods, forward/backslashes
+    std::regex valid_chars("[^a-zA-Z0-9 ._/\\\\-:]");
+    std::string safe_path = std::regex_replace(path, valid_chars, "");
+
 #ifdef _WIN32
     // Windows: use rmdir for directories, del for files
     // Try rmdir first (for .bp directories), fall back to del (for files)
-    std::string cmd = "rmdir /s /q \"" + path + "\" 2>nul || del /q \"" + path + "\" 2>nul";
+    std::string cmd =
+        "rmdir /s /q \"" + safe_path + "\" 2>nul || del /q \"" + safe_path + "\" 2>nul";
 #else
     // Unix/Linux/macOS: use rm -rf
-    std::string cmd = "rm -rf " + path;
+    std::string cmd = "rm -rf " + safe_path;
 #endif
     int rc = std::system(cmd.c_str());
 
