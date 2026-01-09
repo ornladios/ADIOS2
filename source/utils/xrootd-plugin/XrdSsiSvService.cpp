@@ -426,7 +426,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         adios2::Dims Start, Count;
         size_t BlockID, DimCount, StepStart;
         size_t StepCount = 1;
-        bool ArrayOrder;
+        bool ArrayOrder = false;
         std::vector<std::string> requestParams = split(reqArgs, '&');
         for (auto &param : requestParams)
         {

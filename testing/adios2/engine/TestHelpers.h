@@ -32,7 +32,13 @@ inline void CleanupTestFiles(const std::string &path)
     // Unix/Linux/macOS: use rm -rf
     std::string cmd = "rm -rf " + path;
 #endif
-    std::system(cmd.c_str());
+    int rc = std::system(cmd.c_str());
+
+    if (rc == -1)
+    {
+        std::cerr << "error: could not execute command: " << cmd << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 // Test data for each type.  Make sure our values exceed the range of the
