@@ -10,6 +10,7 @@ readonly subtree="thirdparty/GTest/googletest"
 readonly repo="https://github.com/google/googletest.git"
 readonly tag="v1.14.0"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 
