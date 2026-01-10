@@ -48,16 +48,18 @@ std::string get_current_dir()
 // Helper function to cleanup test files/directories
 inline void CleanupTestFiles(const std::string &path)
 {
-    // CWD is the build_dir, we will only remove child dirs of the build_dir
-    if (path.find(get_current_dir()) == std::string::npos)
-    {
-        return;
-    }
-
-    // Allows: alphanumeric, spaces, hyphens, underscores, periods, forward/backslashes
-    std::regex valid_chars("[^a-zA-Z0-9 ._/\\\\-:]");
+    // Allows sane characters
+    std::regex valid_chars("[^a-zA-Z0-9 ._/\\-:]");
     std::string safe_path = std::regex_replace(path, valid_chars, "");
 
+    // If we are given an absolute path, make sure that it descendant of CWD
+    if (std::regex_match(safe_path, std::regex(R"(^((([a-zA-Z]:)?\\)|/).*$)")))
+    {
+        if (safe_path.find(get_current_dir()) == std::string::npos)
+        {
+            return;
+        }
+    }
 #ifdef _WIN32
     // Windows: use rmdir for directories, del for files
     // Try rmdir first (for .bp directories), fall back to del (for files)
