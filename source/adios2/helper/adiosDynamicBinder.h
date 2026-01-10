@@ -23,7 +23,7 @@ namespace helper
 class DynamicBinder
 {
 public:
-    using VoidSymbolPointer = std::add_pointer<void()>::type;
+    using VoidSymbolPointer = std::add_pointer_t<void()>;
 
 public:
     DynamicBinder(std::string libName);

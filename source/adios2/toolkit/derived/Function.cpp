@@ -156,7 +156,7 @@ DerivedData AddAggregatedFunc(DerivedData inputData, DataType type)
         size_t numVar = inputData.Count.back();                                                    \
         T *addValues =                                                                             \
             detail::AggregateOnLastDim<T>(reinterpret_cast<T *>(inputData.Data), dataSize, numVar, \
-                                          [](T a, T b) { return a + b; });                         \
+                                          [](auto a, auto b) { return a + b; });                   \
         return DerivedData({(void *)addValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_agradd)
@@ -183,7 +183,7 @@ DerivedData AddFunc(ExprData exprData)
     {                                                                                              \
         T initVal = detail::ApplyExprOnConst<T, std::plus<T>>(exprData.Const, 0, std::plus<T>());  \
         T *addValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a + b; },          \
+            inputData.begin(), inputData.end(), dataSize, [](auto a, auto b) { return a + b; },    \
             initVal);                                                                              \
         return DerivedData({(void *)addValues});                                                   \
     }
@@ -207,8 +207,9 @@ DerivedData SubtractFunc(ExprData exprData)
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),       \
-                                                     dataSize, [](T a, T b) { return a + b; });    \
+        T *subtractValues =                                                                        \
+            detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,             \
+                                     [](auto a, auto b) { return a + b; });                        \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             subtractValues[i] =                                                                    \
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
@@ -235,7 +236,7 @@ DerivedData MultFunc(ExprData exprData)
         T initVal = detail::ApplyExprOnConst<T, std::multiplies<T>>(exprData.Const, 1,             \
                                                                     std::multiplies<T>());         \
         T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; },          \
+            inputData.begin(), inputData.end(), dataSize, [](auto a, auto b) { return a * b; },    \
             initVal);                                                                              \
         return DerivedData({(void *)multValues});                                                  \
     }
@@ -260,7 +261,8 @@ DerivedData DivFunc(ExprData exprData)
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
         T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
+            inputData.begin() + 1, inputData.end(), dataSize,                                      \
+            [](auto a, auto b) { return a * b; }, 1);                                              \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues});                                                   \
@@ -290,7 +292,7 @@ DerivedData SqrtFunc(ExprData exprData)
         long double *sqrtValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sqrtValues,
-                       [](long double &a) { return std::sqrt(a); });
+                       [](auto &a) { return std::sqrt(a); });
         return DerivedData({(void *)sqrtValues});
     }
 #define declare_type_sqrt(T)                                                                       \
@@ -299,7 +301,7 @@ DerivedData SqrtFunc(ExprData exprData)
         double *sqrtValues = (double *)malloc(dataSize * sizeof(double));                          \
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,            \
-                       [](T &a) { return std::sqrt(a); });                                         \
+                       [](auto &a) { return std::sqrt(a); });                                      \
         return DerivedData({(void *)sqrtValues});                                                  \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
@@ -330,7 +332,7 @@ DerivedData PowFunc(ExprData exprData)
         long double *powValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
-                       [base](long double &a) { return std::pow(a, base); });
+                       [base](auto &a) { return std::pow(a, base); });
         return DerivedData({(void *)powValues});
     }
 #define declare_type_pow(T)                                                                        \
@@ -366,7 +368,7 @@ DerivedData SinFunc(ExprData exprData)
         long double *sinValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sinValues,
-                       [](long double &a) { return std::sin(a); });
+                       [](auto &a) { return std::sin(a); });
         return DerivedData({(void *)sinValues});
     }
 #define declare_type_sin(T)                                                                        \
@@ -405,7 +407,7 @@ DerivedData CosFunc(ExprData exprData)
         long double *cosValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, cosValues,
-                       [](long double &a) { return std::cos(a); });
+                       [](auto &a) { return std::cos(a); });
         return DerivedData({(void *)cosValues});
     }
 #define declare_type_cos(T)                                                                        \
@@ -444,7 +446,7 @@ DerivedData TanFunc(ExprData exprData)
         long double *tanValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, tanValues,
-                       [](long double &a) { return std::tan(a); });
+                       [](auto &a) { return std::tan(a); });
         return DerivedData({(void *)tanValues});
     }
 #define declare_type_tan(T)                                                                        \
@@ -483,7 +485,7 @@ DerivedData AsinFunc(ExprData exprData)
         long double *asinValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, asinValues,
-                       [](long double &a) { return std::asin(a); });
+                       [](auto &a) { return std::asin(a); });
         return DerivedData({(void *)asinValues});
     }
 #define declare_type_asin(T)                                                                       \
@@ -522,7 +524,7 @@ DerivedData AcosFunc(ExprData exprData)
         long double *acosValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, acosValues,
-                       [](long double &a) { return std::acos(a); });
+                       [](auto &a) { return std::acos(a); });
         return DerivedData({(void *)acosValues});
     }
 #define declare_type_acos(T)                                                                       \
@@ -561,7 +563,7 @@ DerivedData AtanFunc(ExprData exprData)
         long double *atanValues = (long double *)malloc(dataSize * sizeof(long double));
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, atanValues,
-                       [](long double &a) { return std::atan(a); });
+                       [](auto &a) { return std::atan(a); });
         return DerivedData({(void *)atanValues});
     }
 #define declare_type_atan(T)                                                                       \
@@ -595,7 +597,7 @@ DerivedData MagAggregatedFunc(DerivedData inputData, DataType type)
         size_t numVar = inputData.Count.back();                                                    \
         T *magValues =                                                                             \
             detail::AggregateOnLastDim<T>(reinterpret_cast<T *>(inputData.Data), dataSize, numVar, \
-                                          [](T a, T b) { return a + b * b; });                     \
+                                          [](auto a, auto b) { return a + b * b; });               \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
@@ -622,7 +624,7 @@ DerivedData MagnitudeFunc(ExprData exprData)
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
         T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b * b; });               \
+                                                [](auto a, auto b) { return a + b * b; });         \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \

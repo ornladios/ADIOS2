@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(adios_plugin_test CXX)
 enable_testing()
-
+set(CMAKE_CXX_STANDARD 14)
 find_package(adios2 REQUIRED)
 
 option(BUILD_SHARED_LIBS "build shared libs" ON)

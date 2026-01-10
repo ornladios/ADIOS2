@@ -59,7 +59,7 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart, const Di
     size_t paramOffset = bufferOutOffset;
     bufferOutOffset += sizeof(size_t) + 3;
 
-    auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
+    auto lf_Write = [](auto png_ptr, auto data, auto length) {
         DestInfo *pDestInfo = reinterpret_cast<DestInfo *>(png_get_io_ptr(png_ptr));
         std::memcpy(pDestInfo->BufferOut + pDestInfo->Offset, data, length);
         pDestInfo->Offset += length;

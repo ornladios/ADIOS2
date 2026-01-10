@@ -404,8 +404,7 @@ CManagerSingleton::MakeEVPathConnection(const std::string &hostName)
             return it->second;
         }
     }
-    auto m_Remote =
-        std::shared_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+    auto m_Remote = std::make_shared<EVPathRemote>(core::ADIOS::StaticGetHostOptions());
     try
     {
         int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(hostName);

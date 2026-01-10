@@ -265,7 +265,7 @@ constexpr size_t DefaultMinDeferredSize = 4 * 1024 * 1024;
 
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/
-constexpr size_t DefaultMaxFileBatchSize = 2147381248;
+constexpr size_t DefaultMaxFileBatchSize = 2147483648 - 102400;
 
 /** default maximum shared memory segment size
  *  2 blocks of MaxFileBatchSize */

@@ -25,7 +25,7 @@ namespace helper
 std::unique_ptr<pugi::xml_document> XMLDocument(const std::string &xmlContents,
                                                 const std::string hint)
 {
-    std::unique_ptr<pugi::xml_document> document(new pugi::xml_document);
+    auto document = std::make_unique<pugi::xml_document>();
     auto parse_result =
         document->load_buffer_inplace(const_cast<char *>(xmlContents.data()), xmlContents.size());
 
@@ -44,7 +44,7 @@ std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
                                         const std::string hint, const bool isMandatory,
                                         const bool isUnique)
 {
-    std::unique_ptr<pugi::xml_node> node(new pugi::xml_node(xmlDocument.child(nodeName.c_str())));
+    auto node = std::make_unique<pugi::xml_node>(xmlDocument.child(nodeName.c_str()));
 
     if (isMandatory && !node)
     {
@@ -71,7 +71,7 @@ std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName, const pugi::
                                         const std::string hint, const bool isMandatory,
                                         const bool isUnique)
 {
-    std::unique_ptr<pugi::xml_node> node(new pugi::xml_node(upperNode.child(nodeName.c_str())));
+    auto node = std::make_unique<pugi::xml_node>(upperNode.child(nodeName.c_str()));
 
     if (isMandatory && !node)
     {

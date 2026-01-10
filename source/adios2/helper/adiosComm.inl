@@ -61,7 +61,7 @@ void Comm::GathervArrays(const T *source, size_t sourceCount,
         displs = GetGathervDisplacements(counts, countsSize);
         const size_t totalElements =
             displs[countsSize - 1] + counts[countsSize - 1];
-        if (totalElements > 2147483648)
+        if (totalElements > 2'147'483'648)
         {
             helper::ThrowNested<std::runtime_error>(
                 "Helper", "adiosComm", "GathervVectors",

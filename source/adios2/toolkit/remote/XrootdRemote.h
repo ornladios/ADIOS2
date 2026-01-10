@@ -71,8 +71,8 @@ private:
     XrdOucStream cLine;
 #endif
     char prompt[80];
-    static const int minBsz = 1024;            // 1 KB
-    static const int maxBsz = 8 * 1024 * 1024; // 8 MB
+    static const int minBsz = 1024;      // 1 KB
+    static const int maxBsz = 8'388'608; // 8 MB
     const char *affName;
     int reqBsz;
     int reqBpad;

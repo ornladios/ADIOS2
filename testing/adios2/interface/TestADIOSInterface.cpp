@@ -419,7 +419,7 @@ TYPED_TEST(ADIOS2_CXX_API_MultiBlock, PutZeroCopyMixed)
         }
         else
         {
-            lastBlock.reset(new T[myData.Count(b)]);
+            lastBlock = std::make_unique<T[]>(myData.Count(b));
             myData.Place(b, lastBlock.get());
         }
     }
