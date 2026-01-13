@@ -296,6 +296,21 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 
         EXPECT_EQ(dataStr, std::string(inString));
 
+        // Test adios2_get_string with the two-call pattern
+        // First call: get the string length (data = NULL)
+        size_t stringLength = 0;
+        adios2_error errGetStr = adios2_get_string(engineH, varStr, NULL, &stringLength);
+        EXPECT_EQ(errGetStr, adios2_error_none);
+        EXPECT_EQ(stringLength, strlen(dataStr));
+
+        // Second call: get the string data
+        char *inString2 = new char[stringLength + 1];
+        errGetStr = adios2_get_string(engineH, varStr, inString2, &stringLength);
+        EXPECT_EQ(errGetStr, adios2_error_none);
+        inString2[stringLength] = '\0';
+        EXPECT_EQ(std::string(dataStr), std::string(inString2));
+        delete[] inString2;
+
         int8_t minI8, maxI8;
         int16_t minI16, maxI16;
         int32_t minI32, maxI32;
