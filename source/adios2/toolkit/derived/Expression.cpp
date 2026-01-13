@@ -66,8 +66,7 @@ inline bool get_op_associativity(ExpressionOperator op)
 
 inline ExpressionOperator get_op(std::string op)
 {
-    std::transform(op.begin(), op.end(), op.begin(),
-                   [](unsigned char c) { return std::toupper(c); });
+    std::transform(op.begin(), op.end(), op.begin(), [](auto c) { return std::toupper(c); });
     return string_to_op.at(op);
 }
 

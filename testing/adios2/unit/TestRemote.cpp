@@ -37,7 +37,7 @@ TEST(Remote, OpenRead)
     {
         std::unique_ptr<Remote> remote = nullptr;
 
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
+        remote = std::make_unique<EVPathRemote>(hostOptions);
         remote->OpenReadSimpleFile("localhost", localPort, FNAME, contents);
         std::cout << "Contents size was " << contents.size() << std::endl;
         ASSERT_EQ(contents.size(), strlen(FILE_STRING));
@@ -49,7 +49,7 @@ TEST(Remote, OpenRead)
 
     {
         std::unique_ptr<Remote> remote = nullptr;
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(hostOptions));
+        remote = std::make_unique<EVPathRemote>(hostOptions);
         remote->OpenSimpleFile("localhost", localPort, FNAME);
         std::cout << "Contents size is " << remote->m_Size << std::endl;
         contents.resize(remote->m_Size); // should be unnecessary

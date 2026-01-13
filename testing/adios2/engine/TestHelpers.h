@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -21,18 +22,60 @@
 #define NOMINMAX
 #endif
 
+// Include appropriate headers based on the operating system
+#ifdef _WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
+std::string get_current_dir()
+{
+    char buff[FILENAME_MAX]; // FILENAME_MAX is a platform-specific macro for buffer size
+    if (GetCurrentDir(buff, FILENAME_MAX) != NULL)
+    {
+        return std::string(buff);
+    }
+    else
+    {
+        // Handle error (e.g., buffer too small)
+        return std::string("");
+    }
+}
+
 // Helper function to cleanup test files/directories
 inline void CleanupTestFiles(const std::string &path)
 {
+    // Allows sane characters
+    std::regex valid_chars("[^a-zA-Z0-9 ._/\\-:]");
+    std::string safe_path = std::regex_replace(path, valid_chars, "");
+
+    // If we are given an absolute path, make sure that it descendant of CWD
+    if (std::regex_match(safe_path, std::regex(R"(^((([a-zA-Z]:)?\\)|/).*$)")))
+    {
+        if (safe_path.find(get_current_dir()) == std::string::npos)
+        {
+            return;
+        }
+    }
 #ifdef _WIN32
     // Windows: use rmdir for directories, del for files
     // Try rmdir first (for .bp directories), fall back to del (for files)
-    std::string cmd = "rmdir /s /q \"" + path + "\" 2>nul || del /q \"" + path + "\" 2>nul";
+    std::string cmd =
+        "rmdir /s /q \"" + safe_path + "\" 2>nul || del /q \"" + safe_path + "\" 2>nul";
 #else
     // Unix/Linux/macOS: use rm -rf
-    std::string cmd = "rm -rf " + path;
+    std::string cmd = "rm -rf " + safe_path;
 #endif
-    std::system(cmd.c_str());
+    int rc = std::system(cmd.c_str());
+
+    if (rc == -1)
+    {
+        std::cerr << "error: could not execute command: " << cmd << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 // Test data for each type.  Make sure our values exceed the range of the

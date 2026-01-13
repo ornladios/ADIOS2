@@ -980,8 +980,8 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
 
     // create derived variable with the expression
     auto itVariablePair = m_VariablesDerived.emplace(
-        name, std::unique_ptr<VariableBase>(new VariableDerived(
-                  name, derived_exp, expressionType, isConstant, varType, name_to_type)));
+        name, std::make_unique<VariableDerived>(name, derived_exp, expressionType, isConstant,
+                                                varType, name_to_type));
     VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
 
     // check IO placeholder for variable operations
@@ -1026,9 +1026,8 @@ VariableStruct &IO::DefineStructVariable(const std::string &name, StructDefiniti
         }
     }
 
-    auto itVariablePair =
-        m_Variables.emplace(name, std::unique_ptr<VariableBase>(new VariableStruct(
-                                      name, def, shape, start, count, constantDims)));
+    auto itVariablePair = m_Variables.emplace(
+        name, std::make_unique<VariableStruct>(name, def, shape, start, count, constantDims));
 
     VariableStruct &variable = static_cast<VariableStruct &>(*itVariablePair.first->second);
 

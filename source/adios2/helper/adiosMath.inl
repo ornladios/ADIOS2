@@ -577,7 +577,7 @@ ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 template <class T>
-inline bool LessThan(const T input1, const T input2) noexcept
+constexpr bool LessThan(const T input1, const T input2) noexcept
 {
     if (input1 < input2)
     {
@@ -602,7 +602,7 @@ ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 template <class T>
-inline bool GreaterThan(const T input1, const T input2) noexcept
+constexpr bool GreaterThan(const T input1, const T input2) noexcept
 {
     if (input1 > input2)
     {
@@ -642,7 +642,7 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
 }
 
 template <class T>
-T SetWithinLimit(const T value, const T minValue, const T maxValue)
+constexpr T SetWithinLimit(const T value, const T minValue, const T maxValue)
 {
     T v = (value < minValue ? minValue : value);
     v = (v > maxValue ? maxValue : v);

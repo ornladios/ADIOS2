@@ -313,8 +313,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             // Retrieve key
             if (!m_ConnectionManager)
             {
-                m_ConnectionManager =
-                    std::unique_ptr<Remote>(new Remote(core::ADIOS::StaticGetHostOptions()));
+                m_ConnectionManager = std::make_unique<Remote>(core::ADIOS::StaticGetHostOptions());
             }
             m_CampaignData.keys[rep.keyIdx].keyHex =
                 m_ConnectionManager->GetKeyFromConnectionManager(
@@ -1326,14 +1325,14 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
 #ifdef ADIOS2_HAVE_XROOTD
     if (getenv("DoXRootD"))
     {
-        remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
+        remote = std::make_unique<XrootdRemote>(m_HostOptions);
         remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
     }
     else
 #endif
 #ifdef ADIOS2_HAVE_SST
     {
-        remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
+        remote = std::make_unique<EVPathRemote>(m_HostOptions);
         int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
         remote->OpenSimpleFile("localhost", localPort, remotePath);
     }

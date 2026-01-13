@@ -27,16 +27,16 @@ namespace plugin
 class PluginManager
 {
 public:
-    using EngineCreatePtr = std::add_pointer<PluginEngineInterface *(
-        core::IO &, const std::string &, const Mode, helper::Comm)>::type;
-    using EngineDestroyPtr = std::add_pointer<void(PluginEngineInterface *)>::type;
-    using EngineCreateFun = std::function<typename std::remove_pointer<EngineCreatePtr>::type>;
-    using EngineDestroyFun = std::function<typename std::remove_pointer<EngineDestroyPtr>::type>;
+    using EngineCreatePtr = std::add_pointer_t<PluginEngineInterface *(
+        core::IO &, const std::string &, const Mode, helper::Comm)>;
+    using EngineDestroyPtr = std::add_pointer_t<void(PluginEngineInterface *)>;
+    using EngineCreateFun = std::function<std::remove_pointer_t<EngineCreatePtr>>;
+    using EngineDestroyFun = std::function<std::remove_pointer_t<EngineDestroyPtr>>;
 
-    using OperatorCreatePtr = std::add_pointer<PluginOperatorInterface *(const Params &)>::type;
-    using OperatorDestroyPtr = std::add_pointer<void(PluginOperatorInterface *)>::type;
-    using OperatorCreateFun = std::function<std::remove_pointer<OperatorCreatePtr>::type>;
-    using OperatorDestroyFun = std::function<std::remove_pointer<OperatorDestroyPtr>::type>;
+    using OperatorCreatePtr = std::add_pointer_t<PluginOperatorInterface *(const Params &)>;
+    using OperatorDestroyPtr = std::add_pointer_t<void(PluginOperatorInterface *)>;
+    using OperatorCreateFun = std::function<std::remove_pointer_t<OperatorCreatePtr>>;
+    using OperatorDestroyFun = std::function<std::remove_pointer_t<OperatorDestroyPtr>>;
 
     static PluginManager &GetInstance();
 

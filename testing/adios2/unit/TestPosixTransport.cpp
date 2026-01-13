@@ -32,8 +32,7 @@ TEST(FileTransport, FailOnEOF)
     {
         std::vector<uint8_t> b(256, 0xef);
         helper::Comm comm = helper::CommDummy();
-        std::unique_ptr<transport::FilePOSIX> w =
-            std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
+        auto w = std::make_unique<transport::FilePOSIX>(comm);
 
         w->Open("FailOnEOF", Mode::Write);
         w->Write((char *)b.data(), b.size());
@@ -43,8 +42,7 @@ TEST(FileTransport, FailOnEOF)
         // 2x the size of data which was written
         std::vector<uint8_t> b(512);
         helper::Comm comm = helper::CommDummy();
-        std::unique_ptr<transport::FilePOSIX> r =
-            std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
+        auto r = std::make_unique<transport::FilePOSIX>(comm);
 
         r->Open("FailOnEOF", Mode::Read);
         Params p = {{"FailOnEOF", "true"}};
@@ -59,8 +57,7 @@ TEST(FileTransport, WaitForData)
     constexpr int size = 256;
     std::vector<uint8_t> b(size, 0xef);
     helper::Comm comm = helper::CommDummy();
-    std::unique_ptr<transport::FilePOSIX> w =
-        std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
+    auto w = std::make_unique<transport::FilePOSIX>(comm);
 
     w->Open("FailOnEOF2", Mode::Write);
     w->Write((char *)b.data(), b.size());
@@ -77,8 +74,7 @@ TEST(FileTransport, WaitForData)
 
         std::vector<uint8_t> b(size * 2);
         helper::Comm comm = helper::CommDummy();
-        std::unique_ptr<transport::FilePOSIX> r =
-            std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
+        auto r = std::make_unique<transport::FilePOSIX>(comm);
 
         r->Open("FailOnEOF2", Mode::Read);
         r->Read((char *)b.data(), size * 2, 0);

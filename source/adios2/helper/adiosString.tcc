@@ -36,7 +36,7 @@ std::set<std::string> LowerCase(const std::set<std::string> &input)
 {
     std::set<std::string> output;
     std::transform(input.begin(), input.end(), std::inserter(output, output.begin()),
-                   [](const std::string &in) { return LowerCase(in); });
+                   [](const auto &in) { return LowerCase(in); });
     return output;
 }
 

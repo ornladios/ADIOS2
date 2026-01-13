@@ -36,7 +36,7 @@ inline void close_socket(socket_t s)
     if (s != INVALID_SOCKET)
         closesocket(s);
 }
-inline bool is_valid_socket(socket_t s) { return (s != INVALID_SOCKET); }
+constexpr bool is_valid_socket(socket_t s) { return (s != INVALID_SOCKET); }
 // Simple RAII to ensure WSA is initialized once
 struct WSAInit
 {
@@ -80,7 +80,7 @@ inline void close_socket(socket_t s)
     if (s >= 0)
         close(s);
 }
-inline bool is_valid_socket(socket_t s) { return (s >= 0); }
+constexpr bool is_valid_socket(socket_t s) { return (s >= 0); }
 
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 #include <iostream>

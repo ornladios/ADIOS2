@@ -154,7 +154,7 @@ void ConvertUint64VectorToSizetVector(const std::vector<uint64_t> &in,
 {
     out.resize(in.size());
     std::transform(in.begin(), in.end(), out.begin(),
-                   [](uint64_t value) { return static_cast<size_t>(value); });
+                   [](auto value) { return static_cast<size_t>(value); });
 }
 
 void Uint64ArrayToSizetVector(const size_t nElements, const uint64_t *in,
@@ -167,8 +167,7 @@ void Uint64ArrayToSizetVector(const size_t nElements, const uint64_t *in,
     }
 }
 
-std::vector<std::size_t> Uint64ArrayToSizetVector(const size_t nElements,
-                                                  const uint64_t *in) noexcept
+std::vector<size_t> Uint64ArrayToSizetVector(const size_t nElements, const uint64_t *in) noexcept
 {
     std::vector<size_t> out(nElements);
     for (size_t i = 0; i < nElements; i++)
@@ -182,7 +181,7 @@ std::vector<size_t> Uint64VectorToSizetVector(const std::vector<uint64_t> &in) n
 {
     std::vector<size_t> out(in.size());
     std::transform(in.begin(), in.end(), out.begin(),
-                   [](uint64_t value) { return static_cast<size_t>(value); });
+                   [](auto value) { return static_cast<size_t>(value); });
     return out;
 }
 

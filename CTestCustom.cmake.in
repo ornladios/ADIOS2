@@ -30,6 +30,7 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   # CMake>=4 add this flag that some compilers do not understand
   "icpc: command line warning #10006: ignoring unknown option '-fstack-clash-protection'"
   "icc: command line warning #10006: ignoring unknown option '-fstack-clash-protection'"
+  "warning: dereferencing type-punned pointer will break strict-aliasing rules"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

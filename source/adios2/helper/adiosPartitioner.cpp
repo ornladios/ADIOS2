@@ -58,9 +58,7 @@ adios2::helper::Partitioning PartitionGreedily(const std::vector<uint64_t> &valu
         valuesAndIndices.push_back(std::make_pair(values[i], i));
     }
     std::sort(valuesAndIndices.begin(), valuesAndIndices.end(),
-              [](std::pair<uint64_t, size_t> a, std::pair<uint64_t, size_t> b) {
-                  return a.first > b.first;
-              });
+              [](const auto &a, const auto &b) { return a.first > b.first; });
 
     result.m_Partitions.resize(numberOfPartitions);
     result.m_Sizes.resize(numberOfPartitions);

@@ -343,31 +343,30 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     };
 
-    auto GetInOvlpBase = [](const char *&inOvlpBase, const char *in, const CoreDims &inStart,
-                            CoreDims &inStride, CoreDims &ovlpStart) {
+    auto GetInOvlpBase = [](const char *&inOvlpBase, const char *in, const auto &inStart,
+                            auto &inStride, auto &ovlpStart) {
         inOvlpBase = in;
         for (size_t i = 0; i < inStart.size(); i++)
         {
             inOvlpBase = inOvlpBase + (ovlpStart[i] - inStart[i]) * inStride[i];
         }
     };
-    auto GetOutOvlpBase = [](char *&outOvlpBase, char *out, const CoreDims &outStart,
-                             CoreDims &outStride, CoreDims &ovlpStart) {
+    auto GetOutOvlpBase = [](char *&outOvlpBase, char *out, const auto &outStart, auto &outStride,
+                             auto &ovlpStart) {
         outOvlpBase = out;
         for (size_t i = 0; i < outStart.size(); i++)
         {
             outOvlpBase = outOvlpBase + (ovlpStart[i] - outStart[i]) * outStride[i];
         }
     };
-    auto GetIoOvlpGapSize = [](CoreDims &ioOvlpGapSize, CoreDims &ioStride, const CoreDims &ioCount,
-                               CoreDims &ovlpCount) {
+    auto GetIoOvlpGapSize = [](auto &ioOvlpGapSize, auto &ioStride, const auto &ioCount,
+                               auto &ovlpCount) {
         for (size_t i = 0; i < ioOvlpGapSize.size(); i++)
         {
             ioOvlpGapSize[i] = (ioCount[i] - ovlpCount[i]) * ioStride[i];
         }
     };
-    auto GetMinContDim = [](const CoreDims &inCount, const CoreDims &outCount,
-                            CoreDims &ovlpCount) {
+    auto GetMinContDim = [](const auto &inCount, const auto &outCount, auto &ovlpCount) {
         //    note: minContDim is the first index where its input box and
         //    overlap box
         //    are not fully match. therefore all data below this branch is
@@ -390,7 +389,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         }
         return i;
     };
-    auto GetBlockSize = [](CoreDims &ovlpCount, size_t minContDim, size_t elmSize) {
+    auto GetBlockSize = [](auto &ovlpCount, auto minContDim, auto elmSize) {
         size_t res = elmSize;
         for (size_t i = minContDim; i < ovlpCount.size(); i++)
         {
@@ -399,8 +398,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         return res;
     };
 
-    auto GetRltvOvlpStartPos = [](CoreDims &ioRltvOvlpStart, const CoreDims &ioStart,
-                                  CoreDims &ovlpStart) {
+    auto GetRltvOvlpStartPos = [](auto &ioRltvOvlpStart, const auto &ioStart, auto &ovlpStart) {
         for (size_t i = 0; i < ioStart.size(); i++)
         {
             ioRltvOvlpStart[i] = ovlpStart[i] - ioStart[i];
