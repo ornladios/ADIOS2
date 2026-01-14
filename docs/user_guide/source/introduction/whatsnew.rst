@@ -1,3 +1,17 @@
+======================
+What's new in master?
+======================
+
+C API Improvements
+------------------
+
+New ``adios2_get_string()`` function for safely retrieving string variables
+of unknown length. This function supports a two-call pattern: first call with
+a NULL buffer to query the string length, then call again with an allocated
+buffer to retrieve the data. This addresses a gap in the C API where string
+variable lengths could not be queried before reading.
+
+
 ===================
 What's new in 2.11?
 ===================

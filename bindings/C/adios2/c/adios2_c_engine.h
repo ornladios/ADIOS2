@@ -208,6 +208,38 @@ adios2_error adios2_get_by_name(adios2_engine *engine, const char *variable_name
                                 const adios2_mode launch);
 
 /**
+ * Gets a string variable from an engine. String variables are always
+ * retrieved synchronously (data is immediately available) since strings
+ * are stored in metadata.
+ *
+ * This function supports a two-call pattern to safely retrieve strings
+ * of unknown length:
+ *   1. Call with data=NULL to get the string length
+ *   2. Allocate a buffer of at least (length + 1) bytes
+ *   3. Call again with the buffer to retrieve the string data
+ *
+ * The returned length does NOT include a null terminator. The caller
+ * is responsible for null-terminating the string if needed.
+ *
+ * @param engine handler for a particular engine
+ * @param variable handler for a string variable (adios2_type_string)
+ * @param data pre-allocated buffer for string data, or NULL to only query length
+ * @param length output: the string length in bytes (excludes null terminator)
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ *
+ * Example usage:
+ * @code
+ *   size_t length;
+ *   adios2_get_string(engine, var, NULL, &length);  // get length
+ *   char *str = (char *)malloc(length + 1);
+ *   adios2_get_string(engine, var, str, &length);   // get data
+ *   str[length] = '\0';                             // null terminate
+ * @endcode
+ */
+adios2_error adios2_get_string(adios2_engine *engine, adios2_variable *variable, char *data,
+                               size_t *length);
+
+/**
  * Performs all the adios2_get and adios2_get_by_name called with mode
  * adios2_mode_deferred up to this point by getting the data from the Engine.
  * User data can be reused after this point.

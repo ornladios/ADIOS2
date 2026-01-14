@@ -497,6 +497,46 @@ adios2_error adios2_get_by_name(adios2_engine *engine, const char *variable_name
     }
 }
 
+adios2_error adios2_get_string(adios2_engine *engine, adios2_variable *variable, char *data,
+                               size_t *length)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(engine, "for adios2_engine, in call to adios2_get_string");
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to adios2_get_string");
+        adios2::helper::CheckForNullptr(length, "for size_t *length, in call to adios2_get_string");
+
+        adios2::core::Engine *engineCpp = reinterpret_cast<adios2::core::Engine *>(engine);
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::DataType type = variableBase->m_Type;
+
+        if (type != adios2::helper::GetDataType<std::string>())
+        {
+            throw std::invalid_argument("ERROR: variable " + variableBase->m_Name +
+                                        " is not of string type, in call to adios2_get_string\n");
+        }
+
+        std::string dataStr;
+        engineCpp->Get(*dynamic_cast<adios2::core::Variable<std::string> *>(variableBase), dataStr);
+
+        *length = dataStr.size();
+
+        if (data != nullptr)
+        {
+            dataStr.copy(data, dataStr.size());
+        }
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_get_string"));
+    }
+}
+
 adios2_error adios2_perform_gets(adios2_engine *engine)
 {
     try
