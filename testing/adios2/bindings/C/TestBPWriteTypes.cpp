@@ -264,6 +264,56 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         EXPECT_EQ(dataVector[3], "fourth");
         EXPECT_EQ(elements, 4);
 
+        // Test adios2_attribute_string_data with the two-call pattern (single value)
+        size_t attrStrLength = 0;
+        adios2_error errAttrStr = adios2_attribute_string_data(attrSingle, NULL, &attrStrLength);
+        EXPECT_EQ(errAttrStr, adios2_error_none);
+        EXPECT_EQ(attrStrLength, strlen("Hello Attribute"));
+
+        char *attrStrData = new char[attrStrLength + 1];
+        errAttrStr = adios2_attribute_string_data(attrSingle, attrStrData, &attrStrLength);
+        EXPECT_EQ(errAttrStr, adios2_error_none);
+        attrStrData[attrStrLength] = '\0';
+        EXPECT_EQ(std::string(attrStrData), "Hello Attribute");
+        delete[] attrStrData;
+
+        // Test adios2_attribute_string_data_array with the two-call pattern (array)
+        size_t attrArrayCount = 0;
+        adios2_attribute_size(&attrArrayCount, attrArray);
+        EXPECT_EQ(attrArrayCount, 4u);
+
+        size_t *attrArrayLengths = new size_t[attrArrayCount];
+        adios2_error errAttrArr =
+            adios2_attribute_string_data_array(attrArray, NULL, attrArrayLengths);
+        EXPECT_EQ(errAttrArr, adios2_error_none);
+        EXPECT_EQ(attrArrayLengths[0], strlen("first"));
+        EXPECT_EQ(attrArrayLengths[1], strlen("second"));
+        EXPECT_EQ(attrArrayLengths[2], strlen("third"));
+        EXPECT_EQ(attrArrayLengths[3], strlen("fourth"));
+
+        char **attrArrayData = new char *[attrArrayCount];
+        for (size_t i = 0; i < attrArrayCount; ++i)
+        {
+            attrArrayData[i] = new char[attrArrayLengths[i] + 1];
+        }
+        errAttrArr = adios2_attribute_string_data_array(attrArray, attrArrayData, attrArrayLengths);
+        EXPECT_EQ(errAttrArr, adios2_error_none);
+        for (size_t i = 0; i < attrArrayCount; ++i)
+        {
+            attrArrayData[i][attrArrayLengths[i]] = '\0';
+        }
+        EXPECT_EQ(std::string(attrArrayData[0]), "first");
+        EXPECT_EQ(std::string(attrArrayData[1]), "second");
+        EXPECT_EQ(std::string(attrArrayData[2]), "third");
+        EXPECT_EQ(std::string(attrArrayData[3]), "fourth");
+
+        for (size_t i = 0; i < attrArrayCount; ++i)
+        {
+            delete[] attrArrayData[i];
+        }
+        delete[] attrArrayData;
+        delete[] attrArrayLengths;
+
         // compare min and max
         auto mmI8 = std::minmax_element(&data_I8[0], &data_I8[data_Nx]);
         auto mmI16 = std::minmax_element(&data_I16[0], &data_I16[data_Nx]);

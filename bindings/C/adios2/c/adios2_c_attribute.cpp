@@ -192,6 +192,105 @@ adios2_error adios2_attribute_data(void *data, size_t *size, const adios2_attrib
     }
 }
 
+adios2_error adios2_attribute_string_data(const adios2_attribute *attribute, char *data,
+                                          size_t *length)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(attribute,
+                                        "for attribute, in call to adios2_attribute_string_data");
+        adios2::helper::CheckForNullptr(
+            length, "for size_t *length, in call to adios2_attribute_string_data");
+
+        const adios2::core::AttributeBase *attributeBase =
+            reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
+
+        if (attributeBase->m_Type != adios2::helper::GetDataType<std::string>())
+        {
+            throw std::invalid_argument("ERROR: attribute " + attributeBase->m_Name +
+                                        " is not of string type, in call to "
+                                        "adios2_attribute_string_data\n");
+        }
+
+        if (!attributeBase->m_IsSingleValue)
+        {
+            throw std::invalid_argument("ERROR: attribute " + attributeBase->m_Name +
+                                        " is not a single value, use "
+                                        "adios2_attribute_string_data_array instead, in call to "
+                                        "adios2_attribute_string_data\n");
+        }
+
+        const adios2::core::Attribute<std::string> *attributeCpp =
+            dynamic_cast<const adios2::core::Attribute<std::string> *>(attributeBase);
+
+        *length = attributeCpp->m_DataSingleValue.size();
+
+        if (data != nullptr)
+        {
+            attributeCpp->m_DataSingleValue.copy(data, *length);
+        }
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_attribute_string_data"));
+    }
+}
+
+adios2_error adios2_attribute_string_data_array(const adios2_attribute *attribute, char **data,
+                                                size_t *lengths)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            attribute, "for attribute, in call to adios2_attribute_string_data_array");
+        adios2::helper::CheckForNullptr(
+            lengths, "for size_t *lengths, in call to adios2_attribute_string_data_array");
+
+        const adios2::core::AttributeBase *attributeBase =
+            reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
+
+        if (attributeBase->m_Type != adios2::helper::GetDataType<std::string>())
+        {
+            throw std::invalid_argument("ERROR: attribute " + attributeBase->m_Name +
+                                        " is not of string type, in call to "
+                                        "adios2_attribute_string_data_array\n");
+        }
+
+        if (attributeBase->m_IsSingleValue)
+        {
+            throw std::invalid_argument("ERROR: attribute " + attributeBase->m_Name +
+                                        " is a single value, use "
+                                        "adios2_attribute_string_data instead, in call to "
+                                        "adios2_attribute_string_data_array\n");
+        }
+
+        const adios2::core::Attribute<std::string> *attributeCpp =
+            dynamic_cast<const adios2::core::Attribute<std::string> *>(attributeBase);
+
+        const size_t count = attributeCpp->m_Elements;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            lengths[i] = attributeCpp->m_DataArray[i].size();
+
+            if (data != nullptr)
+            {
+                attributeCpp->m_DataArray[i].copy(data[i], lengths[i]);
+            }
+        }
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_attribute_string_data_array"));
+    }
+}
+
 #ifdef __cplusplus
 } // end extern C
 #endif
