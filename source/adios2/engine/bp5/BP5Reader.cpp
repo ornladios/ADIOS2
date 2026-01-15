@@ -144,7 +144,8 @@ void BP5Reader::ProcessMetadataFromMemory(const char *md)
     if (!m_BP5Deserializer)
     {
         m_BP5Deserializer = new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
-                                                        (m_OpenMode == Mode::ReadRandomAccess));
+                                                        (m_OpenMode == Mode::ReadRandomAccess),
+                                                        false, m_Minifooter.IsLittleEndian);
         m_BP5Deserializer->m_Engine = this;
     }
 
@@ -1473,9 +1474,9 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         // create the serializer object
         if (!m_BP5Deserializer)
         {
-            m_BP5Deserializer =
-                new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
-                                            (m_OpenMode != Mode::Read), (m_FlattenSteps));
+            m_BP5Deserializer = new format::BP5Deserializer(
+                m_WriterIsRowMajor, m_ReaderIsRowMajor, (m_OpenMode != Mode::Read),
+                (m_FlattenSteps), m_Minifooter.IsLittleEndian);
             m_BP5Deserializer->m_Engine = this;
         }
     }
@@ -1606,16 +1607,6 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
         position = m_EndianFlagPosition;
         const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
         m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
-#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
-        if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
-        {
-            helper::Throw<std::runtime_error>("Engine", "BP5Reader", "ParseMetadataIndex",
-                                              "reader found BigEndian bp file, "
-                                              "this version of ADIOS2 wasn't compiled "
-                                              "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                                              "explicitly, in call to Open");
-        }
-#endif
 
         // This has no flag in BP5 header. Always true
         m_Minifooter.HasSubFiles = true;

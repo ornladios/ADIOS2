@@ -192,7 +192,6 @@ adios_option(Fortran    "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem  "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 adios_option(UCX        "Enable support for UCX DataPlane in SST" AUTO)
 adios_option(Profiling  "Enable support for profiling" AUTO)
-adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
 adios_option(Campaign   "Enable support for Campaigns (requires SQLite3 and ZLIB)" AUTO)
@@ -278,7 +277,7 @@ endif()
 set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PRODM PNG SZ SZ3 ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
-    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK OpenSSL XRootD CURL GPU_Support CUDA Kokkos
+    ZeroMQ Profiling Derived_Variable AWSSDK OpenSSL XRootD CURL GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE
 )
 

@@ -193,7 +193,6 @@ The default ADIOS2 configuration on Titan builds a static library. Python bindin
             Python   : ON
             Fortran  : ON
             SysVShMem: ON
-            Endian_Reverse: OFF
 
       -- Configuring done
       -- Generating done

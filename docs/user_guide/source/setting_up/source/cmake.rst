@@ -62,7 +62,6 @@ To build ADIOS v2.x, clone the repository and invoke the canonical CMake build s
           UCX                : OFF
           ZeroMQ             : ON
           Profiling          : ON
-          Endian_Reverse     : OFF
           Derived_Variable   : OFF
           AWSSDK             : OFF
           GPU_Support        : OFF
@@ -143,7 +142,6 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_MGARD``           **ON**/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Blosc2``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
-``ADIOS2_USE_Endian_Reverse``  ON/**OFF**      Enable endian conversion if a different endianness is detected between write and read.
 ``ADIOS2_USE_IME``             ON/**OFF**      DDN IME transport.
 ============================= ================ ==========================================================================================================================================================================================================================
 
