@@ -16,6 +16,15 @@ again with allocated buffer to retrieve data):
 This addresses a gap in the C API where string lengths could not be queried
 before reading.
 
+Cross-Endian Interoperability
+-----------------------------
+
+The ``ADIOS2_USE_Endian_Reverse`` CMake option has been removed. Cross-endian
+file interoperability (reading files written on a machine with different byte
+order) is now always enabled. This means files written on big-endian systems
+can be read on little-endian systems and vice versa without any special build
+configuration.
+
 
 ===================
 What's new in 2.11?

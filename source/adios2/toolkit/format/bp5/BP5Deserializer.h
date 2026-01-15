@@ -36,7 +36,7 @@ class BP5Deserializer : virtual public BP5Base
 
 public:
     BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode = false,
-                    bool FlattenSteps = false);
+                    bool FlattenSteps = false, bool DataSourceIsLittleEndian = true);
 
     ~BP5Deserializer();
 
@@ -189,6 +189,8 @@ private:
 
     const bool m_RandomAccessMode;
     const bool m_FlattenSteps;
+    const bool m_SourceIsLittleEndian;
+    const bool m_ReaderIsLittleEndian;
 
     std::vector<size_t> m_WriterCohortSize; // per step, in random mode
     size_t m_CurrentWriterCohortSize;       // valid in streaming mode
