@@ -30,12 +30,8 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
         helper::IsLittleEndian() != m_BP3Deserializer->m_Minifooter.IsLittleEndian;
-#else
-    constexpr bool endianReverse = false;
-#endif
     size_t threadID = 0;
 
     for (typename Variable<T>::BPInfo &blockInfo : variable.m_BlocksInfo)
@@ -121,12 +117,8 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
         helper::IsLittleEndian() != m_BP3Deserializer->m_Minifooter.IsLittleEndian;
-#else
-    constexpr bool endianReverse = false;
-#endif
     size_t threadID = 0;
 
     threadID = 0;

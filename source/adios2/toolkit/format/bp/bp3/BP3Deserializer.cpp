@@ -82,17 +82,6 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
                                           "ParseMinifooter", err);
     }
     m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
-#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
-    if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
-    {
-        helper::Throw<std::runtime_error>("Toolkit", "format::bp::BP3Deserializer",
-                                          "ParseMinifooter",
-                                          "reader found BigEndian bp file, "
-                                          "this version of ADIOS2 wasn't compiled "
-                                          "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                                          "explicitly, in call to Open");
-    }
-#endif
 
     position += 1;
 

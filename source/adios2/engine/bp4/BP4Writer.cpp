@@ -350,10 +350,8 @@ void BP4Writer::InitBPBuffer()
             {
                 helper::Throw<std::runtime_error>(
                     "Engine", "BP4Writer", "InitBPBuffer",
-                    "previous run generated BigEndian bp file, "
-                    "this version of ADIOS2 wasn't compiled "
-                    "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                    "explicitly, in call to Open");
+                    "previous run generated a file with different endianness, "
+                    "appending to cross-endian files is not supported");
             }
             const size_t pos_last_step = preMetadataIndexFileSize - 64;
             position = pos_last_step;
