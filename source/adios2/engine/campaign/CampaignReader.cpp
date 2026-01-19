@@ -358,14 +358,15 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
     bool setHDF5FilePath = true;
     if (rep.files.size())
     {
-        for (auto &f : rep.files)
+        for (auto &fileid : rep.files)
         {
+            CampaignFile &cf = m_CampaignData.files[fileid];
             std::string path =
-                localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(f.name);
+                localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(cf.name);
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable, will read from DB directly, no local path
-                CreateTextVariable(ds.name, f.lengthOriginal, dsIdx, repIdx, false);
+                CreateTextVariable(ds.name, cf.lengthOriginal, dsIdx, repIdx, false);
                 continue;
             }
             else if (ds.format == FileFormat::IMAGE)
@@ -373,12 +374,12 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 // IMAGE -> create a variable, will read from DB directly, no local path
                 std::string imgName =
                     ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
-                CreateImageVariable(imgName, f.lengthOriginal, dsIdx, repIdx, false);
+                CreateImageVariable(imgName, cf.lengthOriginal, dsIdx, repIdx, false);
                 continue;
             }
             else
             {
-                m_CampaignData.SaveToFile(path, f, keyhex);
+                m_CampaignData.SaveToFile(path, fileid, keyhex);
             }
 
             if (setHDF5FilePath)
@@ -612,9 +613,9 @@ void CampaignReader::InitTransports()
                 {
                     std::cout << "          key: " << rep.keyIdx << "\n";
                 }
-                for (auto &f : rep.files)
+                for (auto &fileid : rep.files)
                 {
-                    std::cout << "          file: " << f.name << "\n";
+                    std::cout << "          file: " << m_CampaignData.files[fileid].name << "\n";
                 }
             }
         }
@@ -646,9 +647,10 @@ void CampaignReader::InitTransports()
                     {
                         std::cout << "          key: " << rep.keyIdx << "\n";
                     }
-                    for (auto &f : rep.files)
+                    for (auto &fileid : rep.files)
                     {
-                        std::cout << "          file: " << f.name << "\n";
+                        std::cout << "          file: " << m_CampaignData.files[fileid].name
+                                  << "\n";
                     }
                 }
             }
@@ -889,8 +891,9 @@ void CampaignReader::InitTransports()
                 {
                     std::cout << "        --- embedded image " << imgName << "\n";
                 }
-                auto f = rep.files.begin();
-                CreateImageVariable(imgName, f->lengthOriginal, dsIdx, repIdx, true);
+                auto fileid = *rep.files.begin();
+                CreateImageVariable(imgName, m_CampaignData.files[fileid].lengthOriginal, dsIdx,
+                                    repIdx, true);
             }
             else if (m_CampaignData.hosts[rep.hostIdx].hostname == m_Options.hostname)
             {
@@ -1311,11 +1314,11 @@ void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, size_t re
     }
 
     CampaignReplica &rep = m_CampaignData.datasets[dsIdx].replicas[repIdx];
-    const CampaignFile &f = rep.files.at(0);
+    const size_t fileid = rep.files.at(0);
     std::string keyhex;
     if (rep.hasKey)
         keyhex = m_CampaignData.keys[rep.keyIdx].keyHex;
-    m_CampaignData.ReadToMemory((char *)data, f, keyhex);
+    m_CampaignData.ReadToMemory((char *)data, fileid, keyhex);
 }
 
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
