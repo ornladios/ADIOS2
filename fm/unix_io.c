@@ -36,7 +36,7 @@ extern int select(int width, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
 #endif
 
-static int
+static size_t
 unix_read_func(void *conn, void *buffer, size_t length, int *errno_p, char **result_p)
 {
     int left = length;
@@ -164,7 +164,7 @@ unix_timeout_read_func(void *conn, void *buffer, size_t length, int *errno_p, ch
     return length;
 }
 
-static int
+static size_t
 unix_write_func(void *conn, void *buffer, size_t length, int *errno_p, char **result_p)
 {
     int left = length;
@@ -239,7 +239,7 @@ unix_file_open_func(const char *path, const char *flag_str, int *input, int *out
     }
 }
     
-static int
+static size_t
 unix_writev_func(void *conn, struct iovec *iov, int iovcnt, int *errno_p, char **result_p)
 {
     int fd = (int) (long) conn;
@@ -290,7 +290,7 @@ unix_writev_func(void *conn, struct iovec *iov, int iovcnt, int *errno_p, char *
     return iovcnt;
 }
 
-static int
+static size_t
 unix_readv_func(void *conn, struct iovec *iov, int icount, int *errno_p, char **result_p)
 {
     int orig_icount = icount;

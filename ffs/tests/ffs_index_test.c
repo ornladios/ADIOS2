@@ -340,6 +340,7 @@ do_test(char *input_file, size_t (*size_func) (FFSFile, size_t), int (*read_func
 	item_count++;
     }
 
+    (void)item_count;
     close_FFSfile(iofile);
     free_FFSfile(iofile);
     free_written_data();

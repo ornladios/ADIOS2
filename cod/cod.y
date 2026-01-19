@@ -1887,6 +1887,22 @@ constant :
 
 typedef struct scope *scope_ptr;
 
+enum namespace { NS_DEFAULT, NS_STRUCT, NS_ENUM };
+
+typedef struct st_entry {
+    char *id;
+    sm_ref node;
+    enum namespace ns;
+    struct st_entry *next;
+} *st_entry;
+
+struct scope {
+    cod_extern_list externs;
+    struct st_entry *entry_list;
+    sm_ref code_container;
+    struct scope *containing_scope;
+};
+
 struct parse_struct {
     sm_list decls;
     sm_list standard_decls;
@@ -2052,6 +2068,24 @@ cod_parse_for_context(char *code, cod_parse_context context)
     }
     ret = semanticize_decls_list(context, decls, context->scope);
     if (ret == 0) {
+	/* Remove failed decls from scope before freeing to avoid dangling pointers */
+	sm_list tmp = decls;
+	while (tmp != NULL) {
+	    if (tmp->node != NULL) {
+		st_entry *prev_ptr = &context->scope->entry_list;
+		st_entry list = context->scope->entry_list;
+		while(list != NULL) {
+		    if (list->node == tmp->node) {
+			*prev_ptr = list->next;
+			free(list);
+			break;
+		    }
+		    prev_ptr = &list->next;
+		    list = list->next;
+		}
+	    }
+	    tmp = tmp->next;
+	}
 	cod_rfree_list(decls, NULL);
 	context->decls = NULL;
     }
@@ -2450,24 +2484,7 @@ free_enc_info(enc_info enc)
     free(enc);
 }
 
-enum namespace { NS_DEFAULT, NS_STRUCT, NS_ENUM };
-
 char *namespace_str[] = {"DEFAULT", "STRUCT"};
-
-typedef struct st_entry {
-    char *id;
-    sm_ref node;
-    enum namespace ns;
-    struct st_entry *next;
-} *st_entry;
-
-struct scope {
-    cod_extern_list externs;
-    struct st_entry *entry_list;
-    sm_ref code_container;
-    struct scope *containing_scope;
-};
-
 
 extern cod_parse_context
 cod_copy_context(cod_parse_context context)
@@ -2695,6 +2712,22 @@ resolve_local(char *id, scope_ptr scope)
 	list = list->next;
     }
     return NULL;
+}
+
+static void
+remove_decl(sm_ref node, scope_ptr scope)
+{
+    st_entry *prev_ptr = &scope->entry_list;
+    st_entry list = scope->entry_list;
+    while(list != NULL) {
+	if (list->node == node) {
+	    *prev_ptr = list->next;
+	    free(list);
+	    return;
+	}
+	prev_ptr = &list->next;
+	list = list->next;
+    }
 }
 
 static sm_ref
@@ -3009,7 +3042,6 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
     int string_appeared = 0;
     int spec_count = 0;
     int prefix_end = 0;
-    int type_found = 0;
     int cg_type;
 
     cg_type = DILL_ERR;
@@ -3183,9 +3215,6 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
 	}
     }
  finalize:
-    if (cg_type != DILL_ERR) {
-	type_found++;
-    }
     switch(cg_type) {
     case DILL_C: 
 	*size = sizeof(char);
@@ -3229,7 +3258,6 @@ cod_build_parsed_type_node(cod_parse_context c, char *name, sm_list l)
 
     sm_list tmp = l;
     sm_list last_type = NULL;
-    int field_count = 0;
     decl->node.struct_type_decl.id = name;
     
      while(tmp != NULL) {
@@ -3289,7 +3317,6 @@ cod_build_parsed_type_node(cod_parse_context c, char *name, sm_list l)
 	new_elem->node->node.field.cg_type = DILL_ERR;
 	new_elem->node->node.field.type_spec = typ;
 	cod_rfree(node);
-	field_count++;
 	last_type = tmp;
 	tmp = tmp->next;
 	free(last_type);
@@ -4959,9 +4986,6 @@ static int semanticize_decl(cod_parse_context context, sm_ref decl,
 {
     switch(decl->node_type) {
     case cod_declaration: {
-	sm_ref ctype;
-	int is_block_type = 0;
-
 	if (resolve_local(decl->node.declaration.id, scope) != NULL) {
 	    if (resolve_local(decl->node.declaration.id, scope) != decl) {
 		cod_src_error(context, decl, "Duplicate Symbol \"%s\"", 
@@ -5069,10 +5093,6 @@ static int semanticize_decl(cod_parse_context context, sm_ref decl,
 	    if ((typ == NULL) && (cg_type == DILL_ERR)) return 0;
 	    decl->node.declaration.cg_type = cg_type;
 	    decl->node.declaration.sm_complex_type = typ;
-	}
-	ctype = decl->node.declaration.sm_complex_type;
-	if ((ctype != NULL) && ((ctype->node_type == cod_array_type_decl) || (ctype->node_type == cod_struct_type_decl))) {
-	    is_block_type = 1;
 	}
 	if (decl->node.declaration.init_value != NULL) {
 	    int ret;
