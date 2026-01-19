@@ -495,11 +495,11 @@ dump_bb(dill_stream c, struct basic_block* bb, int i)
     printf("\n    live_at_end :");
     dump_reg_vec(bb->live_at_end);
     printf("\n    succ :");
-    for (j = 0; j < bb->succ_count; j++) {
+    for (j = 0; j < (size_t)bb->succ_count; j++) {
         printf(" %d", bb->succ_list[j]);
     }
     printf("\n    preds :");
-    for (j = 0; j < bb->pred_count; j++) {
+    for (j = 0; j < (size_t)bb->pred_count; j++) {
         printf(" %d", bb->pred_list[j]);
     }
     if (bb->is_loop_start)
@@ -508,7 +508,7 @@ dump_bb(dill_stream c, struct basic_block* bb, int i)
         printf(" - LOOP_END");
     printf("\n");
     for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
-        printf(" %zd - ", j);
+        printf(" %zu - ", j);
         virtual_print_insn(
             c, NULL,
             ((char*)c->p->virtual.code_base) + j * sizeof(virtual_insn));
@@ -526,6 +526,19 @@ dump_bbs(dill_stream c)
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#if defined __GNUC__ && defined __GNUC_MINOR__
+# define __GNUC_PREREQ(maj, min) \
+        ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+#else
+# define __GNUC_PREREQ(maj, min) 0
+#endif
+#  if __GNUC_PREREQ(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#  endif
+#endif
+/* overflow is confused about operation on bit_vec->vec, suppress warning */
 static int
 add_regs(bit_vec dest, bit_vec src)
 {
@@ -553,6 +566,11 @@ remove_regs(bit_vec dest, bit_vec src)
         dest->vec[i] = (dest->vec[i] & ~src->vec[i]);
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#  if __GNUC_PREREQ(4,6)
+#pragma GCC diagnostic pop
+#  endif
+#endif
 
 static void
 clear_bit_vec(bit_vec b)
@@ -1807,7 +1825,8 @@ emit_insns(dill_stream c,
            virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    size_t i, j = 0;
+    int i;
+    size_t j = 0;
     virtual_insn* ip;
     if (count_verbose == -1) {
         count_verbose = (getenv("DILL_COUNTS") != NULL);
@@ -2546,9 +2565,9 @@ emit_insns(dill_stream c,
         if (count_verbose) {
             int insn_end = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
             printf(
-                "Basic Block %zd, %d virtual instructions, %d physical "
+                "Basic Block %d, %d virtual instructions, %d physical "
                 "instructions\n",
-                i, insn_count, c->j->count_insn(c, insn_start, insn_end));
+                (int)i, insn_count, c->j->count_insn(c, insn_start, insn_end));
         }
     }
     if ((unsigned)ltable[label_xlate].old_location ==
@@ -3053,7 +3072,8 @@ new_emit_insns(dill_stream c,
                virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    size_t i, j = 0;
+    int i;
+    size_t j = 0;
     reg_state state;
 
     if (count_verbose == -1) {
@@ -3061,8 +3081,8 @@ new_emit_insns(dill_stream c,
     }
     init_reg_state(&state, c);
     state.c = c;
-    for (j = 0; j < c->p->vreg_count; j++) {
-        if (dill_type_of(c, 100 + j) == DILL_B) {
+    for (j = 0; j < (size_t)c->p->vreg_count; j++) {
+        if (dill_type_of(c, 100 + (int)j) == DILL_B) {
             /* offset is really size, fix that */
             c->p->vregs[j].offset = dill_localb(c, c->p->vregs[j].offset);
         }
@@ -3071,7 +3091,7 @@ new_emit_insns(dill_stream c,
         basic_block bb = &vmi->bblist[i];
         int insn_count = (int)(bb->end - bb->start);
         int insn_start;
-        for (j = 0; j < c->p->vreg_count; j++) {
+        for (j = 0; j < (size_t)c->p->vreg_count; j++) {
             c->p->vregs[j].assign_loc = -1;
             c->p->vregs[j].in_reg = -1;
             c->p->vregs[j].last_use = -1;
@@ -3079,7 +3099,7 @@ new_emit_insns(dill_stream c,
             c->p->vregs[j].update_in_reg = 0;
             c->p->vregs[j].value_in_mem = -1;
         }
-        for (j = 0; j < c->p->c_param_count; j++) {
+        for (j = 0; j < (size_t)c->p->c_param_count; j++) {
             state.param_info[j].assign_loc = -1;
             state.param_info[j].in_reg = -1;
             state.param_info[j].last_use = -1;
@@ -3091,7 +3111,7 @@ new_emit_insns(dill_stream c,
             virtual_insn* ip = &((virtual_insn*)insns)[j];
             update_vreg_info(&state, bb, ip, (int)j);
         }
-        for (j = 0; j < c->p->vreg_count; j++) {
+        for (j = 0; j < (size_t)c->p->vreg_count; j++) {
             if (get_last_use(&state, (int)j + 100) == -1)
                 continue;
             c->p->vregs[j].use_metric *= insn_count;
@@ -3099,7 +3119,7 @@ new_emit_insns(dill_stream c,
                 (c->p->vregs[j].last_use - c->p->vregs[j].value_in_mem + 1);
             c->p->vregs[j].value_in_mem = bit_vec_is_set(bb->regs_used, (int)j);
         }
-        for (j = 0; j < c->p->c_param_count; j++) {
+        for (j = 0; j < (size_t)c->p->c_param_count; j++) {
             if (c->p->c_param_args[j].is_register) {
                 state.param_info[j].update_in_reg = 0;
                 state.param_info[j].value_in_mem = 0;
@@ -3112,7 +3132,7 @@ new_emit_insns(dill_stream c,
         }
         reset_reg_state(&state);
         if (c->dill_debug) {
-            printf("============= Starting basic block %zd ===========\n", i);
+            printf("============= Starting basic block %d ===========\n", (int)i);
             dump_bb(c, bb, (int)i);
         }
         insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
@@ -3367,9 +3387,9 @@ new_emit_insns(dill_stream c,
         if (count_verbose) {
             int insn_end = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
             printf(
-                "Basic Block %zd, %d virtual instructions, %d physical "
+                "Basic Block %d, %d virtual instructions, %d physical "
                 "instructions\n",
-                i, insn_count, c->j->count_insn(c, insn_start, insn_end));
+                (int)i, insn_count, c->j->count_insn(c, insn_start, insn_end));
         }
     }
     if ((unsigned)ltable[label_xlate].old_location ==
@@ -3401,7 +3421,8 @@ apply_to_each(dill_stream c,
               virtual_mach_info vmi,
               apply_func func)
 {
-    size_t i, j = 0;
+    int i;
+    size_t j = 0;
 
     for (i = 0; i < vmi->bbcount; i++) {
         basic_block bb = &vmi->bblist[i];
@@ -3863,7 +3884,8 @@ is_convert_noop(int insn_code)
     int to_type = insn_code & 0xf;
 
     /* GSE -bug  This test should be for *generated* target, not host */
-    if (sizeof(long) != sizeof(int)) {
+    /* Use sizeof(uintptr_t) since that's what DILL uses for UL/L types */
+    if (sizeof(uintptr_t) != sizeof(int)) {
         return 0;
     } else {
         switch (from_type) {
@@ -4476,6 +4498,8 @@ virtual_do_end(dill_stream s, int package)
         if (vmi->prefix_code_start == -1) {
             dill_retii(s, 0);
             s->p->virtual.cur_ip = s->p->cur_ip;
+	    s->p->virtual.code_base = s->p->code_base;
+	    s->p->virtual.code_limit = s->p->code_limit;
         }
         setup_VM_proc(s);
 #endif

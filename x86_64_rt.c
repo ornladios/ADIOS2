@@ -24,8 +24,8 @@ dill_x86_64_hidden_ULtoD(size_t a)
 extern size_t
 dill_x86_64_hidden_DtoUL(double a)
 {
-    size_t l = (long)a;
-    return l;
+    /* Cast directly to size_t, not via long (long is 32-bit on Windows) */
+    return (size_t)a;
 }
 
 static xfer_entry x86_64_xfer_recs[5] = {
@@ -94,6 +94,7 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     DWORD dummy;
     result =
         VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
+    (void) result;
 #endif
     return tmp + pkg->entry_offset;
 }
