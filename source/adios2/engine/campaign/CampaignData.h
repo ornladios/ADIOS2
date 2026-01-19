@@ -54,8 +54,8 @@ struct CampaignKey
 struct CampaignFile
 {
     std::string name;
-    size_t datasetIdx; // index of grandparent CampaignDataset in the map
-    size_t replicaIdx; // index of parent CampaignReplica in CampaignDataset
+    // size_t datasetIdx; // index of grandparent CampaignDataset in the map
+    //  std::vector<size_t> replicaIdxs; // CampaignReplicas using this file in CampaignDataset
     bool compressed;
     size_t lengthOriginal;
     size_t lengthCompressed;
@@ -106,8 +106,8 @@ struct CampaignReplica
     bool deleted;
     bool hasKey;
     size_t keyIdx;
-    size_t size; // replica size on remote location
-    std::vector<CampaignFile> files;
+    size_t size;               // replica size on remote location
+    std::vector<size_t> files; // file indices in CampaignDataset, ordered by fileid
     // image replicas have resolution information (ds.format == FileFormat::IMAGE)
     size_t x;
     size_t y;
@@ -122,6 +122,7 @@ struct CampaignDataset
     FileFormat format;
     bool deleted;
     std::map<size_t, CampaignReplica> replicas; // indexed by replicaID, 1..n, not contiguous
+    std::map<size_t, CampaignFile> files;       // indexed by fileID, 1..n, not contiguous
 };
 
 struct CampaignTimeSeries
@@ -165,6 +166,7 @@ public:
     std::map<size_t, CampaignDataset> datasets;      // indexed by datasetID, 1..n, not contiguous
     std::map<size_t, CampaignTimeSeries> timeseries; // indexed by tsid, 1..n, not contiguous
     std::map<size_t, std::string> tarnames;          // indexed by rowid of archive table
+    std::map<size_t, CampaignFile> files;            // indexed by fileid, 1..n, not contiguous
 
     CampaignData() = default;
     ~CampaignData() = default;
@@ -173,10 +175,10 @@ public:
     void ReadDatabase();
     void Close();
 
-    void SaveToFile(const std::string &path, const CampaignFile &file, std::string &keyHex);
+    void SaveToFile(const std::string &path, const size_t fileIdx, std::string &keyHex);
 
     // assumed that memory for data is allocated
-    void ReadToMemory(char *data, const CampaignFile &file, std::string &keyHex);
+    void ReadToMemory(char *data, const size_t fileIdx, std::string &keyHex);
 
     // return 0 if there is no replica found for 'hostname', otherwise the replica index
     size_t FindReplicaOnHost(const size_t datasetIdx, std::string hostname);
@@ -193,7 +195,7 @@ public:
     std::string GetTarIdx(const size_t dsIdx, const size_t repIdx);
 
 private:
-    void DumpToFileOrMemory(const CampaignFile &file, std::string &keyHex, const std::string &path,
+    void DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex, const std::string &path,
                             char *data);
     void *m_DB = nullptr;
 };
