@@ -135,10 +135,6 @@ static int remove_periodic_task(select_data_ptr sd,
 				      periodic_task_handle handle);
 
 #ifdef HAVE_WINDOWS_H
-/* Winsock init stuff  */
-/* ask for ver 1.1 */
-static WORD wVersionRequested = MAKEWORD(1, 1);
-static WSADATA wsaData;
 int nErrorStatus;
 static char*WSAerror_str(int err);
 #ifndef FD_SETSIZE
@@ -819,8 +815,7 @@ static void read_wake_fd(void *fd_as_ptr, void *junk)
 
 #ifdef HAVE_WINDOWS_H
 static char*
-WSAerror_str(err)
-int err;
+WSAerror_str(int err)
 {
     switch(err) {
     case WSAEINTR: return "WSAEINTR";
@@ -887,7 +882,6 @@ pipe(SOCKET *filedes)
     
     int length;
     struct sockaddr_in sock_addr;
-    int sock_opt_val = 1;
     SOCKET sock1, sock2, conn_sock;
     unsigned long block = TRUE;
     int delay_value = 1;

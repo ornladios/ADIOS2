@@ -7,6 +7,7 @@
 #define FD_SETSIZE 1024
 #endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <process.h>
 #include <time.h>
@@ -223,7 +224,7 @@ socket_accept_conn(void *void_trans, void *void_conn_sock)
     socket_conn_data_ptr socket_conn_data;
     SOCKET sock;
     struct sockaddr sock_addr;
-    unsigned int sock_len = sizeof(sock_addr);
+    socklen_t sock_len = sizeof(sock_addr);
     int int_port_num;
     struct linger linger_val;
     int sock_opt_val = 1;
@@ -241,7 +242,7 @@ socket_accept_conn(void *void_trans, void *void_conn_sock)
     svc->trace_out(sd->cm, "Trying to accept something, socket %d\n", conn_sock);
     linger_val.l_onoff = 1;
     linger_val.l_linger = 60;
-    if ((sock = accept(conn_sock, (struct sockaddr *) 0, (unsigned int *) 0)) == SOCKET_ERROR) {
+    if ((sock = accept(conn_sock, (struct sockaddr *) 0, (socklen_t *) 0)) == SOCKET_ERROR) {
 	perror("Cannot accept socket connection");
 	svc->fd_remove_select(sd->cm, conn_sock);
 	fprintf(stderr, "failure in CMsockets  removing socket connection\n");
@@ -358,7 +359,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
     char *host_name;
     int remote_IP = -1;
     static int host_ip = 0;
-    unsigned int sock_len;
+    socklen_t sock_len;
     union {
 	struct sockaddr s;
 	struct sockaddr_in s_I4;
@@ -525,8 +526,11 @@ libcmsockets_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entr
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
-    if ((sock = initiate_conn(cm, svc, trans, attrs, socket_conn_data, conn_attr_list)) < 0)
-	return NULL;
+    if ((sock = initiate_conn(cm, svc, trans, attrs, socket_conn_data, conn_attr_list)) < 0) {
+        free(socket_conn_data);
+        free_attr_list(conn_attr_list);
+        return NULL;
+    }
 
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (intptr_t)socket_conn_data->remote_contact_port);
@@ -654,7 +658,7 @@ extern attr_list
 libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     socket_client_data_ptr sd = trans->trans_data;
-    unsigned int length;
+    socklen_t length;
     struct sockaddr_in sock_addr;
     int sock_opt_val = 1;
     SOCKET conn_sock = 0;
@@ -886,7 +890,7 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
       int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
       scd->block_state = Block;
       if (ret != NO_ERROR)
-	printf("ioctlsocket failed with error: %ld\n", ret);
+	printf("ioctlsocket failed with error: %d\n", ret);
 
       svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to blocking WIN properly",
 		     scd->fd);
@@ -895,7 +899,7 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
       u_long mode = 1;  // 1 to enable non-blocking socket
       int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
       if (ret != NO_ERROR)
-	printf("ioctlsocket failed with error: %ld\n", ret);
+	printf("ioctlsocket failed with error: %d\n", ret);
 
       scd->block_state = Non_Block;
       svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to nonblocking WIN properly",
@@ -903,6 +907,12 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
     }
 #endif
 }
+
+#ifndef MAX_RW_COUNT
+// Not actually defined outside the kernel as far as I know  - GSE
+#define MAX_RW_COUNT 0x7ffff000   
+//#define MAX_RW_COUNT 0x3ffff000    // Be more conservative.
+#endif
 
 extern ssize_t
 libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr scd, void *buffer, ssize_t requested_len, int non_blocking)
@@ -928,7 +938,9 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 		       scd->fd);
 	set_block_state(svc, scd, Non_Block);
     }
-    iget = read(scd->fd, (char *) buffer, (int)requested_len);
+    ssize_t read_len = requested_len;
+    if (read_len > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
+    iget = read(scd->fd, (char *) buffer, (int)read_len);
     if ((iget == -1) || (iget == 0)) {
 	int lerrno = errno;
 	if ((lerrno != 0) &&
@@ -951,8 +963,10 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
     left = requested_len - iget;
     while (left > 0) {
 	int lerrno;
+	read_len = left;
+	if (left > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
 	iget = read(scd->fd, (char *) buffer + requested_len - left,
-		    (int)left);
+		    (int)read_len);
 	lerrno = errno;
 	if (iget == -1) {
 	    if ((lerrno != EWOULDBLOCK) &&
@@ -989,10 +1003,7 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 #ifndef HAVE_WRITEV
 static
 ssize_t
-writev(fd, iov, iovcnt)
-int fd;
-struct iovec *iov;
-int iovcnt;
+writev(SOCKET fd, struct iovec *iov, size_t iovcnt)
 {
     ssize_t wrote = 0;
     int i;
@@ -1024,16 +1035,52 @@ int iovcnt;
 }
 #endif
 
-int long_writev(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt)
-{
-    assert(0);   // for right now, don't try this
-    return 0;
-}
+extern ssize_t
+libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs);
 
-#ifndef MAX_RW_COUNT
-// Not actually defined outside the kernel as far as I know  - GSE
-#define MAX_RW_COUNT 0x7ffff000
-#endif
+static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struct iovec* iov, int iovcnt, attr_list attrs, ssize_t left)
+{
+    int cur_iov_base = 0;
+    int cur_iov_cnt = 0;
+    svc->trace_out(scd->sd->cm, "CMSocket doing long writev of %zd bytes on fd %d",
+		   left, scd->fd);
+    while (left > 0) {
+	ssize_t write_size = 0;
+	ssize_t ret;
+	while (cur_iov_cnt + cur_iov_base < iovcnt) {
+	    cur_iov_cnt++;
+#define TRAIL_BUFFER 1024
+	    if ((write_size + iov[cur_iov_cnt + cur_iov_base -1].iov_len) + TRAIL_BUFFER > MAX_RW_COUNT) {
+		struct iovec saved_iov_entry = iov[cur_iov_cnt + cur_iov_base -1];
+		ssize_t new_iov_len = MAX_RW_COUNT - write_size - TRAIL_BUFFER;   // give some buffer
+		iov[cur_iov_cnt + cur_iov_base -1].iov_len = new_iov_len;
+		svc->trace_out(scd->sd->cm, "CMSocket doing long intermediate writev of %d buffers on fd %d",
+			       (int)new_iov_len, scd->fd);
+		ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+		if (ret != cur_iov_cnt) {
+		    return ret + cur_iov_base;
+		}
+		iov[cur_iov_cnt + cur_iov_base -1].iov_len = saved_iov_entry.iov_len - new_iov_len;
+		iov[cur_iov_cnt + cur_iov_base -1].iov_base = (char*)iov[cur_iov_cnt + cur_iov_base -1].iov_base + new_iov_len;
+		write_size += new_iov_len;
+		left -= write_size;
+		cur_iov_base += cur_iov_cnt - 1;
+		cur_iov_cnt = 0;
+		write_size = 0;
+	    } else {
+		write_size += iov[cur_iov_cnt + cur_iov_base -1].iov_len;
+	    }
+	}
+	svc->trace_out(scd->sd->cm, "CMSocket doing long final writev of %zd bytes on fd %d",
+		       left, scd->fd);
+	ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+	if (ret != cur_iov_cnt) {
+	    return ret + cur_iov_base;
+	}
+	left -= write_size;
+    }
+    return iovcnt;
+}
 
 extern ssize_t
 libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs)
@@ -1053,7 +1100,7 @@ libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, voi
 		   left, fd);
     if (left > MAX_RW_COUNT) {
 	// more to write than unix lets us do in one call
-	return long_writev(svc, scd, iovs, iovcnt);
+	return long_writev(svc, scd, iovs, iovcnt, attrs, left);
     }
 		    
     while (left > 0) {
