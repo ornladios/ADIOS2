@@ -1,5 +1,5 @@
 
-set(TESTS basic_call general t1 opt branch prefix_test)
+set(TESTS basic_call general t1 opt branch prefix_test mixed_params)
 
 if(NATIVE_CG)
   list(APPEND TESTS pkg_test multi_test)

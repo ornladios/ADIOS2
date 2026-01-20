@@ -1,15 +1,17 @@
 name: Build and Test
 
-on: 
-  push: 
-    branches: 
-    - master 
-  pull_request: 
-    branches: 
-    - master 
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: '0 6 * * 1'  # Monday 6am UTC - weekly build to catch dependency issues 
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -30,9 +32,6 @@ jobs:
         buildtype: [ release, debug ]
         os: [ alma9, ubuntu2204, ubuntu2404 ]
         compiler: [ clang, gcc ]
-        exclude:
-          - { os: alma9, compiler: nvhpc }
-          - { os: ubuntu2204, compiler: nvhpc }
         include:
         - os: alma9
           container: almalinux:9
@@ -42,12 +41,19 @@ jobs:
           container: ubuntu:22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
     - name: Setup
       run: source/scripts/ci/setup/linux.sh
+    - name: Cache CMake build
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
+        restore-keys: |
+          ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.buildtype }}-
     - name: Update
       run: source/scripts/ci/gh-actions/run.sh update
     - name: Configure
@@ -88,16 +94,23 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
-    - name: Setup
+    - name: Setup Windows
       if: ${{ runner.os == 'Windows' }}
       run: source/scripts/ci/setup/windows.sh
-    - name: Setup
+    - name: Setup macOS
       if: ${{ runner.os == 'macOS' }}
       run: source/scripts/ci/setup/macos.sh
+    - name: Cache CMake build
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ matrix.jobname }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
+        restore-keys: |
+          ${{ matrix.jobname }}-${{ matrix.buildtype }}-
     - name: Update
       run: source/scripts/ci/gh-actions/run.sh update
     - name: Configure
