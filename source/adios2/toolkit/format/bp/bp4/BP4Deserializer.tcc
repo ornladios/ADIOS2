@@ -533,12 +533,8 @@ void BP4Deserializer::PostDataRead(core::Variable<T> &variable,
         }
     }
 
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
         (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true : false;
-#else
-    constexpr bool endianReverse = false;
-#endif
 
     const Dims blockInfoStart =
         (variable.m_ShapeID == ShapeID::LocalArray && blockInfo.Start.empty())

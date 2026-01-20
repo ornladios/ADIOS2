@@ -1226,6 +1226,8 @@ void BP5Deserializer::InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseDat
         }
     };
 
+    const bool endianReverse = m_ReaderIsLittleEndian != m_SourceIsLittleEndian;
+
     for (size_t i = 0; i < Attrs->PrimAttrCount; i++)
     {
         PrimitiveTypeAttr *ThisAttr = &Attrs->PrimAttrs[i];
@@ -1242,9 +1244,23 @@ void BP5Deserializer::InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseDat
 #define declare_type(T)                                                                            \
     else if (Type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        m_Engine->m_IO.DefineAttribute<T>(Name, (T *)ThisAttr->Values,                             \
-                                          ThisAttr->TotalElementSize / DataTypeSize[(int)Type],    \
-                                          "", "/", true);                                          \
+        size_t elemCount = ThisAttr->TotalElementSize / DataTypeSize[(int)Type];                   \
+        if (endianReverse)                                                                         \
+        {                                                                                          \
+            std::vector<T> swappedValues(elemCount);                                               \
+            for (size_t j = 0; j < elemCount; j++)                                                 \
+            {                                                                                      \
+                size_t pos = j * sizeof(T);                                                        \
+                helper::ReverseCopyFromBuffer(ThisAttr->Values, pos, &swappedValues[j], 1);        \
+            }                                                                                      \
+            m_Engine->m_IO.DefineAttribute<T>(Name, swappedValues.data(), elemCount, "", "/",      \
+                                              true);                                               \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            m_Engine->m_IO.DefineAttribute<T>(Name, (T *)ThisAttr->Values, elemCount, "", "/",     \
+                                              true);                                               \
+        }                                                                                          \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -1263,7 +1279,17 @@ void BP5Deserializer::InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseDat
 #define declare_type(T)                                                                            \
     else if (Type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        m_Engine->m_IO.DefineAttribute<T>(Name, *(T *)ThisAttr->Values, "", "/", true);            \
+        if (endianReverse)                                                                         \
+        {                                                                                          \
+            T swappedValue;                                                                        \
+            size_t pos = 0;                                                                        \
+            helper::ReverseCopyFromBuffer(ThisAttr->Values, pos, &swappedValue, 1);                \
+            m_Engine->m_IO.DefineAttribute<T>(Name, swappedValue, "", "/", true);                  \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            m_Engine->m_IO.DefineAttribute<T>(Name, *(T *)ThisAttr->Values, "", "/", true);        \
+        }                                                                                          \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -1733,6 +1759,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                 RR.DirectToAppMemory = false;
                             else if (VarRec->Operator != NULL)
                                 RR.DirectToAppMemory = false;
+                            else if (m_SourceIsLittleEndian != m_ReaderIsLittleEndian)
+                                RR.DirectToAppMemory = false;
                             else
                                 RR.DirectToAppMemory =
                                     IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
@@ -1913,6 +1941,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
                                     if (Req->MemSpace != MemorySpace::Host)
                                         RR.DirectToAppMemory = false;
+                                    else if (m_SourceIsLittleEndian != m_ReaderIsLittleEndian)
+                                        RR.DirectToAppMemory = false;
                                     else
                                         RR.DirectToAppMemory = IsContiguousTransfer(
                                             Req, &writer_meta_base->Offsets[StartDim],
@@ -1987,6 +2017,8 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         return;
 
     int ElementSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
+    DataType VarType = ((struct BP5VarRec *)Req.VarRec)->Type;
+    bool IsComplexType = (VarType == DataType::FloatComplex || VarType == DataType::DoubleComplex);
     MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
         ((struct BP5VarRec *)Req.VarRec), Read.Timestep, Read.WriterRank);
 
@@ -2116,6 +2148,21 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         std::reverse(outMemCount.begin(), outMemCount.end());
     }
 
+    // For complex types with cross-endian reads, halve element size and double
+    // the fastest-changing dimension so NdCopy swaps real/imag parts separately
+    if (IsComplexType && (m_SourceIsLittleEndian != m_ReaderIsLittleEndian))
+    {
+        ElementSize /= 2;
+        inStart[DimCount - 1] *= 2;
+        inCount[DimCount - 1] *= 2;
+        outStart[DimCount - 1] *= 2;
+        outCount[DimCount - 1] *= 2;
+        if (outMemStart.size() > 0)
+            outMemStart[DimCount - 1] *= 2;
+        if (outMemCount.size() > 0)
+            outMemCount[DimCount - 1] *= 2;
+    }
+
     if (VB->m_MemoryStart.size() > 0)
     {
 #ifdef NOTDEF // haven't done endinness for BP5
@@ -2156,16 +2203,19 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             intersectStart[d] += outMemStart[d];
             blockStart[d] += outMemStart[d];
         }
-        helper::NdCopy(VirtualIncomingData, intersectStart, intersectCount, true, true,
-                       (char *)Req.Data, intersectStart, intersectCount, true, true, ElementSize,
-                       intersectStart, blockCount, memoryStart, memoryCount, false);
+        helper::NdCopy(VirtualIncomingData, intersectStart, intersectCount, true,
+                       m_SourceIsLittleEndian, (char *)Req.Data, intersectStart, intersectCount,
+                       true, m_ReaderIsLittleEndian, ElementSize, intersectStart, blockCount,
+                       memoryStart, memoryCount, false);
     }
     else
     {
-        helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true, (char *)Req.Data,
-                       outStart, outCount, true, true, ElementSize, CoreDims(), CoreDims(),
-                       CoreDims(), CoreDims(), false, Req.MemSpace);
+        helper::NdCopy(VirtualIncomingData, inStart, inCount, true, m_SourceIsLittleEndian,
+                       (char *)Req.Data, outStart, outCount, true, m_ReaderIsLittleEndian,
+                       ElementSize, CoreDims(), CoreDims(), CoreDims(), CoreDims(), false,
+                       Req.MemSpace);
     }
+
     if (freeAddr)
     {
         free((char *)Read.DestinationAddr);
@@ -2275,9 +2325,11 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size, const size_t *I
  */
 
 BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
-                                 bool RandomAccessMode, bool FlattenSteps)
+                                 bool RandomAccessMode, bool FlattenSteps,
+                                 bool DataSourceIsLittleEndian)
 : m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
-  m_RandomAccessMode{RandomAccessMode}, m_FlattenSteps{FlattenSteps}
+  m_RandomAccessMode{RandomAccessMode}, m_FlattenSteps{FlattenSteps},
+  m_SourceIsLittleEndian{DataSourceIsLittleEndian}, m_ReaderIsLittleEndian{helper::IsLittleEndian()}
 {
     FMContext Tmp = create_local_FMcontext();
     set_ignore_default_values_FMcontext(Tmp);

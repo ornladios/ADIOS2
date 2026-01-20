@@ -35,7 +35,6 @@ namespace
 void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
                        const bool endianReverse, const DataType destType)
 {
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {
         if (destType == DataType::None)
@@ -54,11 +53,6 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
     {
         std::copy(src, src + payloadStride, dest);
     }
-#else
-    (void)endianReverse;
-    (void)destType;
-    std::copy(src, src + payloadStride, dest);
-#endif
 }
 
 Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor, const bool srcRowMajor)
