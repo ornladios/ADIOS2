@@ -23,7 +23,7 @@
 #define cod_exec_context_free(x) 0
 #define cod_code_free(x) 0
 #define cod_assoc_externs(x,y) 0
-#define cod_parse_for_context(x,y) 0
+#define cod_parse_for_context(x,y) (void)x
 #define cod_set_closure(x,y,z) 0
 #define cod_add_int_constant_to_parse_context(name, i, context) 0
 #endif
@@ -583,7 +583,7 @@ filter_wrapper(CManager cm, struct _event_item *event, void *client_data,
 	       attr_list attrs, int out_count, int *out_stones)
 {
     response_instance instance = (response_instance)client_data;
-    int ret;
+    int ret = 0;
     cod_exec_context ec = instance->u.filter.ec;
     struct ev_state_data ev_state;
 
@@ -614,7 +614,7 @@ router_wrapper(CManager cm, struct _event_item *event, void *client_data,
 	       attr_list attrs, int out_count, int *out_stones)
 {
     response_instance instance = (response_instance)client_data;
-    int ret;
+    int ret = 0;
     if (instance->u.filter.func_ptr) {
 	ret = ((int(*)(void *, attr_list))instance->u.filter.func_ptr)(event->decoded_event, attrs);
     } else {
@@ -660,9 +660,8 @@ transform_wrapper(CManager cm, struct _event_item *event, void *client_data,
 		  attr_list attrs, int out_count, int *out_stones)
 {
     response_instance instance = (response_instance)client_data;
-    int ret;
+    int ret = 0;
     void *out_event = malloc(instance->u.transform.out_size);
-    int(*func)(cod_exec_context, void *, void*, attr_list, attr_list) = NULL;
     cod_exec_context ec = instance->u.transform.ec;
     struct ev_state_data ev_state;
     attr_list output_attrs = create_attr_list();
@@ -685,6 +684,7 @@ transform_wrapper(CManager cm, struct _event_item *event, void *client_data,
     memset(out_event, 0, instance->u.transform.out_size);
     if (ec != NULL) {
 #ifdef HAVE_COD_H
+        int(*func)(cod_exec_context, void *, void*, attr_list, attr_list) = NULL;
 	func = (int(*)(cod_exec_context, void *, void*, attr_list, attr_list))instance->u.transform.code->func;
 	cod_assoc_client_data(ec, 0x34567890, (intptr_t)&ev_state);
 	ret = func(ec, event->decoded_event, out_event, attrs, output_attrs);
@@ -1290,7 +1290,6 @@ response_determination(CManager cm, stone_type stone, action_class stage, event_
     free(formatList);
     free(format_map);
     if (nearest_proto_action != -1) {
-	int action_generated = 0;
 	proto_action *proto = &stone->proto_actions[nearest_proto_action];
 	if (proto->action_type == Action_Immediate) {
 	    /* must be immediate action */
@@ -1320,7 +1319,6 @@ response_determination(CManager cm, stone_type stone, action_class stage, event_
 	    if (instance == NULL) return 0;
 	    instance->stone = stone->local_id;
 	    instance->proto_action_id = nearest_proto_action;
-	    action_generated++;
 	    switch(mrd->response_type) {
 	    case Response_Filter:
 		INT_EVassoc_mutated_imm_action(cm, stone->local_id, nearest_proto_action,
@@ -1355,7 +1353,6 @@ response_determination(CManager cm, stone_type stone, action_class stage, event_
             }
 	    instance->stone = stone->local_id;
 	    instance->proto_action_id = nearest_proto_action;
-	    action_generated++;
 	    INT_EVassoc_mutated_multi_action(cm, stone->local_id, nearest_proto_action,
 					     queued_wrapper, instance,
 					     proto->matching_reference_formats, free_multi_response);

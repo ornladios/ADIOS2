@@ -387,7 +387,6 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     if (buf[0] == 0) {
 	/* bloody hell, what do you have to do? */
 	struct in_addr IP;
-	extern int h_errno;
 	char *iface;
 	if (get_string_attr(attrs, CM_IP_INTERFACE, &iface)){
 	    IP.s_addr = htonl(get_self_ip_iface(trace_func, trace_data, iface));

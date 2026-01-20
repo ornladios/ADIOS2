@@ -48,7 +48,7 @@
 #include "cod.h"
 #else
 #define cod_assoc_externs(x,y)
-#define cod_parse_for_context(x,y)
+#define cod_parse_for_context(x,y) (void)x
 #endif
 #include <fcntl.h>
 

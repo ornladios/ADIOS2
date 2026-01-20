@@ -141,7 +141,6 @@ static
 pid_t
 run_subprocess(char **args)
 {
-    static int count = 0;
 #ifdef HAVE_WINDOWS_H
     intptr_t child;
     child = _spawnv(_P_NOWAIT, "./evtest.exe", args);
@@ -151,6 +150,7 @@ run_subprocess(char **args)
     }
     return child;
 #else
+    static int count = 0;
     pid_t child = -1;
     if (quiet <=0) {printf("Forking subprocess\n");}
     if (no_fork) {

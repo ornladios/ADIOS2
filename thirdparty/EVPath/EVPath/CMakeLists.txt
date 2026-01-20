@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.8 LANGUAGES C CXX)
+project(EVPath VERSION 4.5.9 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -60,15 +60,15 @@ if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-  # Silence MSVC warnings
-  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
-     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
+  # MSVC warning suppressions (must be before any targets are defined)
+  if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_compile_definitions(
+      _CRT_SECURE_NO_DEPRECATE
+      _CRT_SECURE_NO_WARNINGS
+      _SCL_SECURE_NO_DEPRECATE
+      _WINSOCK_DEPRECATED_NO_WARNINGS
+      _CRT_NONSTDC_NO_DEPRECATE
+      FFS_SRC)
   endif()
 endif()
 
@@ -78,13 +78,12 @@ set(ENABLE_SOMETHING AUTO CACHE STRING "Enable SOMETHING support")  #
 set(EVPATH_DEFAULT_PORT_RANGE  "26000:26100" CACHE STRING "Default port range for IP communication")
 mark_as_advanced(EVPATH_DEFAULT_PORT_RANGE)
 
-include(CheckFunctionExists)
-include(CheckIncludeFiles)
+include(CheckSymbolExists)
+include(CheckIncludeFile)
 include(CheckLibraryExists)
 include(CheckTypeSize)
 include(CheckStructHasMember)
 include(CheckCSourceRuns)
-include(TestBigEndian)
 include(CheckBrokenTitanCompiler)
 
 include(CTest)
@@ -123,6 +122,17 @@ add_library(EVPath
   revp.c evp_compat.c thin_server.c evp_threads.c ev_dfg.c)
 add_library(EVPath::EVPath ALIAS EVPath)
 add_library(evpath ALIAS EVPath)
+
+# MSVC warning suppressions
+if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+  target_compile_definitions(EVPath PRIVATE
+    _CRT_SECURE_NO_DEPRECATE
+    _CRT_SECURE_NO_WARNINGS
+    _SCL_SECURE_NO_DEPRECATE
+    _WINSOCK_DEPRECATED_NO_WARNINGS
+    _CRT_NONSTDC_NO_DEPRECATE)
+endif()
+
 target_include_directories(EVPath PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -635,14 +645,19 @@ CHECK_STRUCT_HAS_MEMBER("struct fd_set" "fds_bits" "sys/select.h" HAVE_FDS_BITS)
 
 CHECK_TYPE_SIZE("int"   SIZEOF_INT)
 CHECK_TYPE_SIZE("long"   SIZEOF_LONG)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 
-CHECK_FUNCTION_EXISTS(writev HAVE_WRITEV)
-CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
-CHECK_FUNCTION_EXISTS(getdomainname HAVE_GETDOMAINNAME)
-CHECK_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
-CHECK_FUNCTION_EXISTS(gettimeofday HAVE_GETTIMEOFDAY)
-CHECK_FUNCTION_EXISTS(getifaddrs HAVE_GETIFADDRS)
+if(CMAKE_C_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+  set(WORDS_BIGENDIAN 1)
+else()
+  set(WORDS_BIGENDIAN 0)
+endif()
+
+check_symbol_exists(writev "sys/uio.h" HAVE_WRITEV)
+check_symbol_exists(uname "sys/utsname.h" HAVE_UNAME)
+check_symbol_exists(getdomainname "unistd.h" HAVE_GETDOMAINNAME)
+check_symbol_exists(getloadavg "stdlib.h" HAVE_GETLOADAVG)
+check_symbol_exists(gettimeofday "sys/time.h" HAVE_GETTIMEOFDAY)
+check_symbol_exists(getifaddrs "ifaddrs.h" HAVE_GETIFADDRS)
 
 try_compile(HAVE_MAC_SYSCTL
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -657,8 +672,8 @@ try_compile(HAVE_SYSCONF
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_sysconf.c
 )
 
-if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
+if(CMAKE_C_COMPILER_ID MATCHES "Intel")
+  add_link_options(-shared-intel)
 endif()
 
 function(_pkg_expand_libs in_libs out_ldflags)
@@ -719,13 +734,9 @@ if(EVPATH_INSTALL_HEADERS)
   )
 endif()
 
-set(namelink_component_args)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(namelink_component_args NAMELINK_COMPONENT ${EVPATH_HEADER_COMPONENT})
-endif()
 install(TARGETS EVPath EXPORT EVPathTargets
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${EVPATH_RUNTIME_COMPONENT}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_LIBRARY_COMPONENT} ${namelink_component_args}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_LIBRARY_COMPONENT} NAMELINK_COMPONENT ${EVPATH_HEADER_COMPONENT}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_ARCHIVE_COMPONENT}
 )
 
@@ -740,10 +751,6 @@ if(multi_config)
 endif()
 TARGET_COMPILE_DEFINITIONS(EVPath PRIVATE EVPATH_MODULE_BUILD_DIR="${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}${config_suffix}")
 set(EVPATH_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${EVPATH_INSTALL_MODULE_DIR})
-
-if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
-endif()
 
 find_program(SSH ssh)
 if(SSH) 

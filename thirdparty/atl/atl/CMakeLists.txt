@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 # The directory label is used for CDash to treat ATL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS ATL)
 
-project(ATL VERSION 2.2.2 LANGUAGES C)
+project(ATL VERSION 2.2.3 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -40,17 +40,6 @@ endif()
 if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-
-  # Silence MSVC warnings
-  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
-     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
-  endif()
 endif()
 
 # Default to a RelWithDebInfo build if not specified
@@ -107,6 +96,16 @@ if(WIN32)
   target_link_libraries(atl wsock32 ws2_32)
 endif()
 add_library(atl::atl ALIAS atl)
+
+# MSVC warning suppressions
+if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+  target_compile_definitions(atl PRIVATE
+    _CRT_SECURE_NO_DEPRECATE
+    _CRT_SECURE_NO_WARNINGS
+    _SCL_SECURE_NO_DEPRECATE
+    _WINSOCK_DEPRECATED_NO_WARNINGS
+    _CRT_NONSTDC_NO_DEPRECATE)
+endif()
 option(ATL_INSTALL_HEADERS "Install ATL header files" ON)
 mark_as_advanced(ATL_INSTALL_HEADERS)
 set_target_properties(atl PROPERTIES
@@ -146,15 +145,11 @@ if(ATL_INSTALL_HEADERS)
   install(FILES atl.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     COMPONENT ${ATL_HEADER_COMPONENT})
 endif()
-set(namelink_component_args)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(namelink_component_args NAMELINK_COMPONENT ${ATL_HEADER_COMPONENT})
-endif()
 install(TARGETS atl
   # IMPORTANT: Add the foo library to the "export-set"
   EXPORT atl-targets
   RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${ATL_RUNTIME_COMPONENT}
-  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${ATL_LIBRARY_COMPONENT} ${namelink_component_args}
+  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${ATL_LIBRARY_COMPONENT} NAMELINK_COMPONENT ${ATL_HEADER_COMPONENT}
   ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${ATL_ARCHIVE_COMPONENT}
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT ${ATL_HEADER_COMPONENT})
 
