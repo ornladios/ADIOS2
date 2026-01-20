@@ -101,7 +101,6 @@ static int inet_aton(const char* cp, struct in_addr* addr)
 pid_t
 run_subprocess(char **args)
 {
-    char **run_args = args;
 #ifdef HAVE_WINDOWS_H
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -133,13 +132,14 @@ run_subprocess(char **args)
 		       &pi ) 
     ) 
     {
-        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        printf( "CreateProcess failed (%lu).\n", GetLastError() );
 	printf("Args were argv[0] = %s\n", args[0]);
 	printf("Args were argv[1] = %s, argv[2] = %s\n", args[1], args[2]);
         return 0;
     }
     return (intptr_t) pi.hProcess;
 #else
+    char **run_args = args;
     pid_t child;
     if (quiet <=0) {printf("Forking subprocess\n");}
     if (ssh_args[0] != NULL) {

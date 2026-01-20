@@ -548,7 +548,7 @@ extern int
 CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 {
     struct pbio_exchange_msg tmp_msg;
-    struct pbio_exchange_msg *msg;
+    struct pbio_exchange_msg *msg = NULL;
     int swap;
 
     int *incoming_length;

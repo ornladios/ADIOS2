@@ -587,7 +587,7 @@ extern void INT_CMTrace_file_id(int ID);
 #include <process.h>
 #include <time.h>
 #define CLOCK_MONOTONIC 1
-static int clock_gettime(int cl, struct timespec* spec)
+inline int clock_gettime(int cl, struct timespec* spec)
 {
     __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
     wintime -= 116444736000000000i64;  //1jan1601 to 1jan1970
