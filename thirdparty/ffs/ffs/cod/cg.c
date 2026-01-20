@@ -837,10 +837,10 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 	    *(unsigned int *)(var_base) = (int)f;
 	    break;
 	case DILL_L:
-	    *(long *)(var_base) = (long)f;
+	    *(ssize_t *)(var_base) = (ssize_t)f;
 	    break;
 	case DILL_UL:
-	    *(unsigned long *)(var_base) = (long)f;
+	    *(size_t *)(var_base) = (size_t)f;
 	    break;
 	case DILL_F:
 	    *(float*)(var_base) = (float)f;
