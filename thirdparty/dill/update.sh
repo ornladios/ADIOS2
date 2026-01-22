@@ -10,6 +10,7 @@ readonly subtree="thirdparty/dill/dill"
 readonly repo="https://github.com/GTkorvo/dill.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 
