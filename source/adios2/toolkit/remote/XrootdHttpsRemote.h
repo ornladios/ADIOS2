@@ -184,8 +184,8 @@ private:
     bool m_OpenSuccess = false; ///< Connection state
 
     // CURL state
-    CURL *m_Curl = nullptr;      ///< CURL easy handle
-    std::mutex m_CurlMutex;      ///< Mutex for CURL operations (not thread-safe)
+    CURL *m_Curl = nullptr; ///< CURL easy handle
+    std::mutex m_CurlMutex; ///< Mutex for CURL operations (not thread-safe)
     bool m_CurlInitialized = false;
 
     // Configuration

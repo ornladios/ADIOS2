@@ -15,8 +15,8 @@
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
-#include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/remote/XrootdHttpsRemote.h"
+#include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
@@ -534,12 +534,13 @@ void BP5Reader::PerformGets()
             {
                 params["VerifySSL"] = "false";
             }
-            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering, params);
+            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering,
+                           params);
         }
         else
 #endif
 #ifdef ADIOS2_HAVE_XROOTD
-        if (getenv("DoXRootD"))
+            if (getenv("DoXRootD"))
         {
             std::string XRootDHost = "localhost";
             int XRootDPort = 1094;

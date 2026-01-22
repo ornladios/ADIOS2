@@ -12,8 +12,8 @@
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
 
-#include <dlfcn.h>
 #include <cstring>
+#include <dlfcn.h>
 #include <iostream>
 #include <sstream>
 
@@ -30,16 +30,13 @@ XrdVERSIONINFO(XrdHttpGetExtHandler, HttpSsi);
 /******************************************************************************/
 
 XrdHttpSsiRequest::XrdHttpSsiRequest(const char *reqData, int reqLen)
-    : m_reqLen(reqLen),
-      m_respData(nullptr),
-      m_respLen(0),
-      m_errNum(0),
-      m_isError(false),
-      m_responseReady(false)
+: m_reqLen(reqLen), m_respData(nullptr), m_respLen(0), m_errNum(0), m_isError(false),
+  m_responseReady(false)
 {
     // Copy request data - SSI framework expects us to own this buffer
     m_reqData = (char *)malloc(reqLen + 1);
-    if (m_reqData) {
+    if (m_reqData)
+    {
         memcpy(m_reqData, reqData, reqLen);
         m_reqData[reqLen] = '\0';
     }
@@ -47,7 +44,8 @@ XrdHttpSsiRequest::XrdHttpSsiRequest(const char *reqData, int reqLen)
 
 XrdHttpSsiRequest::~XrdHttpSsiRequest()
 {
-    if (m_reqData) {
+    if (m_reqData)
+    {
         free(m_reqData);
         m_reqData = nullptr;
     }
@@ -59,13 +57,13 @@ char *XrdHttpSsiRequest::GetRequest(int &reqLen)
     return m_reqData;
 }
 
-bool XrdHttpSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo,
-                                        const XrdSsiRespInfo &rInfo)
+bool XrdHttpSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     // Check for errors first
-    if (eInfo.hasError()) {
+    if (eInfo.hasError())
+    {
         m_isError = true;
         m_errMsg = eInfo.Get();
         m_errNum = eInfo.GetArg();
@@ -75,48 +73,49 @@ bool XrdHttpSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo,
     }
 
     // Process based on response type
-    switch (rInfo.rType) {
-        case XrdSsiRespInfo::isData:
-            // Direct data response
-            m_respData = rInfo.buff;
-            m_respLen = rInfo.blen;
-            m_isError = false;
-            break;
+    switch (rInfo.rType)
+    {
+    case XrdSsiRespInfo::isData:
+        // Direct data response
+        m_respData = rInfo.buff;
+        m_respLen = rInfo.blen;
+        m_isError = false;
+        break;
 
-        case XrdSsiRespInfo::isError:
-            // Error response
-            m_isError = true;
-            m_errMsg = rInfo.eMsg ? rInfo.eMsg : "Unknown error";
-            m_errNum = rInfo.eNum;
-            break;
+    case XrdSsiRespInfo::isError:
+        // Error response
+        m_isError = true;
+        m_errMsg = rInfo.eMsg ? rInfo.eMsg : "Unknown error";
+        m_errNum = rInfo.eNum;
+        break;
 
-        case XrdSsiRespInfo::isStream:
-            // Stream response - for now, we don't support this via HTTP
-            // A full implementation would use chunked transfer encoding
-            m_isError = true;
-            m_errMsg = "Stream responses not yet supported via HTTP";
-            m_errNum = ENOTSUP;
-            break;
+    case XrdSsiRespInfo::isStream:
+        // Stream response - for now, we don't support this via HTTP
+        // A full implementation would use chunked transfer encoding
+        m_isError = true;
+        m_errMsg = "Stream responses not yet supported via HTTP";
+        m_errNum = ENOTSUP;
+        break;
 
-        case XrdSsiRespInfo::isFile:
-            // File response - for now, we don't support this via HTTP
-            m_isError = true;
-            m_errMsg = "File responses not yet supported via HTTP";
-            m_errNum = ENOTSUP;
-            break;
+    case XrdSsiRespInfo::isFile:
+        // File response - for now, we don't support this via HTTP
+        m_isError = true;
+        m_errMsg = "File responses not yet supported via HTTP";
+        m_errNum = ENOTSUP;
+        break;
 
-        case XrdSsiRespInfo::isNone:
-            // No response data
-            m_respData = nullptr;
-            m_respLen = 0;
-            m_isError = false;
-            break;
+    case XrdSsiRespInfo::isNone:
+        // No response data
+        m_respData = nullptr;
+        m_respLen = 0;
+        m_isError = false;
+        break;
 
-        default:
-            m_isError = true;
-            m_errMsg = "Unknown response type";
-            m_errNum = EINVAL;
-            break;
+    default:
+        m_isError = true;
+        m_errMsg = "Unknown response type";
+        m_errNum = EINVAL;
+        break;
     }
 
     m_responseReady = true;
@@ -124,21 +123,23 @@ bool XrdHttpSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo,
     return true;
 }
 
-void XrdHttpSsiRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo,
-                                            char *buff, int blen, bool last)
+void XrdHttpSsiRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int blen,
+                                            bool last)
 {
     // This is called for streaming responses
     // For now, we accumulate data but a full implementation would
     // stream it back via HTTP chunked transfer encoding
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if (eInfo.hasError()) {
+    if (eInfo.hasError())
+    {
         m_isError = true;
         m_errMsg = eInfo.Get();
         m_errNum = eInfo.GetArg();
     }
 
-    if (last) {
+    if (last)
+    {
         m_responseReady = true;
         m_cond.notify_all();
     }
@@ -147,18 +148,20 @@ void XrdHttpSsiRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo,
 bool XrdHttpSsiRequest::WaitForResponse(int timeoutSec)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
-    if (m_responseReady) return true;
+    if (m_responseReady)
+        return true;
 
-    auto status = m_cond.wait_for(lock, std::chrono::seconds(timeoutSec),
-                                  [this] { return m_responseReady; });
+    auto status =
+        m_cond.wait_for(lock, std::chrono::seconds(timeoutSec), [this] { return m_responseReady; });
     return status;
 }
 
-bool XrdHttpSsiRequest::GetResponseInfo(const char *&data, int &len,
-                                        std::string &errMsg, int &errNum)
+bool XrdHttpSsiRequest::GetResponseInfo(const char *&data, int &len, std::string &errMsg,
+                                        int &errNum)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_isError) {
+    if (m_isError)
+    {
         errMsg = m_errMsg;
         errNum = m_errNum;
         data = nullptr;
@@ -174,18 +177,17 @@ bool XrdHttpSsiRequest::GetResponseInfo(const char *&data, int &len,
 /*            X r d H t t p S s i H a n d l e r   M e t h o d s               */
 /******************************************************************************/
 
-XrdHttpSsiHandler::XrdHttpSsiHandler(XrdSysError *log, const char *config,
-                                     const char *parms, XrdOucEnv *myEnv)
-    : m_log(log->logger(), "HttpSsi_"),
-      m_ssiService(nullptr),
-      m_ssiProvider(nullptr),
-      m_pathPrefix("/ssi"),
-      m_initialized(false)
+XrdHttpSsiHandler::XrdHttpSsiHandler(XrdSysError *log, const char *config, const char *parms,
+                                     XrdOucEnv *myEnv)
+: m_log(log->logger(), "HttpSsi_"), m_ssiService(nullptr), m_ssiProvider(nullptr),
+  m_pathPrefix("/ssi"), m_initialized(false)
 {
     // Parse parameters if provided (e.g., "prefix=/adios")
-    if (parms && *parms) {
+    if (parms && *parms)
+    {
         std::string p(parms);
-        if (p.find("prefix=") == 0) {
+        if (p.find("prefix=") == 0)
+        {
             m_pathPrefix = p.substr(7);
         }
     }
@@ -201,9 +203,10 @@ XrdHttpSsiHandler::~XrdHttpSsiHandler()
 int XrdHttpSsiHandler::Init(const char *cfgfile)
 {
     // Try to obtain the SSI service
-    if (!ObtainSSIService()) {
+    if (!ObtainSSIService())
+    {
         m_log.Emsg("Init", "Failed to obtain SSI service - handler will reject requests");
-        return 0;  // Return success anyway, will fail requests later
+        return 0; // Return success anyway, will fail requests later
     }
 
     m_initialized = true;
@@ -216,24 +219,25 @@ bool XrdHttpSsiHandler::ObtainSSIService()
     // Use dlsym to find the XrdSsiProviderServer symbol
     // This works because both plugins are loaded in the same process
     void *handle = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
-    if (!handle) {
+    if (!handle)
+    {
         m_log.Emsg("ObtainSSI", "dlopen failed:", dlerror());
         return false;
     }
 
     // Look for the XrdSsiProviderServer symbol
-    XrdSsiProvider **providerPtr =
-        (XrdSsiProvider **)dlsym(handle, "XrdSsiProviderServer");
+    XrdSsiProvider **providerPtr = (XrdSsiProvider **)dlsym(handle, "XrdSsiProviderServer");
 
-    if (!providerPtr) {
-        m_log.Emsg("ObtainSSI", "XrdSsiProviderServer symbol not found:",
-                   dlerror());
+    if (!providerPtr)
+    {
+        m_log.Emsg("ObtainSSI", "XrdSsiProviderServer symbol not found:", dlerror());
         dlclose(handle);
         return false;
     }
 
     m_ssiProvider = *providerPtr;
-    if (!m_ssiProvider) {
+    if (!m_ssiProvider)
+    {
         m_log.Emsg("ObtainSSI", "XrdSsiProviderServer is NULL");
         dlclose(handle);
         return false;
@@ -243,10 +247,10 @@ bool XrdHttpSsiHandler::ObtainSSIService()
     XrdSsiErrInfo eInfo;
     m_ssiService = m_ssiProvider->GetService(eInfo, "", 256);
 
-    if (!m_ssiService) {
+    if (!m_ssiService)
+    {
         std::string err = eInfo.Get();
-        m_log.Emsg("ObtainSSI", "GetService failed:",
-                   err.empty() ? "unknown error" : err.c_str());
+        m_log.Emsg("ObtainSSI", "GetService failed:", err.empty() ? "unknown error" : err.c_str());
         dlclose(handle);
         return false;
     }
@@ -260,10 +264,12 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
 {
     // Match POST requests to our prefix path
     // Format: POST /ssi/<resource>
-    if (!verb || !path) return false;
+    if (!verb || !path)
+        return false;
 
     // Accept POST for requests, GET for simple queries
-    if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0) {
+    if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0)
+    {
         return false;
     }
 
@@ -274,15 +280,19 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
 int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
 {
     // Check if we're initialized
-    if (!m_initialized || !m_ssiService) {
+    if (!m_initialized || !m_ssiService)
+    {
         return SendError(req, 503, "SSI service not available");
     }
 
     // Extract the resource name from the path (after prefix)
     std::string resource = req.resource;
-    if (resource.length() > m_pathPrefix.length()) {
+    if (resource.length() > m_pathPrefix.length())
+    {
         resource = resource.substr(m_pathPrefix.length());
-    } else {
+    }
+    else
+    {
         resource = "/";
     }
 
@@ -290,24 +300,32 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     // For POST requests, the SSI command is in the request body
     std::string ssiCommand;
 
-    if (req.verb == "GET") {
+    if (req.verb == "GET")
+    {
         // Check for xrd-http-query header (contains query string)
         auto it = req.headers.find("xrd-http-query");
-        if (it != req.headers.end()) {
+        if (it != req.headers.end())
+        {
             ssiCommand = it->second;
-        } else {
+        }
+        else
+        {
             return SendError(req, 400, "GET request requires query parameters");
         }
-    } else {
+    }
+    else
+    {
         // POST - read the request body
-        if (req.length <= 0) {
+        if (req.length <= 0)
+        {
             return SendError(req, 400, "POST request requires body");
         }
 
         // Read the request body
         char *bodyData = nullptr;
         int bytesRead = req.BuffgetData(req.length, &bodyData, true);
-        if (bytesRead <= 0 || !bodyData) {
+        if (bytesRead <= 0 || !bodyData)
+        {
             return SendError(req, 400, "Failed to read request body");
         }
         ssiCommand = std::string(bodyData, bytesRead);
@@ -317,14 +335,14 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     XrdSsiResource ssiResource(resource);
 
     // Create the SSI request with the command
-    XrdHttpSsiRequest *ssiReq = new XrdHttpSsiRequest(
-        ssiCommand.c_str(), ssiCommand.length());
+    XrdHttpSsiRequest *ssiReq = new XrdHttpSsiRequest(ssiCommand.c_str(), ssiCommand.length());
 
     // Process the request
     m_ssiService->ProcessRequest(*ssiReq, ssiResource);
 
     // Wait for the response (with timeout)
-    if (!ssiReq->WaitForResponse(60)) {
+    if (!ssiReq->WaitForResponse(60))
+    {
         delete ssiReq;
         return SendError(req, 504, "SSI request timeout");
     }
@@ -335,7 +353,8 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     std::string errMsg;
     int errNum = 0;
 
-    if (!ssiReq->GetResponseInfo(respData, respLen, errMsg, errNum)) {
+    if (!ssiReq->GetResponseInfo(respData, respLen, errMsg, errNum))
+    {
         // Error response
         delete ssiReq;
         std::stringstream ss;
@@ -356,8 +375,7 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
 int XrdHttpSsiHandler::SendError(XrdHttpExtReq &req, int code, const char *message)
 {
     m_log.Emsg("SendError", message);
-    return req.SendSimpleResp(code, nullptr, nullptr,
-                              const_cast<char *>(message), strlen(message));
+    return req.SendSimpleResp(code, nullptr, nullptr, const_cast<char *>(message), strlen(message));
 }
 
 int XrdHttpSsiHandler::SendResponse(XrdHttpExtReq &req, const char *data, int len,
@@ -366,8 +384,7 @@ int XrdHttpSsiHandler::SendResponse(XrdHttpExtReq &req, const char *data, int le
     std::string headers = "Content-Type: ";
     headers += contentType;
 
-    return req.SendSimpleResp(200, nullptr,
-                              const_cast<char *>(headers.c_str()),
+    return req.SendSimpleResp(200, nullptr, const_cast<char *>(headers.c_str()),
                               const_cast<char *>(data), len);
 }
 
@@ -377,23 +394,26 @@ int XrdHttpSsiHandler::SendResponse(XrdHttpExtReq &req, const char *data, int le
 
 extern "C" {
 
-XrdHttpExtHandler *XrdHttpGetExtHandler(XrdSysError *log, const char *config,
-                                        const char *parms, XrdOucEnv *myEnv)
+XrdHttpExtHandler *XrdHttpGetExtHandler(XrdSysError *log, const char *config, const char *parms,
+                                        XrdOucEnv *myEnv)
 {
     log->Emsg("HttpSsiInit", "Loading HTTP-SSI bridge handler");
 
-    try {
+    try
+    {
         XrdHttpSsiHandler *handler = new XrdHttpSsiHandler(log, config, parms, myEnv);
-        if (handler->Init(config) != 0) {
+        if (handler->Init(config) != 0)
+        {
             log->Emsg("HttpSsiInit", "Handler initialization failed");
             delete handler;
             return nullptr;
         }
         return handler;
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
         log->Emsg("HttpSsiInit", "Exception during handler creation:", e.what());
         return nullptr;
     }
 }
-
 }

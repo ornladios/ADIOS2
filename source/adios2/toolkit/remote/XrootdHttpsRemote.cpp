@@ -107,8 +107,8 @@ bool XrootdHttpsRemote::InitCurl()
     m_CurlInitialized = true;
     return true;
 #else
-    helper::Log("Remote", "XrootdHttpsRemote", "InitCurl",
-                "ADIOS2 was not built with CURL support", helper::LogMode::ERROR);
+    helper::Log("Remote", "XrootdHttpsRemote", "InitCurl", "ADIOS2 was not built with CURL support",
+                helper::LogMode::ERROR);
     return false;
 #endif
 }
@@ -192,10 +192,7 @@ void XrootdHttpsRemote::Open(const std::string hostname, const int32_t port,
 /*                                C l o s e                                   */
 /******************************************************************************/
 
-void XrootdHttpsRemote::Close()
-{
-    m_OpenSuccess = false;
-}
+void XrootdHttpsRemote::Close() { m_OpenSuccess = false; }
 
 /******************************************************************************/
 /*                   B u i l d R e q u e s t S t r i n g                      */
@@ -206,7 +203,8 @@ std::string XrootdHttpsRemote::BuildRequestString(const char *VarName, size_t St
                                                   const Dims &Count, const Dims &Start)
 {
     // Build request string in the same format as XrootdRemote
-    // Format: get Filename=xxx&RMOrder=n&Varname=yyy&StepStart=n&StepCount=n&Block=n&Dims=n&Count=n&Start=n...
+    // Format: get
+    // Filename=xxx&RMOrder=n&Varname=yyy&StepStart=n&StepCount=n&Block=n&Dims=n&Count=n&Start=n...
     //
     // String parameters (Filename, Varname) are URL-encoded to handle special characters
     // like spaces, &, =, /, etc. that could break the parsing.
@@ -346,8 +344,8 @@ Remote::GetHandle XrootdHttpsRemote::Get(const char *VarName, size_t Step, size_
 {
     if (!m_OpenSuccess)
     {
-        helper::Log("Remote", "XrootdHttpsRemote", "Get",
-                    "Connection not open", helper::LogMode::WARNING);
+        helper::Log("Remote", "XrootdHttpsRemote", "Get", "Connection not open",
+                    helper::LogMode::WARNING);
         return nullptr;
     }
 
@@ -402,8 +400,8 @@ bool XrootdHttpsRemote::WaitForGet(GetHandle handle)
 
     if (!result)
     {
-        helper::Log("Remote", "XrootdHttpsRemote", "WaitForGet",
-                    "Get failed: " + asyncOp->errorMsg, helper::LogMode::WARNING);
+        helper::Log("Remote", "XrootdHttpsRemote", "WaitForGet", "Get failed: " + asyncOp->errorMsg,
+                    helper::LogMode::WARNING);
     }
 
     delete asyncOp;
