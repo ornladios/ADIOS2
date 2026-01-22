@@ -33,8 +33,19 @@ if [ ! -f "${CONFIG_BASE}/xroot-http/certs/server.crt" ]; then
 fi
 
 if [ "$(id -u)" -eq 0 ]; then
-    # we run as root in CI in docker images, this is OK, but we have to tell XRootD that it's OK.
-    XROOTD_USER=("-R" "daemon")
+    # We run as root in CI in docker images, this is OK, but we have to tell XRootD that it's OK.
+    # Try to find a user to run as (daemon or nobody), or skip -R if neither exists
+    if id daemon >/dev/null 2>&1; then
+        XROOTD_USER=("-R" "daemon")
+        echo "Running as daemon user"
+    elif id nobody >/dev/null 2>&1; then
+        XROOTD_USER=("-R" "nobody")
+        echo "Running as nobody user"
+    else
+        # No suitable user found, let XRootD run as root
+        echo "WARNING: No suitable non-root user found, running as root"
+        XROOTD_USER=()
+    fi
 fi
 
 # Remove old log file
@@ -46,6 +57,8 @@ START_RESULT=$?
 
 if [ $START_RESULT -ne 0 ]; then
     echo "ERROR: XRootD failed to start (exit code: $START_RESULT)"
+    echo "=== Server log (on failure) ==="
+    cat "${LOG_FILE}" 2>/dev/null || echo "No log file created"
     exit 1
 fi
 

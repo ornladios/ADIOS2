@@ -1,12 +1,18 @@
 #!/bin/sh
 # Generate XRootD configuration for HTTP-to-SSI bridge testing
-# Usage: generateXRootDHttpConfig.sh <adios2_xrootd_plugin> <adios2_xrootd_http_plugin>
+# Usage: generateXRootDHttpConfig.sh <adios2_xrootd_plugin> <adios2_xrootd_http_plugin> [xrd_port] [http_port]
 
 set -e
+
+# Default ports (can be overridden to avoid conflicts in parallel CI)
+XRD_PORT="${3:-11094}"
+HTTP_PORT="${4:-8443}"
 
 echo "Generating config for XRootD with HTTP handler"
 echo "SSI plugin library: $1"
 echo "HTTP handler library: $2"
+echo "XRootD port: ${XRD_PORT}"
+echo "HTTP port: ${HTTP_PORT}"
 
 # Get absolute path of current directory
 BASEDIR="$(pwd)"
@@ -46,10 +52,10 @@ fi
     echo "ssi.svclib $1"
     echo ""
     # Disable native xrootd protocol (use port 0 to disable or a different port)
-    echo "xrd.port 11094"
+    echo "xrd.port ${XRD_PORT}"
     echo ""
-    # Enable HTTP protocol on port 8443
-    echo "xrd.protocol http:8443 libXrdHttp.so"
+    # Enable HTTP protocol
+    echo "xrd.protocol http:${HTTP_PORT} libXrdHttp.so"
     echo ""
     # Configure HTTPS with self-signed cert (use absolute paths)
     echo "http.cert ${BASEDIR}/xroot-http/certs/server.crt"
