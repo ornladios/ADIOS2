@@ -22,12 +22,11 @@ if [ ! -f xroot-http/certs/server.crt ]; then
     echo "Generating self-signed SSL certificate..."
     # Unset OPENSSL_CONF to avoid issues with spack's corrupted OpenSSL config path
     # The -batch flag and -subj provide all needed info without requiring a config file
-    OPENSSL_CONF=/dev/null openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    if OPENSSL_CONF=/dev/null openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout xroot-http/certs/server.key \
         -out xroot-http/certs/server.crt \
         -subj "/CN=localhost" \
-        -batch
-    if [ $? -eq 0 ]; then
+        -batch; then
         echo "Certificate generated successfully"
     else
         echo "ERROR: Certificate generation failed"
