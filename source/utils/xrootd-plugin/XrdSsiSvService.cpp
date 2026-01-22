@@ -97,6 +97,45 @@ public:
     AlertMsg(char *aMsg) : XrdSsiRespInfoMsg(strdup(aMsg), strlen(aMsg)) {}
     ~AlertMsg() {}
 };
+
+// URL-decode a string (reverses percent-encoding)
+// Handles %XX hex sequences and + for space
+std::string UrlDecode(const std::string &str)
+{
+    std::string result;
+    result.reserve(str.size());
+
+    for (size_t i = 0; i < str.size(); ++i)
+    {
+        if (str[i] == '%' && i + 2 < str.size())
+        {
+            // Decode %XX hex sequence
+            char hex[3] = {str[i + 1], str[i + 2], '\0'};
+            char *endptr;
+            long val = strtol(hex, &endptr, 16);
+            if (endptr == hex + 2)
+            {
+                result += static_cast<char>(val);
+                i += 2;
+            }
+            else
+            {
+                // Invalid hex sequence, keep as-is
+                result += str[i];
+            }
+        }
+        else if (str[i] == '+')
+        {
+            // + represents space in URL encoding
+            result += ' ';
+        }
+        else
+        {
+            result += str[i];
+        }
+    }
+    return result;
+}
 }
 
 /******************************************************************************/
@@ -433,12 +472,12 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             if (HasPrefix(param, "Filename="))
             {
                 std::size_t pos = param.find("=") + 1;
-                Filename = param.substr(pos);
+                Filename = UrlDecode(param.substr(pos));
             }
             else if (HasPrefix(param, "Varname="))
             {
                 std::size_t pos = param.find("=") + 1;
-                VarName = param.substr(pos);
+                VarName = UrlDecode(param.substr(pos));
             }
             else if (HasPrefix(param, "RMOrder="))
             {

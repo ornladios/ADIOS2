@@ -201,6 +201,7 @@ adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK'
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
 adios_option(PIP        "Enable support for pip packaging" OFF)
 adios_option(XRootD     "Enable support for XRootD" AUTO)
+adios_option(CURL       "Enable support for CURL (HTTPS remote access)" AUTO)
 adios_option(KVCACHE    "Enable support for KVCache" OFF)
 
 option(ADIOS2_LIBADIOS_MODE "Install only C/C++ library components" OFF)
@@ -277,7 +278,7 @@ endif()
 set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PRODM PNG SZ SZ3 ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
-    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK OpenSSL XRootD GPU_Support CUDA Kokkos
+    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK OpenSSL XRootD CURL GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE
 )
 
