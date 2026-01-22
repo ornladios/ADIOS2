@@ -71,12 +71,17 @@ jobs:
       matrix:
         buildtype: [ release, debug ]
         jobname: [
-          windows2019-vs2019-clang,
+          windows2025-vs2022-clang,
           windows2022-vs2022-msvc,
+          windows2022-vs2022-msvc-win32,
           macos-clang ]
         include:
-        - jobname: windows2019-vs2019-clang
-          vm: windows-latest
+        - jobname: windows2025-vs2022-clang
+          vm: windows-2025
+        - jobname: windows2022-vs2022-msvc
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-win32
+          vm: windows-2022
         - jobname: macos-clang
           vm: macos-latest
 

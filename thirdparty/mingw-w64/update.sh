@@ -10,7 +10,6 @@ readonly subtree="thirdparty/mingw-w64/mingw-w64"
 readonly repo="https://github.com/mirror/mingw-w64.git"
 readonly tag="master"
 readonly shortlog="true"
-readonly exact_tree_match="false"
 readonly paths="
 mingw-w64-crt/misc/getopt.c
 mingw-w64-headers/crt/getopt.h

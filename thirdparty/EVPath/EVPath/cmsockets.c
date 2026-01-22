@@ -7,6 +7,7 @@
 #define FD_SETSIZE 1024
 #endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <process.h>
 #include <time.h>
@@ -223,7 +224,7 @@ socket_accept_conn(void *void_trans, void *void_conn_sock)
     socket_conn_data_ptr socket_conn_data;
     SOCKET sock;
     struct sockaddr sock_addr;
-    unsigned int sock_len = sizeof(sock_addr);
+    socklen_t sock_len = sizeof(sock_addr);
     int int_port_num;
     struct linger linger_val;
     int sock_opt_val = 1;
@@ -241,7 +242,7 @@ socket_accept_conn(void *void_trans, void *void_conn_sock)
     svc->trace_out(sd->cm, "Trying to accept something, socket %d\n", conn_sock);
     linger_val.l_onoff = 1;
     linger_val.l_linger = 60;
-    if ((sock = accept(conn_sock, (struct sockaddr *) 0, (unsigned int *) 0)) == SOCKET_ERROR) {
+    if ((sock = accept(conn_sock, (struct sockaddr *) 0, (socklen_t *) 0)) == SOCKET_ERROR) {
 	perror("Cannot accept socket connection");
 	svc->fd_remove_select(sd->cm, conn_sock);
 	fprintf(stderr, "failure in CMsockets  removing socket connection\n");
@@ -358,7 +359,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
     char *host_name;
     int remote_IP = -1;
     static int host_ip = 0;
-    unsigned int sock_len;
+    socklen_t sock_len;
     union {
 	struct sockaddr s;
 	struct sockaddr_in s_I4;
@@ -657,7 +658,7 @@ extern attr_list
 libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     socket_client_data_ptr sd = trans->trans_data;
-    unsigned int length;
+    socklen_t length;
     struct sockaddr_in sock_addr;
     int sock_opt_val = 1;
     SOCKET conn_sock = 0;
@@ -889,7 +890,7 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
       int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
       scd->block_state = Block;
       if (ret != NO_ERROR)
-	printf("ioctlsocket failed with error: %ld\n", ret);
+	printf("ioctlsocket failed with error: %d\n", ret);
 
       svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to blocking WIN properly",
 		     scd->fd);
@@ -898,7 +899,7 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
       u_long mode = 1;  // 1 to enable non-blocking socket
       int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
       if (ret != NO_ERROR)
-	printf("ioctlsocket failed with error: %ld\n", ret);
+	printf("ioctlsocket failed with error: %d\n", ret);
 
       scd->block_state = Non_Block;
       svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to nonblocking WIN properly",
@@ -1002,10 +1003,7 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 #ifndef HAVE_WRITEV
 static
 ssize_t
-writev(fd, iov, iovcnt)
-int fd;
-struct iovec *iov;
-int iovcnt;
+writev(SOCKET fd, struct iovec *iov, size_t iovcnt)
 {
     ssize_t wrote = 0;
     int i;

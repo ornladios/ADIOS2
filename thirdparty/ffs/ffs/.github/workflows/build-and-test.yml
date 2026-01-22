@@ -75,6 +75,7 @@ jobs:
           windows2025-vs2022-clang,
           windows2022-vs2022-msvc,
           windows2022-vs2022-msvc-static,
+          windows2022-vs2022-msvc-win32,
           macos-clang ]
         include:
         - jobname: windows2025-vs2022-clang
@@ -82,6 +83,8 @@ jobs:
         - jobname: windows2022-vs2022-msvc
           vm: windows-2022
         - jobname: windows2022-vs2022-msvc-static
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-win32
           vm: windows-2022
         - jobname: macos-clang
           vm: macos-latest
@@ -113,5 +116,19 @@ jobs:
       run: source/scripts/ci/gh-actions/run.sh configure
     - name: Build
       run: source/scripts/ci/gh-actions/run.sh build
+    - name: Stage DLLs (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: |
+          # Copy dependency DLLs to build output directory so Windows can find them
+          $buildType = "${{ matrix.buildtype }}"
+          $configDir = if ($buildType -eq "release") { "Release" } else { "Debug" }
+          $destDir = "build/bin/$configDir"
+          if (Test-Path $destDir) {
+              Copy-Item -Path "atl/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
+              Copy-Item -Path "dill/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
+              Write-Host "Copied DLLs to $destDir"
+              Get-ChildItem $destDir -Filter *.dll | ForEach-Object { Write-Host "  - $($_.Name)" }
+          }
     - name: Test
       run: source/scripts/ci/gh-actions/run.sh test

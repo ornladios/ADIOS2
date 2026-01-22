@@ -11,7 +11,6 @@ readonly repo="https://github.com/khuck/perfstubs.git"
 readonly tag="master"
 
 readonly shortlog="true"
-readonly exact_tree_match="false"
 readonly paths="
 LICENSE
 README.md

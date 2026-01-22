@@ -153,7 +153,7 @@ allocate_tmp_space(estate s, FFSBuffer buf, size_t length, int req_alignment, si
 	    s->iovcnt++;
 	}
     }
-    msg_offset = s->output_len + pad;
+    msg_offset = (size_t) s->output_len + pad;
     if (tmp_data_loc) *tmp_data_loc = tmp_data;
     s->output_len += length + pad;
     return msg_offset;
@@ -217,7 +217,7 @@ add_data_iovec(estate s, FFSBuffer buf, void *data, size_t length, int req_align
 	s->iovec[s->iovcnt].iov_base = data;
 	s->iovcnt++;
     }
-    msg_offset = s->output_len;
+    msg_offset = (size_t) s->output_len;
     s->output_len += length;
     return msg_offset;
 }
@@ -262,7 +262,7 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size,
     /* setup header information */
     setup_header(b, fmformat, &state);
 
-    header_size = state.output_len;
+    header_size = (size_t) state.output_len;
     state.saved_offset_difference = header_size;
 
     if (fmformat->variant || state.copy_all) {
@@ -272,7 +272,7 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size,
     }
 
     if (!fmformat->variant) {
-	*buf_size = state.output_len;
+	*buf_size = (size_t) state.output_len;
 	return b->tmp_buffer;
     }
 
@@ -296,7 +296,7 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size,
     // round up malloc to 8
     roundup_tmp_buffer(b, 8);
     free_addr_list(&state);
-    *buf_size = state.output_len;
+    *buf_size = (size_t) state.output_len;
     if (!state.iovec_is_stack) {
 	free(state.iovec);
     }
@@ -424,7 +424,7 @@ FFSencode_vector(FFSBuffer b, FMFormat fmformat, void *data)
     /* setup header information */
     setup_header(b, fmformat, &state);
 
-    header_size = state.output_len;
+    header_size = (size_t) state.output_len;
     state.saved_offset_difference = header_size;
 
     if (fmformat->variant || state.copy_all) {
@@ -1147,7 +1147,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
     if (params->final_base == NULL) {
 	/* need memory for at least the base record in temp area */
 	int64_t buffer_required = Max(final_base_size, src_base_size);
-	dest_offset = add_to_tmp_buffer(&c->tmp, buffer_required);
+	dest_offset = (size_t) add_to_tmp_buffer(&c->tmp, buffer_required);
 	dest_address = NULL;
 	if (dest_offset == -1) return 0;
     } else {
@@ -1172,7 +1172,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	     * where we want the record to end up.  Need temporary space.
 	     */
 	    int64_t source_base_size = expand_size_to_align(ioformat->body->record_length);
-	    src_offset = add_to_tmp_buffer(&c->tmp, source_base_size);
+	    src_offset = (size_t) add_to_tmp_buffer(&c->tmp, source_base_size);
 	    src_address = NULL;
 	    if (src_offset == -1) return 0;
 	} else {
@@ -1196,7 +1196,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	int64_t buffer_required = Max(possible_converted_variant_size + align_pad,
 				  orig_variant_size + align_pad);
 	buffer_required = expand_size_to_align(buffer_required);
-	final_string_offset = add_to_tmp_buffer(&c->tmp, buffer_required);
+	final_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, buffer_required);
 	final_string_address = NULL;
 	if (final_string_offset == -1) return 0;
     } else {
@@ -1224,7 +1224,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	     */
 	    int64_t source_variant_size =	/* plus possible alignment of 8 */
 		input_record_len - ioformat->body->record_length + 8;
-	    src_string_offset = add_to_tmp_buffer(&c->tmp, source_variant_size);
+	    src_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, source_variant_size);
 	    src_string_address = NULL;
 	    if (src_string_offset == -1) return 0;
 	} else {
@@ -1279,7 +1279,7 @@ FFS_decode_length_format(FFSContext context, FFSTypeHandle ioformat,
     final_base_size = expand_size_to_align((int64_t)(ioformat->body->record_length +
 						     conv->base_size_delta));
     src_base_size = expand_size_to_align(ioformat->body->record_length);
-    return variant_part + Max(final_base_size, src_base_size);
+    return (size_t) (variant_part + Max(final_base_size, src_base_size));
 }
 
 extern size_t
@@ -1386,7 +1386,7 @@ FFSinternal_decode(FFSTypeHandle ioformat, char *src, void *dest, int to_buffer)
     if (params.src_string_address != params.cur_variant) {
 	if (input_record_len - ioformat->body->record_length - data_align_pad > 0) {
 	    memcpy(params.src_string_address, params.cur_variant,
-		   input_record_len - ioformat->body->record_length - data_align_pad);
+		   (size_t)(input_record_len - ioformat->body->record_length - data_align_pad));
 	}
     }
     if (conv->conversion_type != none_required) {
@@ -1537,18 +1537,18 @@ make_tmp_buffer(FFSBuffer buf, int64_t size)
     }
     if (buf->tmp_buffer_size == 0) {
 	int64_t tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
-	buf->tmp_buffer = malloc(tmp_size);
-	buf->tmp_buffer_size = tmp_size;
+	buf->tmp_buffer = malloc((size_t)tmp_size);
+	buf->tmp_buffer_size = (size_t)tmp_size;
     }
     if (size > buf->tmp_buffer_size) {
-	buf->tmp_buffer = realloc(buf->tmp_buffer, size);
+	buf->tmp_buffer = realloc(buf->tmp_buffer, (size_t)size);
 	if (buf->tmp_buffer) {
-	    buf->tmp_buffer_size = size;
+	    buf->tmp_buffer_size = (size_t)size;
 	} else {
 	    buf->tmp_buffer_size = 0;
 	}
     }
-    buf->tmp_buffer_in_use_size = size;
+    buf->tmp_buffer_in_use_size = (size_t) size;
     return buf->tmp_buffer;
 }
 
@@ -1565,7 +1565,7 @@ add_to_tmp_buffer(FFSBuffer buf, size_t size)
     } else {
 	if (buf->tmp_buffer_size == 0) {
 	    int64_t tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
-	    buf->tmp_buffer = malloc(tmp_size);
+	    buf->tmp_buffer = malloc((size_t)tmp_size);
 	}
 	if (size > (size_t)buf->tmp_buffer_size) {
 	    buf->tmp_buffer = realloc(buf->tmp_buffer, size);
@@ -1582,7 +1582,7 @@ add_to_tmp_buffer(FFSBuffer buf, size_t size)
     return old_size;
 }
 
-#if SIZEOF_LONG != 8
+#if SIZEOF_SIZE_T != 8
 #ifndef WORDS_BIGENDIAN
 
 static int words_bigendian = -1;
@@ -1616,13 +1616,13 @@ quick_get_ulong(FMFieldPtr iofield, void *data)
     case 4:
 	return (unsigned long) (*((unsigned int *) data));
     case 8:
-#if SIZEOF_LONG == 8
-	if ((((long) data) & 0x0f) == 0) {
+#if SIZEOF_SIZE_T == 8
+	if ((((size_t) data) & 0x0f) == 0) {
 	    /* properly aligned */
-	    return (unsigned long) (*((unsigned long *) data));
+	    return (size_t) (*((size_t *) data));
 	} else {
 	    union {
-		unsigned long tmp;
+		size_t tmp;
 		int tmpi[2];
 	    } u;
 	    u.tmpi[0] = ((int *) data)[0];
@@ -1646,23 +1646,24 @@ quick_get_pointer(FMFieldPtr iofield, void *data)
 {
     union {
 	void *p;
-	unsigned long tmp;
+	size_t tmp;
 	int tmpi[2];
     } u;
+    u.tmp = 0;  /* Initialize to avoid garbage in upper bytes on LLP64 */
     data = (void *) ((char *) data + iofield->offset);
     /* only used when field type is an integer and aligned by its size */
     switch (iofield->size) {
     case 1:
-	u.tmp = (unsigned long) (*((unsigned char *) data));
+	u.tmp = (size_t) (*((unsigned char *) data));
 	break;
     case 2:
-	u.tmp = (unsigned long) (*((unsigned short *) data));
+	u.tmp = (size_t) (*((unsigned short *) data));
 	break;
     case 4:
     {
 	unsigned int tmpi;
 	memcpy(&tmpi, data, 4);
-	u.tmp = (unsigned long) tmpi;
+	u.tmp = (size_t) tmpi;
 	break;
     }
     case 8:

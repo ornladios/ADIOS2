@@ -24,8 +24,8 @@ dill_x86_64_hidden_ULtoD(size_t a)
 extern size_t
 dill_x86_64_hidden_DtoUL(double a)
 {
-    size_t l = (long)a;
-    return l;
+    /* Cast directly to size_t, not via long (long is 32-bit on Windows) */
+    return (size_t)a;
 }
 
 static xfer_entry x86_64_xfer_recs[5] = {

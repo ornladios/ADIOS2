@@ -2463,13 +2463,14 @@ timeout_conn(CManager cm, void *client_data)
 		 ((char*)&attr_length)[3] = base[8];
 	     }
 	 } else {
- #ifdef WORDS_BIGENDIAN	    
+ #ifdef WORDS_BIGENDIAN
 	     checksum = (unsigned char) check_sum_base[3];
  #else
 	     checksum = (unsigned char) check_sum_base[0];
  #endif
-	     data_length = ((int64_t)(((unsigned int *) base)[1])) << 32;
-	     data_length += ((unsigned int *) base)[0];
+	     /* Both CMP and CMB use high word first, low word second */
+	     data_length = ((int64_t)(((unsigned int *) base)[0])) << 32;
+	     data_length += ((unsigned int *) base)[1];
 	     if (header_len != 12) {
 		 attr_length = ((int *) base)[2];
 	     }
@@ -2509,7 +2510,7 @@ timeout_conn(CManager cm, void *client_data)
      }
 
      if ((ssize_t)length < header_len + data_length + attr_length) {
-	 return header_len + data_length + attr_length - 
+	 return header_len + data_length + attr_length -
 	     length;
      }
      /* At this point, the message is accepted.  Determine processing */
@@ -3181,6 +3182,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	     }
 	     start = 0;
 	 }
+	 (void)count;
      }
      ((int*)full_vec[0].iov_base)[0] = 
 	 (((int*)full_vec[0].iov_base)[0] & 0xffffff00) | (unsigned char) checksum;
@@ -3357,15 +3359,11 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	     header_len = sizeof(no_attr_header);
 	 }
      } else {
-	 if (attrs_present) {
-	     memcpy((void*) &attr_long_header[1], &length, sizeof(length));
-	     header_ptr = &attr_long_header;
-	     header_len = sizeof(attr_long_header);
-	 } else {
-	     memcpy((void*) &attr_long_header[2], &length, sizeof(length));
-	     header_ptr = no_attr_header;
-	     header_len = sizeof(no_attr_header);
-	 }
+	 /* Long message format: use explicit high/low word order to match CMP */
+	 attr_long_header[1] = (int)(length >> 32);      /* high 32 bits */
+	 attr_long_header[2] = (int)(length & 0xffffffff); /* low 32 bits */
+	 header_ptr = &attr_long_header;
+	 header_len = sizeof(attr_long_header);
      }	 
      if (attrs_present) {
 	 encoded_attrs = encode_attr_for_xmit(attrs, conn->attr_encode_buffer,
@@ -3431,7 +3429,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      int attr_len = 0;
      int do_write = 1;
      void *encoded_attrs = NULL;
-     int attrs_present = 0;
      CManager cm = conn->cm;
 
      /* ensure conn is open */
@@ -3512,7 +3509,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 data_length = event->event_len;
      }
      if (attrs != NULL) {
-	 attrs_present++;
 	 encoded_attrs = encode_attr_for_xmit(attrs, conn->attr_encode_buffer,
 					      &attr_len);
 	 attr_len = (attr_len +7) & -8;  /* round up to even 8 */

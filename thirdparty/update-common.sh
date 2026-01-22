@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     https://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,12 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #=============================================================================
-
-set -e
-
-# Disable noise from `pre-commit` when no configuration is present on the
-# imported tree.
-export PRE_COMMIT_ALLOW_NO_CONFIG=1
 
 ########################################################################
 # Script for updating third party packages.
@@ -31,7 +25,7 @@ export PRE_COMMIT_ALLOW_NO_CONFIG=1
 #   ownership
 #       A git author name/email for the commits.
 #   subtree
-#       The location of the third-party package within the main source
+#       The location of the thirdparty package within the main source
 #       tree.
 #   repo
 #       The git repository to use as upstream.
@@ -39,10 +33,6 @@ export PRE_COMMIT_ALLOW_NO_CONFIG=1
 #       The tag, branch or commit hash to use for upstream.
 #   shortlog
 #       Optional.  Set to 'true' to get a shortlog in the commit message.
-#   exact_tree_match
-#       Optional. Set to 'false' to disable tree-object based matching for
-#       previous import commit (required for projects that allow modifying
-#       imported trees). In such cases, log-based searching is performed.
 #
 # Additionally, an "extract_source" function must be defined. It will be
 # run within the checkout of the project on the requested tag. It should
@@ -52,22 +42,6 @@ export PRE_COMMIT_ALLOW_NO_CONFIG=1
 # For convenience, the function may use the "git_archive" function which
 # does a standard "git archive" extraction using the (optional) "paths"
 # variable to only extract a subset of the source tree.
-#
-# Dependencies
-#
-# To update third party packages from git repositories with submodule,
-# you will need to install the "git-archive-all" Python package with
-#
-#   pip install git-archive-all
-#
-# or install it from https://github.com/Kentzo/git-archive-all.
-#
-# This package installs a script named "git-archive-all" where pip
-# installs executables. If you run pip under your user privileges (i.e.,
-# not using "sudo"), this location may be $HOME/.local/bin. Make sure
-# that directory is in your path so that git can find the
-# "git-archive-all" script.
-#
 ########################################################################
 
 ########################################################################
@@ -78,25 +52,11 @@ git_archive () {
         tar -C "$extractdir" -x
 }
 
-confirm_archive_all_exists () {
-    which git-archive-all || die "git requires an archive-all command. Please run 'pip install git-archive-all'"
-}
-
-git_archive_all () {
-    confirm_archive_all_exists
-    local tmptarball="temp.tar"
-    git archive-all --prefix="" "$tmptarball"
-    mkdir -p "$extractdir/$name-reduced"
-    tar -C "$extractdir/$name-reduced" -xf "$tmptarball" $paths
-    rm -f "$tmptarball"
-}
-
 disable_custom_gitattributes() {
     pushd "${extractdir}/${name}-reduced"
     # Git does not allow custom attributes in a subdirectory where we
     # are about to merge the `.gitattributes` file, so disable them.
-    sed -i.bak -e '/^\[attr\]/ {s/^/#/;}' .gitattributes
-    rm .gitattributes.bak
+    sed -i '/^\[attr\]/ {s/^/#/}' .gitattributes
     popd
 }
 
@@ -106,15 +66,11 @@ die () {
 }
 
 warn () {
-    echo >&2 "warning:" "$@"
+    echo >&2 "warning: $@"
 }
 
 readonly regex_date='20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
 readonly basehash_regex="$name $regex_date ([0-9a-f]*)"
-toplevel_dir="$( git rev-parse --show-toplevel )"
-readonly toplevel_dir
-
-cd "$toplevel_dir"
 
 ########################################################################
 # Sanity checking
@@ -129,37 +85,17 @@ cd "$toplevel_dir"
     die "'repo' is empty"
 [ -n "$tag" ] || \
     die "'tag' is empty"
-[ -n "$exact_tree_match" ] || \
-    exact_tree_match=true
 
 # Check for an empty destination directory on disk.  By checking on disk and
-# not in the repo it allows a library to be freshly re-initialized in a single
+# not in the repo it allows a library to be freshly re-inialized in a single
 # commit rather than first deleting the old copy in one commit and adding the
-# new copy in a separate commit.
-if [ ! -d "$( git rev-parse --show-toplevel )/$subtree" ]; then
-    basehash=""
-elif $exact_tree_match; then
-    # Find the tree object for the current subtree.
-    current_tree="$( git rev-parse "HEAD:$subtree" )"
-    # Search history for a commit whose subtree matches this tree object.
-    basehash=""
-    # Limit candidate commits to those with expected import commit messages for efficiency.
-    for commit in $( git rev-list --author="$ownership" --grep="$basehash_regex" HEAD ); do
-        imported_tree="$( git rev-parse "$commit^{tree}" )"
-        # Verify the imported tree is what is currently imported. If so, we
-        # have found the desired import commit.
-        if [ "$imported_tree" = "$current_tree" ] && [ -n "$imported_tree" ]; then
-            basehash="$commit"
-            break
-        fi
-    done
-    if [ -z "$basehash" ]; then
-        die "No previous import commit found with matching tree object for $subtree. (exact_tree_match enabled)"
-    fi
+# new copy in a seperate commit.
+if [ ! -d "$(git rev-parse --show-toplevel)/$subtree" ]; then
+    readonly basehash=""
 else
-    basehash="$( git rev-list --author="$ownership" --grep="$basehash_regex" -n 1 HEAD )"
+    readonly basehash="$( git rev-list --author="$ownership" --grep="$basehash_regex" -n 1 HEAD )"
 fi
-readonly basehash
+readonly upstream_old_short="$( git cat-file commit "$basehash" | sed -n '/'"$basehash_regex"'/ {s/.*(//;s/)//;p}' | egrep '^[0-9a-f]+$' )"
 
 [ -n "$basehash" ] || \
     warn "'basehash' is empty; performing initial import"
@@ -174,20 +110,15 @@ readonly extractdir="$workdir/extract"
 
 trap "rm -rf '$workdir'" EXIT
 
-# Skip LFS downloading; imports should not need LFS data.
-export GIT_LFS_SKIP_SMUDGE=1
-
 # Get upstream
-git clone --recursive "$repo" "$upstreamdir"
+git clone "$repo" "$upstreamdir"
 
 if [ -n "$basehash" ]; then
-    # Remove old worktrees
-    git worktree prune
     # Use the existing package's history
     git worktree add "$extractdir" "$basehash"
     # Clear out the working tree
     pushd "$extractdir"
-    git ls-files -z --recurse-submodules | xargs -0 rm -v
+    git ls-files | xargs rm -v
     find . -type d -empty -delete
     popd
 else
@@ -199,30 +130,20 @@ fi
 # Extract the subset of upstream we care about
 pushd "$upstreamdir"
 git checkout "$tag"
-git submodule sync --recursive
-git submodule update --recursive --init
-upstream_hash="$( git rev-parse HEAD )"
-readonly upstream_hash
-upstream_hash_short="$( git rev-parse --short=8 "$upstream_hash" )"
-readonly upstream_hash_short
-upstream_datetime="$( git rev-list "$upstream_hash" --format='%ci' -n 1 | grep -e "^$regex_date" )"
-readonly upstream_datetime
-upstream_date="$( echo "$upstream_datetime" | grep -o -e "$regex_date" )"
-readonly upstream_date
+readonly upstream_hash="$( git rev-parse HEAD )"
+readonly upstream_hash_short="$( git rev-parse --short=8 "$upstream_hash" )"
+readonly upstream_datetime="$( git rev-list "$upstream_hash" --format='%ci' -n 1 | grep -e "^$regex_date" )"
+readonly upstream_date="$( echo "$upstream_datetime" | grep -o -e "$regex_date" )"
 if $do_shortlog && [ -n "$basehash" ]; then
-    upstream_old_short="$( git cat-file commit "$basehash" | sed -n '/'"$basehash_regex"'/ {s/.*(//;s/)//;p;}' | grep -E '^[0-9a-f]+$' )"
-    readonly upstream_old_short
-
-    commit_shortlog="
+    readonly commit_shortlog="
 
 Upstream Shortlog
 -----------------
 
 $( git shortlog --no-merges --abbrev=8 --format='%h %s' "$upstream_old_short".."$upstream_hash" )"
 else
-    commit_shortlog=""
+    readonly commit_shortlog=""
 fi
-readonly commit_shortlog
 extract_source || \
     die "failed to extract source"
 popd
@@ -236,7 +157,7 @@ pushd "$extractdir"
 mv -v "$name-reduced/"* .
 rmdir "$name-reduced/"
 git add -A .
-git commit --no-verify --no-post-rewrite --author="$ownership" --date="$upstream_datetime" -F - <<-EOF
+git commit -n --author="$ownership" --date="$upstream_datetime" -F - <<-EOF
 $commit_summary
 
 Code extracted from:
@@ -253,13 +174,12 @@ if [ -n "$basehash" ]; then
     git merge --log -s recursive "-Xsubtree=$subtree/" --no-commit "upstream-$name"
 else
     # Note: on Windows 'git merge --help' will open a browser, and the check
-    # will fail, so use the flag by default. Apple opens an editor instead;
-    # assume the flag is understood there too.
+    # will fail, so use the flag by default.
     unrelated_histories_flag=""
-    if git --version | grep -q -E 'windows|Apple'; then
-        unrelated_histories_flag="--allow-unrelated-histories"
+    if git --version | grep -q windows; then
+        unrelated_histories_flag="--allow-unrelated-histories "
     elif git merge --help | grep -q -e allow-unrelated-histories; then
-        unrelated_histories_flag="--allow-unrelated-histories"
+        unrelated_histories_flag="--allow-unrelated-histories "
     fi
     readonly unrelated_histories_flag
 

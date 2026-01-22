@@ -224,10 +224,13 @@ nt_file_open_func(const char *path, const char *flag_str, int *input, int *outpu
 	}
     }
 
-    if (readfile) {
+    if (readfile && writefile) {
+	/* append mode - need both read and write access */
+	file = CreateFile(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+		      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+    } else if (readfile) {
 	file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ,
 		      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
-
     } else {
 	file = CreateFile(path, GENERIC_WRITE, FILE_SHARE_READ,
 		      NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
