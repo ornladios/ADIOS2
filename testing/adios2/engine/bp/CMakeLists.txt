@@ -210,8 +210,9 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    endmacro()
 
    add_test(NAME generateXRootDHttpConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDHttpConfig.sh $<TARGET_FILE:adios2_xrootd> $<TARGET_FILE:adios2_xrootd_http>)
-   add_test(NAME remoteXRHttpsServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd_http.sh ${XROOTD_SERVER_BINARY} ${CMAKE_CURRENT_BINARY_DIR})
+   set_tests_properties(generateXRootDHttpConfig PROPERTIES WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
 
+   add_test(NAME remoteXRHttpsServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd_http.sh ${XROOTD_SERVER_BINARY} ${XROOTD_HTTPS_DIR})
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES DEPENDS "generateXRootDHttpConfig")
 
