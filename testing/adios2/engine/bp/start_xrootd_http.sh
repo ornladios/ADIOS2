@@ -37,14 +37,22 @@ if [ "$(id -u)" -eq 0 ]; then
     # Try to find a user to run as (daemon or nobody), or skip -R if neither exists
     if id daemon >/dev/null 2>&1; then
         XROOTD_USER=("-R" "daemon")
+        XROOTD_USER_NAME="daemon"
         echo "Running as daemon user"
     elif id nobody >/dev/null 2>&1; then
         XROOTD_USER=("-R" "nobody")
+        XROOTD_USER_NAME="nobody"
         echo "Running as nobody user"
     else
         # No suitable user found, let XRootD run as root
         echo "WARNING: No suitable non-root user found, running as root"
         XROOTD_USER=()
+        XROOTD_USER_NAME=""
+    fi
+    # Change ownership of certificate files so the target user can read them
+    if [ -n "${XROOTD_USER_NAME}" ]; then
+        echo "Changing ownership of certs to ${XROOTD_USER_NAME}"
+        chown -R "${XROOTD_USER_NAME}" "${CONFIG_BASE}/xroot-http/certs"
     fi
 fi
 

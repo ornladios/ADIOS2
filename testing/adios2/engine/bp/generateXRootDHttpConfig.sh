@@ -34,6 +34,9 @@ if [ ! -f xroot-http/certs/server.crt ]; then
         -subj "/CN=localhost" \
         -batch; then
         echo "Certificate generated successfully"
+        # Key permissions will be adjusted by start script if needed for user switching
+        chmod 600 xroot-http/certs/server.key
+        chmod 644 xroot-http/certs/server.crt
     else
         echo "ERROR: Certificate generation failed"
         exit 1
