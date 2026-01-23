@@ -180,19 +180,32 @@ bool XrdHttpSsiRequest::GetResponseInfo(const char *&data, int &len, std::string
 XrdHttpSsiHandler::XrdHttpSsiHandler(XrdSysError *log, const char *config, const char *parms,
                                      XrdOucEnv *myEnv)
 : m_log(log->logger(), "HttpSsi_"), m_ssiService(nullptr), m_ssiProvider(nullptr),
-  m_pathPrefix("/ssi"), m_initialized(false)
+  m_pathPrefix("/ssi"), m_ssiLibPath(""), m_initialized(false)
 {
-    // Parse parameters if provided (e.g., "prefix=/adios")
+    // Parse parameters if provided (e.g., "prefix=/adios ssilib=/path/to/lib.so")
     if (parms && *parms)
     {
         std::string p(parms);
-        if (p.find("prefix=") == 0)
+        std::istringstream iss(p);
+        std::string token;
+        while (iss >> token)
         {
-            m_pathPrefix = p.substr(7);
+            if (token.find("prefix=") == 0)
+            {
+                m_pathPrefix = token.substr(7);
+            }
+            else if (token.find("ssilib=") == 0)
+            {
+                m_ssiLibPath = token.substr(7);
+            }
         }
     }
 
     m_log.Emsg("Init", "HTTP-SSI handler created, path prefix:", m_pathPrefix.c_str());
+    if (!m_ssiLibPath.empty())
+    {
+        m_log.Emsg("Init", "SSI library path:", m_ssiLibPath.c_str());
+    }
 }
 
 XrdHttpSsiHandler::~XrdHttpSsiHandler()
@@ -216,9 +229,27 @@ int XrdHttpSsiHandler::Init(const char *cfgfile)
 
 bool XrdHttpSsiHandler::ObtainSSIService()
 {
-    // Use dlsym to find the XrdSsiProviderServer symbol
-    // This works because both plugins are loaded in the same process
-    void *handle = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
+    void *handle = nullptr;
+
+    // If we have a specific SSI library path, open it directly
+    // Use RTLD_NOLOAD to get a handle to the already-loaded library
+    if (!m_ssiLibPath.empty())
+    {
+        m_log.Emsg("ObtainSSI", "Opening SSI library:", m_ssiLibPath.c_str());
+        handle = dlopen(m_ssiLibPath.c_str(), RTLD_NOW | RTLD_NOLOAD);
+        if (!handle)
+        {
+            // Library not already loaded, try loading it
+            m_log.Emsg("ObtainSSI", "Library not pre-loaded, trying to load it");
+            handle = dlopen(m_ssiLibPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        }
+    }
+    else
+    {
+        // Fallback: try to find in the main executable (may not work if not RTLD_GLOBAL)
+        handle = dlopen(NULL, RTLD_NOW);
+    }
+
     if (!handle)
     {
         m_log.Emsg("ObtainSSI", "dlopen failed:", dlerror());
@@ -256,7 +287,7 @@ bool XrdHttpSsiHandler::ObtainSSIService()
     }
 
     m_log.Emsg("ObtainSSI", "Successfully obtained SSI service");
-    dlclose(handle);
+    // Note: We don't dlclose here as we need the library to stay loaded
     return true;
 }
 

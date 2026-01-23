@@ -65,8 +65,9 @@ fi
     echo "http.key ${BASEDIR}/xroot-http/certs/server.key"
     echo ""
     # Load HTTP-to-SSI handler for /ssi endpoint
-    # Format: http.exthandler <path-prefix> <library>
-    echo "http.exthandler /ssi $2"
+    # Format: http.exthandler <path-prefix> <library> [params]
+    # Pass SSI library path as parameter so handler can find it
+    echo "http.exthandler /ssi $2 ssilib=$1"
     echo ""
 } > xroot-http/etc/xrootd/xrootd-http-ssi.cfg
 
