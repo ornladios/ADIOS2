@@ -163,6 +163,11 @@ if(NOT @BUILD_SHARED_LIBS@)
       find_dependency(XRootD)
   endif()
 
+  set(ADIOS2_HAVE_CURL @ADIOS2_HAVE_CURL@)
+  if(ADIOS2_HAVE_CURL)
+      find_dependency(CURL)
+  endif()
+
   set(ADIOS2_HAVE_Campaign @ADIOS2_HAVE_Campaign@)
   if(ADIOS2_HAVE_Campaign)
     find_dependency(ZLIB)

@@ -9,6 +9,7 @@ set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)
 set(DAOS_DIR ${CMAKE_CURRENT_BINARY_DIR}/daos)
 set(XROOTD_DIR ${CMAKE_CURRENT_BINARY_DIR}/xrootd)
+set(XROOTD_HTTPS_DIR ${CMAKE_CURRENT_BINARY_DIR}/xrootd-https)
 set(KVCACHE_DIR ${CMAKE_CURRENT_BINARY_DIR}/kvcache)
 set(FS_DIR ${CMAKE_CURRENT_BINARY_DIR}/filestream)
 file(MAKE_DIRECTORY ${BP3_DIR})
@@ -16,6 +17,7 @@ file(MAKE_DIRECTORY ${BP4_DIR})
 file(MAKE_DIRECTORY ${BP5_DIR})
 file(MAKE_DIRECTORY ${DAOS_DIR})
 file(MAKE_DIRECTORY ${XROOTD_DIR})
+file(MAKE_DIRECTORY ${XROOTD_HTTPS_DIR})
 file(MAKE_DIRECTORY ${KVCACHE_DIR})
 file(MAKE_DIRECTORY ${FS_DIR})
 
@@ -195,6 +197,41 @@ if (ADIOS2_HAVE_XRootD)
    ##### add remote tests below this line
    add_get_xrremote_tests_helper(WriteReadADIOS2stdio)
    add_get_xrremote_tests_helper(WriteMemorySelectionRead)
+endif()
+
+# HTTPS-based remote tests (requires both XRootD for server and CURL for client)
+if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
+   # Generate unique ports based on build directory hash to avoid conflicts in parallel CI
+   # Use string hash of build directory to create a port offset (range 0-999)
+   string(MD5 BUILD_DIR_HASH "${CMAKE_BINARY_DIR}")
+   string(SUBSTRING "${BUILD_DIR_HASH}" 0 4 PORT_HASH_HEX)
+   # Convert hex to decimal and mod 1000 for port offset
+   math(EXPR XROOTD_PORT_OFFSET "0x${PORT_HASH_HEX} % 1000" OUTPUT_FORMAT DECIMAL)
+   math(EXPR XROOTD_XRD_PORT "11094 + ${XROOTD_PORT_OFFSET}")
+   math(EXPR XROOTD_HTTP_PORT "8443 + ${XROOTD_PORT_OFFSET}")
+   message(STATUS "XRootD HTTPS test ports: XRD=${XROOTD_XRD_PORT}, HTTP=${XROOTD_HTTP_PORT} (offset=${XROOTD_PORT_OFFSET})")
+
+   macro(add_get_xrhttps_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetXRHttps" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetXRHttps PROPERTIES
+         FIXTURES_REQUIRED XRHttpsServer
+         ENVIRONMENT "DoXRootDHttps=1;XRootDHttpsNoVerify=1;XRootDHttpsHost=localhost:${XROOTD_HTTP_PORT}"
+         WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
+   endmacro()
+
+   add_test(NAME generateXRootDHttpConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDHttpConfig.sh $<TARGET_FILE:adios2_xrootd> $<TARGET_FILE:adios2_xrootd_http> ${XROOTD_XRD_PORT} ${XROOTD_HTTP_PORT})
+   set_tests_properties(generateXRootDHttpConfig PROPERTIES WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
+
+   add_test(NAME remoteXRHttpsServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd_http.sh ${XROOTD_SERVER_BINARY} ${XROOTD_HTTPS_DIR})
+   set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
+   set_tests_properties(remoteXRHttpsServerSetup PROPERTIES DEPENDS "generateXRootDHttpConfig")
+
+   add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh)
+   set_tests_properties(remoteXRHttpsServerCleanup PROPERTIES FIXTURES_CLEANUP XRHttpsServer)
+
+   ##### add HTTPS remote tests below this line
+   add_get_xrhttps_tests_helper(WriteReadADIOS2stdio)
+   add_get_xrhttps_tests_helper(WriteMemorySelectionRead)
 endif()
 
 if(ADIOS2_HAVE_MPI)

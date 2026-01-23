@@ -15,6 +15,7 @@
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
+#include "adios2/toolkit/remote/XrootdHttpsRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2sys/SystemTools.hxx"
@@ -495,13 +496,51 @@ void BP5Reader::PerformGets()
         {
             RemoteName = m_Parameters.RemoteDataPath;
         }
-        else if (getenv("DoRemote") || getenv("DoXRootD"))
+        else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps"))
         {
             RemoteName = m_Name;
         }
         (void)RowMajorOrdering; // Use in case no remotes available
+#ifdef ADIOS2_HAVE_CURL
+        if (getenv("DoXRootDHttps"))
+        {
+            std::string XRootDHost = "localhost";
+            int XRootDPort = 8443;
+            char *Env = getenv("XRootDHttpsHost");
+            if (Env)
+            {
+                const std::string XEnv = std::string(Env);
+                auto colon_pos = XEnv.find(':');
+                if (colon_pos == std::string::npos)
+                {
+                    XRootDHost = XEnv;
+                }
+                else
+                {
+                    XRootDHost = XEnv.substr(0, colon_pos);
+                    try
+                    {
+                        XRootDPort = std::stoi(XEnv.substr(colon_pos + 1));
+                    }
+                    catch (...)
+                    {
+                    }
+                }
+            }
+            m_Remote = std::make_unique<XrootdHttpsRemote>(m_HostOptions);
+            Params params;
+            // For testing, disable SSL verification
+            if (getenv("XRootDHttpsNoVerify"))
+            {
+                params["VerifySSL"] = "false";
+            }
+            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering,
+                           params);
+        }
+        else
+#endif
 #ifdef ADIOS2_HAVE_XROOTD
-        if (getenv("DoXRootD"))
+            if (getenv("DoXRootD"))
         {
             std::string XRootDHost = "localhost";
             int XRootDPort = 1094;
@@ -511,7 +550,9 @@ void BP5Reader::PerformGets()
                 const std::string XEnv = std::string(Env);
                 auto colon_pos = XEnv.find(':');
                 if (colon_pos == std::string::npos)
+                {
                     XRootDHost = XEnv;
+                }
                 else
                 {
                     XRootDHost = XEnv.substr(0, colon_pos);
@@ -1090,7 +1131,7 @@ void BP5Reader::Init()
     // Don't try to open the remote file when we open local metadata.  Do that on demand.
     if (!m_Parameters.RemoteDataPath.empty())
         m_dataIsRemote = true;
-    if (getenv("DoRemote") || getenv("DoXRootD"))
+    if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps"))
         m_dataIsRemote = true;
 
     if (m_ReadMetadataFromFile)

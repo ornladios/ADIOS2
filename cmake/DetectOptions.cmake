@@ -656,6 +656,16 @@ if(XRootD_FOUND)
 
 endif()
 
+# CURL (for HTTPS remote access to XRootD SSI services)
+if(ADIOS2_USE_CURL STREQUAL AUTO)
+  find_package(CURL QUIET)
+elseif(ADIOS2_USE_CURL)
+  find_package(CURL REQUIRED)
+endif()
+if(CURL_FOUND)
+  set(ADIOS2_HAVE_CURL TRUE)
+endif()
+
 # Campaign Management
 if(ADIOS2_USE_Campaign STREQUAL AUTO)
   find_package(SQLite3)

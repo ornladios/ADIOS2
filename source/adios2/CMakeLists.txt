@@ -256,6 +256,12 @@ if(ADIOS2_HAVE_XRootD)
   target_link_libraries(adios2_core PRIVATE ${XROOTD_CLIENT_LIBRARIES} ${XROOTD_UTILS_LIBRARIES} ${XROOTD_SSI_LIBRARIES})
 endif()
 
+if(ADIOS2_HAVE_CURL)
+  # HTTPS-based remote access to XRootD SSI services (alternative to native XRootD protocol)
+  target_sources(adios2_core PRIVATE toolkit/remote/XrootdHttpsRemote.cpp)
+  target_link_libraries(adios2_core PRIVATE CURL::libcurl)
+endif()
+
 if(ADIOS2_HAVE_SST)
   # EVPath-enabled remote file transport
   target_sources(adios2_core PRIVATE toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp toolkit/remote/EVPathRemote.cpp)
