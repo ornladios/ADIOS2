@@ -4,7 +4,9 @@ find_dependency(atl @atl_VERSION@)
 find_dependency(ffs @ffs_VERSION@)
 
 if(NOT @BUILD_SHARED_LIBS@)
-  find_dependency(dill @dill_VERSION@)
+  if(@HAVE_COD_H@)
+    find_dependency(dill @dill_VERSION@)
+  endif()
 
   if(@NVML_FOUND@)
     find_dependency(NVML)
