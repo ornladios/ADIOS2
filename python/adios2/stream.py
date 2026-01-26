@@ -5,6 +5,7 @@ accompanying file Copyright.txt for details.
 
 from functools import singledispatchmethod
 from sys import maxsize
+from typing import Optional
 import numpy as np
 
 # pylint: disable=duplicate-code
@@ -922,7 +923,7 @@ class Stream:
 
         return self._engine.all_blocks_info(name)
 
-    def minmax(self, name, step: int | None = None, block_info_list: list = []) -> tuple:
+    def minmax(self, name, step: Optional[int] = None, block_info_list: list = []) -> tuple:
         """
         Get min/max value for variable:
         - 'r' mode: min/max in the current step
