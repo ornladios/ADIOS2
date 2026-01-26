@@ -5,6 +5,7 @@ accompanying file Copyright.txt for details.
 
 from functools import singledispatchmethod
 from sys import maxsize
+from typing import Optional
 import numpy as np
 
 # pylint: disable=duplicate-code
@@ -921,3 +922,49 @@ class Stream:
             self.begin_step()
 
         return self._engine.all_blocks_info(name)
+
+    def minmax(self, name, step: Optional[int] = None, block_info_list: list = []) -> tuple:
+        """
+        Get min/max value for variable:
+        - 'r' mode: min/max in the current step
+            - Setting 'step' input will cause error.
+        - 'rra' mode:
+            - the global all-step min/max if 'step' is not given,
+            - the given step's min/max
+        If 'bis' is given as the result of previous all_blocks_info() call, it will be used
+        instead of querying again.
+
+        :param name: Variable name
+        :param step: Which step. It will cause error in 'r' mode if set.
+        :param bis: Result of previous all_blocks_info() call.
+
+        Return a tuple of min/max values
+        """
+
+        if self._mode == bindings.Mode.Read and step is not None:
+            raise ValueError("adios2.Stream.minmax() in 'r' mode must not set step")
+
+        variable = self._io.inquire_variable(name)
+        if variable is None:
+            return None, None
+        if variable.type() == "string":
+            return "", ""
+
+        bis = []
+        if len(block_info_list) == 0:
+            if step is not None:
+                bis.append(self._engine.blocks_info(name, step))
+            else:
+                bis = self._engine.all_blocks_info(name)
+        else:
+            bis = block_info_list
+
+        dtype = type_adios_to_numpy(variable.type())
+
+        if step is not None:
+            mins = [dtype(bi["Min"]) for bi in bis[0]]
+            maxs = [dtype(bi["Max"]) for bi in bis[0]]
+        else:
+            mins = [dtype(bi["Min"]) for n in range(len(bis)) for bi in bis[n]]
+            maxs = [dtype(bi["Max"]) for n in range(len(bis)) for bi in bis[n]]
+        return min(mins), max(maxs)
