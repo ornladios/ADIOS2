@@ -59,6 +59,11 @@ class TestFileReader(unittest.TestCase):
             self.assertEqual(output.size, 1)
             self.assertEqual(output, [13])
 
+            minv, maxv = f.minmax("Temp")
+            print(f"var:Temp min/max :{minv}/{maxv}")
+            self.assertGreaterEqual(minv, 15)
+            self.assertLessEqual(maxv, 35)
+
             output = f.read("Temp", step_selection=[0, 10])
             self.assertEqual(len(output), 30)
             print(f"var:Temp output:{output}")
