@@ -15,7 +15,7 @@
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
-#include "adios2/toolkit/remote/XrootdHttpsRemote.h"
+#include "adios2/toolkit/remote/XrootdHttpRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2sys/SystemTools.hxx"
@@ -496,17 +496,23 @@ void BP5Reader::PerformGets()
         {
             RemoteName = m_Parameters.RemoteDataPath;
         }
-        else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps"))
+        else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
+                 getenv("DoXRootDHttp"))
         {
             RemoteName = m_Name;
         }
         (void)RowMajorOrdering; // Use in case no remotes available
 #ifdef ADIOS2_HAVE_CURL
-        if (getenv("DoXRootDHttps"))
+        if (getenv("DoXRootDHttps") || getenv("DoXRootDHttp"))
         {
+            // Determine if using HTTPS or plain HTTP
+            bool useHttps = (getenv("DoXRootDHttps") != nullptr);
+
             std::string XRootDHost = "localhost";
-            int XRootDPort = 8443;
-            char *Env = getenv("XRootDHttpsHost");
+            int XRootDPort = useHttps ? 8443 : 8080; // Default ports
+
+            // Check for host environment variable (HTTPS or HTTP variant)
+            char *Env = useHttps ? getenv("XRootDHttpsHost") : getenv("XRootDHttpHost");
             if (Env)
             {
                 const std::string XEnv = std::string(Env);
@@ -527,10 +533,11 @@ void BP5Reader::PerformGets()
                     }
                 }
             }
-            m_Remote = std::make_unique<XrootdHttpsRemote>(m_HostOptions);
+            m_Remote = std::make_unique<XrootdHttpRemote>(m_HostOptions);
             Params params;
-            // For testing, disable SSL verification
-            if (getenv("XRootDHttpsNoVerify"))
+            params["UseHttps"] = useHttps ? "true" : "false";
+            // For testing, disable SSL verification (only relevant for HTTPS)
+            if (useHttps && getenv("XRootDHttpsNoVerify"))
             {
                 params["VerifySSL"] = "false";
             }
@@ -1131,7 +1138,8 @@ void BP5Reader::Init()
     // Don't try to open the remote file when we open local metadata.  Do that on demand.
     if (!m_Parameters.RemoteDataPath.empty())
         m_dataIsRemote = true;
-    if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps"))
+    if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
+        getenv("DoXRootDHttp"))
         m_dataIsRemote = true;
 
     if (m_ReadMetadataFromFile)

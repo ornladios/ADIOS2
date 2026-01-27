@@ -1,0 +1,22 @@
+# Ignore build directories
+build*/
+.cache/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore Claude Code data
+.claude/
+
+# Ignore git directory
+.git/
+
+# Ignore test artifacts
+testing/Temporary/
+
+# Ignore local session files
+session-summary.txt
+*.tar

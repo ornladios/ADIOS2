@@ -257,8 +257,8 @@ if(ADIOS2_HAVE_XRootD)
 endif()
 
 if(ADIOS2_HAVE_CURL)
-  # HTTPS-based remote access to XRootD SSI services (alternative to native XRootD protocol)
-  target_sources(adios2_core PRIVATE toolkit/remote/XrootdHttpsRemote.cpp)
+  # HTTP/HTTPS-based remote access to XRootD SSI services (alternative to native XRootD protocol)
+  target_sources(adios2_core PRIVATE toolkit/remote/XrootdHttpRemote.cpp)
   target_link_libraries(adios2_core PRIVATE CURL::libcurl)
 endif()
 
