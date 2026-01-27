@@ -10,6 +10,7 @@ readonly subtree="thirdparty/ffs/ffs"
 readonly repo="https://github.com/GTkorvo/ffs.git"
 readonly tag="master"
 readonly shortlog="true"
+readonly exact_tree_match="false"
 readonly paths="
 "
 
