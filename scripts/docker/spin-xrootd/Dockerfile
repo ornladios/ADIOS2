@@ -38,18 +38,21 @@ RUN mkdir -p /data && \
 # Clean up source to reduce image size
 RUN rm -rf /ADIOS2-src
 
-# Create directories for XRootD
-RUN mkdir -p /var/spool/xrootd /run/xrootd /etc/xrootd /etc/xrootd/certs
+# Create directories for XRootD with correct ownership for non-root operation
+RUN mkdir -p /var/spool/xrootd /run/xrootd /etc/xrootd /etc/xrootd/certs /var/log/xrootd && \
+    chown -R 194:194 /var/spool/xrootd /run/xrootd /var/log/xrootd /data
 
 # Generate self-signed SSL certificate at build time
 # This is needed because XRootD's http.exthandler requires TLS to be configured
+# Ownership set to xrootd user (194:194) so non-root container can read the key
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/xrootd/certs/server.key \
     -out /etc/xrootd/certs/server.crt \
     -subj "/CN=localhost" \
     -batch && \
     chmod 600 /etc/xrootd/certs/server.key && \
-    chmod 644 /etc/xrootd/certs/server.crt
+    chmod 644 /etc/xrootd/certs/server.crt && \
+    chown -R 194:194 /etc/xrootd/certs
 
 # Copy configuration files
 COPY scripts/docker/spin-xrootd/xrootd-http.cfg /etc/xrootd/xrootd-http.cfg

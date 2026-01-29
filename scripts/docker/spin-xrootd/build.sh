@@ -18,7 +18,7 @@ echo ""
 # Create a temporary directory for the build context
 # This avoids issues with .claude directory permissions
 BUILD_CONTEXT=$(mktemp -d)
-trap "rm -rf $BUILD_CONTEXT" EXIT
+trap 'rm -rf "$BUILD_CONTEXT"' EXIT
 
 echo "Creating clean build context in $BUILD_CONTEXT..."
 
@@ -34,7 +34,7 @@ for f in source/adios2/toolkit/remote/XrootdHttpRemote.h \
          scripts/docker/spin-xrootd/xrootd-http.cfg \
          scripts/docker/spin-xrootd/docker-entrypoint.sh; do
     if [ -f "$ADIOS2_ROOT/$f" ]; then
-        mkdir -p "$BUILD_CONTEXT/$(dirname $f)"
+        mkdir -p "$BUILD_CONTEXT/$(dirname "$f")"
         cp "$ADIOS2_ROOT/$f" "$BUILD_CONTEXT/$f"
     fi
 done

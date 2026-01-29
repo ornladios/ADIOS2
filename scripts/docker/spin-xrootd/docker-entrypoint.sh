@@ -19,12 +19,12 @@ echo "=========================================="
 # Determine user specification for xrootd
 # If running as root, switch to xrootd user for security
 if (( EUID == 0 )); then
-    USER_SPEC="-R xrootd"
+    USER_SPEC=("-R" "xrootd")
     echo "Running as root, will switch to xrootd user"
     # Ensure xrootd user can access data directory
     chown -R xrootd:xrootd /data 2>/dev/null || true
 else
-    USER_SPEC=""
+    USER_SPEC=()
     echo "Running as non-root user (UID: $EUID)"
 fi
 
@@ -37,4 +37,4 @@ echo ""
 # -n adios: instance name
 # -c: configuration file
 # Note: Running without -l to let logs go to stdout/stderr
-exec xrootd $USER_SPEC -n adios -c /etc/xrootd/xrootd-http.cfg
+exec xrootd "${USER_SPEC[@]}" -n adios -c /etc/xrootd/xrootd-http.cfg
