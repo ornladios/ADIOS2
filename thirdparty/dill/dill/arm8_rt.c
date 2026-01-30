@@ -1,10 +1,15 @@
 #include "config.h"
 #include <string.h>
+#include <stdio.h>
 #include "dill.h"
 #include "dill_internal.h"
 #include "sys/mman.h"
 #ifdef HAVE_MEMORY_H
 #include "memory.h"
+#endif
+#ifdef USE_MACOS_MAP_JIT
+#include <pthread.h>
+#include <libkern/OSCacheControl.h>
 #endif
 #include "arm8.h"
 #include <string.h>
@@ -117,7 +122,11 @@ static void
 arm8_flush(void *base, void *limit)
 {
 #if defined(HOST_ARM8) || defined(HOST_ARM7)
+#ifdef USE_MACOS_MAP_JIT
+    sys_icache_invalidate(base, (size_t)((char*)limit - (char*)base));
+#else
     __clear_cache(base, limit);
+#endif
 #endif
 }    
 
@@ -127,17 +136,36 @@ arm8_package_stitch(char *code, call_t *t, dill_pkg pkg)
     char *tmp = code;
     dill_lookup_xfer_addrs(t, &arm8_xfer_recs[0]);
     arm8_rt_set_PLT_locs(t, pkg);
-#ifdef USE_MMAP_CODE_SEG
+#ifdef USE_MACOS_MAP_JIT
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+    pthread_jit_write_protect_np(0);
+    tmp = (void*)mmap(0, pkg->code_size,
+		      PROT_READ | PROT_WRITE | PROT_EXEC,
+		      MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+    if (tmp == MAP_FAILED) {
+        perror("mmap MAP_JIT arm8 package_stitch");
+        return NULL;
+    }
+    memcpy(tmp, code, pkg->code_size);
+    arm8_rt_call_link(tmp, t);
+    arm8_flush(tmp, tmp + pkg->code_size);
+    pthread_jit_write_protect_np(1);
+#elif defined(USE_MMAP_CODE_SEG)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
     tmp = (void*)mmap(0, pkg->code_size,
-		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      PROT_EXEC | PROT_READ | PROT_WRITE,
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
-#endif
     arm8_rt_call_link(tmp, t);
     arm8_flush(code, tmp+pkg->code_size);
+#else
+    arm8_rt_call_link(tmp, t);
+    arm8_flush(code, tmp+pkg->code_size);
+#endif
     return tmp + pkg->entry_offset;
 }
 

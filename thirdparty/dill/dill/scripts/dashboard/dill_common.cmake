@@ -62,8 +62,12 @@
 #   set(ENV{FC}  /path/to/fc)   # Fortran compiler (optional)
 #   set(ENV{LD_LIBRARY_PATH} /path/to/vendor/lib) # (if necessary)
 
-set(CTEST_PROJECT_NAME "DILL")
+set(CTEST_PROJECT_NAME "GTKorvo")
+set(CTEST_DROP_METHOD "http")
 set(CTEST_DROP_SITE "open.cdash.org")
+set(CTEST_DROP_LOCATION "/submit.php?project=GTKorvo")
+set(CTEST_DROP_SITE_CDASH TRUE)
+set(CTEST_LABELS_FOR_SUBPROJECTS DILL)
 if(NOT dashboard_git_url)
   set(dashboard_git_url "https://github.com/GTkorvo/dill.git")
 endif()

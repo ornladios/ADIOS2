@@ -57,6 +57,8 @@ arm6_package_stitch(char* code, call_t* t, dill_pkg pkg);
 extern char*
 arm8_package_stitch(char* code, call_t* t, dill_pkg pkg);
 extern char*
+arm64_package_stitch(char* code, call_t* t, dill_pkg pkg);
+extern char*
 ia64_package_stitch(char* code, call_t* t, dill_pkg pkg);
 extern char*
 powerpc_package_stitch(char* code, call_t* t, dill_pkg pkg);
@@ -83,6 +85,8 @@ dill_package_stitch(char* pkg, dill_extern_entry* extra_externs)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
     char* code;
+    memset(handle, 0, sizeof(*handle));
+    handle->ref_count = 1;
     call_t t;
     unpack_package(pkg, &t, &code);
     if (extra_externs) {
@@ -106,6 +110,8 @@ dill_package_stitch(char* pkg, dill_extern_entry* extra_externs)
     char* p = arm6_package_stitch(code, &t, (dill_pkg)pkg);
 #elif defined(HOST_ARM8) && !defined(DILL_IGNORE_NATIVE)
     char* p = arm8_package_stitch(code, &t, (dill_pkg)pkg);
+#elif defined(HOST_ARM64) && !defined(DILL_IGNORE_NATIVE)
+    char* p = arm64_package_stitch(code, &t, (dill_pkg)pkg);
 #elif defined(HOST_POWERPC) && !defined(DILL_IGNORE_NATIVE)
     char* p = powerpc_package_stitch(code, &t, (dill_pkg)pkg);
 #elif defined(HOST_PPC64LE) && !defined(DILL_IGNORE_NATIVE)

@@ -1231,7 +1231,7 @@ build_bbs(dill_stream c, void* vinsns, void* prefix_begin, void* code_end)
 
     vmi->bbcount = 0;
     vmi->bblist = malloc(sizeof(struct basic_block));
-    size_t i = 0;
+    int i = 0;
     bb = vmi->bblist;
     bb->start = 0;
     bb->label = -1;
@@ -1243,7 +1243,7 @@ build_bbs(dill_stream c, void* vinsns, void* prefix_begin, void* code_end)
     bb->is_loop_start = 0;
     bb->is_loop_end = 0;
     if (prefix_begin < code_end) {
-        i = ((char*)prefix_begin - (char*)insns) / sizeof(virtual_insn);
+        i = (int)(((char*)prefix_begin - (char*)insns) / sizeof(virtual_insn));
         bb->start = i;
         while ((insn = &insns[i++]) < (virtual_insn*)code_end) {
             build_bb_body(c, insn, (int)i, insns);
@@ -4615,6 +4615,12 @@ dill_free_exec_context(dill_exec_ctx ec)
     if (ec->out_params)
         free(ec->out_params);
     free(ec);
+}
+
+extern void
+dill_free(void *ptr)
+{
+    free(ptr);
 }
 
 extern void

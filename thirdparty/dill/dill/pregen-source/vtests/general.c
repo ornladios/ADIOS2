@@ -14,194 +14,81 @@
 #define srand48(s) srand(s)
 #define drand48() (rand()*(1./RAND_MAX))
 #define lrand48() ((long long)rand() << 32 | rand())
-#define kill(x,y) 
+#define kill(x,y)
 #else
 extern double drand48();
 extern IMM_TYPE lrand48();
 void srand48(IMM_TYPE seedval);
 #endif
 
-int
-main(int argc, char **argv)
+/* Global test data - initialized in main() */
+static int verbose;
+static float rand1_f;
+static float rand2_f;
+static float src1f_vals[2];
+static float src2f_vals[2];
+static float br_srcf_vals[6];
+static short rand1_s;
+static short rand2_s;
+static short src1s_vals[2];
+static short src2s_vals[2];
+static short br_srcs_vals[6];
+static IMM_TYPE rand1_l;
+static IMM_TYPE rand2_l;
+static IMM_TYPE src1l_vals[2];
+static IMM_TYPE src2l_vals[2];
+static IMM_TYPE br_srcl_vals[6];
+static unsigned char rand1_uc;
+static unsigned char rand2_uc;
+static unsigned char src1uc_vals[2];
+static unsigned char src2uc_vals[2];
+static unsigned char br_srcuc_vals[6];
+static unsigned short rand1_us;
+static unsigned short rand2_us;
+static unsigned short src1us_vals[2];
+static unsigned short src2us_vals[2];
+static unsigned short br_srcus_vals[6];
+static UIMM_TYPE rand1_ul;
+static UIMM_TYPE rand2_ul;
+static UIMM_TYPE src1ul_vals[2];
+static UIMM_TYPE src2ul_vals[2];
+static UIMM_TYPE br_srcul_vals[6];
+static signed char rand1_c;
+static signed char rand2_c;
+static signed char src1c_vals[2];
+static signed char src2c_vals[2];
+static signed char br_srcc_vals[6];
+static double rand1_d;
+static double rand2_d;
+static double src1d_vals[2];
+static double src2d_vals[2];
+static double br_srcd_vals[6];
+static unsigned int rand1_u;
+static unsigned int rand2_u;
+static unsigned int src1u_vals[2];
+static unsigned int src2u_vals[2];
+static unsigned int br_srcu_vals[6];
+static int rand1_i;
+static int rand2_i;
+static int src1i_vals[2];
+static int src2i_vals[2];
+static int br_srci_vals[6];
+static char* rand1_p;
+static char* rand2_p;
+static char* src1p_vals[2];
+static char* src2p_vals[2];
+static char* br_srcp_vals[6];
+static int sh_src2_vals[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63};
+
+static UIMM_TYPE bit_pattern_vals[] = { 0x1, 0x0,  0x2, 0x1,  0x4, 0x3,  0x8, 0x7,  0x10, 0xf,  0x20, 0x1f,  0x40, 0x3f,  0x80, 0x7f,  0x100, 0xff,  0x200, 0x1ff,  0x400, 0x3ff,  0x800, 0x7ff,  0x1000, 0xfff,  0x2000, 0x1fff,  0x4000, 0x3fff,  0x8000, 0x7fff,  0x10000, 0xffff,  0x20000, 0x1ffff,  0x40000, 0x3ffff,  0x80000, 0x7ffff,  0x100000, 0xfffff,  0x200000, 0x1fffff,  0x400000, 0x3fffff,  0x800000, 0x7fffff,  0x1000000, 0xffffff,  0x2000000, 0x1ffffff,  0x4000000, 0x3ffffff,  0x8000000, 0x7ffffff,  0x10000000, 0xfffffff,  0x20000000, 0x1fffffff,  0x40000000, 0x3fffffff,  0x80000000, 0x7fffffff,  0xffffffff};
+
+
+static int
+test_arith_int(dill_stream c)
 {
-    dill_stream c = dill_create_stream();
-    int failed = 0, verbose = 0;
+    int failed = 0;
     size_t i, j;
-    UIMM_TYPE rand1_ul = (UIMM_TYPE)lrand48();
-    UIMM_TYPE rand2_ul = (UIMM_TYPE)lrand48();
-    UIMM_TYPE src1ul_vals[2];
-    UIMM_TYPE src2ul_vals[2];
-    UIMM_TYPE br_srcul_vals[6];
-    signed char rand1_c = (signed char)lrand48();
-    signed char rand2_c = (signed char)lrand48();
-    signed char src1c_vals[2];
-    signed char src2c_vals[2];
-    signed char br_srcc_vals[6];
-    unsigned int rand1_u = (unsigned int)lrand48();
-    unsigned int rand2_u = (unsigned int)lrand48();
-    unsigned int src1u_vals[2];
-    unsigned int src2u_vals[2];
-    unsigned int br_srcu_vals[6];
-    unsigned short rand1_us = (unsigned short)lrand48();
-    unsigned short rand2_us = (unsigned short)lrand48();
-    unsigned short src1us_vals[2];
-    unsigned short src2us_vals[2];
-    unsigned short br_srcus_vals[6];
-    float rand1_f = (float)drand48();
-    float rand2_f = (float)drand48();
-    float src1f_vals[2];
-    float src2f_vals[2];
-    float br_srcf_vals[6];
-    int rand1_i = (int)lrand48();
-    int rand2_i = (int)lrand48();
-    int src1i_vals[2];
-    int src2i_vals[2];
-    int br_srci_vals[6];
-    char* rand1_p = (char*)(char *)lrand48();
-    char* rand2_p = (char*)(char *)lrand48();
-    char* src1p_vals[2];
-    char* src2p_vals[2];
-    char* br_srcp_vals[6];
-    double rand1_d = (double)drand48();
-    double rand2_d = (double)drand48();
-    double src1d_vals[2];
-    double src2d_vals[2];
-    double br_srcd_vals[6];
-    IMM_TYPE rand1_l = (IMM_TYPE)lrand48();
-    IMM_TYPE rand2_l = (IMM_TYPE)lrand48();
-    IMM_TYPE src1l_vals[2];
-    IMM_TYPE src2l_vals[2];
-    IMM_TYPE br_srcl_vals[6];
-    short rand1_s = (short)lrand48();
-    short rand2_s = (short)lrand48();
-    short src1s_vals[2];
-    short src2s_vals[2];
-    short br_srcs_vals[6];
-    unsigned char rand1_uc = (unsigned char)lrand48();
-    unsigned char rand2_uc = (unsigned char)lrand48();
-    unsigned char src1uc_vals[2];
-    unsigned char src2uc_vals[2];
-    unsigned char br_srcuc_vals[6];
-    int sh_src2_vals[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63};
-
-    UIMM_TYPE bit_pattern_vals[] = { 0x1, 0x0,  0x2, 0x1,  0x4, 0x3,  0x8, 0x7,  0x10, 0xf,  0x20, 0x1f,  0x40, 0x3f,  0x80, 0x7f,  0x100, 0xff,  0x200, 0x1ff,  0x400, 0x3ff,  0x800, 0x7ff,  0x1000, 0xfff,  0x2000, 0x1fff,  0x4000, 0x3fff,  0x8000, 0x7fff,  0x10000, 0xffff,  0x20000, 0x1ffff,  0x40000, 0x3ffff,  0x80000, 0x7ffff,  0x100000, 0xfffff,  0x200000, 0x1fffff,  0x400000, 0x3fffff,  0x800000, 0x7fffff,  0x1000000, 0xffffff,  0x2000000, 0x1ffffff,  0x4000000, 0x3ffffff,  0x8000000, 0x7ffffff,  0x10000000, 0xfffffff,  0x20000000, 0x1fffffff,  0x40000000, 0x3fffffff,  0x80000000, 0x7fffffff,  0xffffffff};
-
-    src1f_vals[0] = rand1_f;
-    src1f_vals[1] = -rand1_f;
-    src2f_vals[0] = rand2_f;
-    src2f_vals[1] = -rand2_f;
-    src1d_vals[0] = rand1_d;
-    src1d_vals[1] = -rand1_d;
-    src2d_vals[0] = rand2_d;
-    src2d_vals[1] = -rand2_d;
-    src1c_vals[0] = rand1_c;
-    src1c_vals[1] = -rand1_c;
-    src2c_vals[0] = rand2_c;
-    src2c_vals[1] = -rand2_c;
-    src1s_vals[0] = rand1_s;
-    src1s_vals[1] = -rand1_s;
-    src2s_vals[0] = rand2_s;
-    src2s_vals[1] = -rand2_s;
-    src1i_vals[0] = rand1_i;
-    src1i_vals[1] = -rand1_i;
-    src2i_vals[0] = rand2_i;
-    src2i_vals[1] = -rand2_i;
-    src1l_vals[0] = rand1_l;
-    src1l_vals[1] = -rand1_l;
-    src2l_vals[0] = rand2_l;
-    src2l_vals[1] = -rand2_l;
-    src1uc_vals[0] = (unsigned char) rand1_uc;
-    src1uc_vals[1] = (unsigned char) - (char) rand1_uc;
-    src2uc_vals[0] = (unsigned char) rand2_uc;
-    src2uc_vals[1] = (unsigned char) - (char) rand2_uc;
-    src1us_vals[0] = (unsigned short) rand1_us;
-    src1us_vals[1] = (unsigned short) - (short) rand1_us;
-    src2us_vals[0] = (unsigned short) rand2_us;
-    src2us_vals[1] = (unsigned short) - (short) rand2_us;
-    src1u_vals[0] = (unsigned int) rand1_u;
-    src1u_vals[1] = (unsigned int) - (int) rand1_u;
-    src2u_vals[0] = (unsigned int) rand2_u;
-    src2u_vals[1] = (unsigned int) - (int) rand2_u;
-    src1ul_vals[0] = (UIMM_TYPE) rand1_ul;
-    src1ul_vals[1] = (UIMM_TYPE) - (intptr_t) rand1_ul;
-    src2ul_vals[0] = (UIMM_TYPE) rand2_ul;
-    src2ul_vals[1] = (UIMM_TYPE) - (intptr_t) rand2_ul;
-    br_srcuc_vals[0] = (unsigned char) rand1_uc;
-    br_srcuc_vals[1] = (unsigned char) - (char) rand1_uc;
-    br_srcuc_vals[2] = (unsigned char) rand1_uc + 1;
-    br_srcuc_vals[3] = (unsigned char) -((char) rand1_uc) + 1;
-    br_srcuc_vals[4] = (unsigned char) rand1_uc - 1;
-    br_srcuc_vals[5] = (unsigned char) -((char) rand1_uc) - 1;
-    br_srcc_vals[0] = (signed char) rand1_c;
-    br_srcc_vals[1] = (signed char) -  rand1_c;
-    br_srcc_vals[2] = (signed char) rand1_c + 1;
-    br_srcc_vals[3] = (signed char) -( rand1_c) + 1;
-    br_srcc_vals[4] = (signed char) rand1_c - 1;
-    br_srcc_vals[5] = (signed char) -( rand1_c) - 1;
-    br_srcus_vals[0] = (unsigned short) rand1_us;
-    br_srcus_vals[1] = (unsigned short) - (short) rand1_us;
-    br_srcus_vals[2] = (unsigned short) rand1_us + 1;
-    br_srcus_vals[3] = (unsigned short) -((short) rand1_us) + 1;
-    br_srcus_vals[4] = (unsigned short) rand1_us - 1;
-    br_srcus_vals[5] = (unsigned short) -((short) rand1_us) - 1;
-    br_srcs_vals[0] = (short) rand1_s;
-    br_srcs_vals[1] = (short) -  rand1_s;
-    br_srcs_vals[2] = (short) rand1_s + 1;
-    br_srcs_vals[3] = (short) -( rand1_s) + 1;
-    br_srcs_vals[4] = (short) rand1_s - 1;
-    br_srcs_vals[5] = (short) -( rand1_s) - 1;
-    br_srci_vals[0] = (int) rand1_i;
-    br_srci_vals[1] = (int) -  rand1_i;
-    br_srci_vals[2] = (int) rand1_i + 1;
-    br_srci_vals[3] = (int) -( rand1_i) + 1;
-    br_srci_vals[4] = (int) rand1_i - 1;
-    br_srci_vals[5] = (int) -( rand1_i) - 1;
-    br_srcu_vals[0] = (unsigned int) rand1_u;
-    br_srcu_vals[1] = (unsigned int) - (int) rand1_u;
-    br_srcu_vals[2] = (unsigned int) rand1_u + 1;
-    br_srcu_vals[3] = (unsigned int) -((int) rand1_u) + 1;
-    br_srcu_vals[4] = (unsigned int) rand1_u - 1;
-    br_srcu_vals[5] = (unsigned int) -((int) rand1_u) - 1;
-    br_srcl_vals[0] = (IMM_TYPE) rand1_l;
-    br_srcl_vals[1] = (IMM_TYPE) -  rand1_l;
-    br_srcl_vals[2] = (IMM_TYPE) rand1_l + 1;
-    br_srcl_vals[3] = (IMM_TYPE) -( rand1_l) + 1;
-    br_srcl_vals[4] = (IMM_TYPE) rand1_l - 1;
-    br_srcl_vals[5] = (IMM_TYPE) -( rand1_l) - 1;
-    br_srcul_vals[0] = (UIMM_TYPE) rand1_ul;
-    br_srcul_vals[1] = (UIMM_TYPE) - (intptr_t) rand1_ul;
-    br_srcul_vals[2] = (UIMM_TYPE) rand1_ul + 1;
-    br_srcul_vals[3] = (UIMM_TYPE) -((intptr_t) rand1_ul) + 1;
-    br_srcul_vals[4] = (UIMM_TYPE) rand1_ul - 1;
-    br_srcul_vals[5] = (UIMM_TYPE) -((intptr_t) rand1_ul) - 1;
-    br_srcd_vals[0] = (double) rand1_d;
-    br_srcd_vals[1] = (double) -  rand1_d;
-    br_srcd_vals[2] = (double) rand1_d + 1;
-    br_srcd_vals[3] = (double) -( rand1_d) + 1;
-    br_srcd_vals[4] = (double) rand1_d - 1;
-    br_srcd_vals[5] = (double) -( rand1_d) - 1;
-    br_srcf_vals[0] = (float) rand1_f;
-    br_srcf_vals[1] = (float) -  rand1_f;
-    br_srcf_vals[2] = (float) rand1_f + 1;
-    br_srcf_vals[3] = (float) -( rand1_f) + 1;
-    br_srcf_vals[4] = (float) rand1_f - 1;
-    br_srcf_vals[5] = (float) -( rand1_f) - 1;
-    br_srcp_vals[0] = (char*) rand1_p;
-    br_srcp_vals[1] = (char*) rand1_p;
-    br_srcp_vals[2] = (char*) rand1_p + 1;
-    br_srcp_vals[3] = (char*) rand1_p + 1;
-    br_srcp_vals[4] = (char*) rand1_p - 1;
-    br_srcp_vals[5] = (char*) rand1_p - 1;
-    /* reference these values since they currently aren't done elsewhere */
-    src2p_vals[0] = src1p_vals[0] = rand1_p; src2p_vals[1] = src1p_vals[1] = rand2_p;
-    (void)src2d_vals[0];
-    (void)src2s_vals[0];
-    (void)src2p_vals[0];
-    (void)src2c_vals[0];
-    (void)src2uc_vals[0];
-    (void)src2us_vals[0];
-    (void)src2f_vals[0];
-    if (argc > 1) verbose++;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_addi */
     if (verbose) printf("test for dill_addi");
@@ -1858,6 +1745,15 @@ skip15: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_arith_ptr(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_addp */
     if (verbose) printf("test for dill_addp");
@@ -1940,6 +1836,15 @@ skip15: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_arith_float(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_addf */
     if (verbose) printf("test for dill_addf");
@@ -2270,6 +2175,15 @@ skip17: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_arith2_int(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_comi */
     if (verbose) printf("test for dill_comi");
@@ -2726,6 +2640,15 @@ skip17: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_arith2_float(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_negf */
     if (verbose) printf("test for dill_negf");
@@ -2802,6 +2725,15 @@ skip17: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_arithi(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_addii (immediate) */
     if (verbose) printf("test for dill_addii (immediate)");
@@ -4498,6 +4430,15 @@ skip33: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_branch(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_beqc */
     if (verbose) printf("test for dill_beqc");
@@ -7408,6 +7349,15 @@ skip39: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_branchi(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_beqci */
     if (verbose) printf("test for dill_beqci");
@@ -9736,6 +9686,15 @@ skip45: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_compare(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_eqc */
     if (verbose) printf("test for dill_eqc");
@@ -12448,6 +12407,15 @@ skip51: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_convert(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_cvc2uc */
     if (verbose) printf("test for dill_cvc2uc");
@@ -16075,6 +16043,15 @@ skip51: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_load(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_ldc */
     if (verbose) printf("test for dill_ldc");
@@ -16915,6 +16892,15 @@ skip51: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_store(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for dill_stc */
     if (verbose) printf("test for dill_stc");
@@ -17755,6 +17741,15 @@ skip51: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+static int
+test_setmovret(dill_stream c)
+{
+    int failed = 0;
+    size_t i, j;
+    (void)i; (void)j;  /* suppress unused warnings */
 
     /* test for set/mov/ret c */
     if (verbose) printf("test for set/mov/ret c");
@@ -18145,6 +18140,171 @@ skip51: ;
 	}
     }
     if (verbose) printf(" done\n");
+    return failed;
+}
+
+int
+main(int argc, char **argv)
+{
+    dill_stream c = dill_create_stream();
+    int failed = 0;
+
+    if (argc > 1) verbose++;
+
+    /* Initialize random values */
+    rand1_f = (float)drand48();
+    rand2_f = (float)drand48();
+    rand1_s = (short)lrand48();
+    rand2_s = (short)lrand48();
+    rand1_l = (IMM_TYPE)lrand48();
+    rand2_l = (IMM_TYPE)lrand48();
+    rand1_uc = (unsigned char)lrand48();
+    rand2_uc = (unsigned char)lrand48();
+    rand1_us = (unsigned short)lrand48();
+    rand2_us = (unsigned short)lrand48();
+    rand1_ul = (UIMM_TYPE)lrand48();
+    rand2_ul = (UIMM_TYPE)lrand48();
+    rand1_c = (signed char)lrand48();
+    rand2_c = (signed char)lrand48();
+    rand1_d = (double)drand48();
+    rand2_d = (double)drand48();
+    rand1_u = (unsigned int)lrand48();
+    rand2_u = (unsigned int)lrand48();
+    rand1_i = (int)lrand48();
+    rand2_i = (int)lrand48();
+    rand1_p = (char*)(char *)lrand48();
+    rand2_p = (char*)(char *)lrand48();
+    src1f_vals[0] = rand1_f;
+    src1f_vals[1] = -rand1_f;
+    src2f_vals[0] = rand2_f;
+    src2f_vals[1] = -rand2_f;
+    src1d_vals[0] = rand1_d;
+    src1d_vals[1] = -rand1_d;
+    src2d_vals[0] = rand2_d;
+    src2d_vals[1] = -rand2_d;
+    src1c_vals[0] = rand1_c;
+    src1c_vals[1] = -rand1_c;
+    src2c_vals[0] = rand2_c;
+    src2c_vals[1] = -rand2_c;
+    src1s_vals[0] = rand1_s;
+    src1s_vals[1] = -rand1_s;
+    src2s_vals[0] = rand2_s;
+    src2s_vals[1] = -rand2_s;
+    src1i_vals[0] = rand1_i;
+    src1i_vals[1] = -rand1_i;
+    src2i_vals[0] = rand2_i;
+    src2i_vals[1] = -rand2_i;
+    src1l_vals[0] = rand1_l;
+    src1l_vals[1] = -rand1_l;
+    src2l_vals[0] = rand2_l;
+    src2l_vals[1] = -rand2_l;
+    src1uc_vals[0] = (unsigned char) rand1_uc;
+    src1uc_vals[1] = (unsigned char) - (char) rand1_uc;
+    src2uc_vals[0] = (unsigned char) rand2_uc;
+    src2uc_vals[1] = (unsigned char) - (char) rand2_uc;
+    src1us_vals[0] = (unsigned short) rand1_us;
+    src1us_vals[1] = (unsigned short) - (short) rand1_us;
+    src2us_vals[0] = (unsigned short) rand2_us;
+    src2us_vals[1] = (unsigned short) - (short) rand2_us;
+    src1u_vals[0] = (unsigned int) rand1_u;
+    src1u_vals[1] = (unsigned int) - (int) rand1_u;
+    src2u_vals[0] = (unsigned int) rand2_u;
+    src2u_vals[1] = (unsigned int) - (int) rand2_u;
+    src1ul_vals[0] = (UIMM_TYPE) rand1_ul;
+    src1ul_vals[1] = (UIMM_TYPE) - (intptr_t) rand1_ul;
+    src2ul_vals[0] = (UIMM_TYPE) rand2_ul;
+    src2ul_vals[1] = (UIMM_TYPE) - (intptr_t) rand2_ul;
+    br_srcuc_vals[0] = (unsigned char) rand1_uc;
+    br_srcuc_vals[1] = (unsigned char) - (char) rand1_uc;
+    br_srcuc_vals[2] = (unsigned char) rand1_uc + 1;
+    br_srcuc_vals[3] = (unsigned char) -((char) rand1_uc) + 1;
+    br_srcuc_vals[4] = (unsigned char) rand1_uc - 1;
+    br_srcuc_vals[5] = (unsigned char) -((char) rand1_uc) - 1;
+    br_srcc_vals[0] = (signed char) rand1_c;
+    br_srcc_vals[1] = (signed char) -  rand1_c;
+    br_srcc_vals[2] = (signed char) rand1_c + 1;
+    br_srcc_vals[3] = (signed char) -( rand1_c) + 1;
+    br_srcc_vals[4] = (signed char) rand1_c - 1;
+    br_srcc_vals[5] = (signed char) -( rand1_c) - 1;
+    br_srcus_vals[0] = (unsigned short) rand1_us;
+    br_srcus_vals[1] = (unsigned short) - (short) rand1_us;
+    br_srcus_vals[2] = (unsigned short) rand1_us + 1;
+    br_srcus_vals[3] = (unsigned short) -((short) rand1_us) + 1;
+    br_srcus_vals[4] = (unsigned short) rand1_us - 1;
+    br_srcus_vals[5] = (unsigned short) -((short) rand1_us) - 1;
+    br_srcs_vals[0] = (short) rand1_s;
+    br_srcs_vals[1] = (short) -  rand1_s;
+    br_srcs_vals[2] = (short) rand1_s + 1;
+    br_srcs_vals[3] = (short) -( rand1_s) + 1;
+    br_srcs_vals[4] = (short) rand1_s - 1;
+    br_srcs_vals[5] = (short) -( rand1_s) - 1;
+    br_srci_vals[0] = (int) rand1_i;
+    br_srci_vals[1] = (int) -  rand1_i;
+    br_srci_vals[2] = (int) rand1_i + 1;
+    br_srci_vals[3] = (int) -( rand1_i) + 1;
+    br_srci_vals[4] = (int) rand1_i - 1;
+    br_srci_vals[5] = (int) -( rand1_i) - 1;
+    br_srcu_vals[0] = (unsigned int) rand1_u;
+    br_srcu_vals[1] = (unsigned int) - (int) rand1_u;
+    br_srcu_vals[2] = (unsigned int) rand1_u + 1;
+    br_srcu_vals[3] = (unsigned int) -((int) rand1_u) + 1;
+    br_srcu_vals[4] = (unsigned int) rand1_u - 1;
+    br_srcu_vals[5] = (unsigned int) -((int) rand1_u) - 1;
+    br_srcl_vals[0] = (IMM_TYPE) rand1_l;
+    br_srcl_vals[1] = (IMM_TYPE) -  rand1_l;
+    br_srcl_vals[2] = (IMM_TYPE) rand1_l + 1;
+    br_srcl_vals[3] = (IMM_TYPE) -( rand1_l) + 1;
+    br_srcl_vals[4] = (IMM_TYPE) rand1_l - 1;
+    br_srcl_vals[5] = (IMM_TYPE) -( rand1_l) - 1;
+    br_srcul_vals[0] = (UIMM_TYPE) rand1_ul;
+    br_srcul_vals[1] = (UIMM_TYPE) - (intptr_t) rand1_ul;
+    br_srcul_vals[2] = (UIMM_TYPE) rand1_ul + 1;
+    br_srcul_vals[3] = (UIMM_TYPE) -((intptr_t) rand1_ul) + 1;
+    br_srcul_vals[4] = (UIMM_TYPE) rand1_ul - 1;
+    br_srcul_vals[5] = (UIMM_TYPE) -((intptr_t) rand1_ul) - 1;
+    br_srcd_vals[0] = (double) rand1_d;
+    br_srcd_vals[1] = (double) -  rand1_d;
+    br_srcd_vals[2] = (double) rand1_d + 1;
+    br_srcd_vals[3] = (double) -( rand1_d) + 1;
+    br_srcd_vals[4] = (double) rand1_d - 1;
+    br_srcd_vals[5] = (double) -( rand1_d) - 1;
+    br_srcf_vals[0] = (float) rand1_f;
+    br_srcf_vals[1] = (float) -  rand1_f;
+    br_srcf_vals[2] = (float) rand1_f + 1;
+    br_srcf_vals[3] = (float) -( rand1_f) + 1;
+    br_srcf_vals[4] = (float) rand1_f - 1;
+    br_srcf_vals[5] = (float) -( rand1_f) - 1;
+    br_srcp_vals[0] = (char*) rand1_p;
+    br_srcp_vals[1] = (char*) rand1_p;
+    br_srcp_vals[2] = (char*) rand1_p + 1;
+    br_srcp_vals[3] = (char*) rand1_p + 1;
+    br_srcp_vals[4] = (char*) rand1_p - 1;
+    br_srcp_vals[5] = (char*) rand1_p - 1;
+    /* reference these values since they currently aren't done elsewhere */
+    src2p_vals[0] = src1p_vals[0] = rand1_p; src2p_vals[1] = src1p_vals[1] = rand2_p;
+    (void)src2d_vals[0];
+    (void)src2s_vals[0];
+    (void)src2p_vals[0];
+    (void)src2c_vals[0];
+    (void)src2uc_vals[0];
+    (void)src2us_vals[0];
+    (void)src2f_vals[0];
+
+    /* Call test functions */
+    failed += test_arith_int(c);
+    failed += test_arith_ptr(c);
+    failed += test_arith_float(c);
+    failed += test_arith2_int(c);
+    failed += test_arith2_float(c);
+    failed += test_arithi(c);
+    failed += test_branch(c);
+    failed += test_branchi(c);
+    failed += test_compare(c);
+    failed += test_convert(c);
+    failed += test_load(c);
+    failed += test_store(c);
+    failed += test_setmovret(c);
+
     dill_free_stream(c);
     return failed;
 }

@@ -247,7 +247,7 @@ generate_prefix_code(dill_stream s, int force, int ar_size )
     for (i = 0; i < s->p->c_param_count; i++) {
 	if (args[i].is_register) {
 	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
-		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+		x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
 	    } else {
 		if (smi->generate_SSE) {
 		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
@@ -457,11 +457,11 @@ x86_ploadi(dill_stream s, int type, int force_8087, int dest, int src, long offs
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -538,11 +538,11 @@ x86_sse_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -628,11 +628,11 @@ x86_pload(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -1175,6 +1175,7 @@ int src1;
 int src2;
 {
     int tmp_src2 = src2;
+    int saved_src2_to_ebp = 0;
 
     /* make src1 be EAX */
     if (dest != EAX) {
@@ -1183,14 +1184,17 @@ int src2;
     if (dest != EDX) {
 	x86_push_reg(s, EDX);
     }
-	
-    if (src1 != EAX) {
-	x86_movi(s, EAX, src1);
-    }
-    if (src2 == EDX) {
+
+    /* If src2 is in EAX or EDX, save it to EBP before those registers are modified */
+    if ((src2 == EAX && src1 != EAX) || src2 == EDX) {
 	tmp_src2 = EBP;
 	x86_push_reg(s, EBP);
 	x86_movi(s, EBP, src2);
+	saved_src2_to_ebp = 1;
+    }
+
+    if (src1 != EAX) {
+	x86_movi(s, EAX, src1);
     }
     if (sign) {
 	x86_rshai(s, EDX, EAX, 31);
@@ -1198,7 +1202,7 @@ int src2;
 	x86_seti(s, EDX, 0);
     }
     BYTE_OUT2(s, 0xf7, ModRM(0x3, sign ? 0x7 : 0x6, tmp_src2));
-    if (src2 == EDX) {
+    if (saved_src2_to_ebp) {
 	x86_pop_reg(s, EBP);
     }
     if (div && (dest != EAX)) {
@@ -1213,7 +1217,7 @@ int src2;
     if (dest != EAX) {
 	x86_pop_reg(s, EAX);
     }
-	
+
 }
 
 static int group1_eax_op[] = {
@@ -1970,7 +1974,30 @@ x86_emit_save(dill_stream s)
 
     s->p->cur_ip = save_ip;
 }
-    
+
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
+
+static void
+x86_flush(void *base, void *limit)
+{
+#ifdef USE_VIRTUAL_PROTECT
+    {
+        DWORD dummy;
+        size_t size = ((size_t)limit - (size_t)base);
+        if (!VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %zu\n",
+                    GetLastError(), base, size);
+        }
+    }
+#else
+    (void)base;
+    (void)limit;
+#endif
+}
+
 extern void
 x86_end(s)
 dill_stream s;
@@ -1980,6 +2007,7 @@ dill_stream s;
     x86_call_link(s);
     x86_data_link(s);
     x86_emit_save(s);
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void
@@ -1988,8 +2016,7 @@ x86_package_end(dill_stream s)
     x86_proc_ret(s);
     x86_branch_link(s);
     x86_emit_save(s);
-    /* at this point, code segment is finalized */
-    
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void *
@@ -2045,7 +2072,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 
     if (smi->generate_SSE) {
 	if (type == DILL_F) {
-	    a.f = imm;
+	    a.f = (float)imm;
 	    x86_seti(s, EAX, a.i);
 	    BYTE_OUT4(s, 0x66, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	} else {
@@ -2105,8 +2132,7 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
 #define bit_sse (1<<25)
 
 extern void*
-gen_x86_mach_info(s)
-dill_stream s;
+gen_x86_mach_info(dill_stream s)
 {
     static int host_supports_SSE = -1;
     x86_mach_info smi = malloc(sizeof(*smi));
@@ -2230,7 +2256,7 @@ x86_print_insn(dill_stream s, void *info_ptr, void *insn)
 #endif
 }
 
-extern void null_func(){}
+extern void null_func(void){}
 extern int
 x86_count_insn(dill_stream s, int start, int end)
 {

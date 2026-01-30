@@ -216,7 +216,7 @@ typedef struct x86_mach_info {
 
 extern int x86_type_align[];
 extern int x86_type_size[];
-extern void *gen_x86_mach_info();
+extern void *gen_x86_mach_info(dill_stream s);
 extern void x86_arith3(dill_stream s, int op, int commut, int dest, int src1, int src2);
 extern void x86_arith2(dill_stream s, int op, int subop, int dest, int src);
 extern void x86_mul(dill_stream s, int signed, int imm, int dest, int src1, int src2);

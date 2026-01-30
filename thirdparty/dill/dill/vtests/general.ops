@@ -23,34 +23,82 @@ while ($_ = $ARGV[0]) {
 
 &output_header;
 
+# Track test functions for main() to call
+@test_functions = ();
+
+# Generate separate test functions for each category
+&start_test_func("test_arith_int");
 &arith_insn("add sub mul div mod and or xor lsh rsh", "+ - * / % & | ^ << >>", "i u ul l");
+&end_test_func();
+
+&start_test_func("test_arith_ptr");
 &arithp_insn("add sub", "+ -");
+&end_test_func();
+
+&start_test_func("test_arith_float");
 &arith_insn("add sub mul div", "+ - * /",  "$FT $DT");
+&end_test_func();
 
+&start_test_func("test_arith2_int");
 &arith2_insn("com not", "~ !", "i u ul l");
-&arith2_insn("neg", "-", "i u ul l $FT $DT");
+&arith2_insn("neg", "-", "i u ul l");
+&end_test_func();
 
+&start_test_func("test_arith2_float");
+&arith2_insn("neg", "-", "$FT $DT");
+&end_test_func();
+
+&start_test_func("test_arithi");
 &arithi_insn("add sub mul div mod and or xor lsh rsh", "+ - * / % & | ^ << >>", "i u ul l");
 &arithpi_insn("add sub", "+ -","p");
+&end_test_func();
 
+&start_test_func("test_branch");
 &branch_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p $DT $FT");
+&end_test_func();
+
+&start_test_func("test_branchi");
 &branchi_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p");
+&end_test_func();
 
+&start_test_func("test_compare");
 &compare_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p $DT $FT");
+&end_test_func();
 
+&start_test_func("test_convert");
 &convert( "c $DT $FT i l s u ul us", "c uc s us i u ul l");
 &convert( "$DT $FT c us s us i l u ul", "$FT $DT");
 &convert( "i l u ul", "c s");
 &convert( "p ul", "ul p");
+&end_test_func();
 
+&start_test_func("test_load");
 &load("c uc s us i u ul l $FT $DT");
+&end_test_func();
+
+&start_test_func("test_store");
 &store("c uc s us i u ul l $FT $DT");
+&end_test_func();
 
+&start_test_func("test_setmovret");
 &setmovret("c uc s us i u ul l $FT $DT");
+&end_test_func();
 
-print COUT "    dill_free_stream(c);\n";
-print COUT "    return failed;\n}\n";
+&output_main;
 
+
+sub start_test_func {
+    local ($func_name) = @_;
+    push(@test_functions, $func_name);
+    print COUT "\nstatic int\n$func_name(dill_stream c)\n{\n";
+    print COUT "    int failed = 0;\n";
+    print COUT "    size_t i, j;\n";
+    print COUT "    (void)i; (void)j;  /* suppress unused warnings */\n";
+}
+
+sub end_test_func {
+    print COUT "    return failed;\n}\n";
+}
 
 sub arith_insn {
     local ($dill_ops, $c_ops, $type_list) = @_;
@@ -1075,41 +1123,83 @@ print COUT<<EOF;
 #define srand48(s) srand(s)
 #define drand48() (rand()*(1./RAND_MAX))
 #define lrand48() ((long long)rand() << 32 | rand())
-#define kill(x,y) 
+#define kill(x,y)
 #else
 extern double drand48();
 extern IMM_TYPE lrand48();
 void srand48(IMM_TYPE seedval);
 #endif
 
-int
-main(int argc, char **argv)
-{
-    dill_stream c = dill_create_stream();
-    int failed = 0, verbose = 0;
-    size_t i, j;
+/* Global test data - initialized in main() */
+static int verbose;
 EOF
-# print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
     foreach $dill_type (keys %c_types) {
         $c_type = $c_types{$dill_type};
-        $rand_type = $rand_types{$dill_type};
-        print COUT "    $c_type rand1_$dill_type = ($c_type)${rand_type}rand48();\n";
-	print COUT "    $c_type rand2_$dill_type = ($c_type)${rand_type}rand48();\n";
-	print COUT "    $c_type src1${dill_type}_vals[2];\n";
-	print COUT "    $c_type src2${dill_type}_vals[2];\n";
-	print COUT "    $c_type br_src${dill_type}_vals[6];\n";
+        print COUT "static $c_type rand1_$dill_type;\n";
+	print COUT "static $c_type rand2_$dill_type;\n";
+	print COUT "static $c_type src1${dill_type}_vals[2];\n";
+	print COUT "static $c_type src2${dill_type}_vals[2];\n";
+	print COUT "static $c_type br_src${dill_type}_vals[6];\n";
     }
-    print COUT "    int sh_src2_vals[] = {";
+    print COUT "static int sh_src2_vals[] = {";
     for (0..62) {
 	print COUT " $_,";
     }
     print COUT " 63};\n\n";
 
-    print COUT "    UIMM_TYPE bit_pattern_vals[] = {";
+    print COUT "static UIMM_TYPE bit_pattern_vals[] = {";
     for (0..31) {
 	printf COUT " 0x%x, 0x%x, ",(1<<$_), ((1<<$_) - 1);
     }
     print COUT " 0xffffffff};\n\n";
+
+    # Initialize the hash tables that map operations to test value arrays
+    %c_src2_values = ("rshi", "sh_src2_vals", "rshl", "sh_src2_vals",
+		      "rshu", "sh_src2_vals", "rshul", "sh_src2_vals",
+		      "rshii", "sh_src2_vals", "rshli", "sh_src2_vals",
+		      "rshui", "sh_src2_vals", "rshuli", "sh_src2_vals",
+		      "lshi", "sh_src2_vals", "lshl", "sh_src2_vals",
+		      "lshu", "sh_src2_vals", "lshul", "sh_src2_vals",
+		      "lshii", "sh_src2_vals", "lshli", "sh_src2_vals",
+		      "lshui", "sh_src2_vals", "lshuli", "sh_src2_vals");
+    foreach $dill_op (split(' ', "add sub mul div mod and or xor")) {
+        foreach $dill_type (split(' ', "i u l ul")) {
+	    $full_op = "${dill_op}${dill_type}i";
+	    $c_src2_values{"$full_op"} = "bit_pattern_vals";
+	}
+        foreach $dill_type (split(' ', "i u l ul")) {
+	    $full_op = "${dill_op}${dill_type}";
+	    $c_src2_values{"$full_op"} = "src2${dill_type}_vals";
+	    $c_src1_values{"$full_op"} = "src1${dill_type}_vals";
+	}
+    }
+    foreach $dill_type (split(' ', "uc c us s i u l ul d f p")) {
+	$full_op = "br${dill_type}";
+	$c_src2_values{"$full_op"} = "br_src${dill_type}_vals";
+	$c_src1_values{"$full_op"} = "br_src${dill_type}_vals";
+    }
+}
+
+sub output_main {
+    %u_casts = ('uc', '(char)', 'us', '(short)', 'u', '(int)', 'ul', '(intptr_t)');
+print COUT<<EOF;
+
+int
+main(int argc, char **argv)
+{
+    dill_stream c = dill_create_stream();
+    int failed = 0;
+
+    if (argc > 1) verbose++;
+
+    /* Initialize random values */
+EOF
+    foreach $dill_type (keys %c_types) {
+        $c_type = $c_types{$dill_type};
+        $rand_type = $rand_types{$dill_type};
+        print COUT "    rand1_$dill_type = ($c_type)${rand_type}rand48();\n";
+	print COUT "    rand2_$dill_type = ($c_type)${rand_type}rand48();\n";
+    }
 
     foreach $dill_type (split(' ', "f d c s i l")) {
         $c_type = $c_types{$dill_type};
@@ -1118,10 +1208,8 @@ EOF
 	print COUT "    src2${dill_type}_vals[0] = rand2_$dill_type;\n";
 	print COUT "    src2${dill_type}_vals[1] = -rand2_$dill_type;\n";
     }
-	%u_casts = ('uc', '(char)', 'us', '(short)', 'u', '(int)', 'ul', '(intptr_t)');
     foreach $dill_type (split(' ', "uc us u ul")) {
         $c_type = $c_types{$dill_type};
-
 	print COUT "    src1${dill_type}_vals[0] = ($c_type) rand1_$dill_type;\n";
 	print COUT "    src1${dill_type}_vals[1] = ($c_type) - $u_casts{$dill_type} rand1_$dill_type;\n";
 	print COUT "    src2${dill_type}_vals[0] = ($c_type) rand2_$dill_type;\n";
@@ -1145,7 +1233,6 @@ EOF
     print COUT "    br_src${dill_type}_vals[4] = ($c_type) rand1_$dill_type - 1;\n";
     print COUT "    br_src${dill_type}_vals[5] = ($c_type) rand1_$dill_type - 1;\n";
 
-# print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
 print COUT<<EOF;
     /* reference these values since they currently aren't done elsewhere */
     src2p_vals[0] = src1p_vals[0] = rand1_p; src2p_vals[1] = src1p_vals[1] = rand2_p;
@@ -1156,30 +1243,16 @@ print COUT<<EOF;
     (void)src2uc_vals[0];
     (void)src2us_vals[0];
     (void)src2f_vals[0];
-    if (argc > 1) verbose++;
+
+    /* Call test functions */
 EOF
-    %c_src2_values = ("rshi", "sh_src2_vals", "rshl", "sh_src2_vals", 
-		      "rshu", "sh_src2_vals", "rshul", "sh_src2_vals",
-		      "rshii", "sh_src2_vals", "rshli", "sh_src2_vals", 
-		      "rshui", "sh_src2_vals", "rshuli", "sh_src2_vals",
-		      "lshi", "sh_src2_vals", "lshl", "sh_src2_vals", 
-		      "lshu", "sh_src2_vals", "lshul", "sh_src2_vals",
-		      "lshii", "sh_src2_vals", "lshli", "sh_src2_vals", 
-		      "lshui", "sh_src2_vals", "lshuli", "sh_src2_vals");
-    foreach $dill_op (split(' ', "add sub mul div mod and or xor")) {
-        foreach $dill_type (split(' ', "i u l ul")) {
-	    $full_op = "${dill_op}${dill_type}i";
-	    $c_src2_values{"$full_op"} = "bit_pattern_vals";
-	}
-        foreach $dill_type (split(' ', "i u l ul")) {
-	    $full_op = "${dill_op}${dill_type}";
-	    $c_src2_values{"$full_op"} = "src2${dill_type}_vals";
-	    $c_src1_values{"$full_op"} = "src1${dill_type}_vals";
-	}
+    foreach $func (@test_functions) {
+	print COUT "    failed += $func(c);\n";
     }
-    foreach $dill_type (split(' ', "uc c us s i u l ul d f p")) {
-	$full_op = "br${dill_type}";
-	$c_src2_values{"$full_op"} = "br_src${dill_type}_vals";
-	$c_src1_values{"$full_op"} = "br_src${dill_type}_vals";
-    }
+print COUT<<EOF;
+
+    dill_free_stream(c);
+    return failed;
+}
+EOF
 }

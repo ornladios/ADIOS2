@@ -31,6 +31,8 @@ foreach(TEST ${TESTS})
   add_test(NAME vtest_${TEST} COMMAND v${TEST})
 endforeach()
 
+# ARM64 backend has a bug with small return types (char, short) that
+# only manifests with optimization enabled. Keep -O0 for now.
 if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
      CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
      set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")

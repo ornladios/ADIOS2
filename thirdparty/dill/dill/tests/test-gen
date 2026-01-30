@@ -816,6 +816,7 @@ print<<EOF;
 	dill_reg	rd$t;
 	dill_exec_handle h;
 
+	d$t = 0;
 	if (verbose) printf(" - $insn\\n");
 	s2ul = (UIMM_TYPE)&d$t - $offset;
 
@@ -909,6 +910,8 @@ int main(int argc, char *argv[])
     int 	iters = 10, loop_count = 0;
     int 	aligned_offset, unaligned_offset;
     int 	shifti, shiftu, shiftl, shiftul;
+
+    (void)df; (void)dd;  /* may be unused if float tests disabled */
 
     for (i=1; i < argc; i++) {
 	if (strcmp(argv[i], "-v") == 0) {
