@@ -55,7 +55,7 @@ static void byte_swap(char *data, int size);
 static int get_double_warn = 0;
 static int get_long_warn = 0;
 
-FMfloat_format ffs_my_float_format = Format_Unknown;
+extern FMfloat_format fm_my_float_format;
 /* 
  * ffs_reverse_float_formats identifies for each format what, 
  * if any, format is its byte-swapped reverse.
@@ -66,26 +66,6 @@ FMfloat_format ffs_reverse_float_formats[] = {
     Format_IEEE_754_bigendian, /* bigendian complements littleendian */
     Format_Unknown /* no exact opposite for mixed-endian (ARM) */
 };
-
-static unsigned char IEEE_754_4_bigendian[] = 
-  {0x3c, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_4_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x3c};
-static unsigned char IEEE_754_8_bigendian[] = 
-  {0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_8_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f};
-static unsigned char IEEE_754_8_mixedendian[] = 
-  {0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_16_bigendian[] = 
-  {0x3f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static unsigned char IEEE_754_16_littleendian[] = 
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x3f};
-static unsigned char IEEE_754_16_mixedendian[] = 
-  {0x00, 0x00, 0xf8, 0x3f, 0x00, 0x00, 0x00, 0x00, 
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static char *float_format_str[] = {
     "Unknown float format",
@@ -116,60 +96,6 @@ min_align_size(int size)
     }
     return align_size;
 }
-
-static FMfloat_format
-FFSinfer_float_format(char *float_magic, int object_len)
-{
-    switch (object_len) {
-    case 4:
-	if (memcmp(float_magic, &IEEE_754_4_bigendian[0], 4) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_4_littleendian[0], 4) == 0) {
-	    return Format_IEEE_754_littleendian;
-	}
-	break;
-    case 8:
-	if (memcmp(float_magic, &IEEE_754_8_bigendian[0], 8) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_littleendian[0], 8) == 0) {
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_8_mixedendian[0], 8) == 0) {
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    case 16:
-	if (memcmp(float_magic, &IEEE_754_16_bigendian[0], 16) == 0) {
-	    return Format_IEEE_754_bigendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_littleendian[0], 16) ==0){
-	    return Format_IEEE_754_littleendian;
-	} else if (memcmp(float_magic, &IEEE_754_16_mixedendian[0], 16) == 0){
-	    return Format_IEEE_754_mixedendian;
-	}
-	break;
-    }
-    return Format_Unknown;
-}
-
-extern void
-init_float_formats()
-{
-    static int done = 0;
-    if (!done) {
-	double d = MAGIC_FLOAT;
-	ffs_my_float_format = FFSinfer_float_format((char*)&d, sizeof(d));
-	switch (ffs_my_float_format) {
-	case Format_IEEE_754_bigendian:
-	case Format_IEEE_754_littleendian:
-	case Format_IEEE_754_mixedendian:
-	    break;
-	case Format_Unknown:
-	    fprintf(stderr, "Warning, unknown local floating point format\n");
-	    break;
-	}
-	done++;
-    }
-}
-	
 
 void
 FFSfree_conversion(IOConversionPtr conv)
@@ -294,7 +220,7 @@ create_conversion(FFSTypeHandle src_ioformat, FMFieldList target_field_list, int
 				 target_field_count * sizeof(IOconvFieldStruct));
     int column_row_swap_necessary = (target_column_major != src_ioformat->body->column_major_arrays);
     
-    if (target_fp_format == Format_Unknown) target_fp_format = ffs_my_float_format;
+    if (target_fp_format == Format_Unknown) target_fp_format = fm_my_float_format;
 
     conv_ptr->notify_of_format_change = 0;
     conv_ptr->context = src_ioformat->context;
@@ -665,7 +591,7 @@ set_general_IOconversion_for_format(FFSContext iofile, FFSTypeHandle file_ioform
     conv_ptr = create_conversion(file_ioformat, native_field_list,
 				 native_struct_size, pointer_size,
 				 file_ioformat->body->byte_reversal, 
-				 ffs_my_float_format, conv_type,
+				 fm_my_float_format, conv_type,
 /*				 iofile->native_column_major_arrays*/ 0,
 				 string_offset_size, FALSE, target_list);
 
@@ -844,7 +770,7 @@ ffs_internal_convert_field(FMFieldPtr src_spec, void *src, FMdata_type dest_type
 		*dest_field = (unsigned int)tmp;
 	    } else if (dest_size == sizeof(size_t)) {
 		size_t* dest_field = (size_t*)dest;
-		*dest_field = tmp;
+		*dest_field = (size_t) tmp;
 #if SIZEOF_LONG_LONG != 0
 	    } else if (dest_size == sizeof(long long)) {
 		unsigned long long *dest_field = (unsigned long long *) dest;
@@ -1168,7 +1094,7 @@ FFSconvert_record(IOConversionPtr conv, void *src, void *dest, void *final_strin
 				(((intptr_t) src_string_base) % 4));
 	    printf("record of type \"%s\", contents :\n", 
 		   conv->ioformat->body->format_name);
-	    if (limit * sizeof(int) > conv->ioformat->body->record_length)
+	    if (limit * sizeof(int) > (size_t)conv->ioformat->body->record_length)
 		limit = conv->ioformat->body->record_length / sizeof(int);
 	    for (i = 0; i < limit; i += 4) {
 		printf("%p: %8x %8x %8x %8x\n", ((char *) src) + (i * 4),
@@ -1235,12 +1161,12 @@ transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
 
     if (dimen_count <= 1) return;
     index = malloc(sizeof(index[0]) * dimen_count);
-    for(i = 0; i< dimen_count; i++) {
+    for(i = 0; i< (size_t) dimen_count; i++) {
 	index[i] = 0;
     }
     cur_index = 0;
     jump = 1;
-    for (i = 0; i < dimen_count-1; i++) {
+    for (i = 0; i < (size_t) dimen_count-1; i++) {
 	jump = (jump * dimens[i]);
     }
     while(index[0] < dimens[0]) {
@@ -1266,7 +1192,7 @@ transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
 		dest_field = ((char*)dest) + dest_size * col_index_base;
 		tmp_spec.offset = tmp_spec.size * row_index_base;
 	    }
-	    for(i=0; i < dimens[cur_index]; i++) {
+	    for(i=0; (size_t)i < dimens[cur_index]; i++) {
 		if (dest_type != unknown_type) {
 		    /* simple (native) field or variant array */
 		    if (dest_type != string_type) {
@@ -1325,7 +1251,7 @@ get_offset_for_addr(char *src_field_addr, ConvStatus conv_status,
     tmp_src_field.offset = 0;
 
     tmp_int = get_big_int(&tmp_src_field, src_field_addr);
-    return tmp_int;
+    return (size_t) tmp_int;
 }
     
 static void
@@ -1604,7 +1530,7 @@ internal_convert_record(IOConversionPtr conv, ConvStatus conv_status, void *src,
 		tmp_src_spec.offset = f->field_list[field].field_offset;
 		tmp_src_spec.data_type = integer_type;
 		tmp_src_spec.byte_swap = conv->ioformat->body->byte_reversal;
-		elements = get_big_int(&tmp_src_spec, src);
+		elements = (size_t) get_big_int(&tmp_src_spec, src);
 		if (control_value == NULL) {
 		    int j;
 		    control_value = (size_t *) malloc(sizeof(control_value[0]) * f->field_count);
@@ -1676,6 +1602,15 @@ get_big_int(FMFieldPtr iofield, void *data)
 	    if (iofield->byte_swap)
 		byte_swap((char *) &tmp, sizeof(int));
 	    return (long) tmp;
+#if SIZEOF_SIZE_T == 8 && SIZEOF_LONG == 4
+	/* Windows x64 LLP64: sizeof(long)==4 but sizeof(size_t)==8 */
+	} else if (iofield->size == 8) {
+	    int64_t tmp;
+	    memcpy(&tmp, (char *) data + iofield->offset, 8);
+	    if (iofield->byte_swap)
+		byte_swap((char *) &tmp, 8);
+	    return (MAX_INTEGER_TYPE) tmp;
+#endif
 	} else if (iofield->size == sizeof(long)) {
 	    long tmp;
 	    memcpy(&tmp, (char *) data + iofield->offset, sizeof(long));
@@ -1745,6 +1680,15 @@ get_big_unsigned(FMFieldPtr iofield, void *data)
 	    if (iofield->byte_swap)
 		byte_swap((char *) &tmp, sizeof(int));
 	    return (MAX_UNSIGNED_TYPE) tmp;
+#if SIZEOF_SIZE_T == 8 && SIZEOF_LONG == 4
+	/* Windows x64 LLP64: sizeof(long)==4 but sizeof(size_t)==8 */
+	} else if (iofield->size == 8) {
+	    size_t tmp;
+	    memcpy(&tmp, (char *) data + iofield->offset, 8);
+	    if (iofield->byte_swap)
+		byte_swap((char *) &tmp, 8);
+	    return (MAX_UNSIGNED_TYPE) tmp;
+#endif
 	} else if (iofield->size == sizeof(long)) {
 	    unsigned long tmp;
 	    memcpy(&tmp, (char *) data + iofield->offset, sizeof(long));
@@ -2304,9 +2248,9 @@ gen_mem_float_conv(dill_stream c, struct _FMgetFieldStruct src, int src_addr,
 	    ffs_putreg(c, tmp, DILL_I);
 	    break;
 	}
-#if SIZEOF_LONG == 8
-	case sizeof(long): 
-	    if (((src_offset & 0x7) == 0) && (assume_align >= sizeof(long))) {
+#if SIZEOF_SIZE_T == 8
+	case 8:
+	    if (((src_offset & 0x7) == 0) && (assume_align >= 8)) {
 		dill_reg tmp;
 		ffs_getreg(c, &tmp, DILL_L, DILL_TEMP);
 		dill_ldbsli(c, tmp, src_addr, src_offset);
@@ -2521,7 +2465,7 @@ gen_convert_address_field(dill_stream c, struct _FMgetFieldStruct tmp_spec, int 
 	if (src_oprnd.size != dest_size) {
 	    /* make it the right size to operate on */
 	    iogen_oprnd tmp_oprnd;
-	    tmp_oprnd = gen_size_conversion(c, src_oprnd, sizeof(long));
+	    tmp_oprnd = gen_size_conversion(c, src_oprnd, sizeof(char *));
 	    free_oprnd(c, src_oprnd);
 	    src_oprnd = tmp_oprnd;
 	    *string_dest_reg = src_oprnd.vc_reg;
@@ -2819,8 +2763,10 @@ generate_convert_field(dill_stream c, ConvStatus conv_status, dill_reg src_addr,
 		    dill_reg val;
 		    int field = next->control_field_index;
 		    ffs_getreg(c, &val, DILL_I, DILL_TEMP);
-		    dill_ldii(c, val, addr_reg, field*sizeof(int));
+		    /* load lower 4 bytes of size_t (works on little-endian) */
+		    dill_ldii(c, val, addr_reg, field*sizeof(size_t));
 		    dill_muli(c, loop_var, loop_var, val);
+		    ffs_putreg(c, val, DILL_I);
 		}
 		next = next->next;
 	    }
@@ -2920,32 +2866,47 @@ generate_convert_field(dill_stream c, ConvStatus conv_status, dill_reg src_addr,
 	    FMdata_type dest_type = conv->src_field.data_type;
 
 	    ffs_getreg(c, &dimen_reg, DILL_P, DILL_TEMP);
-	    ffs_getreg(c, &tmp, DILL_I, DILL_TEMP);
+	    ffs_getreg(c, &tmp, DILL_P, DILL_TEMP);  /* use pointer-sized reg for size_t */
 	    ffs_getreg(c, &spec_reg, DILL_P, DILL_TEMP);
-	    dimens = ffs_localb(c, dimen_count * sizeof(int));
+	    dimens = ffs_localb(c, (dimen_count + 1) * sizeof(size_t));  /* size_t array for transpose_array */
 	    spec = ffs_localb(c, sizeof(struct _FMgetFieldStruct));
 	    dill_virtual_lea(c, dimen_reg, dimens);
 	    dill_virtual_lea(c, spec_reg, spec);
 	    FMTypeDesc *next = type_desc;
 	    int i = 0;
+	    /* Zero out the dimens array first (needed for 64-bit where we store lower 4 bytes) */
+	    for (int j = 0; j <= dimen_count; j++) {
+		dill_setp(c, tmp, 0);
+		dill_stpi(c, tmp, dimen_reg, j * sizeof(size_t));
+	    }
 	    while (next->type == FMType_array) {
+		dill_reg tmp_int;
+		ffs_getreg(c, &tmp_int, DILL_I, DILL_TEMP);
 		if (next->static_size != 0) {
-		    dill_seti(c, tmp, next->static_size);
+		    dill_seti(c, tmp_int, next->static_size);
 		} else {
 		    dill_reg addr_reg = (dill_reg)(intptr_t)conv_status->control_value;
 		    int field = next->control_field_index;
-		    dill_ldii(c, tmp, addr_reg, field*sizeof(int));
+		    /* load lower 4 bytes of size_t (works on little-endian) */
+		    dill_ldii(c, tmp_int, addr_reg, field*sizeof(size_t));
 		}
-		dill_stii(c, tmp, dimen_reg, i * sizeof(int));
+		/* store as lower 4 bytes of size_t slot (upper bytes already zeroed) */
+		dill_stii(c, tmp_int, dimen_reg, i * sizeof(size_t));
+		ffs_putreg(c, tmp_int, DILL_I);
 		i++;
 		next = next->next;
 	    }
-	    dill_seti(c, tmp, 0);
-	    dill_stii(c, tmp, dimen_reg, dimen_count * sizeof(int));
-	    dill_stii(c, tmp, spec_reg, FMOffset(struct _IOgetFieldStruct *, offset));
-	    for (i=4 ; i < sizeof(struct _IOgetFieldStruct); i+= 4) {
-		dill_seti(c, tmp, *((int*)((char*)&tmp_spec + i)));
-		dill_stii(c, tmp, spec_reg, i);
+	    /* terminator is already zero from the zeroing loop above */
+	    {
+		dill_reg tmp_int;
+		ffs_getreg(c, &tmp_int, DILL_I, DILL_TEMP);
+		dill_seti(c, tmp_int, 0);
+		dill_stii(c, tmp_int, spec_reg, FMOffset(struct _IOgetFieldStruct *, offset));
+		for (i=4 ; i < sizeof(struct _IOgetFieldStruct); i+= 4) {
+		    dill_seti(c, tmp_int, *((int*)((char*)&tmp_spec + i)));
+		    dill_stii(c, tmp_int, spec_reg, i);
+		}
+		ffs_putreg(c, tmp_int, DILL_I);
 	    }
 	    {
 		dill_reg tmp_src, tmp_dest;
@@ -3003,27 +2964,27 @@ new_generate_conversion_code(dill_stream c, ConvStatus conv_status, IOConversion
 				      tmp_src_spec.size,
 				      tmp_src_spec.data_type,
 				      src_is_aligned, tmp_src_spec.byte_swap);
-		if (src_oprnd.size != sizeof(int)) {
+		if (src_oprnd.size != sizeof(size_t)) {
 		    iogen_oprnd tmp_oprnd;
-		    tmp_oprnd = gen_size_conversion(c, src_oprnd, sizeof(int));
+		    tmp_oprnd = gen_size_conversion(c, src_oprnd, sizeof(size_t));
 		    free_oprnd(c, src_oprnd);
 		    src_oprnd = tmp_oprnd;
 		}
 
 		if (control_base == -1) {
-		    control_base = ffs_localb(c, sizeof(int) * f->field_count);
+		    control_base = ffs_localb(c, sizeof(size_t) * f->field_count);
 #ifdef RAW
 		}
-		gen_store(c, src_oprnd, dill_lp(c), control_base + field * sizeof(int),
-			  sizeof(int), integer_type, TRUE /* aligned */ );
+		gen_store(c, src_oprnd, dill_lp(c), control_base + field * sizeof(size_t),
+			  sizeof(size_t), integer_type, TRUE /* aligned */ );
 #else
 		    addr_reg = dill_getreg(c, DILL_P);
 		    dill_virtual_lea(c, addr_reg, control_base);
 		    conv_status->control_value = (size_t*)(intptr_t)addr_reg;
 	        }
 	    assert(addr_reg != -1);
-	        gen_store(c, src_oprnd, addr_reg, field*sizeof(int),
-			  sizeof(int), integer_type, TRUE /* aligned */);
+	        gen_store(c, src_oprnd, addr_reg, field*sizeof(size_t),
+			  sizeof(size_t), integer_type, TRUE /* aligned */);
 #endif
 		free_oprnd(c, src_oprnd);
 	    }

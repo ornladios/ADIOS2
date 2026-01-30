@@ -225,4 +225,19 @@ FFSheader_size(FFSTypeHandle ioformat);
 #define MAX_UNSIGNED_TYPE unsigned MAX_INTEGER_TYPE
 #define FFS_NO_LEAF_COPY 0x1
 
+/* Memory sanitizer support for JIT-generated code */
+#if defined(__SANITIZE_MEMORY__)
+#  define FFS_HAVE_MSAN 1
+#elif defined(__has_feature)
+#  if __has_feature(memory_sanitizer)
+#    define FFS_HAVE_MSAN 1
+#  endif
+#endif
+#if defined(FFS_HAVE_MSAN)
+#  include <sanitizer/msan_interface.h>
+#  define FFS_UNPOISON(ptr, size) __msan_unpoison(ptr, size)
+#else
+#  define FFS_UNPOISON(ptr, size) ((void)0)
+#endif
+
 #endif

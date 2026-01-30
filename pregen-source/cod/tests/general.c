@@ -25238,7 +25238,7 @@ void add_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul + source2_f);
 
 	    result = proc(source1_ul, source2_f);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	range += 1.0;
 	    if ((result > (expected_result + range)) || (result < (expected_result - range))) {
@@ -25295,7 +25295,7 @@ void add_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul + source2_d);
 
 	    result = proc(source1_ul, source2_d);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	if (expected_result != result) {
 		printf("Failed uintptr_t + double test, expected %zu, got %zu, for %zu + %g\n",
@@ -30728,7 +30728,7 @@ void sub_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul - source2_f);
 
 	    result = proc(source1_ul, source2_f);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	range += 1.0;
 	    if ((result > (expected_result + range)) || (result < (expected_result - range))) {
@@ -30785,7 +30785,7 @@ void sub_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul - source2_d);
 
 	    result = proc(source1_ul, source2_d);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	if (expected_result != result) {
 		printf("Failed uintptr_t - double test, expected %zu, got %zu, for %zu - %g\n",
@@ -36218,7 +36218,7 @@ void mult_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul * source2_f);
 
 	    result = proc(source1_ul, source2_f);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	range += 1.0;
 	    if ((result > (expected_result + range)) || (result < (expected_result - range))) {
@@ -36275,7 +36275,7 @@ void mult_ul_tests()
 	    expected_result = (uintptr_t) (source1_ul * source2_d);
 
 	    result = proc(source1_ul, source2_d);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	if (expected_result != result) {
 		printf("Failed uintptr_t * double test, expected %zu, got %zu, for %zu * %g\n",
@@ -41798,7 +41798,7 @@ skip195: ;
 	    expected_result = (uintptr_t) (source1_ul / source2_f);
 
 	    result = proc(source1_ul, source2_f);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	range += 1.0;
 	    if ((result > (expected_result + range)) || (result < (expected_result - range))) {
@@ -41856,7 +41856,7 @@ skip196: ;
 	    expected_result = (uintptr_t) (source1_ul / source2_d);
 
 	    result = proc(source1_ul, source2_d);
-	    if (source1_ul > ((ssize_t)11<<52)) continue;
+	    if (source1_ul > ((int64_t)11<<52)) continue;
  	if ((expected_result == 0) || (expected_result == (uintptr_t) 0xffffffffffffffff) || (expected_result == (uintptr_t) 0x8000000000000000)) continue;
 	if (expected_result != result) {
 		printf("Failed uintptr_t / double test, expected %zu, got %zu, for %zu / %g\n",

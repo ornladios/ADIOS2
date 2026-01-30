@@ -1,13 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat FFS as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS FFS)
 
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-project(FFS VERSION 3.1.5)
+project(FFS VERSION 3.2.0)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -59,15 +55,15 @@ if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-  # Silence MSVC warnings
-  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
-     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
+  # MSVC warning suppressions (must be before any targets are defined)
+  if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_compile_definitions(
+      _CRT_SECURE_NO_DEPRECATE
+      _CRT_SECURE_NO_WARNINGS
+      _SCL_SECURE_NO_DEPRECATE
+      _WINSOCK_DEPRECATED_NO_WARNINGS
+      _CRT_NONSTDC_NO_DEPRECATE
+      FFS_SRC)
   endif()
 endif()
 
@@ -81,26 +77,17 @@ cmake_dependent_option(BUILD_SHARED_LIBS
   "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
   "SHARED_LIBS_SUPPORTED" OFF)
 mark_as_advanced(BUILD_SHARED_LIBS)
-if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DFFS_SRC)
-endif()
-
-# Default to a RelWithDebInfo build if not specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
-endif()
 
 set(TARGET_DEP_INC)
 set(TARGET_DEP_LIBS)
 set(PKG_DEP_PKG)
 set(PKG_DEP_LIBS)
 
-include(CheckFunctionExists)
-include(CheckIncludeFiles)
+include(CheckSymbolExists)
+include(CheckIncludeFile)
 include(CheckTypeSize)
 include(CheckStructHasMember)
 include(CMakeFindDependencyMacro)
-include(TestBigEndian)
 
 CHECK_TYPE_SIZE("double" SIZEOF_DOUBLE)
 CHECK_TYPE_SIZE("float" SIZEOF_FLOAT)
@@ -110,19 +97,28 @@ CHECK_TYPE_SIZE("long" SIZEOF_LONG)
 CHECK_TYPE_SIZE("long double" SIZEOF_LONG_DOUBLE)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
-
-if(NOT (DEFINED NO_SOCKETS))
-  check_function_exists(socket SOCKETS_FOUND)
-  if(NOT SOCKETS_FOUND)
-    set(NO_SOCKETS TRUE)
-  endif()
+if (${CMAKE_C_BYTE_ORDER} STREQUAL "BIG_ENDIAN")
+set (WORDS_BIGENDIAN 1)
+else()
+set (WORDS_BIGENDIAN 0)
 endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(WINDOWS TRUE)
 endif()
 
-if(NO_SOCKETS AND !WINDOWS)
+if(NOT (DEFINED NO_SOCKETS))
+  if(WINDOWS)
+    check_symbol_exists(socket "winsock2.h" SOCKETS_FOUND)
+  else()
+    check_symbol_exists(socket "sys/socket.h" SOCKETS_FOUND)
+  endif()
+  if(NOT SOCKETS_FOUND)
+    set(NO_SOCKETS TRUE)
+  endif()
+endif()
+
+if(NO_SOCKETS AND NOT WINDOWS)
   set(FM_SOCKET_IO null_io.c)
 elseif(WINDOWS)
   set(FM_SOCKET_IO "server_acts.c;nt_io.c")
@@ -245,7 +241,7 @@ target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/ffs>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-find_package(dill 3.0.0)
+find_package(dill 3.0.0 QUIET)
 
 option(FFS_USE_DILL "Enable Dill code generation" ${DILL_FOUND})
 
@@ -304,19 +300,33 @@ else()
   set(DATA_LEN_TYPE "undefined")
 endif()
 
-CHECK_FUNCTION_EXISTS(strtof HAVE_STRTOF)
-CHECK_FUNCTION_EXISTS(strtod HAVE_STRTOD)
-CHECK_FUNCTION_EXISTS(strtold HAVE_STRTOLD)
-CHECK_FUNCTION_EXISTS(getdomainname HAVE_GETDOMAINNAME)
+check_symbol_exists(strtof "stdlib.h" HAVE_STRTOF)
+check_symbol_exists(strtod "stdlib.h" HAVE_STRTOD)
+check_symbol_exists(strtold "stdlib.h" HAVE_STRTOLD)
 
-set(CMAKE_EXTRA_INCLUDE_FILES sys/socket.h)
-CHECK_TYPE_SIZE("struct iovec" IOVEC_DEFINE)
-unset(CMAKE_EXTRA_INCLUDE_FILES)
-CHECK_STRUCT_HAS_MEMBER("struct iovec" iov_base sys/uio.h HAS_IOV_BASE_IOVEC)
+if(NOT WINDOWS)
+  check_symbol_exists(getdomainname "unistd.h" HAVE_GETDOMAINNAME)
 
-if(NOT HAS_IOV_BASE_IOVEC)
+  set(CMAKE_EXTRA_INCLUDE_FILES sys/socket.h)
+  CHECK_TYPE_SIZE("struct iovec" IOVEC_DEFINE)
+  unset(CMAKE_EXTRA_INCLUDE_FILES)
+  CHECK_STRUCT_HAS_MEMBER("struct iovec" iov_base sys/uio.h HAS_IOV_BASE_IOVEC)
+
+  if(NOT HAS_IOV_BASE_IOVEC)
+    set(NEED_IOVEC_DEFINE TRUE)
+  endif()
+else()
+  # Windows doesn't have getdomainname or struct iovec in POSIX headers
   set(NEED_IOVEC_DEFINE TRUE)
 endif()
+
+try_run(FFS_FLOAT_FORMAT_TEST COMPILE_RESULT
+        # Binary directory:
+        ${CMAKE_CURRENT_BINARY_DIR}/
+        # source file
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/float_format_test.c
+	RUN_OUTPUT_VARIABLE FFS_FLOAT_FORMAT)
+message(STATUS "Float format is ${FFS_FLOAT_FORMAT}")
 
 if(NOT DEFINED FORMAT_SERVER_HOST)
   set(FORMAT_SERVER_HOST "formathost.cercs.gatech.edu")
@@ -370,18 +380,14 @@ if(FFS_INSTALL_HEADERS)
     COMPONENT ${FFS_HEADER_COMPONENT})
 endif()
 
-set(namelink_component_args)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(namelink_component_args NAMELINK_COMPONENT ${FFS_HEADER_COMPONENT})
-endif()
 install(TARGETS ffs EXPORT ffs-targets
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${FFS_RUNTIME_COMPONENT}
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${FFS_LIBRARY_COMPONENT} ${namelink_component_args}
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${FFS_LIBRARY_COMPONENT} NAMELINK_COMPONENT ${FFS_HEADER_COMPONENT}
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT ${FFS_ARCHIVE_COMPONENT}
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ffs" COMPONENT ${FFS_HEADER_COMPONENT})
 
 if(CMAKE_C_COMPILER_ID MATCHES Intel)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
+  add_link_options(-shared-intel)
 endif()
 
 configure_file(

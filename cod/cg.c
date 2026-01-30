@@ -21,6 +21,7 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#include <inttypes.h>
 #endif
 #ifdef HAVE_DILL_H
 #include "dill.h"
@@ -837,10 +838,10 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 	    *(unsigned int *)(var_base) = (int)f;
 	    break;
 	case DILL_L:
-	    *(long *)(var_base) = (long)f;
+	    *(ssize_t *)(var_base) = (ssize_t)f;
 	    break;
 	case DILL_UL:
-	    *(unsigned long *)(var_base) = (long)f;
+	    *(size_t *)(var_base) = (size_t)f;
 	    break;
 	case DILL_F:
 	    *(float*)(var_base) = (float)f;
@@ -2790,7 +2791,7 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 	    }
 	    dill_seti(s, lvar, l);	/* op_i_setc */
 	} else {   /* integer_constant */
-	    long i;
+	    intptr_t i;
 	    char *val = expr->node.constant.const_val;
 	    int typ = type_of_int_const_string(val);
 	    lvar = dill_getreg(s, typ);
@@ -2798,7 +2799,7 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 		/* hex or octal */
 		if (val[1] == 'x') {
 		    /* hex */
-		    if (sscanf(val+2, "%lx", &i) != 1) 
+		    if (sscanf(val+2, "%" SCNxPTR, &i) != 1)
 			printf("hex sscanf failed, %s\n", val);
 		} else if (val[1] == 'b') {
 		    /* binary */
@@ -2812,11 +2813,11 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 			j++;
 		    }
 		} else {
-		    if (sscanf(val, "%lo", &i) != 1) 
+		    if (sscanf(val, "%" SCNoPTR, &i) != 1)
 			printf("octal sscanf failed %s\n", val);
 		}
 	    } else {
-		if (sscanf(val, "%ld", &i) != 1) 
+		if (sscanf(val, "%" SCNdPTR, &i) != 1)
 		    printf("decimal sscanf failed %s\n", val);
 	    }
 	    switch (typ) {
@@ -3137,30 +3138,46 @@ coerce_type(dill_stream s, dill_reg obj, int target_type, int obj_type)
 	    dill_cvuc2i(s, ret, obj);
 	    break;
 	case DILL_I:
-	    dill_cvi2c(s, ret, obj);	/* op_i_cvi2c */
+	    if (target_type == DILL_UC) {
+		dill_cvi2uc(s, ret, obj);	/* op_i_cvi2uc */
+	    } else {
+		dill_cvi2c(s, ret, obj);	/* op_i_cvi2c */
+	    }
 	    break;
 	case DILL_U:
-	    dill_cvu2c(s, ret, obj);	/* op_i_cvu2c */
+	    if (target_type == DILL_UC) {
+		dill_cvu2uc(s, ret, obj);	/* op_i_cvu2uc */
+	    } else {
+		dill_cvu2c(s, ret, obj);	/* op_i_cvu2c */
+	    }
 	    break;
 	case DILL_L:
-	    dill_cvl2c(s, ret, obj);	/* op_i_cvl2c */
+	    if (target_type == DILL_UC) {
+		dill_cvl2uc(s, ret, obj);	/* op_i_cvl2uc */
+	    } else {
+		dill_cvl2c(s, ret, obj);	/* op_i_cvl2c */
+	    }
 	    break;
 	case DILL_UL:
-	    dill_cvul2c(s, ret, obj);	/* op_i_cvul2c */
+	    if (target_type == DILL_UC) {
+		dill_cvul2uc(s, ret, obj);	/* op_i_cvul2uc */
+	    } else {
+		dill_cvul2c(s, ret, obj);	/* op_i_cvul2c */
+	    }
 	    break;
 	case DILL_F:
 	    if (target_type == DILL_UC) {
 	        dill_cvf2u(s, ret, obj);	/* op_i_cvf2u */
-		dill_cvu2c(s, ret, ret);	/* op_i_cvu2c */
+		dill_cvu2uc(s, ret, ret);	/* op_i_cvu2uc */
 	    } else {
 	        dill_cvf2i(s, ret, obj);	/* op_i_cvf2i */
 		dill_cvi2c(s, ret, ret);	/* op_i_cvi2c */
-	    }	    
+	    }
 	    break;
 	case DILL_D:
 	    if (target_type == DILL_UC) {
 	        dill_cvd2u(s, ret, obj);	/* op_i_cvd2u */
-		dill_cvu2c(s, ret, ret);	/* op_i_cvu2c */
+		dill_cvu2uc(s, ret, ret);	/* op_i_cvu2uc */
 	    } else {
 	        dill_cvd2i(s, ret, obj);	/* op_i_cvd2i */
 		dill_cvi2c(s, ret, ret);	/* op_i_cvi2c */
@@ -3168,7 +3185,11 @@ coerce_type(dill_stream s, dill_reg obj, int target_type, int obj_type)
 	    break;
 	case DILL_P:
 	    dill_cvp2ul(s, ret, obj);	/* op_i_cvp2ul */
-	    dill_cvul2c(s, ret, ret);	/* op_i_cvul2c */
+	    if (target_type == DILL_UC) {
+		dill_cvul2uc(s, ret, ret);	/* op_i_cvul2uc */
+	    } else {
+		dill_cvul2c(s, ret, ret);	/* op_i_cvul2c */
+	    }
 	    break;
 	default:
 	    assert(FALSE);
@@ -3225,7 +3246,7 @@ coerce_type(dill_stream s, dill_reg obj, int target_type, int obj_type)
 	case DILL_F:
 	    if (target_type == DILL_US) {
 	        dill_cvf2u(s, ret, obj);	/* op_i_cvf2u */
-		dill_cvu2s(s, ret, ret);	/* op_i_cvu2s */
+		dill_cvu2us(s, ret, ret);	/* op_i_cvu2us */
 	    } else {
 	        dill_cvf2i(s, ret, obj);	/* op_i_cvf2i */
 		dill_cvi2s(s, ret, ret);	/* op_i_cvi2s */
@@ -3234,7 +3255,7 @@ coerce_type(dill_stream s, dill_reg obj, int target_type, int obj_type)
 	case DILL_D:
 	    if (target_type == DILL_US) {
 	        dill_cvd2u(s, ret, obj);	/* op_i_cvd2u */
-		dill_cvu2s(s, ret, ret);	/* op_i_cvu2s */
+		dill_cvu2us(s, ret, ret);	/* op_i_cvu2us */
 	    } else {
 	        dill_cvd2i(s, ret, obj);	/* op_i_cvd2i */
 		dill_cvi2s(s, ret, ret);	/* op_i_cvi2s */
@@ -3242,7 +3263,11 @@ coerce_type(dill_stream s, dill_reg obj, int target_type, int obj_type)
 	    break;
 	case DILL_P:
 	    dill_cvp2ul(s, ret, obj);	/* op_i_cvp2ul */
-	    dill_cvul2s(s, ret, ret);	/* op_i_cvul2s */
+	    if (target_type == DILL_US) {
+		dill_cvul2us(s, ret, ret);	/* op_i_cvul2us */
+	    } else {
+		dill_cvul2s(s, ret, ret);	/* op_i_cvul2s */
+	    }
 	    break;
 	default:
 	    assert(FALSE);

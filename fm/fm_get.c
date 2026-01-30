@@ -351,14 +351,14 @@ get_FMuint(FMFieldPtr field, void *data)
 extern size_t
 get_FMlong(FMFieldPtr field, void *data)
 {
-    ssize_t tmp = get_big_int(field, data);
+    ssize_t tmp = (ssize_t)get_big_int(field, data);
     return tmp;
 }
 
 extern size_t
 get_FMulong(FMFieldPtr field, void *data)
 {
-    size_t tmp = get_big_unsigned(field, data);
+    size_t tmp = (size_t)get_big_unsigned(field, data);
     return tmp;
 }
 

@@ -1,18 +1,79 @@
 name: Build and Test
 
-on: 
-  push: 
-    branches: 
-    - master 
-  pull_request: 
-    branches: 
-    - master 
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: '0 7 * * 1'  # Monday 7am UTC - weekly build to catch dependency issues 
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  # MemorySanitizer build to detect uninitialized memory reads
+  msan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git
+
+    - name: Build atl with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Configure ffs with MSan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
@@ -27,30 +88,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        buildtype: [ release, debug ]
-        os: [ centos7, alma8, ubuntu1604, ubuntu1804, ubuntu2004 ]
-        compiler: [ clang, gcc, nvhpc ]
-        exclude:
-          - { os: alma8, compiler: nvhpc }
-          - { os: ubuntu1604, compiler: nvhpc }
-          - { os: ubuntu1804, compiler: nvhpc }
+        buildtype: [ release ]
+        os: [ alma10, ubuntu2204, ubuntu2404 ]
+        compiler: [ clang, gcc ]
         include:
-        - os: centos7
-          container: centos:7
-        - os: alma8
-          container: almalinux:8
-        - os: ubuntu1604
-          container: ubuntu:16.04
-        - os: ubuntu1804
-          container: ubuntu:18.04
-        - os: ubuntu2004
-          container: ubuntu:20.04
-        - os: centos7
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
-        - os: ubuntu2004
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+        - os: alma10
+          container: almalinux:10
+        - os: ubuntu2404
+          container: ubuntu:24.04
+        - os: ubuntu2204
+          container: ubuntu:22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -86,16 +133,19 @@ jobs:
       matrix:
         buildtype: [ release, debug ]
         jobname: [
-          windows2019-vs2019-clang,
+          windows2025-vs2022-clang,
           windows2022-vs2022-msvc,
           windows2022-vs2022-msvc-static,
+          windows2022-vs2022-msvc-win32,
           macos-clang ]
         include:
-        - jobname: windows2019-vs2019-clang
-          vm: windows-2019
+        - jobname: windows2025-vs2022-clang
+          vm: windows-2025
         - jobname: windows2022-vs2022-msvc
           vm: windows-2022
         - jobname: windows2022-vs2022-msvc-static
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-win32
           vm: windows-2022
         - jobname: macos-clang
           vm: macos-latest
@@ -127,5 +177,19 @@ jobs:
       run: source/scripts/ci/gh-actions/run.sh configure
     - name: Build
       run: source/scripts/ci/gh-actions/run.sh build
+    - name: Stage DLLs (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: |
+          # Copy dependency DLLs to build output directory so Windows can find them
+          $buildType = "${{ matrix.buildtype }}"
+          $configDir = if ($buildType -eq "release") { "Release" } else { "Debug" }
+          $destDir = "build/bin/$configDir"
+          if (Test-Path $destDir) {
+              Copy-Item -Path "atl/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
+              Copy-Item -Path "dill/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
+              Write-Host "Copied DLLs to $destDir"
+              Get-ChildItem $destDir -Filter *.dll | ForEach-Object { Write-Host "  - $($_.Name)" }
+          }
     - name: Test
       run: source/scripts/ci/gh-actions/run.sh test
