@@ -241,7 +241,7 @@ CMdo_performance_response(CMConnection conn, size_t length, int func,
 	    free_attr_list(upcall_feed);
 	    CMtrace_out(conn->cm, CMTransportVerbose, "CM - transport test response sent:");
 	    actual = INT_CMwrite_raw(conn, tmp_vec, NULL, 2, sizeof(header) + tmp_vec[1].iov_len, NULL, 0);
-	    if (str_list) free(str_list);
+	    if (str_list) atl_free(str_list);
 	    if (actual != 1) {
 		printf("perf write failed\n");
 	    }
@@ -586,7 +586,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
     header_vec[1].iov_base = attr_str;
     header_vec[1].iov_len = strlen(attr_str) + 1; /* send NULL */
     actual = INT_CMwrite_raw(conn, header_vec, NULL, 2, header_vec[0].iov_len + header_vec[1].iov_len, NULL, 1);
-    free(attr_str);
+    atl_free(attr_str);
     if (actual != 1) { 
 	free(header_vec);
 	return NULL;
@@ -604,7 +604,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
 	    }
 	    for (count = 0; count < vecs; count++) {
 		/* for each vector, give it unique data */
-		int j;
+		size_t j;
 		for (j=0; j < ((each + repeat_count) /sizeof(int)); j++) {
 		    ((int*)tmp_vec[count+1].iov_base)[j] = rand();
 		}

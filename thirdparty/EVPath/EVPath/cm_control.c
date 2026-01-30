@@ -238,7 +238,7 @@ INT_CMCondition_wait(CManager cm, int condition)
     }
     cond->waiting++;
     if (cm_control_debug_flag) {
-	fprintf(cm->CMTrace_file, "CMLowLevel In condition wait, server thread = %p\n", 
+	fprintf(cm->CMTrace_file, "CMLowLevel In condition wait, server thread = %p\n",
 	       (void*)(intptr_t)cl->server_thread);
     }
     if (!cl->has_thread) {

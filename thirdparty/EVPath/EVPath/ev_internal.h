@@ -1,6 +1,9 @@
 
 #define EV_INTERNAL_H
 
+#include <stddef.h>  /* for offsetof */
+#include <string.h>  /* for memcpy */
+
 typedef enum { Event_App_Owned,  Event_Freeable, Event_CM_Owned } event_pkg_contents;
 
 typedef struct _event_item {
@@ -21,6 +24,15 @@ typedef struct _event_item {
     void *free_arg;
     EVFreeFunction free_func;
 } event_item, *event_queue;
+
+/*
+ * Copy event_item fields except ref_count to avoid TSan race.
+ * ref_count is always set explicitly after the copy.
+ */
+#define EVENT_ITEM_COPY_FIELDS(dst, src) \
+    memcpy((char*)(dst) + offsetof(event_item, event_encoded), \
+           (char*)(src) + offsetof(event_item, event_encoded), \
+           sizeof(event_item) - offsetof(event_item, event_encoded))
 
 typedef enum { Action_NoAction = 0, Action_Bridge, Action_Thread_Bridge, Action_Terminal, Action_Filter, Action_Immediate, Action_Multi, Action_Decode, Action_Encode_to_Buffer, Action_Split, Action_Store, Action_Congestion, Action_Source } action_value;
 

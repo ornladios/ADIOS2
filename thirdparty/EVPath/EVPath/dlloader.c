@@ -67,6 +67,7 @@ DLFCN_EXPORT     char* dlerror(void)
 
     if (var.lasterror) {
 	sprintf(errstr, "%s error #%ld", var.err_rutin, var.lasterror);
+	var.lasterror = 0;  /* Clear error after reporting */
 	return errstr;
     }
     else {
@@ -159,7 +160,9 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
     if (!handle) return NULL;
     dlh = malloc(sizeof(*dlh));
     tmp = strrchr(lib, '/'); /* find name start */
-    if (!tmp) tmp = lib;
+    if (!tmp) tmp = strrchr(lib, '\\'); /* try Windows path separator */
+    if (tmp) tmp++; /* skip past the separator */
+    else tmp = lib;
 
     char *cm_lib_prefix;
     if(strlen(CM_LIBRARY_PREFIX) > 0 &&
@@ -202,7 +205,7 @@ CMdlsym(void *vdlh, char *sym)
       free(tmp2);
     }
     free(tmp);
-    if (!sym_val) 
+    if (!sym_val)
 	sym_val = dlsym(dlh->dlopen_handle, sym);
     return sym_val;
 #endif

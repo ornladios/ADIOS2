@@ -338,4 +338,22 @@ extern void win_condition_free(CONDITION_VARIABLE *c)
 {
   // nothing necessary
 }
+extern void win_condition_broadcast(CONDITION_VARIABLE *c)
+{
+    WakeAllConditionVariable(c);
+}
+extern void win_thread_join(HANDLE thread, void **status)
+{
+    if (thread) {
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+    }
+    if (status) *status = NULL;
+}
+extern void win_thread_detach(HANDLE thread)
+{
+    if (thread) {
+        CloseHandle(thread);
+    }
+}
 #endif

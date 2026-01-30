@@ -1005,8 +1005,10 @@ INT_EVassoc_conversion_action(CManager cm, int stone_id, int stage,
 	char *incoming_tmp = global_name_of_FMFormat(incoming_format);
 	fprintf(cm->CMTrace_file, "Adding Conversion action %d to ", a);
 	fprint_stone_identifier(cm->CMTrace_file, cm->evp, stone_id);
-	fprintf(cm->CMTrace_file, "\n   Incoming format is %s, target %s\n", incoming_tmp, 
+	fprintf(cm->CMTrace_file, "\n   Incoming format is %s, target %s\n", incoming_tmp,
 	       target_tmp);
+	ffs_free(target_tmp);
+	ffs_free(incoming_tmp);
     }
     stone->response_cache = realloc(stone->response_cache,
 			     sizeof(stone->response_cache[0]) * (a + 1));
@@ -1118,9 +1120,11 @@ determine_action(CManager cm, stone_type stone, action_class stage, event_item *
     if (event->reference_format == NULL) {
 	CMtrace_out(cm, EVerbose, "Call to determine_action, event reference_format is NULL\n");
     } else {
+	char *tmp = global_name_of_FMFormat(event->reference_format);
 	CMtrace_out(cm, EVerbose, "Call to determine_action, event reference_format is %p (%s), stage is %d, encoded is %d\n",
-		    event->reference_format, global_name_of_FMFormat(event->reference_format),
+		    event->reference_format, tmp,
 		    stage, event->event_encoded);
+	ffs_free(tmp);
     }
     return_response = check_response_cache(cm, stone, stage, event);
 
@@ -1209,8 +1213,7 @@ extern void
 return_event(event_path_data evp, event_item *event)
 {
     (void)evp;
-    event->ref_count--;
-    if (event->ref_count == 0) {
+    if (thr_atomic_dec(&event->ref_count) == 0) {
 	/* return event memory */
 	switch (event->contents) {
 	case Event_CM_Owned:
@@ -1387,7 +1390,7 @@ cod_decode_event(CManager cm, int stone_num, int act_num, event_item *event) {
 	printf("Warning!  bad multiq action found for incoming an event on stone %x, stage %d\n",
 	       stone->local_id, stage);
 	printf("A decode response should be installed into the response cache for event type \"%s\" (%p)\n", tmp = global_name_of_FMFormat(event->reference_format), event->reference_format);
-        free(tmp);
+        ffs_free(tmp);
 	dump_stone(stone);
     }
     return decode_action(cm, event, &stone->response_cache[resp_id]);
@@ -1428,7 +1431,7 @@ fdump_action(FILE* out, stone_type stone, response_cache_element *resp, int a, c
 	    char *tmp;
 	    fprintf(out, "\"%s\" (%p), ", tmp = global_name_of_FMFormat(act->matching_reference_formats[i]), act->matching_reference_formats[i]);
 	    i++;
-	    free(tmp);
+	    ffs_free(tmp);
 	}
     } else {
 	fprintf(out, " NULL");
@@ -1512,10 +1515,12 @@ fdump_stone(FILE* out, stone_type stone)
     fprintf(out, "  response_cache_count %d:\n", stone->response_cache_count);
     for (i=0; i< stone->response_cache_count; i++) {
 	response_cache_element *resp = &stone->response_cache[i];
+	char *tmp = resp->reference_format ? global_name_of_FMFormat(resp->reference_format) : NULL;
 	fprintf(out, "Response cache item %d, reference format %p (%s)\n", i, resp->reference_format,
-		resp->reference_format ? global_name_of_FMFormat(resp->reference_format) : "<none>");
+		tmp ? tmp : "<none>");
 	fprintf(out, "stage %d, action_type %s, proto_action_id %d, requires_decoded %d\n", resp->stage,
 	       action_str[resp->action_type], resp->proto_action_id, resp->requires_decoded);
+	if (tmp) ffs_free(tmp);
     }
 }
 
@@ -1762,7 +1767,7 @@ process_events_stone(CManager cm, int s, action_class c)
                 } else {
                     printf("    Unhandled incoming event format was NULL\n");
                 }
-                if (tmp) free(tmp);
+                if (tmp) ffs_free(tmp);
                 event = dequeue_item(cm, stone, item);
                 return_event(evp, event);
             }
@@ -1774,7 +1779,7 @@ process_events_stone(CManager cm, int s, action_class c)
 		    CMtrace_out(cm, EVerbose, "Encoding event prior to decode for conversion, action id %d\n", resp_id);
 		    old_data_event = reassign_memory_event(cm, event, 0);  /* reassign memory */
 		    return_event(evp, old_data_event);
-		    event->ref_count++;
+		    thr_atomic_inc(&event->ref_count);
 		}
 		CMtrace_out(cm, EVerbose, "Decoding event, action id %d\n", resp_id);
 		event_to_submit = decode_action(cm, event, resp);
@@ -1784,13 +1789,15 @@ process_events_stone(CManager cm, int s, action_class c)
 		resp = &stone->response_cache[resp_id];
 	    }
 	    if (CMtrace_on(cm, EVerbose)) {
+		char *tmp = resp->reference_format ? global_name_of_FMFormat(resp->reference_format) : NULL;
 		fprintf(cm->CMTrace_file, "next action event %p on ", event);
 		fprint_stone_identifier(cm->CMTrace_file, evp, s);
 		fprintf(cm->CMTrace_file, " action type is %s, reference_format is %p (%s), stage is %d, requires_decoded is %d\n",
-			action_str[resp->action_type], resp->reference_format, 
-			resp->reference_format ? global_name_of_FMFormat(resp->reference_format) : "<none>",
+			action_str[resp->action_type], resp->reference_format,
+			tmp ? tmp : "<none>",
 			resp->stage, resp->requires_decoded);
 		fdump_action(cm->CMTrace_file, stone, resp, resp->proto_action_id, "    ");
+		if (tmp) ffs_free(tmp);
 	    }
             act = &stone->response_cache[resp_id];
 	}
@@ -2365,14 +2372,13 @@ INT_EVassoc_anon_multi_action(CManager cm, EVstone stone_id, EVaction act_num,
     resp->stage = cached_stage_for_action(&stone->proto_actions[act_num]);
     resp->reference_format = anon_target;
     if (CMtrace_on(cm, EVerbose)) {
-	char *tmp;
 	if (resp->reference_format) {
-	    tmp = global_name_of_FMFormat(resp->reference_format);
+	    char *tmp = global_name_of_FMFormat(resp->reference_format);
+	    fprintf(cm->CMTrace_file, "\tResponse %d for format \"%s\"(%p)", stone->response_cache_count, tmp, resp->reference_format);
+	    ffs_free(tmp);
 	} else {
-	    tmp = strdup("<none>");
+	    fprintf(cm->CMTrace_file, "\tResponse %d for format \"<none>\"(%p)", stone->response_cache_count, resp->reference_format);
 	}
-	fprintf(cm->CMTrace_file, "\tResponse %d for format \"%s\"(%p)", stone->response_cache_count, tmp, resp->reference_format);
-	free(tmp);
     }
     stone->response_cache_count += 1;
     fix_response_cache(stone);
@@ -2416,14 +2422,13 @@ INT_EVassoc_mutated_multi_action(CManager cm, EVstone stone_id, EVaction act_num
         resp->stage = cached_stage_for_action(&stone->proto_actions[act_num]);
 	resp->reference_format = reference_formats[i];
 	if (CMtrace_on(cm, EVerbose)) {
-	    char *tmp;
 	    if (resp->reference_format) {
-		tmp = global_name_of_FMFormat(resp->reference_format);
+		char *tmp = global_name_of_FMFormat(resp->reference_format);
+		fprintf(cm->CMTrace_file, "\tResponse %d for format \"%s\"(%p)\n", stone->response_cache_count+i, tmp, resp->reference_format);
+		ffs_free(tmp);
 	    } else {
-		tmp = strdup("<none>");
+		fprintf(cm->CMTrace_file, "\tResponse %d for format \"<none>\"(%p)\n", stone->response_cache_count+i, resp->reference_format);
 	    }
-	    fprintf(cm->CMTrace_file, "\tResponse %d for format \"%s\"(%p)\n", stone->response_cache_count+i, tmp, resp->reference_format);
-	    free(tmp);
 	}
     }
     stone->response_cache_count += queue_count;
@@ -3267,7 +3272,7 @@ INT_EVfree_source(EVsource source)
 static void
 reference_event(event_item *event)
 {
-    event->ref_count++;
+    thr_atomic_inc(&event->ref_count);
 }
 
 extern void
@@ -3314,7 +3319,11 @@ internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf,
 		dump_char_limit = atoi(size_str);
 	    }
 	}
-	fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", global_name_of_FMFormat(event->reference_format));
+	{
+	    char *tmp = global_name_of_FMFormat(event->reference_format);
+	    fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", tmp);
+	    ffs_free(tmp);
+	}
 	r = FMfdump_encoded_data(cm->CMTrace_file, event->reference_format,
 				event->encoded_event, dump_char_limit);
 	if (r && !warned) {
@@ -3356,7 +3365,7 @@ reassign_memory_event(CManager cm, event_item *event, int do_decode)
     void *decode_buffer;
 
     CMtrace_out(cm, EVerbose, "Doing deep copy to free up event before returning from EVsubmit()\n");
-    *tmp_event = *event;
+    EVENT_ITEM_COPY_FIELDS(tmp_event, event);
     tmp_event->ref_count = 1;   /* we're going to make sure the enqueued events don't reference anything that this does */
     tmp_event->attrs = CMadd_ref_attr_list(cm, event->attrs);
     event->free_func = NULL;   /* if these were present, no longer applicable */
@@ -3387,7 +3396,7 @@ reassign_memory_event(CManager cm, event_item *event, int do_decode)
 	event->event_encoded = 0;
 	free_FFSContext(tmp_context);
     }
-    event->ref_count--;   /* we've essentially split the event.  tmp_event will be dereferenced */
+    thr_atomic_dec(&event->ref_count);   /* we've essentially split the event.  tmp_event will be dereferenced */
     return tmp_event;
 }
 
@@ -3439,7 +3448,7 @@ INT_EVsubmit(EVsource source, void *data, attr_list attrs)
     event->attrs = CMadd_ref_attr_list(source->cm, attrs);
     internal_path_submit(source->cm, source->local_stone_id, event);
     while (process_local_actions(source->cm));
-    if (event->ref_count != 1 && (event->contents == Event_App_Owned)) {
+    if (thr_atomic_read(&event->ref_count) != 1 && (event->contents == Event_App_Owned)) {
 	event = reassign_memory_event(source->cm, event, 1);  /* reassign memory */
     }
     return_event(source->cm->evp, event);

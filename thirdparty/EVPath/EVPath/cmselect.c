@@ -64,7 +64,24 @@
 #include "ev_select.h"
 #ifdef _MSC_VER
 #define getpid()	_getpid()
+#endif
+#ifdef HAVE_WINDOWS_H
 #define close(x) closesocket(x)
+
+static int winsock_initialized = 0;
+static void ensure_winsock_initialized(void) {
+    if (!winsock_initialized) {
+        WSADATA wsaData;
+        int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (err != 0) {
+            fprintf(stderr, "cmselect: WSAStartup failed with error %d\n", err);
+        } else {
+            winsock_initialized = 1;
+        }
+    }
+}
+#else
+#define ensure_winsock_initialized()
 #endif
 #undef realloc
 #undef malloc
@@ -443,7 +460,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 	    }
 	    if (FD_ISSET(i, &wr_set)) {
 		if (sd->write_items[i].func != NULL) {
-		    svc->verbose(sd->cm, CMSelectVerbose, 
+		    svc->verbose(sd->cm, CMSelectVerbose,
 				   "Running select write action on fd %d",
 				   i);
 		    sd->write_items[i].func(sd->write_items[i].arg1,
@@ -451,12 +468,12 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 		} else {
 		    assert(!FD_ISSET(i, (fd_set *)sd->write_set));
 		}
-		if (sd->select_consistency_number != 
+		if (sd->select_consistency_number !=
 		    tmp_select_consistency_number) return;
 	    }
 	    if (FD_ISSET(i, &rd_set)) {
 		if (sd->select_items[i].func != NULL) {
-		    svc->verbose(sd->cm, CMSelectVerbose, 
+		    svc->verbose(sd->cm, CMSelectVerbose,
 				   "Running select read action on fd %d",
 				   i);
 		    sd->select_items[i].func(sd->select_items[i].arg1,
@@ -879,15 +896,17 @@ WSAerror_str(int err)
 static int
 pipe(SOCKET *filedes)
 {
-    
+
     int length;
     struct sockaddr_in sock_addr;
     SOCKET sock1, sock2, conn_sock;
     unsigned long block = TRUE;
     int delay_value = 1;
-   
+
+    ensure_winsock_initialized();
+    memset(&sock_addr, 0, sizeof(sock_addr));
     conn_sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (conn_sock == SOCKET_ERROR) {
+    if (conn_sock == INVALID_SOCKET) {
 	fprintf(stderr, "Cannot open INET socket\n");
 	return -1;
     }
@@ -896,7 +915,9 @@ pipe(SOCKET *filedes)
     sock_addr.sin_port = 0;
     if (bind(conn_sock, (struct sockaddr *) &sock_addr,
 	     sizeof sock_addr) == SOCKET_ERROR) {
-	fprintf(stderr, "Cannot bind INET socket\n");
+	int err = WSAGetLastError();
+	fprintf(stderr, "Cannot bind INET socket, WSA error %s\n", WSAerror_str(err));
+	closesocket(conn_sock);
 	return -1;
     }
     length = sizeof sock_addr;
@@ -911,7 +932,8 @@ pipe(SOCKET *filedes)
     }
 
 /* send sock */
-    if ((sock1 = socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
+    if ((sock1 = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+	closesocket(conn_sock);
 	return -1;
     }
     sock_addr.sin_addr.s_addr = 0x0100007f;  /* loopback */
@@ -927,9 +949,12 @@ pipe(SOCKET *filedes)
 	}
     }
 
-    if ((sock2 = accept(conn_sock, (struct sockaddr *) 0, (int *) 0)) == SOCKET_ERROR) {
+    if ((sock2 = accept(conn_sock, (struct sockaddr *) 0, (int *) 0)) == INVALID_SOCKET) {
 	    int err = WSAGetLastError();
-	    printf("err was %s\n", WSAerror_str(err));
+	    printf("accept err was %s\n", WSAerror_str(err));
+	    closesocket(sock1);
+	    closesocket(conn_sock);
+	    return -1;
     }
     
     setsockopt(sock2, IPPROTO_TCP, TCP_NODELAY, (char *) &delay_value,

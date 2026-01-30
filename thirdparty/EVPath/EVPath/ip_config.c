@@ -633,7 +633,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	strcpy(hostname_to_use, determined_hostname);
 	IP_to_use = determined_IP;
     }
-    if (hostname_buf && (len > strlen(determined_hostname))) {
+    if (hostname_buf && ((size_t)len > strlen(determined_hostname))) {
 	strcpy(hostname_buf, hostname_to_use);
     }
     if (IP_p && (determined_IP != -1)) {

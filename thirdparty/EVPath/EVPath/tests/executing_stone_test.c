@@ -19,11 +19,12 @@
 #include <arpa/inet.h>
 #endif
 #include "evpath.h"
+#include "support.h"
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
+/* windows.h included via support.h */
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
@@ -89,7 +90,6 @@ static FMStructDescRec simple_format_list[] =
     {NULL, NULL}
 };
 
-int quiet = 1;
 
 EVsource source_handle[3];
 
@@ -112,18 +112,15 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
     return 0;
 }
 
-char *transport = NULL;
-char *control = NULL;
 
-#include "support.c"
-int regression_master, regression;  /* not used in this test */
+int regression_master;  /* regression provided by support.c */
 
 int
 main(int argc, char **argv)
 {
     CManager cm;
     EVstone sink1, sink2, sink3;
-    simple_rec data;
+    simple_rec data = {0};
 
     PARSE_ARGS();
 

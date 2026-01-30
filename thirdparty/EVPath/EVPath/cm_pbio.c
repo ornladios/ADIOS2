@@ -553,7 +553,7 @@ CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 
     int *incoming_length;
     int tmp_length;
-    int used_length = 4;
+    size_t used_length = 4;
     int header = *(int*)buffer;
 
     CManager_lock(conn->cm);

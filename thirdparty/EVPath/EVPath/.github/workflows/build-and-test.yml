@@ -13,6 +13,159 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # MemorySanitizer build to detect uninitialized memory reads
+  msan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+      # Suppress known false positives from uninstrumented system libraries
+      MSAN_OPTIONS: "halt_on_error=1:print_stats=1"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git curl pkg-config
+
+    - name: Build atl with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Build ffs with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/ffs.git
+        cmake -G Ninja -S ffs -B ffs/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C ffs/build install
+
+    - name: Build EVPath with MSan
+      run: |
+        cmake -G Ninja -S source -B build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+        ninja -C build
+
+    - name: Test with MSan
+      run: |
+        cd build
+        ctest --output-on-failure --timeout 120
+
+  # ThreadSanitizer build to detect data races
+  tsan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      TSAN_FLAGS: "-fsanitize=thread -fno-omit-frame-pointer"
+      TSAN_OPTIONS: "halt_on_error=1:second_deadlock_stack=1"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git curl pkg-config
+
+    - name: Build atl with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Build ffs with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/ffs.git
+        cmake -G Ninja -S ffs -B ffs/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C ffs/build install
+
+    - name: Build EVPath with TSan
+      run: |
+        cmake -G Ninja -S source -B build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+        ninja -C build
+
+    - name: Test with TSan
+      run: |
+        cd build
+        ctest --output-on-failure --timeout 120
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
@@ -123,16 +276,20 @@ jobs:
       if: ${{ runner.os == 'Windows' }}
       shell: pwsh
       run: |
-          # Copy dependency DLLs to build output directory so Windows can find them
           $buildType = "${{ matrix.buildtype }}"
           $configDir = if ($buildType -eq "release") { "Release" } else { "Debug" }
-          $destDir = "build/bin/$configDir"
-          if (Test-Path $destDir) {
-              Copy-Item -Path "atl/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
-              Copy-Item -Path "dill/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
-              Copy-Item -Path "ffs/install/bin/*.dll" -Destination $destDir -Force -ErrorAction SilentlyContinue
-              Write-Host "Copied DLLs to $destDir"
-              Get-ChildItem $destDir -Filter *.dll | ForEach-Object { Write-Host "  - $($_.Name)" }
+          $srcDirs = @("atl/install/bin", "dill/install/bin", "ffs/install/bin", "build/bin/$configDir", "build/lib/$configDir")
+          $testDirs = @("build/tests/$configDir", "build/mtests/$configDir", "build/dfg_tests/$configDir", "build/rtests/$configDir")
+          foreach ($testDir in $testDirs) {
+              if (Test-Path $testDir) {
+                  foreach ($srcDir in $srcDirs) {
+                      if (Test-Path "$srcDir/*.dll") {
+                          Copy-Item -Path "$srcDir/*.dll" -Destination $testDir -Force -ErrorAction SilentlyContinue
+                      }
+                  }
+                  Write-Host "DLLs in ${testDir}:"
+                  Get-ChildItem $testDir -Filter *.dll | ForEach-Object { Write-Host "  - $($_.Name)" }
+              }
           }
     - name: Test
       run: source/scripts/ci/gh-actions/run.sh test

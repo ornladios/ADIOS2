@@ -1,10 +1,11 @@
 set(TESTS cmtest cmping cmconn bulktest take_test)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/test_common)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmtests.tsts "" )
 foreach(T ${TESTS})
-  add_executable(mtests_${T} ${T}.c)
+  add_executable(mtests_${T} ${T}.c ${CMAKE_SOURCE_DIR}/test_common/support.c)
   target_link_libraries(mtests_${T} evpath atl::atl)
   add_test(NAME mtests_${T} COMMAND mtests_${T})
   list(APPEND CMTESTS mtests_${T})
@@ -35,7 +36,7 @@ configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/test_spec
   ${CMAKE_CURRENT_BINARY_DIR}/test_spec
   COPYONLY)
-file(WRITE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/correctness_spec" 
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec"
 "%macro = (\n"
 "        basic_size_list  => [ \"size:24 vectors:1 msg_count:10\",\n"
 "			      \"size:102400 vectors:1 msg_count:3\" ],\n"
@@ -67,9 +68,11 @@ if(RUN_IB_TESTS)
 endif()
 
 add_test(NAME all_transports
-  COMMAND perl transport_test.pl -q -f ./correctness_spec)
+  COMMAND perl ${CMAKE_CURRENT_BINARY_DIR}/transport_test.pl -q -f ${CMAKE_CURRENT_BINARY_DIR}/correctness_spec
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:trans_test>)
 add_test(NAME non_blocking_transports
-  COMMAND perl transport_test.pl -q -f ./correctness_spec)
+  COMMAND perl ${CMAKE_CURRENT_BINARY_DIR}/transport_test.pl -q -f ${CMAKE_CURRENT_BINARY_DIR}/correctness_spec
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:trans_test>)
 set_tests_properties(non_blocking_transports
   PROPERTIES ENVIRONMENT "CMNonBlockWrite=1")
 

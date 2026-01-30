@@ -1905,7 +1905,7 @@ REVextract_attr_list_handler(CManager cm, CMConnection conn, void *data,void *cl
     response.ret = attr_list_to_string(ret);
     response.condition_var = request->condition_var;
     CMwrite(conn, f, &response);
-    free(response.ret);
+    atl_free(response.ret);
 }
 
 typedef struct _EVfree_stone_request {

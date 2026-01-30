@@ -116,6 +116,18 @@ typedef struct socket_connection_data {
 #define write(fd, buf, len) send(fd, buf, len, 0)
 #define close(x) closesocket(x)
 #define INST_ADDRSTRLEN 50
+/* Windows socket error handling - WSAGetLastError() instead of errno */
+#define SOCKET_GET_LAST_ERROR() WSAGetLastError()
+/* On Windows, socket errors use WSA* constants (10000+), not errno values */
+#define SOCKET_ERROR_IS_WOULDBLOCK(err) ((err) == WSAEWOULDBLOCK)
+#define SOCKET_ERROR_IS_INTR(err) ((err) == WSAEINTR)
+#define SOCKET_ERROR_IS_TRANSIENT(err) (SOCKET_ERROR_IS_WOULDBLOCK(err) || SOCKET_ERROR_IS_INTR(err))
+#else
+/* Unix - use errno */
+#define SOCKET_GET_LAST_ERROR() errno
+#define SOCKET_ERROR_IS_WOULDBLOCK(err) ((err) == EWOULDBLOCK || (err) == EAGAIN)
+#define SOCKET_ERROR_IS_INTR(err) ((err) == EINTR)
+#define SOCKET_ERROR_IS_TRANSIENT(err) (SOCKET_ERROR_IS_WOULDBLOCK(err) || SOCKET_ERROR_IS_INTR(err))
 #endif
 
 static atom_t CM_FD = -1;
@@ -937,18 +949,19 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 	svc->trace_out(scd->sd->cm, "CMSocket switch to non-blocking fd %d",
 		       scd->fd);
 	set_block_state(svc, scd, Non_Block);
+    } else if (!non_blocking && (scd->block_state == Non_Block)) {
+	svc->trace_out(scd->sd->cm, "CMSocket switch to blocking fd %d",
+		       scd->fd);
+	set_block_state(svc, scd, Block);
     }
     ssize_t read_len = requested_len;
     if (read_len > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
     iget = read(scd->fd, (char *) buffer, (int)read_len);
     if ((iget == -1) || (iget == 0)) {
-	int lerrno = errno;
-	if ((lerrno != 0) &&
-	    (lerrno != EWOULDBLOCK) &&
-	    (lerrno != EAGAIN) &&
-	    (lerrno != EINTR)) {
+	int lerrno = SOCKET_GET_LAST_ERROR();
+	if ((lerrno != 0) && !SOCKET_ERROR_IS_TRANSIENT(lerrno)) {
 	    /* serious error */
-	    svc->trace_out(scd->sd->cm, "CMSocket iget was -1, errno is %d, returning 0 for read",
+	    svc->trace_out(scd->sd->cm, "CMSocket iget was -1, errno is %d, returning -1 for read",
 			   lerrno);
 	    return -1;
 	} else {
@@ -967,13 +980,11 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 	if (left > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
 	iget = read(scd->fd, (char *) buffer + requested_len - left,
 		    (int)read_len);
-	lerrno = errno;
+	lerrno = SOCKET_GET_LAST_ERROR();
 	if (iget == -1) {
-	    if ((lerrno != EWOULDBLOCK) &&
-		(lerrno != EAGAIN) &&
-		(lerrno != EINTR)) {
+	    if (!SOCKET_ERROR_IS_TRANSIENT(lerrno)) {
 		/* serious error */
-		svc->trace_out(scd->sd->cm, "CMSocket iget was -1, errno is %d, returning %d for read", 
+		svc->trace_out(scd->sd->cm, "CMSocket iget was -1, errno is %d, returning %d for read",
 			   lerrno, requested_len - left);
 		return (requested_len - left);
 	    } else {
@@ -1006,21 +1017,18 @@ ssize_t
 writev(SOCKET fd, struct iovec *iov, size_t iovcnt)
 {
     ssize_t wrote = 0;
-    int i;
+    size_t i;
     for (i = 0; i < iovcnt; i++) {
 	size_t left = iov[i].iov_len;
 	ssize_t iget = 0;
 
 	while (left > 0) {
-	    errno = 0;
 	    size_t this_write = left;
 	    char *this_base = ((char*)iov[i].iov_base) + iov[i].iov_len - left;
 	    iget = write(fd, this_base, (int)this_write);
 	    if (iget == -1) {
-		int lerrno = errno;
-		if ((lerrno != EWOULDBLOCK) &&
-		    (lerrno != EAGAIN) &&
-		    (lerrno != EINTR)) {
+		int lerrno = SOCKET_GET_LAST_ERROR();
+		if (!SOCKET_ERROR_IS_TRANSIENT(lerrno)) {
 		    /* serious error */
 		    return -1;
 		} else {
@@ -1110,16 +1118,15 @@ libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, voi
 	iget = writev(fd, (struct iovec *) &iov[iovcnt - iovleft],
 		      write_count);
 	if (iget == -1) {
-	    svc->trace_out(scd->sd->cm, "	writev failed, errno was %d", errno);
-	    if ((errno != EWOULDBLOCK) && (errno != EAGAIN)) {
+	    int lerrno = SOCKET_GET_LAST_ERROR();
+	    svc->trace_out(scd->sd->cm, "	writev failed, errno was %d", lerrno);
+	    if (!SOCKET_ERROR_IS_WOULDBLOCK(lerrno)) {
 		/* serious error */
 		return (iovcnt - iovleft);
 	    } else {
-		if (errno == EWOULDBLOCK) {
-		    svc->trace_out(scd->sd->cm, "CMSocket writev blocked - switch to blocking fd %d",
-				   scd->fd);
-		    set_block_state(svc, scd, Block);
-		}
+		svc->trace_out(scd->sd->cm, "CMSocket writev blocked - switch to blocking fd %d",
+			       scd->fd);
+		set_block_state(svc, scd, Block);
 		iget = 0;
 	    }
 	}
@@ -1182,9 +1189,10 @@ libcmsockets_LTX_NBwritev_func(CMtrans_services svc, socket_conn_data_ptr scd, v
 	iget = writev(fd, (struct iovec *) &iov[iovcnt - iovleft],
 		      write_count);
 	if (iget == -1) {
+	    int lerrno = SOCKET_GET_LAST_ERROR();
 	    svc->trace_out(scd->sd->cm, "CMSocket writev returned -1, errno %d",
-		   errno);
-	    if ((errno != EWOULDBLOCK) && (errno != EAGAIN)) {
+		   lerrno);
+	    if (!SOCKET_ERROR_IS_WOULDBLOCK(lerrno)) {
 		/* serious error */
 		return -1;
 	    } else {
