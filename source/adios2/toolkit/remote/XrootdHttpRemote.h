@@ -2,15 +2,15 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * XrootdHttpsRemote.h - HTTPS-based client for XRootD SSI services
+ * XrootdHttpRemote.h - HTTP/HTTPS-based client for XRootD SSI services
  *
- * This provides the same functionality as XrootdRemote but uses HTTPS
+ * This provides the same functionality as XrootdRemote but uses HTTP or HTTPS
  * instead of the native XRootD SSI protocol. It connects to an XRootD
  * server running the HTTP-to-SSI bridge handler.
  */
 
-#ifndef ADIOS2_XROOTDHTTPSREMOTE_H
-#define ADIOS2_XROOTDHTTPSREMOTE_H
+#ifndef ADIOS2_XROOTDHTTPREMOTE_H
+#define ADIOS2_XROOTDHTTPREMOTE_H
 
 #include "Remote.h"
 #include "adios2/common/ADIOSConfig.h"
@@ -29,38 +29,41 @@ namespace adios2
 {
 
 /**
- * @brief HTTPS-based remote access to ADIOS data via XRootD HTTP-SSI bridge
+ * @brief HTTP/HTTPS-based remote access to ADIOS data via XRootD HTTP-SSI bridge
  *
- * This class provides the same interface as XrootdRemote but uses HTTPS
+ * This class provides the same interface as XrootdRemote but uses HTTP or HTTPS
  * for transport instead of the native XRootD SSI protocol. This enables:
- * - Access through HTTPS (port 443/8443) which is commonly allowed through firewalls
- * - TLS encryption for data in transit
+ * - Access through HTTP/HTTPS ports which are commonly allowed through firewalls
+ * - Optional TLS encryption for data in transit (when using HTTPS)
  * - Compatibility with NERSC Spin and other Kubernetes deployments
+ *   - Use HTTP mode behind Spin Ingress (which terminates TLS)
+ *   - Use HTTPS mode for direct connections
  *
  * The server must be running XRootD with the HTTP-to-SSI bridge handler
  * (libadios2_xrootd_http.so) loaded.
  *
  * Usage:
- *   XrootdHttpsRemote remote(hostOptions);
- *   remote.Open("server.example.com", 8443, "/path/to/file.bp", Mode::Read, true);
+ *   XrootdHttpRemote remote(hostOptions);
+ *   remote.SetUseHttps(false);  // Use plain HTTP (for Spin Ingress)
+ *   remote.Open("server.example.com", 8080, "/path/to/file.bp", Mode::Read, true);
  *   auto handle = remote.Get("temperature", step, 1, blockID, count, start, accuracy, buffer);
  *   remote.WaitForGet(handle);
  */
-class XrootdHttpsRemote : public Remote
+class XrootdHttpRemote : public Remote
 {
 public:
     profiling::IOChrono m_Profiler;
 
     /**
-     * @brief Construct an HTTPS remote client
+     * @brief Construct an HTTP/HTTPS remote client
      * @param hostOptions Host configuration options
      */
-    XrootdHttpsRemote(const adios2::HostOptions &hostOptions);
+    XrootdHttpRemote(const adios2::HostOptions &hostOptions);
 
     /**
      * @brief Destructor - cleans up CURL resources
      */
-    ~XrootdHttpsRemote();
+    ~XrootdHttpRemote();
 
     /**
      * @brief Check if connection is open and valid
@@ -68,9 +71,9 @@ public:
     explicit operator bool() const override { return m_OpenSuccess; }
 
     /**
-     * @brief Open a remote ADIOS file via HTTPS
+     * @brief Open a remote ADIOS file via HTTP/HTTPS
      * @param hostname Server hostname
-     * @param port HTTPS port (typically 443 or 8443)
+     * @param port HTTP/HTTPS port
      * @param filename Path to the ADIOS file on the server
      * @param mode Open mode (Read, Write, etc.)
      * @param RowMajorOrdering Array ordering preference
@@ -102,7 +105,7 @@ public:
     bool WaitForGet(GetHandle handle) override;
 
     /**
-     * @brief Read raw bytes from the remote file (not implemented for HTTPS)
+     * @brief Read raw bytes from the remote file (not implemented for HTTP)
      * @param Start Byte offset
      * @param Size Number of bytes
      * @param Dest Destination buffer
@@ -118,6 +121,19 @@ public:
     // Configuration options
 
     /**
+     * @brief Set whether to use HTTPS (default: true)
+     *
+     * Set to false for plain HTTP connections, useful when running behind
+     * a reverse proxy like NERSC Spin Ingress that terminates TLS.
+     */
+    void SetUseHttps(bool useHttps) { m_UseHttps = useHttps; }
+
+    /**
+     * @brief Check if HTTPS is enabled
+     */
+    bool GetUseHttps() const { return m_UseHttps; }
+
+    /**
      * @brief Set connection timeout in seconds (default: 30)
      */
     void SetConnectTimeout(long seconds) { m_ConnectTimeout = seconds; }
@@ -128,12 +144,12 @@ public:
     void SetRequestTimeout(long seconds) { m_RequestTimeout = seconds; }
 
     /**
-     * @brief Set CA certificate path for server verification
+     * @brief Set CA certificate path for server verification (HTTPS only)
      */
     void SetCACertPath(const std::string &path) { m_CACertPath = path; }
 
     /**
-     * @brief Disable SSL certificate verification (use with caution!)
+     * @brief Disable SSL certificate verification (HTTPS only, use with caution!)
      */
     void SetVerifySSL(bool verify) { m_VerifySSL = verify; }
 
@@ -189,12 +205,13 @@ private:
     bool m_CurlInitialized = false;
 
     // Configuration
+    bool m_UseHttps = true;      ///< Whether to use HTTPS (true) or HTTP (false)
     long m_ConnectTimeout = 30;  ///< Connection timeout in seconds
     long m_RequestTimeout = 300; ///< Request timeout in seconds
-    std::string m_CACertPath;    ///< CA certificate path
-    bool m_VerifySSL = true;     ///< Whether to verify SSL certificates
+    std::string m_CACertPath;    ///< CA certificate path (HTTPS only)
+    bool m_VerifySSL = true;     ///< Whether to verify SSL certificates (HTTPS only)
 };
 
 } // end namespace adios2
 
-#endif // ADIOS2_XROOTDHTTPSREMOTE_H
+#endif // ADIOS2_XROOTDHTTPREMOTE_H

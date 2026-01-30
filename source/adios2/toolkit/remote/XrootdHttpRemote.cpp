@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * XrootdHttpsRemote.cpp - HTTPS-based client for XRootD SSI services
+ * XrootdHttpRemote.cpp - HTTP/HTTPS-based client for XRootD SSI services
  */
 
-#include "XrootdHttpsRemote.h"
+#include "XrootdHttpRemote.h"
 #include "adios2/helper/adiosLog.h"
 
 #include <cstring>
@@ -65,7 +65,7 @@ std::string UrlEncode(CURL *curl, const std::string &str)
 /*                     C o n s t r u c t o r / D e s t r u c t o r            */
 /******************************************************************************/
 
-XrootdHttpsRemote::XrootdHttpsRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions)
+XrootdHttpRemote::XrootdHttpRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions)
 {
 #ifdef ADIOS2_HAVE_CURL
     // Global CURL initialization (should be called once per process)
@@ -74,7 +74,7 @@ XrootdHttpsRemote::XrootdHttpsRemote(const adios2::HostOptions &hostOptions) : R
 #endif
 }
 
-XrootdHttpsRemote::~XrootdHttpsRemote()
+XrootdHttpRemote::~XrootdHttpRemote()
 {
     Close();
 #ifdef ADIOS2_HAVE_CURL
@@ -86,7 +86,7 @@ XrootdHttpsRemote::~XrootdHttpsRemote()
 /*                              I n i t C u r l                               */
 /******************************************************************************/
 
-bool XrootdHttpsRemote::InitCurl()
+bool XrootdHttpRemote::InitCurl()
 {
 #ifdef ADIOS2_HAVE_CURL
     std::lock_guard<std::mutex> lock(m_CurlMutex);
@@ -99,7 +99,7 @@ bool XrootdHttpsRemote::InitCurl()
     m_Curl = curl_easy_init();
     if (!m_Curl)
     {
-        helper::Log("Remote", "XrootdHttpsRemote", "InitCurl", "Failed to initialize CURL",
+        helper::Log("Remote", "XrootdHttpRemote", "InitCurl", "Failed to initialize CURL",
                     helper::LogMode::FATALERROR);
         return false;
     }
@@ -107,8 +107,8 @@ bool XrootdHttpsRemote::InitCurl()
     m_CurlInitialized = true;
     return true;
 #else
-    helper::Log("Remote", "XrootdHttpsRemote", "InitCurl", "ADIOS2 was not built with CURL support",
-                helper::LogMode::ERROR);
+    helper::Log("Remote", "XrootdHttpRemote", "InitCurl", "ADIOS2 was not built with CURL support",
+                helper::LogMode::FATALERROR);
     return false;
 #endif
 }
@@ -117,7 +117,7 @@ bool XrootdHttpsRemote::InitCurl()
 /*                          C l e a n u p C u r l                             */
 /******************************************************************************/
 
-void XrootdHttpsRemote::CleanupCurl()
+void XrootdHttpRemote::CleanupCurl()
 {
 #ifdef ADIOS2_HAVE_CURL
     std::lock_guard<std::mutex> lock(m_CurlMutex);
@@ -135,29 +135,23 @@ void XrootdHttpsRemote::CleanupCurl()
 /*                                 O p e n                                    */
 /******************************************************************************/
 
-void XrootdHttpsRemote::Open(const std::string hostname, const int32_t port,
-                             const std::string filename, const Mode mode, bool RowMajorOrdering,
-                             const Params &params)
+void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
+                            const std::string filename, const Mode mode, bool RowMajorOrdering,
+                            const Params &params)
 {
     m_Filename = filename;
     m_Mode = mode;
     m_RowMajorOrdering = RowMajorOrdering;
 
-    // Build base URL for HTTPS connections
-    // Format: https://hostname:port/ssi
-    std::ostringstream urlStream;
-    urlStream << "https://" << hostname << ":" << port << "/ssi";
-    m_BaseUrl = urlStream.str();
-
-    // Initialize CURL
-    if (!InitCurl())
+    // Check optional parameters - do this before building URL
+    // so UseHttps can be set via params
+    auto it = params.find("UseHttps");
+    if (it != params.end())
     {
-        m_OpenSuccess = false;
-        return;
+        m_UseHttps = (it->second == "true" || it->second == "1" || it->second == "yes");
     }
 
-    // Check optional parameters
-    auto it = params.find("CAPath");
+    it = params.find("CAPath");
     if (it != params.end())
     {
         m_CACertPath = it->second;
@@ -181,8 +175,22 @@ void XrootdHttpsRemote::Open(const std::string hostname, const int32_t port,
         m_RequestTimeout = std::stol(it->second);
     }
 
-    helper::Log("Remote", "XrootdHttpsRemote", "Open",
-                "Opened HTTPS connection to " + m_BaseUrl + " for file " + m_Filename,
+    // Build base URL for HTTP/HTTPS connections
+    // Format: http[s]://hostname:port/ssi
+    std::ostringstream urlStream;
+    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/ssi";
+    m_BaseUrl = urlStream.str();
+
+    // Initialize CURL
+    if (!InitCurl())
+    {
+        m_OpenSuccess = false;
+        return;
+    }
+
+    std::string protocol = m_UseHttps ? "HTTPS" : "HTTP";
+    helper::Log("Remote", "XrootdHttpRemote", "Open",
+                "Opened " + protocol + " connection to " + m_BaseUrl + " for file " + m_Filename,
                 helper::LogMode::INFO);
 
     m_OpenSuccess = true;
@@ -192,15 +200,15 @@ void XrootdHttpsRemote::Open(const std::string hostname, const int32_t port,
 /*                                C l o s e                                   */
 /******************************************************************************/
 
-void XrootdHttpsRemote::Close() { m_OpenSuccess = false; }
+void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 
 /******************************************************************************/
 /*                   B u i l d R e q u e s t S t r i n g                      */
 /******************************************************************************/
 
-std::string XrootdHttpsRemote::BuildRequestString(const char *VarName, size_t Step,
-                                                  size_t StepCount, size_t BlockID,
-                                                  const Dims &Count, const Dims &Start)
+std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
+                                                 size_t BlockID, const Dims &Count,
+                                                 const Dims &Start)
 {
     // Build request string in the same format as XrootdRemote
     // Format: get
@@ -246,8 +254,8 @@ std::string XrootdHttpsRemote::BuildRequestString(const char *VarName, size_t St
 /*                             H t t p P o s t                                */
 /******************************************************************************/
 
-bool XrootdHttpsRemote::HttpPost(const std::string &endpoint, const std::string &requestData,
-                                 std::vector<char> &responseData, std::string &errorMsg)
+bool XrootdHttpRemote::HttpPost(const std::string &endpoint, const std::string &requestData,
+                                std::vector<char> &responseData, std::string &errorMsg)
 {
 #ifdef ADIOS2_HAVE_CURL
     std::lock_guard<std::mutex> lock(m_CurlMutex);
@@ -277,20 +285,23 @@ bool XrootdHttpsRemote::HttpPost(const std::string &endpoint, const std::string 
     curl_easy_setopt(m_Curl, CURLOPT_CONNECTTIMEOUT, m_ConnectTimeout);
     curl_easy_setopt(m_Curl, CURLOPT_TIMEOUT, m_RequestTimeout);
 
-    // SSL configuration
-    if (!m_VerifySSL)
+    // SSL configuration - only relevant for HTTPS
+    if (m_UseHttps)
     {
-        curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    }
-    else
-    {
-        curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYPEER, 1L);
-        curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYHOST, 2L);
-
-        if (!m_CACertPath.empty())
+        if (!m_VerifySSL)
         {
-            curl_easy_setopt(m_Curl, CURLOPT_CAINFO, m_CACertPath.c_str());
+            curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        }
+        else
+        {
+            curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYPEER, 1L);
+            curl_easy_setopt(m_Curl, CURLOPT_SSL_VERIFYHOST, 2L);
+
+            if (!m_CACertPath.empty())
+            {
+                curl_easy_setopt(m_Curl, CURLOPT_CAINFO, m_CACertPath.c_str());
+            }
         }
     }
 
@@ -338,13 +349,13 @@ bool XrootdHttpsRemote::HttpPost(const std::string &endpoint, const std::string 
 /*                                  G e t                                     */
 /******************************************************************************/
 
-Remote::GetHandle XrootdHttpsRemote::Get(const char *VarName, size_t Step, size_t StepCount,
-                                         size_t BlockID, Dims &Count, Dims &Start,
-                                         Accuracy &accuracy, void *dest)
+Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t StepCount,
+                                        size_t BlockID, Dims &Count, Dims &Start,
+                                        Accuracy &accuracy, void *dest)
 {
     if (!m_OpenSuccess)
     {
-        helper::Log("Remote", "XrootdHttpsRemote", "Get", "Connection not open",
+        helper::Log("Remote", "XrootdHttpRemote", "Get", "Connection not open",
                     helper::LogMode::WARNING);
         return nullptr;
     }
@@ -387,7 +398,7 @@ Remote::GetHandle XrootdHttpsRemote::Get(const char *VarName, size_t Step, size_
 /*                           W a i t F o r G e t                              */
 /******************************************************************************/
 
-bool XrootdHttpsRemote::WaitForGet(GetHandle handle)
+bool XrootdHttpRemote::WaitForGet(GetHandle handle)
 {
     if (!handle)
     {
@@ -400,7 +411,7 @@ bool XrootdHttpsRemote::WaitForGet(GetHandle handle)
 
     if (!result)
     {
-        helper::Log("Remote", "XrootdHttpsRemote", "WaitForGet", "Get failed: " + asyncOp->errorMsg,
+        helper::Log("Remote", "XrootdHttpRemote", "WaitForGet", "Get failed: " + asyncOp->errorMsg,
                     helper::LogMode::WARNING);
     }
 
@@ -412,12 +423,12 @@ bool XrootdHttpsRemote::WaitForGet(GetHandle handle)
 /*                                 R e a d                                    */
 /******************************************************************************/
 
-Remote::GetHandle XrootdHttpsRemote::Read(size_t Start, size_t Size, void *Dest)
+Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest)
 {
-    // Raw byte read not implemented for HTTPS
+    // Raw byte read not implemented for HTTP
     // This would require a different server-side implementation
-    helper::Log("Remote", "XrootdHttpsRemote", "Read",
-                "Raw byte Read not implemented for HTTPS transport", helper::LogMode::WARNING);
+    helper::Log("Remote", "XrootdHttpRemote", "Read",
+                "Raw byte Read not implemented for HTTP transport", helper::LogMode::WARNING);
     return nullptr;
 }
 
