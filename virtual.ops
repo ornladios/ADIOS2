@@ -578,11 +578,11 @@ extern int virtual_callr(dill_stream s, int type, int src)
     virtual_insn i;
     i.class_code = iclass_call;
     i.insn_code = 0x10 | type;
-    i.opnds.bri.src = -1;
-    if (type != DILL_V) i.opnds.bri.src = dill_getreg(s, type);
-    i.opnds.bri.imm_l = src;
+    i.opnds.calli.src = -1;
+    if (type != DILL_V) i.opnds.calli.src = dill_getreg(s, type);
+    i.opnds.calli.imm_l = src;
     INSN_OUT(s, i);
-    return i.opnds.bri.src;
+    return i.opnds.calli.src;
 }
 
 extern void virtual_push(dill_stream s, int type, int reg)

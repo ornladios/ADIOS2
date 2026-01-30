@@ -1964,8 +1964,7 @@ ia64_reg_init(dill_stream s)
 }
 
 extern void*
-gen_ia64_mach_info(s)
-dill_stream s;
+gen_ia64_mach_info(dill_stream s)
 {
     ia64_mach_info smi = malloc(sizeof(*smi));
     if (s->p->mach_info != NULL) {

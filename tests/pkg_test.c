@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 	} else if (verbose) {
 	    printf("Test 1 passed, got %d\n", result);
 	}
+	dill_free_handle(h);
 	free(pkg);
     }
 
@@ -70,12 +71,13 @@ int main(int argc, char **argv)
 	result = func(s1u, s2u);
         expected_result = (s1u % s2u);
 	if (expected_result != result) {
-	    printf("Failed test for %u modu %u, expected %u, got %u\n", 
+	    printf("Failed test for %u modu %u, expected %u, got %u\n",
 		   s1u, s2u, expected_result, result);
 	} else if (verbose) {
-	    printf("Test for %u modu %u, passed.  Expected %u, got %u\n", 
+	    printf("Test for %u modu %u, passed.  Expected %u, got %u\n",
 		   s1u, s2u, expected_result, result);
 	}
+	dill_free_handle(h);
 	free(pkg);
     }
     return 0;

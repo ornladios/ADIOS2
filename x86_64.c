@@ -715,7 +715,13 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
     switch (type) {
     case DILL_D:
     case DILL_F:
+#ifdef USE_WINDOWS_CALLS
+        /* Windows x64: XMM registers must preserve all 128 bits
+         * Use 16-byte spacing for full XMM register saves */
+        offset = reg * 16 + BEGIN_FLOAT_SAVE;
+#else
         offset = reg * smi->stack_align + BEGIN_FLOAT_SAVE;
+#endif
         break;
     default:
         if ((reg == RBX) || ((reg >= R12) && (reg <= R15))) {
@@ -754,9 +760,53 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
         }
     }
     if (save_restore == 0) { /* save */
-        x86_64_pstorei(s, type, 0, reg, _frame_reg, smi->save_base + offset);
+#ifdef USE_WINDOWS_CALLS
+        if (type == DILL_D || type == DILL_F) {
+            /* Use MOVUPS for full 128-bit save on Windows */
+            int rex = 0;
+            int final_offset = smi->save_base + offset;
+            if (reg > RDI) rex |= REX_R;
+            if (_frame_reg > RDI) rex |= REX_B;
+            /* MOVUPS [rbp + offset], xmm */
+            /* Encoding: [REX] 0F 11 ModRM disp */
+            if (((intptr_t)final_offset <= 127) && ((intptr_t)final_offset > -128)) {
+                /* 4-byte: 0F 11 ModRM(0x1=disp8) disp8 */
+                BYTE_OUT4R(s, rex, 0x0f, 0x11, ModRM(0x1, reg, _frame_reg),
+                           final_offset & 0xff);
+            } else {
+                /* 3-byte + 32-bit: 0F 11 ModRM(0x2=disp32) disp32 */
+                BYTE_OUT3IR(s, rex, 0x0f, 0x11, ModRM(0x2, reg, _frame_reg),
+                            (int)final_offset);
+            }
+        } else
+#endif
+        {
+            x86_64_pstorei(s, type, 0, reg, _frame_reg, smi->save_base + offset);
+        }
     } else { /* restore */
-        x86_64_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset);
+#ifdef USE_WINDOWS_CALLS
+        if (type == DILL_D || type == DILL_F) {
+            /* Use MOVUPS for full 128-bit restore on Windows */
+            int rex = 0;
+            int final_offset = smi->save_base + offset;
+            if (reg > RDI) rex |= REX_R;
+            if (_frame_reg > RDI) rex |= REX_B;
+            /* MOVUPS xmm, [rbp + offset] */
+            /* Encoding: [REX] 0F 10 ModRM disp */
+            if (((intptr_t)final_offset <= 127) && ((intptr_t)final_offset > -128)) {
+                /* 4-byte: 0F 10 ModRM(0x1=disp8) disp8 */
+                BYTE_OUT4R(s, rex, 0x0f, 0x10, ModRM(0x1, reg, _frame_reg),
+                           final_offset & 0xff);
+            } else {
+                /* 3-byte + 32-bit: 0F 10 ModRM(0x2=disp32) disp32 */
+                BYTE_OUT3IR(s, rex, 0x0f, 0x10, ModRM(0x2, reg, _frame_reg),
+                            (int)final_offset);
+            }
+        } else
+#endif
+        {
+            x86_64_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset);
+        }
     }
     s->p->used_frame++;
 }
@@ -851,6 +901,16 @@ save_required_regs(dill_stream s, int force)
         dill_wasused(&s->p->tmp_i, R15)) {
         x86_64_push_reg(s, R15);
     }
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, XMM6-XMM15 are non-volatile (callee-saved) */
+    /* Always save all 128 bits of each register */
+    {
+        int i;
+        for (i = XMM6; i <= XMM15; i++) {
+            x86_64_save_restore_op(s, 0, DILL_D, i);
+        }
+    }
+#endif
 }
 
 static int
@@ -1058,6 +1118,17 @@ x86_64_proc_ret(dill_stream s)
      * ret */
     if ((smi->last_proc_ret_end == s->p->cur_ip) && !dill_is_label_mark(s))
         return;
+
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, restore XMM6-XMM15 (non-volatile) before integer regs */
+    /* Always restore all 128 bits of each register */
+    {
+        int i;
+        for (i = XMM15; i >= XMM6; i--) {
+            x86_64_save_restore_op(s, 1, DILL_D, i);
+        }
+    }
+#endif
 
     if (force || dill_wasused(&s->p->var_i, R15) ||
         dill_wasused(&s->p->tmp_i, R15)) {
@@ -1541,6 +1612,32 @@ x86_64_pstorei(dill_stream s,
     case DILL_D:
         float_op = 0xf2;
         break;
+    default:
+        break;
+    }
+    if (dest > RDI)
+        rex |= REX_R;
+    if (src > RDI)
+        rex |= REX_B;
+    /* Check for large offset case first - handle via push/arith/store/pop
+     * without outputting prefix bytes that would be applied to the push */
+    if (!(((src & 0x7) == ESP) &&
+          (((offset & 0xffffffff80000000) == 0) ||
+           ((offset & 0xffffffff80000000) == 0xffffffff80000000))) &&
+        !((offset == 0) && ((src & 0x7) != 5)) &&
+        !(((intptr_t)offset <= 127) && ((intptr_t)offset > -128)) &&
+        !(((offset & 0xffffffff80000000) == 0) ||
+          ((offset & 0xffffffff80000000) == 0xffffffff80000000))) {
+        /* Large offset that doesn't fit in 32 bits - use push/arith/store/pop.
+         * Don't output 0x66 prefix here; the recursive call will handle it. */
+        x86_64_push_reg(s, src);
+        x86_64_arith3i(s, 0, DILL_L, src, src, offset);
+        x86_64_pstorei(s, type, 0, dest, src, 0);
+        x86_64_pop_reg(s, src);
+        return;
+    }
+    /* Now we know we'll emit a direct store instruction - output prefixes */
+    switch (type) {
     case DILL_S:
     case DILL_US:
         BYTE_OUT1(s, 0x66);
@@ -1552,10 +1649,6 @@ x86_64_pstorei(dill_stream s,
         BYTE_OUT1(s, smi->pending_prefix);
         smi->pending_prefix = 0;
     }
-    if (dest > RDI)
-        rex |= REX_R;
-    if (src > RDI)
-        rex |= REX_B;
     if (((src & 0x7) == ESP) &&
         (((offset & 0xffffffff80000000) == 0) ||
          ((offset & 0xffffffff80000000) == 0xffffffff80000000))) {
@@ -1594,8 +1687,7 @@ x86_64_pstorei(dill_stream s,
                 BYTE_OUT3R(s, rex, st_opcodes[type], ModRM(0x1, dest, src),
                            offset & 0xff);
             }
-        } else if (((offset & 0xffffffff80000000) == 0) ||
-                   ((offset & 0xffffffff80000000) == 0xffffffff80000000)) {
+        } else {
             /* safe INT offset using only low 31 bits */
             if (float_op != 0) {
                 BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x11,
@@ -1604,11 +1696,6 @@ x86_64_pstorei(dill_stream s,
                 BYTE_OUT2IR(s, rex, st_opcodes[type], ModRM(0x2, dest, src),
                             (int)offset);
             }
-        } else {
-            x86_64_push_reg(s, src);
-            x86_64_arith3i(s, 0, DILL_L, src, src, offset);
-            x86_64_pstorei(s, type, 0, dest, src, 0);
-            x86_64_pop_reg(s, src);
         }
     }
 }
@@ -2162,15 +2249,51 @@ x86_64_convert(dill_stream s, int from_type, int to_type, int dest, int src)
         break;
     }
     case CONV(DILL_L, DILL_F):
-    case CONV(DILL_L, DILL_D):
+    case CONV(DILL_L, DILL_D): {
+        int rex = REX_W;
+        /* cvtsi2s{s,d} - for signed 64-bit long */
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_U, DILL_D):
-    case CONV(DILL_U, DILL_F):
+    case CONV(DILL_U, DILL_F): {
+        int rex = REX_W;
+        /* First zero-extend 32-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 32);
+        x86_64_rshi(s, src, src, 32);
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_US, DILL_D):
-    case CONV(DILL_US, DILL_F):
+    case CONV(DILL_US, DILL_F): {
+        int rex = REX_W;
+        /* First zero-extend 16-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 48);
+        x86_64_rshi(s, src, src, 48);
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_UC, DILL_D):
     case CONV(DILL_UC, DILL_F): {
         int rex = REX_W;
-        /* cvtsi2s{s,d} */
+        /* First zero-extend 8-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 56);
+        x86_64_rshi(s, src, src, 56);
         if (src > RDI)
             rex |= REX_B;
         if (dest > RDI)
@@ -2573,7 +2696,7 @@ internal_push(dill_stream s, int type, int immediate, void* value_ptr)
         }
     }
     if (arg.is_register == 0) {
-        if (arg.offset == 0) {
+        if (smi->call_stack_space == 0) {
             smi->call_backpatch_offset =
                 (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
             dill_subli(s, ESP, ESP, 0x70909090); /* tentative for backpatch */
@@ -2702,20 +2825,32 @@ x86_64_calli(dill_stream s, int type, void* xfer_address, const char* name)
     if (tmp_call_reg > RDI)
         rex |= REX_B;
 
-    /* save temporary registers */
-    for (i = XMM8; i < XMM15; i += 1) {
+    /* save caller-saved (volatile) temporary registers */
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, XMM0-XMM5 are caller-saved (volatile) */
+    for (i = XMM0; i <= XMM5; i += 1) {
+#else
+    /* On Linux/SysV, all XMM registers are caller-saved (volatile) */
+    for (i = XMM0; i <= XMM15; i += 1) {
+#endif
         if (dill_mustsave(&s->p->tmp_f, i)) {
             x86_64_save_restore_op(s, 0, DILL_D, i);
         }
     }
 
-    /* save temporary registers */
+    /* make call */
     dill_mark_call_location(s, name, xfer_address);
     BYTE_OUT1LR(s, rex, 0xb8 + (0x7 & tmp_call_reg), 0); /* setl */
     int ret_reg = x86_64_callr(s, type, R11);
 
-    /* restore temporary registers */
-    for (i = XMM8; i < XMM15; i += 1) {
+    /* restore caller-saved (volatile) temporary registers */
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, XMM0-XMM5 are caller-saved (volatile) */
+    for (i = XMM0; i <= XMM5; i += 1) {
+#else
+    /* On Linux/SysV, all XMM registers are caller-saved (volatile) */
+    for (i = XMM0; i <= XMM15; i += 1) {
+#endif
         if (dill_mustsave(&s->p->tmp_f, i)) {
             x86_64_save_restore_op(s, 1, DILL_D, i);
         }
@@ -2731,6 +2866,13 @@ x86_64_callr(dill_stream s, int type, int src)
     int rex = REX_W;
     if (src > RDI)
         rex |= REX_B;
+
+#ifdef USE_WINDOWS_CALLS
+    /* Windows x64 requires 32 bytes of shadow space even when all args fit in registers */
+    if (smi->call_stack_space == 0) {
+        dill_subli(s, ESP, ESP, 32);
+    }
+#endif
 
     /* save temporary registers */
     /* call through reg */
@@ -2752,6 +2894,12 @@ x86_64_callr(dill_stream s, int type, int src)
         /* undo arg space reservation */
         dill_addli(s, ESP, ESP, call_stack_size);
     }
+#ifdef USE_WINDOWS_CALLS
+    else {
+        /* Restore shadow space when all args fit in registers */
+        dill_addli(s, ESP, ESP, 32);
+    }
+#endif
     return caller_side_ret_reg;
 }
 
@@ -2974,10 +3122,14 @@ x86_64_flush(void* base, void* limit)
     }
 #endif
 #ifdef USE_VIRTUAL_PROTECT
-    int result;
-    DWORD dummy;
-    size_t size = ((intptr_t)limit - (intptr_t)base);
-    result = VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy);
+    {
+        DWORD dummy;
+        size_t size = ((intptr_t)limit - (intptr_t)base);
+        if (!VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %zu\n",
+                    GetLastError(), base, size);
+        }
+    }
 #endif
 }
 extern void

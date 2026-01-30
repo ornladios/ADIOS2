@@ -47,6 +47,8 @@ int main(int argc, char *argv[])
     int 	aligned_offset, unaligned_offset;
     int 	shifti, shiftu, shiftl, shiftul;
 
+    (void)df; (void)dd;  /* may be unused if float tests disabled */
+
     for (i=1; i < argc; i++) {
 	if (strcmp(argv[i], "-v") == 0) {
 	    verbose++;

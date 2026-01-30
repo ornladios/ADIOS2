@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 3.1.1 LANGUAGES C CXX)
+project(DILL VERSION 3.3.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -38,20 +38,13 @@ endif()
 if(NOT DEFINED DILL_HEADER_COMPONENT)
   set(DILL_HEADER_COMPONENT dev)
 endif()
-add_definitions(-DDILL_SRC)
+
 if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-  # Silence MSVC warnings
   if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
      CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
     set (MSVC_PERL_FLAGS "-msvc-long")
   endif()
 endif()
@@ -132,15 +125,15 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.7.")
   set(HOST_ARM7 1)
   set(TEST_PERL_FLAGS -max_arg=4)
   set(ARCH_FILE arm6)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.*")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.*" AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
   set(NATIVE_ARCH arm6)
   set(HOST_ARM6 1)
   set(TEST_PERL_FLAGS -max_arg=4)
   set(ARCH_FILE arm6)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  set(NATIVE_ARCH arm8)
-  set(HOST_ARM8 1)
-  set(ARCH_FILE arm8)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+  set(NATIVE_ARCH arm64)
+  set(HOST_ARM64 1)
+  set(ARCH_FILE arm64)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
   set(NATIVE_ARCH ppc64le)
   set(HOST_PPC64LE 1)
@@ -156,15 +149,39 @@ else()
   set(DILL_NATIVE_ONLY_DEFAULT OFF)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|FreeBSD")
   set(USE_MMAP_CODE_SEG 1)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  set(USE_MMAP_CODE_SEG 1)
+  set(USE_MACOS_MAP_JIT 1)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    set(NATIVE_ARCH arm64)
+    set(HOST_ARM64 1)
+    set(ARCH_FILE arm64)
+    message(STATUS "DILL - Enabling Native CG for Apple Silicon (arm64) with MAP_JIT")
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64")
+    set(NATIVE_ARCH x86_64)
+    set(HOST_X86_64 1)
+    set(TEST_PERL_FLAGS "-max_arg=4")
+    set(ARCH_FILE x86_64)
+    message(STATUS "DILL - Enabling Native CG for Intel Mac (x86_64) with MAP_JIT")
+  else()
+    message(STATUS "DILL - NO Native CG for macOS on ${CMAKE_SYSTEM_PROCESSOR}")
+    set(NATIVE_CG FALSE)
+    set(NATIVE_ARCH UNSUPPORTED)
+    set(DILL_IGNORE_NATIVE ON)
+    set(DILL_NATIVE_ONLY_DEFAULT OFF)
+  endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(USE_VIRTUAL_PROTECT 1)
   set(USE_WINDOWS_CALLS 1)
 endif()
 
-include(TestBigEndian)
-test_big_endian(WORDS_BIGENDIAN)
+if(CMAKE_C_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+  set(WORDS_BIGENDIAN 1)
+else()
+  set(WORDS_BIGENDIAN 0)
+endif()
 
 set(HARDFP_AVAILABLE 0)
 # Determine float ABI of ARM Linux
@@ -273,7 +290,7 @@ option(DILL_ENABLE_DISASSEMBLY
 
 find_package(Perl)
 
-set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
+set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8 arm64)
 foreach(_arch ${ARCHITECTURES})
   if(PERL_FOUND)
     if(_arch STREQUAL "virtual")
@@ -408,14 +425,13 @@ void main()
     INIT_DISASSEMBLE_INFO_THREE_ARG
   )
 
-  include(CheckFunctionExists)
-  check_function_exists(print_insn_sparc          HAVE_PRINT_INSN_SPARC)
-  check_function_exists(print_insn_big_powerpc    HAVE_PRINT_INSN_BIG_POWERPC)
-  check_function_exists(print_insn_little_powerpc HAVE_PRINT_INSN_LITTLE_POWERPC)
-  check_function_exists(print_insn_ia64           HAVE_PRINT_INSN_IA64)
-  check_function_exists(print_insn_i386           HAVE_PRINT_INSN_I386)
-  check_function_exists(print_insn_arm            HAVE_PRINT_INSN_ARM)
-  check_function_exists(print_insn_little_arm     HAVE_PRINT_INSN_LITTLE_ARM)
+  check_symbol_exists(print_insn_sparc          "dis-asm.h" HAVE_PRINT_INSN_SPARC)
+  check_symbol_exists(print_insn_big_powerpc    "dis-asm.h" HAVE_PRINT_INSN_BIG_POWERPC)
+  check_symbol_exists(print_insn_little_powerpc "dis-asm.h" HAVE_PRINT_INSN_LITTLE_POWERPC)
+  check_symbol_exists(print_insn_ia64           "dis-asm.h" HAVE_PRINT_INSN_IA64)
+  check_symbol_exists(print_insn_i386           "dis-asm.h" HAVE_PRINT_INSN_I386)
+  check_symbol_exists(print_insn_arm            "dis-asm.h" HAVE_PRINT_INSN_ARM)
+  check_symbol_exists(print_insn_little_arm     "dis-asm.h" HAVE_PRINT_INSN_LITTLE_ARM)
 
   cmake_pop_check_state()
 endif()
@@ -431,6 +447,18 @@ set_target_properties(dill PROPERTIES
   VERSION ${DILL_VERSION}
   SOVERSION ${DILL_VERSION_MAJOR})
 add_library(dill::dill ALIAS dill)
+
+target_compile_definitions(dill PRIVATE DILL_SRC)
+
+# MSVC warning suppressions
+if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+  target_compile_definitions(dill PRIVATE
+    _CRT_SECURE_NO_DEPRECATE
+    _CRT_SECURE_NO_WARNINGS
+    _SCL_SECURE_NO_DEPRECATE
+    _WINSOCK_DEPRECATED_NO_WARNINGS
+    _CRT_NONSTDC_NO_DEPRECATE)
+endif()
 
 target_include_directories(dill
   PUBLIC
@@ -487,20 +515,16 @@ if(DILL_INSTALL_HEADERS)
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
 endif()
 
-set(namelink_component_args)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(namelink_component_args NAMELINK_COMPONENT ${DILL_HEADER_COMPONENT})
-endif()
 install(TARGETS dill
   # IMPORTANT: Add the dill library to the "export-set"
   EXPORT dill-targets
   RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"          COMPONENT ${DILL_RUNTIME_COMPONENT}
-  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT ${DILL_LIBRARY_COMPONENT} ${namelink_component_args}
+  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT ${DILL_LIBRARY_COMPONENT} NAMELINK_COMPONENT ${DILL_HEADER_COMPONENT}
   ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT ${DILL_ARCHIVE_COMPONENT}
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/dill" COMPONENT ${DILL_HEADER_COMPONENT})
 
-if(${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
+if(CMAKE_C_COMPILER_ID MATCHES "Intel")
+  add_link_options(-shared-intel)
 endif()
 
 configure_file(

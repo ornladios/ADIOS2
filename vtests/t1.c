@@ -67,6 +67,7 @@ void a () {
      if (target == (void*)-1) perror("mmap");
 #else
      target = (void*)malloc(dill_code_size(s));
+     (void)target;
 #endif
      if (verbose) dill_dump(s);
 
