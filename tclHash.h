@@ -1,10 +1,10 @@
 /*
  * tclHash.h --
  *
- *  This header file was brutally hacked to allow tclHash.c to be 
- *  compiled and used outside of tcl.  Derived from tcl.h and tclInt.h 
+ *  This header file was brutally hacked to allow tclHash.c to be
+ *  compiled and used outside of tcl.  Derived from tcl.h and tclInt.h
  *  in the tcl 7.4 release.
- *  
+ *
  * Original copyright notices below.
  *
  * Copyright (c) 1987-1994 The Regents of the University of California.
@@ -24,62 +24,14 @@
 #define TCL_MAJOR_VERSION 7
 #define TCL_MINOR_VERSION 4
 
-/*
- * Definitions that allow this header file to be used either with or
- * without ANSI C features like function prototypes.
- */
-
-#undef _ANSI_ARGS_
-#undef CONST
-#if ((defined(__STDC__) || defined(SABER)) && !defined(NO_PROTOTYPE)) || defined(__cplusplus)
-#   define _USING_PROTOTYPES_ 1
-#   define _ANSI_ARGS_(x)	x
-#   define CONST const
-#   ifdef __cplusplus
-#       define VARARGS(first) (first, ...)
-#   else
-#       define VARARGS(first) ()
-#   endif
-#else
-#   define _ANSI_ARGS_(x)	()
-#   define CONST
-#endif
-
 #ifdef __cplusplus
 #   define EXTERN extern "C"
 #else
 #   define EXTERN extern
 #endif
 
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
-#endif
-
-/*
- * Miscellaneous declarations (to allow Tcl to be used stand-alone,
- * without the rest of Sprite).
- */
-
-#ifndef NULL
-#define NULL 0
-#endif
-
 #ifndef _CLIENTDATA
-#   if defined(__STDC__) || defined(__cplusplus)
-    typedef void *ClientData;
-#   else
-    typedef int *ClientData;
-#   endif /* __STDC__ */
+typedef void *ClientData;
 #define _CLIENTDATA
 #endif
 
@@ -147,15 +99,14 @@ typedef struct Tcl_HashTable {
 					 * order bits of randomized keys. */
     int mask;				/* Mask value used in hashing
 					 * function. */
-    int keyType;			/* Type of keys used in this table. 
+    int keyType;			/* Type of keys used in this table.
 					 * It's either TCL_STRING_KEYS,
 					 * TCL_ONE_WORD_KEYS, or an integer
 					 * giving the number of ints in a
 					 */
-    Tcl_HashEntry *(*findProc) _ANSI_ARGS_((struct Tcl_HashTable *tablePtr,
-	    char *key));
-    Tcl_HashEntry *(*createProc) _ANSI_ARGS_((struct Tcl_HashTable *tablePtr,
-	    char *key, int *newPtr));
+    Tcl_HashEntry *(*findProc)(struct Tcl_HashTable *tablePtr, char *key);
+    Tcl_HashEntry *(*createProc)(struct Tcl_HashTable *tablePtr,
+	    char *key, int *newPtr);
 } Tcl_HashTable;
 
 /*
@@ -198,16 +149,12 @@ typedef struct Tcl_HashSearch {
 	(*((tablePtr)->createProc))(tablePtr, key, newPtr)
 
 
-EXTERN void		Tcl_DeleteHashEntry _ANSI_ARGS_((
-			    Tcl_HashEntry *entryPtr));
-EXTERN void		Tcl_DeleteHashTable _ANSI_ARGS_((
-			    Tcl_HashTable *tablePtr));
-EXTERN Tcl_HashEntry *	Tcl_FirstHashEntry _ANSI_ARGS_((
-			    Tcl_HashTable *tablePtr,
-			    Tcl_HashSearch *searchPtr));
-EXTERN char *		Tcl_HashStats _ANSI_ARGS_((Tcl_HashTable *tablePtr));
-EXTERN void		Tcl_InitHashTable _ANSI_ARGS_((Tcl_HashTable *tablePtr,
-			    int keyType));
-EXTERN Tcl_HashEntry *	Tcl_NextHashEntry _ANSI_ARGS_((
-			    Tcl_HashSearch *searchPtr));
+EXTERN void		Tcl_DeleteHashEntry(Tcl_HashEntry *entryPtr);
+EXTERN void		Tcl_DeleteHashTable(Tcl_HashTable *tablePtr);
+EXTERN Tcl_HashEntry *	Tcl_FirstHashEntry(Tcl_HashTable *tablePtr,
+			    Tcl_HashSearch *searchPtr);
+EXTERN char *		Tcl_HashStats(Tcl_HashTable *tablePtr);
+EXTERN void		Tcl_InitHashTable(Tcl_HashTable *tablePtr,
+			    int keyType);
+EXTERN Tcl_HashEntry *	Tcl_NextHashEntry(Tcl_HashSearch *searchPtr);
 #endif /* _TCL_HASH */

@@ -40,17 +40,20 @@ main()
 
     attr_list al = create_attr_list();
     attr_list al2 = create_attr_list();
+    attr_list combined;
 
-    set_attr (al, 2000, Attr_String, (attr_value)"test string");
+    set_attr (al, 2000, Attr_String, (attr_value)strdup("test string"));
     set_attr (al, 2001, Attr_Int4, (attr_value)2001);
 
-    attr_add_list (al, al2);
-    attr_list_to_string (al);
+    combined = attr_add_list (al, al2);
+    string = attr_list_to_string (combined);
+    free(string);
 
-    dump_attr_list (al);
+    dump_attr_list (combined);
+    free_attr_list(combined);
     free_attr_list(al);
     free_attr_list(al2);
-    
+
     for (i=0; i < sizeof(buffer); i++) {
         buffer[i] = 0x30 + i;
     }
@@ -67,16 +70,24 @@ main()
     add_attr(list, red_atom, Attr_Int4, (attr_value) 2);
     add_attr(list, blue_atom, Attr_String, (attr_value) strdup("The sky"));
     add_double_attr(list, magenta_atom, 3.14159);
-    add_opaque_attr(list, cyan_atom, 48, &buffer[0]);
+    {
+        char *opaque_buf = malloc(48);
+        memcpy(opaque_buf, buffer, 48);
+        add_opaque_attr(list, cyan_atom, 48, opaque_buf);
+    }
     dump_attr_list(list);
 /*    add_attr(list2, RED_ATOM, Attr_Int4, (attr_value) 4);*/
-    attr_add_list(list, list2);
-    dump_attr_list(list);
-    printf("stringified is %s\n", attr_list_to_string(list2));
+    combined = attr_add_list(list, list2);
+    dump_attr_list(combined);
+    string = attr_list_to_string(list2);
+    printf("stringified is %s\n", string);
+    free(string);
     putenv("ATL_BASE64_STRINGS=1");
-    string = attr_list_to_string(list);
+    string = attr_list_to_string(combined);
     printf("stringified version is >%s<\n", string);
+    free_attr_list(combined);
     free_attr_list(list);
+    free_attr_list(list2);
     list2 = attr_list_from_string(string);
     free(string);
     dump_attr_list(list2);

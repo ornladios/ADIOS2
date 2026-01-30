@@ -1,14 +1,119 @@
 name: Build and Test
 
-on: 
-  push: 
-    branches: 
-    - master 
-  pull_request: 
-    branches: 
-    - master 
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: '0 6 * * 1'  # Monday 6am UTC - weekly build to catch dependency issues
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
+  # MemorySanitizer build to detect uninitialized memory reads
+  msan:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build
+
+    - name: Configure with MSan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  # AddressSanitizer build to detect memory errors (buffer overflow, use-after-free, etc.)
+  asan:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      ASAN_FLAGS: "-fsanitize=address -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build
+
+    - name: Configure with ASan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  # UndefinedBehaviorSanitizer build to detect undefined behavior
+  ubsan:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      UBSAN_FLAGS: "-fsanitize=undefined -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build
+
+    - name: Configure with UBSan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
@@ -24,37 +129,30 @@ jobs:
       fail-fast: false
       matrix:
         buildtype: [ release, debug ]
-        os: [ centos7, centos8, ubuntu1604, ubuntu1804, ubuntu2004 ]
-        compiler: [ clang, gcc, nvhpc ]
-        exclude:
-          - { os: centos8, compiler: nvhpc }
-          - { os: ubuntu1604, compiler: nvhpc }
-          - { os: ubuntu1804, compiler: nvhpc }
+        os: [ alma9, ubuntu2204, ubuntu2404 ]
+        compiler: [ clang, gcc ]
         include:
-        - os: centos7
-          container: centos:7
-        - os: centos8
-          container: centos:8
-        - os: ubuntu1604
-          container: ubuntu:16.04
-        - os: ubuntu1804
-          container: ubuntu:18.04
-        - os: ubuntu2004
-          container: ubuntu:20.04
-        - os: centos7
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
-        - os: ubuntu2004
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+        - os: alma9
+          container: almalinux:9
+        - os: ubuntu2404
+          container: ubuntu:24.04
+        - os: ubuntu2204
+          container: ubuntu:22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
     - name: Setup
       run: source/scripts/ci/setup/linux.sh
+    - name: Cache CMake build
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
+        restore-keys: |
+          ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.buildtype }}-
     - name: Update
       run: source/scripts/ci/gh-actions/run.sh update
     - name: Configure
@@ -79,14 +177,17 @@ jobs:
       matrix:
         buildtype: [ release, debug ]
         jobname: [
-          windows-vs2019-msvc,
-          windows-vs2019-clang,
+          windows2025-vs2022-clang,
+          windows2022-vs2022-msvc,
+          windows2022-vs2022-msvc-win32,
           macos-clang ]
         include:
-        - jobname: windows-vs2019-msvc
-          vm: windows-latest
-        - jobname: windows-vs2019-clang
-          vm: windows-latest
+        - jobname: windows2025-vs2022-clang
+          vm: windows-2025
+        - jobname: windows2022-vs2022-msvc
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-win32
+          vm: windows-2022
         - jobname: macos-clang
           vm: macos-latest
 
@@ -95,16 +196,23 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
-    - name: Setup
+    - name: Setup Windows
       if: ${{ runner.os == 'Windows' }}
       run: source/scripts/ci/setup/windows.sh
-    - name: Setup
+    - name: Setup macOS
       if: ${{ runner.os == 'macOS' }}
       run: source/scripts/ci/setup/macos.sh
+    - name: Cache CMake build
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ matrix.jobname }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
+        restore-keys: |
+          ${{ matrix.jobname }}-${{ matrix.buildtype }}-
     - name: Update
       run: source/scripts/ci/gh-actions/run.sh update
     - name: Configure
