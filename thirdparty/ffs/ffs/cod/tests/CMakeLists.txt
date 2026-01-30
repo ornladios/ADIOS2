@@ -23,10 +23,6 @@ foreach (TEST ${TESTS} )
     ADD_TEST(NAME ${TEST} COMMAND ${TEST})
 endforeach()
 
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-   SET_SOURCE_FILES_PROPERTIES(general.c PROPERTIES COMPILE_FLAGS -O0)
-endif()
-
 set_tests_properties (t2
   PROPERTIES PASS_REGULAR_EXPRESSION "Expect -> .values are is 5, 3.14159, hello!.
 values are is 5, 3.14159, hello!")

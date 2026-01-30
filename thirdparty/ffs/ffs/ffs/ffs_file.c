@@ -1,4 +1,3 @@
-
 #include "config.h"
 
 #include "assert.h"
@@ -864,7 +863,7 @@ write_encoded_FFSfile(FFSFile f, void *data, DATA_LEN_TYPE byte_size, FFSContext
 
     vec[0].iov_len = 8;
     vec[0].iov_base = indicator;
-    vec[1].iov_len = byte_size;
+    vec[1].iov_len = (size_t)byte_size;
     vec[1].iov_base = data;
     if (f->writev_func(f->file_id, (struct iovec *)vec, 2, 
 		       NULL, NULL) != 2) {
@@ -994,20 +993,23 @@ FFSread_format(FFSFile ffsfile)
 	}
     }
     
-    id = malloc(ffsfile->next_fid_len);
-    rep = malloc(ffsfile->next_data_len);
-    if (ffsfile->read_func(ffsfile->file_id, id, 
+    id = malloc((size_t)ffsfile->next_fid_len);
+    rep = malloc((size_t)ffsfile->next_data_len);
+    if (ffsfile->read_func(ffsfile->file_id, id,
 			   ffsfile->next_fid_len, NULL, NULL)
 	!= ffsfile->next_fid_len) {
 	printf("Read failed, errno %d\n", errno);
 	return NULL;
     }
-    if (ffsfile->read_func(ffsfile->file_id, rep, 
-			   ffsfile->next_data_len, NULL, NULL)
-	!= ffsfile->next_data_len) {
+    if (ffsfile->read_func(ffsfile->file_id, rep,
+			   (size_t)ffsfile->next_data_len, NULL, NULL)
+	!= (size_t)ffsfile->next_data_len) {
 	printf("Read failed, errno %d\n", errno);
 	return NULL;
     }
+    /* Mark file data as initialized - msan can't track file I/O */
+    FFS_UNPOISON(id, (size_t)ffsfile->next_fid_len);
+    FFS_UNPOISON(rep, (size_t)ffsfile->next_data_len);
     ffsfile->read_ahead = FALSE;
     format = load_external_format_FMcontext(ffsfile->c->fmc, id, 
 					    ffsfile->next_fid_len, rep);
@@ -1071,16 +1073,17 @@ FFSread_index(FFSFile ffsfile)
     while (ffsfile->next_record_type != FFSindex) {
 	if (!FFSconsume_next_item(ffsfile)) return NULL;
     }
-    index_data = malloc(ffsfile->next_data_len);
-    index_size = ffsfile->next_data_len;
+    index_data = malloc((size_t)ffsfile->next_data_len);
+    index_size = (size_t)ffsfile->next_data_len;
     update_fpos(ffsfile);
     index_fpos = ffsfile->fpos - 4;
-    if (ffsfile->read_func(ffsfile->file_id, index_data+4, 
-			   ffsfile->next_data_len-4, NULL, NULL)
-	!= ffsfile->next_data_len-4) {
+    if (ffsfile->read_func(ffsfile->file_id, index_data+4,
+			   (size_t)(ffsfile->next_data_len-4), NULL, NULL)
+	!= (size_t)(ffsfile->next_data_len-4)) {
 	printf("Read failed, errno %d\n", errno);
 	return NULL;
     }
+    FFS_UNPOISON(index_data, (size_t)ffsfile->next_data_len);
     ffsfile->read_ahead = FALSE;
     index_item = parse_index_block(index_data);
     ffsfile->read_index = index_item;
@@ -1177,7 +1180,7 @@ FFSfile_next_decode_length(FFSFile iofile)
     FFSTypeHandle th = FFSnext_type_handle(iofile);
     DATA_LEN_TYPE len = iofile->next_data_len;
     th = iofile->next_actual_handle;
-    return FFS_decode_length_format(context, th, len);
+    return FFS_decode_length_format(context, th, (size_t)len);
 }
 
 extern
@@ -1195,12 +1198,13 @@ FFSread_comment(FFSFile ffsfile)
     }
     if (ffsfile->tmp_buffer == NULL) ffsfile->tmp_buffer = create_FFSBuffer();
     make_tmp_buffer(ffsfile->tmp_buffer, ffsfile->next_data_len);
-    if (ffsfile->read_func(ffsfile->file_id, ffsfile->tmp_buffer->tmp_buffer, 
-			   ffsfile->next_data_len, NULL, NULL)
-	!= ffsfile->next_data_len) {
+    if (ffsfile->read_func(ffsfile->file_id, ffsfile->tmp_buffer->tmp_buffer,
+			   (size_t)ffsfile->next_data_len, NULL, NULL)
+	!= (size_t)ffsfile->next_data_len) {
 	printf("Read failed, errno %d\n", errno);
 	return NULL;
     }
+    FFS_UNPOISON(ffsfile->tmp_buffer->tmp_buffer, (size_t)ffsfile->next_data_len);
     ffsfile->read_ahead = FALSE;
     return ffsfile->tmp_buffer->tmp_buffer;
 }
@@ -1369,12 +1373,13 @@ convert_last_index_block(FFSFile ffsfile)
     assert(ffsfile->next_record_type == FFSindex);
 
     index_data = ffsfile->cur_index->write_info.index_block;
-    if (ffsfile->read_func(ffsfile->file_id, index_data+4, 
-			   ffsfile->next_data_len-4, NULL, NULL)
-	!= ffsfile->next_data_len-4) {
+    if (ffsfile->read_func(ffsfile->file_id, index_data+4,
+			   (size_t)(ffsfile->next_data_len-4), NULL, NULL)
+	!= (size_t)(ffsfile->next_data_len-4)) {
 	printf("Read failed, errno %d\n", errno);
 	return;
     }
+    FFS_UNPOISON(index_data, (size_t)ffsfile->next_data_len);
     ffsfile->cur_index->write_info.data_index_start =  htonl(*((int*)(index_data+8)));;
     ffsfile->data_count = read_index->last_data_count + 1;
     if (ffs_file_lseek_func(ffsfile->file_id, 0, SEEK_END) == -1)
@@ -1479,7 +1484,7 @@ next_record_type(FFSFile ffsfile)
 		    assert(sizeof(tmp_fid_storage) > fid_len);
 		    /* store away the format ID we've read */
 		    memcpy(tmp_fid_storage, tmp_buf, fid_len);
-		    tmp_data_len = ffsfile->next_data_len;
+		    tmp_data_len = (size_t)ffsfile->next_data_len;
 
                     index = ffsfile->index_head;
                     while (!done && index) {
@@ -1536,7 +1541,7 @@ next_record_type(FFSFile ffsfile)
 		if ((ffsfile->next_data_handle == NULL) &&
                     (!ffsfile->raw_flag)) {
 		    /* no target for this format, discard */
-		    size_t more = ffsfile->next_data_len - ffsfile->next_fid_len;
+		    size_t more = (size_t)(ffsfile->next_data_len - ffsfile->next_fid_len);
 		    if (ffsfile->read_func(ffsfile->file_id, tmp_buf +
                                            ffsfile->next_fid_len, more, NULL,
                                            NULL) != more) {
@@ -1592,7 +1597,7 @@ FFSnext_data_length(FFSFile file)
     while (file->next_record_type != FFSdata) {
 	if (!FFSconsume_next_item(file)) return 0;
     }
-    return file->next_data_len;
+    return (size_t)file->next_data_len;
 }
 
 extern int
@@ -1613,7 +1618,7 @@ FFSread(FFSFile file, void *dest)
     }
 
     header_size = FFSheader_size(file->next_actual_handle);
-    read_size = file->next_data_len - header_size;
+    read_size = (size_t)(file->next_data_len - header_size);
     tmp_buf = file->tmp_buffer->tmp_buffer;
     /* should have buffer optimization logic here.  
      * I.E. if decode_in_place_possible() handle differently.  later
@@ -1707,7 +1712,7 @@ FFSread_raw(FFSFile file, void *dest, int buffer_size, FFSTypeHandle *fp)
     f = file->next_actual_handle;
     *fp = f;
     header_size = FFSheader_size(f);
-    read_size = file->next_data_len - header_size;
+    read_size = (size_t)(file->next_data_len - header_size);
 
     if (file->read_func(file->file_id, dest, read_size, NULL, NULL) != read_size) {
 	file->next_record_type = (file->errno_val) ? FFSerror : FFSend;
@@ -1738,7 +1743,7 @@ FFSread_raw_header(FFSFile file, void *dest, int buffer_size, FFSTypeHandle *fp)
     f = file->next_actual_handle;
     *fp = f;
     header_size = FFSheader_size(f);
-    read_size = file->next_data_len - header_size;
+    read_size = (size_t)(file->next_data_len - header_size);
     /* should have buffer optimization logic here.  
      * I.E. if decode_in_place_possible() handle differently.  later
      */
@@ -1772,7 +1777,7 @@ FFSread_to_buffer(FFSFile file, FFSBuffer b,  void **dest)
     }
 
     header_size = FFSheader_size(file->next_actual_handle);
-    read_size = file->next_data_len - header_size;
+    read_size = (size_t)(file->next_data_len - header_size);
     tmp_buf = file->tmp_buffer->tmp_buffer;
     /* should have buffer optimization logic here.  
      * I.E. if decode_in_place_possible() handle differently.  later

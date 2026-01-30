@@ -1633,10 +1633,9 @@ static
 int
 topo_order_subformats(FMFormat super_format, int format_count)
 {
-    FMFormat sorted[100], visit[100], stack[100];
+    FMFormat sorted[100] = {0}, visit[100] = {0}, stack[100] = {0};
     int sorted_count = 1;
     int i = 0;
-    sorted[0] = visit[0] = stack[0] = NULL;
     
     add_format(super_format, sorted, visit, stack);
     while(sorted[sorted_count] != 0) sorted_count++;
@@ -2929,6 +2928,12 @@ free_FMcontext(FMContext c)
     free(c);
 }
 
+extern void
+ffs_free(void *ptr)
+{
+    free(ptr);
+}
+
 #define DUMP
 #ifdef DUMP
 static void
@@ -3377,7 +3382,7 @@ expand_subformat_from_rep_0(struct _subformat_wire_format *rep)
 
 	format->alignment = rep->f.f0.alignment;
 	format->column_major_arrays = rep->f.f0.column_major_arrays;
-	tmp = rep->f.f1.opt_info_offset;
+	tmp = rep->f.f0.opt_info_offset;
 	if (byte_reversal) byte_swap((char*)&tmp, 2);
 	if (tmp != 0) {
 	    offset = tmp;

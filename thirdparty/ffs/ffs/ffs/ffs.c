@@ -1147,7 +1147,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
     if (params->final_base == NULL) {
 	/* need memory for at least the base record in temp area */
 	int64_t buffer_required = Max(final_base_size, src_base_size);
-	dest_offset = (size_t) add_to_tmp_buffer(&c->tmp, buffer_required);
+	dest_offset = (size_t) add_to_tmp_buffer(&c->tmp, (size_t)buffer_required);
 	dest_address = NULL;
 	if (dest_offset == -1) return 0;
     } else {
@@ -1172,7 +1172,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	     * where we want the record to end up.  Need temporary space.
 	     */
 	    int64_t source_base_size = expand_size_to_align(ioformat->body->record_length);
-	    src_offset = (size_t) add_to_tmp_buffer(&c->tmp, source_base_size);
+	    src_offset = (size_t) add_to_tmp_buffer(&c->tmp, (size_t)source_base_size);
 	    src_address = NULL;
 	    if (src_offset == -1) return 0;
 	} else {
@@ -1196,7 +1196,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	int64_t buffer_required = Max(possible_converted_variant_size + align_pad,
 				  orig_variant_size + align_pad);
 	buffer_required = expand_size_to_align(buffer_required);
-	final_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, buffer_required);
+	final_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, (size_t)buffer_required);
 	final_string_address = NULL;
 	if (final_string_offset == -1) return 0;
     } else {
@@ -1224,7 +1224,7 @@ set_conversion_params(FFSTypeHandle ioformat, int64_t input_record_len, IOConver
 	     */
 	    int64_t source_variant_size =	/* plus possible alignment of 8 */
 		input_record_len - ioformat->body->record_length + 8;
-	    src_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, source_variant_size);
+	    src_string_offset = (size_t) add_to_tmp_buffer(&c->tmp, (size_t)source_variant_size);
 	    src_string_address = NULL;
 	    if (src_string_offset == -1) return 0;
 	} else {
@@ -1393,6 +1393,16 @@ FFSinternal_decode(FFSTypeHandle ioformat, char *src, void *dest, int to_buffer)
 	FFSconvert_record(conv, params.src_address, params.dest_address,
 			 params.final_string_address,
 			 params.src_string_address);
+	/* Unpoison memory written by JIT-generated conversion code.
+	 * MSan cannot track writes through JIT code, so we mark the
+	 * destination buffers as initialized. */
+	FFS_UNPOISON(params.dest_address,
+		     ioformat->body->record_length + conv->base_size_delta);
+	if (ioformat->body->variant) {
+	    int64_t variant_size = final_variant_size_for_record(input_record_len, conv);
+	    FFS_UNPOISON(params.final_string_address, (size_t)variant_size);
+	    (void)variant_size;  /* suppress unused warning when FFS_UNPOISON is no-op */
+	}
     }
     return 1;
 }
