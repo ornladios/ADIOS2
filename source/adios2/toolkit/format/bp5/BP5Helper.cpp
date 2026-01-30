@@ -255,7 +255,7 @@ void BP5Helper::BreakdownIncomingMData(const std::vector<size_t> &RecvCounts,
         if (BcastInfo[node] & ((uint64_t)1 << 63))
         {
             void *buffer = malloc(AttrSize[node]);
-            helper::ReadArray(IncomingMMA, pos, (char *)buffer, AttrSize[node]);
+            helper::CopyFromBuffer(IncomingMMA.data(), pos, (char *)buffer, AttrSize[node]);
             AttributeEncodeBuffers.push_back({buffer, AttrSize[node]});
             BcastInfo[node] &= ~((uint64_t)1 << 63);
         }
@@ -268,7 +268,8 @@ void BP5Helper::BreakdownIncomingMData(const std::vector<size_t> &RecvCounts,
                 size_t index = NewMetaMetaBlocks.size();
                 mmib.MetaMetaInfoLen = MMBSizes[index];
                 mmib.MetaMetaInfo = (char *)malloc(MMBSizes[index]);
-                helper::ReadArray(IncomingMMA, pos, mmib.MetaMetaInfo, mmib.MetaMetaInfoLen);
+                helper::CopyFromBuffer(IncomingMMA.data(), pos, mmib.MetaMetaInfo,
+                                       mmib.MetaMetaInfoLen);
                 mmib.MetaMetaIDLen = FMformatID_len((char *)&MMBIDs[index]);
                 mmib.MetaMetaID = (char *)malloc(mmib.MetaMetaIDLen);
                 std::memcpy(mmib.MetaMetaID, (char *)&MMBIDs[index], mmib.MetaMetaIDLen);

@@ -23,10 +23,8 @@ namespace adios2
 namespace helper
 {
 
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
 template <class T>
 void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
-#endif
 
 /**
  * Inserts source at the end of a buffer updating buffer.size()
