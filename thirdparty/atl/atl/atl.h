@@ -215,6 +215,18 @@ atl_base64_decode(unsigned char *input, unsigned char *output);
 extern char *
 atl_base64_encode(char *buffer, unsigned int len);
 
+/*!
+ * Free memory allocated by ATL functions.
+ *
+ * On Windows, memory allocated within a DLL must be freed by that same DLL
+ * due to separate CRT heaps. Use this function to free strings returned by
+ * attr_list_to_string(), atl_base64_encode(), and similar functions.
+ *
+ * \param ptr Pointer to memory allocated by ATL (may be NULL)
+ */
+extern void
+atl_free(void *ptr);
+
 #if defined(__cplusplus) || defined(c_plusplus)
 	   }
 #endif
