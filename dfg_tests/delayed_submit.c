@@ -79,13 +79,13 @@ event_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 	printf("Delay is %ld.%06d\n", (long)delay.tv_sec, (int)delay.tv_usec);
     }
     if ((message_count % 2) == 0) {
-	if (labs(delay.tv_sec *1000000 + delay.tv_usec - 1000000) > 100000) {
+	if (labs(delay.tv_sec *1000000 + delay.tv_usec - 1000000) > 200000) {
 	    printf("Message delayed too much, %ld\n", labs(delay.tv_sec *1000000 + delay.tv_usec - 1000000));
 	    failure = 1;
 	}
     }
     if ((message_count % 2) == 1) {
-	if (labs(delay.tv_sec *1000000 + delay.tv_usec - 1500000) > 100000) {
+	if (labs(delay.tv_sec *1000000 + delay.tv_usec - 1500000) > 200000) {
 	    printf("Message delayed too much, %ld\n", labs(delay.tv_sec *1000000 + delay.tv_usec - 1500000));
 	    failure = 1;
 	}

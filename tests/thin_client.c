@@ -8,6 +8,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#define SOCKET int
+#define INVALID_SOCKET (-1)
 #else
 #include <WinSock2.h>
 #include <windows.h>
@@ -49,9 +51,6 @@ FMStructDescRec thin_formats[] = {
     {"thin_message", simple_field_list, sizeof(simple_rec), NULL},
     {NULL, NULL, 0, NULL}};
 
-#ifndef _MSC_VER
-#define SOCKET int
-#endif
 static SOCKET do_connection(char* host, int port);
 static void generate_record (simple_rec_ptr event);
 
@@ -75,9 +74,19 @@ main(int argc, char **argv)
     }
     remote_host = argv[1];
 
+#ifdef HAVE_WINDOWS_H
+    {
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+	    printf("WSAStartup failed\n");
+	    exit(1);
+	}
+    }
+#endif
+
     conn = do_connection(remote_host, remote_port);
 
-    if (conn == -1) {
+    if (conn == INVALID_SOCKET) {
 	printf("Connection to %s:%d failed\n", remote_host, remote_port);
 	exit(1);
     }
@@ -105,12 +114,12 @@ do_connection(char * remote_host, int port)
 
     SOCKET conn = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    if (conn == -1) return -1;
+    if (conn == INVALID_SOCKET) return INVALID_SOCKET;
 
     host_addr = gethostbyname(remote_host);
     if (!host_addr) {
 	sin.sin_addr.s_addr = inet_addr(remote_host);
-	if(host_addr == NULL) return -1;
+	if(sin.sin_addr.s_addr == INADDR_NONE) return INVALID_SOCKET;
     } else {
 	memcpy((char*)&sin.sin_addr, host_addr->h_addr, host_addr->h_length);
     }
@@ -120,10 +129,10 @@ do_connection(char * remote_host, int port)
 		sizeof sin) == -1) {
 #ifdef WSAEWOULDBLOCK
 	int err = WSAGetLastError();
-	if (err != WSAEWOULDBLOCK || err != WSAEINPROGRESS) {
+	if (err != WSAEWOULDBLOCK && err != WSAEINPROGRESS) {
 #endif
 	    close(conn);
-	    return -1;
+	    return INVALID_SOCKET;
 #ifdef WSAEWOULDBLOCK
 	}
 #endif

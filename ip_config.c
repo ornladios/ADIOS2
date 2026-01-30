@@ -353,7 +353,7 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
 	}
 
 	for(p = info; p != NULL; p = p->ai_next) {
-	    strcpy(buf, p->ai_canonname);
+	    if (p->ai_canonname) strcpy(buf, p->ai_canonname);
 	}
 
 	freeaddrinfo(info);
@@ -387,7 +387,6 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     if (buf[0] == 0) {
 	/* bloody hell, what do you have to do? */
 	struct in_addr IP;
-	extern int h_errno;
 	char *iface;
 	if (get_string_attr(attrs, CM_IP_INTERFACE, &iface)){
 	    IP.s_addr = htonl(get_self_ip_iface(trace_func, trace_data, iface));
@@ -634,7 +633,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	strcpy(hostname_to_use, determined_hostname);
 	IP_to_use = determined_IP;
     }
-    if (hostname_buf && (len > strlen(determined_hostname))) {
+    if (hostname_buf && ((size_t)len > strlen(determined_hostname))) {
 	strcpy(hostname_buf, hostname_to_use);
     }
     if (IP_p && (determined_IP != -1)) {

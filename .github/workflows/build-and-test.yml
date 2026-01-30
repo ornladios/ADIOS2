@@ -1,18 +1,171 @@
 name: Build and Test
 
-on: 
-  push: 
-    branches: 
-    - master 
-  pull_request: 
-    branches: 
-    - master 
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  # MemorySanitizer build to detect uninitialized memory reads
+  msan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+      # Suppress known false positives from uninstrumented system libraries
+      MSAN_OPTIONS: "halt_on_error=1:print_stats=1"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git curl pkg-config
+
+    - name: Build atl with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Build ffs with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/ffs.git
+        cmake -G Ninja -S ffs -B ffs/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C ffs/build install
+
+    - name: Build EVPath with MSan
+      run: |
+        cmake -G Ninja -S source -B build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+        ninja -C build
+
+    - name: Test with MSan
+      run: |
+        cd build
+        ctest --output-on-failure --timeout 120
+
+  # ThreadSanitizer build to detect data races
+  tsan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      TSAN_FLAGS: "-fsanitize=thread -fno-omit-frame-pointer"
+      TSAN_OPTIONS: "halt_on_error=1:second_deadlock_stack=1"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git curl pkg-config
+
+    - name: Build atl with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Build ffs with TSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/ffs.git
+        cmake -G Ninja -S ffs -B ffs/build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C ffs/build install
+
+    - name: Build EVPath with TSan
+      run: |
+        cmake -G Ninja -S source -B build \
+          -DCMAKE_C_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${TSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+        ninja -C build
+
+    - name: Test with TSan
+      run: |
+        cd build
+        ctest --output-on-failure --timeout 120
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
@@ -27,30 +180,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        buildtype: [ release, debug ]
-        os: [ centos7, alma8, ubuntu1604, ubuntu1804, ubuntu2004 ]
-        compiler: [ clang, gcc, nvhpc ]
-        exclude:
-          - { os: alma8, compiler: nvhpc }
-          - { os: ubuntu1604, compiler: nvhpc }
-          - { os: ubuntu1804, compiler: nvhpc }
+        buildtype: [ release ]
+        os: [ alma10, ubuntu2204, ubuntu2404 ]
+        compiler: [ clang, gcc ]
         include:
-        - os: centos7
-          container: centos:7
-        - os: alma8
-          container: almalinux:8
-        - os: ubuntu1604
-          container: ubuntu:16.04
-        - os: ubuntu1804
-          container: ubuntu:18.04
-        - os: ubuntu2004
-          container: ubuntu:20.04
-        - os: centos7
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
-        - os: ubuntu2004
-          compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+        - os: alma10
+          container: almalinux:10
+        - os: ubuntu2404
+          container: ubuntu:24.04
+        - os: ubuntu2204
+          container: ubuntu:22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -72,59 +211,85 @@ jobs:
     - name: Test
       run: source/scripts/ci/gh-actions/run.sh test
 
- # mac_and_windows:
- #   # The jobs should run pretty quick; anything over 30m essentially means
- #   # something is stuck somewhere
- #   timeout-minutes: 30
- #   runs-on: ${{ matrix.vm }}
- #   env:
- #     GH_YML_JOBNAME: ${{ matrix.jobname }}
- #     GH_YML_BUILDTYPE: ${{ matrix.buildtype }}
- #     GH_YML_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
- #
- #   strategy:
- #     fail-fast: false
- #     matrix:
- #       buildtype: [ release, debug ]
- #       jobname: [
- #         windows-vs2019-msvc,
- #         windows-vs2019-clang,
- #         macos-clang ]
- #       include:
- #       - jobname: windows-vs2019-msvc
- #         vm: windows-latest
- #       - jobname: windows-vs2019-clang
- #         vm: windows-latest
- #       - jobname: macos-clang
- #         vm: macos-latest
+  mac_and_windows:
+    # The jobs should run pretty quick; anything over 30m essentially means
+    # something is stuck somewhere
+    timeout-minutes: 30
+    runs-on: ${{ matrix.vm }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_BUILDTYPE: ${{ matrix.buildtype }}
+      GH_YML_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
- #   defaults:
- #     run:
- #       shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        buildtype: [ release, debug ]
+        jobname: [
+          windows2025-vs2022-clang,
+          windows2022-vs2022-msvc,
+          windows2022-vs2022-msvc-static,
+          windows2022-vs2022-msvc-win32,
+          macos-clang ]
+        include:
+        - jobname: windows2025-vs2022-clang
+          vm: windows-2025
+        - jobname: windows2022-vs2022-msvc
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-static
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-win32
+          vm: windows-2022
+        - jobname: macos-clang
+          vm: macos-latest
 
- #   steps:
- #   - uses: actions/checkout@v2
- #     with:
- #       ref: ${{ github.event.pull_request.head.sha }}
- #       path: source
- #   - name: Setup
- #     if: ${{ runner.os == 'Windows' }}
- #     run: |
- #         . source/scripts/ci/setup/windows.sh
- #         source/scripts/ci/setup/install-atl.sh ${{ matrix.buildtype }}
- #         source/scripts/ci/setup/install-ffs.sh ${{ matrix.buildtype }}
- #   - name: Setup
- #     if: ${{ runner.os == 'macOS' }}
- #     run: |
- #         . source/scripts/ci/setup/macos.sh
- #         source/scripts/ci/setup/install-atl.sh ${{ matrix.buildtype }}
- #         source/scripts/ci/setup/install-dill.sh ${{ matrix.buildtype }}
- #         source/scripts/ci/setup/install-ffs.sh ${{ matrix.buildtype }}
- #   - name: Update
- #     run: source/scripts/ci/gh-actions/run.sh update
- #   - name: Configure
- #     run: source/scripts/ci/gh-actions/run.sh configure
- #   - name: Build
- #     run: source/scripts/ci/gh-actions/run.sh build
- #   - name: Test
- #     run: source/scripts/ci/gh-actions/run.sh test
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+    - name: Setup
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+          . source/scripts/ci/setup/windows.sh
+          source/scripts/ci/setup/install-atl.sh ${{ matrix.buildtype }}
+          source/scripts/ci/setup/install-dill.sh ${{ matrix.buildtype }}
+          source/scripts/ci/setup/install-ffs.sh ${{ matrix.buildtype }}
+    - name: Setup
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+          . source/scripts/ci/setup/macos.sh
+          source/scripts/ci/setup/install-atl.sh ${{ matrix.buildtype }}
+          source/scripts/ci/setup/install-dill.sh ${{ matrix.buildtype }}
+          source/scripts/ci/setup/install-ffs.sh ${{ matrix.buildtype }}
+    - name: Update
+      run: source/scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: source/scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: source/scripts/ci/gh-actions/run.sh build
+    - name: Stage DLLs (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: |
+          $buildType = "${{ matrix.buildtype }}"
+          $configDir = if ($buildType -eq "release") { "Release" } else { "Debug" }
+          $srcDirs = @("atl/install/bin", "dill/install/bin", "ffs/install/bin", "build/bin/$configDir", "build/lib/$configDir")
+          $testDirs = @("build/tests/$configDir", "build/mtests/$configDir", "build/dfg_tests/$configDir", "build/rtests/$configDir")
+          foreach ($testDir in $testDirs) {
+              if (Test-Path $testDir) {
+                  foreach ($srcDir in $srcDirs) {
+                      if (Test-Path "$srcDir/*.dll") {
+                          Copy-Item -Path "$srcDir/*.dll" -Destination $testDir -Force -ErrorAction SilentlyContinue
+                      }
+                  }
+                  Write-Host "DLLs in ${testDir}:"
+                  Get-ChildItem $testDir -Filter *.dll | ForEach-Object { Write-Host "  - $($_.Name)" }
+              }
+          }
+    - name: Test
+      run: source/scripts/ci/gh-actions/run.sh test

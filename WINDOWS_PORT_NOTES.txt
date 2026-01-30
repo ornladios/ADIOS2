@@ -1,0 +1,99 @@
+EVPath Windows Port - Work in Progress Notes
+============================================
+Date: January 24, 2026
+
+LOCATION
+--------
+Source: C:\Users\eisen\AppData\Local\Temp\evpath
+Build:  C:\Users\eisen\AppData\Local\Temp\evpath\build
+
+Dependencies (already built):
+- atl:  C:\Users\eisen\atl\build
+- dill: C:\Users\eisen\dill\build
+- ffs:  C:\Users\eisen\ffs\build
+
+COMPLETED WORK
+--------------
+1. Replaced blocking _cwait() with non-blocking WaitForSingleObject() loop
+   in all 43 test files. The blocking wait prevented CM message processing.
+
+2. Added Windows socket error handling macros in cmsockets.c:
+   - SOCKET_GET_LAST_ERROR() -> WSAGetLastError()
+   - SOCKET_ERROR_IS_WOULDBLOCK(err)
+   - SOCKET_ERROR_IS_TRANSIENT(err)
+
+3. Added server_thread_handle to CMControlList (cm_internal.h) for proper
+   Windows thread join - Windows needs HANDLE not just thread ID.
+
+4. Implemented Windows threading functions in cm_util.c:
+   - win_thread_join()
+   - win_thread_detach()
+   - win_condition_broadcast()
+
+5. Fixed thr_thread_yield to use SwitchToThread() on Windows.
+
+CURRENT TEST STATUS (mtests)
+----------------------------
+- bulktest:  PASS (consistent)
+- cmconn:    PASS (consistent)
+- cmping:    INTERMITTENT (sometimes passes, sometimes segfaults)
+- cmtest:    INTERMITTENT (sometimes passes, sometimes segfaults)
+- take_test: FAIL (receives only 6/25 messages consistently)
+
+KNOWN ISSUES TO INVESTIGATE
+---------------------------
+1. Intermittent segfaults in cmtest/cmping
+   - Appears to be race condition or memory corruption
+   - Happens during cleanup after test completion
+   - Verbose output shows normal operation, crashes at end
+
+2. take_test only receives partial messages (6/25)
+   - Already uses non-blocking WaitForSingleObject pattern
+   - May be related to message flow/buffering
+
+3. cmsockets.dll dlopen shows "dlsym error #127"
+   - This is a stale error from cmselect loading
+   - Falls back to built-in sockets transport (works)
+   - Should clear error state in dlloader.c
+
+BUILD COMMANDS
+--------------
+# Clean rebuild
+rm -rf build && mkdir build && cd build
+cmake .. -DCMAKE_PREFIX_PATH="C:/Users/eisen/ffs/build;C:/Users/eisen/dill/build;C:/Users/eisen/atl/build"
+cmake --build . --config Release
+
+# Copy DLLs for testing
+cp bin/Release/evpath.dll lib/Release/cm*.dll \
+   ~/atl/build/bin/Release/atl.dll \
+   ~/dill/build/bin/Release/dill.dll \
+   ~/ffs/build/bin/Release/ffs.dll \
+   mtests/Release/
+
+# Run tests
+cd mtests/Release
+./mtests_cmtest.exe      # basic test
+./mtests_cmping.exe      # ping test
+./mtests_bulktest.exe    # bulk data
+./mtests_take_test.exe   # take buffer test
+
+# Debug with separate master/client
+./mtests_cmping.exe -n   # master only, prints contact list
+./mtests_cmping.exe -c "CONTACT_STRING"  # client connects to master
+
+NEXT STEPS
+----------
+1. Investigate race conditions causing intermittent segfaults
+   - May need to add synchronization in cleanup paths
+   - Check thread join timing
+
+2. Debug take_test message loss
+   - Check if messages are being sent but not received
+   - May be buffer/flow control issue
+
+3. Consider adding DLL copy target to CMakeLists.txt for easier testing
+
+GIT STATUS
+----------
+Commit: fce6ba0 "Windows port improvements: non-blocking subprocess wait..."
+Branch: master (local changes committed, not pushed)

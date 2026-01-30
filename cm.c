@@ -264,6 +264,7 @@ INT_CMfork_comm_thread(CManager cm)
 		return 0;
 	    }
 	    cm->control_list->server_thread = thr_get_thread_id(server_thread);
+	    cm->control_list->server_thread_handle = server_thread;
 	    cm->control_list->has_thread = 1;
 	    cm->reference_count++;
 	    CMtrace_out(cm, CMFreeVerbose, "Forked - CManager %p ref count now %d\n", 
@@ -709,8 +710,10 @@ CMcontrol_list_wait(CMControlList cl)
     }
     cl->server_thread = thr_thread_self();
     if (cl->network_blocking_function.func != NULL) {
-	cl->network_blocking_function.func((void*)&CMstatic_trans_svcs,
-					   cl->network_blocking_function.client_data);
+	if (!cl->closed) {
+	    cl->network_blocking_function.func((void*)&CMstatic_trans_svcs,
+					       cl->network_blocking_function.client_data);
+	}
     }
     CMcontrol_list_poll(cl);
     return 1;
@@ -1064,6 +1067,7 @@ CManager_free(CManager cm)
      new_list->add_select = NULL;
      new_list->remove_select = NULL;
      new_list->server_thread =  (thr_thread_id)0;
+     new_list->server_thread_handle = (thr_thread_t)0;
      new_list->network_blocking_function.func = NULL;
      new_list->network_polling_function.func = NULL;
      new_list->polling_function_list = NULL;
@@ -1308,7 +1312,9 @@ CManager_free(CManager cm)
      free_FFSBuffer(conn->io_out_buffer);
      free_AttrBuffer(conn->attr_encode_buffer);
  #ifdef EV_INTERNAL_H
-     INT_EVforget_connection(conn->cm, conn);
+     if (conn->cm->evp) {
+	 INT_EVforget_connection(conn->cm, conn);
+     }
  #endif
      INT_CMfree(conn);
  }
@@ -1402,7 +1408,8 @@ INT_CMConnection_failed(CMConnection conn)
 	 (cl->wake_select)((void*)&CMstatic_trans_svcs,
 			   &cl->select_data);
 	 CManager_unlock(cm);
-	 thr_thread_join(cl->server_thread, &status);
+	 thr_thread_join(cl->server_thread_handle, &status);
+	 cl->server_thread_handle = (thr_thread_t)0;
 	 CManager_lock(cm);
 	 cl->has_thread = 0;
      }
@@ -1552,10 +1559,10 @@ timeout_conn(CManager cm, void *client_data)
 						    (void*)(intptr_t)wait_condition);
 	 if (CMtrace_on(cm, CMConnectionVerbose)) {
 	     char *attr_str = attr_list_to_string(attrs);
-	     CMtrace_out(cm, CMConnectionVerbose, 
+	     CMtrace_out(cm, CMConnectionVerbose,
 			 "CM - Try to establish connection %p - %s, wait condition %ld\n", (void*)conn,
 			 attr_str, wait_condition);
-	     INT_CMfree(attr_str);
+	     atl_free(attr_str);
 	 }
 	 void *client_data = trans->initiate_conn_nonblocking(cm, &CMstatic_trans_svcs,
 						 trans, attrs, wait_condition);
@@ -1574,10 +1581,10 @@ timeout_conn(CManager cm, void *client_data)
      if (conn != NULL) {
 	 if (CMtrace_on(conn->cm, CMConnectionVerbose)) {
 	     char *attr_str = attr_list_to_string(attrs);
-	     CMtrace_out(conn->cm, CMConnectionVerbose, 
+	     CMtrace_out(conn->cm, CMConnectionVerbose,
 			 "CM - Establish connection %p - %s\n", (void*)conn,
 			 attr_str);
-	     INT_CMfree(attr_str);
+	     atl_free(attr_str);
 	 }
 	 if (conn->use_read_thread) {
 	     INT_CMstart_read_thread(conn);
@@ -2293,7 +2300,7 @@ timeout_conn(CManager cm, void *client_data)
      int64_t data_length, decoded_length;
      int attr_length = 0, i;
      int header_len;
-     int stone_id;
+     int stone_id = 0;
      char *decode_buffer = NULL, *data_buffer;
      FFSTypeHandle local_format, original_format;
      CManager cm = conn->cm;
@@ -2311,10 +2318,11 @@ timeout_conn(CManager cm, void *client_data)
 	 byte_swap = 1;
      case 0x004d4400:  /* CMD\0 */
 	 break;
-     case 0x00444d01: /* \1DMC reversed byte order long msg*/
+     case 0x00424d00: /* \0BMC reversed byte order long msg*/
 	 byte_swap = 1;
-     case 0x004d4401:  /* CMD\1 long msg*/
+     case 0x004d4200:  /* CMB\0 long msg*/
 	 short_length = 0;
+	 get_attrs = 1;
 	 break;
      case 0x00414d00: /* \0AMC reversed byte order */
 	 byte_swap = 1;
@@ -2374,9 +2382,12 @@ timeout_conn(CManager cm, void *client_data)
 	   CManager_lock(cm);
 	   if (local) cm_return_data_buf(cm, local);
 	   if (ret == -1) {
-	       printf("Unknown message on connection %p, failed %d, closed %d, %x\n", conn, conn->failed, conn->closed, *(int*)buffer);
-	       CMtrace_out(conn->cm, CMFreeVerbose, "Calling connection unknown message failed with dereference %p\n", conn);
-	       INT_CMConnection_failed(conn);
+	       /* Only fail connection if not already closed - stale data on closed connections is expected */
+	       if (!conn->closed) {
+		   printf("Unknown message on connection %p, failed %d, closed %d, %x\n", conn, conn->failed, conn->closed, *(int*)buffer);
+		   CMtrace_out(conn->cm, CMFreeVerbose, "Calling connection unknown message failed with dereference %p\n", conn);
+		   INT_CMConnection_failed(conn);
+	       }
 	   }
 	   return 0;
        }
@@ -2390,7 +2401,8 @@ timeout_conn(CManager cm, void *client_data)
 	     header_len = 16;
 	 }
 	 if (!short_length) {
-	     header_len += 4; /* extra data length bytes */
+	     header_len = 16; /* extra data length bytes */
+	     skip = 0;
 	 }
      } else {
 	 if (short_length) {
@@ -2400,8 +2412,8 @@ timeout_conn(CManager cm, void *client_data)
 	 }
      }
 
-     if (length < header_len) {
-	 return header_len - length;
+     if (length < (size_t)header_len) {
+	 return (size_t)header_len - length;
      }
      base = buffer + 4 + skip; /* skip used data */
      if (short_length) {
@@ -2451,6 +2463,7 @@ timeout_conn(CManager cm, void *client_data)
 	     ((char*)&tmp)[1] = base[6];
 	     ((char*)&tmp)[2] = base[5];
 	     ((char*)&tmp)[3] = base[4];
+	     data_length += tmp;
 	     if (header_len != 12) {
 		 ((char*)&attr_length)[0] = base[11];
 		 ((char*)&attr_length)[1] = base[10];
@@ -2458,15 +2471,16 @@ timeout_conn(CManager cm, void *client_data)
 		 ((char*)&attr_length)[3] = base[8];
 	     }
 	 } else {
- #ifdef WORDS_BIGENDIAN	    
+ #ifdef WORDS_BIGENDIAN
 	     checksum = (unsigned char) check_sum_base[3];
  #else
 	     checksum = (unsigned char) check_sum_base[0];
  #endif
-	     data_length = ((int64_t)(((int *) base)[0])) << 32;
-	     data_length += ((int *) base)[1];
+	     /* Both CMP and CMB use high word first, low word second */
+	     data_length = ((int64_t)(((unsigned int *) base)[0])) << 32;
+	     data_length += ((unsigned int *) base)[1];
 	     if (header_len != 12) {
-		 attr_length = ((int *) base)[1];
+		 attr_length = ((int *) base)[2];
 	     }
 	 }
      }
@@ -2504,8 +2518,8 @@ timeout_conn(CManager cm, void *client_data)
      }
 
      if ((ssize_t)length < header_len + data_length + attr_length) {
-	 return header_len + data_length + attr_length - 
-	     length;
+	 return (size_t)(header_len + data_length + attr_length -
+	     (ssize_t)length);
      }
      /* At this point, the message is accepted.  Determine processing */
      base = buffer + header_len;
@@ -2515,22 +2529,22 @@ timeout_conn(CManager cm, void *client_data)
      }
      if (checksum != 0) {
 	 unsigned char calculated_checksum = 0;
-	 for (i=4; i < length; i++) {
-	     calculated_checksum += ((unsigned char *)buffer)[i];
+	 for (size_t ci=4; ci < length; ci++) {
+	     calculated_checksum += ((unsigned char *)buffer)[ci];
 	 }
 	 if (calculated_checksum != checksum) {
 	     printf("Discarding incoming message because of corruption.  Checksum mismatch got %x, expected %x\n",
 		    calculated_checksum, checksum);
 	     printf("Message was : ");
-	     for (i=0 ; i < length; i++) {
-		 printf(" %02x",  ((unsigned char *)buffer)[i]);
+	     for (size_t ci=0 ; ci < length; ci++) {
+		 printf(" %02x",  ((unsigned char *)buffer)[ci]);
 	     }
 	     printf("\n");
 	     return 0;
 	 }
      }
      if (performance_msg) {
-	 CMdo_performance_response(conn, data_length, performance_func, byte_swap,
+	 CMdo_performance_response(conn, (size_t)data_length, performance_func, byte_swap,
 				   base);
 	 return 0;
      } else if (evcontrol_msg) {
@@ -2574,7 +2588,7 @@ timeout_conn(CManager cm, void *client_data)
 	 }
  #ifdef EV_INTERNAL_H	
 	 internal_cm_network_submit(cm, cm_buffer, attrs, conn, data_buffer,
-				    data_length, stone_id);
+				    (size_t)data_length, stone_id);
  #endif
 	 if (local) cm_return_data_buf(cm, local);
 	 free_attr_list(attrs);
@@ -2644,8 +2658,8 @@ timeout_conn(CManager cm, void *client_data)
 	     return 0;
 	 }
      } else {
-	 decoded_length = FFS_est_decode_length(cm->FFScontext, data_buffer, data_length);
-	 cm_decode_buf = cm_get_data_buf(cm, decoded_length);
+	 decoded_length = FFS_est_decode_length(cm->FFScontext, data_buffer, (size_t)data_length);
+	 cm_decode_buf = cm_get_data_buf(cm, (ssize_t)decoded_length);
 	 decode_buffer = cm_decode_buf->buffer;
 	 FFSdecode_to_buffer(cm->FFScontext, data_buffer, decode_buffer);
      }
@@ -2905,7 +2919,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
  cm_wake_any_pending_write(CMConnection conn)
  {
      if (conn->write_callbacks) {
-	 int i = 0;
+	 size_t i = 0;
 	 CMConnHandlerListEntry callbacks[16];
 	 size_t callback_len = conn->write_callback_len;
 	 assert(conn->write_callback_len <= 16);
@@ -2915,7 +2929,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 		 (callbacks[i].func)(conn->cm, conn, callbacks[i].client_data);
 	     }
 	 }
-	 CMtrace_out(conn->cm, CMTransportVerbose, "Completed pending write, did %d notifications\n", i);
+	 CMtrace_out(conn->cm, CMTransportVerbose, "Completed pending write, did %zu notifications\n", i);
      } else {
 	 CMtrace_out(conn->cm, CMTransportVerbose, "Completed pending write, No notifications\n");
      }
@@ -3058,7 +3072,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
  static void
  remove_pending_write_callback_by_id(CMConnection conn, SOCKET ids) {
      int id = (int)(intptr_t)ids;
-     assert(id < conn->write_callback_len && id >= 0);
+     assert((size_t)id < conn->write_callback_len && id >= 0);
      conn->write_callbacks[id].func = NULL;
  }
 
@@ -3076,7 +3090,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
  add_pending_write_callback(CMConnection conn, CMWriteCallbackFunc handler, 
 			    void* client_data)
  {
-     int count = 0;
+     size_t count = 0;
      while (conn->write_callbacks && count < conn->write_callback_len &&
 	    (conn->write_callbacks[count].func != NULL)) count++;
      if (count + 1 > conn->write_callback_len) {
@@ -3092,7 +3106,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      }
      conn->write_callbacks[count].func = handler;
      conn->write_callbacks[count].client_data = client_data;
-     return count;
+     return (int)count;
  }
 
 
@@ -3155,7 +3169,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
  {
      size_t actual = 0;
      unsigned char checksum = 0;
-     int i, j, start;
+     int i, start;
      size_t count = 0;
      size_t length = 0;
      if (conn->closed || conn->failed) return 0;
@@ -3171,11 +3185,12 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 /* do checksum for small messages */
 	 for (i=0; i < vec_count; i++) {
 	     count += full_vec[i].iov_len - start;
-	     for (j=start; j< full_vec[i].iov_len; j++) {
-		 checksum += ((unsigned char*)full_vec[i].iov_base)[j];
+	     for (size_t cj=(size_t)start; cj < full_vec[i].iov_len; cj++) {
+		 checksum += ((unsigned char*)full_vec[i].iov_base)[cj];
 	     }
 	     start = 0;
 	 }
+	 (void)count;
      }
      ((int*)full_vec[0].iov_base)[0] = 
 	 (((int*)full_vec[0].iov_base)[0] & 0xffffff00) | (unsigned char) checksum;
@@ -3258,9 +3273,8 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      void *header_ptr = NULL;
      int header_len = 0;
      int no_attr_header[2] = {0x434d4400, 0};  /* CMD\0 in first entry */
-//  not yet impl     int no_attr_long_header[4] = {0x434d4401, 0x434d4401, 0, 0};  /* CMD\1 in first entry, pad to 16 */
      int attr_header[4] = {0x434d4100, 0x434d4100, 0, 0};  /* CMA\0 in first entry, pad to 16 */
-     int attr_long_header[4] = {0x434d4101, 0, 0, 0};  /* CMA\1 in first entry */
+     int attr_long_header[4] = {0x434d4200, 0, 0, 0};  /* CMB\0 in first entry */
      FFSEncodeVector vec;
      size_t length = 0, vec_count = 0, actual;
      int do_write = 1;
@@ -3336,7 +3350,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 length += vec[vec_count].iov_len;
 	 vec_count++;
      }
-     if ((length & 0x7fffffff) == 0) {
+     if (length > 0x7fffffff) {
 	 long_message = 1;
      }
      if (attrs != NULL) {
@@ -3353,15 +3367,11 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	     header_len = sizeof(no_attr_header);
 	 }
      } else {
-	 if (attrs_present) {
-	     memcpy((void*) &attr_long_header[1], &length, sizeof(length));
-	     header_ptr = &attr_long_header;
-	     header_len = sizeof(attr_long_header);
-	 } else {
-	     memcpy((void*) &attr_long_header[2], &length, sizeof(length));
-	     header_ptr = no_attr_header;
-	     header_len = sizeof(no_attr_header);
-	 }
+	 /* Long message format: use explicit high/low word order to match CMP */
+	 attr_long_header[1] = (int)((uint64_t)length >> 32);      /* high 32 bits */
+	 attr_long_header[2] = (int)(length & 0xffffffff); /* low 32 bits */
+	 header_ptr = &attr_long_header;
+	 header_len = sizeof(attr_long_header);
      }	 
      if (attrs_present) {
 	 encoded_attrs = encode_attr_for_xmit(attrs, conn->attr_encode_buffer,
@@ -3427,7 +3437,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      int attr_len = 0;
      int do_write = 1;
      void *encoded_attrs = NULL;
-     int attrs_present = 0;
      CManager cm = conn->cm;
 
      /* ensure conn is open */
@@ -3508,7 +3517,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 data_length = event->event_len;
      }
      if (attrs != NULL) {
-	 attrs_present++;
 	 encoded_attrs = encode_attr_for_xmit(attrs, conn->attr_encode_buffer,
 					      &attr_len);
 	 attr_len = (attr_len +7) & -8;  /* round up to even 8 */
@@ -3867,6 +3875,7 @@ CM_init_select(CMControlList cl, CManager cm)
 	CMtrace_out(cm, CMLowLevelVerbose,
 		    "CM - Forked comm thread %p\n", (void*)(intptr_t)server_thread);
 	cm->control_list->server_thread = thr_get_thread_id(server_thread);
+	cm->control_list->server_thread_handle = server_thread;
 	cm->control_list->cl_reference_count++;
 	cm->control_list->free_reference_count++;
 	cl->has_thread = 1;

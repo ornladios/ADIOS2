@@ -1,28 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat EVPath as a subproject of
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.4 LANGUAGES C CXX)
-
-# Enable <PackageName>_ROOT variables for dependency searching
-# CMake v3.12
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-# Enable imported targets as library dependencies for CHECK_INCLUDE_FILE
-if(POLICY CMP0075)
-  cmake_policy(SET CMP0075 NEW)
-endif()
-
-# Let option(...) setings work with non-cache variables.  Useful for including
-# EVPath as a third party dependency in another project.
-# CMake v3.13
-if(POLICY CMP0077)
-  cmake_policy(SET CMP0077 NEW)
-endif()
+project(EVPath VERSION 5.0.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -78,15 +60,15 @@ if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-  # Silence MSVC warnings
-  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
-     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
+  # MSVC warning suppressions (must be before any targets are defined)
+  if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_compile_definitions(
+      _CRT_SECURE_NO_DEPRECATE
+      _CRT_SECURE_NO_WARNINGS
+      _SCL_SECURE_NO_DEPRECATE
+      _WINSOCK_DEPRECATED_NO_WARNINGS
+      _CRT_NONSTDC_NO_DEPRECATE
+      FFS_SRC)
   endif()
 endif()
 
@@ -96,13 +78,12 @@ set(ENABLE_SOMETHING AUTO CACHE STRING "Enable SOMETHING support")  #
 set(EVPATH_DEFAULT_PORT_RANGE  "26000:26100" CACHE STRING "Default port range for IP communication")
 mark_as_advanced(EVPATH_DEFAULT_PORT_RANGE)
 
-include(CheckFunctionExists)
-include(CheckIncludeFiles)
+include(CheckSymbolExists)
+include(CheckIncludeFile)
 include(CheckLibraryExists)
 include(CheckTypeSize)
 include(CheckStructHasMember)
 include(CheckCSourceRuns)
-include(TestBigEndian)
 include(CheckBrokenTitanCompiler)
 
 include(CTest)
@@ -134,13 +115,32 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 add_library(EVPath
-  cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
+  cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c
   cm_lock.c cm_perf.c cm_pbio.c cm_interface.c version.c
-  cm_threadio.c cm_evol.c evp.c response.c metrics.c 
+  cm_threadio.c cm_evol.c evp.c response.c metrics.c
   dlloader.c ip_config.c chr_time.c revpath.h revp_internal.h
   revp.c evp_compat.c thin_server.c evp_threads.c ev_dfg.c)
 add_library(EVPath::EVPath ALIAS EVPath)
 add_library(evpath ALIAS EVPath)
+
+# GCC 12-14 emit spurious -Warray-bounds warning in ev_dfg.c; update upper bound if needed
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12" AND
+     CMAKE_C_COMPILER_VERSION VERSION_LESS "15")
+    set_source_files_properties(ev_dfg.c PROPERTIES COMPILE_FLAGS "-Wno-array-bounds")
+  endif()
+endif()
+
+# MSVC warning suppressions
+if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+  target_compile_definitions(EVPath PRIVATE
+    _CRT_SECURE_NO_DEPRECATE
+    _CRT_SECURE_NO_WARNINGS
+    _SCL_SECURE_NO_DEPRECATE
+    _WINSOCK_DEPRECATED_NO_WARNINGS
+    _CRT_NONSTDC_NO_DEPRECATE)
+endif()
+
 target_include_directories(EVPath PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -216,21 +216,26 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 )
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
-find_package(atl 2.2.1 REQUIRED)
-find_package(ffs 3.0.0 REQUIRED)
+find_package(atl 2.3.0 REQUIRED)
+find_package(ffs 3.2.0 REQUIRED)
 _pkg_get_target_prefix(atl::atl atl_PREFIX)
 _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
 
 if(TARGET ffs) # The unaliased target exists so it's built by us
-  set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  if (DILL_FOUND)  # this only exists in meta-builds
+    set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+  endif()
 else()
+  get_target_property(_ffs_inc ffs::ffs INTERFACE_INCLUDE_DIRECTORIES)
+  set(CMAKE_REQUIRED_INCLUDES ${_ffs_inc})
   set(CMAKE_REQUIRED_LIBRARIES ffs::ffs)
   CHECK_INCLUDE_FILE(cod.h HAVE_COD_H)
   unset(CMAKE_REQUIRED_LIBRARIES)
+  unset(CMAKE_REQUIRED_INCLUDES)
 endif()
 if (HAVE_COD_H)
-   find_package(dill 3.0.0 REQUIRED)
+   find_package(dill 3.2.2 REQUIRED)
    target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
    _pkg_get_target_prefix(dill::dill dill_PREFIX)
    list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
@@ -296,11 +301,11 @@ if(EVPATH_TRANSPORT_MODULES)
 
   add_library(cmselect MODULE cmselect.c)
   add_library(cmsockets MODULE cmsockets.c ip_config.c)
-  list (APPEND tgts cmselect cmsockets)
+  add_library(cmudp MODULE cmudp.c)
+  list (APPEND tgts cmselect cmsockets cmudp)
   if(NOT WIN32)
-    add_library(cmudp MODULE cmudp.c)
     add_library(cmmulticast MODULE cmmulticast.c)
-    list (APPEND tgts  cmudp cmmulticast)
+    list (APPEND tgts cmmulticast)
   endif()
   foreach(M ${tgts})
     set_target_properties(${M} PROPERTIES
@@ -312,11 +317,14 @@ if(EVPATH_TRANSPORT_MODULES)
 
   target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
   target_link_libraries(cmsockets PRIVATE evpath_headers atl::atl)
-  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets)
+  target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
+  if(WIN32)
+    target_link_libraries(cmudp PRIVATE ws2_32)
+  endif()
+  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets cmudp)
   if(NOT WIN32)
-    target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
     target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
-    list (APPEND EVPATH_TRANSPORT_TARGETS  cmudp cmmulticast)
+    list (APPEND EVPATH_TRANSPORT_TARGETS cmmulticast)
   endif()
 
   if (HAVE_SYS_EPOLL_H)
@@ -360,7 +368,8 @@ if(ENET_FOUND)
     add_library(cmenet MODULE cmenet.c ip_config.c)
     set_target_properties(cmenet PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
+      WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
     target_link_libraries(cmenet PRIVATE evpath_headers atl::atl enet::enet)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmenet)
@@ -589,8 +598,6 @@ find_package(Perl)
 if (PERL_FOUND) 
   add_custom_command(
     OUTPUT "cm_interface.c" "revp.c" "revpath.h" "revp_internal.h"
-    SOURCE
-      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
     COMMAND ${PERL_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
       ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
@@ -653,14 +660,19 @@ CHECK_STRUCT_HAS_MEMBER("struct fd_set" "fds_bits" "sys/select.h" HAVE_FDS_BITS)
 
 CHECK_TYPE_SIZE("int"   SIZEOF_INT)
 CHECK_TYPE_SIZE("long"   SIZEOF_LONG)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 
-CHECK_FUNCTION_EXISTS(writev HAVE_WRITEV)
-CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
-CHECK_FUNCTION_EXISTS(getdomainname HAVE_GETDOMAINNAME)
-CHECK_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
-CHECK_FUNCTION_EXISTS(gettimeofday HAVE_GETTIMEOFDAY)
-CHECK_FUNCTION_EXISTS(getifaddrs HAVE_GETIFADDRS)
+if(CMAKE_C_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+  set(WORDS_BIGENDIAN 1)
+else()
+  set(WORDS_BIGENDIAN 0)
+endif()
+
+check_symbol_exists(writev "sys/uio.h" HAVE_WRITEV)
+check_symbol_exists(uname "sys/utsname.h" HAVE_UNAME)
+check_symbol_exists(getdomainname "unistd.h" HAVE_GETDOMAINNAME)
+check_symbol_exists(getloadavg "stdlib.h" HAVE_GETLOADAVG)
+check_symbol_exists(gettimeofday "sys/time.h" HAVE_GETTIMEOFDAY)
+check_symbol_exists(getifaddrs "ifaddrs.h" HAVE_GETIFADDRS)
 
 try_compile(HAVE_MAC_SYSCTL
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -675,8 +687,8 @@ try_compile(HAVE_SYSCONF
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_sysconf.c
 )
 
-if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
+if(CMAKE_C_COMPILER_ID MATCHES "Intel")
+  add_link_options(-shared-intel)
 endif()
 
 function(_pkg_expand_libs in_libs out_ldflags)
@@ -737,13 +749,9 @@ if(EVPATH_INSTALL_HEADERS)
   )
 endif()
 
-set(namelink_component_args)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(namelink_component_args NAMELINK_COMPONENT ${EVPATH_HEADER_COMPONENT})
-endif()
 install(TARGETS EVPath EXPORT EVPathTargets
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${EVPATH_RUNTIME_COMPONENT}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_LIBRARY_COMPONENT} ${namelink_component_args}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_LIBRARY_COMPONENT} NAMELINK_COMPONENT ${EVPATH_HEADER_COMPONENT}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_ARCHIVE_COMPONENT}
 )
 
@@ -758,10 +766,6 @@ if(multi_config)
 endif()
 TARGET_COMPILE_DEFINITIONS(EVPath PRIVATE EVPATH_MODULE_BUILD_DIR="${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}${config_suffix}")
 set(EVPATH_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${EVPATH_INSTALL_MODULE_DIR})
-
-if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
-endif()
 
 find_program(SSH ssh)
 if(SSH) 

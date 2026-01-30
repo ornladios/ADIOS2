@@ -548,12 +548,12 @@ extern int
 CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 {
     struct pbio_exchange_msg tmp_msg;
-    struct pbio_exchange_msg *msg;
+    struct pbio_exchange_msg *msg = NULL;
     int swap;
 
     int *incoming_length;
     int tmp_length;
-    int used_length = 4;
+    size_t used_length = 4;
     int header = *(int*)buffer;
 
     CManager_lock(conn->cm);
@@ -566,7 +566,7 @@ CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
     }
     if (length < used_length + 4) {
 	if (trans->read_to_buffer_func) {
-	    int actual = trans->read_to_buffer_func(&CMstatic_trans_svcs,
+	    int actual = (int) trans->read_to_buffer_func(&CMstatic_trans_svcs,
 						    conn->transport_data,
 						    &tmp_length, 4, 0);
 	    CMtrace_out(conn->cm, CMLowLevelVerbose, "CMpbio reading 4 length bytes\n");
@@ -592,7 +592,7 @@ CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 
     if (length < used_length + sizeof(tmp_msg) - 8) {
 	if (trans->read_to_buffer_func) {
-	    int actual = trans->read_to_buffer_func(&CMstatic_trans_svcs,
+	    int actual = (int) trans->read_to_buffer_func(&CMstatic_trans_svcs,
 						    conn->transport_data,
 						    ((char*)&tmp_msg) + 8, 
 						    (int)sizeof(tmp_msg) - 8, 0);

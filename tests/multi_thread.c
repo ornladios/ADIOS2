@@ -12,8 +12,9 @@
 #include <arpa/inet.h>
 #endif
 #include "evpath.h"
+#include "support.h"
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
+/* windows.h included via support.h */
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
@@ -105,7 +106,6 @@ generate_record(simple_rec_ptr event)
     event->scan_sum = (int) sum;
 }
 
-int quiet = 1;
 
 static
 int
@@ -158,7 +158,7 @@ main(int argc, char **argv)
     CManager cm, cm2;
     int message_count = 0;
     EVstone target_stone, stone;
-    simple_rec data;
+    simple_rec data = {0};
     EVsource source_handle;
 
     while (argv[1] && (argv[1][0] == '-')) {

@@ -1,15 +1,13 @@
-# Client maintainer: chuck.atkins@kitware.com
-
-message("DEBUG: PATH: $ENV{PATH}")
-
-set(ENV{atl_ROOT} "$ENV{CI_ROOT_DIR}/atl/install")
-set(ENV{PATH} "$ENV{CI_ROOT_DIR}/atl/install/bin:$ENV{PATH}")
-
-set(ENV{ffs_ROOT} "$ENV{CI_ROOT_DIR}/ffs/install")
-set(ENV{PATH} "$ENV{CI_ROOT_DIR}/ffs/install/bin:$ENV{PATH}")
+# Client maintainer: eisen@cc.gatech.edu
 
 string(APPEND dashboard_cache "
 ")
+
+# Point cmake to the dependency install directories using _DIR variables
+# which point directly to the cmake config files
+set(ENV{atl_DIR} "${CMAKE_CURRENT_LIST_DIR}/../../../../atl/install/lib/cmake/atl")
+set(ENV{dill_DIR} "${CMAKE_CURRENT_LIST_DIR}/../../../../dill/install/lib/cmake/dill")
+set(ENV{ffs_DIR} "${CMAKE_CURRENT_LIST_DIR}/../../../../ffs/install/CMake")
 
 set(CTEST_BUILD_WARNINGS_AS_ERRORS FALSE)
 
