@@ -1,5 +1,9 @@
 if (HAVE_COD_H)
-  set (TESTS evtest bulktest http_test filter_test router_test router_test2 no_type_router_test filter2_test transform_test auto_test extract_test submit_test thin_test rawtest rawtest2 multi_thread multiq_test split_test executing_stone_test)
+  set (TESTS evtest bulktest http_test filter_test router_test router_test2 no_type_router_test filter2_test transform_test auto_test extract_test submit_test rawtest rawtest2 multi_thread multiq_test split_test executing_stone_test)
+  if (NOT WIN32)
+    # thin_test uses FFS over sockets which requires socket-aware I/O on Windows
+    list(APPEND TESTS thin_test)
+  endif()
 else()
   set (TESTS evtest bulktest http_test)
 endif()
@@ -7,10 +11,10 @@ set (NO_INST_PROGS thin_client)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}/test_common)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/evtests.tsts "" )
 foreach(T ${TESTS})
-  add_executable(${T} ${T}.c)
+  add_executable(${T} ${T}.c ${CMAKE_SOURCE_DIR}/test_common/support.c)
   target_link_libraries(${T} evpath atl::atl)
   add_test(NAME ${T} COMMAND ${T})
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/evtests.tsts "${T}\n" )

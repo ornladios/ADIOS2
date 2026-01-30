@@ -342,7 +342,6 @@ get_qual_hostname(void *cm, char *buf, int len, CMtrans_services svc, attr_list 
     if (buf[0] == 0) {
 	/* bloody hell, what do you have to do? */
 	struct in_addr IP;
-	extern int h_errno;
 	IP.s_addr = htonl(get_self_ip_addr(cm, svc));
 	svc->trace_out(cm, "CM<transport> - No hostname yet, trying gethostbyaddr on IP %lx", IP);
 	if (!is_private_IP(ntohl(IP.s_addr))) {

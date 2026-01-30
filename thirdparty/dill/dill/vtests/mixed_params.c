@@ -32,12 +32,7 @@ int main() {
 
     h = dill_finalize(s);
 
-    printf("\nVirtual instruction dump:\n");
-    dill_dump(s);
-
     unsigned char* code = (unsigned char*)dill_get_fp(h);
-    printf("\nFirst 128 bytes of native code at %p:\n", (void*)code);
-    dump_hex(code, 128);
 
     /* Now run the test */
     {
@@ -52,6 +47,10 @@ int main() {
             printf("PASSED!\n");
         } else {
             printf("FAILED!\n");
+            printf("\nVirtual instruction dump:\n");
+            dill_dump(s);
+            printf("\nFirst 128 bytes of native code at %p:\n", (void*)code);
+            dump_hex(code, 128);
         }
     }
 

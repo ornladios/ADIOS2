@@ -20,3 +20,4 @@ cmake ${arch_flag} \
   ../source
 cmake --build . -j4 --config $1
 cmake --install . --config $1
+

@@ -9,12 +9,25 @@
 #include <string.h>
 #include <signal.h>
 #include "evpath.h"
+#define PARSE_EXTRA_ARGS } else if (strcmp(&argv[1][1], "size") == 0) {\
+	    if (sscanf(argv[2], "%zu", &size) != 1) {\
+		printf("Unparseable argument to -size, %s\n", argv[2]);\
+	    }\
+	    if (vecs == 0) { vecs = 1; printf("vecs not 1\n");}\
+	    argv++;\
+	    argc--;\
+	} else 	if (strcmp(&argv[1][1], "vecs") == 0) {\
+	    if (sscanf(argv[2], "%d", &vecs) != 1) {\
+		printf("Unparseable argument to -vecs, %s\n", argv[2]);\
+	    }\
+	    argv++;\
+	    argc--;
+#include "support.h"
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
+/* windows.h included via support.h */
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
-#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 
 #else
 #include <sys/wait.h>
@@ -107,7 +120,6 @@ static FMStructDescRec simple_format_list[] =
 
 static size_t size = 400;
 static int vecs = 20;
-int quiet = 1;
 
 int message_count = 0;
 
@@ -148,10 +160,10 @@ generate_record(simple_rec_ptr event)
 }
 
 static
-void 
+void
 free_record(simple_rec_ptr event)
 {
-    int i;
+    size_t i;
     for (i=0; i < event->vec_count; i++) {
       free(event->vecs[i].iov_base);
     }
@@ -224,25 +236,7 @@ simple_handler(CManager cm, CMConnection conn, void *vevent, void *client_data,
 }
 
 static int do_regression_master_test();
-static int regression = 1;
 static atom_t CM_TRANSPORT;
-static char *transport;
-
-#define PARSE_EXTRA_ARGS } else if (strcmp(&argv[1][1], "size") == 0) {\
-	    if (sscanf(argv[2], "%zu", &size) != 1) {\
-		printf("Unparseable argument to -size, %s\n", argv[2]);\
-	    }\
-	    if (vecs == 0) { vecs = 1; printf("vecs not 1\n");}\
-	    argv++;\
-	    argc--;\
-	} else 	if (strcmp(&argv[1][1], "vecs") == 0) {\
-	    if (sscanf(argv[2], "%d", &vecs) != 1) {\
-		printf("Unparseable argument to -vecs, %s\n", argv[2]);\
-	    }\
-	    argv++;\
-	    argc--;
-
-#include "support.c"
 
 int
 main(int argc, char **argv)
@@ -298,7 +292,7 @@ main(int argc, char **argv)
 	    }
 	    free_attr_list(contact_list);
 	}
-	data = malloc(sizeof(simple_rec));
+	data = calloc(1, sizeof(simple_rec));
 	format = CMregister_format(cm, simple_format_list);
 	done_format = CMregister_simple_format(cm, "done", done_field_list, sizeof(int));
 	CMregister_handler(done_format, done_handler, NULL);
@@ -371,7 +365,7 @@ do_regression_master_test()
     CMFormat format;
     int done = 0;
 #ifdef HAVE_WINDOWS_H
-    SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
+    SetTimer(NULL, 5, 300*1000, (TIMERPROC) fail_and_die);
 #else
     struct sigaction sigact;
     sigact.sa_flags = 0;
@@ -421,27 +415,15 @@ do_regression_master_test()
 	printf("Waiting for remote....\n");
     }
     while (!done) {
-#ifdef HAVE_WINDOWS_H
-	if (_cwait(&exit_state, subproc_proc, 0) == -1) {
-	    perror("cwait");
-	}
-	if (exit_state == 0) {
-	    if (quiet <= 0) 
-		printf("Subproc exitted\n");
-	} else {
-	    printf("Single remote subproc exit with status %d\n",
-		   exit_state);
-	}
-#else
-	int result;
+	pid_t result;
 	if (quiet <= 0) {
 	    printf(",");
 	    fflush(stdout);
 	}
 	CMsleep(cm, 1);
-	result = waitpid(subproc_proc, &exit_state, WNOHANG);
+	result = wait_for_subprocess(subproc_proc, &exit_state, 0);
 	if (result == -1) {
-	    perror("waitpid");
+	    perror("wait_for_subprocess");
 	    done++;
 	}
 	if (result == subproc_proc) {
@@ -459,7 +441,6 @@ do_regression_master_test()
 	    }
 	    done++;
 	}
-#endif
     }
     if (msg_count != MSG_COUNT) {
 	int i = 10;
@@ -467,7 +448,7 @@ do_regression_master_test()
 	    CMsleep(cm, 1);
 	}
     }
-    free(string_list);
+    atl_free(string_list);
     CManager_close(cm);
     if (message_count != expected_count) {
 	printf ("failure, received %d messages instead of %d\n",

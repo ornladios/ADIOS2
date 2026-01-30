@@ -248,13 +248,16 @@ handle_queued_messages(CManager cm, void* vmaster)
     EVmaster_msg_ptr next;
     EVmaster_msg_ptr *last_ptr;
 
-    if (master->queued_messages == NULL) return;
+    if (master->queued_messages == NULL) {
+        return;
+    }
     assert(CManager_locked(cm));
     next = master->queued_messages;
     last_ptr = &master->queued_messages;
     while(next != NULL) {
+	char action = action_model[master->state][next->msg_type];
 	CMtrace_out(cm, EVdfgVerbose, "EVDFG handle_queued_messages -  master DFG state is %s\n", str_state[master->state]);
-	switch (action_model[master->state][next->msg_type]) {
+	switch (action) {
 	case 'H':
 	    CMtrace_out(cm, EVdfgVerbose, "Master Message is type %s, calling handler\n", master_msg_str[next->msg_type]);
 	    *last_ptr = next->next;  /* remove msg from queue */
@@ -273,7 +276,7 @@ handle_queued_messages(CManager cm, void* vmaster)
 	    next = next->next;
 	    break;
 	default:
-	    printf("Unexpected action type '%c', discarding\n", action_model[master->state][next->msg_type]);
+	    printf("Unexpected action type '%c', discarding\n", action);
 	    /* falling through */
 	case 'I':
 	    *last_ptr = next->next;  /* remove msg from queue */
@@ -764,7 +767,6 @@ EVdfg_perform_act_on_state(EVdfg_configuration config, EVdfg_config_action act, 
 	if (!src) {
 	    return 0;
 	}
-	if (src->out_count <= act.u.link.port) return 0;
 	for (i=0; i < src->out_count; i++) {
 	    if (src->out_links[i] == dest->stone_id) {
 		/* remove this, move remaining down */
@@ -1043,7 +1045,7 @@ dfg_ready_handler(CManager cm, CMConnection conn, void *vmsg,
     CManager_unlock(cm);
 }
 
-static void 
+static void
 handle_conn_shutdown(EVmaster master, EVmaster_msg_ptr msg)
 {
     int stone = msg->u.conn_shutdown.stone;
@@ -1052,10 +1054,16 @@ handle_conn_shutdown(EVmaster master, EVmaster_msg_ptr msg)
 
     /* this stone is automatically frozen by EVPath */
     reporting_stone->condition = EVstone_Frozen;
+
+    if (master->node_fail_handler == NULL) {
+	/* No handler to deal with connection shutdown, just log and return */
+	CMtrace_out(master->cm, EVdfgVerbose, "EVDFG conn_shutdown_handler - no node_fail_handler, ignoring\n");
+	return;
+    }
+
     master->state = DFG_Reconfiguring;
-    
     CMtrace_out(master->cm, EVdfgVerbose, "EVDFG conn_shutdown_handler -  master DFG state is now %s\n", str_state[master->state]);
-    if (master->node_fail_handler != NULL) {
+    {
 	int i;
 	int target_stone = -1;
 	char *failed_node = NULL;
@@ -1402,7 +1410,7 @@ free_master(CManager cm, void *vmaster)
 	    free(master->nodes[i].str_contact_list);
     }
     free(master->nodes);
-    if (master->my_contact_str) free(master->my_contact_str);
+    if (master->my_contact_str) atl_free(master->my_contact_str);
     free(master);
 }
 
@@ -1458,7 +1466,7 @@ free_attrs_msg(EVflush_attrs_reconfig_ptr msg)
 {
     int i = 0;
     for (i = 0; i < msg->count; i++) {
-	free(msg->attr_stone_list[i].attr_str);
+	atl_free(msg->attr_stone_list[i].attr_str);
     }
     free(msg->attr_stone_list);
     free(msg);
@@ -2047,7 +2055,7 @@ dfg_assoc_client(CManager cm, char* node_name, char *master_contact, EVmaster ma
 	    free(msg.sinks[i].name);
 	}
 	free(msg.sinks);
-	free(msg.contact_string);
+	atl_free(msg.contact_string);
 	free(msg.node_name);
     }
     CMtrace_out(cm, EVdfgVerbose, "DFG %p node name %s\n", client, node_name);
@@ -2468,7 +2476,7 @@ queue_master_msg(EVmaster master, void*vmsg, EVmaster_msg_type msg_type, CMConne
 }
 
 static void
-dfg_master_msg_handler(CManager cm, CMConnection conn, void *vmsg, 
+dfg_master_msg_handler(CManager cm, CMConnection conn, void *vmsg,
 		       void *client_data, attr_list attrs)
 {
     EVmaster master = (EVmaster)((uintptr_t)client_data & (~0x7));

@@ -3122,11 +3122,14 @@ x86_64_flush(void* base, void* limit)
     }
 #endif
 #ifdef USE_VIRTUAL_PROTECT
-    int result;
-    DWORD dummy;
-    size_t size = ((intptr_t)limit - (intptr_t)base);
-    result = VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy);
-    (void) result;
+    {
+        DWORD dummy;
+        size_t size = ((intptr_t)limit - (intptr_t)base);
+        if (!VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %zu\n",
+                    GetLastError(), base, size);
+        }
+    }
 #endif
 }
 extern void

@@ -200,6 +200,7 @@ extern dill_stream dill_dup_stream(dill_stream s);
 extern dill_exec_ctx dill_get_exec_context(dill_stream x);
 extern void dill_free_stream(dill_stream s);
 extern void dill_free_exec_context(dill_exec_ctx c);
+extern void dill_free(void *ptr);
 extern void dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value);
 extern IMM_TYPE dill_get_client_data(dill_exec_ctx ec, int key);
 extern void* dill_take_code(dill_stream s);

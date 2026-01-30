@@ -1,12 +1,16 @@
 #include "config.h"
+#include <stdio.h>
 #ifdef USE_MMAP_CODE_SEG
 #include <sys/mman.h>
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
 #endif
 #include <string.h>
 #include "dill.h"
 #include "dill_internal.h"
 #include "x86.h"
-#include <string.h>
 
 extern long dill_x86_hidden_mod(long a, long b)
 { return a % b; }
@@ -43,9 +47,20 @@ x86_package_stitch(char *code, call_t *t, dill_pkg pkg)
 #define MAP_ANONYMOUS MAP_ANON
 #endif
     tmp = (void*)mmap(0, pkg->code_size,
-		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      PROT_EXEC | PROT_READ | PROT_WRITE,
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+    {
+        DWORD dummy;
+        if (!VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %d\n",
+                    GetLastError(), (void*)tmp, pkg->code_size);
+            return NULL;
+        }
+        FlushInstructionCache(GetCurrentProcess(), tmp, pkg->code_size);
+    }
 #endif
     return tmp + pkg->entry_offset;
 }

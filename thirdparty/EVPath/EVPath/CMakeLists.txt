@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.9 LANGUAGES C CXX)
+project(EVPath VERSION 5.0.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -115,13 +115,21 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 add_library(EVPath
-  cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
+  cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c
   cm_lock.c cm_perf.c cm_pbio.c cm_interface.c version.c
-  cm_threadio.c cm_evol.c evp.c response.c metrics.c 
+  cm_threadio.c cm_evol.c evp.c response.c metrics.c
   dlloader.c ip_config.c chr_time.c revpath.h revp_internal.h
   revp.c evp_compat.c thin_server.c evp_threads.c ev_dfg.c)
 add_library(EVPath::EVPath ALIAS EVPath)
 add_library(evpath ALIAS EVPath)
+
+# GCC 12-14 emit spurious -Warray-bounds warning in ev_dfg.c; update upper bound if needed
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12" AND
+     CMAKE_C_COMPILER_VERSION VERSION_LESS "15")
+    set_source_files_properties(ev_dfg.c PROPERTIES COMPILE_FLAGS "-Wno-array-bounds")
+  endif()
+endif()
 
 # MSVC warning suppressions
 if(MSVC OR CMAKE_C_SIMULATE_ID MATCHES "MSVC")
@@ -208,8 +216,8 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 )
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
-find_package(atl 2.2.1 REQUIRED)
-find_package(ffs 3.0.0 REQUIRED)
+find_package(atl 2.3.0 REQUIRED)
+find_package(ffs 3.2.0 REQUIRED)
 _pkg_get_target_prefix(atl::atl atl_PREFIX)
 _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
@@ -219,12 +227,15 @@ if(TARGET ffs) # The unaliased target exists so it's built by us
     set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
   endif()
 else()
+  get_target_property(_ffs_inc ffs::ffs INTERFACE_INCLUDE_DIRECTORIES)
+  set(CMAKE_REQUIRED_INCLUDES ${_ffs_inc})
   set(CMAKE_REQUIRED_LIBRARIES ffs::ffs)
   CHECK_INCLUDE_FILE(cod.h HAVE_COD_H)
   unset(CMAKE_REQUIRED_LIBRARIES)
+  unset(CMAKE_REQUIRED_INCLUDES)
 endif()
 if (HAVE_COD_H)
-   find_package(dill 3.0.0 REQUIRED)
+   find_package(dill 3.2.2 REQUIRED)
    target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
    _pkg_get_target_prefix(dill::dill dill_PREFIX)
    list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
@@ -290,11 +301,11 @@ if(EVPATH_TRANSPORT_MODULES)
 
   add_library(cmselect MODULE cmselect.c)
   add_library(cmsockets MODULE cmsockets.c ip_config.c)
-  list (APPEND tgts cmselect cmsockets)
+  add_library(cmudp MODULE cmudp.c)
+  list (APPEND tgts cmselect cmsockets cmudp)
   if(NOT WIN32)
-    add_library(cmudp MODULE cmudp.c)
     add_library(cmmulticast MODULE cmmulticast.c)
-    list (APPEND tgts  cmudp cmmulticast)
+    list (APPEND tgts cmmulticast)
   endif()
   foreach(M ${tgts})
     set_target_properties(${M} PROPERTIES
@@ -306,11 +317,14 @@ if(EVPATH_TRANSPORT_MODULES)
 
   target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
   target_link_libraries(cmsockets PRIVATE evpath_headers atl::atl)
-  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets)
+  target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
+  if(WIN32)
+    target_link_libraries(cmudp PRIVATE ws2_32)
+  endif()
+  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets cmudp)
   if(NOT WIN32)
-    target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
     target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
-    list (APPEND EVPATH_TRANSPORT_TARGETS  cmudp cmmulticast)
+    list (APPEND EVPATH_TRANSPORT_TARGETS cmmulticast)
   endif()
 
   if (HAVE_SYS_EPOLL_H)
@@ -354,7 +368,8 @@ if(ENET_FOUND)
     add_library(cmenet MODULE cmenet.c ip_config.c)
     set_target_properties(cmenet PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
+      WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
     target_link_libraries(cmenet PRIVATE evpath_headers atl::atl enet::enet)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmenet)

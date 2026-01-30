@@ -1,18 +1,79 @@
 name: Build and Test
 
-on: 
-  push: 
-    branches: 
-    - master 
-  pull_request: 
-    branches: 
-    - master 
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: '0 7 * * 1'  # Monday 7am UTC - weekly build to catch dependency issues 
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  # MemorySanitizer build to detect uninitialized memory reads
+  msan:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build git
+
+    - name: Build atl with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/atl.git
+        cmake -G Ninja -S atl -B atl/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C atl/build install
+
+    - name: Build dill with MSan
+      run: |
+        git clone --depth 1 https://github.com/GTkorvo/dill.git
+        cmake -G Ninja -S dill -B dill/build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug
+        ninja -C dill/build install
+
+    - name: Configure ffs with MSan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${MSAN_FLAGS}" \
+          -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere

@@ -11,8 +11,9 @@
 #include <signal.h>
 #include <arpa/inet.h>
 #include "evpath.h"
+#include "support.h"
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
+/* windows.h included via support.h */
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
@@ -105,7 +106,6 @@ static FMStructDescRec *simple_format_lists[] =
 
 static int size = 400;
 static int vecs = 20;
-int quiet = 1;
 
 static
 void 
@@ -136,7 +136,7 @@ generate_record(simple_rec_ptr event)
     if (quiet <= 0) printf("Sending %d vecs of size %d\n", vecs, size/vecs);
     for (i=0; i < vecs; i++) {
 	event->vecs[i].iov_len = size/vecs;
-	event->vecs[i].iov_base = malloc(event->vecs[i].iov_len);
+	event->vecs[i].iov_base = calloc(1, event->vecs[i].iov_len);
     }
 }
 
@@ -182,7 +182,6 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 }
 
 static int do_regression_master_test();
-static int regression = 1;
 static atom_t CM_TRANSPORT;
 static atom_t CM_NETWORK_POSTFIX;
 static atom_t CM_MCAST_ADDR;
@@ -192,7 +191,6 @@ static const char *congest = "{\n\
 printf(\"In congestion handler\\n\"); return 0;\n\
 }";
 
-#include "support.h"
 
 int
 main(int argc, char **argv)
@@ -289,7 +287,7 @@ main(int argc, char **argv)
         } else {
             assert(FALSE);
         }
-	data = malloc(sizeof(simple_rec));
+	data = calloc(1, sizeof(simple_rec));
 	generate_record(data);
 	attrs = create_attr_list();
 	CMDEMO_TEST_ATOM = attr_atom_from_string("CMdemo_test_atom");
@@ -407,34 +405,22 @@ do_regression_master_test()
 	printf("Waiting for remote....\n");
     }
     while (!done) {
-#ifdef HAVE_WINDOWS_H
-	if (_cwait(&exit_state, subproc_proc, 0) == -1) {
-	    perror("cwait");
-	}
-	if (exit_state == 0) {
-	    if (quiet <= 0) 
-		printf("Subproc exitted\n");
-	} else {
-	    printf("Single remote subproc exit with status %d\n",
-		   exit_state);
-	}
-#else
-	int result;
+	pid_t result;
 	if (quiet <= 0) {
 	    printf(",");
 	    fflush(stdout);
 	}
-	CMsleep(cm, 50);	done++;
+	CMsleep(cm, 50);
 
-	result = waitpid(subproc_proc, &exit_state, WNOHANG);
+	result = wait_for_subprocess(subproc_proc, &exit_state, 0);
 	if (result == -1) {
-	    perror("waitpid");
+	    perror("wait_for_subprocess");
 	    done++;
 	}
 	if (result == subproc_proc) {
 	    if (WIFEXITED(exit_state)) {
 		if (WEXITSTATUS(exit_state) == 0) {
-		    if (quiet <= 0) 
+		    if (quiet <= 0)
 			printf("Subproc exited\n");
 		} else {
 		    printf("Single remote subproc exit with status %d\n",
@@ -447,7 +433,6 @@ do_regression_master_test()
 	    done++;
 	}
     }
-#endif
     if (msg_count != msg_limit) {
 	int i = 10;
 	while ((i >= 0) && (msg_count != msg_limit)) {
@@ -456,7 +441,7 @@ do_regression_master_test()
 	}
     }
     free(args[6]);
-    free(string_list);
+    atl_free(string_list);
     CManager_close(cm);
     if (message_count != expected_count) {
 	printf ("failure, received %d messages instead of %d\n",

@@ -3,13 +3,15 @@ name: Triggers
 on:
   workflow_run:
     workflows: ["Build and Test"]
-    types: [requested]
+    types: [requested, completed]
 
 jobs:
-  all_triggers:
+  post_cdash_link:
     runs-on: ubuntu-latest
+    # Only post CDash link when workflow completes (results are available)
+    if: ${{ github.event.action == 'completed' }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Post CDash Status
       run: scripts/ci/scripts/post-cdash-status.sh ${{ github.event.repository.full_name }} ${{ github.event.workflow_run.head_sha }} ${{ secrets.GITHUB_TOKEN }}

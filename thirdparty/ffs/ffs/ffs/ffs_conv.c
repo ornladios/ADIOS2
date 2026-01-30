@@ -1192,7 +1192,7 @@ transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
 		dest_field = ((char*)dest) + dest_size * col_index_base;
 		tmp_spec.offset = tmp_spec.size * row_index_base;
 	    }
-	    for(i=0; i < (size_t) dimens[cur_index]; i++) {
+	    for(i=0; (size_t)i < dimens[cur_index]; i++) {
 		if (dest_type != unknown_type) {
 		    /* simple (native) field or variant array */
 		    if (dest_type != string_type) {

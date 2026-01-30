@@ -22,8 +22,9 @@ int main(int argc, char **argv)
 
     dill_start_simple_proc(s, "foo", DILL_V);
     dill_raw_getreg(s, &r, DILL_I, DILL_TEMP);
-	
-    dill_push_init(s);
+
+    /* printf is variadic: 1 non-variadic arg (format string) */
+    dill_push_varidiac_init(s, 1);
     if (!dill_do_reverse_vararg_push(s)) {
 	dill_push_argpi(s, "Hello: %d %d %d %d\n");
 	dill_seti(s, r, 10);
@@ -53,7 +54,8 @@ int main(int argc, char **argv)
     dill_free_handle(h);
 
     dill_start_simple_proc(s, "foo", DILL_V);
-    dill_push_init(s);
+    /* printf is variadic: 1 non-variadic arg (format string) */
+    dill_push_varidiac_init(s, 1);
     if (!dill_do_reverse_vararg_push(s)) {
 	dill_push_argpi(s, "Hello: %d %d %d %d\n");
 	dill_push_argii(s, 10);
@@ -75,7 +77,8 @@ int main(int argc, char **argv)
     dill_free_handle(h);
 
     dill_start_simple_proc(s, "foo", DILL_V);
-    dill_push_init(s);
+    /* printf is variadic: 1 non-variadic arg (format string) */
+    dill_push_varidiac_init(s, 1);
     if (!dill_do_reverse_vararg_push(s)) {
 	dill_push_argpi(s, "Hello: %d %d %d %d %d %d %d %d %d %d\n");
 	dill_push_argii(s, 10);

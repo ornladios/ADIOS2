@@ -1636,7 +1636,7 @@ internal_cod_submit_general(cod_exec_context ec, int port, void *data, void *typ
 	    struct delayed_event *ev = malloc(sizeof(struct delayed_event));
 	    ev->to_stone = target_stone;
 	    ev->event = ev_state->cur_event;
-	    ev_state->cur_event->ref_count++;
+	    thr_atomic_inc(&ev_state->cur_event->ref_count);
 	    INT_CMadd_delayed_task(cm, tp->tv_sec, tp->tv_usec, EVdelayed_submit_func, (void*)ev);
 	} else {
 	    internal_path_submit(ev_state->cm, target_stone, ev_state->cur_event);

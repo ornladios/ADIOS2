@@ -28,7 +28,7 @@ return 1;\n\
 #include "ev_dfg_internal.h"
 static int received_count = -1;
 static void
-on_failure()
+on_failure(void)
 {
     int i;
     printf("In failure\n");

@@ -57,7 +57,7 @@ typedef struct ia64_mach_info {
 
 extern int ia64_type_align[];
 extern int ia64_type_size[];
-extern void *gen_ia64_mach_info();
+extern void *gen_ia64_mach_info(dill_stream c);
 extern void ia64_arith3(dill_stream c, int op, int commut, int dest, int src1, int src2);
 extern void ia64_arith2(dill_stream c, int op, int subop, int dest, int src);
 extern void ia64_bswap(dill_stream c, int op, int subop, int dest, int src);

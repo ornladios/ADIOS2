@@ -51,7 +51,7 @@ be_test_master(int argc, char **argv)
     int fanout=1;
     EVdfg test_dfg;
     EVmaster test_master;
-    EVclient_sinks sink_capabilities;
+    EVclient_sinks sink_capabilities = NULL;
     EVclient_sources source_capabilities;
 
 #ifdef HAVE_WINDOWS_H

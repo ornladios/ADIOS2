@@ -7,6 +7,7 @@
 #define FD_SETSIZE 1024
 #endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #else
 #ifdef HAVE_SYS_TIME_H
@@ -69,6 +70,10 @@
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
+#endif
+
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
 #endif
 
 #if defined (__INTEL_COMPILER)
@@ -180,7 +185,7 @@ dump_sockinfo(msg, fd)
 char *msg;
 int fd;
 {
-    int nl;
+    socklen_t nl;
     struct sockaddr_in peer, me;
 
     printf("Dumping sockinfo for fd=%d: %s\n", fd, msg);
@@ -337,13 +342,21 @@ libcmudp_data_available(void *vtrans, void *vinput)
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
     udp_conn_data_ptr ucd = utd->connections;
     struct sockaddr_in addr;
-    unsigned int addrlen = sizeof(addr);
+    socklen_t addrlen = sizeof(addr);
     char *msgbuf;
     int unused;
 
     if (recvfrom(input_fd, (char*) & unused, 4, MSG_PEEK,
 		 (struct sockaddr *) &addr, &addrlen) != 4) {
+#ifdef _WIN32
+        /* On Windows, WSAEMSGSIZE means the message is larger than our peek buffer,
+           which is fine - it means data IS available, just larger than 4 bytes */
+        if (WSAGetLastError() != WSAEMSGSIZE) {
+            return;
+        }
+#else
         return;
+#endif
     }
     while (ucd != NULL) {
 	if (memcmp(&addr, &ucd->dest_addr, sizeof(addr)) == 0) {
@@ -522,7 +535,7 @@ libcmudp_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_en
     int int_port_num = 0;
     u_short port_num;
     attr_list listen_list;
-    unsigned int nl;
+    socklen_t nl;
     int one = 1;
     SOCKET socket_fd;
     struct sockaddr_in addr;
@@ -540,7 +553,7 @@ libcmudp_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_en
 	}
 	svc->trace_out(cm, "CMUDP transport connect to port %d", int_port_num);
     }
-    if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
 	perror("socket");
 	exit(1);
     }
@@ -622,8 +635,8 @@ extern int
 libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iovec *iov, size_t iovcnt, attr_list attrs)
 {
     SOCKET fd = ucd->utd->socket_fd;
-    if (ucd->utd->socket_fd == -1) {
-	if ((ucd->utd->socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if (ucd->utd->socket_fd == INVALID_SOCKET) {
+	if ((ucd->utd->socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
 	    perror("socket");
 	    exit(1);
 	}
@@ -644,7 +657,19 @@ libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iov
 	exit(1);
     }
 #else
-    // no reimplementation for windows currently
+    WSABUF wsa_bufs[IOV_MAX];
+    DWORD bytes_sent;
+    size_t i;
+    struct sockaddr_in addr = ucd->dest_addr;
+    for (i = 0; i < iovcnt && i < IOV_MAX; i++) {
+	wsa_bufs[i].buf = (char*)iov[i].iov_base;
+	wsa_bufs[i].len = (ULONG)iov[i].iov_len;
+    }
+    if (WSASendTo(fd, wsa_bufs, (DWORD)iovcnt, &bytes_sent, 0,
+		  (struct sockaddr*)&addr, sizeof(addr), NULL, NULL) == SOCKET_ERROR) {
+	fprintf(stderr, "WSASendTo failed: %d\n", WSAGetLastError());
+	exit(1);
+    }
 #endif
     return (int)iovcnt;
 }
@@ -682,6 +707,7 @@ libcmudp_LTX_initialize(CManager cm, CMtrans_services svc)
 	    WSACleanup();
 	    exit(-1);
 	}
+	socket_global_init = 1;
     }
 #endif
     if (atom_init == 0) {
@@ -695,7 +721,7 @@ libcmudp_LTX_initialize(CManager cm, CMtrans_services svc)
     udp_data = svc->malloc_func(sizeof(struct udp_transport_data));
     udp_data->cm = cm;
     udp_data->svc = svc;
-    udp_data->socket_fd = -1;
+    udp_data->socket_fd = INVALID_SOCKET;
     udp_data->self_ip = 0;
     udp_data->self_port = 0;
     udp_data->connections = NULL;

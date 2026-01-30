@@ -9,12 +9,12 @@
 #include <string.h>
 #include <signal.h>
 #include "evpath.h"
+#include "support.h"
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
+/* windows.h included via support.h */
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
-#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
 #include <arpa/inet.h>
@@ -79,7 +79,6 @@ static FMStructDescRec simple_format_list[] =
     {NULL, NULL}
 };
 
-int quiet = 1;
 
 static
 int
@@ -119,7 +118,6 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 }
 
 static int do_regression_master_test();
-static int regression = 1;
 static atom_t CM_TRANSPORT;
 static atom_t CM_NETWORK_POSTFIX;
 static atom_t CM_MCAST_ADDR;
@@ -150,10 +148,7 @@ char *ECL_generate = "{\n\
     return count == 1;\n\
 }";
 
-char *transport = NULL;
-char *control = NULL;
 
-#include "support.c"
 
 int
 main(int argc, char **argv)
@@ -344,24 +339,12 @@ do_regression_master_test()
     if (quiet <= 0) {
 	printf("Waiting for remote....\n");
     }
-#ifdef HAVE_WINDOWS_H
-    WaitForSingleObject((HANDLE)subproc_proc, INFINITE );
-    DWORD exitCode = 0;
-    GetExitCodeProcess((HANDLE)subproc_proc, &exitCode);
-    exit_state = exitCode;
-    if (exit_state == 0) {
-	    printf("Passed single remote subproc test\n");
-    } else {
-	printf("Single remote subproc exit with status %d\n",
-	       exit_state);
-    }
-#else
-    if (waitpid(subproc_proc, &exit_state, 0) == -1) {
-	perror("waitpid");
+    if (wait_for_subprocess(subproc_proc, &exit_state, 1) == -1) {
+	perror("wait_for_subprocess");
     }
     if (WIFEXITED(exit_state)) {
 	if (WEXITSTATUS(exit_state) == 0) {
-	    if (quiet <- 1) 
+	    if (quiet <= -1)
 		printf("Passed single remote subproc test\n");
 	} else {
 	    printf("Single remote subproc exit with status %d\n",
@@ -371,8 +354,7 @@ do_regression_master_test()
 	printf("Single remote subproc died with signal %d\n",
 	       WTERMSIG(exit_state));
     }
-#endif
-    free(string_list);
+    atl_free(string_list);
     free(args[2]);
     EVfree_stone(cm, handle);
     CManager_close(cm);

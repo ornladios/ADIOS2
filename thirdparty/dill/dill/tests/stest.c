@@ -17,6 +17,20 @@
 #ifdef USE_MMAP_CODE_SEG
 #include "sys/mman.h"
 #endif
+#ifdef USE_MACOS_MAP_JIT
+#include <sys/mman.h>
+#include <pthread.h>
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
+
+#ifdef USE_MACOS_MAP_JIT
+#define WRITE_PROTECT(x)    pthread_jit_write_protect_np(x)
+#else
+#define WRITE_PROTECT(x)
+#endif
 
 dill_exec_handle mk_test(dill_stream s) {
 	int i, regs, fregs;
@@ -116,9 +130,12 @@ int main() {
 		dill_dump(s);
 		printf("failure at point %d (second)\n", ret);
 	}
-#ifdef USE_MMAP_CODE_SEG
+#if defined(USE_MMAP_CODE_SEG) || defined(USE_MACOS_MAP_JIT)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
+#endif
+#ifndef MAP_JIT
+#define MAP_JIT 0
 #endif
 	{
 	    int size = dill_code_size(s);
@@ -127,9 +144,9 @@ int main() {
 	        ps = (getpagesize ());
 	    }
 	    if (ps > size) size = ps;
-	    target = (void*)mmap(0, size, 
-				 PROT_EXEC | PROT_READ | PROT_WRITE, 
-				 MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	    target = (void*)mmap(0, size,
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_ANONYMOUS|MAP_PRIVATE|MAP_JIT, -1, 0);
 	}
 	if (target == (void*)-1) perror("mmap");
 #else
@@ -138,8 +155,19 @@ int main() {
 	    printf("out of memory\n");
 	    return 1;
 	}
+#ifdef USE_VIRTUAL_PROTECT
+	{
+	    DWORD dummy;
+	    if (!VirtualProtect(target, dill_code_size(s), PAGE_EXECUTE_READWRITE, &dummy)) {
+	        fprintf(stderr, "VirtualProtect failed\n");
+	        return 1;
+	    }
+	}
 #endif
+#endif
+	WRITE_PROTECT(0);
 	ip = (int (*)()) dill_clone_code(s, target, dill_code_size(s));
+	WRITE_PROTECT(1);
 	dill_free_stream(s);
 	ret = ip();
 	if(ret == 0)

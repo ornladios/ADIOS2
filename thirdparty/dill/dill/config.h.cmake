@@ -84,6 +84,9 @@
 /* Define if the host processor is ARM8 */
 #cmakedefine HOST_ARM8 @HOST_ARM8@
 
+/* Define if the host processor is ARM64 (AArch64) */
+#cmakedefine HOST_ARM64 @HOST_ARM64@
+
 /* Define if the host processor is an ia64 */
 #cmakedefine HOST_IA64
 
@@ -148,6 +151,9 @@
 
 /* Define this if VirtualProtect should be used to change memory protections */
 #cmakedefine USE_VIRTUAL_PROTECT
+
+/* Define this if macOS MAP_JIT should be used for JIT memory allocation */
+#cmakedefine USE_MACOS_MAP_JIT
 
 /* Define this if windows calling convention should be used */
 #cmakedefine USE_WINDOWS_CALLS

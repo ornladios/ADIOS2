@@ -9,105 +9,16 @@
 #include <string.h>
 #include <signal.h>
 #include "evpath.h"
+#include "support.h"
 #ifdef HAVE_WINDOWS_H
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#define drand48() (((double)rand())/((double)RAND_MAX))
-#define lrand48() rand()
-#define srand48(x)
-#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/socket.h>
-#include <sys/wait.h>
 #include <arpa/inet.h>
 #endif
 
-typedef struct _complex_rec {
-    double r;
-    double i;
-} complex, *complex_ptr;
+#include "simple_rec.h"
 
-typedef struct _nested_rec {
-    complex item;
-} nested, *nested_ptr;
-
-static FMField nested_field_list[] =
-{
-    {"item", "complex", sizeof(complex), FMOffset(nested_ptr, item)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMField complex_field_list[] =
-{
-    {"r", "double", sizeof(double), FMOffset(complex_ptr, r)},
-    {"i", "double", sizeof(double), FMOffset(complex_ptr, i)},
-    {NULL, NULL, 0, 0}
-};
-
-typedef struct _simple_rec {
-    int integer_field;
-    short short_field;
-    long long_field;
-    nested nested_field;
-    double double_field;
-    char char_field;
-    int scan_sum;
-} simple_rec, *simple_rec_ptr;
-
-static FMField simple_field_list[] =
-{
-    {"integer_field", "integer",
-     sizeof(int), FMOffset(simple_rec_ptr, integer_field)},
-    {"short_field", "integer",
-     sizeof(short), FMOffset(simple_rec_ptr, short_field)},
-    {"long_field", "integer",
-     sizeof(long), FMOffset(simple_rec_ptr, long_field)},
-    {"nested_field", "nested",
-     sizeof(nested), FMOffset(simple_rec_ptr, nested_field)},
-    {"double_field", "float",
-     sizeof(double), FMOffset(simple_rec_ptr, double_field)},
-    {"char_field", "char",
-     sizeof(char), FMOffset(simple_rec_ptr, char_field)},
-    {"scan_sum", "integer",
-     sizeof(int), FMOffset(simple_rec_ptr, scan_sum)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec simple_format_list[] =
-{
-    {"simple", simple_field_list, sizeof(simple_rec), NULL},
-    {"complex", complex_field_list, sizeof(complex), NULL},
-    {"nested", nested_field_list, sizeof(nested), NULL},
-    {NULL, NULL}
-};
-
-static
-void 
-generate_record(simple_rec_ptr event)
-{
-    long sum = 0;
-    event->integer_field = (int) lrand48() % 100;
-    sum += event->integer_field % 100;
-    event->short_field = ((short) lrand48());
-    sum += event->short_field % 100;
-    event->long_field = ((long) lrand48());
-    sum += event->long_field % 100;
-
-    event->nested_field.item.r = drand48();
-    sum += ((int) (event->nested_field.item.r * 100.0)) % 100;
-    event->nested_field.item.i = drand48();
-    sum += ((int) (event->nested_field.item.i * 100.0)) % 100;
-
-    event->double_field = drand48();
-    sum += ((int) (event->double_field * 100.0)) % 100;
-    event->char_field = lrand48() % 128;
-    sum += event->char_field;
-    sum = sum % 100;
-    event->scan_sum = (int) sum;
-}
-
-int quiet = 1;
+#define generate_record generate_simple_record
 
 static
 int
@@ -147,16 +58,10 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 }
 
 static int do_regression_master_test();
-static int regression = 1;
 static atom_t CM_TRANSPORT;
 static atom_t CM_NETWORK_POSTFIX;
 static atom_t CM_MCAST_ADDR;
 static atom_t CM_MCAST_PORT;
-
-char *transport = NULL;
-char *control = NULL;
-
-#include "support.c"
 
 int
 main(int argc, char **argv)
@@ -227,10 +132,10 @@ main(int argc, char **argv)
 	stone = EValloc_stone(cm);
 	EVassoc_terminal_action(cm, stone, simple_format_list, simple_handler, NULL);
 	printf("Contact list \"%d:%s\"\n", stone, string_list);
-	free(string_list);
+	atl_free(string_list);
 	CMsleep(cm, 120);
     } else {
-	simple_rec data;
+	simple_rec data = {0};
 	attr_list attrs, stone_attrs;
 	atom_t CMDEMO_TEST_ATOM;
 	int remote_stone, stone = 0;
@@ -369,24 +274,12 @@ do_regression_master_test()
     if (quiet <= 0) {
 	printf("Waiting for remote....\n");
     }
-#ifdef HAVE_WINDOWS_H
-    WaitForSingleObject((HANDLE)subproc_proc, INFINITE );
-    DWORD exitCode = 0;
-    GetExitCodeProcess((HANDLE)subproc_proc, &exitCode);
-    exit_state = exitCode;
-    if (exit_state == 0) {
-	    printf("Passed single remote subproc test\n");
-    } else {
-	printf("Single remote subproc exit with status %d\n",
-	       exit_state);
-    }
-#else
-    if (waitpid(subproc_proc, &exit_state, 0) == -1) {
-	perror("waitpid");
+    if (wait_for_subprocess(subproc_proc, &exit_state, 1) == -1) {
+	perror("wait_for_subprocess");
     }
     if (WIFEXITED(exit_state)) {
 	if (WEXITSTATUS(exit_state) == 0) {
-	    if (quiet <- 1) 
+	    if (quiet <= -1)
 		printf("Passed single remote subproc test\n");
 	} else {
 	    printf("Single remote subproc exit with status %d\n",
@@ -396,8 +289,7 @@ do_regression_master_test()
 	printf("Single remote subproc died with signal %d\n",
 	       WTERMSIG(exit_state));
     }
-#endif
-    free(string_list);
+    atl_free(string_list);
     EVfree_stone(cm, handle);
     CManager_close(cm);
     if (message_count != 1) printf("Message count == %d\n", message_count);

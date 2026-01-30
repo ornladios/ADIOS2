@@ -81,7 +81,7 @@ clone_event(CManager cm, event_item *event, CManager target_cm)
     int id_len;
     char *old_ID;
 
-    *new_event = *event;
+    EVENT_ITEM_COPY_FIELDS(new_event, event);
     CMadd_ref_attr_list(cm, new_event->attrs);
     new_event->format = NULL;
     new_event->ref_count = 1;

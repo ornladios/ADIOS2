@@ -24,8 +24,8 @@
 #include <direct.h>
 #include <sys/timeb.h>
 #include <time.h>
-#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #define getcwd(x,y) _getcwd(x,y)
+#define kill(x,y) TerminateProcess((HANDLE)(x), y)
 #endif
 
 static atom_t CM_TRANS_TEST_SIZE = 10240;
@@ -116,14 +116,13 @@ trans_test_upcall(CManager cm, void *buffer, size_t length, int type, attr_list 
 	}
 	if (take) {
 	    int sum = 0;
-	    int i;
 	    if (!buffer_list) {
 		buffer_list = malloc(sizeof(buffer_list[0]));
 	    } else {
 		buffer_list = realloc(buffer_list, (buffer_count+1)*sizeof(buffer_list[0]));
 	    }
-	    for(i=0; i < length/sizeof(int); i++) {
-		sum += ((int*)buffer)[i];
+	    for(size_t si=0; si < length/sizeof(int); si++) {
+		sum += ((int*)buffer)[si];
 	    }
 	    buffer_list[buffer_count].buffer = buffer;
 	    buffer_list[buffer_count].length = length;
@@ -152,9 +151,8 @@ trans_test_upcall(CManager cm, void *buffer, size_t length, int type, attr_list 
 	chr_timer_stop(&bandwidth_start_time);
 	for (buf = 0; buf < buffer_count; buf++) {
 	    int sum = 0;
-	    int i;
-	    for(i=0; i < buffer_list[buf].length/sizeof(int); i++) {
-		sum += ((int*)buffer_list[buf].buffer)[i];
+	    for(size_t si=0; si < buffer_list[buf].length/sizeof(int); si++) {
+		sum += ((int*)buffer_list[buf].buffer)[si];
 	    }
 	    if (buffer_list[buf].checksum != sum) {
 		printf("taken data corrupted, calc checksum %d, stored %d, first entry %d\n", sum, buffer_list[buf].checksum, ((int*)buffer_list[buf].buffer)[0]);
@@ -219,13 +217,39 @@ pid_t
 run_subprocess(char **args)
 {
 #ifdef HAVE_WINDOWS_H
-    intptr_t child;
-    child = _spawnv(_P_NOWAIT, args[0], args);
-    if (child == -1) {
-	printf("failed for cmtest\n");
-	perror("spawnv");
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    char comm_line[8191];
+    char module[MAX_PATH];
+    int i;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+    GetModuleFileName(NULL, &module[0], MAX_PATH);
+    i = 1;
+    strcpy(comm_line, module);
+    strcat(comm_line, " ");
+    while (args[i] != NULL) {
+        strcat(comm_line, args[i]);
+        strcat(comm_line, " ");
+        i++;
     }
-    return child;
+    if (!CreateProcess(module,
+                       comm_line,
+                       NULL,           // Process handle not inheritable
+                       NULL,           // Thread handle not inheritable
+                       FALSE,          // Set handle inheritance to FALSE
+                       0,              // No creation flags
+                       NULL,           // Use parent's environment block
+                       NULL,           // Use parent's starting directory
+                       &si,            // Pointer to STARTUPINFO structure
+                       &pi))
+    {
+        printf("CreateProcess failed (%lu).\n", (unsigned long)GetLastError());
+        return 0;
+    }
+    return (intptr_t) pi.hProcess;
 #else
     pid_t child = fork();
 /*    int i = 0;
@@ -289,12 +313,22 @@ main(int argc, char **argv)
 	MPI_Finalize();
 	exit(1);
     }
+#ifdef _MSC_VER
+    /* On Windows, check for absolute path (drive letter or UNC path) */
+    if (!((argv0[0] && argv0[1] == ':') || (argv0[0] == '\\' && argv0[1] == '\\'))) {
+	strcat(path, "\\");
+	strcat(path, argv0);
+    } else {
+	strcpy(path, argv0);
+    }
+#else
     if (argv0[0] != '/') {
 	strcat(path, "/");
 	strcat(path, argv0);
     } else {
 	strcpy(path, argv0);
     }
+#endif
     subproc_args[--start_subproc_arg_count] = strdup(path);
     while (argv[1] && (argv[1][0] == '-')) {
 	subproc_args[cur_subproc_arg++] = strdup(argv[1]);

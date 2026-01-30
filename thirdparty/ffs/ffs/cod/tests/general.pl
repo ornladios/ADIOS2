@@ -88,10 +88,26 @@ sub arith_insn {
 	    if ($c_op eq "/") {
 		$div_continue = "if (source2_$t2 == 0) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;}";
 		$div_label = "skip$skip_count: ;\n";
-		if (($c_type1 eq "short") && 
+		if (($c_type1 eq "short") &&
 		    (($t2 eq "d") || ($t2 eq "f"))) {
 		    $div_continue .= "\n	if ((source1_$t1/source2_$t2) < (-32768) || ((source1_$t1/source2_$t2) > 32767)){if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;}";
-		} 
+		}
+		# Skip signed char overflow cases - result doesn't fit in -128 to 127
+		if (($c_type1 eq "signed char") &&
+		    (($t2 eq "d") || ($t2 eq "f"))) {
+		    $div_continue .= "\n	if ((source1_$t1/source2_$t2) < (-128) || ((source1_$t1/source2_$t2) > 127)){if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;} /* skip overflow */";
+		}
+		# Skip negative float/double with unsigned result - UB in C
+		if ((($t1 eq "uc") || ($t1 eq "us") || ($t1 eq "u") || ($t1 eq "ul")) &&
+		    (($t2 eq "f") || ($t2 eq "d"))) {
+		    $div_continue .= "\n	if (source2_$t2 < 0) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;} /* skip negative divisor - UB */";
+		    # Also skip overflow cases
+		    if ($t1 eq "uc") {
+			$div_continue .= "\n	if ((source1_$t1 / source2_$t2) > 255) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;} /* skip overflow */";
+		    } elsif ($t1 eq "us") {
+			$div_continue .= "\n	if ((source1_$t1 / source2_$t2) > 65535) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;} /* skip overflow */";
+		    }
+		}
 		$skip_count++;
 	    } elsif ($c_op eq "%") {
 		$div_continue = "if (source2_$t2 <= 0) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;}";
@@ -102,6 +118,16 @@ sub arith_insn {
 		$div_continue = "if (source2_$_ >= sizeof(source1_$t1)) goto skip$skip_count;";
 		$div_label = "skip$skip_count: ;\n";
 		$skip_count++;
+	    } elsif ($c_op eq "*") {
+		$div_continue = "";
+		$div_label = "";
+		# Skip negative float/double with unsigned result - UB in C
+		if ((($t1 eq "uc") || ($t1 eq "us") || ($t1 eq "u") || ($t1 eq "ul")) &&
+		    (($t2 eq "f") || ($t2 eq "d"))) {
+		    $div_continue = "if (source2_$t2 < 0) {if (verbose) {printf(\"+\");fflush(stdout);} goto skip$skip_count;} /* skip negative multiplier - UB */";
+		    $div_label = "skip$skip_count: ;\n";
+		    $skip_count++;
+		}
 	    } else {
 		$div_continue = "";
 		$div_label = "";
@@ -136,7 +162,7 @@ sub arith_insn {
 		$result_if = "if ((expected_result == 0) || (expected_result == ($c_type1) 0x$type_max{$t1}) || (expected_result == ($c_type1) 0x$type_max2{$t1})) continue;\n	$result_if";
 	    }
 	    if (($t1 eq "ul") && (($t2 eq "d") || ($t2 eq "f"))) {
-		$result_if = "if (source1_ul > ((ssize_t)11<<52)) continue;\n 	$result_if";
+		$result_if = "if (source1_ul > ((int64_t)11<<52)) continue;\n 	$result_if";
 	    }
 	    if (($t1 eq "uc") && ($c_op eq "/")) {
 		$range_decl .= "\n	    unsigned int expect_int;";
