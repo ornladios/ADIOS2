@@ -970,6 +970,8 @@ int main(int argc, char **argv)
         {
             printf("Forking server to background\n");
         }
+        // Ready file used to synchronize parent/child - parent waits for this before exiting
+        char ready_filename[256];
 #ifdef _MSC_VER
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
@@ -1023,8 +1025,28 @@ int main(int argc, char **argv)
                     fprintf(stdout, "%s", buffer);
                 fflush(stdout);
             }
-            std::cout << "calling exit 0" << std::endl;
-            ;
+            else
+            {
+                // Wait for child to signal it's ready (listening on port)
+                snprintf(ready_filename, sizeof(ready_filename), "/tmp/adios2_remote_ready_%d",
+                         parent_pid);
+                FILE *f = NULL;
+                int wait_count = 0;
+                while (f == NULL && wait_count < 30)
+                {
+                    f = fopen(ready_filename, "r");
+                    if (f == NULL)
+                    {
+                        usleep(100000); // 100ms
+                        wait_count++;
+                    }
+                }
+                if (f)
+                {
+                    fclose(f);
+                    unlink(ready_filename);
+                }
+            }
             close(0);
             close(1);
             close(2);
@@ -1072,6 +1094,19 @@ int main(int argc, char **argv)
         // listen on well-known port
         add_attr(listen_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
         CMlisten_specific(cm, listen_list);
+        // Signal parent that we're ready (if running in background mode)
+        if (background)
+        {
+            char ready_filename[256];
+            snprintf(ready_filename, sizeof(ready_filename), "/tmp/adios2_remote_ready_%d",
+                     parent_pid);
+            FILE *f = fopen(ready_filename, "w");
+            if (f)
+            {
+                fprintf(f, "ready\n");
+                fclose(f);
+            }
+        }
     }
     else
     {

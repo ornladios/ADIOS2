@@ -20,6 +20,13 @@
 
 #include <gtest/gtest.h>
 
+// Detect sanitizers - test is too slow due to ~4GB allocation
+#if defined(__has_feature)
+#if __has_feature(memory_sanitizer) || __has_feature(thread_sanitizer)
+#define ADIOS2_RUNNING_UNDER_SANITIZER 1
+#endif
+#endif
+
 std::string engineName; // comes from command line
 
 constexpr size_t DefaultMaxFileBatchSize = 4294762496;
@@ -46,6 +53,12 @@ public:
 
 TEST_F(LargeBlocks, MultiBlock)
 {
+#ifdef ADIOS2_RUNNING_UNDER_SANITIZER
+    std::cerr << "SKIP: test disabled under sanitizers (too slow with ~4GB allocation)"
+              << std::endl;
+    return;
+#endif
+
     if (!this->CanDiskAllocateBytes(RequiredDiskSpace))
     {
         std::cerr << "SKIP: insufficient space in disk, bytes needed: " << RequiredDiskSpace
