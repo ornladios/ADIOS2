@@ -75,6 +75,42 @@ void FileAWSSDK::SetParameters(const Params &params)
     helper::SetParameterValue("recheck_metadata", params, recheckStr);
     m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
 
+    // Part size limits for multipart uploads (accepts human-readable sizes like "64MB", "1GB")
+    std::string minPartSizeStr, maxPartSizeStr;
+    helper::SetParameterValue("min_part_size", params, minPartSizeStr);
+    helper::SetParameterValue("max_part_size", params, maxPartSizeStr);
+
+    if (!minPartSizeStr.empty())
+    {
+        size_t minPartSize = helper::StringToByteUnits(minPartSizeStr, "min_part_size");
+        if (minPartSize < S3_MIN_PART_SIZE)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileAWSSDK", "SetParameters",
+                "min_part_size must be at least 5MB (S3 requirement), got " + minPartSizeStr);
+        }
+        m_MinPartSize = minPartSize;
+    }
+
+    if (!maxPartSizeStr.empty())
+    {
+        size_t maxPartSize = helper::StringToByteUnits(maxPartSizeStr, "max_part_size");
+        if (maxPartSize > S3_MAX_PART_SIZE)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileAWSSDK", "SetParameters",
+                "max_part_size must be at most 5GB (S3 limit), got " + maxPartSizeStr);
+        }
+        if (maxPartSize < m_MinPartSize)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileAWSSDK", "SetParameters",
+                "max_part_size (" + maxPartSizeStr + ") must be >= min_part_size (" +
+                    minPartSizeStr + ")");
+        }
+        m_MaxPartSize = maxPartSize;
+    }
+
     core::ADIOS::Global_init_AWS_API();
 
     s3ClientConfig = new Aws::S3::S3ClientConfiguration;
@@ -86,8 +122,9 @@ void FileAWSSDK::SetParameters(const Params &params)
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
-                  << m_Endpoint << "'"
-                  << " recheck_metadata = " << m_RecheckMetadata << std::endl;
+                  << m_Endpoint << "' recheck_metadata = " << m_RecheckMetadata
+                  << " min_part_size = " << m_MinPartSize << " max_part_size = " << m_MaxPartSize
+                  << std::endl;
     }
 }
 
@@ -217,9 +254,25 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
     {
 
     case Mode::Write:
+        ProfilerStart("open");
+        m_WriteBuffer.clear();
+        m_WriteBuffer.reserve(m_MinPartSize);
+        m_CompletedParts.clear();
+        m_CurrentPartNumber = 0;
+        m_TotalBytesWritten = 0;
+
+        // Initiate multipart upload
+        InitiateMultipartUpload();
+
+        m_IsOpen = true;
+        ProfilerStop("open");
+        break;
+
     case Mode::Append:
+        // Append is complex with S3 - objects are immutable after upload
+        // Would need to download, modify, re-upload or use multipart copy + new parts
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Open",
-                                              "does not support writing yet " + m_Name);
+                                              "Append mode not supported for S3 " + m_Name);
         break;
 
     case Mode::Read: {
@@ -268,8 +321,9 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
         CheckFile("unknown open mode for file " + m_Name + ", in call to AWSSDK open");
     }
 
-    if (!m_IsOpening)
+    if (!m_IsOpening && !m_IsOpen)
     {
+        // Only check for read mode - write mode already set m_IsOpen = true
         CheckFile("couldn't open file " + m_Name + ", in call to AWSSDK open");
         m_IsOpen = true;
     }
@@ -295,8 +349,65 @@ void FileAWSSDK::OpenChain(const std::string &name, Mode openMode, const helper:
 
 void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
 {
-    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Write",
-                                          "does not support writing yet " + m_Name);
+    WaitForOpen();
+
+    if (m_OpenMode != Mode::Write)
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Write",
+                                              "File not opened for writing: " + m_Name);
+    }
+
+    // S3 multipart upload only supports sequential writes
+    // The 'start' parameter is typically MaxSizeT for sequential writes
+    if (start != MaxSizeT && start != m_TotalBytesWritten)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileAWSSDK", "Write",
+            "S3 multipart upload only supports sequential writes. "
+            "Requested start: " +
+                std::to_string(start) +
+                ", current position: " + std::to_string(m_TotalBytesWritten));
+    }
+
+    ProfilerStart("write");
+
+    size_t offset = 0;
+
+    // Step 1: If we have buffered data, fill it up to target size first
+    if (!m_WriteBuffer.empty())
+    {
+        size_t spaceInBuffer = m_MinPartSize - m_WriteBuffer.size();
+        size_t toBuffer = std::min(size, spaceInBuffer);
+
+        m_WriteBuffer.insert(m_WriteBuffer.end(), buffer, buffer + toBuffer);
+        offset = toBuffer;
+
+        if (m_WriteBuffer.size() >= m_MinPartSize)
+        {
+            UploadBufferedPart();
+        }
+    }
+
+    // Step 2: Handle remaining data
+    size_t remaining = size - offset;
+
+    // Upload large chunks directly (but respect max part size)
+    while (remaining >= m_MinPartSize)
+    {
+        size_t partSize = std::min(remaining, m_MaxPartSize);
+        UploadPart(buffer + offset, partSize);
+        offset += partSize;
+        remaining -= partSize;
+    }
+
+    // Buffer any small remainder for later
+    if (remaining > 0)
+    {
+        m_WriteBuffer.insert(m_WriteBuffer.end(), buffer + offset, buffer + size);
+    }
+
+    m_TotalBytesWritten += size;
+    ProfilerStop("write");
 }
 
 void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
@@ -386,18 +497,26 @@ size_t FileAWSSDK::GetSize()
     switch (m_OpenMode)
     {
     case Mode::Write:
+        return m_TotalBytesWritten;
     case Mode::Append:
         return 0;
-        break;
     case Mode::Read:
         return m_Size;
-        break;
     default:
         return 0;
     }
 }
 
-void FileAWSSDK::Flush() {}
+void FileAWSSDK::Flush()
+{
+    if (m_OpenMode == Mode::Write && m_WriteBuffer.size() >= m_MinPartSize)
+    {
+        // Only flush if we have enough data for a valid part
+        // S3 requires minimum 5MB per part (except the last part)
+        UploadBufferedPart();
+    }
+    // If buffer < 5MB, we must wait - can't upload undersized parts except last
+}
 
 void FileAWSSDK::Close()
 {
@@ -409,6 +528,34 @@ void FileAWSSDK::Close()
     ProfilerStart("close");
     errno = 0;
     m_Errno = errno;
+
+    if (m_OpenMode == Mode::Write)
+    {
+        // Upload any remaining data as the final part
+        // (Final part can be < 5MB, unlike other parts)
+        if (!m_WriteBuffer.empty())
+        {
+            UploadBufferedPart();
+        }
+
+        // Complete or abort the multipart upload
+        if (!m_CompletedParts.empty())
+        {
+            CompleteMultipartUpload();
+        }
+        else if (!m_UploadId.empty())
+        {
+            // No parts uploaded (empty file) - abort the upload
+            // S3 doesn't support 0-byte objects via multipart upload
+            AbortMultipartUpload();
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::Close: Aborted empty multipart upload for " << m_Name
+                          << std::endl;
+            }
+        }
+    }
+
     if (s3Client)
     {
         delete s3Client;
@@ -476,6 +623,160 @@ void FileAWSSDK::Truncate(const size_t length)
 }
 
 void FileAWSSDK::MkDir(const std::string &fileName) {}
+
+void FileAWSSDK::InitiateMultipartUpload()
+{
+    Aws::S3::Model::CreateMultipartUploadRequest request;
+    request.SetBucket(m_BucketName);
+    request.SetKey(m_ObjectName);
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::InitiateMultipartUpload: bucket='" << m_BucketName << "' object='"
+                  << m_ObjectName << "'" << std::endl;
+    }
+
+    auto outcome = s3Client->CreateMultipartUpload(request);
+    if (!outcome.IsSuccess())
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK",
+                                              "InitiateMultipartUpload",
+                                              "Failed to initiate multipart upload for " + m_Name +
+                                                  ": " + outcome.GetError().GetMessage());
+    }
+
+    m_UploadId = outcome.GetResult().GetUploadId();
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::InitiateMultipartUpload: Upload ID = " << m_UploadId << std::endl;
+    }
+}
+
+void FileAWSSDK::UploadPart(const char *data, size_t size)
+{
+    m_CurrentPartNumber++;
+
+    // Zero-copy stream: reads directly from data buffer (no memcpy)
+    // Buffer must stay valid until UploadPart returns (synchronous)
+    Aws::Utils::Stream::PreallocatedStreamBuf streamBuf(
+        reinterpret_cast<unsigned char *>(const_cast<char *>(data)), size);
+    auto inputData = Aws::MakeShared<Aws::IOStream>("S3Upload", &streamBuf);
+
+    Aws::S3::Model::UploadPartRequest request;
+    request.SetBucket(m_BucketName);
+    request.SetKey(m_ObjectName);
+    request.SetPartNumber(m_CurrentPartNumber);
+    request.SetUploadId(m_UploadId);
+    request.SetBody(inputData);
+    request.SetContentLength(static_cast<long long>(size));
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::UploadPart: Uploading part " << m_CurrentPartNumber
+                  << ", size=" << size << " bytes" << std::endl;
+    }
+
+    auto outcome = s3Client->UploadPart(request);
+    if (!outcome.IsSuccess())
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileAWSSDK", "UploadPart",
+            "Failed to upload part " + std::to_string(m_CurrentPartNumber) + " for " + m_Name +
+                ": " + outcome.GetError().GetMessage());
+    }
+
+    // Record completed part for final CompleteMultipartUpload call
+    Aws::S3::Model::CompletedPart completedPart;
+    completedPart.SetPartNumber(m_CurrentPartNumber);
+    completedPart.SetETag(outcome.GetResult().GetETag());
+    m_CompletedParts.push_back(completedPart);
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::UploadPart: Part " << m_CurrentPartNumber
+                  << " uploaded, ETag=" << outcome.GetResult().GetETag() << std::endl;
+    }
+}
+
+void FileAWSSDK::UploadBufferedPart()
+{
+    if (m_WriteBuffer.empty())
+    {
+        return;
+    }
+
+    UploadPart(m_WriteBuffer.data(), m_WriteBuffer.size());
+    m_WriteBuffer.clear();
+}
+
+void FileAWSSDK::CompleteMultipartUpload()
+{
+    Aws::S3::Model::CompletedMultipartUpload completedUpload;
+    completedUpload.SetParts(m_CompletedParts);
+
+    Aws::S3::Model::CompleteMultipartUploadRequest request;
+    request.SetBucket(m_BucketName);
+    request.SetKey(m_ObjectName);
+    request.SetUploadId(m_UploadId);
+    request.SetMultipartUpload(completedUpload);
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::CompleteMultipartUpload: Completing upload for " << m_Name
+                  << " with " << m_CompletedParts.size() << " parts" << std::endl;
+    }
+
+    auto outcome = s3Client->CompleteMultipartUpload(request);
+    if (!outcome.IsSuccess())
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK",
+                                              "CompleteMultipartUpload",
+                                              "Failed to complete multipart upload for " + m_Name +
+                                                  ": " + outcome.GetError().GetMessage());
+    }
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::CompleteMultipartUpload: Successfully uploaded " << m_Name << ", "
+                  << m_CompletedParts.size() << " parts, " << m_TotalBytesWritten << " bytes total"
+                  << std::endl;
+    }
+
+    m_UploadId.clear();
+    m_CompletedParts.clear();
+}
+
+void FileAWSSDK::AbortMultipartUpload()
+{
+    if (m_UploadId.empty())
+    {
+        return;
+    }
+
+    Aws::S3::Model::AbortMultipartUploadRequest request;
+    request.SetBucket(m_BucketName);
+    request.SetKey(m_ObjectName);
+    request.SetUploadId(m_UploadId);
+
+    // Best effort - ignore errors on abort
+    auto outcome = s3Client->AbortMultipartUpload(request);
+    if (m_Verbose > 0)
+    {
+        if (outcome.IsSuccess())
+        {
+            std::cout << "FileAWSSDK::AbortMultipartUpload: Aborted upload for " << m_Name
+                      << std::endl;
+        }
+        else
+        {
+            std::cout << "FileAWSSDK::AbortMultipartUpload: Failed to abort upload for " << m_Name
+                      << ": " << outcome.GetError().GetMessage() << std::endl;
+        }
+    }
+
+    m_UploadId.clear();
+    m_CompletedParts.clear();
+}
 
 } // end namespace transport
 } // end namespace adios2
