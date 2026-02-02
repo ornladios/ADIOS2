@@ -1835,8 +1835,9 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
 
         bpWriter.Close();
 
-        EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
+        adios2::Engine bpWriter2 = io.Open(fname, adios2::Mode::Write);
         EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::invalid_argument);
+        bpWriter2.Close();
     }
 
     // Cleanup generated files
