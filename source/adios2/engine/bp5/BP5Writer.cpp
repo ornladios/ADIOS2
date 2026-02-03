@@ -1095,7 +1095,7 @@ void BP5Writer::EndStep()
     if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
         m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
         m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams ||
-        m_Parameters.EnableWriterRerouting))
+                                                          m_Parameters.EnableWriterRerouting))
     {
         // new Writer Map is needed
         if (m_Parameters.verbose > 2)
