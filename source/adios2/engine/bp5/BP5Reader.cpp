@@ -1235,8 +1235,14 @@ bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &poll
 
 size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                                   const TimePoint &timeoutInstant, const Seconds &pollSeconds,
-                                  std::string &lasterrmsg /*INOUT*/)
+                                  std::string &lasterrmsg /*INOUT*/,
+                                  std::shared_ptr<FilePool> filePool)
 {
+    // Use provided filePool or default to m_DataFiles
+    if (!filePool)
+    {
+        filePool = m_DataFiles;
+    }
     size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
     do
     {
@@ -1245,7 +1251,7 @@ size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std
             errno = 0;
             // if dataIsRemote, our filename is real and not in a tar file
             bool skipTarInfoParameter = m_dataIsRemote;
-            file = m_DataFiles->Acquire(fileName, skipTarInfoParameter);
+            file = filePool->Acquire(fileName, skipTarInfoParameter);
             flag = 0; // found file
             break;
         }
@@ -1278,7 +1284,7 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
         std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
 
         flag = OpenWithTimeout(m_MDIndexFile, metadataIndexFile, timeoutInstant, pollSeconds,
-                               lasterrmsg);
+                               lasterrmsg, m_MetadataFiles);
         if (flag == 0)
         {
             /* Open the metadata file */
@@ -1294,7 +1300,8 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFile, metadataFile, timeoutInstant, pollSeconds, lasterrmsg);
+            flag = OpenWithTimeout(m_MDFile, metadataFile, timeoutInstant, pollSeconds, lasterrmsg,
+                                   m_MetadataFiles);
             if (flag != 0)
             {
                 /* Close the metadata index table */
@@ -1316,7 +1323,7 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 }
 
                 flag = OpenWithTimeout(m_MetaMetadataFile, metametadataFile, timeoutInstant,
-                                       pollSeconds, lasterrmsg);
+                                       pollSeconds, lasterrmsg, m_MetadataFiles);
                 if (flag != 0)
                 {
                     /* Close the metametadata index table */
@@ -1417,8 +1424,42 @@ void BP5Reader::InitTransports()
                       << "\n    map size = " << m_TarInfoMap.size() << std::endl;
         }
     }
-    m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                             m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+
+    // Metadata files always use default local transport
+    m_MetadataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
+                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+
+    // Set up data transport parameters - use different transport if DataTransport is specified
+    Params dataTransportParams;
+    if (!m_Parameters.DataTransport.empty())
+    {
+        // User specified a different transport for data files (e.g., "awssdk" for S3)
+        dataTransportParams["transport"] = "file";
+        dataTransportParams["library"] = m_Parameters.DataTransport;
+
+        // Pass through S3-specific parameters if set
+        if (!m_Parameters.S3Endpoint.empty())
+        {
+            dataTransportParams["endpoint"] = m_Parameters.S3Endpoint;
+        }
+        if (!m_Parameters.S3Bucket.empty())
+        {
+            dataTransportParams["bucket"] = m_Parameters.S3Bucket;
+        }
+        // Pass verbose level to transport
+        if (m_Parameters.verbose > 0)
+        {
+            dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
+        }
+
+        m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, dataTransportParams,
+                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+    }
+    else
+    {
+        // Same transport for both metadata and data
+        m_DataFiles = m_MetadataFiles;
+    }
 }
 
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
@@ -2031,12 +2072,19 @@ void BP5Reader::DoClose(const int transportIndex)
         EndStep();
     }
     FlushProfiler();
-    if (m_MDFile)
-        m_MDFile->Close();
-    if (m_MDIndexFile)
-        m_MDIndexFile->Close();
-    if (m_MetaMetadataFile)
-        m_MetaMetadataFile->Close();
+
+    // Release PoolableFile objects BEFORE their owning FilePools.
+    // PoolableFile destructor calls Release() on its pool, which locks
+    // the pool's mutex. If the pool is destroyed first, the mutex is invalid.
+    m_MDFile.reset();
+    m_MDIndexFile.reset();
+    m_MetaMetadataFile.reset();
+
+    // Now safe to release the file pools and their transports.
+    // This ensures transports using external resources (like AWS SDK)
+    // are cleaned up while those resources are still available.
+    m_DataFiles.reset();
+    m_MetadataFiles.reset();
 }
 
 #if defined(_WIN32)

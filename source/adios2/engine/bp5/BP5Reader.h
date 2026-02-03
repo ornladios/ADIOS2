@@ -84,8 +84,10 @@ private:
     /* m_MDFileAbsolutePos <= m_MDFileProcessedSize <= m_MDFileAlreadyReadSize
      */
 
-    /* transport manager for managing data file(s) */
+    /* transport manager for managing data file(s) - may use S3 if DataTransport is set */
     std::shared_ptr<FilePool> m_DataFiles;
+    /* transport manager for managing metadata file(s) - always local */
+    std::shared_ptr<FilePool> m_MetadataFiles;
 
     transportman::TransportMan m_TransportFactory;
 
@@ -148,7 +150,8 @@ private:
      */
     size_t OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                            const TimePoint &timeoutInstant, const Seconds &pollSeconds,
-                           std::string &lasterrmsg /*INOUT*/);
+                           std::string &lasterrmsg /*INOUT*/,
+                           std::shared_ptr<FilePool> filePool = nullptr);
 
     /** Open files within timeout.
      * @return True if files are opened, False in case of timeout

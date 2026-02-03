@@ -60,6 +60,15 @@ void FileAWSSDK::SetParameters(const Params &params)
         }
     }
 
+    helper::SetParameterValue("bucket", params, m_BucketPrefix);
+    if (m_BucketPrefix.empty())
+    {
+        if (const char *bucketEnv = std::getenv("ADIOS2_AWS_BUCKET"))
+        {
+            m_BucketPrefix = std::string(bucketEnv);
+        }
+    }
+
     helper::SetParameterValue("cache", params, m_CachePath);
     if (m_CachePath.empty())
     {
@@ -117,12 +126,14 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->endpointOverride = m_Endpoint;
     s3ClientConfig->useVirtualAddressing = false;
     s3ClientConfig->enableEndpointDiscovery = false;
+    s3ClientConfig->region = "us-east-1"; // Required for signature calculation
 
     s3Client = new Aws::S3::S3Client(*s3ClientConfig);
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
-                  << m_Endpoint << "' recheck_metadata = " << m_RecheckMetadata
+                  << m_Endpoint << "' bucket = '" << m_BucketPrefix
+                  << "' recheck_metadata = " << m_RecheckMetadata
                   << " min_part_size = " << m_MinPartSize << " max_part_size = " << m_MaxPartSize
                   << std::endl;
     }
@@ -238,16 +249,33 @@ void FileAWSSDK::CheckCache(const size_t fileSize)
 void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool async,
                       const bool directio)
 {
-    m_Name = name;
-
-    size_t pos = name.find(PathSeparator);
-    if (pos == std::string::npos)
+    // If bucket is specified via parameter, use it directly and name becomes the object key
+    if (!m_BucketPrefix.empty())
     {
-        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileAWSSDK", "Open",
-                                             "invalid 'bucket/object' name " + name);
+        m_BucketName = m_BucketPrefix;
+        m_ObjectName = name;
+        // Strip leading slashes from object key (S3 keys shouldn't start with /)
+        while (!m_ObjectName.empty() && m_ObjectName[0] == PathSeparator)
+        {
+            m_ObjectName = m_ObjectName.substr(1);
+        }
+        m_Name = m_BucketName + PathSeparator + m_ObjectName;
     }
-    m_BucketName = name.substr(0, pos);
-    m_ObjectName = name.substr(pos + 1);
+    else
+    {
+        // Original behavior: parse bucket/object from the path
+        std::string fullPath = name;
+        m_Name = fullPath;
+
+        size_t pos = fullPath.find(PathSeparator);
+        if (pos == std::string::npos)
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileAWSSDK", "Open",
+                                                 "invalid 'bucket/object' name " + fullPath);
+        }
+        m_BucketName = fullPath.substr(0, pos);
+        m_ObjectName = fullPath.substr(pos + 1);
+    }
 
     m_OpenMode = openMode;
     switch (m_OpenMode)

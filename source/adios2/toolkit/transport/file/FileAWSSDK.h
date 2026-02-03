@@ -96,6 +96,7 @@ private:
     Aws::S3::S3Client *s3Client = nullptr;
     /** AWSSDK file handle returned by Open */
     std::string m_Endpoint;
+    std::string m_BucketPrefix; // Bucket to prepend to paths (from "bucket" parameter)
     Aws::S3::Model::HeadObjectOutcome head_object;
     std::string m_BucketName;
     std::string m_ObjectName;

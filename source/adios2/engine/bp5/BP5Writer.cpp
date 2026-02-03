@@ -1204,11 +1204,8 @@ void BP5Writer::InitParameters()
         helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, m_Parameters.NumAggregators);
 
     // Limiting to max 64MB page size
+    // StripeSize=0 is allowed (no alignment padding, useful for S3/object storage)
     m_Parameters.StripeSize = helper::SetWithinLimit(m_Parameters.StripeSize, 0U, 67108864U);
-    if (m_Parameters.StripeSize == 0)
-    {
-        m_Parameters.StripeSize = 4096;
-    }
 
     if (m_Parameters.DirectIO)
     {
@@ -1573,6 +1570,38 @@ void BP5Writer::InitMetadataTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
+    // Set up data transport parameters - use different transport if DataTransport is specified
+    if (!m_Parameters.DataTransport.empty())
+    {
+        // User specified a different transport for data files (e.g., "awssdk" for S3)
+        Params dataTransportParams;
+        // Set transport type to "file" and library to the specified transport library
+        dataTransportParams["transport"] = "file";
+        dataTransportParams["library"] = m_Parameters.DataTransport;
+
+        // Pass through S3-specific parameters if set
+        if (!m_Parameters.S3Endpoint.empty())
+        {
+            dataTransportParams["endpoint"] = m_Parameters.S3Endpoint;
+        }
+        if (!m_Parameters.S3Bucket.empty())
+        {
+            dataTransportParams["bucket"] = m_Parameters.S3Bucket;
+        }
+        // Pass verbose level to transport
+        if (m_Parameters.verbose > 0)
+        {
+            dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
+        }
+
+        m_DataTransportsParameters.push_back(dataTransportParams);
+    }
+    else
+    {
+        // Use same transport for data as metadata
+        m_DataTransportsParameters = m_IO.m_TransportsParameters;
+    }
+
     if (m_WriteToBB)
     {
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
@@ -1606,12 +1635,20 @@ void BP5Writer::InitMetadataTransports()
         {
             m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
         }
+        for (size_t i = 0; i < m_DataTransportsParameters.size(); ++i)
+        {
+            m_DataTransportsParameters[i]["asyncopen"] = "true";
+        }
     }
     if (m_Parameters.DirectIO)
     {
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
             m_IO.m_TransportsParameters[i]["DirectIO"] = "true";
+        }
+        for (size_t i = 0; i < m_DataTransportsParameters.size(); ++i)
+        {
+            m_DataTransportsParameters[i]["DirectIO"] = "true";
         }
     }
 
@@ -1703,7 +1740,7 @@ void BP5Writer::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_DataTransportsParameters);
             aggData.m_DrainSubStreamNames =
                 GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
@@ -1719,7 +1756,7 @@ void BP5Writer::InitTransports()
     {
         /* Create the directories on target anyway by main thread */
         aggData.m_FileDataManager.MkDirsBarrier(
-            aggData.m_DrainSubStreamNames, m_IO.m_TransportsParameters, m_Parameters.NodeLocal);
+            aggData.m_DrainSubStreamNames, m_DataTransportsParameters, m_Parameters.NodeLocal);
     }
 
     helper::Comm openSyncComm;
@@ -1756,7 +1793,7 @@ void BP5Writer::InitTransports()
                 std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
             }
             aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                m_IO.m_TransportsParameters, true,
+                                                m_DataTransportsParameters, true,
                                                 *DataWritingComm);
         }
     }
@@ -2239,6 +2276,17 @@ void BP5Writer::DoClose(const int transportIndex)
         }
     }
     FlushProfiler();
+
+    // Release transports now, rather than waiting for engine destruction.
+    // This ensures transports using external resources (like AWS SDK) are
+    // cleaned up while those resources are still available.
+    for (auto &aggPair : m_AggregatorSpecifics)
+    {
+        aggPair.second.m_FileDataManager.m_Transports.clear();
+    }
+    m_MetadataFile.reset();
+    m_MetaMetadataFile.reset();
+    m_MetadataIndexFile.reset();
 }
 
 void BP5Writer::FlushProfiler()

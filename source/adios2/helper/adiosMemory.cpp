@@ -662,6 +662,10 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount, const
 
 uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)
 {
+    if (alignment_size == 0)
+    {
+        return 0; // No alignment needed
+    }
     uint64_t padSize = alignment_size - (offset % alignment_size);
     if (padSize == alignment_size)
     {

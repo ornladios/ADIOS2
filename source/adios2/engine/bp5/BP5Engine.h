@@ -174,7 +174,10 @@ public:
     MACRO(RemoteHost, String, std::string, "")                                                     \
     MACRO(UUID, String, std::string, "")                                                           \
     MACRO(TarInfo, String, std::string, "")                                                        \
-    MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
+    MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)                                         \
+    MACRO(DataTransport, String, std::string, "")                                                  \
+    MACRO(S3Endpoint, String, std::string, "")                                                     \
+    MACRO(S3Bucket, String, std::string, "")
 
     struct BP5Params
     {
