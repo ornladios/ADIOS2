@@ -37,26 +37,15 @@ echo ""
 
 # Build for linux/amd64 (x86_64) platform
 # This is required for NERSC Spin which runs x86_64
-if [ "$CONTAINER_CMD" = "podman" ]; then
-    # Podman has native cross-platform support
-    podman build \
-        --platform linux/amd64 \
-        --build-arg "ADIOS2_REPO=$ADIOS2_REPO" \
-        --build-arg "ADIOS2_BRANCH=$ADIOS2_BRANCH" \
-        --tag "$IMAGE_NAME:$IMAGE_TAG" \
-        --file "$SCRIPT_DIR/Dockerfile" \
-        "$SCRIPT_DIR"
-else
-    # Docker uses buildx for cross-platform builds
-    docker buildx build \
-        --platform linux/amd64 \
-        --build-arg "ADIOS2_REPO=$ADIOS2_REPO" \
-        --build-arg "ADIOS2_BRANCH=$ADIOS2_BRANCH" \
-        --tag "$IMAGE_NAME:$IMAGE_TAG" \
-        --file "$SCRIPT_DIR/Dockerfile" \
-        --load \
-        "$SCRIPT_DIR"
-fi
+# Note: --load is a no-op for podman but accepted for docker compatibility
+$CONTAINER_CMD build \
+    --platform linux/amd64 \
+    --load \
+    --build-arg "ADIOS2_REPO=$ADIOS2_REPO" \
+    --build-arg "ADIOS2_BRANCH=$ADIOS2_BRANCH" \
+    --tag "$IMAGE_NAME:$IMAGE_TAG" \
+    --file "$SCRIPT_DIR/Dockerfile" \
+    "$SCRIPT_DIR"
 
 echo ""
 echo "Build complete!"
