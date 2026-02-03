@@ -271,7 +271,16 @@ if(ADIOS2_HAVE_Fortran)
   bp_gtest_add_tests_helper_Fortran(FortranToCppWriter MPI_ONLY)
   bp_gtest_add_tests_helper(FortranToCppReader MPI_ONLY)
 
-  # SetupTestPipeline(Engine.BP.BPFortranToCPPWriter.BP5.MPI ";Engine.BP.BPFortranToCPPReader.ADIOS2BPFortranToCppRead.BP5.MPI" FALSE)
+  # Reader tests depend on writer tests completing first (MPI_ONLY tests)
+  if(ADIOS2_HAVE_MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP3.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP3.MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP4.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP4.MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP5.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP5.MPI)
+  endif()
+
 endif(ADIOS2_HAVE_Fortran)
 
 if(NOT MSVC)
