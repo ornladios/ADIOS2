@@ -217,6 +217,18 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
 
 void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool SerializedWriters)
 {
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    {
+        if (!m_AggregatorInitializedThisStep)
+        {
+            // We can't allow ranks to change subfiles between calls to Put(), so we only
+            // do this initialization once per timestep. Consequently, partition decision
+            // could be based on incomplete step data.
+            InitAggregator(Data->Size());
+            InitTransports();
+            m_AggregatorInitializedThisStep = true;
+        }
+    }
 
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 

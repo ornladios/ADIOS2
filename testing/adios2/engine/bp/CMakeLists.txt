@@ -26,6 +26,8 @@ file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-guided)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-naive)
 
 macro(bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
@@ -75,6 +77,12 @@ macro(async_gtest_add_tests_helper testname mpi)
   )
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Naive
     WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Naive"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.DSB.Guided
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/dsb-guided EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,AsyncWrite=Guided"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.DSB.Naive
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/dsb-naive EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,AsyncWrite=Naive"
   )
 endmacro()
 
