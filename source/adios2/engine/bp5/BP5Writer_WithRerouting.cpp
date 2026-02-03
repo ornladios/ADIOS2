@@ -180,7 +180,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     // Arbitrarily decide that the sub coordinator of the first partition is also
     // the global coordinator
-    int globalCoord = m_Partitioning.m_Partitions[0][0];
+    int globalCoord = static_cast<int>(m_Partitioning.m_Partitions[0][0]);
     bool iAmGlobalCoord = m_RankMPI == globalCoord;
 
     // Some containers only used by augmented roles:
@@ -223,8 +223,8 @@ void BP5Writer::ReroutingCommunicationLoop()
             // message or status inquiry response)
             groupState[i].m_currentStatus = WriterGroupState::Status::UNKNOWN;
             groupState[i].m_subFileIndex = i;
-            subCoordRanks[i] = m_Partitioning.m_Partitions[i][0];
-            scRankToIndex[m_Partitioning.m_Partitions[i][0]] = i;
+            subCoordRanks[i] = static_cast<int>(m_Partitioning.m_Partitions[i][0]);
+            scRankToIndex[subCoordRanks[i]] = i;
             closeAcksNeeded.insert(subCoordRanks[i]);
             groupIdlesNeeded.insert(subCoordRanks[i]);
         }
@@ -307,7 +307,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 closeAckMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE_ACK;
                 closeAckMsg.m_SrcRank = m_RankMPI;
                 closeAckMsg.m_DestRank = globalCoord;
-                closeAckMsg.m_WildCard = m_Aggregator->m_SubStreamIndex;
+                closeAckMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
                 closeAckMsg.BlockingSendTo(m_Comm, globalCoord, sendBuffers.GetNextBuffer());
                 break;
             case RerouteMessage::MessageType::GROUP_CLOSE_ACK:
