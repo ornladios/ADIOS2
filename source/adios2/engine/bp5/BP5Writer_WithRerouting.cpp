@@ -408,10 +408,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 else
                 {
-                    std::cout << "Rank " << m_RankMPI << " sending REROUTE_ACK to rank "
-                              << globalCoord << std::endl;
                     int reroutedRank = writerQueue.front();
                     writerQueue.pop();
+
+                    std::cout << "Rank " << m_RankMPI << " sending REROUTE_ACK to rank "
+                              << globalCoord << " (rerouted rank = " << reroutedRank << ")"
+                              << std::endl;
 
                     adios2::helper::RerouteMessage ackMsg;
                     ackMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_ACK;
@@ -449,7 +451,6 @@ void BP5Writer::ReroutingCommunicationLoop()
                           << status.Source << std::endl;
                 // msg for global coordinator
                 {
-
                     std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
                               << message.m_DestRank << std::endl;
 
@@ -466,8 +467,14 @@ void BP5Writer::ReroutingCommunicationLoop()
                     // as well
                     size_t srcIdx = scRankToIndex[message.m_SrcRank];
                     size_t destIdx = scRankToIndex[message.m_DestRank];
-                    groupState[srcIdx].m_currentStatus = WriterGroupState::Status::WRITING;
-                    groupState[srcIdx].m_queueSize -= 1;
+                    if (groupState[srcIdx].m_currentStatus == WriterGroupState::Status::PENDING)
+                    {
+                        // If I didn't receive a msg causing me to update this groups status
+                        // in the interim (since I sent it REROUTE_REQUEST)), update it to
+                        // WRITING now.
+                        groupState[srcIdx].m_currentStatus = WriterGroupState::Status::WRITING;
+                        groupState[srcIdx].m_queueSize -= 1;
+                    }
                     groupState[destIdx].m_currentStatus = WriterGroupState::Status::WRITING;
                     // groupState[destIdx].m_queueSize += 1;
                 }
