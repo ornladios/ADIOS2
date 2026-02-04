@@ -26,6 +26,8 @@ file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-guided)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-naive)
 
 macro(bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
@@ -75,6 +77,12 @@ macro(async_gtest_add_tests_helper testname mpi)
   )
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Naive
     WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Naive"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.DSB.Guided
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/dsb-guided EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,AsyncWrite=Guided"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.DSB.Naive
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/dsb-naive EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,AsyncWrite=Naive"
   )
 endmacro()
 
@@ -263,7 +271,16 @@ if(ADIOS2_HAVE_Fortran)
   bp_gtest_add_tests_helper_Fortran(FortranToCppWriter MPI_ONLY)
   bp_gtest_add_tests_helper(FortranToCppReader MPI_ONLY)
 
-  # SetupTestPipeline(Engine.BP.BPFortranToCPPWriter.BP5.MPI ";Engine.BP.BPFortranToCPPReader.ADIOS2BPFortranToCppRead.BP5.MPI" FALSE)
+  # Reader tests depend on writer tests completing first (MPI_ONLY tests)
+  if(ADIOS2_HAVE_MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP3.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP3.MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP4.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP4.MPI)
+    set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP5.MPI PROPERTIES
+      DEPENDS Engine.BP.BPFortranToCppWriter.BP5.MPI)
+  endif()
+
 endif(ADIOS2_HAVE_Fortran)
 
 if(NOT MSVC)

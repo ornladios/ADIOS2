@@ -1,70 +1,64 @@
 #!/bin/bash
-# Build Docker image for NERSC Spin deployment
+# Build container image for NERSC Spin deployment
 # This script builds an x86_64 image even on ARM Macs
+# The Dockerfile clones ADIOS2 from GitHub, so no local source is needed
+# Supports both Docker and Podman
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ADIOS2_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 IMAGE_NAME="${IMAGE_NAME:-adios2-xrootd-http}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
+# Optional: override repo/branch via environment variables
+ADIOS2_REPO="${ADIOS2_REPO:-https://github.com/ornladios/ADIOS2.git}"
+ADIOS2_BRANCH="${ADIOS2_BRANCH:-master}"
+
+# Detect container runtime (prefer podman if both available, or use CONTAINER_CMD env var)
+if [ -n "$CONTAINER_CMD" ]; then
+    # User explicitly specified runtime
+    :
+elif command -v podman &> /dev/null; then
+    CONTAINER_CMD="podman"
+elif command -v docker &> /dev/null; then
+    CONTAINER_CMD="docker"
+else
+    echo "Error: Neither docker nor podman found in PATH"
+    exit 1
+fi
+
 echo "Building ADIOS2 XRootD HTTP image for x86_64 (linux/amd64)"
-echo "ADIOS2 source: $ADIOS2_ROOT"
+echo "Container runtime: $CONTAINER_CMD"
+echo "ADIOS2 repo: $ADIOS2_REPO"
+echo "ADIOS2 branch: $ADIOS2_BRANCH"
 echo "Image: $IMAGE_NAME:$IMAGE_TAG"
-echo ""
-
-# Create a temporary directory for the build context
-# This avoids issues with .claude directory permissions
-BUILD_CONTEXT=$(mktemp -d)
-trap 'rm -rf "$BUILD_CONTEXT"' EXIT
-
-echo "Creating clean build context in $BUILD_CONTEXT..."
-
-# Use git archive to get a clean copy of tracked files, then add untracked new files
-cd "$ADIOS2_ROOT"
-git archive --format=tar HEAD | tar -x -C "$BUILD_CONTEXT"
-
-# Copy any new untracked source files that are needed for the build
-# (like our new XrootdHttpRemote files)
-for f in source/adios2/toolkit/remote/XrootdHttpRemote.h \
-         source/adios2/toolkit/remote/XrootdHttpRemote.cpp \
-         scripts/docker/spin-xrootd/Dockerfile \
-         scripts/docker/spin-xrootd/xrootd-http.cfg \
-         scripts/docker/spin-xrootd/docker-entrypoint.sh; do
-    if [ -f "$ADIOS2_ROOT/$f" ]; then
-        mkdir -p "$BUILD_CONTEXT/$(dirname "$f")"
-        cp "$ADIOS2_ROOT/$f" "$BUILD_CONTEXT/$f"
-    fi
-done
-
-# Also copy modified tracked files (git archive gets the committed version)
-for f in source/adios2/CMakeLists.txt \
-         source/adios2/engine/bp5/BP5Reader.cpp; do
-    if [ -f "$ADIOS2_ROOT/$f" ]; then
-        cp "$ADIOS2_ROOT/$f" "$BUILD_CONTEXT/$f"
-    fi
-done
-
-echo "Build context ready."
 echo ""
 
 # Build for linux/amd64 (x86_64) platform
 # This is required for NERSC Spin which runs x86_64
-docker buildx build \
+# Note: --load is a no-op for podman but accepted for docker compatibility
+$CONTAINER_CMD build \
     --platform linux/amd64 \
-    --tag "$IMAGE_NAME:$IMAGE_TAG" \
-    --file "$BUILD_CONTEXT/scripts/docker/spin-xrootd/Dockerfile" \
     --load \
-    "$BUILD_CONTEXT"
+    --build-arg "ADIOS2_REPO=$ADIOS2_REPO" \
+    --build-arg "ADIOS2_BRANCH=$ADIOS2_BRANCH" \
+    --tag "$IMAGE_NAME:$IMAGE_TAG" \
+    --file "$SCRIPT_DIR/Dockerfile" \
+    "$SCRIPT_DIR"
 
 echo ""
 echo "Build complete!"
 echo ""
 echo "To test locally:"
-echo "  docker run --rm -p 8080:8080 $IMAGE_NAME:$IMAGE_TAG"
+echo "  $CONTAINER_CMD run --rm -p 8080:8080 $IMAGE_NAME:$IMAGE_TAG"
 echo ""
 echo "To push to a registry for Spin:"
-echo "  docker tag $IMAGE_NAME:$IMAGE_TAG registry.spin.nersc.gov/YOUR_PROJECT/$IMAGE_NAME:$IMAGE_TAG"
-echo "  docker push registry.spin.nersc.gov/YOUR_PROJECT/$IMAGE_NAME:$IMAGE_TAG"
+echo "  $CONTAINER_CMD tag $IMAGE_NAME:$IMAGE_TAG registry.spin.nersc.gov/YOUR_PROJECT/$IMAGE_NAME:$IMAGE_TAG"
+echo "  $CONTAINER_CMD push registry.spin.nersc.gov/YOUR_PROJECT/$IMAGE_NAME:$IMAGE_TAG"
+echo ""
+echo "To build from a different branch:"
+echo "  ADIOS2_BRANCH=feature-branch ./build.sh"
+echo ""
+echo "To force a specific container runtime:"
+echo "  CONTAINER_CMD=docker ./build.sh"

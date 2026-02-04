@@ -7,14 +7,22 @@ RUN dnf update -y && \
 
 # Install XRootD and dependencies
 # Note: xrootd-* installs all XRootD components including HTTP plugin
-RUN dnf install -y cmake 'xrootd-*' libcurl-devel openssl && \
+RUN dnf install -y cmake git 'xrootd-*' libcurl-devel openssl && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
-# Clone and build ADIOS2 with XRootD and CURL support
-# Using local copy for development - in production, use a tagged release
-COPY . /ADIOS2-src
-RUN mkdir -p /ADIOS2-src/build && \
+# Copy configuration files from build context (scripts/docker/spin-xrootd/)
+COPY xrootd-http.cfg /etc/xrootd/xrootd-http.cfg
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Clone and build ADIOS2 with XRootD and CURL support from GitHub
+ARG ADIOS2_REPO=https://github.com/ornladios/ADIOS2.git
+ARG ADIOS2_BRANCH=master
+
+# Build, install, create test data, then remove source entirely
+RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && \
+    mkdir -p /ADIOS2-src/build && \
     cd /ADIOS2-src/build && \
     cmake \
         -DADIOS2_USE_XRootD=ON \
@@ -28,18 +36,14 @@ RUN mkdir -p /ADIOS2-src/build && \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         .. && \
     make -j$(nproc) && \
-    make install
-
-# Create test data directory with sample BP5 file
-RUN mkdir -p /data && \
+    make install && \
+    mkdir -p /data && \
     cd /data && \
-    /ADIOS2-src/build/bin/TestCommonWrite bp5 sample
-
-# Clean up source to reduce image size
-RUN rm -rf /ADIOS2-src
+    /ADIOS2-src/build/bin/TestCommonWrite bp5 sample && \
+    rm -rf /ADIOS2-src
 
 # Create directories for XRootD with correct ownership for non-root operation
-RUN mkdir -p /var/spool/xrootd /run/xrootd /etc/xrootd /etc/xrootd/certs /var/log/xrootd && \
+RUN mkdir -p /var/spool/xrootd /run/xrootd /etc/xrootd/certs /var/log/xrootd && \
     chown -R 194:194 /var/spool/xrootd /run/xrootd /var/log/xrootd /data
 
 # Generate self-signed SSL certificate at build time
@@ -53,11 +57,6 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     chmod 600 /etc/xrootd/certs/server.key && \
     chmod 644 /etc/xrootd/certs/server.crt && \
     chown -R 194:194 /etc/xrootd/certs
-
-# Copy configuration files
-COPY scripts/docker/spin-xrootd/xrootd-http.cfg /etc/xrootd/xrootd-http.cfg
-COPY scripts/docker/spin-xrootd/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
 
 # Expose HTTP port (Spin Ingress will terminate TLS and forward to this port)
 EXPOSE 8080
