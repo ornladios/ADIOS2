@@ -435,6 +435,7 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
     }
 
     m_TotalBytesWritten += size;
+    ProfilerWriteBytes(size);
     ProfilerStop("write");
 }
 
