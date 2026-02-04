@@ -145,7 +145,7 @@ public:
     MACRO(verbose, Int, int, 0)                                                                    \
     MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
     MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
-    MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
+    MACRO(NumSubFiles, UInt, unsigned int, 2)                                                      \
     MACRO(StripeSize, UInt, unsigned int, 4096)                                                    \
     MACRO(DirectIO, Bool, bool, false)                                                             \
     MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
