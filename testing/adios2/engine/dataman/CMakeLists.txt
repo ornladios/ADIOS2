@@ -29,6 +29,8 @@ if (ADIOS2_HAVE_Python)
     python_add_test(NAME Test.Engine.DataMan1D.Serial SCRIPT TestDataMan1D.py)
     python_add_test(NAME Test.Engine.DataMan1xN.Serial SCRIPT TestDataMan1xN.py)
     python_add_test(NAME Test.Engine.DataManSingleValues SCRIPT TestDataManSingleValues.py)
+    set_tests_properties(Test.Engine.DataMan1D.Serial Test.Engine.DataMan1xN.Serial Test.Engine.DataManSingleValues
+        PROPERTIES RUN_SERIAL TRUE)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
