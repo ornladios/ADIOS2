@@ -466,6 +466,10 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         size_t BlockID, DimCount, StepStart;
         size_t StepCount = 1;
         bool ArrayOrder = false;
+        // Accuracy parameters
+        double AccuracyError = 0.0;
+        double AccuracyNorm = 0.0;
+        bool AccuracyRelative = false;
         std::vector<std::string> requestParams = split(reqArgs, '&');
         for (auto &param : requestParams)
         {
@@ -527,6 +531,26 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 sstream >> S;
                 Start.push_back(S);
             }
+            else if (HasPrefix(param, "AccuracyError="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> AccuracyError;
+            }
+            else if (HasPrefix(param, "AccuracyNorm="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> AccuracyNorm;
+            }
+            else if (HasPrefix(param, "AccuracyRelative="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                int rel;
+                sstream >> rel;
+                AccuracyRelative = (rel != 0);
+            }
         }
         //  Get a "anonymous" engine with this file open with this array order.
         //  (any other differentiating characteristics of an ADIOS Open should be included in these
@@ -556,6 +580,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         var.SetStepSelection({StepStart, StepCount});                                              \
         if (Start.size())                                                                          \
             var.SetSelection(varSel);                                                              \
+        if (AccuracyError != 0.0 || AccuracyNorm != 0.0)                                           \
+            var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});                      \
         m_responseBufferSize = var.SelectionSize() * sizeof(T);                                    \
         if (m_responseBufferSize > sizeof(m_respData))                                             \
             m_responseBuffer = (char *)malloc(m_responseBufferSize);                               \
