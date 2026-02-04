@@ -1426,8 +1426,9 @@ void BP5Reader::InitTransports()
     }
 
     // Metadata files always use default local transport
-    m_MetadataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+    m_MetadataFiles =
+        std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
+                                   m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 
     // Set up data transport parameters - use different transport if DataTransport is specified
     Params dataTransportParams;

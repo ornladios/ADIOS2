@@ -123,12 +123,11 @@ private:
     int m_CurrentPartNumber = 0;
 
     // Write buffer - accumulate at least S3_MIN_PART_SIZE before uploading
-    // S3 hard limits: minimum 5MB per part (except last), maximum 5GB per part
-    // Using decimal units (1000-based) to match AWS S3 documentation and StringToByteUnits
-    static constexpr size_t S3_MIN_PART_SIZE = 5ULL * 1000 * 1000;        // 5 MB (S3 limit)
-    static constexpr size_t S3_MAX_PART_SIZE = 5ULL * 1000 * 1000 * 1000; // 5 GB (S3 limit)
-    size_t m_MinPartSize = S3_MIN_PART_SIZE; // configurable via min_part_size (must be >= 5MB)
-    size_t m_MaxPartSize = S3_MAX_PART_SIZE; // configurable via max_part_size (must be <= 5GB)
+    // S3 hard limits: minimum 5 MiB per part (except last), maximum 5 GiB per part
+    static constexpr size_t S3_MIN_PART_SIZE = 5ULL * 1024 * 1024;        // 5 MiB (S3 limit)
+    static constexpr size_t S3_MAX_PART_SIZE = 5ULL * 1024 * 1024 * 1024; // 5 GiB (S3 limit)
+    size_t m_MinPartSize = S3_MIN_PART_SIZE; // configurable via min_part_size (must be >= 5 MiB)
+    size_t m_MaxPartSize = S3_MAX_PART_SIZE; // configurable via max_part_size (must be <= 5 GiB)
     std::vector<char> m_WriteBuffer;
     size_t m_TotalBytesWritten = 0;
 

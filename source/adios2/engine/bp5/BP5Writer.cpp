@@ -1204,8 +1204,19 @@ void BP5Writer::InitParameters()
         helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, m_Parameters.NumAggregators);
 
     // Limiting to max 64MB page size
-    // StripeSize=0 is allowed (no alignment padding, useful for S3/object storage)
     m_Parameters.StripeSize = helper::SetWithinLimit(m_Parameters.StripeSize, 0U, 67108864U);
+
+    // For S3/object storage, disable stripe alignment to avoid non-sequential writes
+    // S3 multipart upload requires sequential writes; StripeSize=1 means no padding
+    if (m_Parameters.DataTransport == "awssdk")
+    {
+        m_Parameters.StripeSize = 1;
+    }
+
+    if (m_Parameters.StripeSize == 0)
+    {
+        m_Parameters.StripeSize = 4096;
+    }
 
     if (m_Parameters.DirectIO)
     {
@@ -1755,8 +1766,8 @@ void BP5Writer::InitTransports()
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
-        aggData.m_FileDataManager.MkDirsBarrier(
-            aggData.m_DrainSubStreamNames, m_DataTransportsParameters, m_Parameters.NodeLocal);
+        aggData.m_FileDataManager.MkDirsBarrier(aggData.m_DrainSubStreamNames,
+                                                m_DataTransportsParameters, m_Parameters.NodeLocal);
     }
 
     helper::Comm openSyncComm;
@@ -1793,8 +1804,7 @@ void BP5Writer::InitTransports()
                 std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
             }
             aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                m_DataTransportsParameters, true,
-                                                *DataWritingComm);
+                                                m_DataTransportsParameters, true, *DataWritingComm);
         }
     }
 

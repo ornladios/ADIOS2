@@ -386,7 +386,7 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
     }
 
     // S3 multipart upload only supports sequential writes
-    // The 'start' parameter is typically MaxSizeT for sequential writes
+    // BP5 should set StripeSize=0 when using awssdk to avoid non-sequential writes
     if (start != MaxSizeT && start != m_TotalBytesWritten)
     {
         helper::Throw<std::ios_base::failure>(
@@ -394,7 +394,8 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
             "S3 multipart upload only supports sequential writes. "
             "Requested start: " +
                 std::to_string(start) +
-                ", current position: " + std::to_string(m_TotalBytesWritten));
+                ", current position: " + std::to_string(m_TotalBytesWritten) +
+                ". Hint: Set StripeSize=0 when using S3 storage.");
     }
 
     ProfilerStart("write");
