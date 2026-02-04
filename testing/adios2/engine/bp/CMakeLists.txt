@@ -121,8 +121,8 @@ if(UNIX)
   target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)
 endif()
 
-bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
-bp_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
+# Transport tests (parameterized for stdio and fstream)
+bp_gtest_add_tests_helper(WriteReadADIOS2Transport MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2_Threads MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributes MPI_ALLOW)
@@ -177,12 +177,12 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
 
     endmacro()
 
-    add_get_kvcache_tests_helper(WriteReadADIOS2stdio)
+    add_get_kvcache_tests_helper(WriteReadADIOS2Transport)
     add_get_kvcache_tests_helper(WriteMemorySelectionRead)
   endif()
 
    ##### add remote tests below this line
-   add_get_remote_tests_helper(WriteReadADIOS2stdio)
+   add_get_remote_tests_helper(WriteReadADIOS2Transport)
    add_get_remote_tests_helper(WriteMemorySelectionRead)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
 endif()
@@ -203,7 +203,7 @@ if (ADIOS2_HAVE_XRootD)
    set_tests_properties(remoteXRServerCleanup         PROPERTIES FIXTURES_CLEANUP    XRServer)
 
    ##### add remote tests below this line
-   add_get_xrremote_tests_helper(WriteReadADIOS2stdio)
+   add_get_xrremote_tests_helper(WriteReadADIOS2Transport)
    add_get_xrremote_tests_helper(WriteMemorySelectionRead)
 endif()
 
@@ -238,7 +238,7 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    set_tests_properties(remoteXRHttpsServerCleanup PROPERTIES FIXTURES_CLEANUP XRHttpsServer)
 
    ##### add HTTPS remote tests below this line
-   add_get_xrhttps_tests_helper(WriteReadADIOS2stdio)
+   add_get_xrhttps_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_tests_helper(WriteMemorySelectionRead)
 endif()
 

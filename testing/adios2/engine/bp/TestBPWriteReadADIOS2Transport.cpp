@@ -15,14 +15,17 @@
 #include "../TestHelpers.h"
 
 std::string engineName; // comes from command line
-std::string UniqName;   // comes from command line
 
-class BPWriteReadTestADIOS2stdio : public ::testing::Test
+// Parameterized by transport library: "stdio", "fstream"
+class BPWriteReadTestADIOS2Transport : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPWriteReadTestADIOS2stdio() = default;
+    BPWriteReadTestADIOS2Transport() = default;
 
     SmallTestData m_TestData;
+
+    std::string GetLibrary() { return GetParam(); }
+    std::string Suffix() { return "_" + GetParam() + ".bp"; }
 };
 
 //******************************************************************************
@@ -30,7 +33,7 @@ public:
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
+TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -45,9 +48,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead1D8stdio_MPI" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead1D8_MPI" + Suffix());
 #else
-    const std::string fname("ADIOS2BPWriteRead1D8stdio" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead1D8" + Suffix());
 #endif
 
     // Write test data using BP
@@ -63,7 +66,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -174,7 +177,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -374,7 +377,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
+TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
@@ -392,9 +395,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio_MPI" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D2x4Test_MPI" + Suffix());
 #else
-    const std::string fname("ADIOS2BPWriteRead2D2x4Teststdio" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D2x4Test" + Suffix());
 #endif
 
     // Write test data using ADIOS2
@@ -410,7 +413,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -518,7 +521,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -723,7 +726,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
 // 2D 4x2 test data
 //******************************************************************************
 
-TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
+TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -740,9 +743,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio_MPI" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_MPI" + Suffix());
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Teststdio" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test" + Suffix());
 #endif
 
     // Write test data using ADIOS2
@@ -758,7 +761,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -862,7 +865,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -1057,7 +1060,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
     }
 }
 
-TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
+TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -1075,9 +1078,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio_MPI" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiSteps_MPI" + Suffix());
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsstdio" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiSteps" + Suffix());
 #endif
 
     // Write test data using ADIOS2
@@ -1093,7 +1096,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -1195,7 +1198,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -1392,7 +1395,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
     }
 }
 
-TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
+TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -1410,9 +1413,9 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio_MPI" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflow_MPI" + Suffix());
 #else
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflowstdio" + UniqName);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflow" + Suffix());
 #endif
 
     // Write test data using ADIOS2
@@ -1428,7 +1431,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -1520,7 +1523,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -1602,11 +1605,11 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
     }
 }
 
-TEST_F(BPWriteReadTestADIOS2stdio, OpenEngineTwice)
+TEST_P(BPWriteReadTestADIOS2Transport, OpenEngineTwice)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("OpenTwicestdio.bp");
+    const std::string fname("OpenTwice" + Suffix());
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -1619,7 +1622,7 @@ TEST_F(BPWriteReadTestADIOS2stdio, OpenEngineTwice)
         {
             io.SetEngine(engineName);
         }
-        io.AddTransport("file", {{"Library", "stdio"}});
+        io.AddTransport("file", {{"Library", GetLibrary()}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1636,7 +1639,11 @@ TEST_F(BPWriteReadTestADIOS2stdio, OpenEngineTwice)
     CleanupTestFiles(fname);
 }
 
-int main(int argc, char **argv, char **envp)
+// Instantiate for stdio and fstream transports
+INSTANTIATE_TEST_SUITE_P(Stdio, BPWriteReadTestADIOS2Transport, ::testing::Values("stdio"));
+INSTANTIATE_TEST_SUITE_P(Fstream, BPWriteReadTestADIOS2Transport, ::testing::Values("fstream"));
+
+int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
     int provided;
@@ -1650,10 +1657,6 @@ int main(int argc, char **argv, char **envp)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
-    }
-    if (argc > 2)
-    {
-        UniqName = std::string(argv[2]);
     }
     result = RUN_ALL_TESTS();
 
