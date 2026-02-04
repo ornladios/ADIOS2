@@ -1756,6 +1756,11 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
     else
     {
         // Didn't have one in the cache, add it now
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " cache miss for aggregator key " << cacheKey
+                      << std::endl;
+        }
         m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
     }
 
@@ -1793,18 +1798,23 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                 }
             }
 
-            if (m_Parameters.verbose > 1)
-            {
-                std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
-            }
+
             if (useComm)
             {
+                if (m_Parameters.verbose > 1)
+                {
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm" << std::endl;
+                }
                 aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                     m_IO.m_TransportsParameters, true,
                                                     *DataWritingComm);
             }
             else
             {
+                if (m_Parameters.verbose > 1)
+                {
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm" << std::endl;
+                }
                 aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                     m_IO.m_TransportsParameters, true);
             }
