@@ -173,7 +173,10 @@ void BP5Writer::ReroutingCommunicationLoop()
 {
     using RerouteMessage = adios2::helper::RerouteMessage;
 
-    std::cout << "Rank " << m_RankMPI << " Enter ReroutingCommunicationLoop" << std::endl;
+    if (m_Parameters.verbose > 4)
+    {
+        std::cout << "Rank " << m_RankMPI << " Enter ReroutingCommunicationLoop" << std::endl;
+    }
 
     int subCoord = m_Aggregator->m_AggregatorRank;
     bool iAmSubCoord = m_RankMPI == subCoord;
@@ -275,7 +278,10 @@ void BP5Writer::ReroutingCommunicationLoop()
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
             case RerouteMessage::MessageType::DO_WRITE:
-                std::cout << "Rank " << m_RankMPI << " received DO_WRITE" << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received DO_WRITE" << std::endl;
+                }
                 // msg for all processes
                 {
                     std::unique_lock<std::mutex> lck(m_WriteMutex);
@@ -288,21 +294,30 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::WRITE_COMPLETION:
-                std::cout << "Rank " << m_RankMPI << " received WRITE_COMPLETION from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received WRITE_COMPLETION from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for sub coordinator
                 currentFilePos = message.m_Offset;
                 writingRank = -1;
                 expectingWriteCompletion = false;
                 break;
             case RerouteMessage::MessageType::GROUP_CLOSE:
-                std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for sub coordinator
                 receivedGroupClose = true;
 
-                std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE_ACK to rank "
-                          << globalCoord << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE_ACK to rank "
+                              << globalCoord << std::endl;
+                }
                 adios2::helper::RerouteMessage closeAckMsg;
                 closeAckMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE_ACK;
                 closeAckMsg.m_SrcRank = m_RankMPI;
@@ -313,8 +328,11 @@ void BP5Writer::ReroutingCommunicationLoop()
             case RerouteMessage::MessageType::GROUP_CLOSE_ACK:
                 // msg for global coordinator
                 {
-                    std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE_ACK from rank "
-                              << status.Source << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " received GROUP_CLOSE_ACK from rank "
+                                  << status.Source << std::endl;
+                    }
 
                     size_t ackGroupIdx = static_cast<size_t>(message.m_WildCard);
                     groupState[ackGroupIdx].m_currentStatus = WriterGroupState::Status::CLOSED;
@@ -322,8 +340,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::WRITER_IDLE:
-                std::cout << "Rank " << m_RankMPI << " received WRITER_IDLE from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received WRITER_IDLE from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for global coordinator
                 {
                     // int idleWriter = message.m_SrcRank;
@@ -342,9 +363,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                             // is
                             if (scRank != idleWriter)
                             {
-                                std::cout << "GC (" << m_RankMPI
-                                          << ") sending STATUS_INQUIRY to rank " << scRank
-                                          << std::endl;
+                                if (m_Parameters.verbose > 4)
+                                {
+                                    std::cout << "GC (" << m_RankMPI
+                                              << ") sending STATUS_INQUIRY to rank " << scRank
+                                              << std::endl;
+                                }
                                 adios2::helper::RerouteMessage inquiryMsg;
                                 inquiryMsg.m_MsgType = RerouteMessage::MessageType::STATUS_INQUIRY;
                                 inquiryMsg.m_SrcRank = m_RankMPI;
@@ -359,8 +383,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::WRITER_CAPACITY:
-                std::cout << "Rank " << m_RankMPI << " received WRITER_CAPACITY from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received WRITER_CAPACITY from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for global coordinator
                 {
                     int capacityGroup = message.m_WildCard;
@@ -368,8 +395,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::STATUS_INQUIRY:
-                std::cout << "Rank " << m_RankMPI << " received STATUS_INQUIRY from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received STATUS_INQUIRY from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for sub coordinator
                 adios2::helper::RerouteMessage replyMsg;
                 replyMsg.m_MsgType = RerouteMessage::MessageType::STATUS_REPLY;
@@ -380,8 +410,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 replyMsg.NonBlockingSendTo(m_Comm, globalCoord, sendBuffers.GetNextBuffer());
                 break;
             case RerouteMessage::MessageType::STATUS_REPLY:
-                std::cout << "Rank " << m_RankMPI << " received STATUS_REPLY from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received STATUS_REPLY from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for global coordinator
                 {
                     size_t subStreamIdx = static_cast<size_t>(message.m_WildCard);
@@ -393,13 +426,19 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_REQUEST:
-                std::cout << "Rank " << m_RankMPI << " received REROUTE_REQUEST from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received REROUTE_REQUEST from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for sub coordinator
                 if (writerQueue.empty())
                 {
-                    std::cout << "Rank " << m_RankMPI << " sending REROUTE_REJECT to rank "
-                              << globalCoord << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " sending REROUTE_REJECT to rank "
+                                  << globalCoord << std::endl;
+                    }
                     adios2::helper::RerouteMessage rejectMsg;
                     rejectMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_REJECT;
                     rejectMsg.m_SrcRank = message.m_SrcRank;
@@ -411,9 +450,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                     int reroutedRank = writerQueue.front();
                     writerQueue.pop();
 
-                    std::cout << "Rank " << m_RankMPI << " sending REROUTE_ACK to rank "
-                              << globalCoord << " (rerouted rank = " << reroutedRank << ")"
-                              << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " sending REROUTE_ACK to rank "
+                                  << globalCoord << " (rerouted rank = " << reroutedRank << ")"
+                                  << std::endl;
+                    }
 
                     adios2::helper::RerouteMessage ackMsg;
                     ackMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_ACK;
@@ -424,8 +466,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_REJECT:
-                std::cout << "Rank " << m_RankMPI << " received REROUTE_REJECT from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received REROUTE_REJECT from rank "
+                              << status.Source << std::endl;
+                }
                 {
                     // msg for global coordinator
 
@@ -447,12 +492,18 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_ACK:
-                std::cout << "Rank " << m_RankMPI << " received REROUTE_ACK from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received REROUTE_ACK from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for global coordinator
                 {
-                    std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
-                              << message.m_DestRank << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " sending WRITE_MORE to rank "
+                                  << message.m_DestRank << std::endl;
+                    }
 
                     // Send the lucky volunteer another writer
                     adios2::helper::RerouteMessage writeMoreMsg;
@@ -480,8 +531,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 break;
             case RerouteMessage::MessageType::WRITE_MORE:
-                std::cout << "Rank " << m_RankMPI << " received WRITE_MORE from rank "
-                          << status.Source << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " received WRITE_MORE from rank "
+                              << status.Source << std::endl;
+                }
                 // msg for sub coordinator
                 writerQueue.push(message.m_WildCard);
                 sentIdle = false;
@@ -509,8 +563,12 @@ void BP5Writer::ReroutingCommunicationLoop()
 
                 if (!iAmSubCoord && !iAmGlobalCoord)
                 {
-                    std::cout << "Rank " << m_RankMPI << " notifying SC (" << m_TargetCoordinator
-                              << ") of write completion -- BLOCKING" << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " notifying SC ("
+                                  << m_TargetCoordinator << ") of write completion -- BLOCKING"
+                                  << std::endl;
+                    }
                     // My only role was to write (no communication responsibility) so I am
                     // done at this point. However, I need to do a blocking send because I
                     // am about to return from this function, at which point my buffer pool
@@ -523,8 +581,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
                 else
                 {
-                    std::cout << "Rank " << m_RankMPI << " notifying SC (" << m_TargetCoordinator
-                              << ") of write completion -- NONBLOCKING" << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " notifying SC ("
+                                  << m_TargetCoordinator << ") of write completion -- NONBLOCKING"
+                                  << std::endl;
+                    }
                     writeCompleteMsg.NonBlockingSendTo(m_Comm, m_TargetCoordinator,
                                                        sendBuffers.GetNextBuffer());
                 }
@@ -541,8 +603,11 @@ void BP5Writer::ReroutingCommunicationLoop()
             {
                 // Pop the queue and send DO_WRITE
                 int nextWriter = writerQueue.front();
-                std::cout << "Rank " << m_RankMPI << " sending DO_WRITE to " << nextWriter
-                          << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " sending DO_WRITE to " << nextWriter
+                              << std::endl;
+                }
                 writerQueue.pop();
                 adios2::helper::RerouteMessage writeMsg;
                 writeMsg.m_MsgType = RerouteMessage::MessageType::DO_WRITE;
@@ -556,8 +621,11 @@ void BP5Writer::ReroutingCommunicationLoop()
             }
             else if (!sentIdle)
             {
-                std::cout << "Rank " << m_RankMPI << " sending WRITER_IDLE to gc (" << globalCoord
-                          << ")" << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " sending WRITER_IDLE to gc ("
+                              << globalCoord << ")" << std::endl;
+                }
                 // Writer queue now empty, send WRITE_IDLE to the GC
                 adios2::helper::RerouteMessage idleMsg;
                 idleMsg.m_MsgType = RerouteMessage::MessageType::WRITER_IDLE;
@@ -583,15 +651,22 @@ void BP5Writer::ReroutingCommunicationLoop()
         // Look for possible reroute-to / reroute-from pairs
         if (iAmGlobalCoord && !waitingForCloseAcks)
         {
-            std::cout << "GC (" << m_RankMPI << ") looking for reroute candidate pair" << std::endl;
+            if (m_Parameters.verbose > 4)
+            {
+                std::cout << "GC (" << m_RankMPI << ") looking for reroute candidate pair"
+                          << std::endl;
+            }
             std::pair<size_t, size_t> nextPair;
             StateTraversal::SearchResult result = pairFinder.FindNextPair(groupState, nextPair);
 
             if (result == StateTraversal::SearchResult::FOUND)
             {
-                std::cout << "GC (" << m_RankMPI << ") found reroute candidate pair ("
-                          << nextPair.first << ", " << nextPair.second
-                          << "), sending REROUTE_REQUEST" << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "GC (" << m_RankMPI << ") found reroute candidate pair ("
+                              << nextPair.first << ", " << nextPair.second
+                              << "), sending REROUTE_REQUEST" << std::endl;
+                }
                 // Finding a pair means there was both an idle group and a writing
                 // group with at least one writer in its queue. With these, we will
                 // initiate a reroute sequence.
@@ -613,11 +688,14 @@ void BP5Writer::ReroutingCommunicationLoop()
             else if (result == StateTraversal::SearchResult::FINISHED && groupIdlesNeeded.empty())
             {
 
-                for (size_t i = 0; i < groupState.size(); ++i)
+                if (m_Parameters.verbose > 4)
                 {
-                    std::cout << "  group " << i
-                              << " status: " << static_cast<int>(groupState[i].m_currentStatus)
-                              << ", queue size: " << groupState[i].m_queueSize << std::endl;
+                    for (size_t i = 0; i < groupState.size(); ++i)
+                    {
+                        std::cout << "  group " << i
+                                  << " status: " << static_cast<int>(groupState[i].m_currentStatus)
+                                  << ", queue size: " << groupState[i].m_queueSize << std::endl;
+                    }
                 }
                 // If we didn't find a pair, it could be because all the groups are
                 // done writing (either idle or possibly at capacity). In that case,
@@ -627,8 +705,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                 {
                     if (subCoordRanks[scIdx] != globalCoord)
                     {
-                        std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE to rank "
-                                  << subCoordRanks[scIdx] << std::endl;
+                        if (m_Parameters.verbose > 4)
+                        {
+                            std::cout << "Rank " << m_RankMPI << " sending GROUP_CLOSE to rank "
+                                      << subCoordRanks[scIdx] << std::endl;
+                        }
                         adios2::helper::RerouteMessage closeMsg;
                         closeMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE;
                         closeMsg.NonBlockingSendTo(m_Comm, subCoordRanks[scIdx],
@@ -636,8 +717,11 @@ void BP5Writer::ReroutingCommunicationLoop()
                     }
                 }
 
-                std::cout << "Rank " << m_RankMPI << " marking my own close ack as received"
-                          << std::endl;
+                if (m_Parameters.verbose > 4)
+                {
+                    std::cout << "Rank " << m_RankMPI << " marking my own close ack as received"
+                              << std::endl;
+                }
                 receivedGroupClose = true;
                 closeAcksNeeded.erase(globalCoord);
 
@@ -645,25 +729,28 @@ void BP5Writer::ReroutingCommunicationLoop()
             }
             else
             {
-                std::cout << "candidate pair search returned ";
-
-                switch (result)
+                if (m_Parameters.verbose > 4)
                 {
-                case StateTraversal::SearchResult::NOT_FOUND:
-                    std::cout << "NOT FOUND" << std::endl;
-                    std::cout << "  states: [ ";
-                    for (size_t i = 0; i < groupState.size(); ++i)
+                    std::cout << "candidate pair search returned ";
+
+                    switch (result)
                     {
-                        std::cout << static_cast<int>(groupState[i].m_currentStatus) << " ";
+                    case StateTraversal::SearchResult::NOT_FOUND:
+                        std::cout << "NOT FOUND" << std::endl;
+                        std::cout << "  states: [ ";
+                        for (size_t i = 0; i < groupState.size(); ++i)
+                        {
+                            std::cout << static_cast<int>(groupState[i].m_currentStatus) << " ";
+                        }
+                        std::cout << "]" << std::endl;
+                        break;
+                    case StateTraversal::SearchResult::FOUND:
+                        std::cout << "FOUND" << std::endl;
+                        break;
+                    case StateTraversal::SearchResult::FINISHED:
+                        std::cout << "FINISHED" << std::endl;
+                        break;
                     }
-                    std::cout << "]" << std::endl;
-                    break;
-                case StateTraversal::SearchResult::FOUND:
-                    std::cout << "FOUND" << std::endl;
-                    break;
-                case StateTraversal::SearchResult::FINISHED:
-                    std::cout << "FINISHED" << std::endl;
-                    break;
                 }
             }
         }
@@ -674,19 +761,25 @@ void BP5Writer::ReroutingCommunicationLoop()
             {
                 if (closeAcksNeeded.empty())
                 {
-                    std::cout << "Rank " << m_RankMPI << " got all my close acks" << std::endl;
+                    if (m_Parameters.verbose > 4)
+                    {
+                        std::cout << "Rank " << m_RankMPI << " got all my close acks" << std::endl;
+                    }
                     // global coordinator received the final close ack, now it can leave
                     waitingForCloseAcks = false;
                 }
                 else
                 {
-                    std::cout << "Rank " << m_RankMPI << " still need " << closeAcksNeeded.size()
-                              << " close acks [ ";
-                    for (int n : closeAcksNeeded)
+                    if (m_Parameters.verbose > 4)
                     {
-                        std::cout << " " << n;
+                        std::cout << "Rank " << m_RankMPI << " still need "
+                                  << closeAcksNeeded.size() << " close acks [ ";
+                        for (int n : closeAcksNeeded)
+                        {
+                            std::cout << " " << n;
+                        }
+                        std::cout << " ]" << std::endl;
                     }
-                    std::cout << " ]" << std::endl;
                 }
             }
         }
@@ -699,7 +792,10 @@ void BP5Writer::ReroutingCommunicationLoop()
         m_DataPos = currentFilePos;
     }
 
-    std::cout << "Rank " << m_RankMPI << " Exit ReroutingCommunicationLoop" << std::endl;
+    if (m_Parameters.verbose > 4)
+    {
+        std::cout << "Rank " << m_RankMPI << " Exit ReroutingCommunicationLoop" << std::endl;
+    }
 }
 
 void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
@@ -727,7 +823,10 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     std::thread commThread(&BP5Writer::ReroutingCommunicationLoop, this);
 
-    std::cout << "Background thread for rank " << m_RankMPI << " is now running" << std::endl;
+    if (m_Parameters.verbose > 4)
+    {
+        std::cout << "Background thread for rank " << m_RankMPI << " is now running" << std::endl;
+    }
 
     // wait until communication thread indicates it's our turn to write
     {
@@ -737,7 +836,10 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     // Do the writing
 
-    std::cout << "Rank " << m_RankMPI << " signaled to write" << std::endl;
+    if (m_Parameters.verbose > 4)
+    {
+        std::cout << "Rank " << m_RankMPI << " signaled to write" << std::endl;
+    }
 
     size_t substreamIdx = static_cast<size_t>(m_TargetIndex);
 
@@ -776,7 +878,10 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
 
     commThread.join();
 
-    // std::cout << "Background thread for rank " << m_RankMPI << " is now finished" << std::endl;
+    if (m_Parameters.verbose > 4)
+    {
+        std::cout << "Background thread for rank " << m_RankMPI << " is returning" << std::endl;
+    }
 }
 
 } // end namespace engine
