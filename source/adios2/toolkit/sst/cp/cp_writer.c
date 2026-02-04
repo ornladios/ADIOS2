@@ -234,8 +234,11 @@ static int registerContactInfo(const char *Name, SstStream Stream, attr_list DPA
 static void removeContactInfoFile(SstStream Stream)
 {
     const char *Name = Stream->AbsoluteFilename;
-    unlink(Name);
-    RemoveNameFromExitList(Name);
+    if (Name)
+    {
+        unlink(Name);
+        RemoveNameFromExitList(Name);
+    }
 }
 
 static void removeContactInfo(SstStream Stream)
