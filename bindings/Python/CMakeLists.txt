@@ -1,4 +1,5 @@
-Python_add_library(adios2_py MODULE
+find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development)
+Python3_add_library(adios2_py MODULE
   WITH_SOABI
   py11ADIOS.cpp
   py11IO.cpp

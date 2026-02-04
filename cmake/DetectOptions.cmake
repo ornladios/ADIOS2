@@ -435,20 +435,20 @@ if(NOT SHARED_LIBS_SUPPORTED)
 endif()
 
 if(ADIOS2_USE_PIP)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+  find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
   set(ADIOS2_HAVE_PIP TRUE)
 elseif(ADIOS2_USE_Python STREQUAL AUTO)
-  find_package(Python 3.8 COMPONENTS Interpreter Development)
-  if(Python_FOUND AND ADIOS2_HAVE_MPI)
+  find_package(Python3 3.8 COMPONENTS Interpreter Development)
+  if(Python3_FOUND AND ADIOS2_HAVE_MPI)
     find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
 elseif(ADIOS2_USE_Python)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
+  find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development)
   if(ADIOS2_HAVE_MPI)
     find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
 endif()
-if(Python_FOUND)
+if(Python3_FOUND)
   if(ADIOS2_HAVE_MPI)
     if(PythonModule_mpi4py_FOUND)
       set(ADIOS2_HAVE_Python ON)
@@ -459,19 +459,19 @@ if(Python_FOUND)
 endif()
 
 # Even if no python support, we still want the interpreter for tests
-if(BUILD_TESTING AND NOT Python_Interpreter_FOUND)
+if(BUILD_TESTING AND NOT Python3_Interpreter_FOUND)
   find_package(Python REQUIRED COMPONENTS Interpreter)
 endif()
 
-if(Python_Interpreter_FOUND)
+if(Python3_Interpreter_FOUND)
   # Setup output directories
-  if(Python_Development_FOUND)
-    lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
+  if(Python3_Development_FOUND)
+    lists_get_prefix("Python3_INCLUDE_DIRS;Python3_LIBRARIES;Python3_SITEARCH" _Python3_DEVPREFIX)
   else()
-    lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
+    lists_get_prefix("Python3_EXECUTABLE;Python3_SITEARCH" _Python3_DEVPREFIX)
   endif()
   string_strip_prefix(
-    "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
+    "${_Python3_DEVPREFIX}" "${Python3_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
   )
   set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
     CACHE PATH "Install directory for python modules"
