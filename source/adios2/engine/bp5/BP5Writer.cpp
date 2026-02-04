@@ -1798,12 +1798,12 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                 }
             }
 
-
             if (useComm)
             {
                 if (m_Parameters.verbose > 1)
                 {
-                    std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm" << std::endl;
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm"
+                              << std::endl;
                 }
                 aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                     m_IO.m_TransportsParameters, true,
@@ -1813,7 +1813,8 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
             {
                 if (m_Parameters.verbose > 1)
                 {
-                    std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm" << std::endl;
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm"
+                              << std::endl;
                 }
                 aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
                                                     m_IO.m_TransportsParameters, true);
