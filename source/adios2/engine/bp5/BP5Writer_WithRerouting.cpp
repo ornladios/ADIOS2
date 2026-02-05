@@ -17,12 +17,60 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
+#include <chrono>
 #include <ctime>
 #include <iostream>
 #include <thread>
 
 namespace
 {
+
+#if REROUTING_ENABLE_DELAYED_WRITE
+// Turn this feature on at configure time with:
+//
+//     -DREROUTING_ENABLE_DELAYED_WRITE:BOOL=ON
+//
+size_t _GetDelayFromEnvironment(int rankMpi)
+{
+    size_t delayMillis = 0;
+
+    try
+    {
+        std::cout << "Looking for write delay environment variable" << std::endl;
+
+        std::string envVarName("REROUTING_WRITE_DELAY_");
+        envVarName += std::to_string(rankMpi);
+        const char *delayEnvVal = std::getenv(envVarName.c_str());
+        if (delayEnvVal)
+        {
+            std::cout << "Found environment variable " << envVarName.c_str() << " = "
+                      << delayEnvVal << std::endl;
+
+            // try to parse the value of the env variable value as a number
+            delayMillis = std::stol({delayEnvVal});
+
+            if (delayMillis > 0)
+            {
+                std::cout << "Parsed environment variable " << envVarName.c_str() << " = "
+                          << delayMillis << std::endl;
+            }
+        }
+    }
+    catch (std::exception const& ex)
+    {
+        std::cout << "Error when looking for delay environment variable" << ex.what() << std::endl;
+    }
+
+    return delayMillis;
+}
+
+size_t GetWriteDelay(int rankMpi)
+{
+    static size_t delay = _GetDelayFromEnvironment(rankMpi);
+    return delay;
+}
+#endif
+
 class BufferPool
 {
 public:
@@ -834,13 +882,42 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
         m_WriteCV.wait(lck, [this] { return m_ReadyToWrite; });
     }
 
-    // Do the writing
-
     if (m_Parameters.verbose > 4)
     {
         std::cout << "Rank " << m_RankMPI << " signaled to write" << std::endl;
     }
 
+#if REROUTING_ENABLE_DELAYED_WRITE
+    // Turn this feature on at configure time with:
+    //
+    //     -DREROUTING_ENABLE_DELAYED_WRITE:BOOL=ON
+    //
+    size_t writeDelay = GetWriteDelay(this->m_RankMPI);
+    if (writeDelay > 0)
+    {
+        if (m_Parameters.verbose > 1)
+        {
+            std::cout << "Rank " << this->m_RankMPI << " delaying " << writeDelay
+                    << " milliseconds before writing." << std::endl;
+        }
+
+        try
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(writeDelay));
+        }
+        catch (std::exception const& ex)
+        {
+            std::cout << "Exception when sleeping for " << writeDelay << " milliseconds." << std::endl;
+        }
+    }
+
+    if (m_Parameters.verbose > 1)
+    {
+        std::cout << "Rank " << m_RankMPI << " proceeding with write" << std::endl;
+    }
+#endif
+
+    // Do the writing
     size_t substreamIdx = static_cast<size_t>(m_TargetIndex);
 
     // Check if we need to update which file we are writing to
