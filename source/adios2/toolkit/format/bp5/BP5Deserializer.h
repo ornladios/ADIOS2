@@ -118,9 +118,9 @@ public:
         size_t BlockID;
         Dims Start;
         Dims Count;
-        Dims MemoryStart;              // captured at queue time for thread safety
-        Dims MemoryCount;              // captured at queue time for thread safety
-        Accuracy AccuracyRequested;    // captured at queue time for thread safety
+        Dims MemoryStart;           // captured at queue time for thread safety
+        Dims MemoryCount;           // captured at queue time for thread safety
+        Accuracy AccuracyRequested; // captured at queue time for thread safety
         MemorySpace MemSpace;
         std::map<std::string, std::unique_ptr<MinVarInfo>> *DerivedInputMap;
         void *Data;

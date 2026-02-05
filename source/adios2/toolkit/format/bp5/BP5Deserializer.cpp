@@ -2143,7 +2143,6 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         }
     }
 
-    VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
     DimsArray inStart(DimCount, RankOffset);
     DimsArray inCount(DimCount, RankSize);
     DimsArray outStart(DimCount, SelOffset);
