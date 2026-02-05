@@ -209,6 +209,13 @@ Understanding shapes is critical when working with parallel I/O code.
 - AsyncWrite modes: Guided (metadata-driven), Naive (simple async)
 - See `source/adios2/engine/bp5/BP5Engine.h` for base implementation
 
+## Git Workflow
+
+- Never commit directly to master. Always create a named branch for changes.
+- Create branches from the user's fork, but ensure they are up-to-date with upstream/master.
+- Branch names should be descriptive (e.g., `fix-bp5-thread-safety`, `add-selection-api`).
+- Keep commits terse and focused.
+
 ## Common Development Tasks
 
 ### Adding Tests for BP Engine

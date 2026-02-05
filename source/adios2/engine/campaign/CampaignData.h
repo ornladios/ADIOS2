@@ -181,7 +181,7 @@ public:
     void ReadToMemory(char *data, const size_t fileIdx, std::string &keyHex);
 
     // return 0 if there is no replica found for 'hostname', otherwise the replica index
-    size_t FindReplicaOnHost(const size_t datasetIdx, std::string hostname);
+    size_t FindReplicaOnHost(const size_t datasetIdx, std::vector<std::string> localHostAliases);
 
     /* return remote replicas in order of
      * 1. known remote host (has an entry in the hosts config) and not archive directory

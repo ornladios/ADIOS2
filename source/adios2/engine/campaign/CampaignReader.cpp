@@ -20,6 +20,7 @@
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
+#include <algorithm> // std:find in vector
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -224,6 +225,13 @@ void CampaignReader::InitParameters()
         m_Options.hostname = helper::GetClusterName();
     }
 
+    m_LocalhostAliases.push_back(m_Options.hostname);
+    for (auto &host : m_HostOptions)
+    {
+        if (host.second.front().protocol == HostAccessProtocol::LocalHost)
+            m_LocalhostAliases.push_back(host.first);
+    }
+
     if (m_Options.verbose > 0)
     {
         std::cout << "CampaignReader: \n";
@@ -252,6 +260,14 @@ void CampaignReader::InitParameters()
             }
             std::cout << "]" << std::endl;
         }
+        std::cout << "Local host aliases = [";
+        for (size_t idx = 0; idx < m_LocalhostAliases.size(); ++idx)
+        {
+            std::cout << m_LocalhostAliases[idx];
+            if (idx < m_LocalhostAliases.size() - 1)
+                std::cout << ", ";
+        }
+        std::cout << "]" << std::endl;
     }
 }
 
@@ -553,7 +569,6 @@ void CampaignReader::InitTransports()
 
     if (m_Options.verbose > 0)
     {
-        std::cout << "Local hostname = " << m_Options.hostname << "\n";
         std::cout << "Database result:\n  version = " << m_CampaignData.version.version
                   << "\n  hosts:\n";
 
@@ -690,7 +705,7 @@ void CampaignReader::InitTransports()
             if (!Matches(ds.name))
                 continue;
             std::string localPath;
-            size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+            size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
             if (!repIdx)
             {
                 auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
@@ -753,7 +768,7 @@ void CampaignReader::InitTransports()
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
         std::string localPath;
         std::string taropt;
-        size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+        size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
         if (!repIdx)
         {
             auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
@@ -857,7 +872,7 @@ void CampaignReader::InitTransports()
             std::cout << "-- Image " << ds.name << ":\n";
         }
 
-        size_t localRepIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_Options.hostname);
+        size_t localRepIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
         auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
         if (localRepIdx)
         {
@@ -895,7 +910,9 @@ void CampaignReader::InitTransports()
                 CreateImageVariable(imgName, m_CampaignData.files[fileid].lengthOriginal, dsIdx,
                                     repIdx, true);
             }
-            else if (m_CampaignData.hosts[rep.hostIdx].hostname == m_Options.hostname)
+            else if (std::find(m_LocalhostAliases.begin(), m_LocalhostAliases.end(),
+                               m_CampaignData.hosts[rep.hostIdx].hostname) !=
+                     m_LocalhostAliases.end())
             {
                 // this replica is local
                 std::string taropt;
