@@ -105,6 +105,8 @@ private:
     };
     std::unordered_map<std::string, CampaignVarInternalInfo> m_CampaignVarInternalInfo;
 
+    std::vector<std::string> m_LocalhostAliases; // config.yaml hostname + hosts.yaml "local" hosts
+
     void Init() final; ///< called from constructor, gets the selected Skeleton
                        /// transport method from settings
     void ReadConfig(std::string path);
