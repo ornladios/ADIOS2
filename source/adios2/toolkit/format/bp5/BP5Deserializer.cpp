@@ -1491,6 +1491,9 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
+        Req.MemoryStart = variable.m_MemoryStart;
+        Req.MemoryCount = variable.m_MemoryCount;
+        Req.AccuracyRequested = variable.GetAccuracyRequested();
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
         Req.StepCount = 1;
@@ -1511,6 +1514,9 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
         }
+        Req.MemoryStart = variable.m_MemoryStart;
+        Req.MemoryCount = variable.m_MemoryCount;
+        Req.AccuracyRequested = variable.GetAccuracyRequested();
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
         Req.Step = AbsStep;
@@ -1548,6 +1554,9 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
         Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
+        Req.MemoryStart = variable.m_MemoryStart;
+        Req.MemoryCount = variable.m_MemoryCount;
+        Req.AccuracyRequested = variable.GetAccuracyRequested();
         Req.Step = RelStep;
         Req.RelStep = RelStep;
         Req.StepCount = StepCount;
@@ -1568,6 +1577,9 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
         }
+        Req.MemoryStart = variable.m_MemoryStart;
+        Req.MemoryCount = variable.m_MemoryCount;
+        Req.AccuracyRequested = variable.GetAccuracyRequested();
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
         Req.Step = RelStep;
@@ -2081,7 +2093,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
                         }
                     }
                 }
-                op->SetAccuracy(VB->GetAccuracyRequested());
+                op->SetAccuracy(Req.AccuracyRequested);
                 core::Decompress(
                     IncomingData,
                     ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
@@ -2136,8 +2148,8 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     DimsArray inCount(DimCount, RankSize);
     DimsArray outStart(DimCount, SelOffset);
     DimsArray outCount(DimCount, SelSize);
-    DimsArray outMemStart(VB->m_MemoryStart);
-    DimsArray outMemCount(VB->m_MemoryCount);
+    DimsArray outMemStart(Req.MemoryStart);
+    DimsArray outMemCount(Req.MemoryCount);
     if (!m_ReaderIsRowMajor)
     {
         std::reverse(inStart.begin(), inStart.end());
@@ -2163,7 +2175,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             outMemCount[DimCount - 1] *= 2;
     }
 
-    if (VB->m_MemoryStart.size() > 0)
+    if (Req.MemoryStart.size() > 0)
     {
 #ifdef NOTDEF // haven't done endinness for BP5
         if (endianReverse)
