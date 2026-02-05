@@ -30,6 +30,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/Selection.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableStruct.h"
 #include "adios2/helper/adiosComm.h"
@@ -370,6 +371,29 @@ public:
     template <class T>
     void Get(core::Variable<T> &, T **) const;
 
+    //=========================================================================
+    // Selection-based Get() methods
+    //=========================================================================
+
+    /**
+     * @brief Get data with explicit selection specification.
+     *
+     * @param variable  Variable to read
+     * @param data      Pre-allocated buffer to receive data
+     * @param selection Specifies what data to read
+     * @param launch    Execution mode (Deferred or Sync)
+     */
+    template <class T>
+    void Get(Variable<T> &variable, T *data, const Selection &selection,
+             const Mode launch = Mode::Deferred);
+
+    /**
+     * @brief Get with selection, auto-resize vector version.
+     */
+    template <class T>
+    void Get(Variable<T> &variable, std::vector<T> &dataV, const Selection &selection,
+             const Mode launch = Mode::Deferred);
+
     /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
@@ -586,6 +610,13 @@ protected:
     virtual void DoGetDeferred(Variable<T> &, T *);                                                \
     virtual typename Variable<T>::BPInfo *DoGetBlockSync(Variable<T> &);                           \
     virtual typename Variable<T>::BPInfo *DoGetBlockDeferred(Variable<T> &);
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+// Get with Selection (thread-safe)
+#define declare_type(T)                                                                            \
+    virtual void DoGetSync(Variable<T> &, T *, const Selection &);                                 \
+    virtual void DoGetDeferred(Variable<T> &, T *, const Selection &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

@@ -14,6 +14,7 @@
 #include "Variable.h"
 
 #include "adios2/core/Engine.h"
+#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -100,6 +101,48 @@ template <class T>
 size_t Variable<T>::DoSelectionSize() const
 {
     return helper::GetTotalSize(DoCount()) * m_StepsCount;
+}
+
+template <class T>
+size_t Variable<T>::SelectionSize(const Selection &selection) const
+{
+    const size_t stepCount = selection.GetStepCount();
+
+    if (selection.GetSelectionType() == SelectionType::BoundingBox)
+    {
+        return helper::GetTotalSize(selection.GetCount()) * stepCount;
+    }
+    else if (selection.GetSelectionType() == SelectionType::WriteBlock)
+    {
+        // For block selection, we need to look up the block's dimensions
+        if (m_Engine == nullptr)
+        {
+            helper::Throw<std::runtime_error>(
+                "Core", "Variable", "SelectionSize",
+                "Cannot compute block selection size without an associated Engine");
+        }
+
+        const size_t blockID = selection.GetBlockID();
+        const size_t step =
+            (selection.GetStepStart() == 0) ? m_Engine->CurrentStep() : selection.GetStepStart();
+
+        const std::vector<typename Variable<T>::BPInfo> blocksInfo =
+            m_Engine->BlocksInfo<T>(*this, step);
+
+        if (blockID >= blocksInfo.size())
+        {
+            helper::Throw<std::invalid_argument>("Core", "Variable", "SelectionSize",
+                                                 "blockID " + std::to_string(blockID) +
+                                                     " is out of bounds for available blocks "
+                                                     "size " +
+                                                     std::to_string(blocksInfo.size()) +
+                                                     " for variable " + m_Name);
+        }
+
+        return helper::GetTotalSize(blocksInfo[blockID].Count) * stepCount;
+    }
+
+    return 0;
 }
 
 template <class T>

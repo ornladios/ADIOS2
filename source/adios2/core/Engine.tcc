@@ -158,6 +158,40 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV, const M
     Get(FindVariable<T>(variableName, "in Get with std::vector argument"), dataV, launch);
 }
 
+//=============================================================================
+// Selection-based Get() implementations
+//=============================================================================
+
+template <class T>
+void Engine::Get(Variable<T> &variable, T *data, const Selection &selection, const Mode launch)
+{
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
+                 "in call to Get with Selection");
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        DoGetDeferred(variable, data, selection);
+        break;
+    case Mode::Sync:
+        DoGetSync(variable, data, selection);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
+    }
+}
+
+template <class T>
+void Engine::Get(Variable<T> &variable, std::vector<T> &dataV, const Selection &selection,
+                 const Mode launch)
+{
+    const size_t dataSize = variable.SelectionSize(selection);
+    helper::Resize(dataV, dataSize, "in call to Get with Selection and std::vector argument");
+    Get(variable, dataV.data(), selection, launch);
+}
+
 // Get
 template <class T>
 typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable, const Mode launch)

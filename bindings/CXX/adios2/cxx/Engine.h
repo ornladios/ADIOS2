@@ -24,8 +24,9 @@ namespace adios2
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
-class IO;    // friend
-class Query; // friend
+class IO;        // friend
+class Query;     // friend
+class Selection; // for selection-based Get()
 namespace core
 {
 class Engine; // private implementation
@@ -424,6 +425,29 @@ public:
 #endif
         Get(variable, bufferView.data(), launch);
     }
+
+    //=========================================================================
+    // Selection-based Get() methods
+    //=========================================================================
+
+    /**
+     * Get data with explicit selection specification.
+     *
+     * @param variable  Variable to read
+     * @param data      Pre-allocated buffer to receive data
+     * @param selection Specifies what data to read
+     * @param launch    Execution mode (Deferred or Sync)
+     */
+    template <class T>
+    void Get(Variable<T> variable, T *data, const Selection &selection,
+             const Mode launch = Mode::Deferred);
+
+    /**
+     * Get with selection, auto-resize vector version.
+     */
+    template <class T>
+    void Get(Variable<T> variable, std::vector<T> &dataV, const Selection &selection,
+             const Mode launch = Mode::Deferred);
 
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();

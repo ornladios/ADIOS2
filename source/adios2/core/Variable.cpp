@@ -13,6 +13,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetDataType<T>
 
 namespace adios2
@@ -101,6 +102,12 @@ namespace core
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+// Explicit instantiation for SelectionSize(const Selection&)
+#define declare_selection_size(T)                                                                  \
+    template size_t Variable<T>::SelectionSize(const Selection &selection) const;
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_selection_size)
+#undef declare_selection_size
 
 } // end namespace core
 } // end namespace adios2

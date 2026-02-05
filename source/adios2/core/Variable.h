@@ -29,6 +29,10 @@ namespace adios2
 {
 namespace core
 {
+class Selection; // forward declaration
+}
+namespace core
+{
 
 /**
  * @param Base (parent) class for template derived (child) class Variable.
@@ -107,6 +111,13 @@ public:
     Dims Count() const;
 
     size_t SelectionSize() const;
+
+    /**
+     * Compute selection size for an explicit Selection object.
+     * @param selection The selection specification
+     * @return Number of elements that would be read
+     */
+    size_t SelectionSize(const Selection &selection) const;
 
     std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
 
