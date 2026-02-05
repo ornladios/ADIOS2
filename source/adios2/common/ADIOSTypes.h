@@ -421,7 +421,8 @@ enum class HostAccessProtocol
     Invalid,
     SSH,
     XRootD,
-    S3
+    S3,
+    LocalHost
 };
 
 /** Host authentication protocols */

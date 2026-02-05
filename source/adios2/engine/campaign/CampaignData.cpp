@@ -752,16 +752,18 @@ void CampaignData::ReadToMemory(char *data, const size_t fileIdx, std::string &k
     DumpToFileOrMemory(fileIdx, keyHex, "", data);
 }
 
-size_t CampaignData::FindReplicaOnHost(const size_t datasetIdx, std::string hostname)
+size_t CampaignData::FindReplicaOnHost(const size_t datasetIdx,
+                                       std::vector<std::string> localHostAliases)
 {
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto repIdx = it.first;
         auto &rep = it.second;
-        if (hosts[rep.hostIdx].hostname == hostname)
-        {
-            return repIdx;
-        }
+        for (auto &localAlias : localHostAliases)
+            if (hosts[rep.hostIdx].hostname == localAlias)
+            {
+                return repIdx;
+            }
     }
     return 0;
 }

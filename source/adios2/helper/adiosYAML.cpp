@@ -377,7 +377,35 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
 
         /* a dictionary of host options, with each entry a dictionary */
         YAML::Node hostentry = itDoc->second;
-        if (!hostentry.IsMap())
+        if (hostentry.IsScalar())
+        {
+            /* Must be either local, or a reference to an existing host definition */
+            std::string hostref = hostentry.as<std::string>();
+            if (helper::LowerCase(hostref) == "local")
+            {
+                std::vector<HostConfig> hcs;
+                HostConfig hc;
+                hc.protocol = HostAccessProtocol::LocalHost;
+                hcs.push_back(hc);
+                hosts.emplace(hostname, hcs);
+            }
+            else
+            {
+                auto it = hosts.find(hostref);
+                if (it == hosts.end())
+                {
+                    helper::Throw<std::invalid_argument>(
+                        "Helper", "adiosHostOptions", "ParseHostOptionsFile",
+                        "parser error for host " + hostname +
+                            ": it must be either 'local' or a reference to another already defined "
+                            "host, " +
+                            hint);
+                }
+                hosts.emplace(hostname, it->second);
+            }
+            continue;
+        }
+        else if (!hostentry.IsMap())
         {
             helper::Throw<std::invalid_argument>(
                 "Helper", "adiosHostOptions", "ParseHostOptionsFile",
