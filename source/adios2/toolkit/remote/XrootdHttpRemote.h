@@ -169,7 +169,8 @@ private:
      * @brief Build the SSI request string
      */
     std::string BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
-                                   size_t BlockID, const Dims &Count, const Dims &Start);
+                                   size_t BlockID, const Dims &Count, const Dims &Start,
+                                   const Accuracy &accuracy);
 
     /**
      * @brief Perform an HTTP POST request

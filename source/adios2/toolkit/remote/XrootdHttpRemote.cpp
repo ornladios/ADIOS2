@@ -208,7 +208,7 @@ void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 
 std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
                                                  size_t BlockID, const Dims &Count,
-                                                 const Dims &Start)
+                                                 const Dims &Start, const Accuracy &accuracy)
 {
     // Build request string in the same format as XrootdRemote
     // Format: get
@@ -246,6 +246,11 @@ std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Ste
     {
         reqStream << "&Start=" << s;
     }
+
+    // Add accuracy parameters
+    reqStream << "&AccuracyError=" << accuracy.error;
+    reqStream << "&AccuracyNorm=" << accuracy.norm;
+    reqStream << "&AccuracyRelative=" << (accuracy.relative ? 1 : 0);
 
     return reqStream.str();
 }
@@ -366,7 +371,8 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
     asyncOp->destSize = 0;
 
     // Build request string
-    std::string requestData = BuildRequestString(VarName, Step, StepCount, BlockID, Count, Start);
+    std::string requestData =
+        BuildRequestString(VarName, Step, StepCount, BlockID, Count, Start, accuracy);
 
     // Launch async HTTP request
     std::thread requestThread([this, asyncOp, requestData]() {
