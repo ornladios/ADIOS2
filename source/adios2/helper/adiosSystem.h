@@ -91,6 +91,18 @@ unsigned int NumHardwareThreadsPerNode();
  */
 size_t RaiseLimitNoFile();
 
+/**
+ * Remove stale BP files from a directory before writing.
+ * Scans directory for all files and removes any not in filesToKeep.
+ * Only rank 0 performs operations; all ranks synchronize via barrier.
+ *
+ * @param directory BP directory path
+ * @param filesToKeep List of files the engine will create (basenames only)
+ * @param comm MPI communicator
+ */
+void CleanupBPDirectory(const std::string &directory, const std::vector<std::string> &filesToKeep,
+                        helper::Comm &comm);
+
 } // end namespace helper
 } // end namespace adios2
 

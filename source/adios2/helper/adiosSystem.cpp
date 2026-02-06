@@ -19,7 +19,10 @@
 #include <sys/time.h>
 #endif
 
+#include <adios2sys/Directory.hxx>
 #include <adios2sys/SystemTools.hxx>
+
+#include <unordered_set>
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosComm.h"
@@ -230,6 +233,50 @@ size_t RaiseLimitNoFile()
     }
     return raisedLimit;
 #endif
+}
+
+void CleanupBPDirectory(const std::string &directory, const std::vector<std::string> &filesToKeep,
+                        helper::Comm &comm)
+{
+    if (!comm.Rank())
+    {
+        // Build a set of basenames for O(1) lookup
+        std::unordered_set<std::string> keepSet;
+        for (const auto &fullPath : filesToKeep)
+        {
+            std::string basename = adios2sys::SystemTools::GetFilenameName(fullPath);
+            keepSet.insert(basename);
+        }
+
+        // Scan directory and delete files not in whitelist
+        adios2sys::Directory dir;
+        if (dir.Load(directory).IsSuccess())
+        {
+            for (unsigned long i = 0; i < dir.GetNumberOfFiles(); ++i)
+            {
+                const std::string &fileName = dir.GetFileName(i);
+                // Skip . and ..
+                if (fileName == "." || fileName == "..")
+                {
+                    continue;
+                }
+                // Delete if not in whitelist
+                if (keepSet.find(fileName) == keepSet.end())
+                {
+                    std::string filePath = dir.GetFilePath(i);
+                    if (dir.FileIsDirectory(i))
+                    {
+                        adios2sys::SystemTools::RemoveADirectory(filePath);
+                    }
+                    else
+                    {
+                        adios2sys::SystemTools::RemoveFile(filePath);
+                    }
+                }
+            }
+        }
+    }
+    comm.Barrier("CleanupBPDirectory");
 }
 
 } // end namespace helper

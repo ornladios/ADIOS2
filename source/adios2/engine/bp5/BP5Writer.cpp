@@ -15,6 +15,7 @@
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/helper/adiosMath.h"      // SetWithinLimit
 #include "adios2/helper/adiosMemory.h"    // NdCopy
+#include "adios2/helper/adiosSystem.h"    // CleanupBPDirectory
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -1657,6 +1658,21 @@ void BP5Writer::InitMetadataTransports()
 
 void BP5Writer::InitTransports()
 {
+    // Cleanup stale files from previous writes (only on first step in Write mode)
+    if (m_OpenMode == Mode::Write && m_WriterStep == 0)
+    {
+        std::vector<std::string> filesToKeep;
+        filesToKeep.push_back(GetBPMetadataFileName(m_Name));      // md.0
+        filesToKeep.push_back(GetBPMetaMetadataFileName(m_Name));  // mmd.0
+        filesToKeep.push_back(GetBPMetadataIndexFileName(m_Name)); // md.idx
+        // data.0 through data.(NumAggregators-1)
+        for (size_t i = 0; i < m_Aggregator->m_NumAggregators; i++)
+        {
+            filesToKeep.push_back(GetBPSubStreamName(m_Name, i, true, false));
+        }
+        helper::CleanupBPDirectory(m_Name, filesToKeep, m_Comm);
+    }
+
     std::string cacheKey = GetCacheKey(m_Aggregator);
     auto search = m_AggregatorSpecifics.find(cacheKey);
     bool cacheHit = false;
