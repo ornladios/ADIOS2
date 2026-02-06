@@ -19,10 +19,18 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <aws/core/Aws.h>
+#include <aws/core/auth/AWSCredentials.h>
 #include <aws/core/utils/logging/LogLevel.h>
+#include <aws/core/utils/stream/PreallocatedStreamBuf.h>
 #include <aws/s3/S3Client.h>
+#include <aws/s3/model/AbortMultipartUploadRequest.h>
+#include <aws/s3/model/CompleteMultipartUploadRequest.h>
+#include <aws/s3/model/CompletedMultipartUpload.h>
+#include <aws/s3/model/CompletedPart.h>
+#include <aws/s3/model/CreateMultipartUploadRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/UploadPartRequest.h>
 
 namespace adios2
 {
@@ -89,6 +97,10 @@ private:
     Aws::S3::S3Client *s3Client = nullptr;
     /** AWSSDK file handle returned by Open */
     std::string m_Endpoint;
+    std::string m_BucketPrefix; // Bucket to prepend to paths (from "bucket" parameter)
+    std::string m_accessKeyID;
+    std::string m_secretKey;
+    std::string m_sessionToken;
     Aws::S3::Model::HeadObjectOutcome head_object;
     std::string m_BucketName;
     std::string m_ObjectName;
@@ -108,6 +120,27 @@ private:
     bool m_IsCached = false; // true if file is already in cache
     FileFStream *m_CacheFileRead;
     std::string m_CacheFilePath; // full path to file in cache
+
+    // Multipart upload state for S3 writes
+    std::string m_UploadId;
+    std::vector<Aws::S3::Model::CompletedPart> m_CompletedParts;
+    int m_CurrentPartNumber = 0;
+
+    // Write buffer - accumulate at least S3_MIN_PART_SIZE before uploading
+    // S3 hard limits: minimum 5 MiB per part (except last), maximum 5 GiB per part
+    static constexpr size_t S3_MIN_PART_SIZE = 5ULL * 1024 * 1024;        // 5 MiB (S3 limit)
+    static constexpr size_t S3_MAX_PART_SIZE = 5ULL * 1024 * 1024 * 1024; // 5 GiB (S3 limit)
+    size_t m_MinPartSize = S3_MIN_PART_SIZE; // configurable via min_part_size (must be >= 5 MiB)
+    size_t m_MaxPartSize = S3_MAX_PART_SIZE; // configurable via max_part_size (must be <= 5 GiB)
+    std::vector<char> m_WriteBuffer;
+    size_t m_TotalBytesWritten = 0;
+
+    // Multipart upload helper methods
+    void InitiateMultipartUpload();
+    void UploadPart(const char *data, size_t size);
+    void UploadBufferedPart();
+    void CompleteMultipartUpload();
+    void AbortMultipartUpload();
 
     /**
      * Check if m_FileDescriptor is -1 after an operation

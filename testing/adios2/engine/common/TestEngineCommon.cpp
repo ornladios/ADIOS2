@@ -37,26 +37,96 @@ std::string Trim(std::string &str)
 
 /*
  * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
+ * by commas.  White space is trimmed off front and back.
+ *
+ * Values containing colons (like URLs) can be quoted with single or double quotes:
+ *   DataTransport:awssdk,S3Endpoint:"http://127.0.0.1:9000",S3Bucket:mybucket
+ *   or
+ *   DataTransport:awssdk,S3Endpoint:'http://127.0.0.1:9000',S3Bucket:mybucket
  */
 adios2::Params ParseEngineParams(std::string Input)
 {
-    std::istringstream ss(Input);
-    std::string Param;
     adios2::Params Ret = {};
+    size_t pos = 0;
+    size_t len = Input.length();
 
-    while (std::getline(ss, Param, ','))
+    while (pos < len)
     {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
+        // Skip leading whitespace
+        while (pos < len && std::isspace(Input[pos]))
         {
-            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
+            ++pos;
         }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
+        if (pos >= len)
+        {
+            break;
+        }
+
+        // Parse parameter name (up to ':')
+        size_t nameStart = pos;
+        while (pos < len && Input[pos] != ':')
+        {
+            ++pos;
+        }
+        if (pos >= len)
+        {
+            throw std::invalid_argument("Engine parameter missing ':' delimiter");
+        }
+        std::string paramName = Input.substr(nameStart, pos - nameStart);
+        paramName = Trim(paramName);
+        ++pos; // skip ':'
+
+        // Parse parameter value
+        std::string paramValue;
+
+        // Skip whitespace before value
+        while (pos < len && std::isspace(Input[pos]))
+        {
+            ++pos;
+        }
+
+        if (pos < len && (Input[pos] == '"' || Input[pos] == '\''))
+        {
+            // Quoted value - read until matching quote
+            char quote = Input[pos];
+            ++pos; // skip opening quote
+            size_t valueStart = pos;
+            while (pos < len && Input[pos] != quote)
+            {
+                ++pos;
+            }
+            if (pos >= len)
+            {
+                throw std::invalid_argument("Engine parameter \"" + paramName +
+                                            "\" has unterminated quote");
+            }
+            paramValue = Input.substr(valueStart, pos - valueStart);
+            ++pos; // skip closing quote
+        }
+        else
+        {
+            // Unquoted value - read until comma or end
+            size_t valueStart = pos;
+            while (pos < len && Input[pos] != ',')
+            {
+                ++pos;
+            }
+            paramValue = Input.substr(valueStart, pos - valueStart);
+            paramValue = Trim(paramValue);
+        }
+
+        if (paramName.empty())
+        {
+            throw std::invalid_argument("Engine parameter has empty name");
+        }
+
+        Ret[paramName] = paramValue;
+
+        // Skip comma separator if present
+        if (pos < len && Input[pos] == ',')
+        {
+            ++pos;
+        }
     }
     return Ret;
 }
