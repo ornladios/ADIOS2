@@ -33,6 +33,7 @@ add_library(adios2_core
   helper/adiosNetwork.cpp
   helper/adiosPartitioner.cpp
   helper/adiosPluginManager.cpp
+  helper/adiosRerouting.cpp
   helper/adiosString.cpp helper/adiosString.tcc
   helper/adiosSystem.cpp
   helper/adiosType.cpp
@@ -57,6 +58,7 @@ add_library(adios2_core
   engine/bp5/BP5Writer.tcc
   engine/bp5/BP5Writer_TwoLevelShm_Async.cpp
   engine/bp5/BP5Writer_TwoLevelShm.cpp
+  engine/bp5/BP5Writer_WithRerouting.cpp
 
   engine/timeseries/TimeSeriesReader.cpp engine/timeseries/TimeSeriesReader.tcc
 
