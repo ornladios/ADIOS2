@@ -305,7 +305,9 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
         m_BucketName = m_BucketPrefix;
         m_ObjectName = name;
         // Strip leading slashes from object key (S3 keys shouldn't start with /)
-        while (!m_ObjectName.empty() && m_ObjectName[0] == PathSeparator)
+        // Also strip leading dots, those lead to authentication issues
+        while (!m_ObjectName.empty() &&
+               (m_ObjectName[0] == PathSeparator || m_ObjectName[0] == '.'))
         {
             m_ObjectName = m_ObjectName.substr(1);
         }
