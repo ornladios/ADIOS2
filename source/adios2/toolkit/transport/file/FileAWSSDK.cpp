@@ -50,6 +50,11 @@ void FileAWSSDK::SetParameters(const Params &params)
     // Parameters are set from config parameters if present
     // Otherwise, they are set from environment if present
     // Otherwise, they remain at their default value
+    //
+    for (auto const&[l, r]: params)
+    {
+        std::cout << "PARAM:\t" << l << ":\t" << r << std::endl;
+    }
 
     helper::SetParameterValue("endpoint", params, m_Endpoint);
     if (m_Endpoint.empty())
@@ -155,6 +160,7 @@ void FileAWSSDK::SetParameters(const Params &params)
 
     if (!m_accessKeyID.empty() || !m_secretKey.empty())
     {
+        std::cout << "Configuring with secret key." << std::endl;
         Aws::Auth::AWSCredentials aws_credentials;
         if (!m_sessionToken.empty())
         {
@@ -170,6 +176,7 @@ void FileAWSSDK::SetParameters(const Params &params)
     }
     else
     {
+        std::cout << "Configuring without secret key." << std::endl;
         s3Client = new Aws::S3::S3Client(*s3ClientConfig);
     }
     if (m_Verbose > 0)
