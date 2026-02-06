@@ -1599,6 +1599,18 @@ void BP5Writer::InitMetadataTransports()
         {
             dataTransportParams["bucket"] = m_Parameters.S3Bucket;
         }
+        if (!m_Parameters.S3AccessKeyID.empty())
+        {
+            dataTransportParams["AccessKeyID"] = m_Parameters.S3AccessKeyID;
+        }
+        if (!m_Parameters.S3SecretKey.empty())
+        {
+            dataTransportParams["SecretKey"] = m_Parameters.S3SecretKey;
+        }
+        if (!m_Parameters.S3SessionToken.empty())
+        {
+            dataTransportParams["SessionToken"] = m_Parameters.S3SessionToken;
+        }
         // Pass verbose level to transport
         if (m_Parameters.verbose > 0)
         {

@@ -78,7 +78,7 @@ void FileAWSSDK::SetParameters(const Params &params)
         }
     }
 
-    helper::SetParameterValue("accessKeyID", params, m_accessKeyID);
+    helper::SetParameterValue("accesskeyid", params, m_accessKeyID);
     if (m_accessKeyID.empty())
     {
         if (const char *Env = std::getenv("AWS_ACCESS_KEY_ID"))
@@ -86,7 +86,7 @@ void FileAWSSDK::SetParameters(const Params &params)
             m_accessKeyID = std::string(Env);
         }
     }
-    helper::SetParameterValue("secretKey", params, m_secretKey);
+    helper::SetParameterValue("secretkey", params, m_secretKey);
     if (m_secretKey.empty())
     {
         if (const char *Env = std::getenv("AWS_SECRET_KEY"))
@@ -94,7 +94,7 @@ void FileAWSSDK::SetParameters(const Params &params)
             m_secretKey = std::string(Env);
         }
     }
-    helper::SetParameterValue("sessionToken", params, m_sessionToken);
+    helper::SetParameterValue("sessiontoken", params, m_sessionToken);
     if (m_sessionToken.empty())
     {
         if (const char *Env = std::getenv("AWS_SESSION_TOKEN"))
