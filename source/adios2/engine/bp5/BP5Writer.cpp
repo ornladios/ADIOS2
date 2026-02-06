@@ -22,6 +22,7 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <ctime>
+#include <fstream>
 #include <iomanip> // setw
 #include <iostream>
 #include <memory> // make_shared
@@ -1649,6 +1650,29 @@ void BP5Writer::InitMetadataTransports()
 
     m_TransportFactory.MkDirsBarrier({m_MetadataFileName}, m_IO.m_TransportsParameters,
                                      m_Parameters.NodeLocal || m_WriteToBB);
+
+    // Write s3.json sidecar so readers can auto-detect hybrid S3 storage
+    if (m_Comm.Rank() == 0 && !m_Parameters.DataTransport.empty())
+    {
+        std::string sidecarPath = m_Name + PathSeparator + "s3.json";
+        std::ofstream sf(sidecarPath);
+        if (sf.good())
+        {
+            sf << "{\n";
+            sf << "  \"version\": 1,\n";
+            sf << "  \"transport\": \"" << m_Parameters.DataTransport << "\"";
+            if (!m_Parameters.S3Endpoint.empty())
+            {
+                sf << ",\n  \"endpoint\": \"" << m_Parameters.S3Endpoint << "\"";
+            }
+            if (!m_Parameters.S3Bucket.empty())
+            {
+                sf << ",\n  \"bucket\": \"" << m_Parameters.S3Bucket << "\"";
+            }
+            sf << "\n}\n";
+            sf.close();
+        }
+    }
 
     /* Everyone opens its data file. Each aggregation chain opens
        one data file and does so in chain, not everyone at once */

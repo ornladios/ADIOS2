@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdio>
 #include <errno.h>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -1430,11 +1431,94 @@ void BP5Reader::InitTransports()
         std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
                                    m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 
+    // Auto-detect S3 hybrid storage via s3.json sidecar.
+    // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
+    // All ranks participate in the broadcast unconditionally so the collective doesn't deadlock.
+    if (m_Parameters.DataTransport.empty())
+    {
+        if (m_Comm.Rank() == 0)
+        {
+            std::string sidecarPath = m_Name + PathSeparator + "s3.json";
+            std::ifstream sf(sidecarPath);
+            if (sf.good())
+            {
+                std::string content((std::istreambuf_iterator<char>(sf)),
+                                    std::istreambuf_iterator<char>());
+                sf.close();
+
+                auto extractField = [&content](const std::string &key) -> std::string {
+                    std::string pattern = "\"" + key + "\": \"";
+                    auto pos = content.find(pattern);
+                    if (pos == std::string::npos)
+                    {
+                        pattern = "\"" + key + "\":\"";
+                        pos = content.find(pattern);
+                    }
+                    if (pos == std::string::npos)
+                    {
+                        return "";
+                    }
+                    pos += pattern.size();
+                    auto end = content.find("\"", pos);
+                    if (end == std::string::npos)
+                    {
+                        return "";
+                    }
+                    return content.substr(pos, end - pos);
+                };
+
+                m_Parameters.DataTransport = extractField("transport");
+                if (!m_Parameters.DataTransport.empty())
+                {
+                    if (m_Parameters.S3Endpoint.empty())
+                    {
+                        m_Parameters.S3Endpoint = extractField("endpoint");
+                    }
+                    if (m_Parameters.S3Bucket.empty())
+                    {
+                        m_Parameters.S3Bucket = extractField("bucket");
+                    }
+                    if (m_Parameters.verbose > 0)
+                    {
+                        std::cout << "BP5Reader: detected s3.json sidecar, DataTransport="
+                                  << m_Parameters.DataTransport << std::endl;
+                    }
+                }
+            }
+        }
+
+        // Broadcast sidecar results from rank 0 to all ranks.
+        // Every rank enters BroadcastValue so the collective is satisfied.
+        // len==0 means no sidecar was found; everyone skips the rest.
+        auto bcastString = [this](std::string &str) {
+            size_t len = m_Comm.BroadcastValue(str.size(), 0);
+            if (len > 0)
+            {
+                std::vector<char> buf(len);
+                if (m_Comm.Rank() == 0)
+                {
+                    std::copy(str.begin(), str.end(), buf.begin());
+                }
+                m_Comm.Bcast(buf.data(), len, 0);
+                if (m_Comm.Rank() != 0)
+                {
+                    str.assign(buf.begin(), buf.end());
+                }
+            }
+        };
+        bcastString(m_Parameters.DataTransport);
+        if (!m_Parameters.DataTransport.empty())
+        {
+            bcastString(m_Parameters.S3Endpoint);
+            bcastString(m_Parameters.S3Bucket);
+        }
+    }
+
     // Set up data transport parameters - use different transport if DataTransport is specified
     Params dataTransportParams;
     if (!m_Parameters.DataTransport.empty())
     {
-        // User specified a different transport for data files (e.g., "awssdk" for S3)
+        // Using a different transport for data files (e.g., "awssdk" for S3)
         dataTransportParams["transport"] = "file";
         dataTransportParams["library"] = m_Parameters.DataTransport;
 
