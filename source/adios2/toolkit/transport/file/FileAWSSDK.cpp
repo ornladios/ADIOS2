@@ -78,6 +78,31 @@ void FileAWSSDK::SetParameters(const Params &params)
         }
     }
 
+    helper::SetParameterValue("accessKeyID", params, m_accessKeyID);
+    if (m_accessKeyID.empty())
+    {
+        if (const char *Env = std::getenv("AWS_ACCESS_KEY_ID"))
+        {
+            m_accessKeyID = std::string(Env);
+        }
+    }
+    helper::SetParameterValue("secretKey", params, m_secretKey);
+    if (m_secretKey.empty())
+    {
+        if (const char *Env = std::getenv("AWS_SECRET_KEY"))
+        {
+            m_secretKey = std::string(Env);
+        }
+    }
+    helper::SetParameterValue("sessionToken", params, m_sessionToken);
+    if (m_sessionToken.empty())
+    {
+        if (const char *Env = std::getenv("AWS_SESSION_TOKEN"))
+        {
+            m_sessionToken = std::string(Env);
+        }
+    }
+
     helper::SetParameterValueInt("verbose", params, m_Verbose, "");
 
     std::string recheckStr = "true";
@@ -128,7 +153,25 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->enableEndpointDiscovery = false;
     s3ClientConfig->region = "us-east-1"; // Required for signature calculation
 
-    s3Client = new Aws::S3::S3Client(*s3ClientConfig);
+    if (!m_accessKeyID.empty() || !m_secretKey.empty())
+    {
+        Aws::Auth::AWSCredentials aws_credentials;
+        if (!m_sessionToken.empty())
+        {
+            aws_credentials = {m_accessKeyID, m_secretKey, m_sessionToken};
+        }
+        else
+        {
+            aws_credentials = {m_accessKeyID, m_secretKey};
+        }
+        s3Client =
+            new Aws::S3::S3Client(aws_credentials, *s3ClientConfig,
+                                  Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, false);
+    }
+    else
+    {
+        s3Client = new Aws::S3::S3Client(*s3ClientConfig);
+    }
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"

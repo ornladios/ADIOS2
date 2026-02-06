@@ -19,6 +19,7 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <aws/core/Aws.h>
+#include <aws/core/auth/AWSCredentials.h>
 #include <aws/core/utils/logging/LogLevel.h>
 #include <aws/core/utils/stream/PreallocatedStreamBuf.h>
 #include <aws/s3/S3Client.h>
@@ -97,6 +98,9 @@ private:
     /** AWSSDK file handle returned by Open */
     std::string m_Endpoint;
     std::string m_BucketPrefix; // Bucket to prepend to paths (from "bucket" parameter)
+    std::string m_accessKeyID;
+    std::string m_secretKey;
+    std::string m_sessionToken;
     Aws::S3::Model::HeadObjectOutcome head_object;
     std::string m_BucketName;
     std::string m_ObjectName;
