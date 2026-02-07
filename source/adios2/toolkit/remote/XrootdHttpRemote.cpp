@@ -4,7 +4,8 @@
  *
  * XrootdHttpRemote.cpp - HTTP/HTTPS-based client for XRootD SSI services
  *
- * Uses CURL multi interface for efficient parallel requests with connection pooling.
+ * Uses a shared CurlMultiPool singleton for efficient parallel requests
+ * with connection pooling across all XrootdHttpRemote instances.
  */
 
 #include "XrootdHttpRemote.h"
@@ -37,51 +38,40 @@ size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 
 } // anonymous namespace
 
-#endif // ADIOS2_HAVE_CURL
+// ======================================================================
+// CurlMultiPool implementation
+// ======================================================================
 
-XrootdHttpRemote::XrootdHttpRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions)
+CurlMultiPool &CurlMultiPool::getInstance()
 {
-#ifdef ADIOS2_HAVE_CURL
+    static CurlMultiPool instance;
+    return instance;
+}
+
+CurlMultiPool::CurlMultiPool()
+{
     curl_global_init(CURL_GLOBAL_DEFAULT);
-#endif
-}
-
-XrootdHttpRemote::~XrootdHttpRemote()
-{
-    Close();
-    ShutdownCurlMulti();
-}
-
-bool XrootdHttpRemote::InitCurlMulti()
-{
-#ifdef ADIOS2_HAVE_CURL
-    if (m_MultiHandle)
-        return true;
 
     m_MultiHandle = curl_multi_init();
     if (!m_MultiHandle)
     {
-        helper::Log("Remote", "XrootdHttpRemote", "InitCurlMulti",
+        helper::Log("Remote", "CurlMultiPool", "CurlMultiPool",
                     "Failed to initialize CURL multi handle", helper::LogMode::FATALERROR);
-        return false;
+        return;
     }
 
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAXCONNECTS, m_MaxConnections);
+    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAXCONNECTS, 50L);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 
     m_Running = true;
-    m_WorkerThread = std::thread(&XrootdHttpRemote::WorkerLoop, this);
-    return true;
-#else
-    helper::Log("Remote", "XrootdHttpRemote", "InitCurlMulti",
-                "ADIOS2 was not built with CURL support", helper::LogMode::FATALERROR);
-    return false;
-#endif
+    m_WorkerThread = std::thread(&CurlMultiPool::WorkerLoop, this);
+
+    helper::Log("Remote", "CurlMultiPool", "CurlMultiPool",
+                "Shared CURL multi pool initialized (max 50 connections)", helper::LogMode::INFO);
 }
 
-void XrootdHttpRemote::ShutdownCurlMulti()
+CurlMultiPool::~CurlMultiPool()
 {
-#ifdef ADIOS2_HAVE_CURL
     {
         std::lock_guard<std::mutex> lock(m_QueueMutex);
         m_Running = false;
@@ -89,15 +79,175 @@ void XrootdHttpRemote::ShutdownCurlMulti()
     m_QueueCV.notify_all();
 
     if (m_WorkerThread.joinable())
+    {
         m_WorkerThread.join();
+    }
 
     if (m_MultiHandle)
     {
         curl_multi_cleanup(m_MultiHandle);
         m_MultiHandle = nullptr;
     }
-#endif
 }
+
+void CurlMultiPool::Submit(CURL *easyHandle, AsyncGet *asyncOp)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_QueueMutex);
+        m_PendingQueue.push_back({easyHandle, asyncOp});
+    }
+    m_QueueCV.notify_one();
+}
+
+void CurlMultiPool::ProcessCompletedTransfers()
+{
+    CURLMsg *msg;
+    int msgsLeft;
+
+    while ((msg = curl_multi_info_read(m_MultiHandle, &msgsLeft)))
+    {
+        if (msg->msg == CURLMSG_DONE)
+        {
+            CURL *easy = msg->easy_handle;
+            CURLcode result = msg->data.result;
+
+            AsyncGet *asyncOp = nullptr;
+            curl_easy_getinfo(easy, CURLINFO_PRIVATE, &asyncOp);
+
+            if (asyncOp)
+            {
+                bool success = false;
+
+                if (result == CURLE_OK)
+                {
+                    long httpCode = 0;
+                    curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &httpCode);
+
+                    if (httpCode == 200 || httpCode == 201)
+                    {
+                        if (asyncOp->destBuffer && !asyncOp->responseData.empty())
+                        {
+                            memcpy(asyncOp->destBuffer, asyncOp->responseData.data(),
+                                   asyncOp->responseData.size());
+                            asyncOp->destSize = asyncOp->responseData.size();
+                        }
+                        success = true;
+                    }
+                    else
+                    {
+                        std::ostringstream ss;
+                        ss << "HTTP error " << httpCode;
+                        if (!asyncOp->responseData.empty())
+                        {
+                            ss << ": "
+                               << std::string(asyncOp->responseData.begin(),
+                                              asyncOp->responseData.end());
+                        }
+                        asyncOp->errorMsg = ss.str();
+                    }
+                }
+                else
+                {
+                    asyncOp->errorMsg = curl_easy_strerror(result);
+                }
+
+                // Clean up headers and easy handle BEFORE signaling completion.
+                // Once set_value() is called, the waiting thread in WaitForGet()
+                // may immediately delete asyncOp, causing use-after-free.
+                if (asyncOp->headers)
+                {
+                    curl_slist_free_all(asyncOp->headers);
+                    asyncOp->headers = nullptr;
+                }
+
+                curl_multi_remove_handle(m_MultiHandle, easy);
+                curl_easy_cleanup(easy);
+                easy = nullptr;
+
+                asyncOp->promise.set_value(success);
+            }
+
+            if (easy)
+            {
+                curl_multi_remove_handle(m_MultiHandle, easy);
+                curl_easy_cleanup(easy);
+            }
+        }
+    }
+}
+
+void CurlMultiPool::WorkerLoop()
+{
+    while (true)
+    {
+        // Drain pending queue into curl multi handle
+        {
+            std::unique_lock<std::mutex> lock(m_QueueMutex);
+
+            while (!m_PendingQueue.empty())
+            {
+                PendingSubmit req = m_PendingQueue.front();
+                m_PendingQueue.pop_front();
+
+                CURLMcode rc = curl_multi_add_handle(m_MultiHandle, req.easyHandle);
+                if (rc != CURLM_OK)
+                {
+                    req.asyncOp->errorMsg =
+                        std::string("curl_multi_add_handle failed: ") + curl_multi_strerror(rc);
+                    req.asyncOp->promise.set_value(false);
+                    if (req.asyncOp->headers)
+                    {
+                        curl_slist_free_all(req.asyncOp->headers);
+                        req.asyncOp->headers = nullptr;
+                    }
+                    curl_easy_cleanup(req.easyHandle);
+                }
+            }
+        }
+
+        // Drive transfers and process completions
+        int runningHandles = 0;
+        curl_multi_perform(m_MultiHandle, &runningHandles);
+        ProcessCompletedTransfers();
+
+        // Check if we should block waiting for new work
+        if (runningHandles == 0)
+        {
+            std::unique_lock<std::mutex> lock(m_QueueMutex);
+            if (!m_Running && m_PendingQueue.empty())
+            {
+                break;
+            }
+            if (m_PendingQueue.empty())
+            {
+                m_QueueCV.wait(lock);
+            }
+            continue;
+        }
+
+        // Wait for socket activity (up to 100ms)
+        int numfds;
+        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 100, &numfds);
+        if (mc != CURLM_OK)
+        {
+            helper::Log("Remote", "CurlMultiPool", "WorkerLoop",
+                        "curl_multi_wait failed: " + std::string(curl_multi_strerror(mc)),
+                        helper::LogMode::WARNING);
+        }
+    }
+
+    ProcessCompletedTransfers();
+}
+
+#endif // ADIOS2_HAVE_CURL
+
+// ======================================================================
+// XrootdHttpRemote implementation
+// ======================================================================
+
+XrootdHttpRemote::XrootdHttpRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
+
+XrootdHttpRemote::~XrootdHttpRemote() { Close(); }
 
 std::string XrootdHttpRemote::UrlEncode(const std::string &str)
 {
@@ -149,24 +299,13 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     if (it != params.end())
         m_RequestTimeout = std::stol(it->second);
 
-    it = params.find("MaxConnections");
-    if (it != params.end())
-        m_MaxConnections = std::stol(it->second);
-
     std::ostringstream urlStream;
     urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/ssi";
     m_BaseUrl = urlStream.str();
 
-    if (!InitCurlMulti())
-    {
-        m_OpenSuccess = false;
-        return;
-    }
-
     std::string protocol = m_UseHttps ? "HTTPS" : "HTTP";
     helper::Log("Remote", "XrootdHttpRemote", "Open",
-                "Opened " + protocol + " connection to " + m_BaseUrl + " for file " + m_Filename +
-                    " (max " + std::to_string(m_MaxConnections) + " connections)",
+                "Opened " + protocol + " connection to " + m_BaseUrl + " for file " + m_Filename,
                 helper::LogMode::INFO);
 
     m_OpenSuccess = true;
@@ -243,137 +382,6 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
 #endif
 }
 
-void XrootdHttpRemote::ProcessCompletedTransfers()
-{
-#ifdef ADIOS2_HAVE_CURL
-    CURLMsg *msg;
-    int msgsLeft;
-
-    while ((msg = curl_multi_info_read(m_MultiHandle, &msgsLeft)))
-    {
-        if (msg->msg == CURLMSG_DONE)
-        {
-            CURL *easy = msg->easy_handle;
-            CURLcode result = msg->data.result;
-
-            AsyncGet *asyncOp = nullptr;
-            curl_easy_getinfo(easy, CURLINFO_PRIVATE, &asyncOp);
-
-            if (asyncOp)
-            {
-                bool success = false;
-
-                if (result == CURLE_OK)
-                {
-                    long httpCode = 0;
-                    curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &httpCode);
-
-                    if (httpCode == 200 || httpCode == 201)
-                    {
-                        if (asyncOp->destBuffer && !asyncOp->responseData.empty())
-                        {
-                            memcpy(asyncOp->destBuffer, asyncOp->responseData.data(),
-                                   asyncOp->responseData.size());
-                            asyncOp->destSize = asyncOp->responseData.size();
-                        }
-                        success = true;
-                    }
-                    else
-                    {
-                        std::ostringstream ss;
-                        ss << "HTTP error " << httpCode;
-                        if (!asyncOp->responseData.empty())
-                            ss << ": "
-                               << std::string(asyncOp->responseData.begin(),
-                                              asyncOp->responseData.end());
-                        asyncOp->errorMsg = ss.str();
-                    }
-                }
-                else
-                {
-                    asyncOp->errorMsg = curl_easy_strerror(result);
-                }
-
-                asyncOp->promise.set_value(success);
-
-                if (asyncOp->headers)
-                {
-                    curl_slist_free_all(asyncOp->headers);
-                    asyncOp->headers = nullptr;
-                }
-            }
-
-            curl_multi_remove_handle(m_MultiHandle, easy);
-            curl_easy_cleanup(easy);
-        }
-    }
-#endif
-}
-
-void XrootdHttpRemote::WorkerLoop()
-{
-#ifdef ADIOS2_HAVE_CURL
-    while (true)
-    {
-        // Drain pending queue into curl multi handle
-        {
-            std::unique_lock<std::mutex> lock(m_QueueMutex);
-
-            while (!m_PendingQueue.empty())
-            {
-                PendingRequest req = std::move(m_PendingQueue.front());
-                m_PendingQueue.pop_front();
-
-                CURL *easy = CreateEasyHandle(req.asyncOp, req.url, req.postData);
-                if (easy)
-                    curl_multi_add_handle(m_MultiHandle, easy);
-                else
-                {
-                    req.asyncOp->errorMsg = "Failed to create CURL handle";
-                    req.asyncOp->promise.set_value(false);
-                }
-            }
-        }
-
-        // Drive transfers and process completions
-        int runningHandles = 0;
-        curl_multi_perform(m_MultiHandle, &runningHandles);
-        ProcessCompletedTransfers();
-
-        // Check if we should block waiting for new work
-        if (runningHandles == 0)
-        {
-            std::unique_lock<std::mutex> lock(m_QueueMutex);
-            if (!m_Running && m_PendingQueue.empty())
-                break;
-            if (m_PendingQueue.empty())
-                m_QueueCV.wait(lock);
-            continue;
-        }
-
-        // Wait for socket activity (up to 100ms)
-        int numfds;
-        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 100, &numfds);
-        if (mc != CURLM_OK)
-            helper::Log("Remote", "XrootdHttpRemote", "WorkerLoop",
-                        "curl_multi_wait failed: " + std::string(curl_multi_strerror(mc)),
-                        helper::LogMode::WARNING);
-    }
-
-    ProcessCompletedTransfers();
-#endif
-}
-
-void XrootdHttpRemote::SubmitRequest(AsyncGet *asyncOp, const std::string &url,
-                                     const std::string &postData)
-{
-    {
-        std::lock_guard<std::mutex> lock(m_QueueMutex);
-        m_PendingQueue.push_back({asyncOp, url, postData});
-    }
-    m_QueueCV.notify_one();
-}
-
 Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                         size_t BlockID, Dims &Count, Dims &Start,
                                         Accuracy &accuracy, void *dest)
@@ -385,13 +393,31 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
         return nullptr;
     }
 
+#ifdef ADIOS2_HAVE_CURL
+    // Get pool reference first to ensure curl_global_init() runs
+    // before any curl_easy_init() calls in CreateEasyHandle()
+    CurlMultiPool &pool = CurlMultiPool::getInstance();
+
     AsyncGet *asyncOp = new AsyncGet();
     asyncOp->destBuffer = dest;
 
     std::string postData = BuildRequestString(VarName, Step, StepCount, BlockID, Count, Start);
-    SubmitRequest(asyncOp, m_BaseUrl, postData);
+    CURL *easy = CreateEasyHandle(asyncOp, m_BaseUrl, postData);
+    if (!easy)
+    {
+        delete asyncOp;
+        helper::Log("Remote", "XrootdHttpRemote", "Get", "Failed to create CURL handle",
+                    helper::LogMode::WARNING);
+        return nullptr;
+    }
 
+    pool.Submit(easy, asyncOp);
     return static_cast<GetHandle>(asyncOp);
+#else
+    helper::Log("Remote", "XrootdHttpRemote", "Get", "ADIOS2 was not built with CURL support",
+                helper::LogMode::WARNING);
+    return nullptr;
+#endif
 }
 
 bool XrootdHttpRemote::WaitForGet(GetHandle handle)

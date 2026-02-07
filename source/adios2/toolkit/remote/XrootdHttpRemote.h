@@ -34,6 +34,65 @@ struct curl_slist;
 namespace adios2
 {
 
+class XrootdHttpRemote;
+
+/**
+ * @brief Async operation state for a single HTTP GET/POST request.
+ */
+struct AsyncGet
+{
+    std::promise<bool> promise;
+    std::string errorMsg;
+    void *destBuffer = nullptr;
+    size_t destSize = 0;
+    std::vector<char> responseData;
+    CURL *easyHandle = nullptr;
+    ::curl_slist *headers = nullptr;
+};
+
+/**
+ * @brief A fully-configured easy handle waiting to be added to the multi handle.
+ */
+struct PendingSubmit
+{
+    CURL *easyHandle;
+    AsyncGet *asyncOp;
+};
+
+/**
+ * @brief Shared CURL multi pool singleton.
+ *
+ * All XrootdHttpRemote instances submit fully-configured easy handles to
+ * this pool. A single worker thread drives all transfers via one curl_multi
+ * handle, bounding the total number of concurrent TCP connections.
+ */
+class CurlMultiPool
+{
+public:
+    static CurlMultiPool &getInstance();
+
+    /** Submit a fully-configured easy handle for async execution. Thread-safe. */
+    void Submit(CURL *easyHandle, AsyncGet *asyncOp);
+
+    // Non-copyable, non-movable
+    CurlMultiPool(const CurlMultiPool &) = delete;
+    CurlMultiPool &operator=(const CurlMultiPool &) = delete;
+
+private:
+    CurlMultiPool();
+    ~CurlMultiPool();
+
+    void WorkerLoop();
+    void ProcessCompletedTransfers();
+
+    CURLM *m_MultiHandle = nullptr;
+    std::thread m_WorkerThread;
+    std::atomic<bool> m_Running{false};
+    std::mutex m_QueueMutex;
+    std::condition_variable m_QueueCV;
+    std::deque<PendingSubmit> m_PendingQueue;
+};
+
 /**
  * @brief HTTP/HTTPS-based remote access to ADIOS data via XRootD HTTP-SSI bridge
  *
@@ -45,7 +104,7 @@ namespace adios2
  *   - Use HTTP mode behind Spin Ingress (which terminates TLS)
  *   - Use HTTPS mode for direct connections
  *
- * Uses CURL multi interface for efficient parallel requests with connection pooling.
+ * All instances share a single CurlMultiPool for efficient connection pooling.
  *
  * The server must be running XRootD with the HTTP-to-SSI bridge handler
  * (libadios2_xrootd_http.so) loaded.
@@ -76,36 +135,12 @@ public:
     void SetRequestTimeout(long seconds) { m_RequestTimeout = seconds; }
     void SetCACertPath(const std::string &path) { m_CACertPath = path; }
     void SetVerifySSL(bool verify) { m_VerifySSL = verify; }
-    void SetMaxConnections(long maxConn) { m_MaxConnections = maxConn; }
 
 private:
-    struct AsyncGet
-    {
-        std::promise<bool> promise;
-        std::string errorMsg;
-        void *destBuffer = nullptr;
-        size_t destSize = 0;
-        std::vector<char> responseData;
-        CURL *easyHandle = nullptr;
-        ::curl_slist *headers = nullptr;
-    };
-
-    struct PendingRequest
-    {
-        AsyncGet *asyncOp;
-        std::string url;
-        std::string postData;
-    };
-
     std::string BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
                                    size_t BlockID, const Dims &Count, const Dims &Start);
     std::string UrlEncode(const std::string &str);
-    bool InitCurlMulti();
-    void ShutdownCurlMulti();
-    void SubmitRequest(AsyncGet *asyncOp, const std::string &url, const std::string &postData);
-    void WorkerLoop();
     CURL *CreateEasyHandle(AsyncGet *asyncOp, const std::string &url, const std::string &postData);
-    void ProcessCompletedTransfers();
 
     std::string m_BaseUrl;
     std::string m_Filename;
@@ -113,17 +148,9 @@ private:
     bool m_RowMajorOrdering;
     bool m_OpenSuccess = false;
 
-    CURLM *m_MultiHandle = nullptr;
-    std::thread m_WorkerThread;
-    std::atomic<bool> m_Running{false};
-    std::mutex m_QueueMutex;
-    std::condition_variable m_QueueCV;
-    std::deque<PendingRequest> m_PendingQueue;
-
     bool m_UseHttps = true;
     long m_ConnectTimeout = 30;
     long m_RequestTimeout = 300;
-    long m_MaxConnections = 10;
     std::string m_CACertPath;
     bool m_VerifySSL = true;
 };
