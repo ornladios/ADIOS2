@@ -29,6 +29,7 @@
 // Forward declarations for CURL handles
 typedef void CURL;
 typedef void CURLM;
+struct curl_slist;
 
 namespace adios2
 {
@@ -86,7 +87,7 @@ private:
         size_t destSize = 0;
         std::vector<char> responseData;
         CURL *easyHandle = nullptr;
-        struct curl_slist *headers = nullptr;
+        ::curl_slist *headers = nullptr;
     };
 
     struct PendingRequest

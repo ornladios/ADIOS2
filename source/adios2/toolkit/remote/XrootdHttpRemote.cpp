@@ -232,7 +232,8 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
         }
     }
 
-    asyncOp->headers = curl_slist_append(nullptr, "Content-Type: application/x-www-form-urlencoded");
+    asyncOp->headers =
+        curl_slist_append(nullptr, "Content-Type: application/x-www-form-urlencoded");
     curl_easy_setopt(easy, CURLOPT_HTTPHEADER, asyncOp->headers);
     curl_easy_setopt(easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
 
@@ -282,8 +283,9 @@ void XrootdHttpRemote::ProcessCompletedTransfers()
                         std::ostringstream ss;
                         ss << "HTTP error " << httpCode;
                         if (!asyncOp->responseData.empty())
-                            ss << ": " << std::string(asyncOp->responseData.begin(),
-                                                      asyncOp->responseData.end());
+                            ss << ": "
+                               << std::string(asyncOp->responseData.begin(),
+                                              asyncOp->responseData.end());
                         asyncOp->errorMsg = ss.str();
                     }
                 }
@@ -313,20 +315,9 @@ void XrootdHttpRemote::WorkerLoop()
 #ifdef ADIOS2_HAVE_CURL
     while (true)
     {
+        // Drain pending queue into curl multi handle
         {
             std::unique_lock<std::mutex> lock(m_QueueMutex);
-
-            int runningHandles = 0;
-            curl_multi_perform(m_MultiHandle, &runningHandles);
-
-            while (m_PendingQueue.empty() && runningHandles == 0 && m_Running)
-            {
-                m_QueueCV.wait(lock);
-                curl_multi_perform(m_MultiHandle, &runningHandles);
-            }
-
-            if (!m_Running && m_PendingQueue.empty() && runningHandles == 0)
-                break;
 
             while (!m_PendingQueue.empty())
             {
@@ -344,19 +335,29 @@ void XrootdHttpRemote::WorkerLoop()
             }
         }
 
+        // Drive transfers and process completions
         int runningHandles = 0;
         curl_multi_perform(m_MultiHandle, &runningHandles);
         ProcessCompletedTransfers();
 
-        if (runningHandles > 0)
+        // Check if we should block waiting for new work
+        if (runningHandles == 0)
         {
-            int numfds;
-            CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 100, &numfds);
-            if (mc != CURLM_OK)
-                helper::Log("Remote", "XrootdHttpRemote", "WorkerLoop",
-                            "curl_multi_wait failed: " + std::string(curl_multi_strerror(mc)),
-                            helper::LogMode::WARNING);
+            std::unique_lock<std::mutex> lock(m_QueueMutex);
+            if (!m_Running && m_PendingQueue.empty())
+                break;
+            if (m_PendingQueue.empty())
+                m_QueueCV.wait(lock);
+            continue;
         }
+
+        // Wait for socket activity (up to 100ms)
+        int numfds;
+        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 100, &numfds);
+        if (mc != CURLM_OK)
+            helper::Log("Remote", "XrootdHttpRemote", "WorkerLoop",
+                        "curl_multi_wait failed: " + std::string(curl_multi_strerror(mc)),
+                        helper::LogMode::WARNING);
     }
 
     ProcessCompletedTransfers();
