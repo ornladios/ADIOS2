@@ -109,6 +109,8 @@ public:
     std::unique_ptr<PoolableFile> Acquire(const std::string &filename,
                                           const bool skipTarInfo = false);
     void Release(PoolEntry *obj);
+    // Remove all unused pool entries for a given filename, closing their transports.
+    void Evict(const std::string &filename);
     void SetParameters(const adios2::Params &params);
     std::vector<std::shared_ptr<adios2::Transport>> ListOfTransports();
 

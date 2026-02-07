@@ -85,6 +85,11 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
        so we have to read it from file again
     */
     std::vector<char> mdbuf(sizes[0]);
+    if (!m_MDFile)
+    {
+        std::string metadataFile(GetBPMetadataFileName(m_Name));
+        m_MDFile = m_DataFiles->Acquire(metadataFile, m_dataIsRemote);
+    }
     m_MDFile->Read(mdbuf.data(), sizes[0], 0);
 
     size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
@@ -1440,10 +1445,11 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 {
     size_t newIdxSize = 0;
     m_MetadataIndex.Reset(true, false);
-    if (m_Comm.Rank() == 0)
+    m_MetadataIndex.m_Buffer.resize(0);
+    if (m_Comm.Rank() == 0 && m_MDIndexFile)
     {
         /* Read metadata index table into memory */
-        const size_t metadataIndexFileSize = m_MDIndexFile->GetSize();
+        size_t metadataIndexFileSize = m_MDIndexFile->GetSize();
         newIdxSize = metadataIndexFileSize - m_MDIndexFileAlreadyReadSize;
         if (metadataIndexFileSize > m_MDIndexFileAlreadyReadSize)
         {
@@ -1454,6 +1460,37 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         else
         {
             m_MetadataIndex.m_Buffer.resize(0);
+        }
+
+        /* When the writer is done (activeFlag == false), fstat() may
+           briefly report a stale (too small) size for md.idx due to
+           filesystem metadata lag. Poll until the size stabilizes so
+           we don't miss trailing index entries. Check both the already-known
+           m_WriterIsActive flag (for subsequent reads) and the raw header
+           byte (for the first read before ParseMetadataIndex runs). */
+        if (newIdxSize > 0 && (!m_WriterIsActive ||
+                               (!m_MDIndexFileAlreadyReadSize && newIdxSize >= m_IndexHeaderSize &&
+                                m_MetadataIndex.m_Buffer[m_ActiveFlagPosition] != '\1')))
+        {
+            for (int retry = 0; retry < 20; retry++)
+            {
+                size_t updatedSize = m_MDIndexFile->GetSize();
+                if (updatedSize > metadataIndexFileSize)
+                {
+                    size_t extraSize = updatedSize - metadataIndexFileSize;
+                    m_MetadataIndex.m_Buffer.resize(newIdxSize + extraSize);
+                    m_MDIndexFile->Read(m_MetadataIndex.m_Buffer.data() + newIdxSize, extraSize,
+                                        metadataIndexFileSize);
+                    newIdxSize += extraSize;
+                    metadataIndexFileSize = updatedSize;
+                    /* Size grew — check again in case even more appeared */
+                }
+                else
+                {
+                    break; /* Size stabilized, we have everything */
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
     }
 
@@ -1549,20 +1586,26 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             }
 
             /* Read new meta-meta-data into memory and append to existing one in
-             * memory */
-            const size_t metametadataFileSize = m_MetaMetadataFile->GetSize();
-            if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
+             * memory. Guard against null — mmd.0 may have been closed in a
+             * previous call when the writer was inactive. */
+            if (m_MetaMetadataFile)
             {
-                const size_t newMMDSize = metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
-                m_JSONProfiler.Start("MetaMetaDataRead");
-                m_JSONProfiler.AddBytes("metametadataread", newMMDSize);
-                m_MetaMetadata.Resize(metametadataFileSize, "(re)allocating meta-meta-data buffer, "
-                                                            "in call to BP5Reader Open");
-                m_MetaMetadataFile->Read(m_MetaMetadata.m_Buffer.data() +
-                                             m_MetaMetaDataFileAlreadyReadSize,
-                                         newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
-                m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
-                m_JSONProfiler.Stop("MetaMetaDataRead");
+                const size_t metametadataFileSize = m_MetaMetadataFile->GetSize();
+                if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
+                {
+                    const size_t newMMDSize =
+                        metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
+                    m_JSONProfiler.Start("MetaMetaDataRead");
+                    m_JSONProfiler.AddBytes("metametadataread", newMMDSize);
+                    m_MetaMetadata.Resize(metametadataFileSize,
+                                          "(re)allocating meta-meta-data buffer, "
+                                          "in call to BP5Reader Open");
+                    m_MetaMetadataFile->Read(m_MetaMetadata.m_Buffer.data() +
+                                                 m_MetaMetaDataFileAlreadyReadSize,
+                                             newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
+                    m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
+                    m_JSONProfiler.Stop("MetaMetaDataRead");
+                }
             }
         }
 
@@ -1595,6 +1638,37 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                     InstallMetadataForTimestep(Step);
                 }
             }
+        }
+    }
+
+    /* Close metadata files individually once all their data is in memory.
+       Only rank 0 has these files open; on other ranks the pointers are
+       already null, so reset() is a harmless no-op.
+       After releasing the PoolableFile, we must also Evict the entry from the
+       FilePool — otherwise the pool keeps the transport (and FD) alive for
+       potential reuse. */
+    if (!m_WriterIsActive)
+    {
+        /* mmd.0 is always read in full — close it immediately */
+        if (m_MetaMetadataFile)
+        {
+            m_MetaMetadataFile.reset();
+            m_DataFiles->Evict(GetBPMetaMetadataFileName(m_Name));
+        }
+        /* md.idx: close only when all index entries have been parsed
+           (parsedIdxSize >= newIdxSize). In streaming mode the 16 MB limit
+           may leave unparsed entries for a later call. */
+        if (m_MDIndexFile && parsedIdxSize >= newIdxSize)
+        {
+            m_MDIndexFile.reset();
+            m_DataFiles->Evict(GetBPMetadataIndexFileName(m_Name));
+        }
+        /* md.0: close once all index entries are parsed — at that point
+           every metadata section they reference has already been read. */
+        if (m_MDFile && !m_MDIndexFile)
+        {
+            m_MDFile.reset();
+            m_DataFiles->Evict(GetBPMetadataFileName(m_Name));
         }
     }
 }
