@@ -33,6 +33,39 @@ void FilePool::Release(PoolEntry *obj)
     obj->m_InUseCount--;
 }
 
+void FilePool::Evict(const std::string &filename)
+{
+    std::lock_guard<std::mutex> lockGuard(PoolMutex);
+
+    /* Resolve TarInfo the same way Acquire() does.  If this filename maps
+       into a tar container, the pool entry is the containing file and is
+       shared with other files inside the tar — do NOT evict it. */
+    auto finalFileName = filename;
+    if (m_TarInfoMap && m_TarInfoMap->size())
+    {
+        auto FilenameInTar = adios2sys::SystemTools::GetFilenameName(filename);
+        auto it = m_TarInfoMap->find(FilenameInTar);
+        if (it != m_TarInfoMap->end())
+        {
+            return; // file lives inside a tar — transport is shared, leave it alone
+        }
+    }
+
+    auto range = m_Pool.equal_range(finalFileName);
+    for (auto it = range.first; it != range.second;)
+    {
+        if (it->second->m_InUseCount == 0)
+        {
+            it = m_Pool.erase(it);
+            m_OpenFileCount--;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
 std::vector<std::shared_ptr<adios2::Transport>> FilePool::ListOfTransports()
 {
     std::vector<std::shared_ptr<adios2::Transport>> Ret;
