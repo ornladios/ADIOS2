@@ -10,10 +10,12 @@
 #include <algorithm>
 #include <atomic>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <random>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -81,11 +83,31 @@ private:
 class ADIOSFilePool
 {
 public:
+    class SubPool
+    {
+    public:
+        SubPool() = default;
+        ~SubPool() = default;
+        std::mutex subpool_mutex;
+        std::chrono::steady_clock::time_point last_used;
+        size_t in_use_count = 0;
+        std::vector<std::unique_ptr<AnonADIOSFile>> m_list;
+        std::vector<bool> m_busy;
+        AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays);
+        void Return(AnonADIOSFile *Entry);
+    };
+
+    struct PoolEntry
+    {
+        AnonADIOSFile *file = nullptr;
+        std::shared_ptr<SubPool> subpool;
+    };
+
     static ADIOSFilePool &getInstance();
     ~ADIOSFilePool();
 
-    AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays);
-    void Return(AnonADIOSFile *Entry);
+    PoolEntry GetFree(std::string Filename, bool RowMajorArrays);
+    void Return(PoolEntry &Entry);
     void FlushUnused();
 
 private:
@@ -106,22 +128,9 @@ private:
         return std::thread([=] { PeriodicTask(std::chrono::milliseconds(1000)); });
     }
     std::thread periodicThread;
-    class SubPool
-    {
-
-    public:
-        SubPool() = default;
-        ~SubPool() = default;
-        std::chrono::steady_clock::time_point last_used;
-        size_t in_use_count = 0;
-        std::vector<std::unique_ptr<AnonADIOSFile>> m_list;
-        std::vector<bool> m_busy;
-        AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays);
-        void Return(AnonADIOSFile *Entry);
-    };
 
     std::mutex pool_mutex;
-    std::unordered_map<std::string, std::unique_ptr<SubPool>> map;
+    std::unordered_map<std::string, std::shared_ptr<SubPool>> map;
 };
 
 } // end namespace adios2
