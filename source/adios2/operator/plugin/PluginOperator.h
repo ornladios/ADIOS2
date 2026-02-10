@@ -13,17 +13,11 @@
 
 #include "PluginOperatorInterface.h"
 
-#include <functional>  // for function
-#include <memory>      // for unique_ptr
-#include <string>      // for string
-#include <type_traits> // for add_pointer
-#include <vector>      // for vector
+#include <memory> // for unique_ptr
+#include <string> // for string
 
-#include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
-#include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
-#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {

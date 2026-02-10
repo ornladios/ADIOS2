@@ -70,7 +70,7 @@ add_library(adios2_core
   engine/null/NullReader.cpp engine/null/NullReader.tcc
 
   engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
-  operator/plugin/PluginOperator.cpp operator/plugin/PluginOperatorInterface.cpp
+  operator/plugin/PluginOperator.cpp
 
   # toolkit
   toolkit/burstbuffer/FileDrainer.cpp
@@ -562,7 +562,7 @@ set_target_properties(
   SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
-install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
+install(FILES common/ADIOSBaseTypes.h common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 
