@@ -20,8 +20,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <functional>
-#include <numeric>
 
 namespace adios2
 {
@@ -119,52 +117,6 @@ protected:
         std::memcpy(&ret, buffer + pos, sizeof(T));
         pos += sizeof(T);
         return ret;
-    }
-
-    /**
-     * Return the size in bytes of a single element of the given DataType.
-     * Replaces helper::GetDataTypeSize() for plugin use.
-     */
-    static size_t DataTypeSize(const DataType type) noexcept
-    {
-        switch (type)
-        {
-        case DataType::Int8:
-        case DataType::UInt8:
-        case DataType::Char:
-            return 1;
-        case DataType::Int16:
-        case DataType::UInt16:
-            return 2;
-        case DataType::Int32:
-        case DataType::UInt32:
-            return 4;
-        case DataType::Int64:
-        case DataType::UInt64:
-            return 8;
-        case DataType::Float:
-            return sizeof(float);
-        case DataType::Double:
-            return sizeof(double);
-        case DataType::LongDouble:
-            return sizeof(long double);
-        case DataType::FloatComplex:
-            return sizeof(std::complex<float>);
-        case DataType::DoubleComplex:
-            return sizeof(std::complex<double>);
-        default:
-            return 0;
-        }
-    }
-
-    /**
-     * Return the total number of elements (product of dimensions) times
-     * elementSize. Replaces helper::GetTotalSize() for plugin use.
-     */
-    static size_t GetTotalSize(const Dims &dimensions, const size_t elementSize = 1) noexcept
-    {
-        return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
-                               std::multiplies<size_t>());
     }
 };
 

@@ -110,7 +110,7 @@ EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart, const Di
 
     // write any parameters we need to save for the InverseOperate() call
     // In this case, we just write out the size of the data
-    size_t sizeIn = GetTotalSize(blockCount, DataTypeSize(type));
+    size_t sizeIn = GetTotalSize(blockCount, GetDataTypeSize(type));
     PutParameter(bufferOut, offset, sizeIn);
 
     // create the nonce directly in the output buffer, since we'll need it for
