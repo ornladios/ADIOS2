@@ -190,8 +190,6 @@ else()
                    COMMENT "Copying pregen structs.h to build area")
 endif()
 
-add_custom_target(docs ALL DEPENDS "cod_node.c")
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
    SET_SOURCE_FILES_PROPERTIES(cod.tab.c PROPERTIES COMPILE_FLAGS -Wno-unused-function)
 endif()

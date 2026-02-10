@@ -38,7 +38,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {"l", (void*) 0},
 	    {(void*)0, (void*)0}
 	};
@@ -139,7 +139,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */

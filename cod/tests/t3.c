@@ -93,7 +93,7 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_code gen_code;
@@ -203,7 +203,7 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 char code_string[] = {"\
@@ -318,8 +318,8 @@ char code_string[] = {"\
 					double testd();";
 	static cod_extern_entry externs[] = 
 	{
-	    {"testd", (void*)(intptr_t)testd},
-	    {"printf", (void*)(intptr_t)printf},
+	    {"testd", (void*)testd},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -377,7 +377,7 @@ char code_string[] = {"\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_code gen_code;
@@ -403,8 +403,8 @@ char code_string[] = {"\
 					int testi();";
 	static cod_extern_entry externs[] = 
 	{
-	    {"testi", (void*)(intptr_t)testi},
-	    {"printf", (void*)(intptr_t)printf},
+	    {"testi", (void*)testi},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\

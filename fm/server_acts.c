@@ -199,7 +199,7 @@ establish_server_connection(FMContext iofile, action_t action)
 		     (fd_set *) NULL, &timeout);
 	if (ret == -1) {
 	    if (format_server_verbose)
-	      printf("Dead connection, Select return is %d, server fd is %p, errno is %d\n", ret, (void*)(intptr_t)iofile->server_fd, errno);
+	      printf("Dead connection, Select return is %d, server fd is %p, errno is %d\n", ret, (void*)iofile->server_fd, errno);
 	    conn_is_dead = 1;
 	}
 #else

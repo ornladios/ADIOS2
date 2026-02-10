@@ -77,7 +77,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 
@@ -208,7 +208,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	FMField struct_fields[] = {
@@ -268,7 +268,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -351,8 +351,8 @@ main(int argc, char**argv)
 int *dummy(int*p);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"dummy", (void*)(intptr_t)dummy},
+	    {"printf", (void*)printf},
+	    {"dummy", (void*)dummy},
 	    {(void*)0, (void*)0}
 	};
 	typedef struct test {

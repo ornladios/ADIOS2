@@ -27,9 +27,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -111,9 +111,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -164,9 +164,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -216,9 +216,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -266,9 +266,9 @@ void free(void *pointer);\n";
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -338,9 +338,9 @@ static  FMField dyn_arrays_field_list[] =
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();

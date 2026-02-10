@@ -51,7 +51,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -94,7 +94,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -135,7 +135,7 @@ top:\n\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -173,7 +173,7 @@ top:\n\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -217,7 +217,7 @@ top:\n\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -261,7 +261,7 @@ top:\n\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -308,9 +308,9 @@ top:\n\
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"EVdiscard", (void*)(intptr_t)discard},
-	    {"EVcount", (void*)(intptr_t)count},
+	    {"printf", (void*)printf},
+	    {"EVdiscard", (void*)discard},
+	    {"EVcount", (void*)count},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -349,7 +349,7 @@ top:\n\
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\

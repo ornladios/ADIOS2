@@ -349,7 +349,7 @@ comment\n\
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	int ret;
@@ -390,7 +390,7 @@ comment\n\
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"junk", (void*)(intptr_t)printf},
+	    {"junk", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	int ret;
