@@ -4,7 +4,6 @@ channels:
   - conda-forge
 
 dependencies:
-  - python ==3.12
   - breathe
   - cmake
   - docutils
@@ -12,6 +11,8 @@ dependencies:
   - ninja
   - numpy
   - pip
+  - python ==3.12
+  - setuptools <81      # last version with pkg_resources
   - sphinx
   - pip:
     - blockdiag
