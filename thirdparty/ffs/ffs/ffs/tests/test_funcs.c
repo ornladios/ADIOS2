@@ -1477,13 +1477,13 @@ init_written_data()
     reader_pointer_array[0] = malloc(sizeof(struct _cp_init_info));
     reader_pointer_array[0]->contact_info = "contact info 1";
     reader_pointer_array[0]->target_stone = 101;
-    reader_pointer_array[0]->reader_ID = (void*)(intptr_t)0xdead0001;
+    reader_pointer_array[0]->reader_ID = (void*)(uintptr_t)0xdead0001;
     reader_pointer_array[1] = malloc(sizeof(struct _cp_init_info));
     reader_pointer_array[1]->contact_info = "contact info 2";
     reader_pointer_array[1]->target_stone = 102;
-    reader_pointer_array[1]->reader_ID = (void*)(intptr_t)0xdead0002;
-    
-    reader_register.writer_file = (void*)(intptr_t)0xdeadbeef;
+    reader_pointer_array[1]->reader_ID = (void*)(uintptr_t)0xdead0002;
+
+    reader_register.writer_file = (void*)(uintptr_t)0xdeadbeef;
     reader_register.writer_response_condition = 13;
     reader_register.reader_cohort_size = 2;
     reader_register.CP_reader_info = &reader_pointer_array[0];
