@@ -1069,6 +1069,7 @@ void CampaignReader::DoClose(const int transportIndex)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << " Close(" << m_Name << ")\n";
     }
+    PerformGets();
     for (auto ep : m_Engines)
     {
         ep->Close();

@@ -14,6 +14,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/helper/adiosSystem.h"    // CleanupBPDirectory
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -248,6 +249,25 @@ void BP4Writer::InitTransports()
                                         m_BP4Serializer.m_Parameters.NodeLocal);
     }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
+
+    // Cleanup stale files from previous writes (only in Write mode)
+    if (m_OpenMode == Mode::Write)
+    {
+        std::vector<std::string> filesToKeep;
+        filesToKeep.push_back(m_BP4Serializer.GetBPMetadataFileName(m_Name));      // md.0
+        filesToKeep.push_back(m_BP4Serializer.GetBPMetadataIndexFileName(m_Name)); // md.idx
+        filesToKeep.push_back(m_BP4Serializer.GetBPVersionFileName(m_Name));       // .bpversion
+        filesToKeep.push_back(m_BP4Serializer.GetBPActiveFlagFileName(m_Name));    // active
+        // data.0 through data.(size-1) - BP4 uses one file per rank
+        size_t numDataFiles = m_BP4Serializer.m_Aggregator.m_IsActive
+                                  ? m_BP4Serializer.m_Aggregator.m_NumAggregators
+                                  : static_cast<size_t>(m_BP4Serializer.m_SizeMPI);
+        for (size_t i = 0; i < numDataFiles; i++)
+        {
+            filesToKeep.push_back(m_BP4Serializer.GetBPSubFileName(m_Name, i, true, false));
+        }
+        helper::CleanupBPDirectory(m_Name, filesToKeep, m_Comm);
+    }
 
     if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
