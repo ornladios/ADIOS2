@@ -5,37 +5,43 @@
 namespace adios2
 {
 
-AnonADIOSFile *ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays)
+ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays)
 {
-    std::lock_guard<std::mutex> guard(pool_mutex);
-    std::string index = Filename + "/" + std::to_string((int)RowMajorArrays);
-    auto res = map.find(index);
+    std::shared_ptr<SubPool> subpool;
+    {
+        std::lock_guard<std::mutex> guard(pool_mutex);
+        std::string index = Filename + "/" + std::to_string((int)RowMajorArrays);
+        auto res = map.find(index);
 
-    SubPool *subpool;
-    if (res != map.end())
-    {
-        subpool = res->second.get();
+        if (res != map.end())
+        {
+            subpool = res->second;
+        }
+        else
+        {
+            subpool = std::make_shared<SubPool>();
+            map.insert(std::make_pair(index, subpool));
+        }
     }
-    else
-    {
-        auto tmp = std::make_unique<SubPool>();
-        subpool = tmp.get();
-        map.insert(std::make_pair(index, std::move(tmp)));
-    }
-    return subpool->GetFree(Filename, RowMajorArrays);
+    // pool_mutex is released. The shared_ptr keeps subpool alive even if
+    // FlushUnused erases it from the map. The potentially slow file open
+    // only blocks other requests for the SAME file, not the whole pool.
+    AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays);
+    return PoolEntry{file, subpool};
 }
 
-void ADIOSFilePool::Return(AnonADIOSFile *Entry)
+void ADIOSFilePool::Return(PoolEntry &Entry)
 {
-    std::lock_guard<std::mutex> guard(pool_mutex);
-    std::string index = Entry->m_FileName + "/" + std::to_string((int)Entry->m_RowMajorArrays);
-    auto res = map.find(index);
-    auto subpool = res->second.get();
-    subpool->Return(Entry);
+    // No pool_mutex needed — operate directly on the SubPool via the
+    // shared_ptr in the PoolEntry.
+    Entry.subpool->Return(Entry.file);
+    Entry.file = nullptr;
+    Entry.subpool.reset();
 }
 
 AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMajorArrays)
 {
+    std::lock_guard<std::mutex> guard(subpool_mutex);
     for (size_t i = 0; i < m_busy.size(); i++)
     {
         if (!m_busy[i])
@@ -45,14 +51,16 @@ AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMaj
             return m_list[i].get();
         }
     }
-    // no free files
+    // no free files — open new one (only blocks requests for this same file)
     m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays));
     m_busy.push_back(true);
     in_use_count++;
     return m_list[m_list.size() - 1].get();
 }
+
 void ADIOSFilePool::SubPool::Return(adios2::AnonADIOSFile *to_free)
 {
+    std::lock_guard<std::mutex> guard(subpool_mutex);
     last_used = std::chrono::steady_clock::now();
     for (size_t i = 0; i < m_busy.size(); i++)
     {
@@ -93,18 +101,17 @@ ADIOSFilePool &ADIOSFilePool::getInstance()
 
 void ADIOSFilePool::FlushUnused()
 {
+    std::lock_guard<std::mutex> guard(pool_mutex);
     auto now = std::chrono::steady_clock::now();
     for (auto it = map.cbegin(), next_it = it; it != map.cend(); it = next_it)
     {
         ++next_it;
         auto subpool = it->second.get();
+        std::lock_guard<std::mutex> sub_guard(subpool->subpool_mutex);
         auto unused_duration = now - subpool->last_used;
         auto elapsed_seconds =
             std::chrono::duration_cast<std::chrono::seconds>(unused_duration).count();
         bool should_delete = (elapsed_seconds > 15) && (subpool->in_use_count == 0);
-        std::string fname = "";
-        if (subpool->m_list.size() > 0)
-            fname = subpool->m_list[0]->m_FileName;
         if (should_delete)
         {
             if (subpool->m_list.size() > 0)
