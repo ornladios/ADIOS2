@@ -15,5 +15,6 @@ dependencies:
   - sphinx
   - pip:
     - blockdiag
+    - setuptools
     - sphinxcontrib-blockdiag
     - sphinx_rtd_theme
