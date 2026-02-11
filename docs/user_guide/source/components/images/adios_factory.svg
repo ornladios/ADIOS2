@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg viewBox="0 0 706 280" xmlns="http://www.w3.org/2000/svg" xmlns:inkspace="http://www.inkscape.org/namespaces/inkscape" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs id="defs_block">
+    <filter height="1.504" id="filter_blur" inkspace:collect="always" width="1.1575" x="-0.07875" y="-0.252">
+      <feGaussianBlur id="feGaussianBlur3780" inkspace:collect="always" stdDeviation="4.2" />
+    </filter>
+  </defs>
+  <title>blockdiag</title>
+  <desc>blockdiag {
+    default_fontsize = 18;
+    default_shape = roundedbox;
+    default_linecolor = blue;
+    span_width = 150;
+
+    ADIOS -&gt; IO_1, B, IO_N[label = "DeclareIO", fontsize = 13];
+    B[shape = "dots"];
+    ADIOS -&gt; B[style = "none"];
+}
+</desc>
+  <path d="M 161 46 L 273 46 A8,8 0 0 1 281 54 L 281 78 A8,8 0 0 1 273 86 L 161 86 A8,8 0 0 1 153 78 L 153 54 A8,8 0 0 1 161 46" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 439 46 L 551 46 A8,8 0 0 1 559 54 L 559 78 A8,8 0 0 1 551 86 L 439 86 A8,8 0 0 1 431 78 L 431 54 A8,8 0 0 1 439 46" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 439 206 L 551 206 A8,8 0 0 1 559 214 L 559 238 A8,8 0 0 1 551 246 L 439 246 A8,8 0 0 1 431 238 L 431 214 A8,8 0 0 1 439 206" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 158 40 L 270 40 A8,8 0 0 1 278 48 L 278 72 A8,8 0 0 1 270 80 L 158 80 A8,8 0 0 1 150 72 L 150 48 A8,8 0 0 1 158 40" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="18" font-style="normal" font-weight="normal" text-anchor="middle" textLength="55" x="214.5" y="68">ADIOS</text>
+  <path d="M 436 40 L 548 40 A8,8 0 0 1 556 48 L 556 72 A8,8 0 0 1 548 80 L 436 80 A8,8 0 0 1 428 72 L 428 48 A8,8 0 0 1 436 40" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="18" font-style="normal" font-weight="normal" text-anchor="middle" textLength="44" x="492.0" y="69">IO_1</text>
+  <ellipse cx="492.0" cy="140.0" fill="rgb(0,0,255)" rx="4.0" ry="4.0" stroke="rgb(0,0,255)" />
+  <ellipse cx="492.0" cy="120.0" fill="rgb(0,0,255)" rx="4.0" ry="4.0" stroke="rgb(0,0,255)" />
+  <ellipse cx="492.0" cy="160.0" fill="rgb(0,0,255)" rx="4.0" ry="4.0" stroke="rgb(0,0,255)" />
+  <path d="M 436 200 L 548 200 A8,8 0 0 1 556 208 L 556 232 A8,8 0 0 1 548 240 L 436 240 A8,8 0 0 1 428 232 L 428 208 A8,8 0 0 1 436 200" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="18" font-style="normal" font-weight="normal" text-anchor="middle" textLength="44" x="492.0" y="229">IO_N</text>
+  <path d="M 278 60 L 420 60" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="427,60 420,56 420,64 427,60" stroke="rgb(0,0,255)" />
+  <path d="M 278 60 L 353 60" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 353 60 L 353 220" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 353 220 L 420 220" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="427,220 420,216 420,224 427,220" stroke="rgb(0,0,255)" />
+  <rect fill="white" height="16" stroke="rgb(0,0,0)" width="88" x="309" y="37" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="13" font-style="normal" font-weight="normal" text-anchor="middle" textLength="72" x="353.0" y="51">DeclareIO</text>
+  <rect fill="white" height="16" stroke="rgb(0,0,0)" width="88" x="309" y="197" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="13" font-style="normal" font-weight="normal" text-anchor="middle" textLength="72" x="353.0" y="211">DeclareIO</text>
+</svg>
