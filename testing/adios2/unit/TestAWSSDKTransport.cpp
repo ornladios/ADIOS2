@@ -470,6 +470,245 @@ TEST_F(AWSSDKTransportTest, DISABLED_PartSizeParameter)
     }
 }
 
+// Test single-object mode (multipart upload, existing behavior)
+TEST_F(AWSSDKTransportTest, DISABLED_SingleObjectMode)
+{
+    const std::string objectPath = "testbucket/test_singlemode.dat";
+    constexpr size_t dataSize = 12 * 1024 * 1024; // 12 MB
+
+    std::vector<uint8_t> dataWrite(dataSize);
+    for (size_t i = 0; i < dataSize; ++i)
+    {
+        dataWrite[i] = static_cast<uint8_t>((i * 19) % 256);
+    }
+
+    helper::Comm comm = helper::CommDummy();
+
+    // Write in single-object mode (multipart upload)
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        params["s3_object_mode"] = "single";
+        params["min_part_size"] = "5mb";
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Write);
+        transport->Write(reinterpret_cast<char *>(dataWrite.data()), dataWrite.size());
+        transport->Close();
+    }
+
+    // Read back (should find single object directly via HeadObject)
+    std::vector<uint8_t> dataRead(dataSize);
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Read);
+
+        size_t fileSize = transport->GetSize();
+        ASSERT_EQ(fileSize, dataSize) << "File size mismatch";
+
+        transport->Read(reinterpret_cast<char *>(dataRead.data()), dataRead.size());
+        transport->Close();
+    }
+
+    for (size_t i = 0; i < dataSize; ++i)
+    {
+        EXPECT_EQ(dataWrite[i], dataRead[i]) << "Mismatch at byte " << i;
+    }
+}
+
+// Test multi-object mode with FinalizeSegment (simulates step boundaries)
+TEST_F(AWSSDKTransportTest, DISABLED_MultiObjectFinalizeSegment)
+{
+    const std::string objectPath = "testbucket/test_finalize.dat";
+    constexpr size_t stepSize = 500 * 1024; // 500 KB per "step"
+    constexpr size_t numSteps = 5;
+    constexpr size_t totalSize = stepSize * numSteps;
+
+    std::vector<uint8_t> dataWrite(totalSize);
+    for (size_t i = 0; i < totalSize; ++i)
+    {
+        dataWrite[i] = static_cast<uint8_t>((i * 23 + i / 1000) % 256);
+    }
+
+    helper::Comm comm = helper::CommDummy();
+
+    // Write with FinalizeSegment after each "step"
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        params["s3_object_mode"] = "multi";
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Write);
+
+        for (size_t step = 0; step < numSteps; ++step)
+        {
+            transport->Write(reinterpret_cast<char *>(dataWrite.data() + step * stepSize),
+                             stepSize);
+            transport->FinalizeSegment();
+        }
+
+        transport->Close();
+    }
+
+    // Read back via multi-object discovery
+    std::vector<uint8_t> dataRead(totalSize);
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Read);
+
+        size_t fileSize = transport->GetSize();
+        ASSERT_EQ(fileSize, totalSize) << "File size mismatch";
+
+        transport->Read(reinterpret_cast<char *>(dataRead.data()), dataRead.size());
+        transport->Close();
+    }
+
+    for (size_t i = 0; i < totalSize; ++i)
+    {
+        EXPECT_EQ(dataWrite[i], dataRead[i]) << "Mismatch at byte " << i;
+    }
+}
+
+// Test zero-copy large write creates separate objects
+TEST_F(AWSSDKTransportTest, DISABLED_MultiObjectZeroCopy)
+{
+    const std::string objectPath = "testbucket/test_zerocopy_multi.dat";
+    constexpr size_t smallSize = 100 * 1024;      // 100 KB buffered
+    constexpr size_t largeSize = 2 * 1024 * 1024; // 2 MB direct upload
+    constexpr size_t totalSize = smallSize + largeSize;
+
+    std::vector<uint8_t> dataWrite(totalSize);
+    for (size_t i = 0; i < totalSize; ++i)
+    {
+        dataWrite[i] = static_cast<uint8_t>((i * 31) % 256);
+    }
+
+    helper::Comm comm = helper::CommDummy();
+
+    // Write: small buffer + large direct upload = 2 objects
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        params["s3_object_mode"] = "multi";
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Write);
+
+        // Small write goes to buffer
+        transport->Write(reinterpret_cast<char *>(dataWrite.data()), smallSize);
+        // Large write: flushes buffer as object 0, uploads large as object 1
+        transport->Write(reinterpret_cast<char *>(dataWrite.data() + smallSize), largeSize);
+
+        transport->Close();
+    }
+
+    // Read back
+    std::vector<uint8_t> dataRead(totalSize);
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Read);
+
+        size_t fileSize = transport->GetSize();
+        ASSERT_EQ(fileSize, totalSize) << "File size mismatch";
+
+        transport->Read(reinterpret_cast<char *>(dataRead.data()), dataRead.size());
+        transport->Close();
+    }
+
+    for (size_t i = 0; i < totalSize; ++i)
+    {
+        EXPECT_EQ(dataWrite[i], dataRead[i]) << "Mismatch at byte " << i;
+    }
+}
+
+// Test read spanning object boundaries (safety net — doesn't happen in BP5)
+TEST_F(AWSSDKTransportTest, DISABLED_MultiObjectCrossBoundaryRead)
+{
+    const std::string objectPath = "testbucket/test_crossread.dat";
+    constexpr size_t stepSize = 1000; // small objects for easy boundary testing
+    constexpr size_t numSteps = 4;
+    constexpr size_t totalSize = stepSize * numSteps; // 4000 bytes
+
+    std::vector<uint8_t> dataWrite(totalSize);
+    for (size_t i = 0; i < totalSize; ++i)
+    {
+        dataWrite[i] = static_cast<uint8_t>(i % 256);
+    }
+
+    helper::Comm comm = helper::CommDummy();
+
+    // Write 4 objects of 1000 bytes each
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        params["s3_object_mode"] = "multi";
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Write);
+        for (size_t step = 0; step < numSteps; ++step)
+        {
+            transport->Write(reinterpret_cast<char *>(dataWrite.data() + step * stepSize),
+                             stepSize);
+            transport->FinalizeSegment();
+        }
+        transport->Close();
+    }
+
+    // Read spanning object boundary: bytes 800-1200 (spans object 0 and 1)
+    {
+        auto transport = std::make_unique<transport::FileAWSSDK>(comm);
+        Params params;
+        params["endpoint"] = m_Endpoint;
+        transport->SetParameters(params);
+
+        transport->Open(objectPath, Mode::Read);
+
+        constexpr size_t readStart = 800;
+        constexpr size_t readSize = 400; // crosses boundary at 1000
+        std::vector<uint8_t> crossRead(readSize);
+
+        transport->Read(reinterpret_cast<char *>(crossRead.data()), readSize, readStart);
+
+        for (size_t i = 0; i < readSize; ++i)
+        {
+            EXPECT_EQ(crossRead[i], dataWrite[readStart + i])
+                << "Cross-boundary mismatch at offset " << (readStart + i);
+        }
+
+        // Also read spanning 3 objects: bytes 500-2500
+        constexpr size_t readStart2 = 500;
+        constexpr size_t readSize2 = 2000;
+        std::vector<uint8_t> wideRead(readSize2);
+
+        transport->Read(reinterpret_cast<char *>(wideRead.data()), readSize2, readStart2);
+
+        for (size_t i = 0; i < readSize2; ++i)
+        {
+            EXPECT_EQ(wideRead[i], dataWrite[readStart2 + i])
+                << "Wide cross-boundary mismatch at offset " << (readStart2 + i);
+        }
+
+        transport->Close();
+    }
+}
+
 } // namespace unit
 } // namespace adios2
 

@@ -14,10 +14,11 @@
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
 
-#include <cstdio>  // remove
-#include <cstring> // strerror
-#include <errno.h> // errno
-#include <fcntl.h> // open
+#include <algorithm> // sort
+#include <cstdio>    // remove
+#include <cstring>   // strerror
+#include <errno.h>   // errno
+#include <fcntl.h>   // open
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
@@ -105,6 +106,27 @@ void FileAWSSDK::SetParameters(const Params &params)
 
     helper::SetParameterValueInt("verbose", params, m_Verbose, "");
 
+    // S3 object mode: "multi" (default) or "single"
+    std::string objectModeStr;
+    helper::SetParameterValue("s3_object_mode", params, objectModeStr);
+    if (!objectModeStr.empty())
+    {
+        if (objectModeStr == "single")
+        {
+            m_MultiObjectMode = false;
+        }
+        else if (objectModeStr == "multi")
+        {
+            m_MultiObjectMode = true;
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileAWSSDK", "SetParameters",
+                "s3_object_mode must be 'multi' or 'single', got '" + objectModeStr + "'");
+        }
+    }
+
     std::string recheckStr = "true";
     helper::SetParameterValue("recheck_metadata", params, recheckStr);
     m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
@@ -145,6 +167,14 @@ void FileAWSSDK::SetParameters(const Params &params)
         m_MaxPartSize = maxPartSize;
     }
 
+    std::string directThresholdStr;
+    helper::SetParameterValue("direct_upload_threshold", params, directThresholdStr);
+    if (!directThresholdStr.empty())
+    {
+        m_DirectUploadThreshold =
+            helper::StringToByteUnits(directThresholdStr, "direct_upload_threshold");
+    }
+
     core::ADIOS::Global_init_AWS_API();
 
     s3ClientConfig = new Aws::S3::S3ClientConfiguration;
@@ -176,9 +206,10 @@ void FileAWSSDK::SetParameters(const Params &params)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
                   << m_Endpoint << "' bucket = '" << m_BucketPrefix
-                  << "' recheck_metadata = " << m_RecheckMetadata
+                  << "' object_mode = " << (m_MultiObjectMode ? "multi" : "single")
+                  << " recheck_metadata = " << m_RecheckMetadata
                   << " min_part_size = " << m_MinPartSize << " max_part_size = " << m_MaxPartSize
-                  << std::endl;
+                  << " direct_upload_threshold = " << m_DirectUploadThreshold << std::endl;
     }
 }
 
@@ -329,13 +360,22 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
     case Mode::Write:
         ProfilerStart("open");
         m_WriteBuffer.clear();
-        m_WriteBuffer.reserve(m_MinPartSize);
-        m_CompletedParts.clear();
-        m_CurrentPartNumber = 0;
         m_TotalBytesWritten = 0;
 
-        // Initiate multipart upload
-        InitiateMultipartUpload();
+        if (m_MultiObjectMode)
+        {
+            // Multi-object mode: save base object name, upload individual objects
+            m_BaseObjectName = m_ObjectName;
+            m_NextObjectNumber = 0;
+        }
+        else
+        {
+            // Single-object mode: one multipart upload per file
+            m_WriteBuffer.reserve(m_MinPartSize);
+            m_CompletedParts.clear();
+            m_CurrentPartNumber = 0;
+            InitiateMultipartUpload();
+        }
 
         m_IsOpen = true;
         ProfilerStop("open");
@@ -370,19 +410,32 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
                           << head_object_request.GetKey() << "'" << std::endl;
             }
             head_object = s3Client->HeadObject(head_object_request);
-            if (!head_object.IsSuccess())
+            if (head_object.IsSuccess())
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "transport::file::FileAWSSDK", "Open",
-                    "'bucket/object'  " + m_Name + " does not exist ");
+                // Single object exists — use it directly
+                m_Size = head_object.GetResult().GetContentLength();
+                CheckCache(m_Size);
             }
             else
             {
-                m_Size = head_object.GetResult().GetContentLength();
-                /* Cache: check if we want to cache this file (metadata files)
-                   and if we already have it fully in the cache
-                */
-                CheckCache(m_Size);
+                // Object not found — try multi-object layout (data.0.0, data.0.1, ...)
+                DiscoverSubObjects();
+                if (m_IsMultiObjectLayout)
+                {
+                    m_Size = m_TotalVirtualSize;
+                    if (m_Verbose > 0)
+                    {
+                        std::cout << "FileAWSSDK::Open: Multi-object layout for '" << m_ObjectName
+                                  << "': " << m_SubObjects.size()
+                                  << " objects, total size = " << m_Size << std::endl;
+                    }
+                }
+                else
+                {
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "transport::file::FileAWSSDK", "Open",
+                        "'bucket/object'  " + m_Name + " does not exist ");
+                }
             }
 
             m_Errno = errno;
@@ -430,13 +483,12 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
                                               "File not opened for writing: " + m_Name);
     }
 
-    // S3 multipart upload only supports sequential writes
-    // BP5 should set StripeSize=0 when using awssdk to avoid non-sequential writes
+    // S3 only supports sequential writes
     if (start != MaxSizeT && start != m_TotalBytesWritten)
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileAWSSDK", "Write",
-            "S3 multipart upload only supports sequential writes. "
+            "S3 only supports sequential writes. "
             "Requested start: " +
                 std::to_string(start) +
                 ", current position: " + std::to_string(m_TotalBytesWritten) +
@@ -445,39 +497,66 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
 
     ProfilerStart("write");
 
-    size_t offset = 0;
-
-    // Step 1: If we have buffered data, fill it up to target size first
-    if (!m_WriteBuffer.empty())
+    if (m_MultiObjectMode)
     {
-        size_t spaceInBuffer = m_MinPartSize - m_WriteBuffer.size();
-        size_t toBuffer = std::min(size, spaceInBuffer);
-
-        m_WriteBuffer.insert(m_WriteBuffer.end(), buffer, buffer + toBuffer);
-        offset = toBuffer;
-
-        if (m_WriteBuffer.size() >= m_MinPartSize)
+        // Multi-object mode: buffer data, with zero-copy for large writes
+        if (size >= m_DirectUploadThreshold && !m_WriteBuffer.empty())
         {
-            UploadBufferedPart();
+            // Large write: flush current buffer as one object, then upload
+            // the large buffer directly as another (zero-copy)
+            FlushWriteBuffer();
+        }
+
+        if (size >= m_DirectUploadThreshold)
+        {
+            // Upload large data directly without copying into m_WriteBuffer
+            std::string key = m_BaseObjectName + "." + std::to_string(m_NextObjectNumber);
+            m_NextObjectNumber++;
+            UploadObject(key, buffer, size);
+        }
+        else
+        {
+            // Small write: accumulate in buffer
+            m_WriteBuffer.insert(m_WriteBuffer.end(), buffer, buffer + size);
         }
     }
-
-    // Step 2: Handle remaining data
-    size_t remaining = size - offset;
-
-    // Upload large chunks directly (but respect max part size)
-    while (remaining >= m_MinPartSize)
+    else
     {
-        size_t partSize = std::min(remaining, m_MaxPartSize);
-        UploadPart(buffer + offset, partSize);
-        offset += partSize;
-        remaining -= partSize;
-    }
+        // Single-object mode: original multipart upload buffering
+        size_t offset = 0;
 
-    // Buffer any small remainder for later
-    if (remaining > 0)
-    {
-        m_WriteBuffer.insert(m_WriteBuffer.end(), buffer + offset, buffer + size);
+        // Step 1: If we have buffered data, fill it up to target size first
+        if (!m_WriteBuffer.empty())
+        {
+            size_t spaceInBuffer = m_MinPartSize - m_WriteBuffer.size();
+            size_t toBuffer = std::min(size, spaceInBuffer);
+
+            m_WriteBuffer.insert(m_WriteBuffer.end(), buffer, buffer + toBuffer);
+            offset = toBuffer;
+
+            if (m_WriteBuffer.size() >= m_MinPartSize)
+            {
+                UploadBufferedPart();
+            }
+        }
+
+        // Step 2: Handle remaining data
+        size_t remaining = size - offset;
+
+        // Upload large chunks directly (but respect max part size)
+        while (remaining >= m_MinPartSize)
+        {
+            size_t partSize = std::min(remaining, m_MaxPartSize);
+            UploadPart(buffer + offset, partSize);
+            offset += partSize;
+            remaining -= partSize;
+        }
+
+        // Buffer any small remainder for later
+        if (remaining > 0)
+        {
+            m_WriteBuffer.insert(m_WriteBuffer.end(), buffer + offset, buffer + size);
+        }
     }
 
     m_TotalBytesWritten += size;
@@ -523,44 +602,103 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         return;
     }
 
-    Aws::S3::Model::GetObjectRequest request;
-    request.SetBucket(m_BucketName);
-    request.SetKey(m_ObjectName);
-    std::stringstream range;
-    range << "bytes=" << m_SeekPos << "-" << m_SeekPos + size - 1;
-    request.SetRange(range.str());
-
-    Aws::S3::Model::GetObjectOutcome outcome = s3Client->GetObject(request);
-
-    if (!outcome.IsSuccess())
+    if (m_IsMultiObjectLayout)
     {
-        const Aws::S3::S3Error &err = outcome.GetError();
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::file::FileAWSSDK", "Read",
-            "'bucket/object'  " + m_Name + ", range " + range.str() +
-                "GetObject: " + err.GetExceptionName() + ": " + err.GetMessage());
+        // Multi-object read: find the sub-object(s) that contain the requested range
+        size_t readPos = m_SeekPos;
+        size_t bytesRemaining = size;
+        size_t bufferOffset = 0;
+
+        while (bytesRemaining > 0)
+        {
+            // Binary search: find the sub-object containing readPos
+            size_t lo = 0, hi = m_SubObjects.size();
+            while (lo + 1 < hi)
+            {
+                size_t mid = (lo + hi) / 2;
+                if (m_SubObjects[mid].cumulativeOffset <= readPos)
+                {
+                    lo = mid;
+                }
+                else
+                {
+                    hi = mid;
+                }
+            }
+
+            const SubObject &sub = m_SubObjects[lo];
+            size_t offsetInObject = readPos - sub.cumulativeOffset;
+            size_t availableInObject = sub.size - offsetInObject;
+            size_t toRead = std::min(bytesRemaining, availableInObject);
+
+            // Fetch range from this sub-object
+            Aws::S3::Model::GetObjectRequest request;
+            request.SetBucket(m_BucketName);
+            request.SetKey(sub.key);
+            std::stringstream range;
+            range << "bytes=" << offsetInObject << "-" << offsetInObject + toRead - 1;
+            request.SetRange(range.str());
+
+            auto outcome = s3Client->GetObject(request);
+            if (!outcome.IsSuccess())
+            {
+                const Aws::S3::S3Error &err = outcome.GetError();
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "transport::file::FileAWSSDK", "Read",
+                    "multi-object read failed for '" + sub.key + "' range " + range.str() + ": " +
+                        err.GetExceptionName() + ": " + err.GetMessage());
+            }
+
+            auto *body = outcome.GetResult().GetBody().rdbuf();
+            body->sgetn(buffer + bufferOffset, static_cast<std::streamsize>(toRead));
+
+            readPos += toRead;
+            bufferOffset += toRead;
+            bytesRemaining -= toRead;
+        }
     }
     else
     {
-        if (m_Verbose > 0)
-        {
-            std::cout << "FileAWSSDK::Read: Successfully retrieved '" << m_ObjectName << "' from '"
-                      << m_BucketName << "'."
-                      << "\nObject length = " << outcome.GetResult().GetContentLength()
-                      << "\nRange requested = " << range.str() << std::endl;
-        }
-        auto body = outcome.GetResult().GetBody().rdbuf();
-        body->sgetn(buffer, size);
+        // Single-object read
+        Aws::S3::Model::GetObjectRequest request;
+        request.SetBucket(m_BucketName);
+        request.SetKey(m_ObjectName);
+        std::stringstream range;
+        range << "bytes=" << m_SeekPos << "-" << m_SeekPos + size - 1;
+        request.SetRange(range.str());
 
-        /* Save to cache */
-        if (m_CachingThisFile)
+        Aws::S3::Model::GetObjectOutcome outcome = s3Client->GetObject(request);
+
+        if (!outcome.IsSuccess())
         {
-            m_CacheFileWrite->Write(buffer, size, m_SeekPos);
-            m_CacheFileWrite->Flush();
+            const Aws::S3::S3Error &err = outcome.GetError();
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileAWSSDK", "Read",
+                "'bucket/object'  " + m_Name + ", range " + range.str() +
+                    "GetObject: " + err.GetExceptionName() + ": " + err.GetMessage());
+        }
+        else
+        {
             if (m_Verbose > 0)
             {
-                std::cout << "FileAWSSDK::Read: Written to cache " << m_CacheFileWrite->m_Name
-                          << " start = " << m_SeekPos << " size = " << size << std::endl;
+                std::cout << "FileAWSSDK::Read: Successfully retrieved '" << m_ObjectName
+                          << "' from '" << m_BucketName << "'."
+                          << "\nObject length = " << outcome.GetResult().GetContentLength()
+                          << "\nRange requested = " << range.str() << std::endl;
+            }
+            auto *body = outcome.GetResult().GetBody().rdbuf();
+            body->sgetn(buffer, size);
+
+            /* Save to cache */
+            if (m_CachingThisFile)
+            {
+                m_CacheFileWrite->Write(buffer, size, m_SeekPos);
+                m_CacheFileWrite->Flush();
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileAWSSDK::Read: Written to cache " << m_CacheFileWrite->m_Name
+                              << " start = " << m_SeekPos << " size = " << size << std::endl;
+                }
             }
         }
     }
@@ -584,13 +722,28 @@ size_t FileAWSSDK::GetSize()
 
 void FileAWSSDK::Flush()
 {
-    if (m_OpenMode == Mode::Write && m_WriteBuffer.size() >= m_MinPartSize)
+    if (!m_MultiObjectMode && m_OpenMode == Mode::Write && m_WriteBuffer.size() >= m_MinPartSize)
     {
-        // Only flush if we have enough data for a valid part
+        // Single mode only: flush if we have enough data for a valid part
         // S3 requires minimum 5MB per part (except the last part)
         UploadBufferedPart();
     }
-    // If buffer < 5MB, we must wait - can't upload undersized parts except last
+    // Multi-object mode: Flush is a no-op; use FinalizeSegment() instead
+}
+
+void FileAWSSDK::FinalizeSegment()
+{
+    if (m_OpenMode != Mode::Write)
+    {
+        return;
+    }
+
+    if (m_MultiObjectMode)
+    {
+        // Upload buffered data as the next numbered object
+        FlushWriteBuffer();
+    }
+    // Single mode: no-op (multipart upload continues across segments)
 }
 
 void FileAWSSDK::Close()
@@ -606,27 +759,40 @@ void FileAWSSDK::Close()
 
     if (m_OpenMode == Mode::Write)
     {
-        // Upload any remaining data as the final part
-        // (Final part can be < 5MB, unlike other parts)
-        if (!m_WriteBuffer.empty())
+        if (m_MultiObjectMode)
         {
-            UploadBufferedPart();
-        }
-
-        // Complete or abort the multipart upload
-        if (!m_CompletedParts.empty())
-        {
-            CompleteMultipartUpload();
-        }
-        else if (!m_UploadId.empty())
-        {
-            // No parts uploaded (empty file) - abort the upload
-            // S3 doesn't support 0-byte objects via multipart upload
-            AbortMultipartUpload();
+            // Multi-object mode: flush remaining buffered data as final object
+            FlushWriteBuffer();
             if (m_Verbose > 0)
             {
-                std::cout << "FileAWSSDK::Close: Aborted empty multipart upload for " << m_Name
-                          << std::endl;
+                std::cout << "FileAWSSDK::Close: Multi-object mode, wrote " << m_NextObjectNumber
+                          << " objects for " << m_Name << std::endl;
+            }
+        }
+        else
+        {
+            // Single-object mode: finalize multipart upload
+            // Upload any remaining data as the final part
+            // (Final part can be < 5MB, unlike other parts)
+            if (!m_WriteBuffer.empty())
+            {
+                UploadBufferedPart();
+            }
+
+            // Complete or abort the multipart upload
+            if (!m_CompletedParts.empty())
+            {
+                CompleteMultipartUpload();
+            }
+            else if (!m_UploadId.empty())
+            {
+                // No parts uploaded (empty file) - abort the upload
+                AbortMultipartUpload();
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileAWSSDK::Close: Aborted empty multipart upload for " << m_Name
+                              << std::endl;
+                }
             }
         }
     }
@@ -668,7 +834,7 @@ void FileAWSSDK::Delete()
 
 void FileAWSSDK::CheckFile(const std::string hint) const
 {
-    if (!m_IsCached && !head_object.IsSuccess())
+    if (!m_IsCached && !m_IsMultiObjectLayout && !head_object.IsSuccess())
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "CheckFile",
                                               hint);
@@ -698,6 +864,149 @@ void FileAWSSDK::Truncate(const size_t length)
 }
 
 void FileAWSSDK::MkDir(const std::string &fileName) {}
+
+void FileAWSSDK::DiscoverSubObjects()
+{
+    // List objects with prefix "objectName." to find numbered sub-objects
+    // e.g. for "data.0", look for "data.0.0", "data.0.1", ...
+    std::string prefix = m_ObjectName + ".";
+
+    m_SubObjects.clear();
+    m_TotalVirtualSize = 0;
+
+    Aws::String continuationToken;
+    bool moreResults = true;
+
+    while (moreResults)
+    {
+        Aws::S3::Model::ListObjectsV2Request request;
+        request.SetBucket(m_BucketName);
+        request.SetPrefix(prefix);
+        if (!continuationToken.empty())
+        {
+            request.SetContinuationToken(continuationToken);
+        }
+
+        auto outcome = s3Client->ListObjectsV2(request);
+        if (!outcome.IsSuccess())
+        {
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::DiscoverSubObjects: ListObjectsV2 failed for prefix '"
+                          << prefix << "': " << outcome.GetError().GetMessage() << std::endl;
+            }
+            return; // Not multi-object layout
+        }
+
+        const auto &result = outcome.GetResult();
+        for (const auto &object : result.GetContents())
+        {
+            std::string key = object.GetKey();
+            // Extract the numeric suffix after the prefix
+            std::string suffix = key.substr(prefix.length());
+            // Verify it's a pure numeric suffix (no nested slashes or other chars)
+            bool isNumeric = !suffix.empty();
+            for (char c : suffix)
+            {
+                if (c < '0' || c > '9')
+                {
+                    isNumeric = false;
+                    break;
+                }
+            }
+            if (!isNumeric)
+            {
+                continue;
+            }
+
+            SubObject sub;
+            sub.key = key;
+            sub.size = static_cast<size_t>(object.GetSize());
+            sub.cumulativeOffset = 0; // computed after sorting
+            m_SubObjects.push_back(sub);
+        }
+
+        if (result.GetIsTruncated())
+        {
+            continuationToken = result.GetNextContinuationToken();
+        }
+        else
+        {
+            moreResults = false;
+        }
+    }
+
+    if (m_SubObjects.empty())
+    {
+        return; // No sub-objects found
+    }
+
+    // Sort by numeric suffix (object number)
+    std::sort(m_SubObjects.begin(), m_SubObjects.end(),
+              [&prefix](const SubObject &a, const SubObject &b) {
+                  size_t numA = std::stoull(a.key.substr(prefix.length()));
+                  size_t numB = std::stoull(b.key.substr(prefix.length()));
+                  return numA < numB;
+              });
+
+    // Build cumulative offset table
+    size_t cumOffset = 0;
+    for (auto &sub : m_SubObjects)
+    {
+        sub.cumulativeOffset = cumOffset;
+        cumOffset += sub.size;
+    }
+    m_TotalVirtualSize = cumOffset;
+    m_IsMultiObjectLayout = true;
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::DiscoverSubObjects: Found " << m_SubObjects.size()
+                  << " sub-objects for prefix '" << prefix
+                  << "', total size = " << m_TotalVirtualSize << std::endl;
+    }
+}
+
+void FileAWSSDK::UploadObject(const std::string &key, const char *data, size_t size)
+{
+    Aws::Utils::Stream::PreallocatedStreamBuf streamBuf(
+        reinterpret_cast<unsigned char *>(const_cast<char *>(data)), size);
+    auto inputData = Aws::MakeShared<Aws::IOStream>("S3Upload", &streamBuf);
+
+    Aws::S3::Model::PutObjectRequest request;
+    request.SetBucket(m_BucketName);
+    request.SetKey(key);
+    request.SetBody(inputData);
+    request.SetContentLength(static_cast<long long>(size));
+
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::UploadObject: bucket='" << m_BucketName << "' key='" << key
+                  << "' size=" << size << std::endl;
+    }
+
+    auto outcome = s3Client->PutObject(request);
+    if (!outcome.IsSuccess())
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileAWSSDK", "UploadObject",
+            "Failed to upload object '" + key + "' to bucket '" + m_BucketName +
+                "': " + outcome.GetError().GetMessage());
+    }
+}
+
+void FileAWSSDK::FlushWriteBuffer()
+{
+    if (m_WriteBuffer.empty())
+    {
+        return;
+    }
+
+    std::string key = m_BaseObjectName + "." + std::to_string(m_NextObjectNumber);
+    m_NextObjectNumber++;
+    UploadObject(key, m_WriteBuffer.data(), m_WriteBuffer.size());
+    m_WriteBuffer.clear();
+}
 
 void FileAWSSDK::InitiateMultipartUpload()
 {

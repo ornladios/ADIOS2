@@ -30,6 +30,8 @@
 #include <aws/s3/model/CreateMultipartUploadRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/ListObjectsV2Request.h>
+#include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/UploadPartRequest.h>
 
 namespace adios2
@@ -71,6 +73,8 @@ public:
 
     /** Does nothing, each write is supposed to flush */
     void Flush() final;
+
+    void FinalizeSegment() final;
 
     void Close() final;
 
@@ -121,13 +125,27 @@ private:
     FileFStream *m_CacheFileRead;
     std::string m_CacheFilePath; // full path to file in cache
 
-    // Multipart upload state for S3 writes
+    // Object mode: "multi" (default) = one PutObject per segment,
+    //              "single" = one multipart upload per file
+    bool m_MultiObjectMode = true;
+
+    // Multi-object mode state
+    std::string m_BaseObjectName;  // e.g. "data.0" (object name before numbering)
+    size_t m_NextObjectNumber = 0; // sequential counter for numbered objects
+    size_t m_DirectUploadThreshold = 1ULL * 1024 * 1024; // 1MB - large writes bypass buffer
+
+    // Multi-object mode helpers
+    void UploadObject(const std::string &key, const char *data, size_t size);
+    void FlushWriteBuffer(); // upload m_WriteBuffer as next numbered object
+
+    // Multipart upload state for single-object mode
     std::string m_UploadId;
     std::vector<Aws::S3::Model::CompletedPart> m_CompletedParts;
     int m_CurrentPartNumber = 0;
 
-    // Write buffer - accumulate at least S3_MIN_PART_SIZE before uploading
-    // S3 hard limits: minimum 5 MiB per part (except last), maximum 5 GiB per part
+    // Write buffer - used by both modes
+    // Single mode: accumulate at least S3_MIN_PART_SIZE before uploading part
+    // Multi mode: accumulate data between FinalizeSegment() calls
     static constexpr size_t S3_MIN_PART_SIZE = 5ULL * 1024 * 1024;        // 5 MiB (S3 limit)
     static constexpr size_t S3_MAX_PART_SIZE = 5ULL * 1024 * 1024 * 1024; // 5 GiB (S3 limit)
     size_t m_MinPartSize = S3_MIN_PART_SIZE; // configurable via min_part_size (must be >= 5 MiB)
@@ -135,12 +153,25 @@ private:
     std::vector<char> m_WriteBuffer;
     size_t m_TotalBytesWritten = 0;
 
-    // Multipart upload helper methods
+    // Multipart upload helper methods (single-object mode only)
     void InitiateMultipartUpload();
     void UploadPart(const char *data, size_t size);
     void UploadBufferedPart();
     void CompleteMultipartUpload();
     void AbortMultipartUpload();
+
+    // Multi-object read state: virtual concatenated file
+    struct SubObject
+    {
+        std::string key;
+        size_t size;
+        size_t cumulativeOffset; // start offset of this object in virtual file
+    };
+    std::vector<SubObject> m_SubObjects;
+    size_t m_TotalVirtualSize = 0;
+    bool m_IsMultiObjectLayout = false;
+
+    void DiscoverSubObjects();
 
     /**
      * Check if m_FileDescriptor is -1 after an operation

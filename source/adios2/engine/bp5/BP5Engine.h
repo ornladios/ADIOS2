@@ -180,7 +180,9 @@ public:
     MACRO(S3Bucket, String, std::string, "")                                                       \
     MACRO(S3AccessKeyID, String, std::string, "")                                                  \
     MACRO(S3SecretKey, String, std::string, "")                                                    \
-    MACRO(S3SessionToken, String, std::string, "")
+    MACRO(S3SessionToken, String, std::string, "")                                                 \
+    MACRO(S3ObjectMode, String, std::string, "multi")                                              \
+    MACRO(S3DirectUploadThreshold, String, std::string, "")
 
     struct BP5Params
     {
