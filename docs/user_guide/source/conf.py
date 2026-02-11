@@ -35,7 +35,7 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.autosectionlabel",
-    "sphinxcontrib.blockdiag",
+    "sphinxcontrib.mermaid",
     "breathe",
 ]
 
@@ -44,8 +44,6 @@ subprocess.call("cd ../../api_doxygen/C; doxygen", shell=True)
 subprocess.call("cd ../../api_doxygen/CXX; doxygen", shell=True)
 
 breathe_projects = {"C": "../../api_doxygen/C/xml", "CXX": "../../api_doxygen/CXX/xml"}
-
-blockdiag_fontpath = "/usr/share/fonts/truetype/freefont/FreeMono.ttf"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

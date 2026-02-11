@@ -68,18 +68,12 @@ IO names are used to identify IO components in the runtime configuration file, :
 As shown in the diagram below, each resulting IO object is self-managed and independent, thus providing an adaptable way to perform different kinds of I/O operations.
 Users must be careful not to create conflicts between system level unique I/O identifiers: file names, IP address and port, MPI Send/Receive message rank and tag, etc.
 
-.. blockdiag::
+.. mermaid::
 
-    blockdiag {
-        default_fontsize = 18;
-        default_shape = roundedbox;
-        default_linecolor = blue;
-        span_width = 150;
-
-        ADIOS -> IO_1, B, IO_N[label = "DeclareIO", fontsize = 13];
-        B[shape = "dots"];
-        ADIOS -> B[style = "none"];
-    }
+   %%{init: {"theme": "base", "flowchart": {"curve": "linear"}, "themeVariables": {"fontFamily": "monospace", "lineColor": "blue", "primaryBorderColor": "blue", "primaryColor": "#ffffff", "primaryTextColor": "#000000", "background": "#e8f0fe"}}}%%
+   graph LR
+      ADIOS[ADIOS] -->|DeclareIO| IO_1[IO_1]
+      ADIOS -->|DeclareIO| IO_N[IO_N]
 
 .. tip::
 

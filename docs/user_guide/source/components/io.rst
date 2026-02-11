@@ -16,30 +16,18 @@ Its API allows
    Also, at reading always define separate IOs to avoid ``Variable`` name clashes.
 
 
-.. blockdiag::
+.. mermaid::
 
-   diagram {
-      default_fontsize = 17;
-      default_shape = roundedbox;
-      default_linecolor = blue;
-      span_width = 220;
-
-      IO -> Var_1, B, Var_N [label = "DefineVariable<T>",fontsize = 13];
-      B [shape = "dots"];
-      IO -> B [style = "none"];
-
-      IO -> Att_1, C, Att_N [label = "DefineAttribute<T>",fontsize = 13];
-      C [shape = "dots"];
-      IO -> C [style = "none"];
-
-      IO -> Transport_1, D, Transport_N [label = "AddTransport",fontsize = 13];
-      D [shape = "dots"];
-      IO -> D [style = "none"];
-
-      IO -> Engine_1, E, Engine_N [label = "Open",fontsize = 13];
-      E [shape = "dots"];
-      IO -> E [style = "none"];
-   }
+   %%{init: {"theme": "base", "flowchart": {"curve": "linear"}, "themeVariables": {"fontFamily": "monospace", "lineColor": "blue", "primaryBorderColor": "blue", "primaryColor": "#ffffff", "primaryTextColor": "#000000", "background": "#e8f0fe"}}}%%
+   graph LR
+      IO[IO] -->|"DefineVariable&lt;T&gt;"| Var_1[Var_1]
+      IO -->|"DefineVariable&lt;T&gt;"| Var_N[Var_N]
+      IO -->|"DefineAttribute&lt;T&gt;"| Att_1[Att_1]
+      IO -->|"DefineAttribute&lt;T&gt;"| Att_N[Att_N]
+      IO -->|AddTransport| Transport_1[Transport_1]
+      IO -->|AddTransport| Transport_N[Transport_N]
+      IO -->|Open| Engine_1[Engine_1]
+      IO -->|Open| Engine_N[Engine_N]
 
 
 Setting a Particular Engine and its Parameters

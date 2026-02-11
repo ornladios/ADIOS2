@@ -39,32 +39,25 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 The current interaction flow for each language binding API with the ADIOS2 library is specified as follows
 
-.. blockdiag ::
-   
-   diagram {
-      default_fontsize = 22;
-      default_shape = roundedbox;
-      default_linecolor = blue;
-   
-      "ADIOS2" -> "C++11", C, Python;
-      C -> Fortran, Matlab; 
-      
-      "ADIOS2"[width = 200, height = 60]
-      
-      group{
-         label = "C++11 Library"
-         color = orange
-        
-         "ADIOS2";
-      }
-      
-      group{
-         label = "Language bindings APIs"
-         color = yellow
-         
-         "C++11", C, Python, Fortran, Matlab;
-      }
-   }
+.. mermaid::
+
+   %%{init: {"theme": "base", "flowchart": {"curve": "linear"}, "themeVariables": {"fontFamily": "monospace", "lineColor": "blue", "primaryBorderColor": "blue", "primaryColor": "#ffffff", "primaryTextColor": "#000000", "background": "#e8f0fe"}}}%%
+   graph LR
+      subgraph lib ["C++11 Library"]
+         ADIOS2[ADIOS2]
+      end
+      subgraph bindings ["Language bindings APIs"]
+         CPP["C++11"]
+         C[C]
+         Python[Python]
+         Fortran[Fortran]
+         Matlab[Matlab]
+      end
+      ADIOS2 --> CPP
+      ADIOS2 --> C
+      ADIOS2 --> Python
+      C --> Fortran
+      C --> Matlab
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 

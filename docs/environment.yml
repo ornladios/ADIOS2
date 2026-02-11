@@ -15,6 +15,5 @@ dependencies:
   - setuptools <81      # last version with pkg_resources
   - sphinx
   - pip:
-    - blockdiag
-    - sphinxcontrib-blockdiag
+    - sphinxcontrib-mermaid
     - sphinx_rtd_theme
