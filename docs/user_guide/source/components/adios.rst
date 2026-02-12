@@ -68,18 +68,24 @@ IO names are used to identify IO components in the runtime configuration file, :
 As shown in the diagram below, each resulting IO object is self-managed and independent, thus providing an adaptable way to perform different kinds of I/O operations.
 Users must be careful not to create conflicts between system level unique I/O identifiers: file names, IP address and port, MPI Send/Receive message rank and tag, etc.
 
-.. blockdiag::
+.. image:: images/adios_factory.*
 
-    blockdiag {
-        default_fontsize = 18;
-        default_shape = roundedbox;
-        default_linecolor = blue;
-        span_width = 150;
+..
+   Original blockdiag source (requires sphinxcontrib-blockdiag, which
+   depends on pkg_resources removed in setuptools >= 80):
 
-        ADIOS -> IO_1, B, IO_N[label = "DeclareIO", fontsize = 13];
-        B[shape = "dots"];
-        ADIOS -> B[style = "none"];
-    }
+   .. blockdiag::
+
+       blockdiag {
+           default_fontsize = 18;
+           default_shape = roundedbox;
+           default_linecolor = blue;
+           span_width = 150;
+
+           ADIOS -> IO_1, B, IO_N[label = "DeclareIO", fontsize = 13];
+           B[shape = "dots"];
+           ADIOS -> B[style = "none"];
+       }
 
 .. tip::
 

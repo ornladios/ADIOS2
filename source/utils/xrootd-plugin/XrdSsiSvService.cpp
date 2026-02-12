@@ -564,8 +564,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         {
             auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
             pthread_t tid;
-            auto engine = poolEntry->m_engine;
-            auto io = poolEntry->m_io;
+            auto engine = poolEntry.file->m_engine;
+            auto io = poolEntry.file->m_io;
             adios2::Box<adios2::Dims> varSel(Start, Count);
             adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
             if (TypeOfVar == adios2::DataType::None)
