@@ -39,32 +39,38 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 The current interaction flow for each language binding API with the ADIOS2 library is specified as follows
 
-.. blockdiag ::
-   
-   diagram {
-      default_fontsize = 22;
-      default_shape = roundedbox;
-      default_linecolor = blue;
-   
-      "ADIOS2" -> "C++11", C, Python;
-      C -> Fortran, Matlab; 
-      
-      "ADIOS2"[width = 200, height = 60]
-      
-      group{
-         label = "C++11 Library"
-         color = orange
-        
-         "ADIOS2";
+.. image:: images/api_bindings.*
+
+..
+   Original blockdiag source (requires sphinxcontrib-blockdiag, which
+   depends on pkg_resources removed in setuptools >= 80):
+
+   .. blockdiag ::
+
+      diagram {
+         default_fontsize = 22;
+         default_shape = roundedbox;
+         default_linecolor = blue;
+
+         "ADIOS2" -> "C++11", C, Python;
+         C -> Fortran, Matlab;
+
+         "ADIOS2"[width = 200, height = 60]
+
+         group{
+            label = "C++11 Library"
+            color = orange
+
+            "ADIOS2";
+         }
+
+         group{
+            label = "Language bindings APIs"
+            color = yellow
+
+            "C++11", C, Python, Fortran, Matlab;
+         }
       }
-      
-      group{
-         label = "Language bindings APIs"
-         color = yellow
-         
-         "C++11", C, Python, Fortran, Matlab;
-      }
-   }
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 
