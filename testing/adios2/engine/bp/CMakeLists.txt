@@ -230,8 +230,8 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    add_test(NAME generateXRootDHttpConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDHttpConfig.sh $<TARGET_FILE:adios2_xrootd> $<TARGET_FILE:adios2_xrootd_http> ${XROOTD_XRD_PORT} ${XROOTD_HTTP_PORT})
    set_tests_properties(generateXRootDHttpConfig PROPERTIES WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
 
-   add_test(NAME remoteXRHttpsServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd_http.sh ${XROOTD_SERVER_BINARY} ${XROOTD_HTTPS_DIR})
-   set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
+   add_test(NAME remoteXRHttpsServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd_http.sh ${XROOTD_SERVER_BINARY} ${XROOTD_HTTPS_DIR} ${XROOTD_HTTP_PORT})
+   set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR} TIMEOUT 60)
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES DEPENDS "generateXRootDHttpConfig")
 
    add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh)
@@ -324,6 +324,9 @@ gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
 bp4_bp5_gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW)
 bp4_bp5_gtest_add_tests_helper(JoinedArray MPI_ALLOW)
 bp4_bp5_gtest_add_tests_helper(OpenWithMetadata MPI_NONE)
+if(NOT WIN32)
+  bp5_gtest_add_tests_helper(MetadataFDClose MPI_NONE)
+endif()
 
 # BP4 only for now
 # gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4

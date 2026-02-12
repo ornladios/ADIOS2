@@ -40,7 +40,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    const std::string fname("TimeSeries");
+    const std::string fname("TimeSeries_MPI");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     const std::string fname("TimeSeries");
