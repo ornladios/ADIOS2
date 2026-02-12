@@ -32,6 +32,11 @@ class Variable; // private implementation
 template <class T>
 class Span; // private implementation
 }
+
+namespace plugin
+{
+class PluginEngine; // friend
+}
 /// \endcond
 
 namespace detail
@@ -132,6 +137,7 @@ class Variable
     friend class IO;
     friend class Engine;
     friend class Group;
+    friend class plugin::PluginEngine;
 
 public:
     /**
@@ -429,7 +435,7 @@ private:
 
     std::vector<typename Variable<T>::Info> ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
 
-    Variable(core::Variable<IOType> *variable);
+    Variable(core::Variable<IOType> *variable) : m_Variable(variable) {}
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
     std::map<size_t, std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfoMap() const;

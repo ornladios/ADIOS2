@@ -20,11 +20,6 @@ namespace adios2
 #define declare_type(T)                                                                            \
                                                                                                    \
     template <>                                                                                    \
-    Variable<T>::Variable(core::Variable<IOType> *variable) : m_Variable(variable)                 \
-    {                                                                                              \
-    }                                                                                              \
-                                                                                                   \
-    template <>                                                                                    \
     Variable<T>::operator bool() const noexcept                                                    \
     {                                                                                              \
         return (m_Variable == nullptr) ? false : true;                                             \

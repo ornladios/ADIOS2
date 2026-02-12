@@ -11,7 +11,7 @@
 #ifndef ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATOR_H_
 #define ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATOR_H_
 
-#include "PluginOperatorInterface.h"
+#include "adios2/plugin/PluginOperatorInterface.h"
 
 #include <memory> // for unique_ptr
 #include <string> // for string

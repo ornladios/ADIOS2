@@ -11,8 +11,13 @@
 #ifndef ADIOS2_HELPER_PLUGINMANAGER_H
 #define ADIOS2_HELPER_PLUGINMANAGER_H
 
-#include "adios2/engine/plugin/PluginEngineInterface.h"
-#include "adios2/operator/plugin/PluginOperatorInterface.h"
+#include "adios2/plugin/PluginOperatorInterface.h"
+
+#include "adios2/cxx/IO.h"
+
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
 
 #include <functional>
 #include <memory>
@@ -24,11 +29,18 @@ namespace adios2
 namespace plugin
 {
 
+class PluginEngineInterface; // forward declare
+
 class PluginManager
 {
 public:
+#if ADIOS2_USE_MPI
     using EngineCreatePtr = std::add_pointer_t<PluginEngineInterface *(
-        core::IO &, const std::string &, const Mode, helper::Comm)>;
+        adios2::IO, const std::string &, const Mode, MPI_Comm)>;
+#else
+    using EngineCreatePtr =
+        std::add_pointer_t<PluginEngineInterface *(adios2::IO, const std::string &, const Mode)>;
+#endif
     using EngineDestroyPtr = std::add_pointer_t<void(PluginEngineInterface *)>;
     using EngineCreateFun = std::function<std::remove_pointer_t<EngineCreatePtr>>;
     using EngineDestroyFun = std::function<std::remove_pointer_t<EngineDestroyPtr>>;

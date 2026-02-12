@@ -69,7 +69,7 @@ add_library(adios2_core
   engine/null/NullWriter.cpp engine/null/NullWriter.tcc
   engine/null/NullReader.cpp engine/null/NullReader.tcc
 
-  engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
+  engine/plugin/PluginEngine.cpp
   operator/plugin/PluginOperator.cpp
 
   # toolkit
@@ -225,6 +225,8 @@ target_include_directories(adios2_core
   PUBLIC
   $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
   $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
+  PRIVATE
+  $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/bindings/CXX>
 )
 target_link_libraries(adios2_core PRIVATE
   adios2sys_interface
@@ -566,37 +568,11 @@ install(FILES common/ADIOSBaseTypes.h common/ADIOSMacros.h common/ADIOSTypes.h c
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 
-install(DIRECTORY core/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/core COMPONENT adios2_core-development
+install(DIRECTORY plugin/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/plugin COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*.h"
 )
 
-install(DIRECTORY engine/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/engine COMPONENT adios2_core-development
-  FILES_MATCHING PATTERN "*/*.h"
-  PATTERN "*/*.inl"
-)
-
-install(DIRECTORY helper/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/helper COMPONENT adios2_core-development
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN "*.inl"
-)
-
-install(DIRECTORY operator/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/operator COMPONENT adios2_core-development
-  FILES_MATCHING PATTERN "*/*.h"
-  PATTERN "*/*.inl"
-)
-
-install(DIRECTORY toolkit/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit COMPONENT adios2_core-development
-  FILES_MATCHING PATTERN "*/*.h"
-  PATTERN "*/*.inl"
-  REGEX "sst/util" EXCLUDE
-  REGEX "sst/dp" EXCLUDE
-  REGEX "derived/parser" EXCLUDE
-)
 
 # Library installation
 install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_mpi_c} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
