@@ -181,7 +181,7 @@ main(int argc, char **argv)
     static char extern_string[] = "int printf(string format, ...);";
     static cod_extern_entry externs[] = 
 	{
-            {"printf", (void*)(intptr_t)printf},
+            {"printf", (void*)printf},
             {(void*)0, (void*)0}
         };
     

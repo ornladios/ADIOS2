@@ -1298,15 +1298,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     FinalizeCPInfo(Stream->CPInfo, Stream->DP_Interface);
 
-    if (Stream->RendezvousReaderCount > 0)
-    {
-        Stream->FirstReaderCondition = CMCondition_get(Stream->CPInfo->SharedCM->cm, NULL);
-    }
-    else
-    {
-        Stream->FirstReaderCondition = -1;
-    }
-
     attr_list DPAttrs = create_attr_list();
     Stream->DP_Stream = Stream->DP_Interface->initWriter(&Svcs, Stream, Stream->ConfigParams,
                                                          DPAttrs, &Stream->Stats);
@@ -1524,7 +1515,10 @@ void SstWriterClose(SstStream Stream)
     QueueMaintenance(Stream);
 
     // sleep briefly to allow for outgoing close messages to arrive
+    // Drop the stream lock so handlers can process incoming messages
+    STREAM_MUTEX_UNLOCK(Stream);
     usleep(100 * 1000);
+    STREAM_MUTEX_LOCK(Stream);
 
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) || (Stream->Rank == 0))
     {

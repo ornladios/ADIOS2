@@ -147,8 +147,8 @@ main(int argc, char **argv)
 	int submit(cod_exec_context ec, int port, void *d, cod_type_spec dt);";
 	static cod_extern_entry externs[] =
 	    {
-		{"printf", (void*)(intptr_t)printf},
-		{"submit", (void*)(intptr_t)submit},
+		{"printf", (void*)printf},
+		{"submit", (void*)submit},
 		{(void*)0, (void*)0}
 	    };
 	static char code[] = "{\n\

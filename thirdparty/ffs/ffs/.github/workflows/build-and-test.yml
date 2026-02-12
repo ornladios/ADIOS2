@@ -17,6 +17,7 @@ concurrency:
 jobs:
   # MemorySanitizer build to detect uninitialized memory reads
   msan:
+    if: github.event_name != 'schedule' || github.repository == 'GTkorvo/ffs'
     timeout-minutes: 45
     runs-on: ubuntu-24.04
     env:
@@ -75,6 +76,7 @@ jobs:
       run: ctest --test-dir build --output-on-failure
 
   linux:
+    if: github.event_name != 'schedule' || github.repository == 'GTkorvo/ffs'
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
     timeout-minutes: 30
@@ -119,6 +121,7 @@ jobs:
       run: source/scripts/ci/gh-actions/run.sh test
 
   mac_and_windows:
+    if: github.event_name != 'schedule' || github.repository == 'GTkorvo/ffs'
     # The jobs should run pretty quick; anything over 30m essentially means
     # something is stuck somewhere
     timeout-minutes: 30

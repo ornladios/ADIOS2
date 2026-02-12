@@ -1,11 +1,12 @@
 #!/bin/bash
 # Start XRootD server with HTTP-to-SSI bridge enabled
-# Usage: start_xrootd_http.sh <xrootd_binary> <config_base_dir>
+# Usage: start_xrootd_http.sh <xrootd_binary> <config_base_dir> [http_port]
 
 set -x
 
 XROOTD_BINARY="$1"
 CONFIG_BASE="$2"
+HTTP_PORT="${3:-8443}"
 CONFIG_FILE="${CONFIG_BASE}/xroot-http/etc/xrootd/xrootd-http-ssi.cfg"
 LOG_FILE="/tmp/xroot-http.log"
 PID_FILE="/tmp/xrootd-http.pid"
@@ -70,27 +71,34 @@ if [ $START_RESULT -ne 0 ]; then
     exit 1
 fi
 
-# Give the server a moment to start
-sleep 3
-
-# Check if server is running
-if [ -f "${PID_FILE}" ]; then
-    PID=$(cat "${PID_FILE}")
-    echo "XRootD started with PID: ${PID}"
-    if kill -0 "${PID}" 2>/dev/null; then
-        echo "Server is running"
-    else
-        echo "ERROR: Server process not running"
+# Wait for the HTTPS listener to accept connections (up to 30 seconds).
+# A simple kill -0 only checks if the process is alive, not whether the
+# HTTP/TLS stack has finished initializing.  Polling the port avoids a
+# race where tests start before the listener is ready.
+MAX_WAIT=30
+for i in $(seq 1 ${MAX_WAIT}); do
+    if curl -sk -o /dev/null --max-time 2 "https://localhost:${HTTP_PORT}/" 2>/dev/null; then
+        echo "HTTPS listener ready on port ${HTTP_PORT} after ${i}s"
+        break
+    fi
+    # Fall back: if the process died, bail out immediately
+    if [ -f "${PID_FILE}" ]; then
+        PID=$(cat "${PID_FILE}")
+        if ! kill -0 "${PID}" 2>/dev/null; then
+            echo "ERROR: Server process (PID ${PID}) died during startup"
+            echo "=== Server log ==="
+            cat "${LOG_FILE}" 2>/dev/null || echo "No log file"
+            exit 1
+        fi
+    fi
+    if [ "${i}" -eq ${MAX_WAIT} ]; then
+        echo "ERROR: HTTPS listener not ready after ${MAX_WAIT}s"
         echo "=== Server log ==="
         cat "${LOG_FILE}" 2>/dev/null || echo "No log file"
         exit 1
     fi
-else
-    echo "ERROR: PID file not created"
-    echo "=== Server log ==="
-    cat "${LOG_FILE}" 2>/dev/null || echo "No log file"
-    exit 1
-fi
+    sleep 1
+done
 
 # Show log for debugging
 echo "=== Server log (first 50 lines) ==="

@@ -31,10 +31,10 @@ char *strstr(char* s1, char *s2);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
-	    {"malloc", (void*)(intptr_t)malloc},
-	    {"strstr", (void*)(intptr_t)strstr},
-	    {"free", (void*)(intptr_t)free},
+	    {"printf", (void*)printf},
+	    {"malloc", (void*)malloc},
+	    {"strstr", (void*)strstr},
+	    {"free", (void*)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
