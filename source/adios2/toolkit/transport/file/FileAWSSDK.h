@@ -124,6 +124,7 @@ private:
     bool m_IsCached = false; // true if file is already in cache
     FileFStream *m_CacheFileRead;
     std::string m_CacheFilePath; // full path to file in cache
+    std::string m_FileNameInTar; // original file name if we work inside a TAR file
 
     // Object mode: "multi" (default) = one PutObject per segment,
     //              "single" = one multipart upload per file

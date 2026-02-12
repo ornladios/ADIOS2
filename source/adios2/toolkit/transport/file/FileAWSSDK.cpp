@@ -127,6 +127,8 @@ void FileAWSSDK::SetParameters(const Params &params)
         }
     }
 
+    helper::SetParameterValue("filenameintar", params, m_FileNameInTar);
+
     std::string recheckStr = "true";
     helper::SetParameterValue("recheck_metadata", params, recheckStr);
     m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
@@ -237,25 +239,43 @@ void FileAWSSDK::SetUpCache()
             m_CachingThisFile = true;
         }
     }
+    if (!m_CachePath.empty())
+    {
+        std::string path = m_ObjectName;
+        if (!m_FileNameInTar.empty())
+            path = m_FileNameInTar;
+
+        if (helper::EndsWith(path, "md.idx"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/md.idx";
+        }
+        else if (helper::EndsWith(path, "mmd.0"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/mmd.0";
+        }
+        else if (helper::EndsWith(path, "md.0"))
+        {
+            m_CachingThisFile = true;
+            m_CacheFilePath = m_CachePath + "/md.0";
+        }
+    }
 
     if (m_CachingThisFile)
     {
-        std::string const ep = std::regex_replace(m_Endpoint, std::regex("/|:"), "_");
-        const std::string path(m_CachePath + PathSeparator + ep + PathSeparator + m_BucketName +
-                               PathSeparator + m_ObjectName);
-        m_CacheFilePath = path;
         if (!m_RecheckMetadata)
         {
             m_CacheFileRead = new FileFStream(m_Comm);
             try
             {
-                m_CacheFileRead->Open(path, Mode::Read);
+                m_CacheFileRead->Open(m_CacheFilePath, Mode::Read);
                 m_Size = m_CacheFileRead->GetSize();
                 m_IsCached = true;
                 m_CachingThisFile = false;
                 if (m_Verbose > 0)
                 {
-                    std::cout << "FileAWSSDK::SetUpCache: Already cached " << path
+                    std::cout << "FileAWSSDK::SetUpCache: Already cached " << m_CacheFilePath
                               << ", size = " << m_Size << std::endl;
                 }
             }
