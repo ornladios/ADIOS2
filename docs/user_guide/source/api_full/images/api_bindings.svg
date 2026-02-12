@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg viewBox="0 0 712 380" xmlns="http://www.w3.org/2000/svg" xmlns:inkspace="http://www.inkscape.org/namespaces/inkscape" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs id="defs_block">
+    <filter height="1.504" id="filter_blur" inkspace:collect="always" width="1.1575" x="-0.07875" y="-0.252">
+      <feGaussianBlur id="feGaussianBlur3780" inkspace:collect="always" stdDeviation="4.2" />
+    </filter>
+  </defs>
+  <title>blockdiag</title>
+  <desc>blockdiag {
+   default_fontsize = 22;
+   default_shape = roundedbox;
+   default_linecolor = blue;
+
+   "ADIOS2" -&gt; "C++11", C, Python;
+   C -&gt; Fortran, Matlab;
+
+   "ADIOS2"[width = 200, height = 60]
+
+   group{
+      label = "C++11 Library"
+      color = orange
+
+      "ADIOS2";
+   }
+
+   group{
+      label = "Language bindings APIs"
+      color = yellow
+
+      "C++11", C, Python, Fortran, Matlab;
+   }
+}
+</desc>
+  <rect fill="rgb(255,165,0)" height="80" style="filter:url(#filter_blur)" width="216" x="56" y="30" />
+  <rect fill="rgb(255,255,0)" height="320" style="filter:url(#filter_blur)" width="336" x="320" y="30" />
+  <path d="M 75 46 L 259 46 A8,8 0 0 1 267 54 L 267 98 A8,8 0 0 1 259 106 L 75 106 A8,8 0 0 1 67 98 L 67 54 A8,8 0 0 1 75 46" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 339 56 L 451 56 A8,8 0 0 1 459 64 L 459 88 A8,8 0 0 1 451 96 L 339 96 A8,8 0 0 1 331 88 L 331 64 A8,8 0 0 1 339 56" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 339 146 L 451 146 A8,8 0 0 1 459 154 L 459 178 A8,8 0 0 1 451 186 L 339 186 A8,8 0 0 1 331 178 L 331 154 A8,8 0 0 1 339 146" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 339 306 L 451 306 A8,8 0 0 1 459 314 L 459 338 A8,8 0 0 1 451 346 L 339 346 A8,8 0 0 1 331 338 L 331 314 A8,8 0 0 1 339 306" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 531 146 L 643 146 A8,8 0 0 1 651 154 L 651 178 A8,8 0 0 1 643 186 L 531 186 A8,8 0 0 1 523 178 L 523 154 A8,8 0 0 1 531 146" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 531 226 L 643 226 A8,8 0 0 1 651 234 L 651 258 A8,8 0 0 1 643 266 L 531 266 A8,8 0 0 1 523 258 L 523 234 A8,8 0 0 1 531 226" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <path d="M 72 40 L 256 40 A8,8 0 0 1 264 48 L 264 92 A8,8 0 0 1 256 100 L 72 100 A8,8 0 0 1 64 92 L 64 48 A8,8 0 0 1 72 40" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="78" x="164.0" y="80">ADIOS2</text>
+  <path d="M 336 50 L 448 50 A8,8 0 0 1 456 58 L 456 82 A8,8 0 0 1 448 90 L 336 90 A8,8 0 0 1 328 82 L 328 58 A8,8 0 0 1 336 50" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="65" x="392.5" y="80">C++11</text>
+  <path d="M 336 140 L 448 140 A8,8 0 0 1 456 148 L 456 172 A8,8 0 0 1 448 180 L 336 180 A8,8 0 0 1 328 172 L 328 148 A8,8 0 0 1 336 140" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="13" x="392.5" y="170">C</text>
+  <path d="M 336 300 L 448 300 A8,8 0 0 1 456 308 L 456 332 A8,8 0 0 1 448 340 L 336 340 A8,8 0 0 1 328 332 L 328 308 A8,8 0 0 1 336 300" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="78" x="392.0" y="332">Python</text>
+  <path d="M 528 140 L 640 140 A8,8 0 0 1 648 148 L 648 172 A8,8 0 0 1 640 180 L 528 180 A8,8 0 0 1 520 172 L 520 148 A8,8 0 0 1 528 140" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="91" x="584.5" y="170">Fortran</text>
+  <path d="M 528 220 L 640 220 A8,8 0 0 1 648 228 L 648 252 A8,8 0 0 1 640 260 L 528 260 A8,8 0 0 1 520 252 L 520 228 A8,8 0 0 1 528 220" fill="rgb(255,255,255)" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="22" font-style="normal" font-weight="normal" text-anchor="middle" textLength="78" x="584.0" y="250">Matlab</text>
+  <path d="M 264 70 L 320 70" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="327,70 320,66 320,74 327,70" stroke="rgb(0,0,255)" />
+  <path d="M 264 70 L 296 70" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 296 70 L 296 160" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 296 160 L 320 160" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="327,160 320,156 320,164 327,160" stroke="rgb(0,0,255)" />
+  <path d="M 264 70 L 296 70" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 296 70 L 296 320" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 296 320 L 320 320" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="327,320 320,316 320,324 327,320" stroke="rgb(0,0,255)" />
+  <path d="M 456 160 L 512 160" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="519,160 512,156 512,164 519,160" stroke="rgb(0,0,255)" />
+  <path d="M 456 160 L 488 160" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 488 160 L 488 240" fill="none" stroke="rgb(0,0,255)" />
+  <path d="M 488 240 L 512 240" fill="none" stroke="rgb(0,0,255)" />
+  <polygon fill="rgb(0,0,255)" points="519,240 512,236 512,244 519,240" stroke="rgb(0,0,255)" />
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="13" font-style="normal" font-weight="normal" text-anchor="middle" textLength="104" x="164.0" y="37">C++11 Library</text>
+  <text fill="rgb(0,0,0)" font-family="sans-serif" font-size="13" font-style="normal" font-weight="normal" text-anchor="middle" textLength="176" x="488.0" y="37">Language bindings APIs</text>
+</svg>
