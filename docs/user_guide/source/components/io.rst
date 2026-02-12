@@ -16,30 +16,36 @@ Its API allows
    Also, at reading always define separate IOs to avoid ``Variable`` name clashes.
 
 
-.. blockdiag::
+.. image:: images/io_factory.*
 
-   diagram {
-      default_fontsize = 17;
-      default_shape = roundedbox;
-      default_linecolor = blue;
-      span_width = 220;
+..
+   Original blockdiag source (requires sphinxcontrib-blockdiag, which
+   depends on pkg_resources removed in setuptools >= 80):
 
-      IO -> Var_1, B, Var_N [label = "DefineVariable<T>",fontsize = 13];
-      B [shape = "dots"];
-      IO -> B [style = "none"];
+   .. blockdiag::
 
-      IO -> Att_1, C, Att_N [label = "DefineAttribute<T>",fontsize = 13];
-      C [shape = "dots"];
-      IO -> C [style = "none"];
+      diagram {
+         default_fontsize = 17;
+         default_shape = roundedbox;
+         default_linecolor = blue;
+         span_width = 220;
 
-      IO -> Transport_1, D, Transport_N [label = "AddTransport",fontsize = 13];
-      D [shape = "dots"];
-      IO -> D [style = "none"];
+         IO -> Var_1, B, Var_N [label = "DefineVariable<T>",fontsize = 13];
+         B [shape = "dots"];
+         IO -> B [style = "none"];
 
-      IO -> Engine_1, E, Engine_N [label = "Open",fontsize = 13];
-      E [shape = "dots"];
-      IO -> E [style = "none"];
-   }
+         IO -> Att_1, C, Att_N [label = "DefineAttribute<T>",fontsize = 13];
+         C [shape = "dots"];
+         IO -> C [style = "none"];
+
+         IO -> Transport_1, D, Transport_N [label = "AddTransport",fontsize = 13];
+         D [shape = "dots"];
+         IO -> D [style = "none"];
+
+         IO -> Engine_1, E, Engine_N [label = "Open",fontsize = 13];
+         E [shape = "dots"];
+         IO -> E [style = "none"];
+      }
 
 
 Setting a Particular Engine and its Parameters
