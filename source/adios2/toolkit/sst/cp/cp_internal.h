@@ -188,8 +188,6 @@ struct _SstStream
     size_t LastDemandTimestep;
     size_t CloseTimestepCount;
 
-    /* rendezvous condition */
-    int FirstReaderCondition;
     RegisterQueue ReaderRegisterQueue;
 
     int ReaderCount;

@@ -188,7 +188,13 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     print("TestDriver: Killing Writer")
     sys.stdout.flush()
     writer.terminate()
-    writer.wait()
+    try:
+        writer.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        print("TestDriver: Writer did not exit after SIGTERM, sending SIGKILL")
+        sys.stdout.flush()
+        writer.kill()
+        writer.wait()
     reader.wait()
     print("TestDriver: Reader exit status was " + str(reader.returncode))
     sys.stdout.flush()
