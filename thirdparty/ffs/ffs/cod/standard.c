@@ -374,44 +374,54 @@ static char basic_extern_string[] = "\n\
 static char internals[] = "\n\
 	void cod_NoOp(int duration);\n";
 
-static cod_extern_entry internal_externs[] = 
+static cod_extern_entry internal_externs[] =
 {
     {"cod_NoOp", (void*)(long)0xdeadbeef},    /* value is unimportant, but can't be NULL */
     {NULL, NULL}
 };
 
-static cod_extern_entry externs[] = 
+/*
+ * MSVC's C compiler doesn't allow function pointers as static initializers.
+ * Use a macro to either embed the pointer (non-MSVC) or NULL (MSVC, filled at runtime).
+ */
+#ifdef _MSC_VER
+#define FUNC(x) NULL
+#else
+#define FUNC(x) (void*)(x)
+#endif
+
+static cod_extern_entry externs[] =
 {
 #ifdef HAVE_ATL_H
-    {"attr_set", (void*)(intptr_t)attr_set},
-    {"create_attr_list", (void*)(intptr_t)attr_create_list},
-    {"copy_attr_list", (void*)(intptr_t)attr_copy_list},
-    {"free_attr_list", (void*)(intptr_t)attr_free_list},
-    {"set_int_attr", (void*)(intptr_t)std_set_int_attr},
-    {"set_long_attr", (void*)(intptr_t)std_set_long_attr},
-    {"set_double_attr", (void*)(intptr_t)std_set_double_attr},
-    {"set_float_attr", (void*)(intptr_t)std_set_float_attr},
-    {"set_string_attr", (void*)(intptr_t)std_set_string_attr},
-    {"attr_ivalue", (void*)(intptr_t)attr_ivalue},
-    {"attr_lvalue", (void*)(intptr_t)attr_lvalue},
-    {"attr_dvalue", (void*)(intptr_t)attr_dvalue},
-    {"attr_fvalue", (void*)(intptr_t)attr_fvalue},
-    {"attr_svalue", (void*)(intptr_t)attr_svalue},
+    {"attr_set", FUNC(attr_set)},
+    {"create_attr_list", FUNC(attr_create_list)},
+    {"copy_attr_list", FUNC(attr_copy_list)},
+    {"free_attr_list", FUNC(attr_free_list)},
+    {"set_int_attr", FUNC(std_set_int_attr)},
+    {"set_long_attr", FUNC(std_set_long_attr)},
+    {"set_double_attr", FUNC(std_set_double_attr)},
+    {"set_float_attr", FUNC(std_set_float_attr)},
+    {"set_string_attr", FUNC(std_set_string_attr)},
+    {"attr_ivalue", FUNC(attr_ivalue)},
+    {"attr_lvalue", FUNC(attr_lvalue)},
+    {"attr_dvalue", FUNC(attr_dvalue)},
+    {"attr_fvalue", FUNC(attr_fvalue)},
+    {"attr_svalue", FUNC(attr_svalue)},
 #endif
-    {"chr_get_time", (void*)(intptr_t)chr_get_time},
-    {"chr_timer_diff", (void*)(intptr_t)chr_timer_diff},
-    {"chr_timer_eq_zero", (void*)(intptr_t)chr_timer_eq_zero},
-    {"chr_timer_sum", (void*)(intptr_t)chr_timer_sum},
-    {"chr_timer_start", (void*)(intptr_t)chr_timer_start},
-    {"chr_timer_stop", (void*)(intptr_t)chr_timer_stop},
-    {"chr_time_to_nanosecs", (void*)(intptr_t)chr_time_to_nanosecs},
-    {"chr_time_to_microsecs", (void*)(intptr_t)chr_time_to_microsecs},
-    {"chr_time_to_millisecs", (void*)(intptr_t)chr_time_to_millisecs},
-    {"chr_time_to_secs", (void*)(intptr_t)chr_time_to_secs},
-    {"chr_approx_resolution", (void*)(intptr_t)chr_approx_resolution},
-    {"gettimeofday", (void*)(intptr_t)gettimeofday_wrapper},
-    {"open_ffs", (void*)(intptr_t)open_ffs_file},
-    {"close_ffs", (void*)(intptr_t)close_ffs_file},
+    {"chr_get_time", FUNC(chr_get_time)},
+    {"chr_timer_diff", FUNC(chr_timer_diff)},
+    {"chr_timer_eq_zero", FUNC(chr_timer_eq_zero)},
+    {"chr_timer_sum", FUNC(chr_timer_sum)},
+    {"chr_timer_start", FUNC(chr_timer_start)},
+    {"chr_timer_stop", FUNC(chr_timer_stop)},
+    {"chr_time_to_nanosecs", FUNC(chr_time_to_nanosecs)},
+    {"chr_time_to_microsecs", FUNC(chr_time_to_microsecs)},
+    {"chr_time_to_millisecs", FUNC(chr_time_to_millisecs)},
+    {"chr_time_to_secs", FUNC(chr_time_to_secs)},
+    {"chr_approx_resolution", FUNC(chr_approx_resolution)},
+    {"gettimeofday", FUNC(gettimeofday_wrapper)},
+    {"open_ffs", FUNC(open_ffs_file)},
+    {"close_ffs", FUNC(close_ffs_file)},
     {(void*)0, (void*)0}
 };
 
@@ -426,9 +436,56 @@ FMField timeval_list[] = {
     {"tv_usec", "integer", sizeof(((struct timeval*)0)->tv_usec), FMOffset(struct timeval *, tv_usec)}, 
     {NULL, NULL, 0, 0}};
 
+#ifdef _MSC_VER
+/* Runtime initialization of function pointers for MSVC */
+static void init_externs(void)
+{
+    static int initialized = 0;
+    int i;
+    if (initialized) return;
+    initialized = 1;
+
+    /* Initialize externs[] */
+    i = 0;
+#ifdef HAVE_ATL_H
+    externs[i++].extern_value = (void*)attr_set;
+    externs[i++].extern_value = (void*)attr_create_list;
+    externs[i++].extern_value = (void*)attr_copy_list;
+    externs[i++].extern_value = (void*)attr_free_list;
+    externs[i++].extern_value = (void*)std_set_int_attr;
+    externs[i++].extern_value = (void*)std_set_long_attr;
+    externs[i++].extern_value = (void*)std_set_double_attr;
+    externs[i++].extern_value = (void*)std_set_float_attr;
+    externs[i++].extern_value = (void*)std_set_string_attr;
+    externs[i++].extern_value = (void*)attr_ivalue;
+    externs[i++].extern_value = (void*)attr_lvalue;
+    externs[i++].extern_value = (void*)attr_dvalue;
+    externs[i++].extern_value = (void*)attr_fvalue;
+    externs[i++].extern_value = (void*)attr_svalue;
+#endif
+    externs[i++].extern_value = (void*)chr_get_time;
+    externs[i++].extern_value = (void*)chr_timer_diff;
+    externs[i++].extern_value = (void*)chr_timer_eq_zero;
+    externs[i++].extern_value = (void*)chr_timer_sum;
+    externs[i++].extern_value = (void*)chr_timer_start;
+    externs[i++].extern_value = (void*)chr_timer_stop;
+    externs[i++].extern_value = (void*)chr_time_to_nanosecs;
+    externs[i++].extern_value = (void*)chr_time_to_microsecs;
+    externs[i++].extern_value = (void*)chr_time_to_millisecs;
+    externs[i++].extern_value = (void*)chr_time_to_secs;
+    externs[i++].extern_value = (void*)chr_approx_resolution;
+    externs[i++].extern_value = (void*)gettimeofday_wrapper;
+    externs[i++].extern_value = (void*)open_ffs_file;
+    externs[i++].extern_value = (void*)close_ffs_file;
+}
+#endif
+
 extern void
 cod_add_standard_elements(cod_parse_context context)
 {
+#ifdef _MSC_VER
+    init_externs();
+#endif
     cod_assoc_externs(context, externs);
 #ifdef HAVE_ATL_H
     sm_ref attr_node = cod_new_reference_type_decl();
@@ -469,37 +526,72 @@ cod_add_standard_elements(cod_parse_context context)
 #endif /* LINUX_KERNEL_MODULE */
 
 #if defined(NO_DYNAMIC_LINKING) && !defined(_MSC_VER)
-#define sym(x) (void*)(intptr_t)x
+#define sym(x) (void*)x
 #else
 #define sym(x) (void*)0
 #endif
 
-static cod_extern_entry string_externs[] = 
+static cod_extern_entry string_externs[] =
 {
-    {"memchr", (void*)(intptr_t)memchr},
-    {"memcmp", (void*)(intptr_t)memcmp},
-    {"memcpy", (void*)(intptr_t)memcpy},
-    {"memmove", (void*)(intptr_t)memmove},
-    {"memset", (void*)(intptr_t)memset},
-    {"strcat", (void*)(intptr_t)strcat},
-    {"strchr", (void*)(intptr_t)strchr},
-    {"strcmp", (void*)(intptr_t)strcmp},
-    {"strcoll", (void*)(intptr_t)strcoll},
-    {"strcpy", (void*)(intptr_t)strcpy},
-    {"strcspn", (void*)(intptr_t)strcspn},
-    {"strerror", (void*)(intptr_t)strerror},
-    {"strlen", (void*)(intptr_t)strlen},
-    {"strncat", (void*)(intptr_t)strncat},
-    {"strncmp", (void*)(intptr_t)strncmp},
-    {"strncpy", (void*)(intptr_t)strncpy},
-    {"strpbrk", (void*)(intptr_t)strpbrk},
-    {"strrchr", (void*)(intptr_t)strrchr},
-    {"strspn", (void*)(intptr_t)strspn},
-    {"strstr", (void*)(intptr_t)strstr},
-    {"strtok", (void*)(intptr_t)strtok},
-    {"strxfrm", (void*)(intptr_t)strxfrm},
+    {"memchr", FUNC(memchr)},
+    {"memcmp", FUNC(memcmp)},
+    {"memcpy", FUNC(memcpy)},
+    {"memmove", FUNC(memmove)},
+    {"memset", FUNC(memset)},
+    {"strcat", FUNC(strcat)},
+    {"strchr", FUNC(strchr)},
+    {"strcmp", FUNC(strcmp)},
+    {"strcoll", FUNC(strcoll)},
+    {"strcpy", FUNC(strcpy)},
+    {"strcspn", FUNC(strcspn)},
+    {"strerror", FUNC(strerror)},
+    {"strlen", FUNC(strlen)},
+    {"strncat", FUNC(strncat)},
+    {"strncmp", FUNC(strncmp)},
+    {"strncpy", FUNC(strncpy)},
+    {"strpbrk", FUNC(strpbrk)},
+    {"strrchr", FUNC(strrchr)},
+    {"strspn", FUNC(strspn)},
+    {"strstr", FUNC(strstr)},
+    {"strtok", FUNC(strtok)},
+    {"strxfrm", FUNC(strxfrm)},
     {NULL, NULL}
 };
+
+#ifdef _MSC_VER
+/* Runtime initialization of string function pointers for MSVC */
+static void init_string_externs(void)
+{
+    static int initialized = 0;
+    int i;
+    if (initialized) return;
+    initialized = 1;
+
+    i = 0;
+    string_externs[i++].extern_value = (void*)memchr;
+    string_externs[i++].extern_value = (void*)memcmp;
+    string_externs[i++].extern_value = (void*)memcpy;
+    string_externs[i++].extern_value = (void*)memmove;
+    string_externs[i++].extern_value = (void*)memset;
+    string_externs[i++].extern_value = (void*)strcat;
+    string_externs[i++].extern_value = (void*)strchr;
+    string_externs[i++].extern_value = (void*)strcmp;
+    string_externs[i++].extern_value = (void*)strcoll;
+    string_externs[i++].extern_value = (void*)strcpy;
+    string_externs[i++].extern_value = (void*)strcspn;
+    string_externs[i++].extern_value = (void*)strerror;
+    string_externs[i++].extern_value = (void*)strlen;
+    string_externs[i++].extern_value = (void*)strncat;
+    string_externs[i++].extern_value = (void*)strncmp;
+    string_externs[i++].extern_value = (void*)strncpy;
+    string_externs[i++].extern_value = (void*)strpbrk;
+    string_externs[i++].extern_value = (void*)strrchr;
+    string_externs[i++].extern_value = (void*)strspn;
+    string_externs[i++].extern_value = (void*)strstr;
+    string_externs[i++].extern_value = (void*)strtok;
+    string_externs[i++].extern_value = (void*)strxfrm;
+}
+#endif
 
 static char string_extern_string[] = "\n\
 void	*memchr(const void *s, int c, int size);\n\
@@ -665,6 +757,9 @@ cod_process_include(char *name, cod_parse_context context)
     intptr_t char_count = strchr(name, '.') - name;
     if (char_count < 0) char_count = strlen(name);
     if (strncmp(name, "string", char_count) == 0) {
+#ifdef _MSC_VER
+	init_string_externs();
+#endif
 	cod_assoc_externs(context, string_externs);
 	cod_parse_for_context(string_extern_string, context);
     } else if (strncmp(name, "math", char_count) == 0) {

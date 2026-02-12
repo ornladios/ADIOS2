@@ -257,7 +257,7 @@ static void initialize_values()
     br_srcul_vals[4] = (uintptr_t) rand1_ul - 1;
     br_srcul_vals[5] = (uintptr_t) -((long)rand1_ul) - 1;
     externs[0].extern_name = "printf";
-    externs[0].extern_value = (void*)(intptr_t)printf;
+    externs[0].extern_value = (void*)printf;
     externs[1].extern_name = (void*)0;
     externs[1].extern_value = (void*)0;
 }

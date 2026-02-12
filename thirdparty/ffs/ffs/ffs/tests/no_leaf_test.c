@@ -104,8 +104,8 @@ main(int argc, char **argv)
     /* setup a test record to play with */
     data.s1.x = data.s2.x = data.x = 10;
     data.s1.y = data.y = 5;
-    data.s1.array1 = (void*)(intptr_t)(0xdeadbeef);    /* should get a seg fault if we dereference this */
-    data.s2.array2 = (void*)(intptr_t)(0xD15EA5E);    /* should get a seg fault if we dereference this */
+    data.s1.array1 = (void*)(0xdeadbeef);    /* should get a seg fault if we dereference this */
+    data.s2.array2 = (void*)(0xD15EA5E);    /* should get a seg fault if we dereference this */
 
 
     /* register a format so we can do more stuff */

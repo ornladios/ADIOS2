@@ -49,7 +49,7 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(intptr_t)printf},
+	    {"printf", (void*)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
