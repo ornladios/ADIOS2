@@ -1993,6 +1993,16 @@ void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable, std::vector<siz
     {                                                                                              \
         PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
         GetDeferredCommon(variable, data);                                                         \
+    }                                                                                              \
+    void BP5Reader::DoGetSync(Variable<T> &variable, T *data, const Selection &selection)          \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
+        GetSyncCommon(variable, data, selection);                                                  \
+    }                                                                                              \
+    void BP5Reader::DoGetDeferred(Variable<T> &variable, T *data, const Selection &selection)      \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
+        GetDeferredCommon(variable, data, selection);                                              \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

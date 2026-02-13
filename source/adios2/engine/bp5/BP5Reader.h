@@ -214,7 +214,9 @@ private:
 
 #define declare_type(T)                                                                            \
     void DoGetSync(Variable<T> &, T *) final;                                                      \
-    void DoGetDeferred(Variable<T> &, T *) final;
+    void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+    void DoGetSync(Variable<T> &, T *, const Selection &) final;                                   \
+    void DoGetDeferred(Variable<T> &, T *, const Selection &) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -225,6 +227,10 @@ private:
     void GetSyncCommon(VariableBase &variable, void *data);
 
     void GetDeferredCommon(VariableBase &variable, void *data);
+
+    void GetSyncCommon(VariableBase &variable, void *data, const Selection &selection);
+
+    void GetDeferredCommon(VariableBase &variable, void *data, const Selection &selection);
 
     void DoGetStructSync(VariableStruct &, void *);
     void DoGetStructDeferred(VariableStruct &, void *);

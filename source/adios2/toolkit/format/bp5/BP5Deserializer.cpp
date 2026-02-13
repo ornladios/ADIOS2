@@ -1595,6 +1595,330 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
     return true;
 }
 
+//============================================================================
+// Selection-based overloads — read selection params from Selection, not Variable
+//============================================================================
+
+bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec,
+                                                 void *DestData, size_t Step, size_t WriterRank,
+                                                 SelectionType selType, size_t blockID)
+{
+    char *src = (char *)GetMetadataBase(VarRec, Step, WriterRank);
+
+    if (!src)
+        return false;
+
+    if (selType == adios2::SelectionType::WriteBlock)
+        WriterRank = blockID;
+
+    if (variable.m_Type != DataType::String)
+    {
+        memcpy(DestData, src, variable.m_ElementSize);
+    }
+    else
+    {
+        std::string *TmpStr = static_cast<std::string *>(DestData);
+        TmpStr->assign(*(const char **)src);
+    }
+    return true;
+}
+
+bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
+                                     size_t RelStep, const core::Selection &selection)
+{
+    BP5VarRec *VarRec = VarByKey[&variable];
+    if (variable.m_Type == adios2::DataType::Struct)
+    {
+        StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
+    }
+
+    const SelectionType selType = selection.GetSelectionType();
+    const size_t blockID = selection.GetBlockID();
+
+    if (VarRec->OrigShapeID == ShapeID::GlobalValue)
+    {
+        const size_t writerCohortSize = WriterCohortSize(AbsStep);
+        for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+        {
+            if (GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank, selType,
+                                           blockID))
+                return false;
+        }
+        return false;
+    }
+    if (VarRec->OrigShapeID == ShapeID::LocalValue)
+    {
+        // Shows up as global array with one element per writer rank
+        if (selType == adios2::SelectionType::BoundingBox)
+        {
+            const Dims &start = selection.GetStart();
+            const Dims &count = selection.GetCount();
+            for (size_t WriterRank = start[0]; WriterRank < count[0] + start[0]; WriterRank++)
+            {
+                (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
+                                                 selType, blockID);
+                DestData = (char *)DestData + variable.m_ElementSize;
+            }
+        }
+        else if (selType == adios2::SelectionType::WriteBlock)
+        {
+            size_t WriterRank = blockID;
+            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
+                                             selType, blockID);
+        }
+        else if (selType == adios2::SelectionType::All)
+        {
+            // Read all writer ranks
+            const size_t writerCohortSize = WriterCohortSize(AbsStep);
+            for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+            {
+                (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
+                                                 selType, blockID);
+                DestData = (char *)DestData + variable.m_ElementSize;
+            }
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "format::bp::BP5Deserializer",
+                                                 "QueueGetSingle", "Unexpected selection type");
+        }
+        return false;
+    }
+
+    // Resolve SelectionType::All to BoundingBox using variable shape
+    SelectionType effectiveSelType = selType;
+    Dims effectiveStart;
+    Dims effectiveCount;
+    if (selType == adios2::SelectionType::All)
+    {
+        if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            // For LocalArray with All, treat as block 0
+            effectiveSelType = adios2::SelectionType::WriteBlock;
+        }
+        else
+        {
+            // GlobalArray or JoinedArray — read the whole thing
+            effectiveSelType = adios2::SelectionType::BoundingBox;
+            effectiveStart = Dims(variable.m_Shape.size(), 0);
+            effectiveCount = variable.m_Shape;
+        }
+    }
+    else
+    {
+        effectiveStart = selection.GetStart();
+        effectiveCount = selection.GetCount();
+    }
+
+    MemorySpace MemSpace = variable.GetMemorySpace(DestData);
+    const Dims &memoryStart = selection.GetMemoryStart();
+    const Dims &memoryCount = selection.GetMemoryCount();
+    const Accuracy accuracy = selection.GetAccuracy();
+
+    if ((effectiveSelType == adios2::SelectionType::BoundingBox) &&
+        ((variable.m_ShapeID == ShapeID::GlobalArray) ||
+         (variable.m_ShapeID == ShapeID::JoinedArray)))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarRec;
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Global;
+        Req.BlockID = (size_t)-1;
+        Req.Count = effectiveCount;
+        Req.Start = effectiveStart;
+        Req.MemoryStart = memoryStart;
+        Req.MemoryCount = memoryCount;
+        Req.AccuracyRequested = accuracy;
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = 1;
+        Req.MemSpace = MemSpace;
+        Req.Data = DestData;
+        PendingGetRequests.push_back(Req);
+    }
+    else if ((effectiveSelType == adios2::SelectionType::WriteBlock) ||
+             (variable.m_ShapeID == ShapeID::LocalArray))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarByKey[&variable];
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Local;
+        Req.BlockID = (selType == adios2::SelectionType::All) ? 0 : blockID;
+        if (effectiveSelType == adios2::SelectionType::BoundingBox)
+        {
+            Req.Start = effectiveStart;
+            Req.Count = effectiveCount;
+        }
+        Req.MemoryStart = memoryStart;
+        Req.MemoryCount = memoryCount;
+        Req.AccuracyRequested = accuracy;
+        Req.Data = DestData;
+        Req.MemSpace = MemSpace;
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = 1;
+        PendingGetRequests.push_back(Req);
+    }
+    else
+    {
+        std::cout << "Missed get type " << effectiveSelType << " shape " << variable.m_ShapeID
+                  << std::endl;
+    }
+    return true;
+}
+
+bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *DestData,
+                                           size_t RelStep, size_t StepCount,
+                                           const core::Selection &selection)
+{
+    BP5VarRec *VarRec = VarByKey[&variable];
+    if (variable.m_Type == adios2::DataType::Struct)
+    {
+        StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
+    }
+
+    const SelectionType selType = selection.GetSelectionType();
+    const size_t blockID = selection.GetBlockID();
+
+    // Resolve All to effective type
+    SelectionType effectiveSelType = selType;
+    Dims effectiveStart;
+    Dims effectiveCount;
+    if (selType == adios2::SelectionType::All)
+    {
+        if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            effectiveSelType = adios2::SelectionType::WriteBlock;
+        }
+        else
+        {
+            effectiveSelType = adios2::SelectionType::BoundingBox;
+            effectiveStart = Dims(variable.m_Shape.size(), 0);
+            effectiveCount = variable.m_Shape;
+        }
+    }
+    else
+    {
+        effectiveStart = selection.GetStart();
+        effectiveCount = selection.GetCount();
+    }
+
+    MemorySpace MemSpace = variable.GetMemorySpace(DestData);
+    const Dims &memoryStart = selection.GetMemoryStart();
+    const Dims &memoryCount = selection.GetMemoryCount();
+    const Accuracy accuracy = selection.GetAccuracy();
+
+    if ((effectiveSelType == adios2::SelectionType::BoundingBox) &&
+        ((variable.m_ShapeID == ShapeID::GlobalArray) ||
+         (variable.m_ShapeID == ShapeID::JoinedArray)))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarRec;
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Global;
+        Req.BlockID = (size_t)-1;
+        Req.Count = effectiveCount;
+        Req.Start = effectiveStart;
+        Req.MemoryStart = memoryStart;
+        Req.MemoryCount = memoryCount;
+        Req.AccuracyRequested = accuracy;
+        Req.Step = RelStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = StepCount;
+        Req.MemSpace = MemSpace;
+        Req.Data = DestData;
+        PendingGetRequests.push_back(Req);
+    }
+    else if ((effectiveSelType == adios2::SelectionType::WriteBlock) ||
+             (variable.m_ShapeID == ShapeID::LocalArray))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarByKey[&variable];
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Local;
+        Req.BlockID = (selType == adios2::SelectionType::All) ? 0 : blockID;
+        if (effectiveSelType == adios2::SelectionType::BoundingBox)
+        {
+            Req.Start = effectiveStart;
+            Req.Count = effectiveCount;
+        }
+        Req.MemoryStart = memoryStart;
+        Req.MemoryCount = memoryCount;
+        Req.AccuracyRequested = accuracy;
+        Req.Data = DestData;
+        Req.MemSpace = MemSpace;
+        Req.Step = RelStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = StepCount;
+        PendingGetRequests.push_back(Req);
+    }
+    else
+    {
+        std::cout << "Missed get type " << effectiveSelType << " shape " << variable.m_ShapeID
+                  << std::endl;
+    }
+    return true;
+}
+
+bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData,
+                               const core::Selection &selection, bool dataIsRemote)
+{
+    const size_t stepsStart = selection.GetStepStart();
+    const size_t stepsCount = selection.GetStepCount();
+
+    if (!m_RandomAccessMode)
+    {
+        return QueueGetSingle(variable, DestData, CurTimestep, CurTimestep, selection);
+    }
+    else
+    {
+        BP5VarRec *VarRec = VarByKey[&variable];
+        bool ret = false;
+        if (variable.m_Type == adios2::DataType::Struct)
+        {
+            StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
+        }
+
+        if (stepsStart + stepsCount > VarRec->AbsStepFromRel.size())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::BP5Deserializer", "QueueGet",
+                "offset " + std::to_string(stepsCount) + " from steps start " +
+                    std::to_string(stepsStart) + " in variable " + variable.m_Name +
+                    " is beyond the largest available relative step = " +
+                    std::to_string(VarRec->AbsStepFromRel.size()) +
+                    ", check Selection step parameters "
+                    "(random access), or "
+                    "number of BeginStep calls (streaming)");
+        }
+        if (dataIsRemote && VarRec->OrigShapeID != ShapeID::LocalValue &&
+            VarRec->OrigShapeID != ShapeID::GlobalValue)
+        {
+            ret = QueueGetSingleRemote(variable, DestData, stepsStart, stepsCount, selection);
+        }
+        else
+        {
+            for (size_t RelStep = stepsStart; RelStep < stepsStart + stepsCount; RelStep++)
+            {
+                const size_t AbsStep = VarRec->AbsStepFromRel[RelStep];
+                const size_t writerCohortSize = WriterCohortSize(AbsStep);
+                for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+                {
+                    if (GetMetadataBase(VarRec, AbsStep, WriterRank))
+                    {
+                        // This writer wrote on this timestep
+                        ret = QueueGetSingle(variable, DestData, AbsStep, RelStep, selection);
+                        size_t increment = variable.TotalSize() * variable.m_ElementSize;
+                        DestData = (void *)((char *)DestData + increment);
+                        break;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+}
+
 static bool IntersectionStartCount(const size_t dimensionsSize, const size_t *start1,
                                    const size_t *count1, const size_t *start2, const size_t *count2,
                                    size_t *outstart, size_t *outcount) noexcept

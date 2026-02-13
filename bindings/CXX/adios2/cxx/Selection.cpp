@@ -23,6 +23,13 @@ Selection::Selection() : m_Impl(std::make_shared<Impl>()) {}
 // Factory methods
 //============================================================================
 
+Selection Selection::All()
+{
+    Selection sel;
+    sel.m_Impl->m_Selection = core::Selection::All();
+    return sel;
+}
+
 Selection Selection::BoundingBox(const Dims &start, const Dims &count)
 {
     Selection sel;
@@ -143,6 +150,8 @@ Selection Selection::WithAccuracy(double error, double norm, bool relative) cons
 {
     return WithAccuracy(Accuracy{error, norm, relative});
 }
+
+std::string Selection::ToString() const { return m_Impl->m_Selection.ToString(); }
 
 const core::Selection &Selection::GetCoreSelection() const { return m_Impl->m_Selection; }
 

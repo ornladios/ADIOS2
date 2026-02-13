@@ -373,6 +373,9 @@ std::vector<VariableStruct::BPInfo> Engine::BlocksInfoStruct(const VariableStruc
     template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Mode);                     \
     template void Engine::Get<T>(const std::string &, std::vector<T> &, const Mode);               \
                                                                                                    \
+    template void Engine::Get<T>(Variable<T> &, T *, const Selection &, const Mode);               \
+    template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Selection &, const Mode);  \
+                                                                                                   \
     template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &, const Mode);              \
     template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, const Mode);        \
                                                                                                    \

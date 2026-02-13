@@ -32,6 +32,7 @@ Only the ``adios2::ADIOS`` object is "owned" by the developer's program using ad
    adios2::Variable<T>   
    adios2::Attribute<T>  
    adios2::Engine
+   adios2::Selection
    adios2::Operator
 
 The following section provides a summary of the available functionality for each class.
@@ -80,6 +81,15 @@ The following section provides a summary of the available functionality for each
    :project: CXX
    :path: ../../bindings/CXX/adios2/cxx/
    :members:
+
+:ref:`Selection` class
+----------------------
+
+.. doxygenclass:: adios2::Selection
+   :project: CXX
+   :path: ../../bindings/CXX/adios2/cxx/
+   :members:
+
 
 :ref:`Operator` class
 ---------------------

@@ -11,6 +11,7 @@
 
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/Selection.h"
 #include "adios2/core/Variable.h"
 
 #include "BP5Base.h"
@@ -67,6 +68,8 @@ public:
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData, bool dataIsRemote = false);
+    bool QueueGet(core::VariableBase &variable, void *DestData, const core::Selection &selection,
+                  bool dataIsRemote = false);
     bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
                         size_t RelStep);
     bool QueueGetSingleRemote(core::VariableBase &variable, void *DestData, size_t RelStep,
@@ -248,6 +251,13 @@ private:
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
     bool GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
+    bool GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec, void *DestData,
+                                    size_t Step, size_t WriterRank, SelectionType selType,
+                                    size_t blockID);
+    bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
+                        size_t RelStep, const core::Selection &selection);
+    bool QueueGetSingleRemote(core::VariableBase &variable, void *DestData, size_t RelStep,
+                              size_t StepCount, const core::Selection &selection);
     void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
 
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;

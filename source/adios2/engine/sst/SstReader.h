@@ -83,6 +83,8 @@ private:
 #define declare_type(T)                                                                            \
     void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+    void DoGetSync(Variable<T> &, T *, const Selection &) final;                                   \
+    void DoGetDeferred(Variable<T> &, T *, const Selection &) final;                               \
                                                                                                    \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
         const Variable<T> &variable) const final;                                                  \

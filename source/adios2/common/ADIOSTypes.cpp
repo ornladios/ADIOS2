@@ -205,6 +205,8 @@ std::string ToString(SelectionType value)
 {
     switch (value)
     {
+    case SelectionType::All:
+        return "SelectionType::All";
     case SelectionType::BoundingBox:
         return "SelectionType::BoundingBox";
     case SelectionType::WriteBlock:
