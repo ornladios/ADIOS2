@@ -145,13 +145,13 @@ public:
     MACRO(verbose, Int, int, 0)                                                                    \
     MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
     MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
-    MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
+    MACRO(NumSubFiles, UInt, unsigned int, 2)                                                      \
     MACRO(StripeSize, UInt, unsigned int, 4096)                                                    \
     MACRO(DirectIO, Bool, bool, false)                                                             \
     MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
     MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                                              \
-    MACRO(AggregationType, AggregationType, int, (int)AggregationType::TwoLevelShm)                \
-    MACRO(EnableWriterRerouting, Bool, bool, false)                                                \
+    MACRO(AggregationType, AggregationType, int, (int)AggregationType::DataSizeBased)              \
+    MACRO(EnableWriterRerouting, Bool, bool, true)                                                 \
     MACRO(ReroutingThresholdFactor, Float, float, 0.3f)                                            \
     MACRO(AsyncOpen, Bool, bool, true)                                                             \
     MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                                      \
