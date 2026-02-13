@@ -32,8 +32,14 @@ self-documenting by specifying the selection explicitly at the call site:
 Creating Selections
 -------------------
 
-Selections are created using static factory methods. There are three selection
-types:
+Selections are created using static factory methods. A selection has two
+independent aspects:
+
+- **Spatial selection** — ``All`` (the entire variable) or ``BoundingBox``
+  (a hyperslab with start offsets and counts).
+- **Block selection** — optionally targets an individual write block by ID.
+
+These are orthogonal: a block ID can be combined with either spatial type.
 
 .. code-block:: c++
 
@@ -43,8 +49,12 @@ types:
    // Bounding box (hyperslab) — specify start offsets and counts per dimension
    auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20});
 
-   // Block selection — select an individual write block by ID
+   // Block selection — read an entire write block
+   // (equivalent to All().WithBlock(3))
    auto sel = adios2::Selection::Block(3);
+
+   // Block + bounding box — read a sub-region within a specific block
+   auto sel = adios2::Selection::BoundingBox({0}, {10}).WithBlock(3);
 
    // Using Box<Dims> convenience type
    adios2::Box<adios2::Dims> box = {{0, 0}, {10, 20}};
@@ -67,6 +77,7 @@ expressions:
 .. code-block:: c++
 
    auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20})
+                  .WithBlock(2)
                   .WithSteps(0, 5)
                   .WithMemory({0, 0}, {10, 40})
                   .WithAccuracy({0.01, 0.0, false});
@@ -137,8 +148,8 @@ Available Selection Parameters
      - Hyperslab selection with start offsets and counts
    * - Block
      - ``Block(blockID)`` / ``SetBlock()``
-     - —
-     - Select an individual write block by ID
+     - ``WithBlock()``
+     - Select an individual write block by ID (can combine with any spatial type)
    * - Steps
      - ``SetSteps(start, count)``
      - ``WithSteps()``
@@ -154,7 +165,8 @@ Available Selection Parameters
 
 Other methods:
 
-- ``Clear()`` — reset the selection to default state (All)
+- ``Clear()`` — reset the selection to default state (All, no block)
+- ``ClearBlock()`` — remove block selection
 - ``ClearMemory()`` — remove memory layout specification
 - ``ToString()`` — human-readable string representation for debugging
 

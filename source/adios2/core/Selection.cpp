@@ -278,17 +278,13 @@ Selection InferSelection(const VariableBase &variable)
 {
     Selection sel;
 
-    // Set spatial selection (All or BoundingBox)
-    switch (variable.m_SelectionType)
+    // Set spatial selection (All or BoundingBox).
+    // Guard against inconsistent variable state: only create a BoundingBox
+    // when Start and Count are non-empty and have matching dimensions.
+    if (variable.m_SelectionType == SelectionType::BoundingBox && !variable.m_Start.empty() &&
+        variable.m_Start.size() == variable.m_Count.size())
     {
-    case SelectionType::BoundingBox:
         sel.SetBoundingBox(variable.m_Start, variable.m_Count);
-        break;
-    case SelectionType::WriteBlock:
-    case SelectionType::All:
-    default:
-        // sel is already All by default
-        break;
     }
 
     // Block ID is orthogonal to spatial selection.
