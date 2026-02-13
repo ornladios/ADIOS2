@@ -2043,12 +2043,14 @@ void BP5Reader::DoClose(const int transportIndex)
 void BP5Reader::FlushProfiler()
 {
     std::vector<std::string> transportTypes;
+    std::vector<std::string> transportNames;
     std::vector<profiling::IOChrono *> transportProfilers;
 
     auto lf_AddMe = [&](const std::shared_ptr<Transport> &tm) -> void {
         if (tm)
         {
             transportTypes.push_back(tm->m_Type + "_" + tm->m_Library);
+            transportNames.push_back(adios2sys::SystemTools::GetFilenameName(tm->m_Name));
             transportProfilers.push_back(&tm->m_Profiler);
         }
     };
@@ -2064,7 +2066,8 @@ void BP5Reader::FlushProfiler()
     }
 
     const std::string LineJSON(
-        m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportProfilers) + ",\n");
+        m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportNames, transportProfilers) +
+        ",\n");
 
     const std::vector<char> profilingJSON(m_JSONProfiler.AggregateProfilingJSON(LineJSON));
 

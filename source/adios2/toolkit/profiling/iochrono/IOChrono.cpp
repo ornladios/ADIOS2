@@ -102,6 +102,7 @@ void JSONProfiler::AddTimerWatch(const std::string &name, const bool trace)
 
 std::string JSONProfiler::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
+    const std::vector<std::string> &transportsNames,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
 {
     auto lf_WriterTimer = [](std::string &rankLog, const profiling::Timer &timer) {
@@ -145,7 +146,8 @@ std::string JSONProfiler::GetRankProfilingJSON(
     for (unsigned int t = 0; t < transportsSize; ++t)
     {
         rankLog += ", \"transport_" + std::to_string(t) + "\":{";
-        rankLog += "\"type\":\"" + transportsTypes[t] + "\"";
+        rankLog += "\"type\":\"" + transportsTypes[t] + "\", ";
+        rankLog += "\"name\":\"" + transportsNames[t] + "\"";
 
         if (transportsProfilers[t]->m_Bytes.find("write") != transportsProfilers[t]->m_Bytes.end())
         {
