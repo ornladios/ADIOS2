@@ -10,9 +10,42 @@
 
 #include "Transport.h"
 #include "adios2/core/CoreTypes.h"
+#include <adios2sys/SystemTools.hxx>
 #include <algorithm> // max
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
+
+namespace
+{
+#if ADIOS2_ENABLE_DELAYED_WRITE
+// Turn this feature on at configure time with:
+//
+//     -DADIOS2_ENABLE_DELAYED_WRITE:BOOL=ON
+//
+double GetWriteDelay(const std::string &fileName)
+{
+    double delayFraction = 0.0;
+
+    try
+    {
+        std::string envVarName("ADIOS2_WRITE_DELAY_");
+        envVarName += fileName;
+        const char *delayEnvVal = std::getenv(envVarName.c_str());
+        if (delayEnvVal)
+        {
+            // try to parse the value of the env variable value as a number
+            delayFraction = std::stod({delayEnvVal});
+        }
+    }
+    catch (std::exception const &ex)
+    {
+        std::cout << "Error when looking for delay environment variable" << ex.what() << std::endl;
+    }
+
+    return delayFraction;
+}
+#endif
+};
 
 namespace adios2
 {
@@ -124,6 +157,16 @@ void Transport::ProfilerStop(const std::string process) noexcept
 {
     if (m_Profiler.m_IsActive)
     {
+#if ADIOS2_ENABLE_DELAYED_WRITE
+        if (process == "write")
+        {
+            std::string fname = adios2sys::SystemTools::GetFilenameName(m_Name);
+            std::replace(fname.begin(), fname.end(), '.', '_');
+            double writeDelayFraction = GetWriteDelay(fname);
+            m_Profiler.m_Timers.at(process).Pause(writeDelayFraction);
+            return;
+        }
+#endif
         m_Profiler.m_Timers.at(process).Pause();
     }
 }

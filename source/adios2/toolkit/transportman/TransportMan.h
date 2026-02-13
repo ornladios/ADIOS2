@@ -117,6 +117,12 @@ public:
      */
     std::vector<std::string> GetTransportsTypes() noexcept;
 
+    /**
+     * Base name of file for each transport (file component of file path)
+     * @return File name for each transport in m_Transports
+     */
+    std::vector<std::string> GetTransportsNames() noexcept;
+
     /** Returns a vector of pointer references (not owning the memory) to
      * m_Transports.m_Profiler */
     std::vector<profiling::IOChrono *> GetTransportsProfilers() noexcept;

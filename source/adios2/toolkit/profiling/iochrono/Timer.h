@@ -64,6 +64,13 @@ public:
      */
     void Pause();
 
+    /**
+     * Pauses timer with delay (set to inactive)
+     * @param delay sleep for this fraction of the currently elapsed time before pausing
+     * @throws std::invalid_argument if Resume not previously called
+     */
+    void Pause(double delay);
+
     /** Returns TimeUnit as a short std::string  */
     std::string GetShortUnits() const noexcept;
 

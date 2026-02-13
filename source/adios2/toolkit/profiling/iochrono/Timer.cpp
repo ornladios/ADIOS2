@@ -38,6 +38,43 @@ void Timer::Pause()
     AddDetail();
 }
 
+void Timer::Pause(double delay)
+{
+    m_ElapsedTime = std::chrono::high_resolution_clock::now();
+    int64_t elapsed = GetElapsedTime();
+
+    if (delay > 0)
+    {
+        int64_t delayTime = static_cast<int64_t>(delay * elapsed);
+
+        switch (m_TimeUnit)
+        {
+        case TimeUnit::Microseconds:
+            std::this_thread::sleep_for(std::chrono::microseconds(delayTime));
+            break;
+        case TimeUnit::Milliseconds:
+            std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
+            break;
+        case TimeUnit::Seconds:
+            std::this_thread::sleep_for(std::chrono::seconds(delayTime));
+            break;
+        case TimeUnit::Minutes:
+            std::this_thread::sleep_for(std::chrono::minutes(delayTime));
+            break;
+        case TimeUnit::Hours:
+            std::this_thread::sleep_for(std::chrono::hours(delayTime));
+            break;
+        }
+
+        m_ElapsedTime = std::chrono::high_resolution_clock::now();
+        elapsed = GetElapsedTime();
+    }
+
+    m_ProcessTime += elapsed;
+
+    AddDetail();
+}
+
 std::string Timer::GetShortUnits() const noexcept
 {
     std::string units;

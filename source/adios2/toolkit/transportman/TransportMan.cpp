@@ -13,6 +13,7 @@
 #include <set>
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
+#include <adios2sys/SystemTools.hxx>
 
 /// transports
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
@@ -213,6 +214,19 @@ std::vector<profiling::IOChrono *> TransportMan::GetTransportsProfilers() noexce
         profilers.push_back(&transport->m_Profiler);
     }
     return profilers;
+}
+
+std::vector<std::string> TransportMan::GetTransportsNames() noexcept
+{
+    std::vector<std::string> names;
+    names.reserve(m_Transports.size());
+
+    for (const auto &transportPair : m_Transports)
+    {
+        const std::shared_ptr<Transport> &transport = transportPair.second;
+        names.push_back(adios2sys::SystemTools::GetFilenameName(transport->m_Name));
+    }
+    return names;
 }
 
 void TransportMan::WriteFiles(const char *buffer, const size_t size, const int transportIndex)
