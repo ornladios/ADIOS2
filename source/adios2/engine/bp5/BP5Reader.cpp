@@ -1779,12 +1779,12 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
             s.SubfileCount = (uint32_t)helper::ReadValue<uint64_t>(buffer, position,
                                                                    m_Minifooter.IsLittleEndian);
             // Get the process -> subfile map
-            s.RankToSubfile.reserve(s.WriterCount);
+            s.RankToSubfile.resize(s.WriterCount);
             for (uint64_t i = 0; i < s.WriterCount; i++)
             {
                 const uint64_t subfileIdx =
                     helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-                s.RankToSubfile.push_back(subfileIdx);
+                s.RankToSubfile[i] = subfileIdx;
             }
             m_LastMapStep = m_StepsCount;
             m_LastWriterCount = s.WriterCount;
