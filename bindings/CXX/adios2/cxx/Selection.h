@@ -60,7 +60,9 @@ public:
     Selection &SetBoundingBox(const Dims &start, const Dims &count);
     Selection &SetBoundingBox(const Box<Dims> &box);
 
+    /** Set block ID without changing spatial selection type. */
     Selection &SetBlock(size_t blockID);
+    Selection &ClearBlock();
 
     Selection &SetSteps(size_t stepStart, size_t stepCount);
     Selection &SetSteps(const Box<size_t> &steps);
@@ -78,6 +80,8 @@ public:
     //========================================================================
     // Non-mutating modifiers (return NEW Selection, original unchanged)
     //========================================================================
+
+    Selection WithBlock(size_t blockID) const;
 
     Selection WithSteps(size_t stepStart, size_t stepCount) const;
     Selection WithSteps(const Box<size_t> &steps) const;
