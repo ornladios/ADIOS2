@@ -687,8 +687,9 @@ void CampaignReader::InitTransports()
 
         std::string localCachePath =
             m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
-        helper::CreateDirectory(localCachePath);
         std::string atsFilePath = localCachePath + PathSeparator + ts.name + ".ats";
+        auto atsDir = adios2sys::SystemTools::GetFilenamePath(atsFilePath);
+        helper::CreateDirectory(atsDir);
         if (m_Options.verbose > 0)
         {
             std::cout << "    " << tsIdx << ". " << ts.name << "  --> " << atsFilePath << std::endl;
