@@ -142,7 +142,7 @@ RankPartition Partitioning::FindPartition(const int parentRank)
 
 void Partitioning::PrintSummary()
 {
-    std::cout << "Paritioning resulted in " << m_Partitions.size() << " substreams:" << std::endl;
+    std::cout << "Partitioning resulted in " << m_Partitions.size() << " substreams:" << std::endl;
     for (size_t i = 0; i < m_Partitions.size(); ++i)
     {
         std::vector<size_t> nextPart = m_Partitions[i];
