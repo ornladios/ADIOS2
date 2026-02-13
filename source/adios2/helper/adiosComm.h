@@ -61,6 +61,14 @@ public:
     };
 
     /**
+     * @brief Various constants
+     */
+    enum class Constants
+    {
+        CommRecvAny = -10
+    };
+
+    /**
      * @brief Default constructor.  Produces an empty communicator.
      *
      * An empty communicator may not be used for communcation.
@@ -254,6 +262,10 @@ public:
     template <typename T>
     Req Irecv(T *buffer, const size_t count, int source, int tag,
               const std::string &hint = std::string()) const;
+
+    Status Probe(int source, int tag, const std::string &hint = std::string()) const;
+
+    Status Iprobe(int source, int tag, int *flag, const std::string &hint = std::string()) const;
 
     Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                             const std::string &hint = std::string());
@@ -484,6 +496,10 @@ public:
 
     virtual Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                             const std::string &hint) const = 0;
+
+    virtual Comm::Status Probe(int source, int tag, const std::string &hint) const = 0;
+
+    virtual Comm::Status Iprobe(int source, int tag, int *flag, const std::string &hint) const = 0;
 
     virtual Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                           const std::string &hint) const = 0;
