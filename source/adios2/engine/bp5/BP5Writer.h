@@ -78,6 +78,8 @@ private:
     std::map<std::string, AggTransportData> m_AggregatorSpecifics;
     helper::RankPartition GetPartitionInfo(const uint64_t rankDataSize, const int subStreams,
                                            helper::Comm const &parentComm);
+    void OpenSubfile(const bool useComm = true, const bool forceAppend = false);
+    helper::Partitioning m_Partitioning;
 
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
@@ -196,6 +198,7 @@ private:
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
     void WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters);
+    void WriteData_WithRerouting(format::BufferV *Data);
     void WriteData_EveryoneWrites_Async(format::BufferV *Data, bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
@@ -301,6 +304,18 @@ private:
      * It resets m_Aggregator->m_NumAggregators so init aggregators later
      */
     uint64_t CountStepsInMetadataIndex(format::BufferSTL &bufferSTL);
+
+    // Thread function for inter-rank communication when rerouting aggregation
+    // is enabled
+    void ReroutingCommunicationLoop();
+    int m_TargetIndex;
+    int m_TargetCoordinator;
+    std::mutex m_WriteMutex;
+    std::mutex m_NotifMutex;
+    std::condition_variable m_WriteCV;
+    bool m_ReadyToWrite;
+    bool m_FinishedWriting;
+    bool m_MultiBlockWrite;
 
     /* Async write's future */
     std::future<int> m_WriteFuture;
