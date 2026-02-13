@@ -22,6 +22,7 @@
 #include "adios2/cxx/IO.h"
 #include "adios2/cxx/Operator.h"
 #include "adios2/cxx/Query.h"
+#include "adios2/cxx/Selection.h"
 #include "adios2/cxx/Types.h"
 #include "adios2/cxx/Variable.h"
 #include "adios2/cxx/fstream/ADIOS2fstream.h"
