@@ -8,6 +8,7 @@ Interface Components
 .. include:: variable.rst
 .. include:: attribute.rst
 .. include:: engine.rst
+.. include:: selection.rst
 .. include:: operator.rst
 .. include:: runtime.rst
 .. include:: anatomy.rst

@@ -34,6 +34,18 @@ void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data)
     (void)m_BP5Deserializer->QueueGet(variable, data, m_dataIsRemote);
 }
 
+inline void BP5Reader::GetSyncCommon(VariableBase &variable, void *data, const Selection &selection)
+{
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, selection, m_dataIsRemote);
+    if (need_sync)
+        PerformGets();
+}
+
+void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data, const Selection &selection)
+{
+    (void)m_BP5Deserializer->QueueGet(variable, data, selection, m_dataIsRemote);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

@@ -107,14 +107,68 @@ template <class T>
 size_t Variable<T>::SelectionSize(const Selection &selection) const
 {
     const size_t stepCount = selection.GetStepCount();
+    const size_t stepStart = selection.GetStepStart();
+    const SelectionType selType = selection.GetSelectionType();
 
-    if (selection.GetSelectionType() == SelectionType::BoundingBox)
+    if (selType == SelectionType::BoundingBox)
     {
         return helper::GetTotalSize(selection.GetCount()) * stepCount;
     }
-    else if (selection.GetSelectionType() == SelectionType::WriteBlock)
+
+    if (selType == SelectionType::All)
     {
-        // For block selection, we need to look up the block's dimensions
+        // Try MinBlocksInfo to get the actual shape for this step
+        if (m_Engine != nullptr)
+        {
+            auto MVI = m_Engine->MinBlocksInfo(*this, stepStart);
+            if (MVI)
+            {
+                if (MVI->IsValue)
+                {
+                    delete MVI;
+                    return stepCount;
+                }
+                if (MVI->WasLocalValue)
+                {
+                    size_t count = MVI->BlocksInfo.size();
+                    delete MVI;
+                    return count * stepCount;
+                }
+                if (MVI->Shape)
+                {
+                    size_t total = 1;
+                    for (int i = 0; i < MVI->Dims; i++)
+                    {
+                        total *= MVI->Shape[i];
+                    }
+                    delete MVI;
+                    return total * stepCount;
+                }
+                // LocalArray with no global shape — use block 0 count
+                if (!MVI->BlocksInfo.empty())
+                {
+                    size_t total = 1;
+                    const size_t *CountPtr = MVI->BlocksInfo[0].Count;
+                    for (int i = 0; i < MVI->Dims; i++)
+                    {
+                        total *= CountPtr[i];
+                    }
+                    delete MVI;
+                    return total * stepCount;
+                }
+                delete MVI;
+            }
+        }
+        // Fallback: use m_Shape if available, else m_Count
+        if (!m_Shape.empty())
+        {
+            return helper::GetTotalSize(m_Shape) * stepCount;
+        }
+        return helper::GetTotalSize(m_Count) * stepCount;
+    }
+
+    if (selType == SelectionType::WriteBlock)
+    {
         if (m_Engine == nullptr)
         {
             helper::Throw<std::runtime_error>(
@@ -123,11 +177,38 @@ size_t Variable<T>::SelectionSize(const Selection &selection) const
         }
 
         const size_t blockID = selection.GetBlockID();
-        const size_t step =
-            (selection.GetStepStart() == 0) ? m_Engine->CurrentStep() : selection.GetStepStart();
 
+        // Try MinBlocksInfo first (works on BP5)
+        auto MVI = m_Engine->MinBlocksInfo(*this, stepStart);
+        if (MVI)
+        {
+            if (blockID >= MVI->BlocksInfo.size())
+            {
+                delete MVI;
+                helper::Throw<std::invalid_argument>(
+                    "Core", "Variable", "SelectionSize",
+                    "blockID " + std::to_string(blockID) +
+                        " is out of bounds for available blocks size " +
+                        std::to_string(MVI->BlocksInfo.size()) + " for variable " + m_Name);
+            }
+            if (MVI->WasLocalValue)
+            {
+                delete MVI;
+                return stepCount;
+            }
+            size_t total = 1;
+            const size_t *CountPtr = MVI->BlocksInfo[blockID].Count;
+            for (int i = 0; i < MVI->Dims; i++)
+            {
+                total *= CountPtr[i];
+            }
+            delete MVI;
+            return total * stepCount;
+        }
+
+        // Fallback to BlocksInfo<T> (works on other engines)
         const std::vector<typename Variable<T>::BPInfo> blocksInfo =
-            m_Engine->BlocksInfo<T>(*this, step);
+            m_Engine->BlocksInfo<T>(*this, stepStart);
 
         if (blockID >= blocksInfo.size())
         {

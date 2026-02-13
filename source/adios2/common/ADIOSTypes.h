@@ -131,6 +131,7 @@ enum class TimeUnit
 /** Type of selection */
 enum class SelectionType
 {
+    All,         ///< Select the entire variable (default)
     BoundingBox, ///< Contiguous block of data defined by offsets and counts
                  /// per dimension
     WriteBlock,  ///< Selection of an individual block written by a writer

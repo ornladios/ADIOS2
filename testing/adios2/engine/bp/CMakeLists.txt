@@ -134,6 +134,7 @@ bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
+bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
 
 if (ADIOS2_HAVE_MPI)
   # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level

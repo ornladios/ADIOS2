@@ -8,6 +8,8 @@
 #ifndef ADIOS2_BINDINGS_CXX_CXX_SELECTION_H_
 #define ADIOS2_BINDINGS_CXX_CXX_SELECTION_H_
 
+#include <string>
+
 #include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
@@ -34,6 +36,9 @@ public:
     // Factory methods (create new Selection)
     //========================================================================
 
+    /** Create a selection that reads the entire variable. */
+    static Selection All();
+
     /**
      * Create a bounding box selection (hyperslab).
      * @param start  Starting offsets in each dimension
@@ -43,7 +48,7 @@ public:
     static Selection BoundingBox(const Box<Dims> &box);
 
     /**
-     * Create a block selection for LocalArray variables.
+     * Create a block selection to read an individual write block.
      * @param blockID  Block index from the writing rank
      */
     static Selection Block(size_t blockID);
@@ -82,6 +87,9 @@ public:
 
     Selection WithAccuracy(const Accuracy &accuracy) const;
     Selection WithAccuracy(double error, double norm = L2_norm, bool relative = false) const;
+
+    /** Human-readable string representation */
+    std::string ToString() const;
 
     /** Access to internal implementation (for Engine use) */
     const core::Selection &GetCoreSelection() const;

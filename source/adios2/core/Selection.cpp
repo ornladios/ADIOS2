@@ -8,6 +8,8 @@
 #include "Selection.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include <sstream>
+
 namespace adios2
 {
 namespace core
@@ -16,6 +18,13 @@ namespace core
 //============================================================================
 // Factory methods
 //============================================================================
+
+Selection Selection::All()
+{
+    Selection sel;
+    // Default constructor already sets m_Type = SelectionType::All
+    return sel;
+}
 
 Selection Selection::BoundingBox(const Dims &start, const Dims &count)
 {
@@ -122,7 +131,7 @@ Selection &Selection::SetAccuracy(double error, double norm, bool relative)
 
 void Selection::Clear()
 {
-    m_Type = SelectionType::BoundingBox;
+    m_Type = SelectionType::All;
     m_Start.clear();
     m_Count.clear();
     m_BlockID = 0;
@@ -172,6 +181,78 @@ Selection Selection::WithAccuracy(const Accuracy &accuracy) const
 Selection Selection::WithAccuracy(double error, double norm, bool relative) const
 {
     return WithAccuracy(Accuracy{error, norm, relative});
+}
+
+std::string Selection::ToString() const
+{
+    std::ostringstream os;
+    os << "Selection(";
+
+    switch (m_Type)
+    {
+    case SelectionType::All:
+        os << "All";
+        break;
+    case SelectionType::BoundingBox:
+        os << "BoundingBox start={";
+        for (size_t i = 0; i < m_Start.size(); ++i)
+        {
+            if (i > 0)
+            {
+                os << ", ";
+            }
+            os << m_Start[i];
+        }
+        os << "} count={";
+        for (size_t i = 0; i < m_Count.size(); ++i)
+        {
+            if (i > 0)
+            {
+                os << ", ";
+            }
+            os << m_Count[i];
+        }
+        os << "}";
+        break;
+    case SelectionType::WriteBlock:
+        os << "Block " << m_BlockID;
+        break;
+    }
+
+    if (m_StepStart != 0 || m_StepCount != 1)
+    {
+        os << ", steps=[" << m_StepStart << ", " << m_StepCount << "]";
+    }
+    if (m_HasMemory)
+    {
+        os << ", memory start={";
+        for (size_t i = 0; i < m_MemoryStart.size(); ++i)
+        {
+            if (i > 0)
+            {
+                os << ", ";
+            }
+            os << m_MemoryStart[i];
+        }
+        os << "} count={";
+        for (size_t i = 0; i < m_MemoryCount.size(); ++i)
+        {
+            if (i > 0)
+            {
+                os << ", ";
+            }
+            os << m_MemoryCount[i];
+        }
+        os << "}";
+    }
+    if (m_Accuracy.error != 0.0 || m_Accuracy.norm != 0.0)
+    {
+        os << ", accuracy={" << m_Accuracy.error << ", " << m_Accuracy.norm << ", "
+           << (m_Accuracy.relative ? "relative" : "absolute") << "}";
+    }
+
+    os << ")";
+    return os.str();
 }
 
 } // end namespace core

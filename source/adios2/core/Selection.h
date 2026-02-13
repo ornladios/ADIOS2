@@ -10,6 +10,8 @@
 
 #include "adios2/common/ADIOSTypes.h"
 
+#include <string>
+
 namespace adios2
 {
 namespace core
@@ -22,7 +24,7 @@ namespace core
  * 1. Immutable/fluent: Use factory methods + With*() to create new instances
  * 2. Mutable/reuse: Use Set*() methods to modify in place
  *
- * Thread-safety is the user's responsibility (don't share and mutate).
+ * A default-constructed Selection has type All, meaning the entire variable.
  */
 class Selection
 {
@@ -33,6 +35,9 @@ public:
     // Factory methods (create new Selection)
     //========================================================================
 
+    /** Create a selection that reads the entire variable. */
+    static Selection All();
+
     /**
      * Create a bounding box selection (hyperslab).
      * @param start  Starting offsets in each dimension
@@ -42,7 +47,7 @@ public:
     static Selection BoundingBox(const Box<Dims> &box);
 
     /**
-     * Create a block selection for LocalArray variables.
+     * Create a block selection to read an individual write block.
      * @param blockID  Block index from the writing rank
      */
     static Selection Block(size_t blockID);
@@ -102,8 +107,11 @@ public:
 
     const Accuracy &GetAccuracy() const noexcept { return m_Accuracy; }
 
+    /** Human-readable string representation */
+    std::string ToString() const;
+
 private:
-    SelectionType m_Type = SelectionType::BoundingBox;
+    SelectionType m_Type = SelectionType::All;
     Dims m_Start;
     Dims m_Count;
     size_t m_BlockID = 0;
