@@ -28,6 +28,7 @@
 #include <vector>
 /// \endcond
 
+#include "adios2/common/ADIOSBaseTypes.h"
 #include "adios2/common/ADIOSConfig.h"
 
 namespace adios2
@@ -138,27 +139,7 @@ enum class SelectionType
                  /// process
 };
 
-// Data types.
-enum class DataType
-{
-    None,
-    Int8,
-    Int16,
-    Int32,
-    Int64,
-    UInt8,
-    UInt16,
-    UInt32,
-    UInt64,
-    Float,
-    Double,
-    LongDouble,
-    FloatComplex,
-    DoubleComplex,
-    String,
-    Char,
-    Struct
-};
+// DataType enum is defined in ADIOSBaseTypes.h
 
 /** Type of ArrayOrdering */
 enum class ArrayOrdering
@@ -292,9 +273,7 @@ constexpr bool GlobalValue = false;
 constexpr size_t UnknownStep = MaxU64;
 constexpr double UnknownTime = std::numeric_limits<double>::infinity();
 
-using Dims = std::vector<size_t>;
-using Params = std::map<std::string, std::string>;
-using vParams = std::vector<std::pair<std::string, Params>>;
+// Dims, Params, vParams are defined in ADIOSBaseTypes.h
 using Steps = size_t;
 
 template <class T>
@@ -307,18 +286,7 @@ using Box = std::pair<T, T>;
 template <typename T, typename Enable = void>
 struct TypeInfo;
 
-/** Data accuracy **/
-
-/* Error. Accuracy can be requested for reading data.
-   norm: 0.0 = L2, inf() = Linf
-   relative: true = relative error, false = absolute error
- */
-struct Accuracy
-{
-    double error;
-    double norm;
-    bool relative;
-};
+// Accuracy struct is defined in ADIOSBaseTypes.h
 
 constexpr double L2_norm = 0.0;
 constexpr double Linf_norm = std::numeric_limits<double>::infinity();
