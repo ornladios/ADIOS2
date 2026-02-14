@@ -137,9 +137,12 @@ bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
 
 if (ADIOS2_HAVE_MPI)
-  # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level
+  # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level, rerouting?
   gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "2"
+  )
+  gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB.Rerouting
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "5" "WithRerouting"
   )
 endif()
 
@@ -301,7 +304,14 @@ macro(bp5agg_gtest_add_tests testname mpi)
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "TwoLevelShm")
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased")
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB.RR
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased" "WithRerouting")
 endmacro()
+
+if (ADIOS2_HAVE_MPI)
+  gtest_add_tests_helper(RerouteMessage MPI_ONLY BP Engine.BPReroute. .BP5.RR
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5")
+endif()
 
 # BP5 only for now, so test all the aggregators while we're at it
 bp5agg_gtest_add_tests(ParameterSelectSteps MPI_ALLOW)

@@ -17,6 +17,7 @@
 
 std::string engineName;              // comes from command line
 std::string aggType = "TwoLevelShm"; // comes from command line
+bool rerouting = false;              // overridden on command line
 
 class ADIOSReadDirectIOTest : public ::testing::Test
 {
@@ -33,7 +34,7 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 
     int mpiRank = 0, mpiSize = 1;
 
-    std::string filename = "ADIOSDirectIO.agg-" + aggType;
+    std::string filename = "ADIOSDirectIO.agg-" + aggType + "_RR" + (rerouting ? "Y" : "N");
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -60,6 +61,9 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
         ioWrite.SetParameter("BufferChunkSize", "7111");
         // BufferChunkSize should be adjusted to 2*4096 by engine
         // StripeSize should be adjusted to 3*4096 by engine
+
+        const char *rr = (rerouting ? "true" : "false");
+        ioWrite.SetParameter("EnableWriterRerouting", rr);
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
@@ -151,6 +155,15 @@ int main(int argc, char **argv)
     if (argc > 2)
     {
         aggType = std::string(argv[2]);
+    }
+
+    if (argc > 3)
+    {
+        std::string lastArg = std::string(argv[3]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     int result = RUN_ALL_TESTS();
