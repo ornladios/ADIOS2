@@ -23,6 +23,11 @@ class Selection;
 /**
  * Selection specification for Get() operations.
  *
+ * Spatial selection (All or BoundingBox) and block selection are orthogonal.
+ * A block ID can be combined with either spatial type:
+ *   - Block(3)                         = All + block 3
+ *   - BoundingBox({0},{10}).WithBlock(3) = sub-region of block 3
+ *
  * Supports two usage patterns:
  * 1. Immutable/fluent: Use factory methods + With*() to create new instances
  * 2. Mutable/reuse: Use Set*() methods to modify in place
@@ -49,6 +54,7 @@ public:
 
     /**
      * Create a block selection to read an individual write block.
+     * Equivalent to All().WithBlock(blockID).
      * @param blockID  Block index from the writing rank
      */
     static Selection Block(size_t blockID);
@@ -60,7 +66,9 @@ public:
     Selection &SetBoundingBox(const Dims &start, const Dims &count);
     Selection &SetBoundingBox(const Box<Dims> &box);
 
+    /** Set block ID without changing spatial selection type. */
     Selection &SetBlock(size_t blockID);
+    Selection &ClearBlock();
 
     Selection &SetSteps(size_t stepStart, size_t stepCount);
     Selection &SetSteps(const Box<size_t> &steps);
@@ -78,6 +86,8 @@ public:
     //========================================================================
     // Non-mutating modifiers (return NEW Selection, original unchanged)
     //========================================================================
+
+    Selection WithBlock(size_t blockID) const;
 
     Selection WithSteps(size_t stepStart, size_t stepCount) const;
     Selection WithSteps(const Box<size_t> &steps) const;

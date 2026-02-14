@@ -11,6 +11,7 @@
 
 #include "DaosReader.h"
 
+#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -22,14 +23,16 @@ namespace engine
 
 inline void DaosReader::GetSyncCommon(VariableBase &variable, void *data)
 {
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = InferSelection(variable);
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, sel);
     if (need_sync)
         PerformGets();
 }
 
 void DaosReader::GetDeferredCommon(VariableBase &variable, void *data)
 {
-    (void)m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = InferSelection(variable);
+    (void)m_BP5Deserializer->QueueGet(variable, data, sel);
 }
 
 } // end namespace engine

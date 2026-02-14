@@ -6,6 +6,7 @@
  */
 
 #include "Selection.h"
+#include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #include <sstream>
@@ -70,10 +71,15 @@ Selection &Selection::SetBoundingBox(const Box<Dims> &box)
 
 Selection &Selection::SetBlock(size_t blockID)
 {
-    m_Type = SelectionType::WriteBlock;
+    m_HasBlock = true;
     m_BlockID = blockID;
-    m_Start.clear();
-    m_Count.clear();
+    return *this;
+}
+
+Selection &Selection::ClearBlock()
+{
+    m_HasBlock = false;
+    m_BlockID = 0;
     return *this;
 }
 
@@ -134,6 +140,7 @@ void Selection::Clear()
     m_Type = SelectionType::All;
     m_Start.clear();
     m_Count.clear();
+    m_HasBlock = false;
     m_BlockID = 0;
     m_StepStart = 0;
     m_StepCount = 1;
@@ -146,6 +153,13 @@ void Selection::Clear()
 //============================================================================
 // Non-mutating modifiers (return copies)
 //============================================================================
+
+Selection Selection::WithBlock(size_t blockID) const
+{
+    Selection sel = *this;
+    sel.SetBlock(blockID);
+    return sel;
+}
 
 Selection Selection::WithSteps(size_t stepStart, size_t stepCount) const
 {
@@ -214,9 +228,14 @@ std::string Selection::ToString() const
         }
         os << "}";
         break;
-    case SelectionType::WriteBlock:
-        os << "Block " << m_BlockID;
+    default:
+        os << "Unknown";
         break;
+    }
+
+    if (m_HasBlock)
+    {
+        os << ", block " << m_BlockID;
     }
 
     if (m_StepStart != 0 || m_StepCount != 1)
@@ -253,6 +272,39 @@ std::string Selection::ToString() const
 
     os << ")";
     return os.str();
+}
+
+Selection InferSelection(const VariableBase &variable)
+{
+    Selection sel;
+
+    // Set spatial selection (All or BoundingBox).
+    // Guard against inconsistent variable state: only create a BoundingBox
+    // when Start and Count are non-empty and have matching dimensions.
+    if (variable.m_SelectionType == SelectionType::BoundingBox && !variable.m_Start.empty() &&
+        variable.m_Start.size() == variable.m_Count.size())
+    {
+        sel.SetBoundingBox(variable.m_Start, variable.m_Count);
+    }
+
+    // Block ID is orthogonal to spatial selection.
+    // Capture it when explicitly set (WriteBlock) or when it was set independently
+    // and then the spatial type was changed (e.g., SetBlockSelection + SetSelection).
+    if (variable.m_SelectionType == SelectionType::WriteBlock || variable.m_BlockID != 0)
+    {
+        sel.SetBlock(variable.m_BlockID);
+    }
+
+    sel.SetSteps(variable.m_StepsStart, variable.m_StepsCount);
+
+    if (!variable.m_MemoryStart.empty())
+    {
+        sel.SetMemory(variable.m_MemoryStart, variable.m_MemoryCount);
+    }
+
+    sel.SetAccuracy(variable.GetAccuracyRequested());
+
+    return sel;
 }
 
 } // end namespace core

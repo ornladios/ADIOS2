@@ -26,11 +26,14 @@ etc., all selection parameters are bundled into a ``Selection`` object that is
 passed directly to ``Get()``. This avoids relying on potentially stale variable
 state and makes the intent of each ``Get()`` call clear at the call site.
 
-Three selection types are available: ``Selection::All()`` (the default — reads
-the entire variable), ``Selection::BoundingBox(start, count)`` (hyperslab), and
-``Selection::Block(blockID)`` (individual write block). Additional parameters
-(steps, memory layout, accuracy) can be added via fluent ``With*()`` methods or
-mutable ``Set*()`` methods. A ``ToString()`` method is provided for debugging.
+A selection has two independent aspects: a spatial selection —
+``Selection::All()`` (the default — reads the entire variable) or
+``Selection::BoundingBox(start, count)`` (hyperslab) — and an optional block
+selection via ``Selection::Block(blockID)`` or ``.WithBlock(blockID)``. These
+are orthogonal: a block ID can be combined with a bounding box to read a
+sub-region of a specific write block. Additional parameters (steps, memory
+layout, accuracy) can be added via fluent ``With*()`` methods or mutable
+``Set*()`` methods. A ``ToString()`` method is provided for debugging.
 
 .. code-block:: c++
 
