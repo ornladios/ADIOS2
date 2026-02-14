@@ -153,6 +153,11 @@ public:
 
     virtual void MkDir(const std::string &fileName) = 0;
 
+    /** Signal that accumulated data should be finalized/persisted.
+     *  Default is no-op. S3 multi-object transport uses this to upload
+     *  the current buffer as a numbered object. */
+    virtual void FinalizeSegment() {}
+
 protected:
     void ProfilerWriteBytes(size_t bytes) noexcept;
     void ProfilerStart(const std::string process) noexcept;

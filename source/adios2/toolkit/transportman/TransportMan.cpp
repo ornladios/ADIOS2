@@ -457,6 +457,18 @@ void TransportMan::FlushFiles(const int transportIndex)
     }
 }
 
+void TransportMan::FinalizeSegment()
+{
+    for (auto &transportPair : m_Transports)
+    {
+        auto &transport = transportPair.second;
+        if (transport->m_Type == "File")
+        {
+            transport->FinalizeSegment();
+        }
+    }
+}
+
 void TransportMan::CloseFiles(const int transportIndex)
 {
     if (transportIndex == -1)
