@@ -11,12 +11,7 @@
 #ifndef PARAVIEWFIDESENGINE_H
 #define PARAVIEWFIDESENGINE_H
 
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/common/ADIOSTypes.h"
-#include "adios2/core/IO.h"
-#include "adios2/engine/plugin/PluginEngineInterface.h"
-#include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosType.h"
+#include "adios2/plugin/PluginEngineInterface.h"
 
 #include <memory>
 
@@ -44,8 +39,7 @@ class ParaViewFidesEngine : public adios2::plugin::PluginEngineInterface
 {
 
 public:
-    ParaViewFidesEngine(adios2::core::IO &adios, const std::string &name,
-                        adios2::helper::Comm comm);
+    ParaViewFidesEngine(adios2::IO io, const std::string &name, adios2::Mode mode);
 
     ~ParaViewFidesEngine() override;
 
@@ -59,8 +53,8 @@ public:
 
 protected:
 #define declare_type(T)                                                                            \
-    void DoPutSync(adios2::core::Variable<T> &, const T *) override;                               \
-    void DoPutDeferred(adios2::core::Variable<T> &, const T *) override;
+    void DoPutSync(adios2::Variable<T>, const T *) override;                                       \
+    void DoPutDeferred(adios2::Variable<T>, const T *) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -75,8 +69,8 @@ private:
 
 extern "C" {
 
-fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::core::IO &io, const std::string &name,
-                                                const adios2::Mode mode, adios2::helper::Comm comm);
+fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::IO io, const std::string &name,
+                                                const adios2::Mode mode);
 void EngineDestroy(fides_plugin::ParaViewFidesEngine *obj);
 }
 

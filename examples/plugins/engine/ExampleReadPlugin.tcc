@@ -13,15 +13,36 @@
 
 #include "ExampleReadPlugin.h"
 
+#include <sstream>
+#include <stdexcept>
+
 namespace adios2
 {
 namespace plugin
 {
 
+namespace
+{
+// Simple string-to-T conversion to avoid dependency on helper::StringTo
+template <typename T>
+T StringToValue(const std::string &val)
+{
+    T result;
+    std::istringstream ss(val);
+    ss >> result;
+    if (ss.fail())
+    {
+        throw std::invalid_argument("ERROR: could not convert '" + val + "'");
+    }
+    return result;
+}
+
+} // end anon namespace
+
 template <typename T>
 void ExampleReadPlugin::AddVariable(const std::string &name, Dims shape, Dims start, Dims count)
 {
-    core::Variable<T> *v = m_IO.InquireVariable<T>(name);
+    adios2::Variable<T> v = m_IO.InquireVariable<T>(name);
     if (!v)
     {
         m_IO.DefineVariable<T>(name, shape, start, count);
@@ -29,7 +50,7 @@ void ExampleReadPlugin::AddVariable(const std::string &name, Dims shape, Dims st
 }
 
 template <class T>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable, T *values)
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<T> variable, T *values)
 {
     while (m_DataFile.good())
     {
@@ -38,13 +59,13 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable, T *valu
         auto delimPos = line.find(",");
         auto name = line.substr(0, delimPos);
         size_t step = std::stoul(line.substr(delimPos + 1));
-        if (name == variable.m_Name && m_CurrentStep == step)
+        if (name == variable.Name() && m_CurrentStep == step)
         {
             std::string vals;
             std::getline(m_DataFile, vals);
             if (vals.find(",") == vals.npos)
             {
-                values[0] = helper::StringTo<T>(vals, "");
+                values[0] = StringToValue<T>(vals);
             }
             else
             {
@@ -53,7 +74,7 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable, T *valu
                 int i = 0;
                 while (std::getline(ss, val, ','))
                 {
-                    values[i] = helper::StringTo<T>(val, "");
+                    values[i] = StringToValue<T>(val);
                     i++;
                 }
             }
@@ -63,14 +84,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable, T *valu
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<std::string> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<std::string> variable,
                                             std::string *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             std::getline(m_DataFile, values[0]);
             break;
@@ -79,13 +100,13 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<std::string> &variabl
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<char> &variable, char *values)
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<char> variable, char *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -97,14 +118,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<char> &variable, char
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned char> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<unsigned char> variable,
                                             unsigned char *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -118,14 +139,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned char> &varia
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<signed char> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<signed char> variable,
                                             signed char *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -139,13 +160,13 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<signed char> &variabl
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<short> &variable, short *values)
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<short> variable, short *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -159,14 +180,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<short> &variable, sho
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned short> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<unsigned short> variable,
                                             unsigned short *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -180,14 +201,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned short> &vari
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<long double> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<long double> variable,
                                             long double *values)
 {
     while (m_DataFile.good())
     {
         std::string line;
         std::getline(m_DataFile, line);
-        if (line == variable.m_Name)
+        if (line == variable.Name())
         {
             for (size_t i = 0; i < variable.SelectionSize(); ++i)
             {
@@ -209,14 +230,14 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<long double> &variabl
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<std::complex<float>> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<std::complex<float>> variable,
                                             std::complex<float> *values)
 {
     throw std::invalid_argument("ERROR: std::complex<float> not supported in this engine");
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<std::complex<double>> &variable,
+inline void ExampleReadPlugin::ReadVariable(adios2::Variable<std::complex<double>> variable,
                                             std::complex<double> *values)
 {
     throw std::invalid_argument("ERROR: std::complex<double> not supported in this engine");

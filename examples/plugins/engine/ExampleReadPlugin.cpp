@@ -11,18 +11,14 @@
 #include "ExampleReadPlugin.h"
 #include "ExampleReadPlugin.tcc"
 
-#include "adios2/helper/adiosType.h"
-
 namespace adios2
 {
 namespace plugin
 {
 
-ExampleReadPlugin::ExampleReadPlugin(core::IO &io, const std::string &name, const Mode mode,
-                                     helper::Comm comm)
-: PluginEngineInterface(io, name, mode, comm.Duplicate())
+ExampleReadPlugin::ExampleReadPlugin(adios2::IO io, const std::string &name, const Mode mode)
+: PluginEngineInterface(io, name, mode)
 {
-    Init();
 }
 
 ExampleReadPlugin::~ExampleReadPlugin()
@@ -51,8 +47,9 @@ Dims convertStrToDims(const std::string &str)
 void ExampleReadPlugin::Init()
 {
     std::string dir = "ExamplePlugin";
-    auto paramFileNameIt = m_IO.m_Parameters.find("DirName");
-    if (paramFileNameIt != m_IO.m_Parameters.end())
+    auto params = m_IO.Parameters();
+    auto paramFileNameIt = params.find("DirName");
+    if (paramFileNameIt != params.end())
     {
         dir = paramFileNameIt->second;
     }
@@ -86,13 +83,12 @@ void ExampleReadPlugin::Init()
         auto start = convertStrToDims(startStr);
         auto count = convertStrToDims(countStr);
 
-        const DataType type = helper::GetDataTypeFromString(typeStr);
-        if (type == DataType::Struct)
+        if (typeStr == "struct")
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                                          \
-    else if (type == helper::GetDataType<T>())                                                     \
+    else if (typeStr == adios2::GetType<T>())                                                      \
     {                                                                                              \
         AddVariable<T>(name, shape, start, count);                                                 \
     }
@@ -102,11 +98,11 @@ void ExampleReadPlugin::Init()
 }
 
 #define declare(T)                                                                                 \
-    void ExampleReadPlugin::DoGetSync(core::Variable<T> &variable, T *values)                      \
+    void ExampleReadPlugin::DoGetSync(adios2::Variable<T> variable, T *values)                     \
     {                                                                                              \
         ReadVariable(variable, values);                                                            \
     }                                                                                              \
-    void ExampleReadPlugin::DoGetDeferred(core::Variable<T> &variable, T *values)                  \
+    void ExampleReadPlugin::DoGetDeferred(adios2::Variable<T> variable, T *values)                 \
     {                                                                                              \
         ReadVariable(variable, values);                                                            \
     }
@@ -131,10 +127,10 @@ void ExampleReadPlugin::DoClose(const int transportIndex) {}
 
 extern "C" {
 
-adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io, const std::string &name,
-                                                const adios2::Mode mode, adios2::helper::Comm comm)
+adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::IO io, const std::string &name,
+                                                const adios2::Mode mode)
 {
-    return new adios2::plugin::ExampleReadPlugin(io, name, mode, comm.Duplicate());
+    return new adios2::plugin::ExampleReadPlugin(io, name, mode);
 }
 
 void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj) { delete obj; }

@@ -17,15 +17,9 @@
 #include "plugin_engine_write_export.h"
 
 #include <fstream>
-#include <memory>
 #include <string>
 
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/common/ADIOSTypes.h"
-#include "adios2/core/IO.h"
-#include "adios2/engine/plugin/PluginEngineInterface.h"
-#include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosType.h"
+#include "adios2/plugin/PluginEngineInterface.h"
 
 namespace adios2
 {
@@ -36,8 +30,7 @@ namespace plugin
 class ExampleWritePlugin : public PluginEngineInterface
 {
 public:
-    ExampleWritePlugin(core::IO &io, const std::string &name, const Mode openMode,
-                       helper::Comm comm);
+    ExampleWritePlugin(adios2::IO io, const std::string &name, const Mode openMode);
     virtual ~ExampleWritePlugin();
 
     /** Indicates beginning of a step **/
@@ -56,8 +49,8 @@ protected:
     void Init() override;
 
 #define declare(T)                                                                                 \
-    void DoPutSync(core::Variable<T> &variable, const T *values) override;                         \
-    void DoPutDeferred(core::Variable<T> &variable, const T *values) override;
+    void DoPutSync(adios2::Variable<T> variable, const T *values) override;                        \
+    void DoPutDeferred(adios2::Variable<T> variable, const T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
@@ -71,10 +64,10 @@ private:
     void WriteVarsFromIO();
 
     template <typename T>
-    void WriteVariableInfo(core::Variable<T> &variable);
+    void WriteVariableInfo(adios2::Variable<T> variable);
 
     template <typename T>
-    void WriteArray(core::Variable<T> &variable, const T *values);
+    void WriteArray(adios2::Variable<T> variable, const T *values);
 };
 
 } // end namespace plugin
@@ -83,8 +76,7 @@ private:
 extern "C" {
 
 PLUGIN_ENGINE_WRITE_EXPORT adios2::plugin::ExampleWritePlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name, const adios2::Mode mode,
-             adios2::helper::Comm comm);
+EngineCreate(adios2::IO io, const std::string &name, const adios2::Mode mode);
 PLUGIN_ENGINE_WRITE_EXPORT void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
 }
 

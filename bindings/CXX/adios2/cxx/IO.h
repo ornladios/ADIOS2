@@ -38,11 +38,17 @@ namespace core
 {
 class IO; // private implementation
 }
+
+namespace plugin
+{
+class PluginEngine; // friend
+}
 /// \endcond
 
 class IO
 {
     friend class ADIOS;
+    friend class plugin::PluginEngine;
 
 public:
     /**
@@ -402,7 +408,7 @@ public:
     std::string EngineType() const;
 
 private:
-    IO(core::IO *io);
+    IO(core::IO *io) : m_IO(io) {}
     core::IO *m_IO = nullptr;
 };
 

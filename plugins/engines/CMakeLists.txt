@@ -7,9 +7,8 @@ if(ADIOS2_HAVE_Catalyst)
   add_library(ParaViewADIOSInSituEngine MODULE
     ParaViewFidesEngine.cpp)
   target_link_libraries(ParaViewADIOSInSituEngine
-    PUBLIC
-      adios2_core
     PRIVATE
+      adios2::cxx
       catalyst::catalyst)
   install(TARGETS ParaViewADIOSInSituEngine  EXPORT adios2Exports
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime

@@ -29,7 +29,7 @@ namespace helper
  * @param dimensions input containing size on each dimension {Nx, Ny, Nz}
  * @return product of all dimensions Nx * Ny * Nz
  */
-size_t GetTotalSize(const Dims &dimensions, const size_t elementSize = 1) noexcept;
+using adios2::GetTotalSize;
 
 /**
  * Populates min and max for a selection region inside

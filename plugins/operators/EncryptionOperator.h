@@ -13,8 +13,7 @@
 
 #include <memory>
 
-#include "adios2/common/ADIOSTypes.h"
-#include "adios2/operator/plugin/PluginOperatorInterface.h"
+#include "adios2/plugin/PluginOperatorInterface.h"
 
 namespace adios2
 {
