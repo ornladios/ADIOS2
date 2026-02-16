@@ -487,6 +487,7 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
 
 void BP5Reader::PerformGets()
 {
+#if defined ADIOS2_HAVE_CURL || defined ADIOS2_HAVE_XROOTD
     auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
         std::string XRootDHost = "localhost";
         int XRootDPort = defaultPort;
@@ -519,6 +520,7 @@ void BP5Reader::PerformGets()
         }
         return std::make_tuple(XRootDHost, XRootDPort);
     };
+#endif
 
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
