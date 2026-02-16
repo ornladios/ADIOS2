@@ -241,6 +241,11 @@ set_string_and_atom(atom_server as, char *str, atom_t atom)
     new = enter_atom_into_cache(as, &tmp_value);
     if (as->no_server) return;
     if (!new) return;
+    /* HTTP mode - dispatch to http_atom_client */
+    if (atl_http_server_url != NULL) {
+	http_set_string_and_atom(str, atom);
+	return;
+    }
     sprintf((char *)&buf[1], "A%d %s", atom, str);
     len = (long) strlen((char*)&buf[1]);
     if (as->use_tcp) {
@@ -424,6 +429,17 @@ string_from_atom(atom_server as, atom_t atom)
     entry = Tcl_FindHashEntry(&as->value_hash_table, (char *) (int64_t) atom);
 
     if (entry == NULL) {
+	/* HTTP mode - dispatch to http_atom_client */
+	if (atl_http_server_url != NULL) {
+	    char *str = http_string_from_atom(atom);
+	    if (str) {
+		send_get_atom_msg tmp;
+		tmp.atom_string = str;
+		tmp.atom = atom;
+		enter_atom_into_cache(as, &tmp);
+	    }
+	    return str;
+	}
 	sprintf(&buf[1], "N%d", atom);
 	if (establish_server_connection(as, 1) == 0) return NULL;
 	buf[0] = (char) strlen(&buf[1]);
@@ -618,6 +634,18 @@ init_atom_server(atom_cache_type cache_style)
 
     Tcl_InitHashTable(&as->string_hash_table, TCL_STRING_KEYS);
     Tcl_InitHashTable(&as->value_hash_table, TCL_ONE_WORD_KEYS);
+
+    /* Check for HTTP mode */
+    if (strncmp(atom_server_host, "http://", 7) == 0) {
+	atl_http_server_url = atom_server_host;
+	as->he = NULL;
+	as->their_addr.sin_addr.s_addr = 0;
+	as->sockfd = -1;
+	as->flags = 0;
+	preload_in_use_atoms(as);
+	as->no_server = 0;
+	return as;
+    }
 
     if ((as->he = gethostbyname(atom_server_host)) == NULL) {
 	as->he = NULL;
