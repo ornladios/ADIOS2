@@ -434,6 +434,14 @@ enum class HostAuthProtocol
     X509
 };
 
+/** XRootD transfer protocol */
+enum class XRootDTransferProtocol
+{
+    XRootD,
+    HTTP,
+    HTTPS
+};
+
 struct HostConfig
 {
     std::string name; // Connection Option name
@@ -446,6 +454,9 @@ struct HostConfig
     std::string username = "";
     std::string remoteServerPath = "";
     HostAuthProtocol authentication = HostAuthProtocol::Invalid;
+
+    /* xrootd only parameters */
+    XRootDTransferProtocol transfer_protocol = XRootDTransferProtocol::XRootD;
 
     /* s3 parameters */
     std::string endpoint = "";
