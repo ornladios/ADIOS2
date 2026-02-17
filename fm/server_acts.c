@@ -110,6 +110,11 @@ fill_hostaddr(void *addr, char *hostname, Server_Protocol *protocol)
 
     *protocol = Raw;
     if (colon != NULL) {
+	if (strncasecmp(hostname, "http://", 7) == 0) {
+	    /* HTTP mode - store URL for http_client.c */
+	    ffs_http_server_url = hostname;
+	    return 1; /* don't resolve, HTTP client handles connection */
+	}
 	if (strncasecmp(hostname, "auth:", 5) == 0) {
 	    *protocol = Authenticated;
 	    hostname = hostname + 5;
@@ -179,6 +184,9 @@ establish_server_connection(FMContext iofile, action_t action)
 #endif
     if (ffs_sockets_init_func) ffs_sockets_init_func();
 
+    /* If already in HTTP mode, no connection management needed */
+    if (ffs_http_server_url != NULL) return 1;
+
     if (iofile->server_fd != (void*)-1) {
 #ifndef MODULE
 	fd_set rd_set;
@@ -239,6 +247,11 @@ establish_server_connection(FMContext iofile, action_t action)
 	}
 	if (format_server_host == NULL) {
 	    format_server_host = FORMAT_SERVER_HOST;	/* from configure */
+	}
+	/* Check for HTTP mode - no persistent TCP connection needed */
+	if (strncasecmp(format_server_host, "http://", 7) == 0) {
+	    ffs_http_server_url = format_server_host;
+	    return 1;
 	}
 	if (format_server_verbose && conn_is_dead) {
 	    printf("detected dead link to format server, restarting\n");
