@@ -16,6 +16,12 @@
 #ifndef ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATORINTERFACE_H_
 #define ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATORINTERFACE_H_
 
+/* Plugin operator interface version.
+ * v1: derived from core::Operator (ADIOS2 <= 2.11)
+ * v2: standalone, self-contained interface (ADIOS2 >= 2.12)
+ */
+#define ADIOS2_PLUGIN_OPERATOR_INTERFACE 2
+
 #include "adios2/common/ADIOSBaseTypes.h"
 
 #include <cstdint>

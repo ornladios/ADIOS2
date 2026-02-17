@@ -14,6 +14,12 @@
 #ifndef ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_
 #define ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_
 
+/* Plugin engine interface version.
+ * v1: derived from core::Engine (ADIOS2 <= 2.11)
+ * v2: standalone, uses public C++ API only (ADIOS2 >= 2.12)
+ */
+#define ADIOS2_PLUGIN_ENGINE_INTERFACE 2
+
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/cxx/IO.h"
