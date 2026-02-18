@@ -28,7 +28,26 @@
 #ifdef ADIOS2_HAVE_AWSSDK
 #include <aws/core/Aws.h>
 #include <aws/core/utils/logging/LogLevel.h>
-Aws::SDKOptions awdSDKOptions;
+
+/** Meyer's singleton to ensure the AWS SDK is initialized exactly once per
+ *  process and shut down during static destruction.  Construction is deferred
+ *  until the first call to GetInstance(), so processes that never use S3
+ *  never pay the cost. */
+struct AWSGuard
+{
+    Aws::SDKOptions options;
+    AWSGuard()
+    {
+        options.loggingOptions.logLevel = Aws::Utils::Logging::LogLevel::Debug;
+        Aws::InitAPI(options);
+    }
+    ~AWSGuard() { Aws::ShutdownAPI(options); }
+    static AWSGuard &GetInstance()
+    {
+        static AWSGuard guard;
+        return guard;
+    }
+};
 #endif
 
 namespace adios2
@@ -55,31 +74,7 @@ public:
         }
     }
 
-    void Finalize()
-    {
-#ifdef ADIOS2_HAVE_AWSSDK
-        if (isAWSInitialized)
-        {
-            Aws::ShutdownAPI(options);
-            isAWSInitialized = false;
-        }
-#endif
-        wasGlobalShutdown = true;
-    }
-
-#ifdef ADIOS2_HAVE_AWSSDK
-    void Init_AWS_API()
-    {
-        if (!isAWSInitialized)
-        {
-            options.loggingOptions.logLevel = Aws::Utils::Logging::LogLevel::Debug;
-            Aws::InitAPI(options);
-            isAWSInitialized = true;
-        }
-    }
-    Aws::SDKOptions options;
-    bool isAWSInitialized = false;
-#endif
+    void Finalize() { wasGlobalShutdown = true; }
 
 #ifdef ADIOS2_HAVE_KOKKOS
     void Init_Kokkos_API()
@@ -413,9 +408,8 @@ void ADIOS::RecordOutputStep(const std::string &name, const size_t step, const d
 
 void ADIOS::Global_init_AWS_API()
 {
-    m_GlobalServices.CheckStatus();
 #ifdef ADIOS2_HAVE_AWSSDK
-    m_GlobalServices.Init_AWS_API();
+    AWSGuard::GetInstance();
 #endif
 }
 
