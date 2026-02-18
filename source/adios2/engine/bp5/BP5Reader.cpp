@@ -1170,19 +1170,25 @@ void BP5Reader::Init()
         {
             if (getenv("DoXRootDHttps"))
             {
-                m_RemoteHost = getenv("XRootDHttpsHost");
+                char *env = getenv("XRootDHttpsHost");
+                if (env)
+                    m_RemoteHost = std::string(env);
                 m_RemoteProtocol = HostAccessProtocol::XRootD;
                 m_XrootdTransferProtocol = XRootDTransferProtocol::HTTPS;
             }
             else if (getenv("DoXRootDHttp"))
             {
-                m_RemoteHost = getenv("XRootDHttpHost");
+                char *env = getenv("XRootDHttpHost");
+                if (env)
+                    m_RemoteHost = getenv("XRootDHttpHost");
                 m_RemoteProtocol = HostAccessProtocol::XRootD;
                 m_XrootdTransferProtocol = XRootDTransferProtocol::HTTP;
             }
             else if (getenv("DoXRootD"))
             {
-                m_RemoteHost = getenv("XRootDHost");
+                char *env = getenv("XRootDHost");
+                if (env)
+                    m_RemoteHost = getenv("XRootDHost");
                 m_RemoteProtocol = HostAccessProtocol::XRootD;
                 m_XrootdTransferProtocol = XRootDTransferProtocol::XRootD;
             }
