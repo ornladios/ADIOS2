@@ -1165,11 +1165,6 @@ void BP5Reader::Init()
                     }
                 }
             }
-            else if (m_RemoteHost == "localhost")
-            {
-                // special case for debugging on localhost
-                m_RemoteProtocol = HostAccessProtocol::SSH;
-            }
         }
         else
         {
@@ -1196,6 +1191,7 @@ void BP5Reader::Init()
                 m_RemoteHost = "localhost";
             }
         }
+
         if (m_RemoteHost.empty())
         {
             helper::Throw<std::invalid_argument>(
@@ -1205,11 +1201,19 @@ void BP5Reader::Init()
         }
         if (m_RemoteProtocol == HostAccessProtocol::Invalid)
         {
-            helper::Throw<std::invalid_argument>(
-                "Engine", "BP5Reader", "OpenFiles",
-                "No acceptable protocol (xrootd or ssh) was found for " + m_RemoteHost +
-                    " to read " + m_RemoteName +
-                    ". Make sure you define proper access to the server to serve this path.");
+            if (m_RemoteHost == "localhost")
+            {
+                // special case for debugging on localhost
+                m_RemoteProtocol = HostAccessProtocol::SSH;
+            }
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Reader", "OpenFiles",
+                    "No acceptable protocol (xrootd or ssh) was found for " + m_RemoteHost +
+                        " to read " + m_RemoteName +
+                        ". Make sure you define proper access to the server to serve this path.");
+            }
         }
     }
 
