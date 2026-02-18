@@ -21,12 +21,33 @@ namespace adios2
 namespace plugin
 {
 
-/** EncryptionOperator that uses libsodium. Secret-key encryption is used.
- * The user must provide the 'SecretKeyFile' param with a path to the secret
- * key. If this file exists, it will use the key in the file (which should
- * have been generated using libsodium's crypto_secretbox_keygen().)
- * If the file doesn't exist, the operator will generate it using this call
- * and write it out to the specified file.
+/** EncryptionOperator that uses libsodium. The encryption mode is determined
+ * automatically by the parameters supplied.
+ *
+ * --- Symmetric mode (crypto_secretbox) ---
+ * Activated when 'SecretKeyFile' is provided without any public-key params.
+ * Both writer and reader must share the same secret key file.
+ *
+ *   SecretKeyFile  - path to the secret key file; if the file does not exist
+ *                    a new key is generated and written there.
+ *
+ * --- Asymmetric mode (hybrid crypto_box_seal) ---
+ * Activated when 'PublicKeyFile' or 'PublicKey' is provided. A random session
+ * key is sealed with the recipient's Curve25519 public key; bulk data is
+ * encrypted with that session key via crypto_secretbox. Only the public key
+ * is needed for writing; both keys are needed for reading.
+ *
+ *   PublicKeyFile  - path to a 32-byte Curve25519 public key file
+ *   PublicKey      - hex-encoded public key (64 hex chars)
+ *   SecretKeyFile  - path to a 32-byte secret key file (reading only)
+ *   SecretKey      - hex-encoded secret key (64 hex chars, reading only)
+ *
+ * Secret key lookup order (asymmetric): SecretKeyFile param, SecretKey param,
+ *   ADIOS2_SECRET_KEY_FILE env var, ADIOS2_SECRET_KEY env var.
+ * When only the secret key is supplied, the public key is derived automatically
+ * via Curve25519 (sk * basepoint).
+ *
+ * Use adios2_seal_keygen to generate asymmetric key pairs.
  */
 class EncryptionOperator : public PluginOperatorInterface
 {

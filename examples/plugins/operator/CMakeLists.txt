@@ -21,12 +21,36 @@ if(ADIOS2_HAVE_Sodium)
   add_executable(adios2_plugins_exampleOperatorPluginWrite examplePluginOperatorWrite.cpp)
   target_link_libraries(adios2_plugins_exampleOperatorPluginWrite adios2::cxx)
   if (maybe_standalone_project)
-  install(TARGETS adios2_plugins_exampleOperatorPluginWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(
+      TARGETS adios2_plugins_exampleOperatorPluginWrite
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
   endif()
 
   add_executable(adios2_plugins_exampleOperatorPluginRead examplePluginOperatorRead.cpp)
   target_link_libraries(adios2_plugins_exampleOperatorPluginRead adios2::cxx)
   if (maybe_standalone_project)
-  install(TARGETS adios2_plugins_exampleOperatorPluginRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(
+      TARGETS adios2_plugins_exampleOperatorPluginRead
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endif()
+
+  add_executable(adios2_plugins_exampleSealedOperatorWrite exampleSealedOperatorWrite.cpp)
+  target_link_libraries(adios2_plugins_exampleSealedOperatorWrite adios2::cxx)
+  if (maybe_standalone_project)
+    install(
+      TARGETS adios2_plugins_exampleSealedOperatorWrite
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endif()
+
+  add_executable(adios2_plugins_exampleSealedOperatorRead exampleSealedOperatorRead.cpp)
+  target_link_libraries(adios2_plugins_exampleSealedOperatorRead adios2::cxx)
+  if (maybe_standalone_project)
+    install(
+      TARGETS adios2_plugins_exampleSealedOperatorRead
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
   endif()
 endif()
