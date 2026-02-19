@@ -483,9 +483,9 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
             }
             if (m_Verbose > 0)
             {
-                std::cout << "FileAWSSDK::Open(Append): " << m_Name
-                          << " found " << m_NextObjectNumber << " existing segments, "
-                          << m_TotalBytesWritten << " bytes" << std::endl;
+                std::cout << "FileAWSSDK::Open(Append): " << m_Name << " found "
+                          << m_NextObjectNumber << " existing segments, " << m_TotalBytesWritten
+                          << " bytes" << std::endl;
             }
             m_IsOpen = true;
         }
@@ -998,8 +998,7 @@ void FileAWSSDK::Truncate(const size_t length)
                 Aws::S3::Model::Delete deleteObj;
                 for (const auto &obj : result.GetContents())
                 {
-                    deleteObj.AddObjects(
-                        Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
+                    deleteObj.AddObjects(Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
                 }
                 Aws::S3::Model::DeleteObjectsRequest deleteReq;
                 deleteReq.SetBucket(m_BucketName);
@@ -1016,8 +1015,8 @@ void FileAWSSDK::Truncate(const size_t length)
         m_TotalBytesWritten = 0;
         if (m_Verbose > 0)
         {
-            std::cout << "FileAWSSDK::Truncate(0): deleted all segments for "
-                      << m_BaseObjectName << std::endl;
+            std::cout << "FileAWSSDK::Truncate(0): deleted all segments for " << m_BaseObjectName
+                      << std::endl;
         }
         return;
     }
@@ -1065,8 +1064,7 @@ void FileAWSSDK::Truncate(const size_t length)
             }
             if (isNumeric)
             {
-                segs.push_back({key, std::stoul(suffix),
-                                static_cast<size_t>(obj.GetSize())});
+                segs.push_back({key, std::stoul(suffix), static_cast<size_t>(obj.GetSize())});
             }
         }
         hasMore = result.GetIsTruncated();
@@ -1117,8 +1115,8 @@ void FileAWSSDK::Truncate(const size_t length)
         if (m_Verbose > 0)
         {
             std::cout << "FileAWSSDK::Truncate(" << length << "): kept " << keepCount
-                      << " segments, deleted " << toDelete.size() << " for "
-                      << m_BaseObjectName << std::endl;
+                      << " segments, deleted " << toDelete.size() << " for " << m_BaseObjectName
+                      << std::endl;
         }
     }
 
@@ -1312,8 +1310,7 @@ void FileAWSSDK::DeleteStaleObjects()
         Aws::S3::Model::Delete deleteObj;
         for (const auto &obj : objects)
         {
-            deleteObj.AddObjects(
-                Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
+            deleteObj.AddObjects(Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
         }
 
         Aws::S3::Model::DeleteObjectsRequest deleteReq;
