@@ -101,8 +101,15 @@ private:
     /* How many bytes of meta-metadata have we already processed? */
     size_t m_MetaMetaDataFileAlreadyProcessedSize = 0;
 
+    /* Remote dataset information */
     bool m_dataIsRemote = false;
     std::shared_ptr<Remote> m_Remote;
+    std::string m_RemoteHost;                   // host name of remote (as index in config map)
+    std::string m_RemoteName;                   // path on remote location
+    adios2::HostConfig *m_HostConfig = nullptr; // when found the HostConfig to be used
+    HostAccessProtocol m_RemoteProtocol = HostAccessProtocol::Invalid; // ssh or xrootd
+    XRootDTransferProtocol m_XrootdTransferProtocol = XRootDTransferProtocol::XRootD;
+
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
 
