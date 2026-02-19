@@ -70,6 +70,12 @@ Selection &Selection::SetBlock(size_t blockID)
     return *this;
 }
 
+Selection &Selection::ClearBlock()
+{
+    m_Impl->m_Selection.ClearBlock();
+    return *this;
+}
+
 Selection &Selection::SetSteps(size_t stepStart, size_t stepCount)
 {
     m_Impl->m_Selection.SetSteps(stepStart, stepCount);
@@ -114,6 +120,13 @@ void Selection::Clear() { m_Impl->m_Selection.Clear(); }
 //============================================================================
 // Non-mutating modifiers
 //============================================================================
+
+Selection Selection::WithBlock(size_t blockID) const
+{
+    Selection sel;
+    sel.m_Impl->m_Selection = m_Impl->m_Selection.WithBlock(blockID);
+    return sel;
+}
 
 Selection Selection::WithSteps(size_t stepStart, size_t stepCount) const
 {

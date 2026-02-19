@@ -15,6 +15,7 @@
 #include <cstring>
 #include <string>
 
+#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
@@ -619,7 +620,8 @@ void SstReader::Init()
         }                                                                                          \
         if (m_WriterMarshalMethod == SstMarshalBP5)                                                \
         {                                                                                          \
-            m_BP5Deserializer->QueueGet(variable, data);                                           \
+            auto sel = core::InferSelection(variable);                                             \
+            m_BP5Deserializer->QueueGet(variable, data, sel);                                      \
         }                                                                                          \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
@@ -678,7 +680,8 @@ void SstReader::DoGetStructSync(VariableStruct &variable, void *data)
             "SST only supports struct transmission when BP5 marshalling is "
             "selected");
     }
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = core::InferSelection(variable);
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, sel);
     if (need_sync)
         BP5PerformGets();
 }
@@ -693,7 +696,8 @@ void SstReader::DoGetStructDeferred(VariableStruct &variable, void *data)
             "SST only supports struct transmission when BP5 marshalling is "
             "selected");
     }
-    m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = core::InferSelection(variable);
+    m_BP5Deserializer->QueueGet(variable, data, sel);
 }
 
 bool SstReader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const

@@ -467,7 +467,8 @@ TEST_F(BPSelectionGetTest, SelectionToString)
     EXPECT_NE(s.find("20"), std::string::npos);
 
     auto block = adios2::Selection::Block(5);
-    EXPECT_NE(block.ToString().find("Block"), std::string::npos);
+    EXPECT_NE(block.ToString().find("All"), std::string::npos);
+    EXPECT_NE(block.ToString().find("block"), std::string::npos);
     EXPECT_NE(block.ToString().find("5"), std::string::npos);
 
     auto withSteps = adios2::Selection::All().WithSteps(3, 7);
