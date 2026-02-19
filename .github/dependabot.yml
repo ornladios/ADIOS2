@@ -8,13 +8,13 @@ updates:
       all-actions:
         patterns: [ "*" ]
     assignees:
-      - @infrastructure
+      - infrastructure
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
     assignees:
-      - @infrastructure
+      - infrastructure
   - package-ecosystem: "docker"
     directories:
       - "/scripts/ci/images"
@@ -23,4 +23,4 @@ updates:
     schedule:
       interval: "weekly"
     assignees:
-      - @infrastructure
+      - infrastructure
