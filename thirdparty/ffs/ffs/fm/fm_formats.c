@@ -205,7 +205,7 @@ free_FMformat(FMFormat body)
 #endif
 
 static int format_server_verbose = -1;
-static int NO_SANITIZE_THREAD
+int NO_SANITIZE_THREAD
 get_format_server_verbose()
 {
     if (format_server_verbose == -1) {
@@ -846,6 +846,7 @@ type_alignment(FMFormat fmformat, int field)
 	    case unknown_type: case string_type:
 		assert(0);
 	    case float_type:
+		if (size == -1) return -1;
 		if (size < sizeof(float)) return size;
 		if (size < sizeof(double)) return FMOffset(sf, f);
 		if (size < sizeof(long double)) return FMOffset(sd, d);
@@ -960,7 +961,7 @@ set_sizes_and_offsets(FMFormat top, int index, FMStructDescList structs)
 	    free(base_type);
 	}
 	align_req = type_alignment(f, i);
-    
+
 	if (align_req > 0) {
 	    if (align_req > f->alignment) {
 		f->alignment = align_req;
@@ -3178,6 +3179,10 @@ server_register_format(FMContext fmc, FMFormat format)
 	    dump_server_error("Failed to contact format server\n", fmc);
 	    return 0;
 	}
+    }
+    /* HTTP mode - dispatch to http_client */
+    if (ffs_http_server_url != NULL) {
+	return http_server_register_format(fmc, format);
     } else {
 	struct {
 	    char reg[2];
@@ -3774,6 +3779,10 @@ server_get_format(FMContext iocontext, void *buffer)
 	    printf("Failed to contact format server\n");
 	    exit(1);
 	}
+    }
+    /* HTTP mode - dispatch to http_client */
+    if (ffs_http_server_url != NULL) {
+	return http_server_get_format(fmc, buffer);
     } else {
 	char get[2] =
 	{'g', 8};		/* format get, size */

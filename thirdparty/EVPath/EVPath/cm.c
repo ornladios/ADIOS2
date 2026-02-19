@@ -2966,10 +2966,9 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      tmp_vec[i].iov_len -= actual_bytes_written;
      tmp_vec[i].iov_base = (char*)tmp_vec[i].iov_base + actual_bytes_written;
      if (pbio_vec) {
-	 if (attrs_present) {
-	     pbio_vec[i-2] = tmp_vec[i];
-	 } else {
-	     pbio_vec[i-1] = tmp_vec[i];
+	 int pi = attrs_present ? i - 2 : i - 1;
+	 if (pi >= 0) {
+	     pbio_vec[pi] = tmp_vec[i];
 	 }
      }
      actual_bytes_written = 0;
@@ -3018,10 +3017,8 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      /* fixup pbio_vec */
      j = i - 1;  /* how far into the pbio vector are we? */
      if (attrs_present) j--;
-     if (j == -1) {
-	 /* no PBIO data */
-	 conn->queued_data.vector_data = NULL;
-	 return;
+     if (j < 0) {
+	 j = 0;  /* no data consumed yet, queue from start */
      }
      if (pbio_vec == NULL) {
 	 /* DATA NOT FFS, don't do optimized copying */
@@ -3211,6 +3208,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	     conn->trans->set_write_notify(conn->trans, &CMstatic_trans_svcs, 
 					   conn->transport_data, 0);
 	     cm_wake_any_pending_write(conn);
+	     return 0;
 	 }
 	 if (actual_bytes < (ssize_t)length) {
 	     /* copy remaining and send it later */
