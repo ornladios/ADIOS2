@@ -8,7 +8,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 #include <thread>
 
@@ -150,89 +149,18 @@ void CommonWrite()
     engine.Close();
 }
 
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, '=');
-        if (!std::getline(ss2, ParamValue, '='))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
-
 void ParseArgs(int argc, char **argv)
 {
-    int bare_arg = 0;
-    while (argc > 1)
+    if (argc != 3)
     {
-        if (std::string(argv[1]) == "--num_steps")
-        {
-            std::istringstream ss(argv[2]);
-            if (!(ss >> NSteps))
-                std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine_params")
-        {
-            engineParams = ParseEngineParams(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-        {
-            if (bare_arg == 0)
-            {
-                engine = std::string(argv[1]);
-                bare_arg++;
-            }
-            else if (bare_arg == 1)
-            {
-                fname = std::string(argv[1]);
-                bare_arg++;
-            }
-            else if (bare_arg == 2)
-            {
-                engineParams = ParseEngineParams(argv[1]);
-                bare_arg++;
-            }
-            else
-            {
-                throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
-            }
-        }
-        argv++;
-        argc--;
+        throw std::invalid_argument("Usage: WriteCommon <engine name> <filename>");
+    }
+    else
+    {
+        /* first arg is engine */
+        engine = std::string(argv[1]);
+        /* second arg is filename */
+        fname = std::string(argv[2]);
     }
 }
 

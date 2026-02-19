@@ -9,7 +9,7 @@
 ADIOS2 supports writing BP5 data files to S3-compatible object storage while keeping metadata local for fast access. Two object modes are available:
 
 - **Multi-object mode** (default): Each data file is stored as a sequence of numbered S3 objects (`data.0.0`, `data.0.1`, ...). Objects are finalized individually via `PutObject`, providing automatic crash recovery.
-- **Single-object mode**: Each data file is stored as one S3 object via multipart upload. Requires a finalize utility for crash recovery.
+- **Single-object mode**: Each data file is stored as one S3 object via multipart upload. No automatic crash recovery.
 
 ## Architecture
 
@@ -53,15 +53,16 @@ data.0.2    (third segment)
 ...
 ```
 
-Object numbers are sequential starting at 0 and are **independent of step numbers**. Multiple objects may be created per step (via mid-step flushes or large writes).
+Object numbers are sequential starting at 0 and are **independent of step numbers**. Multiple objects may be created per step (e.g., via large writes that exceed the direct upload threshold).
 
 ### FinalizeSegment
 
 The `Transport::FinalizeSegment()` virtual method signals that accumulated data should be uploaded as a numbered object. It is called:
 
-1. **At EndStep boundaries** - after all step data is flushed
-2. **During PerformDataWrite/Flush** - for mid-step memory relief
-3. **At Close** - to upload any remaining buffered data
+1. **After async data write completes** - in the async write thread, after all step data has been written
+2. **At Close** - to upload any remaining buffered data
+
+`Flush()` is a no-op for S3 transports. In multi-object mode, uploads are driven by `FinalizeSegment()` at step boundaries, not by `Flush()`. In single-object mode, S3's 5 MB minimum part size prevents partial flushes. All buffered data is uploaded as complete objects via `FinalizeSegment()` or `Close()`.
 
 For non-S3 transports, `FinalizeSegment()` is a no-op.
 
@@ -71,6 +72,7 @@ For non-S3 transports, `FinalizeSegment()` is a no-op.
 Open(data.0, Write):
   → Store base object name "data.0"
   → Initialize object counter = 0
+  → If subfile 0: DeleteStaleObjects() (remove all data.* from previous run)
 
 Write(buffer, size):
   → If large write (>= 1MB threshold):
@@ -133,7 +135,7 @@ Close():
 
 ### Crash Recovery (Single Mode)
 
-Requires the `adios2_s3_finalize` utility to complete incomplete multipart uploads using S3's `ListParts` API.
+Single-object mode has no crash recovery. If the writer crashes before `Close()` calls `CompleteMultipartUpload`, the in-progress upload is invisible and will eventually be cleaned up by S3's lifecycle rules. A finalize utility using S3's `ListParts` API could be implemented in the future.
 
 ## Read Path
 
@@ -186,12 +188,15 @@ io.SetParameter("S3SessionToken", "...");
 
 ### Environment Variables
 
-Credentials are read from standard AWS environment variables when not set as ADIOS2 parameters:
+Credentials and connection settings are read from environment variables when not set as ADIOS2 parameters:
 
 ```bash
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_SESSION_TOKEN=...     # optional, for temporary credentials
+AWS_ENDPOINT=...          # S3 endpoint URL
+ADIOS2_AWS_BUCKET=...     # S3 bucket name
+AWS_CACHE=...             # local cache directory for read-side caching
 ```
 
 ### Transport Parameters
@@ -203,7 +208,12 @@ AWS_SESSION_TOKEN=...     # optional, for temporary credentials
 "max_part_size"            // Maximum part size for single mode (default 5GB)
 "endpoint"                 // S3 endpoint URL
 "bucket"                   // S3 bucket name
+"accesskeyid"              // AWS access key ID
+"secretkey"                // AWS secret key
+"sessiontoken"             // AWS session token (for temporary credentials)
 "verbose"                  // Verbosity level (0-5)
+"cache"                    // Local cache directory path for read-side caching
+"recheck_metadata"         // "true" (default) or "false" - revalidate cached metadata on open
 ```
 
 ### s3.json Sidecar File
@@ -248,13 +258,21 @@ When `DataTransport` is set (e.g., to `awssdk`), `AsyncWrite` is automatically e
 
 ## Limitations
 
+### Aggregation Compatibility
+
+S3 only supports sequential writes (no seek). The `EveryoneWrites` aggregation strategy requires multiple ranks to write at different offsets within the same data file, which is incompatible with S3. Use `TwoLevelShm` (the default) which assigns one writer per subfile.
+
 ### Accidental Deletion
 
-If user deletes the local directory (`rm -rf sim.bp`), S3 data objects become orphaned. Use `adios2_s3_delete` instead.
+If user deletes the local directory (`rm -rf sim.bp`), S3 data objects become orphaned. There is currently no cleanup utility; objects must be deleted manually from S3.
 
 ### 10K Part Limit (Single Mode Only)
 
 Single-object mode is limited to 10,000 parts per object. For long-running simulations, use multi-object mode (default) which has no such limit.
+
+### Single-Object Mode Limitations
+
+Single-object mode does not support `Mode::Append` or `AppendAfterSteps`. These features are only available in multi-object mode.
 
 ## References
 
