@@ -186,12 +186,12 @@ io.SetParameter("S3SessionToken", "...");
 
 ### Environment Variables
 
+Credentials are read from standard AWS environment variables when not set as ADIOS2 parameters:
+
 ```bash
-AWS_ENDPOINT=https://s3.amazonaws.com
-ADIOS2_AWS_BUCKET=mybucket
 AWS_ACCESS_KEY_ID=...
-AWS_SECRET_KEY=...
-AWS_SESSION_TOKEN=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_SESSION_TOKEN=...     # optional, for temporary credentials
 ```
 
 ### Transport Parameters
@@ -219,11 +219,34 @@ Written to local BP5 directory at Open time:
 }
 ```
 
+## Append and AppendAfterSteps
+
+Multi-object mode supports both `Mode::Append` and the `AppendAfterSteps` parameter.
+
+### Simple Append
+
+Opening a data file in `Mode::Append` discovers existing segment objects, finds the highest segment number, and continues numbering from there. New data is written as new objects without touching existing ones.
+
+### AppendAfterSteps (Truncation)
+
+When `AppendAfterSteps` is set, BP5 computes a truncation offset for each data file. The `Truncate(offset)` implementation:
+
+1. Lists existing segment objects sorted by number
+2. Walks them accumulating sizes until the offset is reached
+3. Deletes all segment objects beyond that point
+4. Resets the object counter to continue from the kept segments
+
+Truncation offsets always fall on segment boundaries since each step's data starts at the beginning of a segment object.
+
+### Stale Object Cleanup
+
+On `Open(Write)`, the subfile-0 transport deletes all existing `data.*` objects under the BP directory prefix. This prevents stale objects from a previous write from being concatenated with new data on read. Only subfile 0 performs cleanup to avoid redundant work across ranks.
+
+## Async Write
+
+When `DataTransport` is set (e.g., to `awssdk`), `AsyncWrite` is automatically enabled (`Naive` mode) unless explicitly overridden. `FinalizeSegment()` runs inside the async write thread after data is written, so S3 uploads happen concurrently with the next step's computation.
+
 ## Limitations
-
-### No Append Operations
-
-S3 objects are immutable after upload. Append mode is not supported.
 
 ### Accidental Deletion
 
