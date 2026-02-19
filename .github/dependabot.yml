@@ -1,4 +1,5 @@
 version: 2
+enable-beta-ecosystems: true
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -20,6 +21,12 @@ updates:
       - "/scripts/ci/images"
       - "/scripts/ci/images/spack"
       - "/scripts/ci/images/formatting"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - infrastructure
+  - package-ecosystem: "conda"
+    directory: "/"
     schedule:
       interval: "weekly"
     assignees:
