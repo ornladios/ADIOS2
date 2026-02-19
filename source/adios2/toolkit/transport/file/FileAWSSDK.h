@@ -28,11 +28,11 @@
 #include <aws/s3/model/CompletedMultipartUpload.h>
 #include <aws/s3/model/CompletedPart.h>
 #include <aws/s3/model/CreateMultipartUploadRequest.h>
+#include <aws/s3/model/Delete.h>
+#include <aws/s3/model/DeleteObjectsRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/HeadObjectRequest.h>
 #include <aws/s3/model/ListObjectsV2Request.h>
-#include <aws/s3/model/Delete.h>
-#include <aws/s3/model/DeleteObjectsRequest.h>
 #include <aws/s3/model/ObjectIdentifier.h>
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/UploadPartRequest.h>
@@ -140,7 +140,7 @@ private:
 
     // Multi-object mode helpers
     void UploadObject(const std::string &key, const char *data, size_t size);
-    void FlushWriteBuffer(); // upload m_WriteBuffer as next numbered object
+    void FlushWriteBuffer();   // upload m_WriteBuffer as next numbered object
     void DeleteStaleObjects(); // remove all data.* objects from a previous write
 
     // Multipart upload state for single-object mode
