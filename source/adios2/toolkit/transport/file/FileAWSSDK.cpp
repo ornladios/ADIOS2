@@ -184,26 +184,53 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->useVirtualAddressing = false;
     s3ClientConfig->enableEndpointDiscovery = false;
     s3ClientConfig->region = "us-east-1"; // Required for signature calculation
+    // Disable automatic checksum calculation which uses aws-chunked encoding
+    // that strips Content-Length — incompatible with MinIO and other S3-compatible stores
+    s3ClientConfig->checksumConfig.requestChecksumCalculation =
+        Aws::Client::RequestChecksumCalculation::WHEN_REQUIRED;
+    // Use UNSIGNED-PAYLOAD instead of computing SHA256 over the request body.
+    // Avoids stream-seek issues and is required for S3-compatible stores.
+    s3ClientConfig->payloadSigningPolicy =
+        Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never;
 
-    if (!m_accessKeyID.empty() || !m_secretKey.empty())
+    // Fall back to environment variables if credentials not set as ADIOS2 parameters
+    if (m_accessKeyID.empty())
     {
-        Aws::Auth::AWSCredentials aws_credentials;
-        if (!m_sessionToken.empty())
+        const char *env = std::getenv("AWS_ACCESS_KEY_ID");
+        if (env)
         {
-            aws_credentials = {m_accessKeyID, m_secretKey, m_sessionToken};
+            m_accessKeyID = env;
         }
-        else
+    }
+    if (m_secretKey.empty())
+    {
+        const char *env = std::getenv("AWS_SECRET_ACCESS_KEY");
+        if (env)
         {
-            aws_credentials = {m_accessKeyID, m_secretKey};
+            m_secretKey = env;
         }
-        s3Client =
-            new Aws::S3::S3Client(aws_credentials, *s3ClientConfig,
-                                  Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, false);
+    }
+    if (m_sessionToken.empty())
+    {
+        const char *env = std::getenv("AWS_SESSION_TOKEN");
+        if (env)
+        {
+            m_sessionToken = env;
+        }
+    }
+
+    Aws::Auth::AWSCredentials aws_credentials;
+    if (!m_sessionToken.empty())
+    {
+        aws_credentials = {m_accessKeyID, m_secretKey, m_sessionToken};
     }
     else
     {
-        s3Client = new Aws::S3::S3Client(*s3ClientConfig);
+        aws_credentials = {m_accessKeyID, m_secretKey};
     }
+    s3Client =
+        new Aws::S3::S3Client(aws_credentials, *s3ClientConfig,
+                              Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, false);
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
@@ -387,6 +414,12 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
             // Multi-object mode: save base object name, upload individual objects
             m_BaseObjectName = m_ObjectName;
             m_NextObjectNumber = 0;
+            // Only subfile 0 (opened by rank 0) cleans up stale data objects
+            size_t lastDot = m_ObjectName.rfind('.');
+            if (lastDot != std::string::npos && m_ObjectName.substr(lastDot + 1) == "0")
+            {
+                DeleteStaleObjects();
+            }
         }
         else
         {
@@ -402,10 +435,66 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
         break;
 
     case Mode::Append:
-        // Append is complex with S3 - objects are immutable after upload
-        // Would need to download, modify, re-upload or use multipart copy + new parts
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Open",
-                                              "Append mode not supported for S3 " + m_Name);
+        if (m_MultiObjectMode)
+        {
+            m_BaseObjectName = m_ObjectName;
+            // Find the highest existing segment number to continue from
+            m_NextObjectNumber = 0;
+            m_TotalBytesWritten = 0;
+            Aws::String continuationToken;
+            bool hasMore = true;
+            std::string prefix = m_ObjectName + ".";
+            while (hasMore)
+            {
+                Aws::S3::Model::ListObjectsV2Request listReq;
+                listReq.SetBucket(m_BucketName);
+                listReq.SetPrefix(prefix);
+                listReq.SetMaxKeys(1000);
+                if (!continuationToken.empty())
+                {
+                    listReq.SetContinuationToken(continuationToken);
+                }
+                auto listOutcome = s3Client->ListObjectsV2(listReq);
+                if (!listOutcome.IsSuccess())
+                {
+                    break;
+                }
+                const auto &result = listOutcome.GetResult();
+                for (const auto &obj : result.GetContents())
+                {
+                    // Extract segment number from key suffix after last '.'
+                    std::string key(obj.GetKey().c_str());
+                    size_t lastDot = key.rfind('.');
+                    if (lastDot != std::string::npos)
+                    {
+                        unsigned long segNum = std::stoul(key.substr(lastDot + 1));
+                        if (segNum + 1 > m_NextObjectNumber)
+                        {
+                            m_NextObjectNumber = segNum + 1;
+                        }
+                    }
+                    m_TotalBytesWritten += obj.GetSize();
+                }
+                hasMore = result.GetIsTruncated();
+                if (hasMore)
+                {
+                    continuationToken = result.GetNextContinuationToken();
+                }
+            }
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::Open(Append): " << m_Name
+                          << " found " << m_NextObjectNumber << " existing segments, "
+                          << m_TotalBytesWritten << " bytes" << std::endl;
+            }
+            m_IsOpen = true;
+        }
+        else
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileAWSSDK", "Open",
+                "Append mode not supported for single-object S3 " + m_Name);
+        }
         break;
 
     case Mode::Read: {
@@ -497,7 +586,7 @@ void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
 {
     WaitForOpen();
 
-    if (m_OpenMode != Mode::Write)
+    if (m_OpenMode != Mode::Write && m_OpenMode != Mode::Append)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Write",
                                               "File not opened for writing: " + m_Name);
@@ -732,7 +821,7 @@ size_t FileAWSSDK::GetSize()
     case Mode::Write:
         return m_TotalBytesWritten;
     case Mode::Append:
-        return 0;
+        return m_TotalBytesWritten;
     case Mode::Read:
         return m_Size;
     default:
@@ -742,18 +831,14 @@ size_t FileAWSSDK::GetSize()
 
 void FileAWSSDK::Flush()
 {
-    if (!m_MultiObjectMode && m_OpenMode == Mode::Write && m_WriteBuffer.size() >= m_MinPartSize)
-    {
-        // Single mode only: flush if we have enough data for a valid part
-        // S3 requires minimum 5MB per part (except the last part)
-        UploadBufferedPart();
-    }
-    // Multi-object mode: Flush is a no-op; use FinalizeSegment() instead
+    // No-op for S3.  Write() already uploads parts when the buffer fills,
+    // and partial buffers can't be uploaded (S3 minimum part size = 5 MB).
+    // Data is finalized via FinalizeSegment() (multi-object) or Close() (single-object).
 }
 
 void FileAWSSDK::FinalizeSegment()
 {
-    if (m_OpenMode != Mode::Write)
+    if (m_OpenMode != Mode::Write && m_OpenMode != Mode::Append)
     {
         return;
     }
@@ -777,7 +862,7 @@ void FileAWSSDK::Close()
     errno = 0;
     m_Errno = errno;
 
-    if (m_OpenMode == Mode::Write)
+    if (m_OpenMode == Mode::Write || m_OpenMode == Mode::Append)
     {
         if (m_MultiObjectMode)
         {
@@ -879,8 +964,17 @@ void FileAWSSDK::Seek(const size_t start)
 
 void FileAWSSDK::Truncate(const size_t length)
 {
-    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Truncate",
-                                          "does not support truncating " + m_Name);
+    if (m_MultiObjectMode)
+    {
+        // For multi-object mode, truncation adjusts the write position.
+        // Actual segment removal is not implemented yet.
+        m_TotalBytesWritten = length;
+    }
+    else
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Truncate",
+                                              "does not support truncating " + m_Name);
+    }
 }
 
 void FileAWSSDK::MkDir(const std::string &fileName) {}
@@ -1026,6 +1120,70 @@ void FileAWSSDK::FlushWriteBuffer()
     m_NextObjectNumber++;
     UploadObject(key, m_WriteBuffer.data(), m_WriteBuffer.size());
     m_WriteBuffer.clear();
+}
+
+void FileAWSSDK::DeleteStaleObjects()
+{
+    // Derive the prefix for all data objects in this BP directory.
+    // m_ObjectName is like "mpi_test.bp/data.0", so we want "mpi_test.bp/data."
+    size_t lastSlash = m_ObjectName.rfind(PathSeparator);
+    if (lastSlash == std::string::npos)
+    {
+        return; // unexpected naming, skip cleanup
+    }
+    std::string prefix = m_ObjectName.substr(0, lastSlash + 1) + "data.";
+
+    // List all objects with this prefix and delete them in batches of 1000
+    Aws::String continuationToken;
+    bool hasMore = true;
+    while (hasMore)
+    {
+        Aws::S3::Model::ListObjectsV2Request listReq;
+        listReq.SetBucket(m_BucketName);
+        listReq.SetPrefix(prefix);
+        listReq.SetMaxKeys(1000);
+        if (!continuationToken.empty())
+        {
+            listReq.SetContinuationToken(continuationToken);
+        }
+
+        auto listOutcome = s3Client->ListObjectsV2(listReq);
+        if (!listOutcome.IsSuccess())
+        {
+            break; // non-fatal: proceed without cleanup
+        }
+
+        const auto &result = listOutcome.GetResult();
+        const auto &objects = result.GetContents();
+        if (objects.empty())
+        {
+            break;
+        }
+
+        Aws::S3::Model::Delete deleteObj;
+        for (const auto &obj : objects)
+        {
+            deleteObj.AddObjects(
+                Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
+        }
+
+        Aws::S3::Model::DeleteObjectsRequest deleteReq;
+        deleteReq.SetBucket(m_BucketName);
+        deleteReq.SetDelete(std::move(deleteObj));
+        s3Client->DeleteObjects(deleteReq);
+
+        if (m_Verbose > 0)
+        {
+            std::cout << "FileAWSSDK::DeleteStaleObjects: deleted " << objects.size()
+                      << " stale objects with prefix '" << prefix << "'" << std::endl;
+        }
+
+        hasMore = result.GetIsTruncated();
+        if (hasMore)
+        {
+            continuationToken = result.GetNextContinuationToken();
+        }
+    }
 }
 
 void FileAWSSDK::InitiateMultipartUpload()

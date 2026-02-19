@@ -1098,10 +1098,6 @@ void BP5Writer::EndStep()
         m_MetadataFile->Flush();
         m_MetaMetadataFile->Flush();
     }
-    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    aggData.m_FileDataManager.FlushFiles();
-    aggData.m_FileDataManager.FinalizeSegment();
-
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
         std::string dsb_tag_str = "ES_DSB";

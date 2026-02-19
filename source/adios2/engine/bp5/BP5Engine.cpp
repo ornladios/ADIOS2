@@ -350,8 +350,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
     // explicitly set AsyncWrite to something other than the default (Sync).
     if (!Params.DataTransport.empty() && Params.AsyncWrite == (int)AsyncWrite::Sync)
     {
-        const std::string lkey = helper::LowerCase(std::string("asyncwrite"));
-        if (params_lowercase.find(lkey) == params_lowercase.end())
+        if (params_lowercase.find("asyncwrite") == params_lowercase.end())
         {
             Params.AsyncWrite = (int)AsyncWrite::Naive;
         }
