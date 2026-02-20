@@ -385,6 +385,20 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
     if (m_Parameters.AsyncWrite)
     {
+        // If a previous async write is still in flight (e.g. from a prior
+        // PerformDataWrite within the same step), wait for it before starting
+        // a new one.  This prevents concurrent access to the transport layer.
+        // The inter-step asynchrony (EndStep -> BeginStep) is unaffected
+        // because BeginStep already waits before any new writes occur.
+        if (m_WriteFuture.valid())
+        {
+            m_AsyncWriteLock.lock();
+            m_flagRush = true;
+            m_AsyncWriteLock.unlock();
+            m_WriteFuture.get();
+            AsyncWriteDataCleanup();
+        }
+
         switch (m_Parameters.AggregationType)
         {
         case (int)AggregationType::EveryoneWrites:
