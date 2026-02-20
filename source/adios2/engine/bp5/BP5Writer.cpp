@@ -1624,6 +1624,12 @@ void BP5Writer::InitMetadataTransports()
         {
             dataTransportParams["direct_upload_threshold"] = m_Parameters.S3DirectUploadThreshold;
         }
+        // Tell S3 transport the total subfile count so it can clean up
+        // stale objects from prior runs that used more subfiles
+        if (m_Parameters.NumSubFiles > 0)
+        {
+            dataTransportParams["s3_num_subfiles"] = std::to_string(m_Parameters.NumSubFiles);
+        }
 
         m_DataTransportsParameters.push_back(dataTransportParams);
     }

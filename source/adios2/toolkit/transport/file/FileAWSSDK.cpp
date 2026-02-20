@@ -15,7 +15,6 @@
 #include "adios2/helper/adiosSystem.h"
 
 #include <algorithm> // sort
-#include <chrono>
 #include <cstdio>    // remove
 #include <cstring>   // strerror
 #include <errno.h>   // errno
@@ -23,7 +22,6 @@
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
-#include <thread>      // sleep_for (simulated latency)
 #include <unistd.h>    // write, close, ftruncate
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -179,11 +177,11 @@ void FileAWSSDK::SetParameters(const Params &params)
             helper::StringToByteUnits(directThresholdStr, "direct_upload_threshold");
     }
 
-    std::string latencyStr;
-    helper::SetParameterValue("simulated_latency_ms", params, latencyStr);
-    if (!latencyStr.empty())
+    std::string numSubFilesStr;
+    helper::SetParameterValue("s3_num_subfiles", params, numSubFilesStr);
+    if (!numSubFilesStr.empty())
     {
-        m_SimulatedLatencyMs = std::stoi(latencyStr);
+        m_NumSubFiles = std::stoi(numSubFilesStr);
     }
 
     core::ADIOS::Global_init_AWS_API();
@@ -255,8 +253,7 @@ void FileAWSSDK::SetParameters(const Params &params)
                   << "' object_mode = " << (m_MultiObjectMode ? "multi" : "single")
                   << " recheck_metadata = " << m_RecheckMetadata
                   << " min_part_size = " << m_MinPartSize << " max_part_size = " << m_MaxPartSize
-                  << " direct_upload_threshold = " << m_DirectUploadThreshold
-                  << " simulated_latency_ms = " << m_SimulatedLatencyMs << std::endl;
+                  << " direct_upload_threshold = " << m_DirectUploadThreshold << std::endl;
     }
 }
 
@@ -432,16 +429,43 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
             // Multi-object mode: save base object name, upload individual objects
             m_BaseObjectName = m_ObjectName;
             m_NextObjectNumber = 0;
-            // Only subfile 0 (opened by rank 0) cleans up stale data objects
-            size_t lastDot = m_ObjectName.rfind('.');
-            if (lastDot != std::string::npos && m_ObjectName.substr(lastDot + 1) == "0")
+            // Each rank deletes its own stale sub-objects (e.g. data.3.0, data.3.1, ...)
+            DeleteStaleSubObjects(m_ObjectName);
+            // Also delete the bare single-object key (e.g. "data.0") left by a
+            // prior single-object mode run.  DeleteObject is a no-op if the key
+            // doesn't exist, so this is always safe.
             {
-                DeleteStaleObjects();
+                Aws::S3::Model::DeleteObjectRequest delReq;
+                delReq.SetBucket(m_BucketName);
+                delReq.SetKey(m_ObjectName);
+                s3Client->DeleteObject(delReq);
+            }
+            // Subfile 0 also cleans up objects from orphaned subfiles
+            // (prior runs that used more subfiles than the current run)
+            if (m_NumSubFiles > 0)
+            {
+                size_t lastDot = m_ObjectName.rfind('.');
+                if (lastDot != std::string::npos && m_ObjectName.substr(lastDot + 1) == "0")
+                {
+                    DeleteOrphanedSubObjects();
+                }
             }
         }
         else
         {
             // Single-object mode: one multipart upload per file
+            // First, clean up stale sub-objects from a prior multi-object mode run
+            // (e.g. "data.0.0", "data.0.1", ... left when switching from multi to single)
+            DeleteStaleSubObjects(m_ObjectName);
+            // Subfile 0 also cleans up objects from orphaned subfiles
+            if (m_NumSubFiles > 0)
+            {
+                size_t lastDot = m_ObjectName.rfind('.');
+                if (lastDot != std::string::npos && m_ObjectName.substr(lastDot + 1) == "0")
+                {
+                    DeleteOrphanedSubObjects();
+                }
+            }
             m_WriteBuffer.reserve(m_MinPartSize);
             m_CompletedParts.clear();
             m_CurrentPartNumber = 0;
@@ -1276,10 +1300,6 @@ void FileAWSSDK::UploadObject(const std::string &key, const char *data, size_t s
             "Failed to upload object '" + key + "' to bucket '" + m_BucketName +
                 "': " + outcome.GetError().GetMessage());
     }
-    if (m_SimulatedLatencyMs > 0)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(m_SimulatedLatencyMs));
-    }
 }
 
 void FileAWSSDK::FlushWriteBuffer()
@@ -1295,18 +1315,12 @@ void FileAWSSDK::FlushWriteBuffer()
     m_WriteBuffer.clear();
 }
 
-void FileAWSSDK::DeleteStaleObjects()
+void FileAWSSDK::DeleteStaleSubObjects(const std::string &base)
 {
-    // Derive the prefix for all data objects in this BP directory.
-    // m_ObjectName is like "mpi_test.bp/data.0", so we want "mpi_test.bp/data."
-    size_t lastSlash = m_ObjectName.rfind(PathSeparator);
-    if (lastSlash == std::string::npos)
-    {
-        return; // unexpected naming, skip cleanup
-    }
-    std::string prefix = m_ObjectName.substr(0, lastSlash + 1) + "data.";
+    // Delete sub-objects for one subfile, e.g. "data.3.0", "data.3.1", ...
+    // Each rank calls this for its own subfile, so no cross-rank race.
+    std::string prefix = base + ".";
 
-    // List all objects with this prefix and delete them in batches of 1000
     Aws::String continuationToken;
     bool hasMore = true;
     while (hasMore)
@@ -1333,21 +1347,98 @@ void FileAWSSDK::DeleteStaleObjects()
             break;
         }
 
-        Aws::S3::Model::Delete deleteObj;
         for (const auto &obj : objects)
         {
-            deleteObj.AddObjects(Aws::S3::Model::ObjectIdentifier().WithKey(obj.GetKey()));
+            Aws::S3::Model::DeleteObjectRequest delReq;
+            delReq.SetBucket(m_BucketName);
+            delReq.SetKey(obj.GetKey());
+            s3Client->DeleteObject(delReq);
         }
-
-        Aws::S3::Model::DeleteObjectsRequest deleteReq;
-        deleteReq.SetBucket(m_BucketName);
-        deleteReq.SetDelete(std::move(deleteObj));
-        s3Client->DeleteObjects(deleteReq);
 
         if (m_Verbose > 0)
         {
-            std::cout << "FileAWSSDK::DeleteStaleObjects: deleted " << objects.size()
+            std::cout << "FileAWSSDK::DeleteStaleSubObjects: deleted " << objects.size()
                       << " stale objects with prefix '" << prefix << "'" << std::endl;
+        }
+
+        hasMore = result.GetIsTruncated();
+        if (hasMore)
+        {
+            continuationToken = result.GetNextContinuationToken();
+        }
+    }
+}
+
+void FileAWSSDK::DeleteOrphanedSubObjects()
+{
+    // Called by subfile 0 only. Delete sub-objects belonging to subfiles
+    // numbered >= m_NumSubFiles — leftovers from a prior run that used more
+    // subfiles. Safe: no current rank writes to those subfiles.
+    size_t lastSlash = m_ObjectName.rfind(PathSeparator);
+    if (lastSlash == std::string::npos)
+    {
+        return;
+    }
+    // Prefix covers all data subfiles: "dir.bp/data."
+    std::string dirPrefix = m_ObjectName.substr(0, lastSlash + 1) + "data.";
+
+    Aws::String continuationToken;
+    bool hasMore = true;
+    while (hasMore)
+    {
+        Aws::S3::Model::ListObjectsV2Request listReq;
+        listReq.SetBucket(m_BucketName);
+        listReq.SetPrefix(dirPrefix);
+        listReq.SetMaxKeys(1000);
+        if (!continuationToken.empty())
+        {
+            listReq.SetContinuationToken(continuationToken);
+        }
+
+        auto listOutcome = s3Client->ListObjectsV2(listReq);
+        if (!listOutcome.IsSuccess())
+        {
+            break;
+        }
+
+        const auto &result = listOutcome.GetResult();
+        for (const auto &obj : result.GetContents())
+        {
+            // Key is like "dir.bp/data.5.3" (sub-object) or "dir.bp/data.5" (bare key)
+            std::string key(obj.GetKey().c_str());
+            std::string suffix = key.substr(dirPrefix.length());
+            // suffix is "5.3" or "5" — subfile number is before the first dot (or the whole suffix)
+            size_t dot = suffix.find('.');
+            int subfileNum = -1;
+            try
+            {
+                if (dot == std::string::npos)
+                {
+                    // Bare "data.N" key from single-object mode
+                    subfileNum = std::stoi(suffix);
+                }
+                else
+                {
+                    // "N.M" sub-object from multi-object mode
+                    subfileNum = std::stoi(suffix.substr(0, dot));
+                }
+            }
+            catch (...)
+            {
+                continue;
+            }
+            if (subfileNum >= m_NumSubFiles)
+            {
+                Aws::S3::Model::DeleteObjectRequest delReq;
+                delReq.SetBucket(m_BucketName);
+                delReq.SetKey(obj.GetKey());
+                s3Client->DeleteObject(delReq);
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileAWSSDK::DeleteOrphanedSubObjects: deleted orphan '" << key
+                              << "'" << std::endl;
+                }
+            }
         }
 
         hasMore = result.GetIsTruncated();
@@ -1432,10 +1523,6 @@ void FileAWSSDK::UploadPart(const char *data, size_t size)
     {
         std::cout << "FileAWSSDK::UploadPart: Part " << m_CurrentPartNumber
                   << " uploaded, ETag=" << outcome.GetResult().GetETag() << std::endl;
-    }
-    if (m_SimulatedLatencyMs > 0)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(m_SimulatedLatencyMs));
     }
 }
 

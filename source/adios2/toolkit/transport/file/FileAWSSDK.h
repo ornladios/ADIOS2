@@ -29,6 +29,7 @@
 #include <aws/s3/model/CompletedPart.h>
 #include <aws/s3/model/CreateMultipartUploadRequest.h>
 #include <aws/s3/model/Delete.h>
+#include <aws/s3/model/DeleteObjectRequest.h>
 #include <aws/s3/model/DeleteObjectsRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/HeadObjectRequest.h>
@@ -137,11 +138,13 @@ private:
     std::string m_BaseObjectName;  // e.g. "data.0" (object name before numbering)
     size_t m_NextObjectNumber = 0; // sequential counter for numbered objects
     size_t m_DirectUploadThreshold = 1ULL * 1024 * 1024; // 1MB - large writes bypass buffer
+    int m_NumSubFiles = 0; // total subfile count (0 = unknown), for stale object cleanup
 
     // Multi-object mode helpers
     void UploadObject(const std::string &key, const char *data, size_t size);
-    void FlushWriteBuffer();   // upload m_WriteBuffer as next numbered object
-    void DeleteStaleObjects(); // remove all data.* objects from a previous write
+    void FlushWriteBuffer(); // upload m_WriteBuffer as next numbered object
+    void DeleteStaleSubObjects(const std::string &base); // remove sub-objects for one subfile
+    void DeleteOrphanedSubObjects(); // remove sub-objects for subfiles >= m_NumSubFiles
 
     // Multipart upload state for single-object mode
     std::string m_UploadId;
