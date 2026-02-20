@@ -15,6 +15,7 @@
 #include "adios2/helper/adiosSystem.h"
 
 #include <algorithm> // sort
+#include <chrono>
 #include <cstdio>    // remove
 #include <cstring>   // strerror
 #include <errno.h>   // errno
@@ -22,6 +23,7 @@
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
+#include <thread>      // sleep_for (simulated latency)
 #include <unistd.h>    // write, close, ftruncate
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -177,6 +179,13 @@ void FileAWSSDK::SetParameters(const Params &params)
             helper::StringToByteUnits(directThresholdStr, "direct_upload_threshold");
     }
 
+    std::string latencyStr;
+    helper::SetParameterValue("simulated_latency_ms", params, latencyStr);
+    if (!latencyStr.empty())
+    {
+        m_SimulatedLatencyMs = std::stoi(latencyStr);
+    }
+
     core::ADIOS::Global_init_AWS_API();
 
     s3ClientConfig = new Aws::S3::S3ClientConfiguration;
@@ -185,9 +194,17 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->enableEndpointDiscovery = false;
     s3ClientConfig->region = "us-east-1"; // Required for signature calculation
     // Disable automatic checksum calculation which uses aws-chunked encoding
-    // that strips Content-Length — incompatible with MinIO and other S3-compatible stores
+    // that strips Content-Length — incompatible with MinIO and other S3-compatible stores.
+    // checksumConfig was added in AWS SDK 1.11.486; older versions don't need this
+    // because they don't have the aws-chunked behavior.
+#if defined(AWS_SDK_VERSION_MAJOR) &&                                                              \
+    (AWS_SDK_VERSION_MAJOR > 1 ||                                                                  \
+     (AWS_SDK_VERSION_MAJOR == 1 &&                                                                \
+      (AWS_SDK_VERSION_MINOR > 11 ||                                                               \
+       (AWS_SDK_VERSION_MINOR == 11 && AWS_SDK_VERSION_PATCH >= 486))))
     s3ClientConfig->checksumConfig.requestChecksumCalculation =
         Aws::Client::RequestChecksumCalculation::WHEN_REQUIRED;
+#endif
     // Use UNSIGNED-PAYLOAD instead of computing SHA256 over the request body.
     // Avoids stream-seek issues and is required for S3-compatible stores.
     s3ClientConfig->payloadSigningPolicy =
@@ -238,7 +255,8 @@ void FileAWSSDK::SetParameters(const Params &params)
                   << "' object_mode = " << (m_MultiObjectMode ? "multi" : "single")
                   << " recheck_metadata = " << m_RecheckMetadata
                   << " min_part_size = " << m_MinPartSize << " max_part_size = " << m_MaxPartSize
-                  << " direct_upload_threshold = " << m_DirectUploadThreshold << std::endl;
+                  << " direct_upload_threshold = " << m_DirectUploadThreshold
+                  << " simulated_latency_ms = " << m_SimulatedLatencyMs << std::endl;
     }
 }
 
@@ -1247,12 +1265,20 @@ void FileAWSSDK::UploadObject(const std::string &key, const char *data, size_t s
     }
 
     auto outcome = s3Client->PutObject(request);
+    // Release SDK's reference to the body stream before the stack-local
+    // PreallocatedStreamBuf is destroyed.  This prevents potential use-after-free
+    // if the SDK retains an internal reference (e.g. for retries or connection pooling).
+    request.SetBody(nullptr);
     if (!outcome.IsSuccess())
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileAWSSDK", "UploadObject",
             "Failed to upload object '" + key + "' to bucket '" + m_BucketName +
                 "': " + outcome.GetError().GetMessage());
+    }
+    if (m_SimulatedLatencyMs > 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_SimulatedLatencyMs));
     }
 }
 
@@ -1385,6 +1411,9 @@ void FileAWSSDK::UploadPart(const char *data, size_t size)
     }
 
     auto outcome = s3Client->UploadPart(request);
+    // Release SDK's reference to the body stream before the stack-local
+    // PreallocatedStreamBuf is destroyed (same rationale as in UploadObject).
+    request.SetBody(nullptr);
     if (!outcome.IsSuccess())
     {
         helper::Throw<std::ios_base::failure>(
@@ -1403,6 +1432,10 @@ void FileAWSSDK::UploadPart(const char *data, size_t size)
     {
         std::cout << "FileAWSSDK::UploadPart: Part " << m_CurrentPartNumber
                   << " uploaded, ETag=" << outcome.GetResult().GetETag() << std::endl;
+    }
+    if (m_SimulatedLatencyMs > 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_SimulatedLatencyMs));
     }
 }
 
