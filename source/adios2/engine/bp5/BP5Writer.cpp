@@ -22,6 +22,7 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <ctime>
+#include <fstream>
 #include <iomanip> // setw
 #include <iostream>
 #include <memory> // make_shared
@@ -384,6 +385,20 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
     if (m_Parameters.AsyncWrite)
     {
+        // If a previous async write is still in flight (e.g. from a prior
+        // PerformDataWrite within the same step), wait for it before starting
+        // a new one.  This prevents concurrent access to the transport layer.
+        // The inter-step asynchrony (EndStep -> BeginStep) is unaffected
+        // because BeginStep already waits before any new writes occur.
+        if (m_WriteFuture.valid())
+        {
+            m_AsyncWriteLock.lock();
+            m_flagRush = true;
+            m_AsyncWriteLock.unlock();
+            m_WriteFuture.get();
+            AsyncWriteDataCleanup();
+        }
+
         switch (m_Parameters.AggregationType)
         {
         case (int)AggregationType::EveryoneWrites:
@@ -425,6 +440,7 @@ void BP5Writer::WriteData(format::BufferV *Data)
         }
         AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
         aggData.m_FileDataManager.FlushFiles();
+        aggData.m_FileDataManager.FinalizeSegment();
         delete Data;
     }
 }
@@ -1096,9 +1112,6 @@ void BP5Writer::EndStep()
         m_MetadataFile->Flush();
         m_MetaMetadataFile->Flush();
     }
-    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    aggData.m_FileDataManager.FlushFiles();
-
     if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
     {
         std::string dsb_tag_str = "ES_DSB";
@@ -1205,6 +1218,14 @@ void BP5Writer::InitParameters()
 
     // Limiting to max 64MB page size
     m_Parameters.StripeSize = helper::SetWithinLimit(m_Parameters.StripeSize, 0U, 67108864U);
+
+    // For S3/object storage, disable stripe alignment to avoid non-sequential writes
+    // S3 multipart upload requires sequential writes; StripeSize=1 means no padding
+    if (m_Parameters.DataTransport == "awssdk")
+    {
+        m_Parameters.StripeSize = 1;
+    }
+
     if (m_Parameters.StripeSize == 0)
     {
         m_Parameters.StripeSize = 4096;
@@ -1573,6 +1594,65 @@ void BP5Writer::InitMetadataTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
+    // Set up data transport parameters - use different transport if DataTransport is specified
+    if (!m_Parameters.DataTransport.empty())
+    {
+        // User specified a different transport for data files (e.g., "awssdk" for S3)
+        Params dataTransportParams;
+        // Set transport type to "file" and library to the specified transport library
+        dataTransportParams["transport"] = "file";
+        dataTransportParams["library"] = m_Parameters.DataTransport;
+
+        // Pass through S3-specific parameters if set
+        if (!m_Parameters.S3Endpoint.empty())
+        {
+            dataTransportParams["endpoint"] = m_Parameters.S3Endpoint;
+        }
+        if (!m_Parameters.S3Bucket.empty())
+        {
+            dataTransportParams["bucket"] = m_Parameters.S3Bucket;
+        }
+        if (!m_Parameters.S3AccessKeyID.empty())
+        {
+            dataTransportParams["accesskeyid"] = m_Parameters.S3AccessKeyID;
+        }
+        if (!m_Parameters.S3SecretKey.empty())
+        {
+            dataTransportParams["secretkey"] = m_Parameters.S3SecretKey;
+        }
+        if (!m_Parameters.S3SessionToken.empty())
+        {
+            dataTransportParams["sessiontoken"] = m_Parameters.S3SessionToken;
+        }
+        // Pass verbose level to transport
+        if (m_Parameters.verbose > 0)
+        {
+            dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
+        }
+        // Pass S3 object mode to transport ("multi" or "single")
+        if (!m_Parameters.S3ObjectMode.empty())
+        {
+            dataTransportParams["s3_object_mode"] = m_Parameters.S3ObjectMode;
+        }
+        if (!m_Parameters.S3DirectUploadThreshold.empty())
+        {
+            dataTransportParams["direct_upload_threshold"] = m_Parameters.S3DirectUploadThreshold;
+        }
+        // Tell S3 transport the total subfile count so it can clean up
+        // stale objects from prior runs that used more subfiles
+        if (m_Parameters.NumSubFiles > 0)
+        {
+            dataTransportParams["s3_num_subfiles"] = std::to_string(m_Parameters.NumSubFiles);
+        }
+
+        m_DataTransportsParameters.push_back(dataTransportParams);
+    }
+    else
+    {
+        // Use same transport for data as metadata
+        m_DataTransportsParameters = m_IO.m_TransportsParameters;
+    }
+
     if (m_WriteToBB)
     {
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
@@ -1598,6 +1678,29 @@ void BP5Writer::InitMetadataTransports()
     m_TransportFactory.MkDirsBarrier({m_MetadataFileName}, m_IO.m_TransportsParameters,
                                      m_Parameters.NodeLocal || m_WriteToBB);
 
+    // Write s3.json sidecar so readers can auto-detect hybrid S3 storage
+    if (m_Comm.Rank() == 0 && !m_Parameters.DataTransport.empty())
+    {
+        std::string sidecarPath = m_Name + PathSeparator + "s3.json";
+        std::ofstream sf(sidecarPath);
+        if (sf.good())
+        {
+            sf << "{\n";
+            sf << "  \"version\": 1,\n";
+            sf << "  \"transport\": \"" << m_Parameters.DataTransport << "\"";
+            if (!m_Parameters.S3Endpoint.empty())
+            {
+                sf << ",\n  \"endpoint\": \"" << m_Parameters.S3Endpoint << "\"";
+            }
+            if (!m_Parameters.S3Bucket.empty())
+            {
+                sf << ",\n  \"bucket\": \"" << m_Parameters.S3Bucket << "\"";
+            }
+            sf << "\n}\n";
+            sf.close();
+        }
+    }
+
     /* Everyone opens its data file. Each aggregation chain opens
        one data file and does so in chain, not everyone at once */
     if (m_Parameters.AsyncOpen)
@@ -1606,12 +1709,20 @@ void BP5Writer::InitMetadataTransports()
         {
             m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
         }
+        for (size_t i = 0; i < m_DataTransportsParameters.size(); ++i)
+        {
+            m_DataTransportsParameters[i]["asyncopen"] = "true";
+        }
     }
     if (m_Parameters.DirectIO)
     {
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
             m_IO.m_TransportsParameters[i]["DirectIO"] = "true";
+        }
+        for (size_t i = 0; i < m_DataTransportsParameters.size(); ++i)
+        {
+            m_DataTransportsParameters[i]["DirectIO"] = "true";
         }
     }
 
@@ -1703,7 +1814,7 @@ void BP5Writer::InitTransports()
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
-                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_DataTransportsParameters);
             aggData.m_DrainSubStreamNames =
                 GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
@@ -1718,8 +1829,8 @@ void BP5Writer::InitTransports()
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
-        aggData.m_FileDataManager.MkDirsBarrier(
-            aggData.m_DrainSubStreamNames, m_IO.m_TransportsParameters, m_Parameters.NodeLocal);
+        aggData.m_FileDataManager.MkDirsBarrier(aggData.m_DrainSubStreamNames,
+                                                m_DataTransportsParameters, m_Parameters.NodeLocal);
     }
 
     helper::Comm openSyncComm;
@@ -1756,8 +1867,7 @@ void BP5Writer::InitTransports()
                 std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
             }
             aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                m_IO.m_TransportsParameters, true,
-                                                *DataWritingComm);
+                                                m_DataTransportsParameters, true, *DataWritingComm);
         }
     }
 
@@ -2239,6 +2349,17 @@ void BP5Writer::DoClose(const int transportIndex)
         }
     }
     FlushProfiler();
+
+    // Release transports now, rather than waiting for engine destruction.
+    // This ensures transports using external resources (like AWS SDK) are
+    // cleaned up while those resources are still available.
+    for (auto &aggPair : m_AggregatorSpecifics)
+    {
+        aggPair.second.m_FileDataManager.m_Transports.clear();
+    }
+    m_MetadataFile.reset();
+    m_MetaMetadataFile.reset();
+    m_MetadataIndexFile.reset();
 }
 
 void BP5Writer::FlushProfiler()

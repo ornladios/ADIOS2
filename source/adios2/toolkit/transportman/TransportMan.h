@@ -177,6 +177,13 @@ public:
     void FlushFiles(const int transportIndex = -1);
 
     /**
+     * Finalize current segment on file transports. For S3 multi-object mode,
+     * this uploads the current buffer as a numbered object. No-op for other
+     * transports.
+     */
+    void FinalizeSegment();
+
+    /**
      * Close file or files depending on transport index. Throws an exception
      * if transport is not a file when transportIndex > -1.
      * @param transportIndex -1: all transports, otherwise index in m_Transports

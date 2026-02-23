@@ -147,6 +147,7 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info)
         info->tokenChain->SendToken(nextWriterPos);
         AsyncWriteThread_TwoLevelShm_Aggregator(info);
         info->tokenChain->RecvToken();
+        info->tm->FinalizeSegment();
     }
     else
     {

@@ -68,6 +68,30 @@ order) is now always enabled. This means files written on big-endian systems
 can be read on little-endian systems and vice versa without any special build
 configuration.
 
+S3 Object Storage for BP5 Data
+-------------------------------
+
+BP5 can now write data files to S3-compatible object storage (Amazon S3, MinIO,
+Ceph, etc.) while keeping metadata on the local filesystem. This hybrid model
+provides cheap bulk storage for data with fast local metadata access.
+
+Set ``DataTransport=awssdk``, ``S3Endpoint``, and ``S3Bucket`` as engine
+parameters. Credentials are accepted as parameters or via standard AWS
+environment variables (``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``).
+
+Key features:
+
+- **Multi-object mode** (default): each data segment is a separate S3 object,
+  providing automatic crash recovery
+- **Async write**: automatically enabled for S3 transports so uploads overlap
+  with computation
+- **Append and AppendAfterSteps**: supported via segment discovery and
+  selective object deletion
+- **Stale object cleanup**: previous data objects are deleted on ``Open(Write)``
+- **s3.json sidecar**: written locally so readers auto-detect the S3 location
+
+See :ref:`BP5 S3 Object Storage<S3 Object Storage>` for configuration details.
+
 
 ===================
 What's new in 2.11?

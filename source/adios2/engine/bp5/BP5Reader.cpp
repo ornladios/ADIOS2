@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdio>
 #include <errno.h>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -1310,8 +1311,14 @@ bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &poll
 
 size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std::string &fileName,
                                   const TimePoint &timeoutInstant, const Seconds &pollSeconds,
-                                  std::string &lasterrmsg /*INOUT*/)
+                                  std::string &lasterrmsg /*INOUT*/,
+                                  std::shared_ptr<FilePool> filePool)
 {
+    // Use provided filePool or default to m_DataFiles
+    if (!filePool)
+    {
+        filePool = m_DataFiles;
+    }
     size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
     do
     {
@@ -1320,7 +1327,7 @@ size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std
             errno = 0;
             // if dataIsRemote, our filename is real and not in a tar file
             bool skipTarInfoParameter = m_dataIsRemote;
-            file = m_DataFiles->Acquire(fileName, skipTarInfoParameter);
+            file = filePool->Acquire(fileName, skipTarInfoParameter);
             flag = 0; // found file
             break;
         }
@@ -1353,7 +1360,7 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
         std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
 
         flag = OpenWithTimeout(m_MDIndexFile, metadataIndexFile, timeoutInstant, pollSeconds,
-                               lasterrmsg);
+                               lasterrmsg, m_MetadataFiles);
         if (flag == 0)
         {
             /* Open the metadata file */
@@ -1369,7 +1376,8 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFile, metadataFile, timeoutInstant, pollSeconds, lasterrmsg);
+            flag = OpenWithTimeout(m_MDFile, metadataFile, timeoutInstant, pollSeconds, lasterrmsg,
+                                   m_MetadataFiles);
             if (flag != 0)
             {
                 /* Close the metadata index table */
@@ -1391,7 +1399,7 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 }
 
                 flag = OpenWithTimeout(m_MetaMetadataFile, metametadataFile, timeoutInstant,
-                                       pollSeconds, lasterrmsg);
+                                       pollSeconds, lasterrmsg, m_MetadataFiles);
                 if (flag != 0)
                 {
                     /* Close the metametadata index table */
@@ -1492,8 +1500,138 @@ void BP5Reader::InitTransports()
                       << "\n    map size = " << m_TarInfoMap.size() << std::endl;
         }
     }
-    m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                             m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+
+    // Metadata files always use default local transport
+    m_MetadataFiles =
+        std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
+                                   m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+
+    // Auto-detect S3 hybrid storage via s3.json sidecar.
+    // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
+    // All ranks participate in the broadcast unconditionally so the collective doesn't deadlock.
+    if (m_Parameters.DataTransport.empty())
+    {
+        if (m_Comm.Rank() == 0)
+        {
+            std::string sidecarPath = m_Name + PathSeparator + "s3.json";
+            std::ifstream sf(sidecarPath);
+            if (sf.good())
+            {
+                std::string content((std::istreambuf_iterator<char>(sf)),
+                                    std::istreambuf_iterator<char>());
+                sf.close();
+
+                auto extractField = [&content](const std::string &key) -> std::string {
+                    std::string pattern = "\"" + key + "\": \"";
+                    auto pos = content.find(pattern);
+                    if (pos == std::string::npos)
+                    {
+                        pattern = "\"" + key + "\":\"";
+                        pos = content.find(pattern);
+                    }
+                    if (pos == std::string::npos)
+                    {
+                        return "";
+                    }
+                    pos += pattern.size();
+                    auto end = content.find("\"", pos);
+                    if (end == std::string::npos)
+                    {
+                        return "";
+                    }
+                    return content.substr(pos, end - pos);
+                };
+
+                m_Parameters.DataTransport = extractField("transport");
+                if (!m_Parameters.DataTransport.empty())
+                {
+                    if (m_Parameters.S3Endpoint.empty())
+                    {
+                        m_Parameters.S3Endpoint = extractField("endpoint");
+                    }
+                    if (m_Parameters.S3Bucket.empty())
+                    {
+                        m_Parameters.S3Bucket = extractField("bucket");
+                    }
+                    if (m_Parameters.verbose > 0)
+                    {
+                        std::cout << "BP5Reader: detected s3.json sidecar, DataTransport="
+                                  << m_Parameters.DataTransport << std::endl;
+                    }
+                }
+            }
+        }
+
+        // Broadcast sidecar results from rank 0 to all ranks.
+        // Every rank enters BroadcastValue so the collective is satisfied.
+        // len==0 means no sidecar was found; everyone skips the rest.
+        auto bcastString = [this](std::string &str) {
+            size_t len = m_Comm.BroadcastValue(str.size(), 0);
+            if (len > 0)
+            {
+                std::vector<char> buf(len);
+                if (m_Comm.Rank() == 0)
+                {
+                    std::copy(str.begin(), str.end(), buf.begin());
+                }
+                m_Comm.Bcast(buf.data(), len, 0);
+                if (m_Comm.Rank() != 0)
+                {
+                    str.assign(buf.begin(), buf.end());
+                }
+            }
+        };
+        bcastString(m_Parameters.DataTransport);
+        if (!m_Parameters.DataTransport.empty())
+        {
+            bcastString(m_Parameters.S3Endpoint);
+            bcastString(m_Parameters.S3Bucket);
+        }
+    }
+
+    // Set up data transport parameters - use different transport if DataTransport is specified
+    Params dataTransportParams;
+    if (!m_Parameters.DataTransport.empty())
+    {
+        // Using a different transport for data files (e.g., "awssdk" for S3)
+        dataTransportParams["transport"] = "file";
+        dataTransportParams["library"] = m_Parameters.DataTransport;
+
+        // Pass through S3-specific parameters if set
+        if (!m_Parameters.S3Endpoint.empty())
+        {
+            dataTransportParams["endpoint"] = m_Parameters.S3Endpoint;
+        }
+        if (!m_Parameters.S3Bucket.empty())
+        {
+            dataTransportParams["bucket"] = m_Parameters.S3Bucket;
+        }
+        if (!m_Parameters.S3AccessKeyID.empty())
+        {
+            dataTransportParams["accesskeyid"] = m_Parameters.S3AccessKeyID;
+        }
+        if (!m_Parameters.S3SecretKey.empty())
+        {
+            dataTransportParams["secretkey"] = m_Parameters.S3SecretKey;
+        }
+        if (!m_Parameters.S3SessionToken.empty())
+        {
+            dataTransportParams["sessiontoken"] = m_Parameters.S3SessionToken;
+        }
+        // Pass verbose level to transport
+        if (m_Parameters.verbose > 0)
+        {
+            dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
+        }
+
+        m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, dataTransportParams,
+                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+    }
+    else
+    {
+        // Same transport for both metadata and data
+        m_DataFiles = m_MetadataFiles;
+    }
 }
 
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
@@ -2106,12 +2244,19 @@ void BP5Reader::DoClose(const int transportIndex)
         EndStep();
     }
     FlushProfiler();
-    if (m_MDFile)
-        m_MDFile->Close();
-    if (m_MDIndexFile)
-        m_MDIndexFile->Close();
-    if (m_MetaMetadataFile)
-        m_MetaMetadataFile->Close();
+
+    // Release PoolableFile objects BEFORE their owning FilePools.
+    // PoolableFile destructor calls Release() on its pool, which locks
+    // the pool's mutex. If the pool is destroyed first, the mutex is invalid.
+    m_MDFile.reset();
+    m_MDIndexFile.reset();
+    m_MetaMetadataFile.reset();
+
+    // Now safe to release the file pools and their transports.
+    // This ensures transports using external resources (like AWS SDK)
+    // are cleaned up while those resources are still available.
+    m_DataFiles.reset();
+    m_MetadataFiles.reset();
 }
 
 #if defined(_WIN32)
