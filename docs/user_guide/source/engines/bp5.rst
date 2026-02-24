@@ -71,6 +71,10 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    #. **NumSubFiles**: The number of data files to write to in the *.bp/* directory. Used by *TwoLevelShm* and *DataSizeBased* aggregators.  For *TwoLevelShm* the number of files can be smaller then the number of aggregators, while for *DataSizeBased*, the number of aggregators and subfiles will always be the same (*NumSubFiles* is used if *NumAggregators* is not specified, and if neither are specified, the number of subfiles will be set to the number of nodes). The default is set to *NumAggregators*.
 
+   #. **EnableWriterRerouting**: This option can be turned on when *DataSizeBased* aggregation is enabled. The goal of writer rerouting is to provide resilience in the presence of external application interference that would otherwise increase wall time to write. When writer rerouting is turned on, writer chains are built as usual with *DataSizeBased* aggregation, and if some chains finish writing before others, then ranks from unfinished chains are rerouted to write to subfiles associated with chains that have completed. To avoid situations where subfiles become too unbalanced in size, a limiting threshold ratio can be configured using the parameter *ReroutingThresholdFactor*. See :ref:`Aggregation in BP5`. The default is *off*/*false*.
+
+   #. **ReroutingThresholdFactor**: This option specifies a ratio beyond which fast-writing chains/subfiles cannot accept more rerouted ranks writing to them. The ratio is specified as a fraction of the originally scheduled data size, so a value of 0.5, for example, indicates that once a subfile contains half again the amount of data originally scheduled to be written to it, it will no longer accept rerouted data. See :ref:`Aggregation in BP5`.
+
    #. **StripeSize**: The data blocks of different processes are aligned to this size (default is 4096 bytes) in the files. Its purpose is to avoid multiple processes to write to the same file system block and potentially slow down the write.  
 
    #. **MaxShmSize**: Upper limit for how much shared memory an aggregator process in *TwoLevelShm* can allocate. For optimum performance, this should be at least *2xM +1KB* where *M* is the maximum size any process writes in a single step. However, there is no point in allowing for more than 4GB. The default is 4GB.
@@ -170,6 +174,8 @@ This engine allows the user to fine tune the buffering operations through the fo
  NumAggregators                  integer >= 1          **0 (one file per compute node)**
  AggregatorRatio                 integer >= 1          not used unless set
  NumSubFiles                     integer >= 1          **=NumAggregators**, used when *AggregationType=TwoLevelShm* or *AggregationType=DataSizeBased*
+ EnableWriterRerouting           boolean               **off**, on, true, false
+ ReroutingThresholdFactor        float > 0             **0.3**
  StripeSize                      integer+units         **4KB**
  MaxShmSize                      integer+units         **4294762496**
  BufferVType                     string                **chunk**, malloc
