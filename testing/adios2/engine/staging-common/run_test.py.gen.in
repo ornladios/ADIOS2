@@ -18,6 +18,7 @@ is_file_engine = {"bpfile": True,
                   "bp4": True,
                   "bp5": True,
                   "bp4_stream": False,
+                  "bp5_stream": False,
                   "hdfmixer": True,
                   "dataman": False,
                   "ssc": False,
@@ -340,9 +341,11 @@ writer_executable = os.path.abspath(
 writer_command_line = writer_exec_cmd
 canonical_engine = args.engine
 if (args.engine.lower() == 'bp4_stream') :
-    # the bp4_stream engine name is used to indicate this test should run in 
+    # the bp4_stream engine name is used to indicate this test should run in
     # streaming mode, but we drop the 'streaming' name for the invocations.
     canonical_engine = 'bp4'
+if (args.engine.lower() == 'bp5_stream') :
+    canonical_engine = 'bp5'
 writer_command_line.extend([writer_executable, canonical_engine, args.filename])
 
 if args.warg is not None:

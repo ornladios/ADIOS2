@@ -1835,11 +1835,26 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
 
     while (position < buffer.size() && metadataSizeToRead < maxMetadataSizeInMemory)
     {
+        /* Stop on any partial record; it will be re-read next poll */
+        const size_t recordHeaderSize = sizeof(unsigned char) + sizeof(uint64_t);
+        if (position + recordHeaderSize > buffer.size())
+        {
+            break;
+        }
 
+        const size_t savedPosition = position;
         const unsigned char recordID =
             helper::ReadValue<unsigned char>(buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t recordLength =
             helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+
+        if (position + recordLength > buffer.size())
+        {
+            /* Incomplete record body; rewind for next poll */
+            position = savedPosition;
+            break;
+        }
+
         const size_t dbgRecordStartPosition = position;
 
         switch (recordID)

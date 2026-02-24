@@ -405,16 +405,8 @@ void MetadataCalculateMinFileSize(const format::BP4Deserializer &m_BP4Deserializ
         idxsize -= m_BP4Deserializer.m_IndexRecordSize;
     }
 
-    if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
-    {
-        helper::Throw<std::runtime_error>("Engine", "BP4Reader", "MetadataCalculateMinFileSize",
-                                          "ADIOS Index file " + IdxFileName +
-                                              " is assumed to always contain n*" +
-                                              std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
-                                              " byte-length records. "
-                                              "Right now the length of index buffer is " +
-                                              std::to_string(idxsize) + " bytes.");
-    }
+    /* Ignore any trailing partial record; it will be re-read next poll */
+    idxsize -= idxsize % m_BP4Deserializer.m_IndexRecordSize;
 
     const size_t nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
     if (nTotalRecords == 0)
@@ -449,15 +441,8 @@ uint64_t MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deseria
                                      const std::string &IdxFileName, bool hasHeader)
 {
     size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
-    if (idxsize % 64 != 0)
-    {
-        helper::Throw<std::runtime_error>(
-            "Engine", "BP4Reader", "MetadataExpectedMinFileSize",
-            "ADIOS Index file " + IdxFileName +
-                " is assumed to always contain n*64 byte-length records. "
-                "The file size now is " +
-                std::to_string(idxsize) + " bytes.");
-    }
+    /* Ignore any trailing partial record */
+    idxsize -= idxsize % 64;
     if ((hasHeader &&
          idxsize < m_BP4Deserializer.m_IndexHeaderSize + m_BP4Deserializer.m_IndexRecordSize) ||
         idxsize < m_BP4Deserializer.m_IndexRecordSize)
@@ -476,8 +461,10 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollS
     // Put all metadata in buffer
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        /* Read metadata index table into memory */
-        const size_t metadataIndexFileSize = m_MDIndexFileManager.GetFileSize(0);
+        /* Read metadata index table, ignoring any trailing partial record */
+        const size_t rawIndexFileSize = m_MDIndexFileManager.GetFileSize(0);
+        const size_t metadataIndexFileSize =
+            rawIndexFileSize - rawIndexFileSize % m_BP4Deserializer.m_IndexRecordSize;
         if (metadataIndexFileSize > 0)
         {
             m_BP4Deserializer.m_MetadataIndex.Resize(metadataIndexFileSize,
