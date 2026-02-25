@@ -604,7 +604,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 adios2::DataType TypeOfVar = io.InquireVariableType(vr.VarName);
                 if (TypeOfVar == adios2::DataType::None)
                 {
-                    m_FilePoolPtr->Return(poolEntry);
                     RespondErr("batchget: unknown variable", EINVAL);
                     return;
                 }
@@ -633,7 +632,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             m_responseBuffer = (char *)malloc(m_responseBufferSize);
             if (!m_responseBuffer)
             {
-                m_FilePoolPtr->Return(poolEntry);
                 RespondErr("batchget: allocation failed", ENOMEM);
                 return;
             }
@@ -677,9 +675,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 writePtr += dataSizes[v];
             }
 
-            m_FilePoolPtr->Return(poolEntry);
-
             // Send response via detached thread (same pattern as single get)
+            // poolEntry auto-returns to pool when it goes out of scope
             pthread_t tid;
             XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "batchget");
         }
@@ -793,15 +790,18 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         //  object has a pointer to the parent's object.
         try
         {
-            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
-            pthread_t tid;
-            auto engine = poolEntry.file->m_engine;
-            auto io = poolEntry.file->m_io;
-            adios2::Box<adios2::Dims> varSel(Start, Count);
-            adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
-            if (TypeOfVar == adios2::DataType::None)
             {
-            }
+                // Scope the poolEntry so it auto-returns to pool on exit
+                auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
+                auto engine = poolEntry.file->m_engine;
+                auto io = poolEntry.file->m_io;
+                adios2::Box<adios2::Dims> varSel(Start, Count);
+                adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
+                if (TypeOfVar == adios2::DataType::None)
+                {
+                    RespondErr("get: unknown variable", EINVAL);
+                    return;
+                }
 #define GET(T)                                                                                     \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
@@ -819,11 +819,12 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         else                                                                                       \
             m_responseBuffer = &m_respData[0];                                                     \
         engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                                \
-        m_FilePoolPtr->Return(poolEntry);                                                          \
-        XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
-            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
+            } // poolEntry returned to pool here
+            pthread_t tid;
+            XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");
         }
         catch (const std::exception &exc)
         {

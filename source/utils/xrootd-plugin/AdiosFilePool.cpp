@@ -30,15 +30,6 @@ ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMa
     return PoolEntry{file, subpool};
 }
 
-void ADIOSFilePool::Return(PoolEntry &Entry)
-{
-    // No pool_mutex needed — operate directly on the SubPool via the
-    // shared_ptr in the PoolEntry.
-    Entry.subpool->Return(Entry.file);
-    Entry.file = nullptr;
-    Entry.subpool.reset();
-}
-
 AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMajorArrays)
 {
     std::lock_guard<std::mutex> guard(subpool_mutex);

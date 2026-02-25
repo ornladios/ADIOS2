@@ -97,17 +97,49 @@ public:
         void Return(AnonADIOSFile *Entry);
     };
 
+    // RAII wrapper: automatically returns the file to the pool on scope exit.
+    // Move-only; moving transfers ownership (source becomes empty).
     struct PoolEntry
     {
         AnonADIOSFile *file = nullptr;
         std::shared_ptr<SubPool> subpool;
+
+        PoolEntry() = default;
+        PoolEntry(AnonADIOSFile *f, std::shared_ptr<SubPool> sp) : file(f), subpool(sp) {}
+        ~PoolEntry()
+        {
+            if (file && subpool)
+            {
+                subpool->Return(file);
+            }
+        }
+        // Move-only
+        PoolEntry(PoolEntry &&o) noexcept : file(o.file), subpool(std::move(o.subpool))
+        {
+            o.file = nullptr;
+        }
+        PoolEntry &operator=(PoolEntry &&o) noexcept
+        {
+            if (this != &o)
+            {
+                if (file && subpool)
+                {
+                    subpool->Return(file);
+                }
+                file = o.file;
+                subpool = std::move(o.subpool);
+                o.file = nullptr;
+            }
+            return *this;
+        }
+        PoolEntry(const PoolEntry &) = delete;
+        PoolEntry &operator=(const PoolEntry &) = delete;
     };
 
     static ADIOSFilePool &getInstance();
     ~ADIOSFilePool();
 
     PoolEntry GetFree(std::string Filename, bool RowMajorArrays);
-    void Return(PoolEntry &Entry);
     void FlushUnused();
 
 private:
