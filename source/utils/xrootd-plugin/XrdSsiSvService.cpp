@@ -828,7 +828,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         catch (const std::exception &exc)
         {
-            RespondErr("Returning exception for Get ", EINVAL);
+            std::string errMsg = std::string("Exception in Get: ") + exc.what();
+            RespondErr(errMsg.c_str(), EINVAL);
         }
         // detached thread. Memory should not be deallocated yet,
         // only if a thread is finished
