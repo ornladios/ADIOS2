@@ -451,7 +451,7 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
     for (size_t b = 0; b < nBatches; b++)
     {
         size_t startIdx = b * subBatchSize;
-        size_t count = std::min(subBatchSize, requests.size() - startIdx);
+        size_t count = (std::min)(subBatchSize, requests.size() - startIdx);
 
         std::vector<BatchGetRequest> subRequests(requests.begin() + startIdx,
                                                  requests.begin() + startIdx + count);
