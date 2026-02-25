@@ -114,6 +114,11 @@ public:
     GetHandle Read(size_t Start, size_t Size, void *Dest) override;
 
     /**
+     * @brief Batch multiple Get requests into a single HTTP round-trip
+     */
+    bool BatchGet(const std::vector<BatchGetRequest> &requests) override;
+
+    /**
      * @brief Close the remote connection
      */
     void Close() override;
@@ -166,11 +171,16 @@ private:
     };
 
     /**
-     * @brief Build the SSI request string
+     * @brief Build the SSI request string for a single Get
      */
     std::string BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
                                    size_t BlockID, const Dims &Count, const Dims &Start,
                                    const Accuracy &accuracy);
+
+    /**
+     * @brief Build the SSI request string for a batch of Gets
+     */
+    std::string BuildBatchRequestString(const std::vector<BatchGetRequest> &requests);
 
     /**
      * @brief Perform an HTTP POST request

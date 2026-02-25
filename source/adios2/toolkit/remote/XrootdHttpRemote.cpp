@@ -351,6 +351,134 @@ bool XrootdHttpRemote::HttpPost(const std::string &endpoint, const std::string &
 }
 
 /******************************************************************************/
+/*              B u i l d B a t c h R e q u e s t S t r i n g                 */
+/******************************************************************************/
+
+std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGetRequest> &requests)
+{
+    std::ostringstream reqStream;
+
+#ifdef ADIOS2_HAVE_CURL
+    std::string encodedFilename = UrlEncode(m_Curl, m_Filename);
+#else
+    std::string encodedFilename = m_Filename;
+#endif
+
+    // Shared header: command, filename, array order, number of variables
+    reqStream << "batchget Filename=" << encodedFilename;
+    reqStream << "&RMOrder=" << (m_RowMajorOrdering ? 1 : 0);
+    reqStream << "&NVars=" << requests.size();
+
+    // Per-variable sections, pipe-delimited
+    for (const auto &req : requests)
+    {
+#ifdef ADIOS2_HAVE_CURL
+        std::string encodedVarName = UrlEncode(m_Curl, std::string(req.VarName));
+#else
+        std::string encodedVarName = std::string(req.VarName);
+#endif
+        reqStream << "|Varname=" << encodedVarName;
+        reqStream << "&StepStart=" << req.Step;
+        reqStream << "&StepCount=" << req.StepCount;
+        reqStream << "&Block=" << req.BlockID;
+        reqStream << "&Dims=" << req.Count.size();
+        for (const auto &c : req.Count)
+        {
+            reqStream << "&Count=" << c;
+        }
+        for (const auto &s : req.Start)
+        {
+            reqStream << "&Start=" << s;
+        }
+        reqStream << "&AccuracyError=" << req.accuracy.error;
+        reqStream << "&AccuracyNorm=" << req.accuracy.norm;
+        reqStream << "&AccuracyRelative=" << (req.accuracy.relative ? 1 : 0);
+    }
+
+    return reqStream.str();
+}
+
+/******************************************************************************/
+/*                            B a t c h G e t                                 */
+/******************************************************************************/
+
+bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
+{
+    if (!m_OpenSuccess || requests.empty())
+    {
+        return false;
+    }
+
+    std::string requestData = BuildBatchRequestString(requests);
+
+    std::vector<char> responseData;
+    std::string errorMsg;
+
+    bool success = HttpPost(m_BaseUrl, requestData, responseData, errorMsg);
+
+    if (!success)
+    {
+        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                    "BatchGet failed: " + errorMsg + " (falling back to individual Gets)",
+                    helper::LogMode::INFO);
+        return false;
+    }
+
+    // Parse binary response: [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
+    size_t nVars = requests.size();
+    size_t headerSize = sizeof(uint64_t) + nVars * sizeof(uint64_t);
+
+    if (responseData.size() < headerSize)
+    {
+        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                    "Response too small for header, falling back", helper::LogMode::INFO);
+        return false;
+    }
+
+    const char *ptr = responseData.data();
+    uint64_t responseNVars;
+    memcpy(&responseNVars, ptr, sizeof(uint64_t));
+    ptr += sizeof(uint64_t);
+
+    if (responseNVars != nVars)
+    {
+        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                    "Response NVars mismatch, falling back", helper::LogMode::INFO);
+        return false;
+    }
+
+    // Read the size table
+    std::vector<uint64_t> sizes(nVars);
+    memcpy(sizes.data(), ptr, nVars * sizeof(uint64_t));
+    ptr += nVars * sizeof(uint64_t);
+
+    // Verify total size
+    uint64_t totalDataSize = 0;
+    for (auto s : sizes)
+    {
+        totalDataSize += s;
+    }
+    if (responseData.size() != headerSize + totalDataSize)
+    {
+        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                    "Response size mismatch, falling back", helper::LogMode::INFO);
+        return false;
+    }
+
+    // Demux data into destination buffers
+    for (size_t i = 0; i < nVars; i++)
+    {
+        if (requests[i].dest && sizes[i] > 0)
+        {
+            memcpy(requests[i].dest, ptr, sizes[i]);
+        }
+        ptr += sizes[i];
+    }
+
+    return true;
+}
+
+/******************************************************************************/
 /*                                  G e t                                     */
 /******************************************************************************/
 

@@ -834,8 +834,25 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
 
 void BP5Reader::PerformRemoteGets()
 {
-    // TP startGenerate = NOW();
     auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+
+    // Try batch get first — single HTTP round-trip for all variables
+    {
+        std::vector<Remote::BatchGetRequest> batchReqs;
+        batchReqs.reserve(GetRequests.size());
+        for (auto &Req : GetRequests)
+        {
+            VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+            batchReqs.push_back({Req.VarName, Req.RelStep, Req.StepCount, Req.BlockID, Req.Count,
+                                 Req.Start, VB->m_AccuracyRequested, Req.Data});
+        }
+        if (m_Remote->BatchGet(batchReqs))
+        {
+            return;
+        }
+    }
+
+    // Fall back to individual Gets
     std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
@@ -846,8 +863,6 @@ void BP5Reader::PerformRemoteGets()
     }
 
     size_t nHandles = handles.size();
-    // TP endGenerate = NOW();
-    // double generateTime = DURATION(startGenerate, endGenerate);
 
     size_t nextHandle = 0;
     std::mutex mutexReadRequests;
@@ -872,8 +887,6 @@ void BP5Reader::PerformRemoteGets()
                 break;
             }
             m_Remote->WaitForGet(handles[reqidx]);
-            // std::cout << "BP5Reader::PerformRemoteGets: thread " << threadID
-            //           << " done with response " << reqidx << std::endl;
         }
         return true;
     };
@@ -883,17 +896,13 @@ void BP5Reader::PerformRemoteGets()
         size_t nThreads = (m_Threads < nHandles ? m_Threads : nHandles);
         std::vector<std::future<bool>> futures(nThreads - 1);
 
-        // launch Threads-1 threads to process subsets of handles,
-        // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
             futures[tid] = std::async(std::launch::async, lf_WaitForGet, tid + 1);
         }
 
-        // main thread runs last subset of reads
         lf_WaitForGet(0);
 
-        // wait for all async threads
         for (auto &f : futures)
         {
             f.get();
