@@ -16,4 +16,10 @@ if(ADIOS2_HAVE_Sodium)
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
 )
+
+  add_executable(adios2_seal_keygen SealedKeyGen.cpp)
+  target_link_libraries(adios2_seal_keygen sodium)
+  install(TARGETS adios2_seal_keygen
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
+)
 endif()
