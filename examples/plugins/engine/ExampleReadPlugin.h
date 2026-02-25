@@ -20,12 +20,7 @@
 #include <fstream>
 #include <string>
 
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/common/ADIOSTypes.h"
-#include "adios2/core/IO.h"
-#include "adios2/engine/plugin/PluginEngineInterface.h"
-#include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosString.h"
+#include "adios2/plugin/PluginEngineInterface.h"
 
 namespace adios2
 {
@@ -36,8 +31,7 @@ namespace plugin
 class ExampleReadPlugin : public PluginEngineInterface
 {
 public:
-    ExampleReadPlugin(core::IO &io, const std::string &name, const Mode openMode,
-                      helper::Comm comm);
+    ExampleReadPlugin(adios2::IO io, const std::string &name, const Mode openMode);
     virtual ~ExampleReadPlugin();
 
     /** Indicates beginning of a step **/
@@ -57,8 +51,8 @@ protected:
     void Init() override;
 
 #define declare(T)                                                                                 \
-    void DoGetSync(core::Variable<T> &variable, T *values) override;                               \
-    void DoGetDeferred(core::Variable<T> &variable, T *values) override;
+    void DoGetSync(adios2::Variable<T> variable, T *values) override;                              \
+    void DoGetDeferred(adios2::Variable<T> variable, T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
@@ -73,7 +67,7 @@ private:
     void AddVariable(const std::string &name, Dims shape, Dims start, Dims count);
 
     template <class T>
-    void ReadVariable(core::Variable<T> &variable, T *values);
+    void ReadVariable(adios2::Variable<T> variable, T *values);
 };
 
 } // end namespace plugin
@@ -82,8 +76,7 @@ private:
 extern "C" {
 
 PLUGIN_ENGINE_READ_EXPORT adios2::plugin::ExampleReadPlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name, const adios2::Mode mode,
-             adios2::helper::Comm comm);
+EngineCreate(adios2::IO io, const std::string &name, const adios2::Mode mode);
 PLUGIN_ENGINE_READ_EXPORT void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
 }
 

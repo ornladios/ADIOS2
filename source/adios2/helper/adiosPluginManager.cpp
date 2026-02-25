@@ -11,11 +11,11 @@
 #include "adios2/helper/adiosPluginManager.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "adios2/engine/plugin/PluginEngineInterface.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosDynamicBinder.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
+#include "adios2/plugin/PluginEngineInterface.h"
 
 #include <adios2sys/SystemTools.hxx>
 
