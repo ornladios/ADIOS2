@@ -136,9 +136,6 @@ private:
     std::string UrlEncode(const std::string &str);
     CURL *CreateEasyHandle(AsyncGet *asyncOp, const std::string &url, const std::string &postData);
 
-    bool HttpPost(const std::string &endpoint, const std::string &requestData,
-                  std::vector<char> &responseData, std::string &errorMsg);
-
     std::string m_BaseUrl;
     std::string m_Filename;
     Mode m_Mode;

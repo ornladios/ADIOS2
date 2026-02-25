@@ -386,82 +386,6 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
 #endif
 }
 
-bool XrootdHttpRemote::HttpPost(const std::string &endpoint, const std::string &requestData,
-                                std::vector<char> &responseData, std::string &errorMsg)
-{
-#ifdef ADIOS2_HAVE_CURL
-    CURL *curl = curl_easy_init();
-    if (!curl)
-    {
-        errorMsg = "Failed to create CURL handle";
-        return false;
-    }
-
-    curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestData.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestData.length()));
-
-    responseData.clear();
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
-
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, m_ConnectTimeout);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, m_RequestTimeout);
-
-    if (m_UseHttps)
-    {
-        if (!m_VerifySSL)
-        {
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        }
-        else
-        {
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-            if (!m_CACertPath.empty())
-                curl_easy_setopt(curl, CURLOPT_CAINFO, m_CACertPath.c_str());
-        }
-    }
-
-    struct curl_slist *headers = nullptr;
-    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    CURLcode res = curl_easy_perform(curl);
-
-    curl_slist_free_all(headers);
-
-    if (res != CURLE_OK)
-    {
-        errorMsg = curl_easy_strerror(res);
-        curl_easy_cleanup(curl);
-        return false;
-    }
-
-    long httpCode = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-    curl_easy_cleanup(curl);
-
-    if (httpCode != 200 && httpCode != 201)
-    {
-        std::ostringstream ss;
-        ss << "HTTP error " << httpCode;
-        if (!responseData.empty())
-        {
-            ss << ": " << std::string(responseData.begin(), responseData.end());
-        }
-        errorMsg = ss.str();
-        return false;
-    }
-
-    return true;
-#else
-    errorMsg = "ADIOS2 was not built with CURL support";
-    return false;
-#endif
-}
-
 std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGetRequest> &requests)
 {
     std::ostringstream reqStream;
@@ -498,70 +422,146 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         return false;
     }
 
-    std::string requestData = BuildBatchRequestString(requests);
-
-    std::vector<char> responseData;
-    std::string errorMsg;
-
-    bool success = HttpPost(m_BaseUrl, requestData, responseData, errorMsg);
-
-    if (!success)
+    // Allow disabling batch get for performance comparison
+    static bool disabled = (getenv("ADIOS2_DISABLE_BATCHGET") != nullptr);
+    if (disabled)
     {
-        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                    "BatchGet failed: " + errorMsg + " (falling back to individual Gets)",
-                    helper::LogMode::INFO);
         return false;
     }
 
-    // Parse binary response: [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
-    size_t nVars = requests.size();
-    size_t headerSize = sizeof(uint64_t) + nVars * sizeof(uint64_t);
+#ifdef ADIOS2_HAVE_CURL
+    // Split requests into sub-batches for server-side parallelism.
+    // Each sub-batch becomes a separate HTTP POST handled by its own
+    // server thread, giving us parallelism without individual-Get overhead.
+    const size_t subBatchSize = 10;
+    size_t nBatches = (requests.size() + subBatchSize - 1) / subBatchSize;
 
-    if (responseData.size() < headerSize)
+    CurlMultiPool &pool = CurlMultiPool::getInstance();
+
+    // Track each sub-batch: its offset into requests[], count, and async state
+    struct SubBatch
     {
-        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                    "Response too small for header, falling back", helper::LogMode::INFO);
-        return false;
-    }
+        size_t startIdx;
+        size_t count;
+        AsyncGet *asyncOp;
+    };
+    std::vector<SubBatch> subBatches;
+    subBatches.reserve(nBatches);
 
-    const char *ptr = responseData.data();
-    uint64_t responseNVars;
-    memcpy(&responseNVars, ptr, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
-
-    if (responseNVars != nVars)
+    for (size_t b = 0; b < nBatches; b++)
     {
-        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                    "Response NVars mismatch, falling back", helper::LogMode::INFO);
-        return false;
-    }
+        size_t startIdx = b * subBatchSize;
+        size_t count = std::min(subBatchSize, requests.size() - startIdx);
 
-    std::vector<uint64_t> sizes(nVars);
-    memcpy(sizes.data(), ptr, nVars * sizeof(uint64_t));
-    ptr += nVars * sizeof(uint64_t);
+        std::vector<BatchGetRequest> subRequests(requests.begin() + startIdx,
+                                                 requests.begin() + startIdx + count);
+        std::string postData = BuildBatchRequestString(subRequests);
 
-    uint64_t totalDataSize = 0;
-    for (auto s : sizes)
-    {
-        totalDataSize += s;
-    }
-    if (responseData.size() != headerSize + totalDataSize)
-    {
-        helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                    "Response size mismatch, falling back", helper::LogMode::INFO);
-        return false;
-    }
-
-    for (size_t i = 0; i < nVars; i++)
-    {
-        if (requests[i].dest && sizes[i] > 0)
+        AsyncGet *asyncOp = new AsyncGet();
+        CURL *easy = CreateEasyHandle(asyncOp, m_BaseUrl, postData);
+        if (!easy)
         {
-            memcpy(requests[i].dest, ptr, sizes[i]);
+            delete asyncOp;
+            // Wait for already-submitted sub-batches before returning
+            for (auto &sb : subBatches)
+            {
+                sb.asyncOp->promise.get_future().get();
+                delete sb.asyncOp;
+            }
+            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                        "Failed to create CURL handle for sub-batch", helper::LogMode::INFO);
+            return false;
         }
-        ptr += sizes[i];
+
+        pool.Submit(easy, asyncOp);
+        subBatches.push_back({startIdx, count, asyncOp});
     }
 
-    return true;
+    // Wait for all sub-batches and parse responses
+    bool allOk = true;
+    for (auto &sb : subBatches)
+    {
+        bool success = sb.asyncOp->promise.get_future().get();
+
+        if (!success || !allOk)
+        {
+            if (!success && allOk)
+            {
+                helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                            "Sub-batch failed: " + sb.asyncOp->errorMsg +
+                                " (falling back to individual Gets)",
+                            helper::LogMode::INFO);
+            }
+            allOk = false;
+            delete sb.asyncOp;
+            continue;
+        }
+
+        // Parse binary response:
+        // [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
+        auto &responseData = sb.asyncOp->responseData;
+        size_t nVars = sb.count;
+        size_t headerSize = sizeof(uint64_t) + nVars * sizeof(uint64_t);
+
+        if (responseData.size() < headerSize)
+        {
+            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                        "Sub-batch response too small for header", helper::LogMode::INFO);
+            allOk = false;
+            delete sb.asyncOp;
+            continue;
+        }
+
+        const char *ptr = responseData.data();
+        uint64_t responseNVars = 0;
+        memcpy(&responseNVars, ptr, sizeof(uint64_t));
+        ptr += sizeof(uint64_t);
+
+        if (responseNVars != nVars)
+        {
+            helper::Log("Remote", "XrootdHttpRemote", "BatchGet", "Sub-batch NVars mismatch",
+                        helper::LogMode::INFO);
+            allOk = false;
+            delete sb.asyncOp;
+            continue;
+        }
+
+        std::vector<uint64_t> sizes(nVars);
+        memcpy(sizes.data(), ptr, nVars * sizeof(uint64_t));
+        ptr += nVars * sizeof(uint64_t);
+
+        uint64_t totalDataSize = 0;
+        for (auto s : sizes)
+        {
+            totalDataSize += s;
+        }
+        if (responseData.size() != headerSize + totalDataSize)
+        {
+            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                        "Sub-batch response size mismatch", helper::LogMode::INFO);
+            allOk = false;
+            delete sb.asyncOp;
+            continue;
+        }
+
+        for (size_t i = 0; i < nVars; i++)
+        {
+            if (requests[sb.startIdx + i].dest && sizes[i] > 0)
+            {
+                memcpy(requests[sb.startIdx + i].dest, ptr, sizes[i]);
+            }
+            ptr += sizes[i];
+        }
+
+        delete sb.asyncOp;
+    }
+
+    return allOk;
+#else
+    helper::Log("Remote", "XrootdHttpRemote", "BatchGet", "ADIOS2 was not built with CURL support",
+                helper::LogMode::WARNING);
+    return false;
+#endif
 }
 
 Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t StepCount,
