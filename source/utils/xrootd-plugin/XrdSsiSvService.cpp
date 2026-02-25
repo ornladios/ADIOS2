@@ -862,10 +862,7 @@ int XrdSsiSvService::Copy2Buff(char *dest, int dsz, const char *src, int ssz)
 /*                               R e s p o n d                                */
 /******************************************************************************/
 
-void XrdSsiSvService::Respond(const char *rData, const char *mData)
-{
-    throw std::logic_error("Respond shouldn't be called");
-}
+void XrdSsiSvService::Respond(const char *rData, const char *mData) { AdiosRespond(rData, mData); }
 
 void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
 {
