@@ -83,7 +83,11 @@ void FileStdio::Open(const std::string &name, const Mode openMode, const bool as
         break;
     case Mode::Append:
         errno = 0;
-        m_File = std::fopen(name.c_str(), "rwb");
+        m_File = std::fopen(name.c_str(), "r+b");
+        if (!m_File)
+        {
+            m_File = std::fopen(name.c_str(), "w+b");
+        }
         std::fseek(m_File, 0, SEEK_END);
         break;
     case Mode::Read:
@@ -137,7 +141,11 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode, const helper::
         break;
     case Mode::Append:
         errno = 0;
-        m_File = std::fopen(name.c_str(), "rwb");
+        m_File = std::fopen(name.c_str(), "r+b");
+        if (!m_File)
+        {
+            m_File = std::fopen(name.c_str(), "w+b");
+        }
         std::fseek(m_File, 0, SEEK_END);
         break;
     case Mode::Read:

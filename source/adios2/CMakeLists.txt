@@ -19,6 +19,7 @@ add_library(adios2_core
   core/Span.cpp core/Span.tcc
   core/Group.cpp core/Group.tcc
   core/Info.cpp
+  core/Selection.cpp
 
   # operator
   operator/OperatorFactory.cpp

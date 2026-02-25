@@ -16,6 +16,10 @@ readonly paths="
 
 extract_source () {
     git_archive
+    pushd "$extractdir/$name-reduced"
+    rm -rf ./scripts/
+    rm -rf .github/
+    popd
 }
 
 . "${BASH_SOURCE%/*}/../update-common.sh"

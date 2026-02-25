@@ -515,8 +515,7 @@ static FMStructDescRec TimestepMetadataDistributionStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
-    {"ReturnMetadataInfo", ReturnMetadataInfoList, sizeof(struct _TimestepMetadataDistributionMsg),
-     NULL},
+    {"ReturnMetadataInfo", ReturnMetadataInfoList, sizeof(struct _ReturnMetadataInfo), NULL},
     {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
     {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},

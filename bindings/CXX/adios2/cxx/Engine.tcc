@@ -12,8 +12,10 @@
 #define ADIOS2_BINDINGS_CXX_CXX_ENGINE_TCC_
 
 #include "Engine.h"
+#include "Selection.h"
 
 #include "adios2/core/Engine.h"
+#include "adios2/core/Selection.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 
@@ -278,6 +280,33 @@ std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> variable) const
                                     "for variable in call to Engine::GetAbsoluteSteps");
 
     return m_Engine->GetAbsoluteSteps<IOType>(*variable.m_Variable);
+}
+
+//=============================================================================
+// Selection-based Get() implementations
+//=============================================================================
+
+template <class T>
+void Engine::Get(Variable<T> variable, T *data, const Selection &selection, const Mode launch)
+{
+    using IOType = typename TypeInfo<T>::IOType;
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get with Selection");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get with Selection");
+    m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType *>(data),
+                  selection.GetCoreSelection(), launch);
+}
+
+template <class T>
+void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Selection &selection,
+                 const Mode launch)
+{
+    using IOType = typename TypeInfo<T>::IOType;
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get with Selection");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get with Selection");
+    m_Engine->Get(*variable.m_Variable, reinterpret_cast<std::vector<IOType> &>(dataV),
+                  selection.GetCoreSelection(), launch);
 }
 
 } // end namespace adios2

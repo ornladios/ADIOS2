@@ -1,4 +1,5 @@
 version: 2
+enable-beta-ecosystems: true
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -8,7 +9,14 @@ updates:
       all-actions:
         patterns: [ "*" ]
     assignees:
-      - vicentebolea
+      - infrastructure
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    security-updates-only: true
+    assignees:
+      - infrastructure
   - package-ecosystem: "docker"
     directories:
       - "/scripts/ci/images"
@@ -16,5 +24,14 @@ updates:
       - "/scripts/ci/images/formatting"
     schedule:
       interval: "weekly"
+    security-updates-only: true
     assignees:
-      - vicentebolea
+      - infrastructure
+  - package-ecosystem: "conda"
+    directory: "/docs/"
+    schedule:
+      interval: "weekly"
+    security-updates-only: true
+    assignees:
+      - infrastructure
+

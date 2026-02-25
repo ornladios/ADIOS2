@@ -13,6 +13,7 @@ add_library(adios2_cxx
   adios2/cxx/IO.tcc
   adios2/cxx/Operator.cpp
   adios2/cxx/Query.cpp
+  adios2/cxx/Selection.cpp
   adios2/cxx/Types.cpp
   adios2/cxx/Types.tcc
   adios2/cxx/Variable.cpp
@@ -156,6 +157,7 @@ install(
         adios2/cxx/KokkosView.h
         adios2/cxx/Operator.h
         adios2/cxx/Query.h
+        adios2/cxx/Selection.h
         adios2/cxx/Types.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx
   COMPONENT adios2_cxx-development

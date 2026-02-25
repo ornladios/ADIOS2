@@ -15,6 +15,7 @@
 #include <cstring>
 #include <string>
 
+#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
@@ -619,11 +620,55 @@ void SstReader::Init()
         }                                                                                          \
         if (m_WriterMarshalMethod == SstMarshalBP5)                                                \
         {                                                                                          \
-            m_BP5Deserializer->QueueGet(variable, data);                                           \
+            auto sel = core::InferSelection(variable);                                             \
+            m_BP5Deserializer->QueueGet(variable, data, sel);                                      \
         }                                                                                          \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 #undef declare_gets
+
+#define declare_gets_selection(T)                                                                  \
+    void SstReader::DoGetSync(Variable<T> &variable, T *data, const Selection &selection)          \
+    {                                                                                              \
+        if (m_BetweenStepPairs == false)                                                           \
+        {                                                                                          \
+            helper::Throw<std::logic_error>("Engine", "SstReader", "DoGetSync",                    \
+                                            "When using the SST engine in ADIOS2, "                \
+                                            "Get() calls must appear between "                     \
+                                            "BeginStep/EndStep pairs");                            \
+        }                                                                                          \
+        if (m_WriterMarshalMethod != SstMarshalBP5)                                                \
+        {                                                                                          \
+            helper::Throw<std::runtime_error>(                                                     \
+                "Engine", "SstReader", "DoGetSync",                                                \
+                "Selection-based Get() is only supported with BP5 marshalling in SST");            \
+        }                                                                                          \
+        bool need_sync = m_BP5Deserializer->QueueGet(variable, data, selection);                   \
+        if (need_sync)                                                                             \
+        {                                                                                          \
+            BP5PerformGets();                                                                      \
+        }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    void SstReader::DoGetDeferred(Variable<T> &variable, T *data, const Selection &selection)      \
+    {                                                                                              \
+        if (m_BetweenStepPairs == false)                                                           \
+        {                                                                                          \
+            helper::Throw<std::logic_error>("Engine", "SstReader", "DoGetDeferred",                \
+                                            "When using the SST engine in ADIOS2, "                \
+                                            "Get() calls must appear between "                     \
+                                            "BeginStep/EndStep pairs");                            \
+        }                                                                                          \
+        if (m_WriterMarshalMethod != SstMarshalBP5)                                                \
+        {                                                                                          \
+            helper::Throw<std::runtime_error>(                                                     \
+                "Engine", "SstReader", "DoGetDeferred",                                            \
+                "Selection-based Get() is only supported with BP5 marshalling in SST");            \
+        }                                                                                          \
+        m_BP5Deserializer->QueueGet(variable, data, selection);                                    \
+    }
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets_selection)
+#undef declare_gets_selection
 
 void SstReader::DoGetStructSync(VariableStruct &variable, void *data)
 {
@@ -635,7 +680,8 @@ void SstReader::DoGetStructSync(VariableStruct &variable, void *data)
             "SST only supports struct transmission when BP5 marshalling is "
             "selected");
     }
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = core::InferSelection(variable);
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, sel);
     if (need_sync)
         BP5PerformGets();
 }
@@ -650,7 +696,8 @@ void SstReader::DoGetStructDeferred(VariableStruct &variable, void *data)
             "SST only supports struct transmission when BP5 marshalling is "
             "selected");
     }
-    m_BP5Deserializer->QueueGet(variable, data);
+    auto sel = core::InferSelection(variable);
+    m_BP5Deserializer->QueueGet(variable, data, sel);
 }
 
 bool SstReader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const

@@ -80,8 +80,8 @@ extern void win_thread_detach(HANDLE thread);
 #define thr_atomic_read(ptr) InterlockedCompareExchange((volatile long*)(ptr), 0, 0)
 #else
 /* GCC/Clang __atomic builtins return the OLD value, so adjust */
-#define thr_atomic_dec(ptr) (__atomic_fetch_sub((ptr), 1, __ATOMIC_ACQ_REL) - 1)
-#define thr_atomic_inc(ptr) (__atomic_fetch_add((ptr), 1, __ATOMIC_ACQ_REL) + 1)
+#define thr_atomic_dec(ptr) ({__atomic_fetch_sub((ptr), 1, __ATOMIC_ACQ_REL) - 1;})
+#define thr_atomic_inc(ptr) ({__atomic_fetch_add((ptr), 1, __ATOMIC_ACQ_REL) + 1;})
 #define thr_atomic_read(ptr) __atomic_load_n((ptr), __ATOMIC_ACQUIRE)
 #endif
 

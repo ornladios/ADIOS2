@@ -337,6 +337,9 @@ Engine::AllStepsBlocksInfo(const VariableNT &variable) const
     template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Mode);                       \
     template void Engine::Get<T>(const std::string &, std::vector<T> &, const Mode);               \
                                                                                                    \
+    template void Engine::Get<T>(Variable<T>, T *, const Selection &, const Mode);                 \
+    template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Selection &, const Mode);    \
+                                                                                                   \
     template void Engine::Get<T>(Variable<T>, typename Variable<T>::Info & info, const Mode);      \
     template void Engine::Get<T>(const std::string &, typename Variable<T>::Info &info,            \
                                  const Mode);                                                      \

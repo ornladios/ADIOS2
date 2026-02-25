@@ -12,6 +12,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <tuple>
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
@@ -486,6 +487,41 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
 
 void BP5Reader::PerformGets()
 {
+#if defined ADIOS2_HAVE_CURL || defined ADIOS2_HAVE_XROOTD
+    auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
+        std::string XRootDHost = "localhost";
+        int XRootDPort = defaultPort;
+        if (m_HostConfig)
+        {
+            XRootDHost = m_HostConfig->hostname;
+            if (m_HostConfig->port > 0)
+            {
+                XRootDPort = m_HostConfig->port;
+            }
+        }
+        else if (m_RemoteHost != "localhost")
+        {
+            auto colon_pos = m_RemoteHost.find(':');
+            if (colon_pos == std::string::npos)
+            {
+                XRootDHost = m_RemoteHost;
+            }
+            else
+            {
+                XRootDHost = m_RemoteHost.substr(0, colon_pos);
+                try
+                {
+                    XRootDPort = std::stoi(m_RemoteHost.substr(colon_pos + 1));
+                }
+                catch (...)
+                {
+                }
+            }
+        }
+        return std::make_tuple(XRootDHost, XRootDPort);
+    };
+#endif
+
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
     // remote file (or die trying)
@@ -497,98 +533,42 @@ void BP5Reader::PerformGets()
         if (m_BP5Deserializer->PendingGetRequests.size() == 0)
             return;
 
-        std::string RemoteName;
-        if (!m_Parameters.RemoteDataPath.empty())
-        {
-            RemoteName = m_Parameters.RemoteDataPath;
-        }
-        else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
-                 getenv("DoXRootDHttp"))
-        {
-            RemoteName = m_Name;
-        }
-        (void)RowMajorOrdering; // Use in case no remotes available
 #ifdef ADIOS2_HAVE_CURL
-        if (getenv("DoXRootDHttps") || getenv("DoXRootDHttp"))
+        if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
+            (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
+             m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS))
         {
             // Determine if using HTTPS or plain HTTP
-            bool useHttps = (getenv("DoXRootDHttps") != nullptr);
-
-            std::string XRootDHost = "localhost";
-            int XRootDPort = useHttps ? 8443 : 8080; // Default ports
-
-            // Check for host environment variable (HTTPS or HTTP variant)
-            char *Env = useHttps ? getenv("XRootDHttpsHost") : getenv("XRootDHttpHost");
-            if (Env)
-            {
-                const std::string XEnv = std::string(Env);
-                auto colon_pos = XEnv.find(':');
-                if (colon_pos == std::string::npos)
-                {
-                    XRootDHost = XEnv;
-                }
-                else
-                {
-                    XRootDHost = XEnv.substr(0, colon_pos);
-                    try
-                    {
-                        XRootDPort = std::stoi(XEnv.substr(colon_pos + 1));
-                    }
-                    catch (...)
-                    {
-                    }
-                }
-            }
+            const bool useHttps = (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
+            auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
             m_Remote = std::make_unique<XrootdHttpRemote>(m_HostOptions);
             Params params;
             params["UseHttps"] = useHttps ? "true" : "false";
             // For testing, disable SSL verification (only relevant for HTTPS)
-            if (useHttps && getenv("XRootDHttpsNoVerify"))
+            if (useHttps) // && getenv("XRootDHttpsNoVerify"))
             {
                 params["VerifySSL"] = "false";
             }
-            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering,
-                           params);
+            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
+                           RowMajorOrdering, params);
         }
         else
 #endif
 #ifdef ADIOS2_HAVE_XROOTD
-            if (getenv("DoXRootD"))
+            if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
+                m_XrootdTransferProtocol == XRootDTransferProtocol::XRootD)
         {
-            std::string XRootDHost = "localhost";
-            int XRootDPort = 1094;
-            char *Env = getenv("XRootDHost");
-            if (Env)
-            {
-                const std::string XEnv = std::string(Env);
-                auto colon_pos = XEnv.find(':');
-                if (colon_pos == std::string::npos)
-                {
-                    XRootDHost = XEnv;
-                }
-                else
-                {
-                    XRootDHost = XEnv.substr(0, colon_pos);
-                    try
-                    {
-                        XRootDPort = std::stoi(XEnv.substr(colon_pos + 1));
-                    }
-                    catch (...)
-                    {
-                    }
-                }
-            }
+            auto tup = lf_getXRootDHostPort(1094);
             m_Remote = std::make_unique<XrootdRemote>(m_HostOptions);
-            m_Remote->Open(XRootDHost, XRootDPort, RemoteName, m_OpenMode, RowMajorOrdering);
+            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
+                           RowMajorOrdering);
         }
         else
 #endif
 #ifdef ADIOS2_HAVE_SST
+            if (m_RemoteProtocol == HostAccessProtocol::SSH)
         {
-            auto pair = CManagerSingleton::MakeEVPathConnection(m_Parameters.RemoteHost);
-            // m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
-            // int localPort =
-            //    m_Remote->LaunchRemoteServerViaConnectionManager(m_Parameters.RemoteHost);
+            auto pair = CManagerSingleton::MakeEVPathConnection(m_RemoteHost);
             m_Remote = pair.first;
             int localPort = pair.second;
             if (m_Remote && localPort > -1)
@@ -601,7 +581,8 @@ void BP5Reader::PerformGets()
                 if (m_Parameters.IgnoreFlattenSteps)
                     p.emplace("IgnoreFlattenSteps", "true");
 
-                m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering, p);
+                m_Remote->Open("localhost", localPort, m_RemoteName, m_OpenMode, RowMajorOrdering,
+                               p);
             }
         }
 #endif
@@ -612,7 +593,7 @@ void BP5Reader::PerformGets()
             m_Fingerprint = m_Parameters.UUID;
             if (m_Fingerprint.empty())
             {
-                m_KVCache.RemotePathHashMd5(RemoteName, m_Fingerprint);
+                m_KVCache.RemotePathHashMd5(m_RemoteName, m_Fingerprint);
             }
             m_KVCache.SetLocalCacheFile(m_Name + PathSeparator + "data");
         }
@@ -1147,6 +1128,100 @@ void BP5Reader::Init()
     if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
         getenv("DoXRootDHttp"))
         m_dataIsRemote = true;
+
+    if (m_dataIsRemote)
+    {
+        if (!m_Parameters.RemoteDataPath.empty())
+        {
+            m_RemoteName = m_Parameters.RemoteDataPath;
+        }
+        else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
+                 getenv("DoXRootDHttp"))
+        {
+            m_RemoteName = m_Name;
+        }
+
+        m_RemoteProtocol = HostAccessProtocol::Invalid;
+        if (!m_Parameters.RemoteHost.empty())
+        {
+            m_RemoteHost = m_Parameters.RemoteHost;
+            auto it = m_HostOptions.find(m_Parameters.RemoteHost);
+            if (it != m_HostOptions.end())
+            {
+                for (auto &hc : it->second)
+                {
+                    if (hc.protocol == HostAccessProtocol::SSH)
+                    {
+                        m_RemoteProtocol = hc.protocol;
+                        m_HostConfig = const_cast<HostConfig *>(&hc);
+                        break;
+                    }
+                    if (hc.protocol == HostAccessProtocol::XRootD)
+                    {
+                        m_RemoteProtocol = hc.protocol;
+                        m_HostConfig = const_cast<HostConfig *>(&hc);
+                        m_XrootdTransferProtocol = hc.transfer_protocol;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (getenv("DoXRootDHttps"))
+            {
+                char *env = getenv("XRootDHttpsHost");
+                if (env)
+                    m_RemoteHost = std::string(env);
+                m_RemoteProtocol = HostAccessProtocol::XRootD;
+                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTPS;
+            }
+            else if (getenv("DoXRootDHttp"))
+            {
+                char *env = getenv("XRootDHttpHost");
+                if (env)
+                    m_RemoteHost = getenv("XRootDHttpHost");
+                m_RemoteProtocol = HostAccessProtocol::XRootD;
+                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTP;
+            }
+            else if (getenv("DoXRootD"))
+            {
+                char *env = getenv("XRootDHost");
+                if (env)
+                    m_RemoteHost = getenv("XRootDHost");
+                m_RemoteProtocol = HostAccessProtocol::XRootD;
+                m_XrootdTransferProtocol = XRootDTransferProtocol::XRootD;
+            }
+            if (m_RemoteHost.empty())
+            {
+                m_RemoteHost = "localhost";
+            }
+        }
+
+        if (m_RemoteHost.empty())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "No remote hostname was found for dataset " + m_RemoteName +
+                    ". Make sure you define proper access to the server to serve this path.");
+        }
+        if (m_RemoteProtocol == HostAccessProtocol::Invalid)
+        {
+            if (m_RemoteHost == "localhost")
+            {
+                // special case for debugging on localhost
+                m_RemoteProtocol = HostAccessProtocol::SSH;
+            }
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Reader", "OpenFiles",
+                    "No acceptable protocol (xrootd or ssh) was found for " + m_RemoteHost +
+                        " to read " + m_RemoteName +
+                        ". Make sure you define proper access to the server to serve this path.");
+            }
+        }
+    }
 
     if (m_ReadMetadataFromFile)
     {
@@ -1760,11 +1835,26 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
 
     while (position < buffer.size() && metadataSizeToRead < maxMetadataSizeInMemory)
     {
+        /* Stop on any partial record; it will be re-read next poll */
+        const size_t recordHeaderSize = sizeof(unsigned char) + sizeof(uint64_t);
+        if (position + recordHeaderSize > buffer.size())
+        {
+            break;
+        }
 
+        const size_t savedPosition = position;
         const unsigned char recordID =
             helper::ReadValue<unsigned char>(buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t recordLength =
             helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+
+        if (position + recordLength > buffer.size())
+        {
+            /* Incomplete record body; rewind for next poll */
+            position = savedPosition;
+            break;
+        }
+
         const size_t dbgRecordStartPosition = position;
 
         switch (recordID)
@@ -1779,12 +1869,12 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
             s.SubfileCount = (uint32_t)helper::ReadValue<uint64_t>(buffer, position,
                                                                    m_Minifooter.IsLittleEndian);
             // Get the process -> subfile map
-            s.RankToSubfile.reserve(s.WriterCount);
+            s.RankToSubfile.resize(s.WriterCount);
             for (uint64_t i = 0; i < s.WriterCount; i++)
             {
                 const uint64_t subfileIdx =
                     helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-                s.RankToSubfile.push_back(subfileIdx);
+                s.RankToSubfile[i] = subfileIdx;
             }
             m_LastMapStep = m_StepsCount;
             m_LastWriterCount = s.WriterCount;
@@ -1993,6 +2083,16 @@ void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable, std::vector<siz
     {                                                                                              \
         PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
         GetDeferredCommon(variable, data);                                                         \
+    }                                                                                              \
+    void BP5Reader::DoGetSync(Variable<T> &variable, T *data, const Selection &selection)          \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
+        GetSyncCommon(variable, data, selection);                                                  \
+    }                                                                                              \
+    void BP5Reader::DoGetDeferred(Variable<T> &variable, T *data, const Selection &selection)      \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                                                  \
+        GetDeferredCommon(variable, data, selection);                                              \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

@@ -347,6 +347,20 @@ HostAuthProtocol GetHostAuthProtocol(std::string valueStr)
     return HostAuthProtocol::Invalid;
 }
 
+XRootDTransferProtocol GetXRootDTransferProtocol(std::string valueStr)
+{
+    std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(), ::tolower);
+    if (valueStr == "https")
+    {
+        return XRootDTransferProtocol::HTTPS;
+    }
+    else if (valueStr == "http")
+    {
+        return XRootDTransferProtocol::HTTP;
+    }
+    return XRootDTransferProtocol::XRootD;
+}
+
 void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOptions &hosts,
                           std::string &homePath)
 {
@@ -447,12 +461,15 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
             }
             case HostAccessProtocol::XRootD: {
                 std::string authStr;
-                SetOption(authStr, "authentication", hostmap, hint, isMandatory);
+                SetOption(authStr, "authentication", hostmap, hint);
                 hc.authentication = GetHostAuthProtocol(authStr);
                 SetOption(hc.hostname, "host", hostmap, hint, isMandatory);
                 SetOption(hc.username, "user", hostmap, hint);
                 SetOption(hc.remoteServerPath, "serverpath", hostmap, hint);
                 SetOption(hc.port, "port", hostmap, hint);
+                std::string tpStr;
+                SetOption(tpStr, "transfer_protocol", hostmap, hint);
+                hc.transfer_protocol = GetXRootDTransferProtocol(tpStr);
                 break;
             }
             case HostAccessProtocol::S3: {

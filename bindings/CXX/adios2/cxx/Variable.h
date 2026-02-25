@@ -20,9 +20,10 @@ namespace adios2
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
-class IO;     // friend
-class Engine; // friend
-class Group;  // friend
+class IO;        // friend
+class Engine;    // friend
+class Group;     // friend
+class Selection; // for SelectionSize
 namespace core
 {
 
@@ -247,6 +248,13 @@ public:
      * @return elements of type T required for pre-allocation
      */
     size_t SelectionSize() const;
+
+    /**
+     * Returns the number of elements for an explicit Selection.
+     * @param selection The selection specification
+     * @return elements of type T required for pre-allocation
+     */
+    size_t SelectionSize(const Selection &selection) const;
 
     /**
      * Inspects Variable name

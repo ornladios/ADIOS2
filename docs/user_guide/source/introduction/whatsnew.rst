@@ -16,6 +16,49 @@ again with allocated buffer to retrieve data):
 This addresses a gap in the C API where string lengths could not be queried
 before reading.
 
+Selection API for Get() Operations
+-----------------------------------
+
+A new ``Selection`` class provides an explicit, self-contained way to specify
+what data to read in ``Get()`` calls. Instead of mutating the ``Variable``
+object with ``SetSelection()``, ``SetBlockSelection()``, ``SetStepSelection()``,
+etc., all selection parameters are bundled into a ``Selection`` object that is
+passed directly to ``Get()``. This avoids relying on potentially stale variable
+state and makes the intent of each ``Get()`` call clear at the call site.
+
+A selection has two independent aspects: a spatial selection —
+``Selection::All()`` (the default — reads the entire variable) or
+``Selection::BoundingBox(start, count)`` (hyperslab) — and an optional block
+selection via ``Selection::Block(blockID)`` or ``.WithBlock(blockID)``. These
+are orthogonal: a block ID can be combined with a bounding box to read a
+sub-region of a specific write block. Additional parameters (steps, memory
+layout, accuracy) can be added via fluent ``With*()`` methods or mutable
+``Set*()`` methods. A ``ToString()`` method is provided for debugging.
+
+.. code-block:: c++
+
+   // Select everything
+   engine.Get(var, data, adios2::Selection::All());
+
+   // Fluent style — bounding box with step range
+   auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20}).WithSteps(0, 5);
+   engine.Get(var, data, sel);
+
+   // Mutable style — reuse across iterations
+   adios2::Selection sel;
+   sel.SetBoundingBox({0, 0}, {10, 20});
+   for (size_t step = 0; step < nsteps; ++step)
+   {
+       sel.SetSteps(step, 1);
+       engine.Get(var, buffers[step], sel);
+   }
+
+   // Debug output
+   std::cout << sel.ToString() << std::endl;
+
+Existing ``SetSelection()``-based APIs remain available and are not deprecated.
+See :ref:`Selection` for full documentation.
+
 Cross-Endian Interoperability
 -----------------------------
 

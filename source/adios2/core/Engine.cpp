@@ -209,7 +209,15 @@ void Engine::DoPutStructDeferred(VariableStruct &, const void *) { ThrowUp("DoPu
     void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }                           \
     void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }                   \
     typename Variable<T>::BPInfo *Engine::DoGetBlockSync(Variable<T> &v) { return nullptr; }       \
-    typename Variable<T>::BPInfo *Engine::DoGetBlockDeferred(Variable<T> &v) { return nullptr; }
+    typename Variable<T>::BPInfo *Engine::DoGetBlockDeferred(Variable<T> &v) { return nullptr; }   \
+    void Engine::DoGetSync(Variable<T> &, T *, const Selection &)                                  \
+    {                                                                                              \
+        ThrowUp("DoGetSync with Selection");                                                       \
+    }                                                                                              \
+    void Engine::DoGetDeferred(Variable<T> &, T *, const Selection &)                              \
+    {                                                                                              \
+        ThrowUp("DoGetDeferred with Selection");                                                   \
+    }
 
 void Engine::RegisterCreatedVariable(const VariableBase *var) { m_CreatedVars.insert(var); }
 
@@ -364,6 +372,9 @@ std::vector<VariableStruct::BPInfo> Engine::BlocksInfoStruct(const VariableStruc
                                                                                                    \
     template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Mode);                     \
     template void Engine::Get<T>(const std::string &, std::vector<T> &, const Mode);               \
+                                                                                                   \
+    template void Engine::Get<T>(Variable<T> &, T *, const Selection &, const Mode);               \
+    template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Selection &, const Mode);  \
                                                                                                    \
     template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &, const Mode);              \
     template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, const Mode);        \
