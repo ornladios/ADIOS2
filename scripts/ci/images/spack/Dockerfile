@@ -1,33 +1,31 @@
-ARG baseos
-FROM ornladios/adios2:spack-dependencies-${baseos}
+FROM ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-base
 
 # Install from CI source
 ARG ci_source_dir=ci-source
 COPY ${ci_source_dir} /opt/adios2/source
-RUN spack dev-build \
-        -j$(grep -c '^processor' /proc/cpuinfo) \
+
+RUN . /spack/share/spack/setup-env.sh && \
+    spack dev-build \
+        -j$(nproc) \
         -d /opt/adios2/source \
+        --no-checksum \
+        --reuse \
         --skip-patch \
-        adios2@develop && \
+        adios2@master && \
     spack clean -a
 
-# Build the environment
-RUN spack env create --without-view adios2 && \
-    spack -e adios2 add $(spack find --format "/{hash}") && \
+RUN . /spack/share/spack/setup-env.sh && \
+    spack config add "concretizer:unify:false" && \
+    spack env create --without-view adios2 && \
+    spack -e adios2 add $(spack find --deps --format "/{hash}" adios2@master) && \
     spack -e adios2 install -v && \
-    rm -rf /root/.spack && \
+    spack clean -a
+
+RUN . /spack/share/spack/setup-env.sh && \
     spack env activate adios2 && \
     spack env deactivate && \
-    spack -e adios2 env loads
-
-# Initialize the first-use-of-environment stuff for the adios user
-WORKDIR /home/adios
-USER adios
-RUN spack env activate adios2 && \
-    spack env deactivate && \
-    echo "source /opt/spack/share/spack/setup-env.sh" >> ~/.bash_profile && \
-    echo "module use ${SPACK_ROOT}/share/spack/modules/linux-ubuntu18.04-haswell" >> ~/.bash_profile && \
-    echo "source ${SPACK_ROOT}/var/spack/environments/adios2/loads" >> ~/.bash_profile
+    echo "source /spack/share/spack/setup-env.sh" >> ~/.bash_profile && \
+    echo "spack env activate adios2" >> ~/.bash_profile
 
 ENTRYPOINT []
 CMD ["bash", "--login"]
