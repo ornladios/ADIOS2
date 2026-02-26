@@ -300,6 +300,22 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     if (it != params.end())
         m_RequestTimeout = std::stol(it->second);
 
+    // Collect non-HTTP engine params (TarInfo, SelectSteps, IgnoreFlattenSteps)
+    // and encode them as a TAB-separated string for transmission
+    Params engineParams;
+    for (const auto &p : params)
+    {
+        if (p.first != "UseHttps" && p.first != "CAPath" && p.first != "VerifySSL" &&
+            p.first != "ConnectTimeout" && p.first != "RequestTimeout")
+        {
+            engineParams[p.first] = p.second;
+        }
+    }
+    if (!engineParams.empty())
+    {
+        m_EngineParams = ParamsToEncodedString(engineParams);
+    }
+
     std::ostringstream urlStream;
     urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/ssi";
     m_BaseUrl = urlStream.str();
@@ -333,6 +349,11 @@ std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Ste
     reqStream << "&AccuracyError=" << accuracy.error;
     reqStream << "&AccuracyNorm=" << accuracy.norm;
     reqStream << "&AccuracyRelative=" << (accuracy.relative ? 1 : 0);
+
+    if (!m_EngineParams.empty())
+    {
+        reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
+    }
 
     return reqStream.str();
 }
@@ -390,6 +411,10 @@ std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGet
     reqStream << "batchget Filename=" << encodedFilename;
     reqStream << "&RMOrder=" << (m_RowMajorOrdering ? 1 : 0);
     reqStream << "&NVars=" << requests.size();
+    if (!m_EngineParams.empty())
+    {
+        reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
+    }
 
     for (const auto &req : requests)
     {

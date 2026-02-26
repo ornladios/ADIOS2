@@ -138,6 +138,7 @@ private:
 
     std::string m_BaseUrl;
     std::string m_Filename;
+    std::string m_EngineParams;
     Mode m_Mode;
     bool m_RowMajorOrdering;
     bool m_OpenSuccess = false;

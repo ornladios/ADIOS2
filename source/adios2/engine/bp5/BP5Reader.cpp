@@ -549,6 +549,12 @@ void BP5Reader::PerformGets()
             {
                 params["VerifySSL"] = "false";
             }
+            if (!m_Parameters.TarInfo.empty())
+                params["TarInfo"] = m_Parameters.TarInfo;
+            if (!m_Parameters.SelectSteps.empty())
+                params["SelectSteps"] = m_Parameters.SelectSteps;
+            if (m_Parameters.IgnoreFlattenSteps)
+                params["IgnoreFlattenSteps"] = "true";
             m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
                            RowMajorOrdering, params);
         }

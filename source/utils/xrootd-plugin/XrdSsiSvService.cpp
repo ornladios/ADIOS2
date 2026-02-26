@@ -469,8 +469,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             return;
         }
 
-        // Parse shared header: Filename, RMOrder, NVars
+        // Parse shared header: Filename, RMOrder, NVars, EngineParams
         std::string Filename;
+        std::string EngineParams;
         bool ArrayOrder = false;
         size_t NVars = 0;
         std::vector<std::string> headerParams = split(sections[0], '&');
@@ -495,6 +496,11 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 std::stringstream sstream(param.substr(pos));
                 sstream >> NVars;
             }
+            else if (HasPrefix(param, "EngineParams="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                EngineParams = UrlDecode(param.substr(pos));
+            }
         }
 
         if (Filename.empty() || NVars == 0 || sections.size() != NVars + 1)
@@ -505,7 +511,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 
         try
         {
-            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
+            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
             auto engine = poolEntry.file->m_engine;
             auto io = poolEntry.file->m_io;
 
@@ -690,6 +696,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     {
         std::string Filename;
         std::string VarName;
+        std::string EngineParams;
         adios2::Dims Start, Count;
         size_t BlockID, DimCount, StepStart;
         size_t StepCount = 1;
@@ -779,6 +786,11 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 sstream >> rel;
                 AccuracyRelative = (rel != 0);
             }
+            else if (HasPrefix(param, "EngineParams="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                EngineParams = UrlDecode(param.substr(pos));
+            }
         }
         //  Get a "anonymous" engine with this file open with this array order.
         //  (any other differentiating characteristics of an ADIOS Open should be included in these
@@ -792,7 +804,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         {
             {
                 // Scope the poolEntry so it auto-returns to pool on exit
-                auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
+                auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
                 auto engine = poolEntry.file->m_engine;
                 auto io = poolEntry.file->m_io;
                 adios2::Box<adios2::Dims> varSel(Start, Count);
