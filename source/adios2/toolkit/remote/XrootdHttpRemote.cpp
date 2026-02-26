@@ -61,6 +61,7 @@ CurlMultiPool::CurlMultiPool()
     }
 
     curl_multi_setopt(m_MultiHandle, CURLMOPT_MAXCONNECTS, 50L);
+    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS, 50L);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 
     m_Running = true;
@@ -303,11 +304,6 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/ssi";
     m_BaseUrl = urlStream.str();
 
-    std::string protocol = m_UseHttps ? "HTTPS" : "HTTP";
-    helper::Log("Remote", "XrootdHttpRemote", "Open",
-                "Opened " + protocol + " connection to " + m_BaseUrl + " for file " + m_Filename,
-                helper::LogMode::INFO);
-
     m_OpenSuccess = true;
 }
 
@@ -468,8 +464,6 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
                 sb.asyncOp->promise.get_future().get();
                 delete sb.asyncOp;
             }
-            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                        "Failed to create CURL handle for sub-batch", helper::LogMode::INFO);
             return false;
         }
 
@@ -487,10 +481,16 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         {
             if (!success && allOk)
             {
-                helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                            "Sub-batch failed: " + sb.asyncOp->errorMsg +
-                                " (falling back to individual Gets)",
-                            helper::LogMode::INFO);
+                std::string errMsg = sb.asyncOp->errorMsg;
+                // Clean up remaining sub-batches before throwing
+                delete sb.asyncOp;
+                for (size_t j = (&sb - &subBatches[0]) + 1; j < subBatches.size(); j++)
+                {
+                    subBatches[j].asyncOp->promise.get_future().get();
+                    delete subBatches[j].asyncOp;
+                }
+                helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "BatchGet",
+                                                  "Sub-batch failed: " + errMsg);
             }
             allOk = false;
             delete sb.asyncOp;
@@ -505,8 +505,6 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
         if (responseData.size() < headerSize)
         {
-            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                        "Sub-batch response too small for header", helper::LogMode::INFO);
             allOk = false;
             delete sb.asyncOp;
             continue;
@@ -519,8 +517,6 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
         if (responseNVars != nVars)
         {
-            helper::Log("Remote", "XrootdHttpRemote", "BatchGet", "Sub-batch NVars mismatch",
-                        helper::LogMode::INFO);
             allOk = false;
             delete sb.asyncOp;
             continue;
@@ -537,8 +533,6 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         }
         if (responseData.size() != headerSize + totalDataSize)
         {
-            helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
-                        "Sub-batch response size mismatch", helper::LogMode::INFO);
             allOk = false;
             delete sb.asyncOp;
             continue;
@@ -570,8 +564,6 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
 {
     if (!m_OpenSuccess)
     {
-        helper::Log("Remote", "XrootdHttpRemote", "Get", "Connection not open",
-                    helper::LogMode::WARNING);
         return nullptr;
     }
 
@@ -589,8 +581,6 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
     if (!easy)
     {
         delete asyncOp;
-        helper::Log("Remote", "XrootdHttpRemote", "Get", "Failed to create CURL handle",
-                    helper::LogMode::WARNING);
         return nullptr;
     }
 
@@ -611,19 +601,10 @@ bool XrootdHttpRemote::WaitForGet(GetHandle handle)
     AsyncGet *asyncOp = static_cast<AsyncGet *>(handle);
     bool result = asyncOp->promise.get_future().get();
 
-    if (!result)
-        helper::Log("Remote", "XrootdHttpRemote", "WaitForGet", "Get failed: " + asyncOp->errorMsg,
-                    helper::LogMode::WARNING);
-
     delete asyncOp;
     return result;
 }
 
-Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest)
-{
-    helper::Log("Remote", "XrootdHttpRemote", "Read",
-                "Raw byte Read not implemented for HTTP transport", helper::LogMode::WARNING);
-    return nullptr;
-}
+Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest) { return nullptr; }
 
 } // end namespace adios2
