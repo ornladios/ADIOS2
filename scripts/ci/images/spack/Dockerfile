@@ -11,21 +11,12 @@ RUN . /spack/share/spack/setup-env.sh && \
         --no-checksum \
         --reuse \
         --skip-patch \
-        adios2@master && \
+        adios2@master~mpi && \
     spack clean -a
 
 RUN . /spack/share/spack/setup-env.sh && \
-    spack config add "concretizer:unify:false" && \
-    spack env create --without-view adios2 && \
-    spack -e adios2 add $(spack find --deps --format "/{hash}" adios2@master) && \
-    spack -e adios2 install -v && \
-    spack clean -a
-
-RUN . /spack/share/spack/setup-env.sh && \
-    spack env activate adios2 && \
-    spack env deactivate && \
     echo "source /spack/share/spack/setup-env.sh" >> ~/.bash_profile && \
-    echo "spack env activate adios2" >> ~/.bash_profile
+    echo "spack load adios2" >> ~/.bash_profile
 
 ENTRYPOINT []
 CMD ["bash", "--login"]

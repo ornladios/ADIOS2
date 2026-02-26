@@ -429,31 +429,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        baseos: [ubuntu-bionic]
+        baseos: [ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ci-source
-      - name: Re-configure docker daemon
+
+      - name: Install Podman
+        if: ${{ matrix.base-img != 'self-hosted' }}
         run: |
-            sudo systemctl stop docker
-            echo $'{\n    "experimental": true\n}' | \
-                sudo tee /etc/docker/daemon.json
-            sudo systemctl start docker
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+
       - name: Build image
         run: |
-            docker build \
-                --rm --squash \
+            podman build \
+                --rm \
                 -t ornladios/adios2:ci-tmp \
-                --build-arg baseos=${{ matrix.baseos }} \
                 --build-arg ci_source_dir=ci-source \
                 -f ci-source/scripts/ci/images/spack/Dockerfile \
                 .
+
       - name: Save image as a tar file
         run: |
-            docker save -o ci-docker.tar ornladios/adios2:ci-tmp
+            podman save -o ci-docker.tar ornladios/adios2:ci-tmp
             ls -lah ci-docker.tar
       - name: Upload
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4
@@ -461,21 +463,21 @@ jobs:
           retention-days: 1
           name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
           path: ci-docker.tar
-      - name: Push image to Docker Hub
+
+      - name: Log in to GitHub Container Registry
         if: github.event_name == 'push'
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Push image to GitHub Container Registry
+        if: github.event_name == 'push'
         run: |
             target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
-            docker tag \
+            podman tag \
                 ornladios/adios2:ci-tmp \
-                ornladios/adios2:${target_tag}
-            docker login \
-                --username="${DOCKERHUB_USERNAME}" \
-                --password="${DOCKERHUB_PASSWORD}"
-            docker push \
-                ornladios/adios2:${target_tag}
+                "ghcr.io/${{ github.repository }}/ornladios/adios2:${target_tag}"
+            podman push \
+                "ghcr.io/${{ github.repository }}/ornladios/adios2:${target_tag}"
 
 #######################################
 # Contract testing jobs
