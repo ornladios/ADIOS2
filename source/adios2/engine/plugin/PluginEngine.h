@@ -12,8 +12,6 @@
 #ifndef ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 #define ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 
-#include "PluginEngineInterface.h"
-
 #include <memory> // for unique_ptr
 #include <string> // for string
 
@@ -29,7 +27,9 @@ namespace adios2
 namespace plugin
 {
 
-/** A front-end wrapper for an engine implemented outside of libadios2 */
+/** A front-end wrapper for an engine implemented outside of libadios2.
+ *  Bridges between the internal core::Engine interface and the public-API-based
+ *  PluginEngineInterface that external plugins implement. */
 class PluginEngine : public core::Engine
 {
 public:

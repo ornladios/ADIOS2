@@ -84,8 +84,7 @@ struct TypeInfo
 // Hack "char" type into this convoluted struct definition which is the key
 // to translate between bindings API types to supported stdtypes
 template <>
-struct TypeInfo<char,
-                typename std::enable_if<std::is_same<char, char>::value>::type>
+struct TypeInfo<char, typename std::enable_if<std::is_same<char, char>::value>::type>
 {
     using IOType = char;
     using ValueType = char;
@@ -94,34 +93,44 @@ struct TypeInfo<char,
 template <typename T>
 struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
 {
-    using IOType =
-        typename FixedWidthInt<sizeof(T), std::is_signed<T>::value>::Type;
+    using IOType = typename FixedWidthInt<sizeof(T), std::is_signed<T>::value>::Type;
     using ValueType = T;
 };
 
 template <typename T>
-struct TypeInfo<T,
-                typename std::enable_if<std::is_floating_point<T>::value>::type>
+struct TypeInfo<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
 {
     using IOType = T;
     using ValueType = T;
 };
 
 template <typename T>
-struct TypeInfo<T, typename std::enable_if<std::is_same<
-                       T, std::complex<typename T::value_type>>::value>::type>
+struct TypeInfo<
+    T, typename std::enable_if<std::is_same<T, std::complex<typename T::value_type>>::value>::type>
 {
     using IOType = T;
     using ValueType = typename T::value_type;
 };
 
 template <typename T>
-struct TypeInfo<
-    T, typename std::enable_if<std::is_same<T, std::string>::value>::type>
+struct TypeInfo<T, typename std::enable_if<std::is_same<T, std::string>::value>::type>
 {
     using IOType = T;
     using ValueType = T;
 };
+
+inline std::string ToString(const Dims &dims)
+{
+    std::string s = "{";
+    for (size_t i = 0; i < dims.size(); i++)
+    {
+        s += std::to_string(dims[i]);
+        if (i < dims.size() - 1)
+            s += ",";
+    }
+    s += "}";
+    return s;
+}
 
 template <typename T, typename Enable>
 inline std::ostream &operator<<(std::ostream &os, const T &value)

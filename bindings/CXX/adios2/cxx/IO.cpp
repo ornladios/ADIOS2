@@ -256,9 +256,6 @@ VariableNT IO::InquireStructVariable(const std::string &name, const StructDefini
     return VariableNT(m_IO->InquireStructVariable(name, *def.m_StructDefinition));
 }
 
-// PRIVATE
-IO::IO(core::IO *io) : m_IO(io) {}
-
 // Explicit declaration of the public template methods
 // Limits the types
 #define declare_template_instantiation(T)                                                          \

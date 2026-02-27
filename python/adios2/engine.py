@@ -84,8 +84,20 @@ class Engine:
             list of BlockInfos
         """
         output = []
-        for step in range(0, self.steps()):
-            output.append(self.blocks_info(name, step))
+        try:
+            for step in range(0, self.steps()):
+                output.append(self.blocks_info(name, step))
+        except ValueError:  # Campaign engine has no steps()
+            vstep = 0
+            while True:
+                try:
+                    binfo = self.blocks_info(name, vstep)
+                    if len(binfo) == 0:
+                        break
+                    output.append(binfo)
+                    vstep += 1
+                except ValueError:
+                    break
         return output
 
     def blocks_info(self, name, step):
