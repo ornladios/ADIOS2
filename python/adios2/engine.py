@@ -87,7 +87,6 @@ class Engine:
         try:
             for step in range(0, self.steps()):
                 output.append(self.blocks_info(name, step))
-            return output
         except ValueError:  # Campaign engine has no steps()
             vstep = 0
             while True:
