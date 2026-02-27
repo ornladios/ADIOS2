@@ -88,7 +88,7 @@ class Engine:
             for step in range(0, self.steps()):
                 output.append(self.blocks_info(name, step))
             return output
-        except ValueError: # Campaign engine has no steps()
+        except ValueError:  # Campaign engine has no steps()
             vstep = 0
             while True:
                 try:
@@ -97,10 +97,9 @@ class Engine:
                         break
                     output.append(bi)
                     vstep += 1
-                except ValueError as e:
+                except ValueError:
                     break
         return output
-
 
     def blocks_info(self, name, step):
         """
