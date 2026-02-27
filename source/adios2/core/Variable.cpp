@@ -12,8 +12,8 @@
 #include "Variable.tcc"
 
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/Selection.h"
 #include "adios2/core/Engine.h"
-#include "adios2/core/Selection.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetDataType<T>
 
 namespace adios2

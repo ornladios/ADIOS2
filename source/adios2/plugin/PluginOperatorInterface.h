@@ -74,10 +74,15 @@ public:
      */
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 
-    /** Give an upper bound estimate how big the transformed data could be */
+    /** Return an upper bound estimate of the output buffer size after the
+     *  operator is applied (e.g., compressed size for a compressor, same size
+     *  plus header for encryption). The default assumes no size reduction and
+     *  adds 128 bytes for operator-specific headers/metadata. Override this
+     *  if your operator can provide a tighter estimate. */
     virtual size_t GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
                                     const size_t ndims, const size_t *dims) const
     {
+        // Uncompressed size + space for operator headers
         return ElemCount * ElemSize + 128;
     }
 

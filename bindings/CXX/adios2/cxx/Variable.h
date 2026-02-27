@@ -113,6 +113,7 @@ public:
 
     // engine allowed to set m_Span
     friend class adios2::Engine;
+    friend class adios2::plugin::PluginEngine;
 
     // Custom iterator class from:
     // https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
@@ -124,7 +125,7 @@ public:
 
 private:
     using CoreSpan = core::Span<IOType>;
-    Span(CoreSpan *span);
+    Span(CoreSpan *span) : m_Span(span) {}
     CoreSpan *m_Span = nullptr;
 };
 
