@@ -92,10 +92,10 @@ class Engine:
             vstep = 0
             while True:
                 try:
-                    bi = self.blocks_info(name, vstep)
-                    if len(bi) == 0:
+                    binfo = self.blocks_info(name, vstep)
+                    if len(binfo) == 0:
                         break
-                    output.append(bi)
+                    output.append(binfo)
                     vstep += 1
                 except ValueError:
                     break
