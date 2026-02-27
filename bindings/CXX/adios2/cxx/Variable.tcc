@@ -232,10 +232,6 @@ adios2::ArrayOrdering Variable<T>::GetArrayLayout()
 namespace detail
 {
 // Span
-template <class T>
-Span<T>::Span(core::Span<IOType> *coreSpan) : m_Span(coreSpan)
-{
-}
 
 template <class T>
 size_t Span<T>::size() const noexcept

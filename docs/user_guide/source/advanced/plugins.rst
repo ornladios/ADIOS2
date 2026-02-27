@@ -19,30 +19,48 @@ Writing Your Plugin Class
 Engine Plugin
 -------------
 
-Your engine plugin class needs to inherit from the ``PluginEngineInterface`` class in the ``adios2/engine/plugin/PluginEngineInterface.h`` header.
-Depending on the type of engine you want to implement, you'll need to override a number of methods that are inherited from the ``adios2::core::Engine`` class.
-These are briefly described in the following table.
-More detailed documentation can be found in ``adios2/core/Engine.h``.
+Your engine plugin class needs to inherit from the ``PluginEngineInterface`` class in the ``adios2/plugin/PluginEngineInterface.h`` header.
+The plugin interface is a standalone class that uses the public C++ API types (``adios2::IO``, ``adios2::Variable<T>``) rather than internal core types.
+All virtual methods except ``BeginStep()``, ``EndStep()``, and ``CurrentStep()`` have empty default implementations, so you only need to override the methods relevant to your engine.
 
-========================= ===================== ===========================================================
- **Method**                **Engine Type**       **Description**
-========================= ===================== ===========================================================
-``BeginStep()``            Read/Write            Indicates the beginning of a step
-``EndStep()``              Read/Write            Indicates the end of a step
-``CurrentStep()``          Read/Write            Returns current step info
-``DoClose()``              Read/Write            Close a particular transport
-``Init()``                 Read/Write            Engine initialization
-``InitParameters()``       Read/Write            Initialize parameters
-``InitTransports()``       Read/Write            Initialize transports
-``PerformPuts()``          Write                 Execute all deferred mode ``Put``
-``Flush()``                Write                 Flushes data and metadata to a transport
-``DoPut()``                Write                 Implementation for ``Put``
-``DoPutSync()``            Write                 Implementation for ``Put`` (Sync mode)
-``DoPutDeferred()``        Write                 Implementation for ``Put`` (Deferred Mode)
-``PerformGets()``          Read                  Execute all deferred mode ``Get``
-``DoGetSync()``            Read                  Implementation for ``Get`` (Sync mode)
-``DoGetDeferred()``        Read                  Implementation for ``Get`` (Deferred Mode)
-========================= ===================== ===========================================================
+The following table describes the available methods.
+
+**Required methods** (pure virtual, must be overridden):
+
+================================= ===================== ===========================================================
+ **Method**                        **Engine Type**       **Description**
+================================= ===================== ===========================================================
+``BeginStep()``                    Read/Write            Indicates the beginning of a step
+``EndStep()``                      Read/Write            Indicates the end of a step
+``CurrentStep()``                  Read/Write            Returns current step
+================================= ===================== ===========================================================
+
+**Core I/O methods** (override the types your engine supports):
+
+================================= ===================== ===========================================================
+ **Method**                        **Engine Type**       **Description**
+================================= ===================== ===========================================================
+``DoPutSync()``                    Write                 Implementation for ``Put`` (Sync mode)
+``DoPutDeferred()``                Write                 Implementation for ``Put`` (Deferred mode)
+``DoGetSync()``                    Read                  Implementation for ``Get`` (Sync mode)
+``DoGetDeferred()``                Read                  Implementation for ``Get`` (Deferred mode)
+``PerformPuts()``                  Write                 Execute all deferred mode ``Put``
+``PerformGets()``                  Read                  Execute all deferred mode ``Get``
+``DoClose()``                      Read/Write            Close the engine
+``Init()``                         Read/Write            Called after construction for initialization
+================================= ===================== ===========================================================
+
+**Advanced methods** (optional, override for additional capabilities):
+
+================================= ===================== ===========================================================
+ **Method**                        **Engine Type**       **Description**
+================================= ===================== ===========================================================
+``DoGetSync(var, data, sel)``      Read                  ``Get`` with a ``Selection`` for sub-array reads
+``DoGetDeferred(var, data, sel)``  Read                  Deferred ``Get`` with a ``Selection``
+``DoPut(var, span, init, val)``    Write                 Span-based ``Put`` for zero-copy writes
+``Steps()``                        Read                  Returns the total number of available steps
+``MinBlocksInfo(name, step)``      Read                  Returns block decomposition info for a variable
+================================= ===================== ===========================================================
 
 Examples showing how to implement an engine plugin can be found in ``examples/plugins/engine``.
 An example write engine is ``ExampleWritePlugin.h``, while an example read engine is in ``ExampleReadPlugin.h``.
@@ -58,11 +76,10 @@ Looking at ``ExampleWritePlugin.h``, this looks like:
     extern "C" {
 
     adios2::plugin::ExampleWritePlugin *
-    EngineCreate(adios2::core::IO &io, const std::string &name,
-                 const adios2::Mode mode, adios2::helper::Comm comm)
+    EngineCreate(adios2::IO io, const std::string &name,
+                 const adios2::Mode mode)
     {
-        return new adios2::plugin::ExampleWritePlugin(io, name, mode,
-                                                            comm.Duplicate());
+        return new adios2::plugin::ExampleWritePlugin(io, name, mode);
     }
 
     void EngineDestroy(adios2::plugin::ExampleWritePlugin * obj)
@@ -75,18 +92,30 @@ Looking at ``ExampleWritePlugin.h``, this looks like:
 Operator Plugin
 ---------------
 
-Your operator plugin class needs to inherit from the ``PluginOperatorInterface`` class in the ``adios2/operator/plugin/PluginOperatorInterface.h`` header.
-There's three methods that you'll need to override from the ``adios2::core::Operator`` class, which are described below.
+Your operator plugin class needs to inherit from the ``PluginOperatorInterface`` class in the ``adios2/plugin/PluginOperatorInterface.h`` header.
+The operator plugin interface is a standalone class that does not depend on any ADIOS internal types.
+You must override the three pure virtual methods listed below. Additional optional methods are available for more advanced use.
 
-========================= ===========================================================
- **Method**                **Description**
-========================= ===========================================================
-``Operate()``              Performs the operation, e.g., compress data
-``InverseOperate()``       Performs the inverse operation, e.g., decompress data
-``IsDataTypeValid()``      Checks that a given data type can be processed
-========================= ===========================================================
+**Required methods** (pure virtual, must be overridden):
 
-An example showing how to implement an operator plugin can be found at ``plugins/EncryptionOperator.h`` and ``plugins/EncryptionOperator.cpp``.
+================================= ===========================================================
+ **Method**                        **Description**
+================================= ===========================================================
+``Operate()``                      Performs the operation, e.g., compress data
+``InverseOperate()``               Performs the inverse operation, e.g., decompress data
+``IsDataTypeValid()``              Checks that a given data type can be processed
+================================= ===========================================================
+
+**Optional methods** (override for additional capabilities):
+
+================================= ===========================================================
+ **Method**                        **Description**
+================================= ===========================================================
+``GetEstimatedSize()``             Upper bound estimate of transformed data size
+``AddExtraParameters()``           Receive per-invocation parameters
+================================= ===========================================================
+
+An example showing how to implement an operator plugin can be found at ``examples/plugins/operator``.
 This operator uses `libsodium <https://doc.libsodium.org/>`_ for encrypting and decrypting data.
 
 In addition to implementing the methods above, you'll need to implement ``OperatorCreate()`` and ``OperatorDestroy()`` functions so ADIOS can create/destroy the operator object.
@@ -123,7 +152,7 @@ To build your plugin, your CMake should look something like the following (using
     add_library(PluginEngineWrite
       ExampleWritePlugin.cpp
     )
-    target_link_libraries(PluginEngineWrite adios2::cxx adios2::core)
+    target_link_libraries(PluginEngineWrite adios2::cxx)
 
 When using the Plugin Engine, ADIOS will check for your plugin at the path specified in the ``ADIOS2_PLUGIN_PATH`` environment variable.
 If ``ADIOS2_PLUGIN_PATH`` is not set, and a path is not specified when loading your plugin (see below steps for using a plugin in your application), then the usual ``dlopen`` search is performed (see the `dlopen man page <https://man7.org/linux/man-pages/man3/dlopen.3.html>`_).
@@ -144,15 +173,15 @@ To do this in a portable way across platforms, you can add something similar to 
         $<INSTALL_INTERFACE:include>)
 
 
-Then in your plugin header, you'll need to ``#include "plugin_engine_write_export.h"``. Then edit your function defintions as follows:
+Then in your plugin header, you'll need to ``#include "plugin_engine_write_export.h"``. Then edit your function definitions as follows:
 
 .. code-block:: c++
 
     extern "C" {
 
     PLUGIN_ENGINE_WRITE_EXPORT adios2::plugin::ExampleWritePlugin *
-        EngineCreate(adios2::core::IO &io, const std::string &name,
-                 const adios2::Mode mode, adios2::helper::Comm comm);
+        EngineCreate(adios2::IO io, const std::string &name,
+                     const adios2::Mode mode);
 
     PLUGIN_ENGINE_WRITE_EXPORT void
         EngineDestroy(adios2::plugin::ExampleWritePlugin * obj);
