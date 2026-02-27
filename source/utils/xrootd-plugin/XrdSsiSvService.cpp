@@ -458,10 +458,245 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     }
 
 #define HasPrefix(s, p) (s.compare(0, sizeof(p) - 1, p) == 0)
+    if (!strcmp(reqData, "batchget"))
+    {
+        // Parse shared params from the header section (before first |)
+        std::string allArgs(reqArgs ? reqArgs : "");
+        std::vector<std::string> sections = split(allArgs, '|');
+        if (sections.empty())
+        {
+            RespondErr("batchget: no parameters", EINVAL);
+            return;
+        }
+
+        // Parse shared header: Filename, RMOrder, NVars, EngineParams
+        std::string Filename;
+        std::string EngineParams;
+        bool ArrayOrder = false;
+        size_t NVars = 0;
+        std::vector<std::string> headerParams = split(sections[0], '&');
+        for (auto &param : headerParams)
+        {
+            if (HasPrefix(param, "Filename="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                Filename = UrlDecode(param.substr(pos));
+            }
+            else if (HasPrefix(param, "RMOrder="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                size_t A;
+                sstream >> A;
+                ArrayOrder = (bool)A;
+            }
+            else if (HasPrefix(param, "NVars="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> NVars;
+            }
+            else if (HasPrefix(param, "EngineParams="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                EngineParams = UrlDecode(param.substr(pos));
+            }
+        }
+
+        if (Filename.empty() || NVars == 0 || sections.size() != NVars + 1)
+        {
+            RespondErr("batchget: invalid parameters", EINVAL);
+            return;
+        }
+
+        try
+        {
+            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
+            auto engine = poolEntry.file->m_engine;
+            auto io = poolEntry.file->m_io;
+
+            // First pass: parse all variable requests and compute sizes
+            struct VarRequest
+            {
+                std::string VarName;
+                size_t StepStart = 0;
+                size_t StepCount = 1;
+                size_t BlockID = (size_t)-1;
+                adios2::Dims Start, Count;
+                double AccuracyError = 0.0;
+                double AccuracyNorm = 0.0;
+                bool AccuracyRelative = false;
+                size_t dataSize = 0;
+            };
+            std::vector<VarRequest> varRequests(NVars);
+
+            for (size_t v = 0; v < NVars; v++)
+            {
+                auto &vr = varRequests[v];
+                std::vector<std::string> varParams = split(sections[v + 1], '&');
+                for (auto &param : varParams)
+                {
+                    if (HasPrefix(param, "Varname="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        vr.VarName = UrlDecode(param.substr(pos));
+                    }
+                    else if (HasPrefix(param, "StepStart="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        sstream >> vr.StepStart;
+                    }
+                    else if (HasPrefix(param, "StepCount="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        sstream >> vr.StepCount;
+                    }
+                    else if (HasPrefix(param, "Block="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        sstream >> vr.BlockID;
+                    }
+                    else if (HasPrefix(param, "Count="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        size_t C;
+                        sstream >> C;
+                        vr.Count.push_back(C);
+                    }
+                    else if (HasPrefix(param, "Start="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        size_t S;
+                        sstream >> S;
+                        vr.Start.push_back(S);
+                    }
+                    else if (HasPrefix(param, "AccuracyError="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        sstream >> vr.AccuracyError;
+                    }
+                    else if (HasPrefix(param, "AccuracyNorm="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        sstream >> vr.AccuracyNorm;
+                    }
+                    else if (HasPrefix(param, "AccuracyRelative="))
+                    {
+                        std::size_t pos = param.find("=") + 1;
+                        std::stringstream sstream(param.substr(pos));
+                        int rel;
+                        sstream >> rel;
+                        vr.AccuracyRelative = (rel != 0);
+                    }
+                }
+            }
+
+            // Compute sizes for each variable and total response size
+            // Response format: [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
+            size_t headerSize = sizeof(uint64_t) + NVars * sizeof(uint64_t);
+            size_t totalDataSize = 0;
+            std::vector<size_t> dataSizes(NVars);
+
+            for (size_t v = 0; v < NVars; v++)
+            {
+                auto &vr = varRequests[v];
+                adios2::DataType TypeOfVar = io.InquireVariableType(vr.VarName);
+                if (TypeOfVar == adios2::DataType::None)
+                {
+                    RespondErr("batchget: unknown variable", EINVAL);
+                    return;
+                }
+
+#define BATCHGET_SIZE(T)                                                                           \
+    else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
+    {                                                                                              \
+        adios2::Variable<T> var = io.InquireVariable<T>(vr.VarName);                               \
+        if (vr.BlockID != (size_t)-1)                                                              \
+            var.SetBlockSelection(vr.BlockID);                                                     \
+        var.SetStepSelection({vr.StepStart, vr.StepCount});                                        \
+        if (vr.Start.size())                                                                       \
+            var.SetSelection({vr.Start, vr.Count});                                                \
+        dataSizes[v] = var.SelectionSize() * sizeof(T);                                            \
+    }
+                if (false)
+                {
+                }
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(BATCHGET_SIZE)
+#undef BATCHGET_SIZE
+                totalDataSize += dataSizes[v];
+            }
+
+            // Allocate response buffer
+            m_responseBufferSize = headerSize + totalDataSize;
+            m_responseBuffer = (char *)malloc(m_responseBufferSize);
+            if (!m_responseBuffer)
+            {
+                RespondErr("batchget: allocation failed", ENOMEM);
+                return;
+            }
+
+            // Write header
+            char *writePtr = m_responseBuffer;
+            uint64_t nv = NVars;
+            memcpy(writePtr, &nv, sizeof(uint64_t));
+            writePtr += sizeof(uint64_t);
+            for (size_t v = 0; v < NVars; v++)
+            {
+                uint64_t sz = dataSizes[v];
+                memcpy(writePtr, &sz, sizeof(uint64_t));
+                writePtr += sizeof(uint64_t);
+            }
+
+            // Read all variables into the response buffer
+            for (size_t v = 0; v < NVars; v++)
+            {
+                auto &vr = varRequests[v];
+                adios2::DataType TypeOfVar = io.InquireVariableType(vr.VarName);
+
+#define BATCHGET_READ(T)                                                                           \
+    else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
+    {                                                                                              \
+        adios2::Variable<T> var = io.InquireVariable<T>(vr.VarName);                               \
+        if (vr.BlockID != (size_t)-1)                                                              \
+            var.SetBlockSelection(vr.BlockID);                                                     \
+        var.SetStepSelection({vr.StepStart, vr.StepCount});                                        \
+        if (vr.Start.size())                                                                       \
+            var.SetSelection({vr.Start, vr.Count});                                                \
+        if (vr.AccuracyError != 0.0 || vr.AccuracyNorm != 0.0)                                     \
+            var.SetAccuracy({vr.AccuracyError, vr.AccuracyNorm, vr.AccuracyRelative});             \
+        engine.Get(var, (T *)writePtr, adios2::Mode::Sync);                                        \
+    }
+                if (false)
+                {
+                }
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(BATCHGET_READ)
+#undef BATCHGET_READ
+                writePtr += dataSizes[v];
+            }
+
+            // Send response via detached thread (same pattern as single get)
+            // poolEntry auto-returns to pool when it goes out of scope
+            pthread_t tid;
+            XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "batchget");
+        }
+        catch (const std::exception &exc)
+        {
+            RespondErr("batchget: exception during processing", EINVAL);
+        }
+        return;
+    }
     if (!strcmp(reqData, "get"))
     {
         std::string Filename;
         std::string VarName;
+        std::string EngineParams;
         adios2::Dims Start, Count;
         size_t BlockID, DimCount, StepStart;
         size_t StepCount = 1;
@@ -551,6 +786,11 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 sstream >> rel;
                 AccuracyRelative = (rel != 0);
             }
+            else if (HasPrefix(param, "EngineParams="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                EngineParams = UrlDecode(param.substr(pos));
+            }
         }
         //  Get a "anonymous" engine with this file open with this array order.
         //  (any other differentiating characteristics of an ADIOS Open should be included in these
@@ -562,15 +802,18 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         //  object has a pointer to the parent's object.
         try
         {
-            auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
-            pthread_t tid;
-            auto engine = poolEntry.file->m_engine;
-            auto io = poolEntry.file->m_io;
-            adios2::Box<adios2::Dims> varSel(Start, Count);
-            adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
-            if (TypeOfVar == adios2::DataType::None)
             {
-            }
+                // Scope the poolEntry so it auto-returns to pool on exit
+                auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
+                auto engine = poolEntry.file->m_engine;
+                auto io = poolEntry.file->m_io;
+                adios2::Box<adios2::Dims> varSel(Start, Count);
+                adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
+                if (TypeOfVar == adios2::DataType::None)
+                {
+                    RespondErr("get: unknown variable", EINVAL);
+                    return;
+                }
 #define GET(T)                                                                                     \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
@@ -588,15 +831,17 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         else                                                                                       \
             m_responseBuffer = &m_respData[0];                                                     \
         engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                                \
-        m_FilePoolPtr->Return(poolEntry);                                                          \
-        XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
-            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
+            } // poolEntry returned to pool here
+            pthread_t tid;
+            XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");
         }
         catch (const std::exception &exc)
         {
-            RespondErr("Returning exception for Get ", EINVAL);
+            std::string errMsg = std::string("Exception in Get: ") + exc.what();
+            RespondErr(errMsg.c_str(), EINVAL);
         }
         // detached thread. Memory should not be deallocated yet,
         // only if a thread is finished
@@ -631,10 +876,7 @@ int XrdSsiSvService::Copy2Buff(char *dest, int dsz, const char *src, int ssz)
 /*                               R e s p o n d                                */
 /******************************************************************************/
 
-void XrdSsiSvService::Respond(const char *rData, const char *mData)
-{
-    throw std::logic_error("Respond shouldn't be called");
-}
+void XrdSsiSvService::Respond(const char *rData, const char *mData) { AdiosRespond(rData, mData); }
 
 void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
 {

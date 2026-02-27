@@ -5,12 +5,14 @@
 namespace adios2
 {
 
-ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays)
+ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays,
+                                                const std::string &EngineParams)
 {
     std::shared_ptr<SubPool> subpool;
     {
         std::lock_guard<std::mutex> guard(pool_mutex);
-        std::string index = Filename + "/" + std::to_string((int)RowMajorArrays);
+        std::string index =
+            Filename + "/" + std::to_string((int)RowMajorArrays) + "|" + EngineParams;
         auto res = map.find(index);
 
         if (res != map.end())
@@ -26,20 +28,12 @@ ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMa
     // pool_mutex is released. The shared_ptr keeps subpool alive even if
     // FlushUnused erases it from the map. The potentially slow file open
     // only blocks other requests for the SAME file, not the whole pool.
-    AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays);
+    AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays, EngineParams);
     return PoolEntry{file, subpool};
 }
 
-void ADIOSFilePool::Return(PoolEntry &Entry)
-{
-    // No pool_mutex needed — operate directly on the SubPool via the
-    // shared_ptr in the PoolEntry.
-    Entry.subpool->Return(Entry.file);
-    Entry.file = nullptr;
-    Entry.subpool.reset();
-}
-
-AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMajorArrays)
+AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMajorArrays,
+                                               const std::string &EngineParams)
 {
     std::lock_guard<std::mutex> guard(subpool_mutex);
     for (size_t i = 0; i < m_busy.size(); i++)
@@ -52,7 +46,7 @@ AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMaj
         }
     }
     // no free files — open new one (only blocks requests for this same file)
-    m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays));
+    m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays, EngineParams));
     m_busy.push_back(true);
     in_use_count++;
     return m_list[m_list.size() - 1].get();

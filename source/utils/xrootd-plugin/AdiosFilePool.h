@@ -13,6 +13,7 @@
 #include <memory>
 #include <mutex>
 #include <random>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -20,7 +21,6 @@
 /// \endcond
 
 #include "adios2.h"
-#include "adios2/helper/adiosString.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 using namespace adios2::core;
@@ -40,7 +40,8 @@ public:
     bool m_RowMajorArrays;
     size_t m_BytesSent = 0;
     size_t m_OperationCount = 0;
-    AnonADIOSFile(std::string FileName, bool RowMajorArrays)
+    AnonADIOSFile(std::string FileName, bool RowMajorArrays,
+                  const std::string &EngineParams = std::string())
     {
         Mode adios_read_mode = adios2::Mode::Read;
         m_FileName = FileName;
@@ -49,6 +50,20 @@ public:
         ArrayOrdering ArrayOrder =
             RowMajorArrays ? ArrayOrdering::RowMajor : ArrayOrdering::ColumnMajor;
         m_io = adios.DeclareIO(m_IOname, ArrayOrder);
+        if (!EngineParams.empty())
+        {
+            // Decode TAB-separated key=value pairs and set as engine parameters
+            std::stringstream ss(EngineParams);
+            std::string entry;
+            while (std::getline(ss, entry, '\t'))
+            {
+                auto eqPos = entry.find('=');
+                if (eqPos != std::string::npos && eqPos > 0)
+                {
+                    m_io.SetParameter(entry.substr(0, eqPos), entry.substr(eqPos + 1));
+                }
+            }
+        }
         adios_read_mode = adios2::Mode::ReadRandomAccess;
         m_engine = m_io.Open(FileName, adios_read_mode);
         std::memcpy(&m_ID, m_IOname.c_str(), sizeof(m_ID));
@@ -93,21 +108,55 @@ public:
         size_t in_use_count = 0;
         std::vector<std::unique_ptr<AnonADIOSFile>> m_list;
         std::vector<bool> m_busy;
-        AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays);
+        AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays,
+                               const std::string &EngineParams = std::string());
         void Return(AnonADIOSFile *Entry);
     };
 
+    // RAII wrapper: automatically returns the file to the pool on scope exit.
+    // Move-only; moving transfers ownership (source becomes empty).
     struct PoolEntry
     {
         AnonADIOSFile *file = nullptr;
         std::shared_ptr<SubPool> subpool;
+
+        PoolEntry() = default;
+        PoolEntry(AnonADIOSFile *f, std::shared_ptr<SubPool> sp) : file(f), subpool(sp) {}
+        ~PoolEntry()
+        {
+            if (file && subpool)
+            {
+                subpool->Return(file);
+            }
+        }
+        // Move-only
+        PoolEntry(PoolEntry &&o) noexcept : file(o.file), subpool(std::move(o.subpool))
+        {
+            o.file = nullptr;
+        }
+        PoolEntry &operator=(PoolEntry &&o) noexcept
+        {
+            if (this != &o)
+            {
+                if (file && subpool)
+                {
+                    subpool->Return(file);
+                }
+                file = o.file;
+                subpool = std::move(o.subpool);
+                o.file = nullptr;
+            }
+            return *this;
+        }
+        PoolEntry(const PoolEntry &) = delete;
+        PoolEntry &operator=(const PoolEntry &) = delete;
     };
 
     static ADIOSFilePool &getInstance();
     ~ADIOSFilePool();
 
-    PoolEntry GetFree(std::string Filename, bool RowMajorArrays);
-    void Return(PoolEntry &Entry);
+    PoolEntry GetFree(std::string Filename, bool RowMajorArrays,
+                      const std::string &EngineParams = std::string());
     void FlushUnused();
 
 private:
