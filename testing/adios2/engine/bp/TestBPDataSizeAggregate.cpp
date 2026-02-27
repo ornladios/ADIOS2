@@ -20,7 +20,8 @@ uint64_t nSteps = 1;
 std::string aggregationType = "DataSizeBased"; // comes from command line
 std::string numberOfSubFiles = "2";            // comes from command line
 std::string numberOfSteps = "1";               // comes from command line
-std::string verbose = "0";
+std::string verbose = "0";                     // comes from command line
+bool rerouting = false;                        // comes from command line
 
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 {
@@ -95,6 +96,8 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     uint64_t globalNy = sumFirstN(columnsPerRank, columnsPerRank.size());
     uint64_t largestValue = (globalNx * globalNy) - 1;
 
+    std::string filename = std::string("unbalanced_output") + "_RR" + (rerouting ? "Y" : "N");
+
     {
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
         bpIO.SetEngine("BPFile");
@@ -102,11 +105,14 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
         bpIO.SetParameter("verbose", verbose);
 
+        const char *rr = (rerouting ? "true" : "false");
+        bpIO.SetParameter("EnableWriterRerouting", rr);
+
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
         EXPECT_TRUE(varGlobalArray);
 
-        adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open(filename, adios2::Mode::Write);
 
         for (size_t step = 0; step < nSteps; ++step)
         {
@@ -155,7 +161,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         adios2::IO io = adios.DeclareIO("ReadIO");
 
         io.SetEngine("BPFile");
-        adios2::Engine bpReader = io.Open("unbalanced_output.bp", adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(filename, adios2::Mode::ReadRandomAccess);
 
         auto var_array = io.InquireVariable<uint64_t>("GlobalArray");
         EXPECT_TRUE(var_array);
@@ -221,6 +227,14 @@ int main(int argc, char **argv)
     if (argc > 4)
     {
         verbose = std::string(argv[4]);
+    }
+    if (argc > 5)
+    {
+        std::string lastArg = std::string(argv[5]);
+        if (lastArg.compare("WithRerouting") == 0)
+        {
+            rerouting = true;
+        }
     }
 
     try

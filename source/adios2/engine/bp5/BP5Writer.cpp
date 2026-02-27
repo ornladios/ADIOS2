@@ -20,6 +20,7 @@
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
+#include <adios2sys/SystemTools.hxx>
 
 #include <ctime>
 #include <iomanip> // setw
@@ -122,15 +123,15 @@ helper::RankPartition BP5Writer::GetPartitionInfo(const uint64_t rankDataSize, c
     std::string p_str = gpi_str + "_partition";
     m_Profiler.AddTimerWatch(p_str);
     m_Profiler.Start(p_str);
-    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
+    m_Partitioning = helper::PartitionRanks(allsizes, numPartitions);
     m_Profiler.Stop(p_str);
 
     if (parentRank == 0 && m_Parameters.verbose > 0)
     {
-        partitioning.PrintSummary();
+        m_Partitioning.PrintSummary();
     }
 
-    return partitioning.FindPartition(parentRank);
+    return m_Partitioning.FindPartition(parentRank);
 }
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -169,6 +170,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         }
         m_MarshalAttributesNecessary = false;
     }
+
+    m_MultiBlockWrite = false;
 
     // one-time stuff after Open must be done above
     m_IsFirstStep = false;
@@ -411,8 +414,43 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_EveryoneWrites(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
-        case (int)AggregationType::DataSizeBased:
             WriteData_EveryoneWrites(Data, true);
+            break;
+        case (int)AggregationType::DataSizeBased:
+            // First initialize aggregator and transports if we haven't done it yet this step
+            if (!m_AggregatorInitializedThisStep)
+            {
+                // We can't allow ranks to change subfiles between calls to Put(), so we only
+                // do this initialization once per timestep. Consequently, partition decision
+                // could be based on incomplete step data.
+                InitAggregator(Data->Size());
+                InitTransports();
+                m_AggregatorInitializedThisStep = true;
+            }
+
+            // For rerouting to be useful, there must be multiple writers sending
+            // data to multiple subfiles.
+            if (m_Parameters.EnableWriterRerouting && m_Comm.Size() > 1 &&
+                m_Aggregator->m_SubStreams > 1)
+            {
+                if (!m_MultiBlockWrite)
+                {
+                    WriteData_WithRerouting(Data);
+                }
+                else
+                {
+                    if (m_Parameters.verbose > 1)
+                    {
+                        std::cout << "Rerouting aggregation and multiblock writes are not "
+                                  << "supported at the same time, disabling rerouting" << std::endl;
+                    }
+                    WriteData_EveryoneWrites(Data, true);
+                }
+            }
+            else
+            {
+                WriteData_EveryoneWrites(Data, true);
+            }
             break;
         case (int)AggregationType::TwoLevelShm:
             WriteData_TwoLevelShm(Data);
@@ -431,19 +469,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
 {
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
-    {
-        if (!m_AggregatorInitializedThisStep)
-        {
-            // We can't allow ranks to change subfiles between calls to Put(), so we only
-            // do this initialization once per timestep. Consequently, partition decision
-            // could be based on incomplete step data.
-            InitAggregator(Data->Size());
-            InitTransports();
-            m_AggregatorInitializedThisStep = true;
-        }
-    }
-
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on aggregator
@@ -1069,6 +1094,34 @@ void BP5Writer::EndStep()
 
     m_Profiler.Stop("ES_WriteData");
 
+    if (m_Parameters.verbose > 2)
+    {
+        std::cout << "Rank " << m_Comm.Rank() << " deciding whether new writer map is needed"
+                  << std::endl;
+        std::cout << "  m_WriterStep: " << m_WriterStep << std::endl;
+        std::cout << "  m_AppendWriterCount: " << m_AppendWriterCount
+                  << ", m_Comm.Size(): " << m_Comm.Size() << std::endl;
+        std::cout << "  m_AppendAggregatorCount: " << m_AppendAggregatorCount
+                  << ", m_Aggregator->m_NumAggregators: " << m_Aggregator->m_NumAggregators
+                  << std::endl;
+        std::cout << "  m_AppendSubfileCount: " << m_AppendSubfileCount
+                  << ", m_Aggregator->m_SubStreams: " << m_Aggregator->m_SubStreams << std::endl;
+    }
+
+    if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
+        m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
+        m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams ||
+                                                          m_Parameters.EnableWriterRerouting))
+    {
+        // new Writer Map is needed
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed" << std::endl;
+        }
+        const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
+        m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
+    }
+
     if (m_Parameters.UseSelectiveMetadataAggregation)
     {
         SelectiveAggregationMetadata(TSInfo);
@@ -1673,29 +1726,9 @@ void BP5Writer::InitTransports()
         helper::CleanupBPDirectory(m_Name, filesToKeep, m_Comm);
     }
 
-    std::string cacheKey = GetCacheKey(m_Aggregator);
-    auto search = m_AggregatorSpecifics.find(cacheKey);
-    bool cacheHit = false;
+    OpenSubfile();
 
-    if (search != m_AggregatorSpecifics.end())
-    {
-        if (m_Parameters.verbose > 2)
-        {
-            std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
-                      << std::endl;
-        }
-        cacheHit = true;
-    }
-    else
-    {
-        // Didn't have one in the cache, add it now
-        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
-    }
-
-    AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
-
-    // /path/name.bp.dir/name.bp.rank
-    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
 
     if (m_IAmDraining)
     {
@@ -1722,9 +1755,54 @@ void BP5Writer::InitTransports()
             aggData.m_DrainSubStreamNames, m_IO.m_TransportsParameters, m_Parameters.NodeLocal);
     }
 
+    if (m_IAmDraining)
+    {
+        if (m_DrainBB)
+        {
+            for (const auto &name : aggData.m_DrainSubStreamNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
+        }
+    }
+
+    InitBPBuffer();
+}
+
+void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
+{
+    std::string cacheKey = GetCacheKey(m_Aggregator);
+    auto search = m_AggregatorSpecifics.find(cacheKey);
+    bool cacheHit = false;
+
+    if (search != m_AggregatorSpecifics.end())
+    {
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " cache hit for aggregator key " << cacheKey
+                      << std::endl;
+        }
+        cacheHit = true;
+    }
+    else
+    {
+        // Didn't have one in the cache, add it now
+        if (m_Parameters.verbose > 2)
+        {
+            std::cout << "Rank " << m_Comm.Rank() << " cache miss for aggregator key " << cacheKey
+                      << std::endl;
+        }
+        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
+    }
+
+    AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
+
+    // /path/name.bp.dir/name.bp.rank
+    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+
     helper::Comm openSyncComm;
 
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased && useComm)
     {
         // Split my writer chain so only ranks that actually need to open a
         // file can do so in an ordered fashion.
@@ -1743,7 +1821,7 @@ void BP5Writer::InitTransports()
 
             if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
             {
-                if (m_WriterStep > 0)
+                if (m_WriterStep > 0 || forceAppend)
                 {
                     // override the mode to be append if we're opening a file that
                     // was already opened by another rank.
@@ -1751,33 +1829,34 @@ void BP5Writer::InitTransports()
                 }
             }
 
-            if (m_Parameters.verbose > 1)
+            if (useComm)
             {
-                std::cout << "Rank " << m_Comm.Rank() << " opening data file" << std::endl;
+                if (m_Parameters.verbose > 1)
+                {
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm"
+                              << std::endl;
+                }
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
+                                                    m_IO.m_TransportsParameters, true,
+                                                    *DataWritingComm);
             }
-            aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                m_IO.m_TransportsParameters, true,
-                                                *DataWritingComm);
+            else
+            {
+                if (m_Parameters.verbose > 1)
+                {
+                    std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm"
+                              << std::endl;
+                }
+                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
+                                                    m_IO.m_TransportsParameters, true);
+            }
         }
     }
 
-    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased)
+    if (m_Parameters.AggregationType == (int)AggregationType::DataSizeBased && useComm)
     {
         openSyncComm.Free();
     }
-
-    if (m_IAmDraining)
-    {
-        if (m_DrainBB)
-        {
-            for (const auto &name : aggData.m_DrainSubStreamNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
-        }
-    }
-
-    this->InitBPBuffer();
 }
 
 /*generate the header for the metadata index file*/
@@ -2027,33 +2106,6 @@ void BP5Writer::InitBPBuffer()
     {
         m_WriterDataPos.resize(m_Comm.Size());
     }
-
-    if (m_Parameters.verbose > 2)
-    {
-        std::cout << "Rank " << m_Comm.Rank() << " deciding whether new writer map is needed"
-                  << std::endl;
-        std::cout << "  m_WriterStep: " << m_WriterStep << std::endl;
-        std::cout << "  m_AppendWriterCount: " << m_AppendWriterCount
-                  << ", m_Comm.Size(): " << m_Comm.Size() << std::endl;
-        std::cout << "  m_AppendAggregatorCount: " << m_AppendAggregatorCount
-                  << ", m_Aggregator->m_NumAggregators: " << m_Aggregator->m_NumAggregators
-                  << std::endl;
-        std::cout << "  m_AppendSubfileCount: " << m_AppendSubfileCount
-                  << ", m_Aggregator->m_SubStreams: " << m_Aggregator->m_SubStreams << std::endl;
-    }
-
-    if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
-        m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
-        m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams))
-    {
-        // new Writer Map is needed, generate now, write later
-        if (m_Parameters.verbose > 2)
-        {
-            std::cout << "Rank " << m_Comm.Rank() << " new writer map needed" << std::endl;
-        }
-        const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
-        m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
-    }
 }
 
 void BP5Writer::EnterComputationBlock() noexcept
@@ -2139,6 +2191,7 @@ void BP5Writer::Flush(const int transportIndex) {}
 void BP5Writer::PerformDataWrite()
 {
     profiling::ProfilerGuard g(m_Profiler, "PDW");
+    m_MultiBlockWrite = true;
     FlushData(false);
 }
 
@@ -2243,8 +2296,20 @@ void BP5Writer::DoClose(const int transportIndex)
 
 void BP5Writer::FlushProfiler()
 {
-    AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    auto transportTypes = aggData.m_FileDataManager.GetTransportsTypes();
+    std::vector<std::string> transportTypes;
+    std::vector<std::string> transportNames;
+    std::vector<adios2::profiling::IOChrono *> transportProfilers;
+
+    for (auto &specs : m_AggregatorSpecifics)
+    {
+        std::vector<std::string> types = specs.second.m_FileDataManager.GetTransportsTypes();
+        std::vector<std::string> names = specs.second.m_FileDataManager.GetTransportsNames();
+        std::vector<adios2::profiling::IOChrono *> profs =
+            specs.second.m_FileDataManager.GetTransportsProfilers();
+        transportTypes.insert(transportTypes.end(), types.begin(), types.end());
+        transportNames.insert(transportNames.end(), names.begin(), names.end());
+        transportProfilers.insert(transportProfilers.end(), profs.begin(), profs.end());
+    }
 
     // find first File type output, where we can write the profile
     int fileTransportIdx = -1;
@@ -2256,18 +2321,18 @@ void BP5Writer::FlushProfiler()
         }
     }
 
-    auto transportProfilers = aggData.m_FileDataManager.GetTransportsProfilers();
-
     if (m_RankMPI == 0)
     {
         transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
+        transportNames.push_back(adios2sys::SystemTools::GetFilenameName(m_MetadataFile->m_Name));
         transportProfilers.push_back(&m_MetadataFile->m_Profiler);
     }
 
     // m_Profiler.WriteOut(transportTypes, transportProfilers);
 
-    const std::string lineJSON(m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
-                               ",\n");
+    const std::string lineJSON(
+        m_Profiler.GetRankProfilingJSON(transportTypes, transportNames, transportProfilers) +
+        ",\n");
 
     const std::vector<char> profilingJSON(m_Profiler.AggregateProfilingJSON(lineJSON));
 
@@ -2282,7 +2347,7 @@ void BP5Writer::FlushProfiler()
             std::vector<std::string> bpTargetNames = {m_Name};
             if (fileTransportIdx > -1)
             {
-                profileFileName = bpTargetNames[fileTransportIdx] + "/profiling.json";
+                profileFileName = bpTargetNames[0] + "/profiling.json";
             }
             else
             {
@@ -2299,7 +2364,7 @@ void BP5Writer::FlushProfiler()
             std::vector<std::string> bpBaseNames = {m_Name};
             if (fileTransportIdx > -1)
             {
-                profileFileName = bpBaseNames[fileTransportIdx] + "/profiling.json";
+                profileFileName = bpBaseNames[0] + "/profiling.json";
             }
             else
             {
