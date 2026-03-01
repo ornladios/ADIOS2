@@ -1,10 +1,9 @@
 #include "AdiosFilePool.h"
+#include "adios2/helper/adiosSystem.h"
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
-#include <fstream>
 #include <iostream>
-#include <sys/resource.h>
 #include <sys/stat.h>
 #include <thread>
 
@@ -387,40 +386,7 @@ void ADIOSFilePool::PeriodicTask(std::chrono::milliseconds interval)
 
 ADIOSFilePool::ADIOSFilePool()
 {
-    // Determine FD limit: try /proc/sys/fs/nr_open (Linux actual kernel max),
-    // fall back to rlimit, cap at a sensible default if neither works.
-    size_t fd_limit = 0;
-
-    // On Linux, /proc/sys/fs/nr_open gives the true per-process kernel maximum
-    std::ifstream proc_nr_open("/proc/sys/fs/nr_open");
-    if (proc_nr_open.is_open())
-    {
-        proc_nr_open >> fd_limit;
-        proc_nr_open.close();
-    }
-
-    // Raise rlimit to max and use it if /proc wasn't available
-    struct rlimit rl;
-    if (getrlimit(RLIMIT_NOFILE, &rl) == 0)
-    {
-        if (rl.rlim_cur < rl.rlim_max)
-        {
-            rl.rlim_cur = rl.rlim_max;
-            setrlimit(RLIMIT_NOFILE, &rl);
-            getrlimit(RLIMIT_NOFILE, &rl);
-        }
-        if (fd_limit == 0)
-        {
-            fd_limit = static_cast<size_t>(rl.rlim_cur);
-        }
-        else
-        {
-            // Use the lesser of /proc limit and rlimit
-            fd_limit = std::min(fd_limit, static_cast<size_t>(rl.rlim_cur));
-        }
-    }
-
-    // If we still don't have a sane limit, use a conservative default
+    size_t fd_limit = adios2::helper::RaiseLimitNoFile();
     if (fd_limit == 0)
     {
         fd_limit = 4096;

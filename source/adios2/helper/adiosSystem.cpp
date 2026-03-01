@@ -10,6 +10,7 @@
 #include "adiosSystem.h"
 #include <chrono> //system_clock, now
 #include <ctime>
+#include <fstream>
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
 #include <thread>
@@ -203,10 +204,6 @@ size_t RaiseLimitNoFile()
         raisedLimit = limit.rlim_cur;
         if (!err)
         {
-            /*std::cout
-                << "adios2::helper::RaiseLimitNoFile() found limits soft = "
-                << limit.rlim_cur << " hard = " << limit.rlim_max <<
-               std::endl;*/
             if (limit.rlim_cur < limit.rlim_max)
             {
                 limit.rlim_cur = limit.rlim_max;
@@ -215,10 +212,6 @@ size_t RaiseLimitNoFile()
                 {
                     getrlimit(RLIMIT_NOFILE, &limit);
                     raisedLimit = limit.rlim_cur;
-                    /*std::cout << "adios2::helper::RaiseLimitNoFile() set "
-                                 "limits soft = "
-                              << limit.rlim_cur << " hard = " << limit.rlim_max
-                              << std::endl;*/
                 }
             }
         }
@@ -229,6 +222,21 @@ size_t RaiseLimitNoFile()
                       << ", hard=" << limit.rlim_max << ") failed with error code " << errno << ": "
                       << strerror(errno) << std::endl;
         }
+
+        // On Linux, check the true kernel per-process maximum.
+        // rlim_max can be set absurdly high in containers without
+        // the kernel actually supporting that many open files.
+        std::ifstream proc_nr_open("/proc/sys/fs/nr_open");
+        if (proc_nr_open.is_open())
+        {
+            size_t kernel_max = 0;
+            proc_nr_open >> kernel_max;
+            if (kernel_max > 0 && kernel_max < raisedLimit)
+            {
+                raisedLimit = kernel_max;
+            }
+        }
+
         firstCallRaiseLimit = false;
     }
     return raisedLimit;
