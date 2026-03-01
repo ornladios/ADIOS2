@@ -1,5 +1,6 @@
 #include "AdiosFilePool.h"
-#include "adios2/helper/adiosSystem.h"
+#include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
@@ -128,6 +129,62 @@ BP5CostEstimate ADIOSFilePool::ProbeBP5Directory(const std::string &path,
     return cost;
 }
 
+// Evict idle subpools in LRU order. Called reactively when an open fails
+// with EMFILE. Must be called with pool_mutex held.
+void ADIOSFilePool::EvictLRU()
+{
+    struct Candidate
+    {
+        decltype(map)::const_iterator it;
+        std::chrono::steady_clock::time_point last_used;
+        size_t fd_cost;
+    };
+    std::vector<Candidate> candidates;
+
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+    {
+        auto *subpool = it->second.get();
+        std::lock_guard<std::mutex> sub_guard(subpool->subpool_mutex);
+        if (subpool->in_use_count == 0)
+        {
+            candidates.push_back({it, subpool->last_used, subpool->EstimateFDCost()});
+        }
+    }
+
+    // Sort LRU first (oldest last_used first)
+    std::sort(candidates.begin(), candidates.end(),
+              [](const Candidate &a, const Candidate &b) { return a.last_used < b.last_used; });
+
+    // Evict up to 10% of idle subpools to make room
+    size_t to_evict = std::max(candidates.size() / 10, size_t(1));
+    size_t evicted = 0;
+
+    for (auto &c : candidates)
+    {
+        if (evicted >= to_evict)
+        {
+            break;
+        }
+        auto *subpool = c.it->second.get();
+        std::lock_guard<std::mutex> sub_guard(subpool->subpool_mutex);
+        if (subpool->in_use_count != 0)
+        {
+            continue;
+        }
+        if (!subpool->m_list.empty())
+        {
+            std::cout << "Evicting (FD pressure) subpool for \"" << subpool->m_list[0]->m_FileName
+                      << "\" (FDs: " << c.fd_cost << ")" << std::endl;
+        }
+        m_Evictions++;
+        m_EvictionsFD++;
+        m_TotalMetadataBytes -= subpool->metadata_bytes;
+        m_TotalSubfileCount -= subpool->EstimateFDCost();
+        map.erase(c.it);
+        evicted++;
+    }
+}
+
 ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays,
                                                 const std::string &EngineParams)
 {
@@ -171,8 +228,32 @@ ADIOSFilePool::PoolEntry ADIOSFilePool::GetFree(std::string Filename, bool RowMa
     // pool_mutex is released. The shared_ptr keeps subpool alive even if
     // FlushUnused erases it from the map. The potentially slow file open
     // only blocks other requests for the SAME file, not the whole pool.
-    AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays, EngineParams);
-    return PoolEntry{file, subpool};
+    try
+    {
+        AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays, EngineParams);
+        return PoolEntry{file, subpool};
+    }
+    catch (...)
+    {
+        // Check if this is an FD exhaustion failure by probing /dev/null
+        FILE *probe = std::fopen("/dev/null", "r");
+        if (!probe && errno == EMFILE)
+        {
+            // FD limit hit — evict idle subpools and retry
+            std::cout << "FD limit hit, evicting idle subpools..." << std::endl;
+            {
+                std::lock_guard<std::mutex> guard(pool_mutex);
+                EvictLRU();
+            }
+            AnonADIOSFile *file = subpool->GetFree(Filename, RowMajorArrays, EngineParams);
+            return PoolEntry{file, subpool};
+        }
+        if (probe)
+        {
+            std::fclose(probe);
+        }
+        throw; // Not an FD issue — propagate original error
+    }
 }
 
 AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMajorArrays,
@@ -360,8 +441,8 @@ void ADIOSFilePool::LogStats()
               << ") cached_files=" << pool_size << " open_handles=" << total_opens
               << " shared_tar_fds=" << adios2::SharedTarFDCache::getInstance().Size()
               << " metadata=" << HumanBytes(m_TotalMetadataBytes) << "/"
-              << HumanBytes(m_MetadataBytesLimit) << " est_fds=" << m_TotalSubfileCount << "/"
-              << m_FDLimit << " served=" << HumanBytes(total_bytes_served) << " ops=" << total_ops
+              << HumanBytes(m_MetadataBytesLimit) << " est_fds=" << m_TotalSubfileCount
+              << " served=" << HumanBytes(total_bytes_served) << " ops=" << total_ops
               << " open_latency=" << HumanMicros(total_open_us)
               << " avg_open=" << HumanMicros(total_opens > 0 ? total_open_us / total_opens : 0)
               << std::endl;
@@ -386,17 +467,9 @@ void ADIOSFilePool::PeriodicTask(std::chrono::milliseconds interval)
 
 ADIOSFilePool::ADIOSFilePool()
 {
-    size_t fd_limit = adios2::helper::RaiseLimitNoFile();
-    if (fd_limit == 0)
-    {
-        fd_limit = 4096;
-    }
-
-    // Reserve FDs for XRootD, logging, etc. — pool gets 90% of available FDs
-    m_FDLimit = fd_limit * 9 / 10;
     adios2::SharedTarFDCache::Enable();
-    std::cout << "Singleton ADIOSFilePool instance created (FD limit: " << m_FDLimit
-              << ", SharedTarFDCache enabled).\n";
+    std::cout << "Singleton ADIOSFilePool instance created (SharedTarFDCache enabled, "
+              << "reactive FD eviction).\n";
     periodicThread = periodicWorker();
 }
 

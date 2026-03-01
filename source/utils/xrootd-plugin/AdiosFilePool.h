@@ -214,6 +214,7 @@ private:
     size_t m_TotalMetadataBytes = 0;
     size_t m_TotalSubfileCount = 0;
     void EvictUnderPressure(size_t incoming_fd_cost, size_t incoming_metadata_bytes);
+    void EvictLRU();
 
     static BP5CostEstimate ProbeBP5Directory(const std::string &path,
                                              const std::string &EngineParams);
