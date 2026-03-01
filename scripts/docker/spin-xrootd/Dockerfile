@@ -1,4 +1,4 @@
-FROM fedora:latest@sha256:781b7642e8bf256e9cf75d2aa58d86f5cc695fd2df113517614e181a5eee9138
+FROM fedora:latest
 
 # Install development tools
 RUN dnf update -y && \
@@ -19,6 +19,9 @@ RUN chmod +x /docker-entrypoint.sh
 # Clone and build ADIOS2 with XRootD and CURL support from GitHub
 ARG ADIOS2_REPO=https://github.com/ornladios/ADIOS2.git
 ARG ADIOS2_BRANCH=master
+
+# Cache bust: change this arg to force re-clone when branch has new commits
+ARG CACHEBUST=0
 
 # Build, install, create test data, then remove source entirely
 RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && \
@@ -42,21 +45,20 @@ RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && 
     /ADIOS2-src/build/bin/TestCommonWrite bp5 sample && \
     rm -rf /ADIOS2-src
 
-# Create directories for XRootD with correct ownership for non-root operation
-RUN mkdir -p /var/spool/xrootd /run/xrootd /etc/xrootd/certs /var/log/xrootd && \
-    chown -R 194:194 /var/spool/xrootd /run/xrootd /var/log/xrootd /data
+# Create directories for XRootD with world-writable permissions
+# Spin runs containers with arbitrary UIDs, so we can't rely on ownership
+RUN mkdir -p /var/spool/xrootd/adios /run/xrootd/adios /etc/xrootd/certs /var/log/xrootd /tmp/adios && \
+    chmod -R 1777 /var/spool/xrootd /run/xrootd /var/log/xrootd /tmp/adios /data
 
 # Generate self-signed SSL certificate at build time
-# This is needed because XRootD's http.exthandler requires TLS to be configured
-# Ownership set to xrootd user (194:194) so non-root container can read the key
+# Written to /tmp so any UID can read them at startup
+# The entrypoint will copy and fix permissions for XRootD
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/xrootd/certs/server.key \
-    -out /etc/xrootd/certs/server.crt \
+    -keyout /tmp/server.key \
+    -out /tmp/server.crt \
     -subj "/CN=localhost" \
     -batch && \
-    chmod 600 /etc/xrootd/certs/server.key && \
-    chmod 644 /etc/xrootd/certs/server.crt && \
-    chown -R 194:194 /etc/xrootd/certs
+    chmod 644 /tmp/server.key /tmp/server.crt
 
 # Expose HTTP port (Spin Ingress will terminate TLS and forward to this port)
 EXPOSE 8080
