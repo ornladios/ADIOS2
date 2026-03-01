@@ -5,6 +5,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <iostream>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <thread>
 
@@ -441,8 +442,8 @@ void ADIOSFilePool::LogStats()
               << ") cached_files=" << pool_size << " open_handles=" << total_opens
               << " shared_tar_fds=" << adios2::SharedTarFDCache::getInstance().Size()
               << " metadata=" << HumanBytes(m_TotalMetadataBytes) << "/"
-              << HumanBytes(m_MetadataBytesLimit) << " est_fds=" << m_TotalSubfileCount
-              << " served=" << HumanBytes(total_bytes_served) << " ops=" << total_ops
+              << HumanBytes(m_MetadataBytesLimit) << " est_fds=" << m_TotalSubfileCount << "/"
+              << m_FDLimit << " served=" << HumanBytes(total_bytes_served) << " ops=" << total_ops
               << " open_latency=" << HumanMicros(total_open_us)
               << " avg_open=" << HumanMicros(total_opens > 0 ? total_open_us / total_opens : 0)
               << std::endl;
@@ -467,9 +468,37 @@ void ADIOSFilePool::PeriodicTask(std::chrono::milliseconds interval)
 
 ADIOSFilePool::ADIOSFilePool()
 {
+    // FD limit: env override > rlimit, with 90% headroom for XRootD overhead
+    const char *fd_env = std::getenv("ADIOS_POOL_FD_LIMIT");
+    if (fd_env)
+    {
+        m_FDLimit = std::strtoull(fd_env, nullptr, 10);
+    }
+    else
+    {
+        struct rlimit rl;
+        if (getrlimit(RLIMIT_NOFILE, &rl) == 0)
+        {
+            if (rl.rlim_cur < rl.rlim_max)
+            {
+                rl.rlim_cur = rl.rlim_max;
+                setrlimit(RLIMIT_NOFILE, &rl);
+                getrlimit(RLIMIT_NOFILE, &rl);
+            }
+            m_FDLimit = static_cast<size_t>(rl.rlim_cur) * 9 / 10;
+        }
+    }
+
+    // Metadata limit: env override > default (2 GB)
+    const char *md_env = std::getenv("ADIOS_POOL_METADATA_LIMIT");
+    if (md_env)
+    {
+        m_MetadataBytesLimit = std::strtoull(md_env, nullptr, 10);
+    }
+
     adios2::SharedTarFDCache::Enable();
-    std::cout << "Singleton ADIOSFilePool instance created (SharedTarFDCache enabled, "
-              << "reactive FD eviction).\n";
+    std::cout << "ADIOSFilePool created (FD limit: " << m_FDLimit
+              << ", metadata limit: " << m_MetadataBytesLimit << ", SharedTarFDCache enabled).\n";
     periodicThread = periodicWorker();
 }
 
