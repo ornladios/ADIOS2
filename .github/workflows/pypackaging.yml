@@ -55,7 +55,10 @@ jobs:
           path: dist/*.tar.gz
 
   build_wheels:
-    name: Wheel on ${{ matrix.os }}
+    # Builds per-version wheels for Python 3.9–3.11 and a single stable-ABI
+    # wheel for Python 3.12+ (cp312-abi3, valid for all future interpreters).
+    # The abi3 variant is enabled per-version via [[tool.cibuildwheel.overrides]].
+    name: Wheels (cp39–cp311 + cp312-abi3) on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -76,7 +79,14 @@ jobs:
 
       - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v2.16
         env:
-          CIBW_BUILD: cp*-manylinux_x86_64
+          # cp39–cp311: standard per-version wheels (no stable ABI, nanobind min)
+          # cp312:       stable-ABI wheel (.abi3.so) valid for all Python >= 3.12
+          #              (abi3 enabled via [[tool.cibuildwheel.overrides]] in pyproject.toml)
+          CIBW_BUILD: >-
+            cp39-manylinux_x86_64
+            cp310-manylinux_x86_64
+            cp311-manylinux_x86_64
+            cp312-manylinux_x86_64
 
       - name: Upload wheels
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4

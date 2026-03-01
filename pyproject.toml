@@ -19,7 +19,7 @@ authors = [
 ]
 description = "The Adaptable Input Output System version 2"
 readme = "ReadMe.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = [
     "Python",
     "Web",
@@ -51,6 +51,13 @@ Changelog = "https://github.com/ornladios/ADIOS2/releases"
 [tool.cibuildwheel]
 # Trigger an install of the package, and run a basic test
 test-command = "python -m unittest adios2.test.simple_read_write.TestSimpleReadWrite"
+
+# For Python 3.12+ enable the stable ABI so a single wheel covers all future
+# interpreters. For 3.9–3.11 a standard per-version wheel is built instead.
+[[tool.cibuildwheel.overrides]]
+select = "cp312-*"
+config-settings."wheel.py-api" = "cp312"
+config-settings."cmake.define.ADIOS2_USE_PythonStableABI" = "ON"
 
 [tool.scikit-build]
 wheel.packages = ["adios2"]

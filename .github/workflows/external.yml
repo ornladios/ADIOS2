@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   generate_statuses:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       statuses: write

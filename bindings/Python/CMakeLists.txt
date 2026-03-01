@@ -1,20 +1,27 @@
-Python_add_library(adios2_py MODULE
-  WITH_SOABI
-  py11ADIOS.cpp
-  py11IO.cpp
-  py11Variable.cpp
-  py11VariableDerived.cpp
-  py11Attribute.cpp
-  py11Engine.cpp
-  py11Operator.cpp
-  py11Query.cpp
-  py11glue.cpp
+if(ADIOS2_USE_PythonStableABI)
+  set(_adios2_py_stable_abi STABLE_ABI)
+else()
+  set(_adios2_py_stable_abi)
+endif()
+
+nanobind_add_module(adios2_py
+  ${_adios2_py_stable_abi}
+  NB_STATIC
+  nbADIOS.cpp
+  nbIO.cpp
+  nbVariable.cpp
+  nbVariableDerived.cpp
+  nbAttribute.cpp
+  nbEngine.cpp
+  nbOperator.cpp
+  nbQuery.cpp
+  nbGlue.cpp
 )
 target_compile_definitions(adios2_py PRIVATE "ADIOS2_PYTHON_MODULE_NAME=adios2_bindings${ADIOS2_LIBRARY_SUFFIX}")
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2_py PRIVATE
-    py11ADIOSMPI.cpp
-    py11IOMPI.cpp
+    nbADIOSMPI.cpp
+    nbIOMPI.cpp
   )
   set(maybe_adios2_cxx_mpi adios2_cxx_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
@@ -27,7 +34,6 @@ endif()
 target_link_libraries(adios2_py PRIVATE
   ${maybe_adios2_cxx_mpi} adios2_cxx
   ${maybe_adios2_core_mpi} adios2_core
-  adios2::thirdparty::pybind11
   ${maybe_mpi4py}
   )
 
