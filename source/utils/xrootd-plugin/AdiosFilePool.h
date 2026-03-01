@@ -189,6 +189,13 @@ public:
                       const std::string &EngineParams = std::string());
     void FlushUnused();
 
+    // Admin interface
+    std::string GetStatsJSON();
+    std::string GetFilesJSON();
+    std::string FlushAll();
+    std::string SetLimits(size_t fd_limit, size_t md_limit);
+    std::string GetLimitsJSON();
+
 private:
     static ADIOSFilePool *instance;
 

@@ -293,23 +293,33 @@ bool XrdHttpSsiHandler::ObtainSSIService()
 
 bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
 {
-    // Match POST requests to our prefix path
-    // Format: POST /ssi/<resource>
     if (!verb || !path)
+    {
         return false;
+    }
 
-    // Accept POST for requests, GET for simple queries
+    // Accept POST for requests, GET for simple queries and admin
     if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0)
     {
         return false;
     }
 
-    // Check if path starts with our prefix
+    // Match admin paths or SSI prefix
+    if (strncmp(path, "/admin", 6) == 0)
+    {
+        return true;
+    }
     return (strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0);
 }
 
 int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
 {
+    // Handle admin requests directly (no SSI needed)
+    if (req.resource.compare(0, 6, "/admin") == 0)
+    {
+        return ProcessAdminReq(req);
+    }
+
     // Check if we're initialized
     if (!m_initialized || !m_ssiService)
     {
@@ -417,6 +427,60 @@ int XrdHttpSsiHandler::SendResponse(XrdHttpExtReq &req, const char *data, int le
 
     return req.SendSimpleResp(200, nullptr, const_cast<char *>(headers.c_str()),
                               const_cast<char *>(data), len);
+}
+
+/******************************************************************************/
+/*              A d m i n   E n d p o i n t   H a n d l e r                   */
+/******************************************************************************/
+
+// Function pointer type matching ADIOSPoolAdmin() in AdiosFilePool.cpp
+typedef const char *(*AdminFunc)(const char *, const char *);
+
+int XrdHttpSsiHandler::ProcessAdminReq(XrdHttpExtReq &req)
+{
+    // Resolve the admin function from the SSI plugin (loaded in same process)
+    static AdminFunc adminFunc = nullptr;
+    if (!adminFunc)
+    {
+        void *handle = dlopen(NULL, RTLD_NOW);
+        if (handle)
+        {
+            adminFunc = (AdminFunc)dlsym(handle, "ADIOSPoolAdmin");
+        }
+    }
+    if (!adminFunc)
+    {
+        return SendError(req, 503, "Admin interface not available (SSI plugin not loaded)");
+    }
+
+    // Extract command from path: /admin/<command>
+    std::string command;
+    if (req.resource.length() > 7) // "/admin/"
+    {
+        command = req.resource.substr(7);
+    }
+
+    // Get query string
+    std::string query;
+    auto it = req.headers.find("xrd-http-query");
+    if (it != req.headers.end())
+    {
+        query = it->second;
+    }
+
+    if (command.empty())
+    {
+        std::string body = "Admin endpoints:\n"
+                           "  GET /admin/stats  - pool statistics (JSON)\n"
+                           "  GET /admin/files  - cached files (JSON)\n"
+                           "  GET /admin/flush  - flush idle cache entries\n"
+                           "  GET /admin/limits - view resource limits\n"
+                           "  GET /admin/limits?fd=N&md=N - set limits\n";
+        return SendResponse(req, body.c_str(), body.size(), "text/plain");
+    }
+
+    const char *result = adminFunc(command.c_str(), query.c_str());
+    return SendResponse(req, result, strlen(result), "application/json");
 }
 
 /******************************************************************************/

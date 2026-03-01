@@ -523,4 +523,193 @@ ADIOSFilePool::~ADIOSFilePool()
         periodicThread.join();
     }
 }
+std::string ADIOSFilePool::GetStatsJSON()
+{
+    size_t pool_size;
+    size_t total_opens = 0;
+    uint64_t total_open_us = 0;
+    uint64_t total_bytes_served = 0;
+    uint64_t total_ops = 0;
+    size_t in_use = 0;
+    {
+        std::lock_guard<std::mutex> guard(pool_mutex);
+        pool_size = map.size();
+        for (auto &kv : map)
+        {
+            auto *sp = kv.second.get();
+            std::lock_guard<std::mutex> sub_guard(sp->subpool_mutex);
+            total_opens += sp->m_list.size();
+            in_use += sp->in_use_count;
+            total_open_us += sp->open_micros;
+            for (auto &f : sp->m_list)
+            {
+                total_bytes_served += f->m_BytesSent;
+                total_ops += f->m_OperationCount;
+            }
+        }
+    }
+
+    std::stringstream ss;
+    ss << "{\n";
+    ss << "  \"requests\": " << m_Requests.load() << ",\n";
+    ss << "  \"cache_hits\": " << m_CacheHits.load() << ",\n";
+    ss << "  \"cache_misses\": " << m_CacheMisses.load() << ",\n";
+    ss << "  \"evictions\": " << m_Evictions.load() << ",\n";
+    ss << "  \"evictions_fd\": " << m_EvictionsFD.load() << ",\n";
+    ss << "  \"evictions_md\": " << m_EvictionsMD.load() << ",\n";
+    ss << "  \"cached_files\": " << pool_size << ",\n";
+    ss << "  \"open_handles\": " << total_opens << ",\n";
+    ss << "  \"in_use\": " << in_use << ",\n";
+    ss << "  \"shared_tar_fds\": " << adios2::SharedTarFDCache::getInstance().Size() << ",\n";
+    ss << "  \"metadata_bytes\": " << m_TotalMetadataBytes << ",\n";
+    ss << "  \"metadata_limit\": " << m_MetadataBytesLimit << ",\n";
+    ss << "  \"est_fds\": " << m_TotalSubfileCount << ",\n";
+    ss << "  \"fd_limit\": " << m_FDLimit << ",\n";
+    ss << "  \"bytes_served\": " << total_bytes_served << ",\n";
+    ss << "  \"operations\": " << total_ops << ",\n";
+    ss << "  \"open_latency_us\": " << total_open_us << ",\n";
+    ss << "  \"avg_open_us\": " << (total_opens > 0 ? total_open_us / total_opens : 0) << "\n";
+    ss << "}\n";
+    return ss.str();
+}
+
+std::string ADIOSFilePool::GetFilesJSON()
+{
+    std::stringstream ss;
+    ss << "[\n";
+    bool first = true;
+    {
+        std::lock_guard<std::mutex> guard(pool_mutex);
+        for (auto &kv : map)
+        {
+            auto *sp = kv.second.get();
+            std::lock_guard<std::mutex> sub_guard(sp->subpool_mutex);
+            if (!first)
+            {
+                ss << ",\n";
+            }
+            first = false;
+            std::string filename = sp->m_list.empty() ? "(unknown)" : sp->m_list[0]->m_FileName;
+            auto age = std::chrono::steady_clock::now() - sp->last_used;
+            auto age_sec = std::chrono::duration_cast<std::chrono::seconds>(age).count();
+            ss << "  {\"file\": \"" << filename << "\", \"handles\": " << sp->m_list.size()
+               << ", \"in_use\": " << sp->in_use_count
+               << ", \"metadata_bytes\": " << sp->metadata_bytes
+               << ", \"subfiles\": " << sp->subfile_count
+               << ", \"is_tar\": " << (sp->is_tar ? "true" : "false")
+               << ", \"idle_sec\": " << age_sec << "}";
+        }
+    }
+    ss << "\n]\n";
+    return ss.str();
+}
+
+std::string ADIOSFilePool::FlushAll()
+{
+    size_t flushed = 0;
+    size_t skipped = 0;
+    {
+        std::lock_guard<std::mutex> guard(pool_mutex);
+        for (auto it = map.begin(); it != map.end();)
+        {
+            auto *sp = it->second.get();
+            std::lock_guard<std::mutex> sub_guard(sp->subpool_mutex);
+            if (sp->in_use_count == 0)
+            {
+                m_TotalMetadataBytes -= sp->metadata_bytes;
+                m_TotalSubfileCount -= sp->EstimateFDCost();
+                m_Evictions++;
+                it = map.erase(it);
+                flushed++;
+            }
+            else
+            {
+                skipped++;
+                ++it;
+            }
+        }
+    }
+    adios2::SharedTarFDCache::getInstance().CloseIdle();
+
+    std::stringstream ss;
+    ss << "{\"flushed\": " << flushed << ", \"in_use_skipped\": " << skipped << "}\n";
+    return ss.str();
+}
+
+std::string ADIOSFilePool::SetLimits(size_t fd_limit, size_t md_limit)
+{
+    if (fd_limit > 0)
+    {
+        m_FDLimit = fd_limit;
+    }
+    if (md_limit > 0)
+    {
+        m_MetadataBytesLimit = md_limit;
+    }
+    return GetLimitsJSON();
+}
+
+std::string ADIOSFilePool::GetLimitsJSON()
+{
+    std::stringstream ss;
+    ss << "{\"fd_limit\": " << m_FDLimit << ", \"metadata_limit\": " << m_MetadataBytesLimit
+       << "}\n";
+    return ss.str();
+}
+
 } // end of namespace adios2
+
+// C-linkage admin functions callable via dlsym from the HTTP handler
+extern "C" {
+const char *ADIOSPoolAdmin(const char *command, const char *query)
+{
+    // Returns a static thread_local buffer (caller must not free)
+    static thread_local std::string result;
+    auto &pool = adios2::ADIOSFilePool::getInstance();
+
+    std::string cmd(command ? command : "");
+    std::string q(query ? query : "");
+
+    if (cmd == "stats")
+    {
+        result = pool.GetStatsJSON();
+    }
+    else if (cmd == "files")
+    {
+        result = pool.GetFilesJSON();
+    }
+    else if (cmd == "flush")
+    {
+        result = pool.FlushAll();
+    }
+    else if (cmd == "limits")
+    {
+        // Parse fd=N&md=N from query
+        size_t fd = 0, md = 0;
+        auto parseParam = [&](const std::string &key) -> size_t {
+            size_t pos = q.find(key + "=");
+            if (pos != std::string::npos)
+            {
+                return strtoull(q.c_str() + pos + key.size() + 1, nullptr, 10);
+            }
+            return 0;
+        };
+        fd = parseParam("fd");
+        md = parseParam("md");
+        if (fd > 0 || md > 0)
+        {
+            result = pool.SetLimits(fd, md);
+        }
+        else
+        {
+            result = pool.GetLimitsJSON();
+        }
+    }
+    else
+    {
+        result = "{\"error\": \"unknown command\", \"commands\": "
+                 "[\"stats\", \"files\", \"flush\", \"limits\"]}\n";
+    }
+    return result.c_str();
+}
+}
