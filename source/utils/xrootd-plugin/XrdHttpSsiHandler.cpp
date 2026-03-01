@@ -442,7 +442,17 @@ int XrdHttpSsiHandler::ProcessAdminReq(XrdHttpExtReq &req)
     static AdminFunc adminFunc = nullptr;
     if (!adminFunc)
     {
-        void *handle = dlopen(NULL, RTLD_NOW);
+        // Try the SSI library first (XRootD loads plugins with RTLD_LOCAL,
+        // so dlopen(NULL) won't see their symbols)
+        void *handle = nullptr;
+        if (!m_ssiLibPath.empty())
+        {
+            handle = dlopen(m_ssiLibPath.c_str(), RTLD_NOW | RTLD_NOLOAD);
+        }
+        if (!handle)
+        {
+            handle = dlopen(NULL, RTLD_NOW);
+        }
         if (handle)
         {
             adminFunc = (AdminFunc)dlsym(handle, "ADIOSPoolAdmin");
