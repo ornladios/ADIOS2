@@ -1,7 +1,7 @@
   # ADIOS SSI service plugin (server-side, handles SSI protocol requests)
   add_library(adios2_xrootd SHARED XrdSsiSvProvider.cpp XrdSsiSvService.cpp XrdSsiSvStreamActive.cpp XrdSsiSvStreamPassive.cpp AdiosFilePool.cpp)
   target_include_directories(adios2_xrootd PRIVATE ${PROJECT_SOURCE_DIR}/bindings/CXX ${XROOTD_INCLUDE_DIRS})
-  target_link_libraries(adios2_xrootd PUBLIC adios2::cxx ${XROOTD_CLIENT_LIBRARIES} ${XROOTD_UTILS_LIBRARIES} ${XROOTD_SSI_LIBRARIES})
+  target_link_libraries(adios2_xrootd PUBLIC adios2::cxx PRIVATE adios2_core ${XROOTD_CLIENT_LIBRARIES} ${XROOTD_UTILS_LIBRARIES} ${XROOTD_SSI_LIBRARIES})
   install(TARGETS adios2_xrootd DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   # HTTP-to-SSI bridge handler (enables HTTPS access to SSI services)

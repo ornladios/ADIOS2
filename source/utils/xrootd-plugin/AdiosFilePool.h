@@ -9,18 +9,22 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <mutex>
 #include <random>
 #include <sstream>
 #include <string>
+#include <sys/resource.h>
 #include <thread>
 #include <unordered_map>
 #include <vector>
 /// \endcond
 
 #include "adios2.h"
+#include "adios2/toolkit/filepool/SharedTarFDCache.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 using namespace adios2::core;
@@ -28,6 +32,14 @@ using namespace adios2;
 
 namespace adios2
 {
+
+struct BP5CostEstimate
+{
+    size_t metadata_bytes = 0; // sum of md.0 + mmd.0 + md.idx sizes
+    size_t subfile_count = 0;  // number of data.* files
+    bool is_tar = false;       // if true, FD cost is ~1 regardless of subfile_count
+};
+
 class AnonADIOSFile
 {
 public:
@@ -108,9 +120,27 @@ public:
         size_t in_use_count = 0;
         std::vector<std::unique_ptr<AnonADIOSFile>> m_list;
         std::vector<bool> m_busy;
+
+        // Resource cost estimates (set once at creation, never change)
+        size_t metadata_bytes = 0;
+        size_t subfile_count = 0;
+        bool is_tar = false;
+        uint64_t open_micros = 0; // cumulative file open latency
+
         AnonADIOSFile *GetFree(std::string Filename, bool RowMajorArrays,
                                const std::string &EngineParams = std::string());
         void Return(AnonADIOSFile *Entry);
+
+        size_t EstimateFDCost() const
+        {
+            if (is_tar)
+            {
+                // With SharedTarFDCache, tar FDs are shared across engines
+                return adios2::SharedTarFDCache::IsEnabled() ? 0 : 1;
+            }
+            return subfile_count;
+        }
+        size_t EstimateTotalCost() const { return metadata_bytes + EstimateFDCost(); }
     };
 
     // RAII wrapper: automatically returns the file to the pool on scope exit.
@@ -177,6 +207,27 @@ private:
         return std::thread([=] { PeriodicTask(std::chrono::milliseconds(1000)); });
     }
     std::thread periodicThread;
+
+    // Resource monitoring
+    size_t m_FDLimit = 0;
+    size_t m_MetadataBytesLimit = 1ULL << 31; // 2 GB default
+    size_t m_TotalMetadataBytes = 0;
+    size_t m_TotalSubfileCount = 0;
+    void EvictUnderPressure(size_t incoming_fd_cost, size_t incoming_metadata_bytes);
+
+    static BP5CostEstimate ProbeBP5Directory(const std::string &path,
+                                             const std::string &EngineParams);
+    static BP5CostEstimate ParseTarInfoCost(const std::string &tarinfo);
+
+    // Statistics counters
+    std::atomic<uint64_t> m_CacheHits{0};
+    std::atomic<uint64_t> m_CacheMisses{0};
+    std::atomic<uint64_t> m_Evictions{0};
+    std::atomic<uint64_t> m_EvictionsFD{0};
+    std::atomic<uint64_t> m_EvictionsMD{0};
+    std::atomic<uint64_t> m_Requests{0};
+    uint64_t m_LastStatsReport = 0; // m_Requests value at last log
+    void LogStats();
 
     std::mutex pool_mutex;
     std::unordered_map<std::string, std::shared_ptr<SubPool>> map;
