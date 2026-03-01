@@ -203,10 +203,6 @@ size_t RaiseLimitNoFile()
         raisedLimit = limit.rlim_cur;
         if (!err)
         {
-            /*std::cout
-                << "adios2::helper::RaiseLimitNoFile() found limits soft = "
-                << limit.rlim_cur << " hard = " << limit.rlim_max <<
-               std::endl;*/
             if (limit.rlim_cur < limit.rlim_max)
             {
                 limit.rlim_cur = limit.rlim_max;
@@ -215,10 +211,6 @@ size_t RaiseLimitNoFile()
                 {
                     getrlimit(RLIMIT_NOFILE, &limit);
                     raisedLimit = limit.rlim_cur;
-                    /*std::cout << "adios2::helper::RaiseLimitNoFile() set "
-                                 "limits soft = "
-                              << limit.rlim_cur << " hard = " << limit.rlim_max
-                              << std::endl;*/
                 }
             }
         }
@@ -229,6 +221,7 @@ size_t RaiseLimitNoFile()
                       << ", hard=" << limit.rlim_max << ") failed with error code " << errno << ": "
                       << strerror(errno) << std::endl;
         }
+
         firstCallRaiseLimit = false;
     }
     return raisedLimit;

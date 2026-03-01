@@ -5,14 +5,24 @@ echo "=========================================="
 echo "ADIOS2 XRootD HTTP Service for NERSC Spin"
 echo "=========================================="
 
-# Create required directories and set ownership
+# Create required directories
 mkdir -p /var/log/xrootd /var/spool/xrootd /run/xrootd
-chown -R xrootd:xrootd /var/log/xrootd /var/spool/xrootd /run/xrootd /etc/xrootd/certs 2>/dev/null || true
+
+# Fix SSL key permissions for XRootD (requires restricted access, not world-readable)
+# Copy to new files owned by current UID, then tighten key permissions
+cp /tmp/server.key /tmp/xrootd-server.key
+chmod 600 /tmp/xrootd-server.key
+cp /tmp/server.crt /tmp/xrootd-server.crt
+
+# Copy config to writable location and update cert paths
+cp /etc/xrootd/xrootd-http.cfg /tmp/xrootd-http.cfg
+sed -i 's|/tmp/server.key|/tmp/xrootd-server.key|' /tmp/xrootd-http.cfg
+sed -i 's|/tmp/server.crt|/tmp/xrootd-server.crt|' /tmp/xrootd-http.cfg
 
 echo ""
 echo "XRootD Configuration:"
 echo "--------------------"
-cat /etc/xrootd/xrootd-http.cfg
+cat /tmp/xrootd-http.cfg
 echo ""
 echo "=========================================="
 
@@ -37,4 +47,4 @@ echo ""
 # -n adios: instance name
 # -c: configuration file
 # Note: Running without -l to let logs go to stdout/stderr
-exec xrootd "${USER_SPEC[@]}" -n adios -c /etc/xrootd/xrootd-http.cfg
+exec xrootd "${USER_SPEC[@]}" -n adios -c /tmp/xrootd-http.cfg
