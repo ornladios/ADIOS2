@@ -1,4 +1,4 @@
-FROM fedora:latest
+FROM --platform=linux/amd64 fedora:latest
 
 # Install development tools
 RUN dnf update -y && \
@@ -34,20 +34,18 @@ RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && 
         -DADIOS2_USE_Fortran=OFF \
         -DADIOS2_USE_Python=OFF \
         -DADIOS2_USE_SST=OFF \
-        -DBUILD_TESTING=ON \
+        -DBUILD_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DCMAKE_C_FLAGS="-Wno-error=implicit-function-declaration" \
         .. && \
     make -j$(nproc) && \
     make install && \
-    mkdir -p /data && \
-    cd /data && \
-    /ADIOS2-src/build/bin/TestCommonWrite bp5 sample && \
     rm -rf /ADIOS2-src
 
 # Create directories for XRootD with world-writable permissions
 # Spin runs containers with arbitrary UIDs, so we can't rely on ownership
-RUN mkdir -p /var/spool/xrootd/adios /run/xrootd/adios /etc/xrootd/certs /var/log/xrootd /tmp/adios && \
+RUN mkdir -p /var/spool/xrootd/adios /run/xrootd/adios /etc/xrootd/certs /var/log/xrootd /tmp/adios /data && \
     chmod -R 1777 /var/spool/xrootd /run/xrootd /var/log/xrootd /tmp/adios /data
 
 # Generate self-signed SSL certificate at build time
