@@ -50,8 +50,8 @@ public:
     std::string m_IOname;
     std::string m_FileName;
     bool m_RowMajorArrays;
-    size_t m_BytesSent = 0;
-    size_t m_OperationCount = 0;
+    std::atomic<size_t> m_BytesSent{0};
+    std::atomic<size_t> m_OperationCount{0};
     AnonADIOSFile(std::string FileName, bool RowMajorArrays,
                   const std::string &EngineParams = std::string())
     {
