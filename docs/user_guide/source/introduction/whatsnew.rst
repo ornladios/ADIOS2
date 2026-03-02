@@ -59,6 +59,47 @@ layout, accuracy) can be added via fluent ``With*()`` methods or mutable
 Existing ``SetSelection()``-based APIs remain available and are not deprecated.
 See :ref:`Selection` for full documentation.
 
+Plugin Interface v2 (Breaking Change)
+--------------------------------------
+
+Both the engine and operator plugin interfaces have been redesigned as
+standalone classes that no longer inherit from internal core types
+(``core::Engine`` and ``core::Operator``). This is a **breaking change** for
+existing plugins written against the v1 interface (ADIOS2 2.11 and earlier).
+
+**What changed:**
+
+- **Engine plugins** now inherit from ``PluginEngineInterface`` (in
+  ``adios2/plugin/PluginEngineInterface.h``) which uses public C++ API types
+  (``adios2::IO``, ``adios2::Variable<T>``) instead of internal core types.
+  The ``EngineCreate()`` signature now takes ``adios2::IO`` and ``adios2::Mode``
+  instead of ``core::IO &`` and ``helper::Comm``.
+- **Operator plugins** now inherit from ``PluginOperatorInterface`` (in
+  ``adios2/plugin/PluginOperatorInterface.h``) which is fully self-contained
+  with no dependencies on ADIOS internals.
+- Plugin shared libraries now only need to link against ``adios2::cxx``
+  (not ``adios2::core``).
+
+**Migrating from v1:** Update your plugin class to inherit from the new
+interface, replace any ``core::IO`` / ``core::Variable<T>`` usage with the
+public ``adios2::IO`` / ``adios2::Variable<T>`` types, and update the
+``EngineCreate()`` / ``EngineDestroy()`` signatures accordingly. See the
+examples in ``examples/plugins/`` for reference implementations.
+
+**New engine plugin capabilities:** The v2 engine interface has also been
+extended with optional methods for more advanced functionality:
+
+- **Selection-based Get**: ``DoGetSync()`` and ``DoGetDeferred()`` overloads
+  that accept a ``Selection`` parameter, enabling sub-array and block reads.
+- **Span-based Put**: ``DoPut()`` with a ``Span`` parameter for zero-copy
+  writes of primitive types.
+- **Step queries**: ``Steps()`` to report the total number of available steps.
+- **Block introspection**: ``MinBlocksInfo()`` to return block decomposition
+  metadata for a given variable and step.
+
+All new methods have empty default implementations, so they are optional.
+See :ref:`Plugins` for full documentation.
+
 Cross-Endian Interoperability
 -----------------------------
 

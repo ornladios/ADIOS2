@@ -9,9 +9,9 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP5_BP5DESERIALIZER_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP5_BP5DESERIALIZER_H_
 
+#include "adios2/common/Selection.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Selection.h"
 #include "adios2/core/Variable.h"
 
 #include "BP5Base.h"

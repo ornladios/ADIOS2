@@ -19,7 +19,7 @@ add_library(adios2_core
   core/Span.cpp core/Span.tcc
   core/Group.cpp core/Group.tcc
   core/Info.cpp
-  core/Selection.cpp
+  common/Selection.cpp
 
   # operator
   operator/OperatorFactory.cpp
@@ -565,7 +565,7 @@ set_target_properties(
   SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
-install(FILES common/ADIOSBaseTypes.h common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
+install(FILES common/ADIOSBaseTypes.h common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl common/Selection.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 

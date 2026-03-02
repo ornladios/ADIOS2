@@ -15,7 +15,7 @@
 #include <cstring>
 #include <string>
 
-#include "adios2/core/Selection.h"
+#include "adios2/common/Selection.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
