@@ -100,6 +100,27 @@ extended with optional methods for more advanced functionality:
 All new methods have empty default implementations, so they are optional.
 See :ref:`Plugins` for full documentation.
 
+XRootD Server Resource Management
+-----------------------------------
+
+The XRootD server plugin used for remote campaign access now includes
+resource-aware cache management:
+
+- **FD and metadata eviction**: The file pool tracks per-file file descriptor
+  costs and metadata memory usage, evicting idle entries when configurable
+  limits are approached. Limits can be set via environment variables
+  (``ADIOS_POOL_FD_LIMIT``, ``ADIOS_POOL_METADATA_LIMIT``) or at runtime
+  through the admin HTTP interface.
+
+- **Shared tar FD cache**: When multiple datasets are packed into a single
+  tar file (common in campaign archives), a process-wide singleton shares
+  one file descriptor across all engines reading from the same tar,
+  reducing FD consumption from N to 1 per tar file.
+
+- **Batched data requests**: The remote reader now batches multiple
+  variable reads into a single network round-trip, reducing latency
+  for workloads that read many variables per step.
+
 Cross-Endian Interoperability
 -----------------------------
 

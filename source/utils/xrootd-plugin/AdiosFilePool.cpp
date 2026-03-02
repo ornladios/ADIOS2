@@ -516,6 +516,32 @@ void ADIOSFilePool::FlushUnused()
 {
     std::lock_guard<std::mutex> guard(pool_mutex);
     EvictUnderPressure(0, 0);
+
+    // Time-based eviction: remove idle subpools after 4 hours
+    auto now = std::chrono::steady_clock::now();
+    for (auto it = map.cbegin(); it != map.cend();)
+    {
+        auto *subpool = it->second.get();
+        std::lock_guard<std::mutex> sub_guard(subpool->subpool_mutex);
+        if (subpool->in_use_count == 0)
+        {
+            auto idle = std::chrono::duration_cast<std::chrono::hours>(now - subpool->last_used);
+            if (idle.count() >= 4)
+            {
+                if (!subpool->m_list.empty())
+                {
+                    std::cout << "Evicting idle subpool for \"" << subpool->m_list[0]->m_FileName
+                              << "\" (idle " << idle.count() << " hours)" << std::endl;
+                }
+                m_Evictions++;
+                m_TotalMetadataBytes -= subpool->metadata_bytes;
+                m_TotalSubfileCount -= subpool->EstimateFDCost();
+                it = map.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
 }
 
 ADIOSFilePool::~ADIOSFilePool()

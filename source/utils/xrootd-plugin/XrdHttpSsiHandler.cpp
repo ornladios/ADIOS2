@@ -463,7 +463,7 @@ int XrdHttpSsiHandler::ProcessAdminReq(XrdHttpExtReq &req)
         return SendError(req, 503, "Admin interface not available (SSI plugin not loaded)");
     }
 
-    // Extract command from path: /admin/<command>
+    // Extract command from path: /_adios/<command>
     std::string command;
     if (req.resource.length() > 8) // "/_adios/"
     {

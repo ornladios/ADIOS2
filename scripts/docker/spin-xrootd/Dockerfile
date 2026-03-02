@@ -37,7 +37,6 @@ RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && 
         -DBUILD_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_C_FLAGS="-Wno-error=implicit-function-declaration" \
         .. && \
     make -j$(nproc) && \
     make install && \
