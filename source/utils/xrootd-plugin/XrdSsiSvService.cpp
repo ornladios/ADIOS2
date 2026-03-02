@@ -681,6 +681,10 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 writePtr += dataSizes[v];
             }
 
+            // Track bytes served and operation count
+            poolEntry.file->m_BytesSent += totalDataSize;
+            poolEntry.file->m_OperationCount += NVars;
+
             // Send response via detached thread (same pattern as single get)
             // poolEntry auto-returns to pool when it goes out of scope
             pthread_t tid;
@@ -834,6 +838,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     }
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
+                // Track bytes served and operation count
+                poolEntry.file->m_BytesSent += m_responseBufferSize;
+                poolEntry.file->m_OperationCount++;
             } // poolEntry returned to pool here
             pthread_t tid;
             XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");

@@ -3,6 +3,14 @@
 
 PoolableFile::~PoolableFile() { m_OwningPool->Release(m_Entry); }
 
+FilePool::~FilePool()
+{
+    if (!m_SharedTarPath.empty())
+    {
+        adios2::SharedTarFDCache::getInstance().Release(m_SharedTarPath);
+    }
+}
+
 void PoolableFile::Read(char *buffer, size_t size, size_t start)
 {
     m_Entry->m_File->Read(buffer, size, start + m_BaseOffset);
@@ -123,9 +131,26 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, con
                     "\" limit is " + std::to_string(m_OpenFileLimit));
     }
 
-    std::shared_ptr<adios2::Transport> file =
-        m_Factory->OpenFileTransport(finalFileName, adios2::Mode::Read, m_TransportParams, false,
-                                     false, adios2::helper::CommDummy());
+    bool isTarFile = (finalFileName != filename);
+    std::shared_ptr<adios2::Transport> file;
+
+    if (isTarFile && adios2::SharedTarFDCache::IsEnabled())
+    {
+        // Use the process-wide shared FD cache for tar containers
+        file = adios2::SharedTarFDCache::getInstance().Acquire(finalFileName, m_Factory,
+                                                               m_TransportParams);
+        if (m_SharedTarPath.empty())
+        {
+            // First tar acquire for this FilePool — register our interest
+            m_SharedTarPath = finalFileName;
+        }
+    }
+    else
+    {
+        file = m_Factory->OpenFileTransport(finalFileName, adios2::Mode::Read, m_TransportParams,
+                                            false, false, adios2::helper::CommDummy());
+    }
+
     auto entry = std::make_shared<PoolEntry>(finalFileName, file);
     entry->m_InUseCount = 1;
     m_Pool.insert({finalFileName, entry});
@@ -139,9 +164,15 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, con
         m_ShareTestDone = true;
         m_CanShare = file->m_ReentrantRead;
     }
-    m_OpenFileCount++;
-    if (m_OpenFileCount > m_MaxFileCount)
-        m_MaxFileCount = m_OpenFileCount;
+    if (!isTarFile || !adios2::SharedTarFDCache::IsEnabled())
+    {
+        // Only count locally-opened FDs, not shared ones
+        m_OpenFileCount++;
+        if (m_OpenFileCount > m_MaxFileCount)
+        {
+            m_MaxFileCount = m_OpenFileCount;
+        }
+    }
     return ptr;
 }
 

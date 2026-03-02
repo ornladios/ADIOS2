@@ -59,6 +59,7 @@
 
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosString.h"
+#include "adios2/toolkit/filepool/SharedTarFDCache.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 #include <mutex>
 
@@ -105,6 +106,7 @@ public:
              size_t OpenFileLimit, adios2::helper::TarInfoMap *TarInfoMap)
     : m_Factory(factory), m_TransportParams(transportParams), m_TarInfoMap(TarInfoMap),
       m_OpenFileLimit(OpenFileLimit){};
+    ~FilePool();
     // Acquire a Poolablefile object from the pool, creating it if necessary
     std::unique_ptr<PoolableFile> Acquire(const std::string &filename,
                                           const bool skipTarInfo = false);
@@ -129,5 +131,6 @@ private:
     bool m_CanShare = false;
     bool m_ShareTestDone = false;
     size_t m_MaxFileCount = 0;
+    std::string m_SharedTarPath; // non-empty if using a shared tar FD from SharedTarFDCache
 };
 #endif /* ADIOS2_FILEPOOL_H_ */

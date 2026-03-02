@@ -78,6 +78,7 @@ add_library(adios2_core
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
 
   toolkit/filepool/FilePool.cpp
+  toolkit/filepool/SharedTarFDCache.cpp
 
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
