@@ -652,7 +652,13 @@ void CampaignData::DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex,
     CampaignFile &file = files[fileIdx];
     if (!path.empty() && isFileNewer(path, file.modtime))
     {
-        return;
+        // Verify file size matches expected size to detect truncated cache files
+        // (e.g. from a process killed mid-write)
+        struct stat st;
+        if (stat(path.c_str(), &st) == 0 && static_cast<size_t>(st.st_size) == file.lengthOriginal)
+        {
+            return;
+        }
     }
 
     sqlite3 *db = get_impl(m_DB);
