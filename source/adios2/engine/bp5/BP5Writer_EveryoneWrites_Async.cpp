@@ -211,6 +211,7 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
             info->tokenChain->RecvToken();
         }
     }
+    info->tm->FinalizeSegment();
     delete info->Data;
     return 1;
 };

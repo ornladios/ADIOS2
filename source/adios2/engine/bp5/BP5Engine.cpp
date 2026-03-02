@@ -345,6 +345,16 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 #undef print_params
         std::cout << "-----------------------------------------------------" << std::endl;
     }
+
+    // S3 uploads are high-latency; auto-enable async write unless the user
+    // explicitly set AsyncWrite to something other than the default (Sync).
+    if (!Params.DataTransport.empty() && Params.AsyncWrite == (int)AsyncWrite::Sync)
+    {
+        if (params_lowercase.find("asyncwrite") == params_lowercase.end())
+        {
+            Params.AsyncWrite = (int)AsyncWrite::Naive;
+        }
+    }
 };
 
 } // namespace engine
