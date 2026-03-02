@@ -17,3 +17,15 @@ if(UNIX)
   gtest_add_tests_helper(PosixTransport MPI_NONE "" Unit. "")
 endif()
 gtest_add_tests_helper(FilePool MPI_NONE "" Unit. "")
+
+# AWS SDK S3 transport tests - disabled by default, require S3-compatible endpoint
+# Run manually with: ./bin/Test.Unit.AWSSDKTransport.Serial --gtest_also_run_disabled_tests
+if(ADIOS2_HAVE_AWSSDK)
+  gtest_add_tests_helper(AWSSDKTransport MPI_NONE "" Unit. "")
+  # Link to AWS SDK and aws-crt-cpp to get all includes
+  find_package(aws-crt-cpp QUIET)
+  if(aws-crt-cpp_FOUND)
+    target_link_libraries(Test.Unit.AWSSDKTransport.Serial AWS::aws-crt-cpp)
+  endif()
+  target_link_libraries(Test.Unit.AWSSDKTransport.Serial aws-cpp-sdk-s3 aws-cpp-sdk-core)
+endif()

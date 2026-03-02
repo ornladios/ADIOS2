@@ -22,6 +22,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/common/Selection.h"
 #include "adios2/cxx/IO.h"
 #include "adios2/cxx/Variable.h"
 
@@ -74,6 +75,34 @@ public:
     virtual void DoGetDeferred(adios2::Variable<T> variable, T *values) {}
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
+
+    // === Get with Selection (override to support sub-array reads) ===
+#define declare(T)                                                                                 \
+    virtual void DoGetSync(adios2::Variable<T> variable, T *values, const core::Selection &sel) {} \
+    virtual void DoGetDeferred(adios2::Variable<T> variable, T *values,                            \
+                               const core::Selection &sel)                                         \
+    {                                                                                              \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare)
+#undef declare
+
+    // === Span-based Put (override to support zero-copy writes) ===
+#define declare(T)                                                                                 \
+    virtual void DoPut(adios2::Variable<T> variable, typename adios2::Variable<T>::Span &span,     \
+                       const bool initialize, const T &value)                                      \
+    {                                                                                              \
+    }
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare)
+#undef declare
+
+    // === Steps ===
+    virtual size_t Steps() const { return 0; }
+
+    // === BlocksInfo query (override to support block introspection) ===
+    virtual MinVarInfo *MinBlocksInfo(const std::string &varName, const size_t Step) const
+    {
+        return nullptr;
+    }
 
     // === Close ===
     virtual void DoClose(const int transportIndex = -1) {}

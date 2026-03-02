@@ -193,6 +193,45 @@ This engine allows the user to fine tune the buffering operations through the fo
  IgnoreFlattenSteps              boolean               **off**, on, true, false
 =============================== ===================== ===========================================================
 
+S3 Object Storage
+-----------------
+
+BP5 supports writing data files to S3-compatible object storage (Amazon S3, MinIO, Ceph, etc.)
+while keeping metadata files on the local filesystem for fast access. A sidecar file (``s3.json``)
+is written locally so that readers can auto-detect the S3 location.
+
+.. code-block:: c++
+
+   io.SetEngine("BP5");
+   io.SetParameter("DataTransport", "awssdk");
+   io.SetParameter("S3Endpoint", "https://s3.amazonaws.com");
+   io.SetParameter("S3Bucket", "mybucket");
+
+Credentials can be provided as engine parameters (``S3AccessKeyID``, ``S3SecretKey``,
+``S3SessionToken``) or via standard AWS environment variables (``AWS_ACCESS_KEY_ID``,
+``AWS_SECRET_ACCESS_KEY``, ``AWS_SESSION_TOKEN``).
+
+``AsyncWrite`` is automatically enabled when ``DataTransport`` is set, unless explicitly overridden.
+
+The default multi-object mode stores each data segment as a separate S3 object
+(``data.0.0``, ``data.0.1``, ...) for automatic crash recovery. On ``Open(Write)``,
+stale data objects from a previous run are deleted. ``Mode::Append`` and ``AppendAfterSteps``
+are supported: append discovers existing segments and continues numbering;
+``AppendAfterSteps`` truncates by deleting segment objects beyond the target step.
+
+=============================== ===================== ===========================================================
+ **Key**                        **Value Format**      **Default** and Examples
+=============================== ===================== ===========================================================
+ DataTransport                   string                **""**, ``awssdk``
+ S3Endpoint                      string                **""**, ``https://s3.amazonaws.com``, ``http://localhost:9000``
+ S3Bucket                        string                **""**, ``mybucket``
+ S3ObjectMode                    string                **multi**, ``single``
+ S3AccessKeyID                   string                **""** (falls back to ``AWS_ACCESS_KEY_ID``)
+ S3SecretKey                     string                **""** (falls back to ``AWS_SECRET_ACCESS_KEY``)
+ S3SessionToken                  string                **""** (falls back to ``AWS_SESSION_TOKEN``)
+ S3DirectUploadThreshold         integer+units         **1MB**
+=============================== ===================== ===========================================================
+
 
 Only file transport types are supported. Optional parameters for ``IO::AddTransport`` or in runtime config file transport field:
 

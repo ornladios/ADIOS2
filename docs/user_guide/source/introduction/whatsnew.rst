@@ -59,6 +59,47 @@ layout, accuracy) can be added via fluent ``With*()`` methods or mutable
 Existing ``SetSelection()``-based APIs remain available and are not deprecated.
 See :ref:`Selection` for full documentation.
 
+Plugin Interface v2 (Breaking Change)
+--------------------------------------
+
+Both the engine and operator plugin interfaces have been redesigned as
+standalone classes that no longer inherit from internal core types
+(``core::Engine`` and ``core::Operator``). This is a **breaking change** for
+existing plugins written against the v1 interface (ADIOS2 2.11 and earlier).
+
+**What changed:**
+
+- **Engine plugins** now inherit from ``PluginEngineInterface`` (in
+  ``adios2/plugin/PluginEngineInterface.h``) which uses public C++ API types
+  (``adios2::IO``, ``adios2::Variable<T>``) instead of internal core types.
+  The ``EngineCreate()`` signature now takes ``adios2::IO`` and ``adios2::Mode``
+  instead of ``core::IO &`` and ``helper::Comm``.
+- **Operator plugins** now inherit from ``PluginOperatorInterface`` (in
+  ``adios2/plugin/PluginOperatorInterface.h``) which is fully self-contained
+  with no dependencies on ADIOS internals.
+- Plugin shared libraries now only need to link against ``adios2::cxx``
+  (not ``adios2::core``).
+
+**Migrating from v1:** Update your plugin class to inherit from the new
+interface, replace any ``core::IO`` / ``core::Variable<T>`` usage with the
+public ``adios2::IO`` / ``adios2::Variable<T>`` types, and update the
+``EngineCreate()`` / ``EngineDestroy()`` signatures accordingly. See the
+examples in ``examples/plugins/`` for reference implementations.
+
+**New engine plugin capabilities:** The v2 engine interface has also been
+extended with optional methods for more advanced functionality:
+
+- **Selection-based Get**: ``DoGetSync()`` and ``DoGetDeferred()`` overloads
+  that accept a ``Selection`` parameter, enabling sub-array and block reads.
+- **Span-based Put**: ``DoPut()`` with a ``Span`` parameter for zero-copy
+  writes of primitive types.
+- **Step queries**: ``Steps()`` to report the total number of available steps.
+- **Block introspection**: ``MinBlocksInfo()`` to return block decomposition
+  metadata for a given variable and step.
+
+All new methods have empty default implementations, so they are optional.
+See :ref:`Plugins` for full documentation.
+
 Cross-Endian Interoperability
 -----------------------------
 
@@ -67,6 +108,30 @@ file interoperability (reading files written on a machine with different byte
 order) is now always enabled. This means files written on big-endian systems
 can be read on little-endian systems and vice versa without any special build
 configuration.
+
+S3 Object Storage for BP5 Data
+-------------------------------
+
+BP5 can now write data files to S3-compatible object storage (Amazon S3, MinIO,
+Ceph, etc.) while keeping metadata on the local filesystem. This hybrid model
+provides cheap bulk storage for data with fast local metadata access.
+
+Set ``DataTransport=awssdk``, ``S3Endpoint``, and ``S3Bucket`` as engine
+parameters. Credentials are accepted as parameters or via standard AWS
+environment variables (``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``).
+
+Key features:
+
+- **Multi-object mode** (default): each data segment is a separate S3 object,
+  providing automatic crash recovery
+- **Async write**: automatically enabled for S3 transports so uploads overlap
+  with computation
+- **Append and AppendAfterSteps**: supported via segment discovery and
+  selective object deletion
+- **Stale object cleanup**: previous data objects are deleted on ``Open(Write)``
+- **s3.json sidecar**: written locally so readers auto-detect the S3 location
+
+See :ref:`BP5 S3 Object Storage<S3 Object Storage>` for configuration details.
 
 
 ===================

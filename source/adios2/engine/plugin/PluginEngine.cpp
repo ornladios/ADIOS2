@@ -12,10 +12,8 @@
 #include "PluginEngine.h"
 #include "adios2/plugin/PluginEngineInterface.h"
 
-#include <functional>
 #include <memory>
 #include <stdexcept>
-#include <utility>
 
 #include "adios2/cxx/IO.h"
 #include "adios2/cxx/Variable.h"
@@ -88,6 +86,8 @@ StepStatus PluginEngine::BeginStep(StepMode mode, const float timeoutSeconds)
     return m_Impl->m_Plugin->BeginStep(mode, timeoutSeconds);
 }
 
+size_t PluginEngine::CurrentStep() const { return m_Impl->m_Plugin->CurrentStep(); }
+
 void PluginEngine::PerformPuts() { m_Impl->m_Plugin->PerformPuts(); }
 
 void PluginEngine::PerformGets() { m_Impl->m_Plugin->PerformGets(); }
@@ -118,6 +118,43 @@ void PluginEngine::EndStep() { m_Impl->m_Plugin->EndStep(); }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
+
+// Get with Selection
+#define declare(T)                                                                                 \
+    void PluginEngine::DoGetSync(core::Variable<T> &variable, T *values,                           \
+                                 const core::Selection &sel)                                       \
+    {                                                                                              \
+        adios2::Variable<T> pubVar(&variable);                                                     \
+        m_Impl->m_Plugin->DoGetSync(pubVar, values, sel);                                          \
+    }                                                                                              \
+    void PluginEngine::DoGetDeferred(core::Variable<T> &variable, T *values,                       \
+                                     const core::Selection &sel)                                   \
+    {                                                                                              \
+        adios2::Variable<T> pubVar(&variable);                                                     \
+        m_Impl->m_Plugin->DoGetDeferred(pubVar, values, sel);                                      \
+    }
+ADIOS2_FOREACH_STDTYPE_1ARG(declare)
+#undef declare
+
+// Span-based Put
+#define declare(T)                                                                                 \
+    void PluginEngine::DoPut(core::Variable<T> &variable,                                          \
+                             typename core::Variable<T>::Span &coreSpan, const bool initialize,    \
+                             const T &value)                                                       \
+    {                                                                                              \
+        adios2::Variable<T> pubVar(&variable);                                                     \
+        typename adios2::Variable<T>::Span pubSpan(&coreSpan);                                     \
+        m_Impl->m_Plugin->DoPut(pubVar, pubSpan, initialize, value);                               \
+    }
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare)
+#undef declare
+
+MinVarInfo *PluginEngine::MinBlocksInfo(const core::VariableBase &Var, const size_t Step) const
+{
+    return m_Impl->m_Plugin->MinBlocksInfo(Var.m_Name, Step);
+}
+
+size_t PluginEngine::DoSteps() const { return m_Impl->m_Plugin->Steps(); }
 
 void PluginEngine::DoClose(const int transportIndex) { m_Impl->m_Plugin->DoClose(transportIndex); }
 
