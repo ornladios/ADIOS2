@@ -78,6 +78,9 @@ void BP5Reader::DestructorClose(bool Verbose) noexcept
     m_IsOpen = false;
 }
 
+static const char BP5HEADER[] = "BP5     ";
+constexpr size_t HEADERLENGTH = 8; // this must be the same across all engines
+
 void BP5Reader::GetMetadata(char **md, size_t *size)
 {
     uint64_t sizes[3] = {m_Metadata.Size(), m_MetaMetadata.m_Buffer.size(),
@@ -94,10 +97,13 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     }
     m_MDFile->Read(mdbuf.data(), sizes[0], 0);
 
-    size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
+    size_t mdsize = HEADERLENGTH + sizeof(sizes) + sizes[0] + sizes[1] + sizes[2];
     *md = (char *)malloc(mdsize);
     *size = mdsize;
     char *p = *md;
+
+    memcpy(p, BP5HEADER, HEADERLENGTH);
+    p += HEADERLENGTH;
     memcpy(p, sizes, sizeof(sizes));
     p += sizeof(sizes);
     memcpy(p, mdbuf.data(), sizes[0]);
@@ -106,12 +112,26 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     p += sizes[1];
     memcpy(p, m_MetadataIndex.m_Buffer.data(), sizes[2]);
     p += sizes[2];
+    std::cout << "BP5 GetMetadata, size = " << size_t(p - *md) << std::endl;
 }
 
 void BP5Reader::ProcessMetadataFromMemory(const char *md)
 {
     uint64_t size_mdidx, size_md, size_mmd;
+    char header[HEADERLENGTH];
     const char *p = md;
+    memcpy(header, p, HEADERLENGTH);
+    p = p + HEADERLENGTH;
+    std::string h1(BP5HEADER);
+    std::string h2(header);
+    if (h1 != h2)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "ProcessMetadataFromMemory",
+            "BP5Reader was called with in-memory object but the header is invalid: [" + h2 +
+                "]  for file " + m_Name);
+    }
+
     memcpy(&size_md, p, sizeof(uint64_t));
     p = p + sizeof(uint64_t);
     memcpy(&size_mmd, p, sizeof(uint64_t));
