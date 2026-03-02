@@ -217,7 +217,9 @@ private:
 
     // Resource monitoring
     size_t m_FDLimit = 0;
+    size_t m_FDLimitDefault = 0;
     size_t m_MetadataBytesLimit = 1ULL << 31; // 2 GB default
+    size_t m_MetadataBytesLimitDefault = 1ULL << 31;
     size_t m_TotalMetadataBytes = 0;
     size_t m_TotalSubfileCount = 0;
     void EvictUnderPressure(size_t incoming_fd_cost, size_t incoming_metadata_bytes);

@@ -496,6 +496,9 @@ ADIOSFilePool::ADIOSFilePool()
         m_MetadataBytesLimit = std::strtoull(md_env, nullptr, 10);
     }
 
+    m_FDLimitDefault = m_FDLimit;
+    m_MetadataBytesLimitDefault = m_MetadataBytesLimit;
+
     adios2::SharedTarFDCache::Enable();
     std::cout << "ADIOSFilePool created (FD limit: " << m_FDLimit
               << ", metadata limit: " << m_MetadataBytesLimit << ", SharedTarFDCache enabled).\n";
@@ -638,11 +641,20 @@ std::string ADIOSFilePool::FlushAll()
 
 std::string ADIOSFilePool::SetLimits(size_t fd_limit, size_t md_limit)
 {
-    if (fd_limit > 0)
+    // SIZE_MAX = don't change, 0 = reset to default, other = set
+    if (fd_limit == 0)
+    {
+        m_FDLimit = m_FDLimitDefault;
+    }
+    else if (fd_limit != SIZE_MAX)
     {
         m_FDLimit = fd_limit;
     }
-    if (md_limit > 0)
+    if (md_limit == 0)
+    {
+        m_MetadataBytesLimit = m_MetadataBytesLimitDefault;
+    }
+    else if (md_limit != SIZE_MAX)
     {
         m_MetadataBytesLimit = md_limit;
     }
@@ -685,18 +697,17 @@ const char *ADIOSPoolAdmin(const char *command, const char *query)
     else if (cmd == "limits")
     {
         // Parse fd=N&md=N from query
-        size_t fd = 0, md = 0;
         auto parseParam = [&](const std::string &key) -> size_t {
             size_t pos = q.find(key + "=");
             if (pos != std::string::npos)
             {
                 return strtoull(q.c_str() + pos + key.size() + 1, nullptr, 10);
             }
-            return 0;
+            return SIZE_MAX; // not specified
         };
-        fd = parseParam("fd");
-        md = parseParam("md");
-        if (fd > 0 || md > 0)
+        size_t fd = parseParam("fd");
+        size_t md = parseParam("md");
+        if (fd != SIZE_MAX || md != SIZE_MAX)
         {
             result = pool.SetLimits(fd, md);
         }

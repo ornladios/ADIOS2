@@ -305,7 +305,7 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
     }
 
     // Match admin paths or SSI prefix
-    if (strncmp(path, "/admin", 6) == 0)
+    if (strncmp(path, "/_adios", 7) == 0)
     {
         return true;
     }
@@ -315,7 +315,7 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
 int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
 {
     // Handle admin requests directly (no SSI needed)
-    if (req.resource.compare(0, 6, "/admin") == 0)
+    if (req.resource.compare(0, 7, "/_adios") == 0)
     {
         return ProcessAdminReq(req);
     }
@@ -465,9 +465,9 @@ int XrdHttpSsiHandler::ProcessAdminReq(XrdHttpExtReq &req)
 
     // Extract command from path: /admin/<command>
     std::string command;
-    if (req.resource.length() > 7) // "/admin/"
+    if (req.resource.length() > 8) // "/_adios/"
     {
-        command = req.resource.substr(7);
+        command = req.resource.substr(8);
     }
 
     // Get query string
@@ -481,11 +481,11 @@ int XrdHttpSsiHandler::ProcessAdminReq(XrdHttpExtReq &req)
     if (command.empty())
     {
         std::string body = "Admin endpoints:\n"
-                           "  GET /admin/stats  - pool statistics (JSON)\n"
-                           "  GET /admin/files  - cached files (JSON)\n"
-                           "  GET /admin/flush  - flush idle cache entries\n"
-                           "  GET /admin/limits - view resource limits\n"
-                           "  GET /admin/limits?fd=N&md=N - set limits\n";
+                           "  GET /_adios/stats  - pool statistics (JSON)\n"
+                           "  GET /_adios/files  - cached files (JSON)\n"
+                           "  GET /_adios/flush  - flush idle cache entries\n"
+                           "  GET /_adios/limits - view resource limits\n"
+                           "  GET /_adios/limits?fd=N&md=N - set limits\n";
         return SendResponse(req, body.c_str(), body.size(), "text/plain");
     }
 
