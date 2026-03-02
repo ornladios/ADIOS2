@@ -256,6 +256,32 @@ foreach(test ${BP5_TESTS})
     add_common_test(${test} BP5)
 endforeach()
 
+#
+#   Setup streaming tests for BP5 engine
+#
+if(NOT MSVC)    # not on windows
+    LIST (APPEND BP5_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
+    MutateTestSet( BP5_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP5_STREAM_TESTS}")
+    # Discard not a feature of BP5
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1.*BPS$")
+    # PreciousTimestep not a feature of BP5
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*PreciousTimestep.*BPS$")
+    # LatestTimestep not a feature of BP5
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*LatestReader.*BPS$")
+    # KillWriter fails with BP5
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*KillWriter.*BPS$")
+    # KillReaders not necessary for BP5 streaming
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*KillReaders.*BPS$")
+    # Delayed reader not worth testing on file streaming
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX "DelayedReader.*BPS$")
+    # DefSync test passes engine name directly, not through run_test.py
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
+    # NoData tests don't work for BP file streaming
+    list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
+    foreach(test ${BP5_STREAM_TESTS})
+        add_common_test(${test} BP5_stream)
+    endforeach()
+endif()
 
 #
 #   Setup streaming tests for BP4 engine

@@ -213,7 +213,7 @@ DataType GetDataType() noexcept;
  */
 DataType GetDataTypeFromString(std::string const &) noexcept;
 
-size_t GetDataTypeSize(DataType type);
+using adios2::GetDataTypeSize;
 
 /**
  * Converts a vector of dimensions to a CSV string

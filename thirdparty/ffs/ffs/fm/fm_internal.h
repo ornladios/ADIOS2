@@ -326,6 +326,11 @@ extern int format_server_restarted(FMContext context);
 extern int FMhas_XML_info(FMFormat format);
 extern int get_internal_format_server_identifier(format_server fs);
 
+/* HTTP format server client (http_client.c) */
+extern char *ffs_http_server_url;
+extern int http_server_register_format(FMContext fmc, FMFormat format);
+extern FMFormat http_server_get_format(FMContext fmc, void *buffer);
+
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif

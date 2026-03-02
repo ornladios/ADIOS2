@@ -79,7 +79,7 @@ CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
 if(ATOM_SERVER_HOST)
   set(_atom_server_default "${ATOM_SERVER_HOST}")
 else()
-  set(_atom_server_default "atomhost.cercs.gatech.edu")
+  set(_atom_server_default "http://gregeisenhauer.online/cgi-bin/korvo_server")
 endif()
 set(ATL_ATOM_SERVER_HOST "${_atom_server_default}" CACHE STRING
   "Default Atom server")
@@ -91,7 +91,7 @@ set(ATL_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(ATL_LIBRARY_PREFIX)
 
-add_library(atl atom.c attr.c lookup3.c tclHash.c)
+add_library(atl atom.c attr.c lookup3.c tclHash.c http_atom_client.c)
 if(WIN32)
   target_link_libraries(atl wsock32 ws2_32)
 endif()

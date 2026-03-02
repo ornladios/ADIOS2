@@ -790,6 +790,18 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
             replicas.push_back(repIdx);
         }
     }
+    // "fs" archive locations on known hosts
+    for (auto &it : datasets[datasetIdx].replicas)
+    {
+        auto &rep = it.second;
+
+        if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
+            directory[rep.dirIdx].archiveSystemName == "fs")
+        {
+            auto repIdx = it.first;
+            replicas.push_back(repIdx);
+        }
+    }
     // s3 hosts that are known in host config
     for (auto &it : datasets[datasetIdx].replicas)
     {
@@ -806,18 +818,6 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     {
         auto &rep = it.second;
         if (directory[rep.dirIdx].archive && hosts[rep.hostIdx].defaultProtocol == "https")
-        {
-            auto repIdx = it.first;
-            replicas.push_back(repIdx);
-        }
-    }
-    // "fs" archive locations on known hosts
-    for (auto &it : datasets[datasetIdx].replicas)
-    {
-        auto &rep = it.second;
-
-        if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
-            directory[rep.dirIdx].archiveSystemName == "fs")
         {
             auto repIdx = it.first;
             replicas.push_back(repIdx);

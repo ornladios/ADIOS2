@@ -12,18 +12,20 @@
 #include "ExampleWritePlugin.h"
 #include "ExampleWritePlugin.tcc"
 
-#include "adios2/helper/adiosSystem.h"
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 namespace adios2
 {
 namespace plugin
 {
 
-ExampleWritePlugin::ExampleWritePlugin(core::IO &io, const std::string &name, const Mode mode,
-                                       helper::Comm comm)
-: PluginEngineInterface(io, name, mode, comm.Duplicate())
+ExampleWritePlugin::ExampleWritePlugin(adios2::IO io, const std::string &name, const Mode mode)
+: PluginEngineInterface(io, name, mode)
 {
-    Init();
 }
 
 ExampleWritePlugin::~ExampleWritePlugin()
@@ -35,12 +37,17 @@ ExampleWritePlugin::~ExampleWritePlugin()
 void ExampleWritePlugin::Init()
 {
     std::string dir = "ExamplePlugin";
-    auto paramFileNameIt = m_IO.m_Parameters.find("DirName");
-    if (paramFileNameIt != m_IO.m_Parameters.end())
+    auto params = m_IO.Parameters();
+    auto paramFileNameIt = params.find("DirName");
+    if (paramFileNameIt != params.end())
     {
         dir = paramFileNameIt->second;
     }
-    helper::CreateDirectory(dir);
+#ifdef _WIN32
+    _mkdir(dir.c_str());
+#else
+    mkdir(dir.c_str(), 0755);
+#endif
 
     std::string fileName = dir + "/data.txt";
     m_DataFile.open(fileName);
@@ -68,11 +75,11 @@ size_t ExampleWritePlugin::CurrentStep() const { return m_CurrentStep; }
 void ExampleWritePlugin::EndStep() { m_CurrentStep++; }
 
 #define declare(T)                                                                                 \
-    void ExampleWritePlugin::DoPutSync(core::Variable<T> &variable, const T *values)               \
+    void ExampleWritePlugin::DoPutSync(adios2::Variable<T> variable, const T *values)              \
     {                                                                                              \
         WriteArray(variable, values);                                                              \
     }                                                                                              \
-    void ExampleWritePlugin::DoPutDeferred(core::Variable<T> &variable, const T *values)           \
+    void ExampleWritePlugin::DoPutDeferred(adios2::Variable<T> variable, const T *values)          \
     {                                                                                              \
         WriteArray(variable, values);                                                              \
     }
@@ -85,18 +92,18 @@ void ExampleWritePlugin::DoClose(const int transportIndex) {}
 
 void ExampleWritePlugin::WriteVarsFromIO()
 {
-    const core::VarMap &variables = m_IO.GetVariables();
+    auto variables = m_IO.AvailableVariables(true);
     for (const auto &vpair : variables)
     {
         const std::string &varName = vpair.first;
-        const DataType varType = vpair.second->m_Type;
+        const std::string varType = m_IO.VariableType(varName);
 #define declare_template_instantiation(T)                                                          \
-    if (varType == helper::GetDataType<T>())                                                       \
+    if (varType == adios2::GetType<T>())                                                           \
     {                                                                                              \
-        core::Variable<T> *v = m_IO.InquireVariable<T>(varName);                                   \
+        adios2::Variable<T> v = m_IO.InquireVariable<T>(varName);                                  \
         if (!v)                                                                                    \
             return;                                                                                \
-        WriteVariableInfo(*v);                                                                     \
+        WriteVariableInfo(v);                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -108,10 +115,10 @@ void ExampleWritePlugin::WriteVarsFromIO()
 
 extern "C" {
 
-adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io, const std::string &name,
-                                                 const adios2::Mode mode, adios2::helper::Comm comm)
+adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::IO io, const std::string &name,
+                                                 const adios2::Mode mode)
 {
-    return new adios2::plugin::ExampleWritePlugin(io, name, mode, comm.Duplicate());
+    return new adios2::plugin::ExampleWritePlugin(io, name, mode);
 }
 
 void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj) { delete obj; }

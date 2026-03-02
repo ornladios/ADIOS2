@@ -41,11 +41,7 @@ void GetGPUMinMax(const T *values, const size_t size, T &min, T &max) noexcept
 }
 #endif
 
-size_t GetTotalSize(const Dims &dimensions, const size_t elementSize) noexcept
-{
-    return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
-                           std::multiplies<size_t>());
-}
+// GetTotalSize is now inline in adiosMath.h, delegating to adios2::GetTotalSize()
 
 bool CheckIndexRange(const int index, const int upperLimit, const int lowerLimit) noexcept
 {

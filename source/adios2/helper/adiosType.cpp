@@ -91,19 +91,7 @@ DataType GetDataTypeFromString(std::string const &type) noexcept
     return DataType::None;
 }
 
-size_t GetDataTypeSize(DataType type)
-{
-#define declare_type(T)                                                                            \
-    if (type == helper::GetDataType<T>())                                                          \
-    {                                                                                              \
-        return sizeof(T);                                                                          \
-    }
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    helper::Throw<std::runtime_error>("Helper", "adiosType", "GetDataTypeSize",
-                                      "unknown data type");
-    return 0;
-}
+// GetDataTypeSize is now inline in adiosType.h, delegating to adios2::GetDataTypeSize()
 
 std::string DimsToCSV(const Dims &dimensions) noexcept
 {

@@ -52,6 +52,23 @@ public:
 
     virtual bool WaitForGet(GetHandle handle);
 
+    struct BatchGetRequest
+    {
+        const char *VarName;
+        size_t Step;
+        size_t StepCount;
+        size_t BlockID;
+        Dims Count;
+        Dims Start;
+        Accuracy accuracy;
+        void *dest;
+    };
+
+    // Batch multiple Get requests into a single round-trip.
+    // Returns true on success (all data written to dest buffers),
+    // false if batching is not supported (caller should fall back to individual Gets).
+    virtual bool BatchGet(const std::vector<BatchGetRequest> &requests) { return false; }
+
     virtual GetHandle Read(size_t Start, size_t Size, void *Dest);
 
     virtual void Close();

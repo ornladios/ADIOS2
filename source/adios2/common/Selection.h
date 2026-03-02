@@ -2,23 +2,22 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Selection.h : Public C++ bindings for Selection class
+ * Selection.h : Thread-safe selection specification for Get() operations
  */
 
-#ifndef ADIOS2_BINDINGS_CXX_CXX_SELECTION_H_
-#define ADIOS2_BINDINGS_CXX_CXX_SELECTION_H_
-
-#include <string>
+#ifndef ADIOS2_CORE_SELECTION_H_
+#define ADIOS2_CORE_SELECTION_H_
 
 #include "adios2/common/ADIOSTypes.h"
 
+#include <string>
+
 namespace adios2
 {
-
 namespace core
 {
-class Selection;
-} // namespace core
+
+class VariableBase;
 
 /**
  * Selection specification for Get() operations.
@@ -32,11 +31,13 @@ class Selection;
  * 1. Immutable/fluent: Use factory methods + With*() to create new instances
  * 2. Mutable/reuse: Use Set*() methods to modify in place
  *
- * Thread-safety is the user's responsibility (don't share and mutate).
+ * A default-constructed Selection has type All, meaning the entire variable.
  */
 class Selection
 {
 public:
+    Selection() = default;
+
     //========================================================================
     // Factory methods (create new Selection)
     //========================================================================
@@ -98,20 +99,53 @@ public:
     Selection WithAccuracy(const Accuracy &accuracy) const;
     Selection WithAccuracy(double error, double norm = L2_norm, bool relative = false) const;
 
+    //========================================================================
+    // Accessors
+    //========================================================================
+
+    /** Returns All or BoundingBox (spatial selection type). */
+    SelectionType GetSelectionType() const noexcept { return m_Type; }
+
+    const Dims &GetStart() const noexcept { return m_Start; }
+    const Dims &GetCount() const noexcept { return m_Count; }
+
+    bool HasBlockSelection() const noexcept { return m_HasBlock; }
+    size_t GetBlockID() const noexcept { return m_BlockID; }
+
+    size_t GetStepStart() const noexcept { return m_StepStart; }
+    size_t GetStepCount() const noexcept { return m_StepCount; }
+
+    bool HasMemorySelection() const noexcept { return m_HasMemory; }
+    const Dims &GetMemoryStart() const noexcept { return m_MemoryStart; }
+    const Dims &GetMemoryCount() const noexcept { return m_MemoryCount; }
+
+    const Accuracy &GetAccuracy() const noexcept { return m_Accuracy; }
+
     /** Human-readable string representation */
     std::string ToString() const;
 
-    /** Access to internal implementation (for Engine use) */
-    const core::Selection &GetCoreSelection() const;
-
 private:
-    friend class Engine;
-    Selection();
-
-    class Impl;
-    std::shared_ptr<Impl> m_Impl;
+    SelectionType m_Type = SelectionType::All;
+    Dims m_Start;
+    Dims m_Count;
+    bool m_HasBlock = false;
+    size_t m_BlockID = 0;
+    size_t m_StepStart = 0;
+    size_t m_StepCount = 1;
+    Dims m_MemoryStart;
+    Dims m_MemoryCount;
+    bool m_HasMemory = false;
+    Accuracy m_Accuracy = {0.0, 0.0, false};
 };
 
+/**
+ * Build a Selection from the current state of a VariableBase.
+ * Reads m_SelectionType, m_Start, m_Count, m_BlockID, m_StepsStart,
+ * m_StepsCount, m_MemoryStart, m_MemoryCount, and GetAccuracyRequested().
+ */
+Selection InferSelection(const VariableBase &variable);
+
+} // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_BINDINGS_CXX_CXX_SELECTION_H_
+#endif /* ADIOS2_CORE_SELECTION_H_ */

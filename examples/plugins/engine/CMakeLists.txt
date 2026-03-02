@@ -18,7 +18,7 @@ endif()
 include(GenerateExportHeader)
 
 add_library(adios2_plugins_exampleWritePlugin ExampleWritePlugin.cpp)
-target_link_libraries(adios2_plugins_exampleWritePlugin adios2::cxx adios2_core)
+target_link_libraries(adios2_plugins_exampleWritePlugin adios2::cxx)
 generate_export_header(adios2_plugins_exampleWritePlugin BASE_NAME plugin_engine_write)
 target_include_directories(adios2_plugins_exampleWritePlugin PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -29,7 +29,7 @@ install(TARGETS adios2_plugins_exampleWritePlugin RUNTIME DESTINATION ${CMAKE_IN
 endif()
 
 add_library(adios2_plugins_exampleReadPlugin ExampleReadPlugin.cpp)
-target_link_libraries(adios2_plugins_exampleReadPlugin adios2::cxx adios2_core)
+target_link_libraries(adios2_plugins_exampleReadPlugin adios2::cxx)
 generate_export_header(adios2_plugins_exampleReadPlugin BASE_NAME plugin_engine_read)
 target_include_directories(adios2_plugins_exampleReadPlugin PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

@@ -1147,7 +1147,7 @@ FFSconvert_record(IOConversionPtr conv, void *src, void *dest, void *final_strin
 
 void
 transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
-		FMdata_type dest_type, int dest_size, 
+		FMdata_type dest_type, int dest_size,
 		FMFieldPtr src_spec)
 {
     int dimen_count = 0;
@@ -1156,7 +1156,14 @@ transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
     ssize_t cur_index;
     size_t jump = 1;
 
-    while (dimens[dimen_count] != 0) dimen_count++;
+    /* This function may be called from JIT-generated code whose stores
+     * are invisible to MSan.  Unpoison the JIT-written arguments. */
+    FFS_UNPOISON(src_spec, sizeof(*src_spec));
+    while (1) {
+	FFS_UNPOISON(&dimens[dimen_count], sizeof(size_t));
+	if (dimens[dimen_count] == 0) break;
+	dimen_count++;
+    }
     struct _FMgetFieldStruct tmp_spec = *src_spec;
 
     if (dimen_count <= 1) return;

@@ -12,7 +12,7 @@
 
 #include "Selection.h"
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/core/Selection.h"
+#include "adios2/common/Selection.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //CheckNullptr
 
@@ -20,11 +20,6 @@ namespace adios2
 {
 
 #define declare_type(T)                                                                            \
-                                                                                                   \
-    template <>                                                                                    \
-    Variable<T>::Variable(core::Variable<IOType> *variable) : m_Variable(variable)                 \
-    {                                                                                              \
-    }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
     Variable<T>::operator bool() const noexcept                                                    \

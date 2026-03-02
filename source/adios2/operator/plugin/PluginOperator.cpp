@@ -9,7 +9,7 @@
  */
 
 #include "PluginOperator.h"
-#include "PluginOperatorInterface.h"
+#include "adios2/plugin/PluginOperatorInterface.h"
 
 #include <functional>
 #include <map>

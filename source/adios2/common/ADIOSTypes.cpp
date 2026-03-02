@@ -259,18 +259,6 @@ std::string ToString(DataType type)
     return std::string();
 }
 
-std::string ToString(const Dims &dims)
-{
-    std::string s = "{";
-    for (size_t i = 0; i < dims.size(); i++)
-    {
-        s += std::to_string(dims[i]);
-        if (i < dims.size() - 1)
-            s += ",";
-    }
-    s += "}";
-    return s;
-}
 std::string ToString(const Box<Dims> &box)
 {
     std::string s = "{";

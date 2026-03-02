@@ -12,8 +12,6 @@
 #ifndef ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 #define ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 
-#include "PluginEngineInterface.h"
-
 #include <memory> // for unique_ptr
 #include <string> // for string
 
@@ -29,7 +27,9 @@ namespace adios2
 namespace plugin
 {
 
-/** A front-end wrapper for an engine implemented outside of libadios2 */
+/** A front-end wrapper for an engine implemented outside of libadios2.
+ *  Bridges between the internal core::Engine interface and the public-API-based
+ *  PluginEngineInterface that external plugins implement. */
 class PluginEngine : public core::Engine
 {
 public:
@@ -37,6 +37,7 @@ public:
     virtual ~PluginEngine();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) override;
+    size_t CurrentStep() const override;
     void PerformPuts() override;
     void PerformGets() override;
     void EndStep() override;
@@ -50,6 +51,24 @@ protected:
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
+
+// Get with Selection
+#define declare(T)                                                                                 \
+    void DoGetSync(core::Variable<T> &, T *, const core::Selection &) override;                    \
+    void DoGetDeferred(core::Variable<T> &, T *, const core::Selection &) override;
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare)
+#undef declare
+
+// Span-based Put
+#define declare(T)                                                                                 \
+    void DoPut(core::Variable<T> &, typename core::Variable<T>::Span &, const bool, const T &)     \
+        override;
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare)
+#undef declare
+
+    MinVarInfo *MinBlocksInfo(const core::VariableBase &, const size_t Step) const override;
+
+    size_t DoSteps() const override;
 
     void DoClose(const int transportIndex = -1) override;
 

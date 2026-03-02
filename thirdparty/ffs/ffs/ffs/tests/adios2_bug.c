@@ -395,7 +395,7 @@ static FMField ReturnMetadataInfoList[] = {
 
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
     {"ReturnMetadataInfo", ReturnMetadataInfoList,
-     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+     sizeof(struct _ReturnMetadataInfo), NULL},
     {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
     {"timestepMetadata", TimestepMetadataList,
      sizeof(struct _TimestepMetadataMsg), NULL},

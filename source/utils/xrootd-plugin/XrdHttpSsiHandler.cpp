@@ -372,7 +372,7 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     m_ssiService->ProcessRequest(*ssiReq, ssiResource);
 
     // Wait for the response (with timeout)
-    if (!ssiReq->WaitForResponse(60))
+    if (!ssiReq->WaitForResponse(300))
     {
         delete ssiReq;
         return SendError(req, 504, "SSI request timeout");

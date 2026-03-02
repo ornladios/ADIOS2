@@ -7,7 +7,11 @@ if(ADIOS2_HAVE_Sodium)
   add_library(EncryptionOperator MODULE
     EncryptionOperator.cpp
   )
-  target_link_libraries(EncryptionOperator adios2_core sodium)
+  target_link_libraries(EncryptionOperator sodium)
+  target_include_directories(EncryptionOperator PRIVATE
+    ${PROJECT_SOURCE_DIR}/source
+    ${PROJECT_BINARY_DIR}/source
+  )
   if (NOT CMAKE_SKIP_INSTALL_RPATH)
     set_target_properties(EncryptionOperator PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
   endif()

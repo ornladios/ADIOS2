@@ -20,23 +20,24 @@ namespace plugin
 {
 
 template <typename T>
-void ExampleWritePlugin::WriteVariableInfo(core::Variable<T> &variable)
+void ExampleWritePlugin::WriteVariableInfo(adios2::Variable<T> variable)
 {
     /** write basic variable info to file **/
-    m_VarFile << variable.m_Name << ";" << variable.m_Type << ";" << variable.m_Shape << ";"
-              << variable.m_Start << ";" << variable.m_Count << std::endl;
+    m_VarFile << variable.Name() << ";" << variable.Type() << ";" << variable.Shape() << ";"
+              << variable.Start() << ";" << variable.Count() << std::endl;
 }
 
 template <typename T>
-void ExampleWritePlugin::WriteArray(core::Variable<T> &variable, const T *values)
+void ExampleWritePlugin::WriteArray(adios2::Variable<T> variable, const T *values)
 {
     /** Write variable name and step to file, followed by the actual data on the
      * next line **/
-    m_DataFile << variable.m_Name << "," << m_CurrentStep << std::endl;
-    for (size_t i = 0; i < variable.SelectionSize(); ++i)
+    m_DataFile << variable.Name() << "," << m_CurrentStep << std::endl;
+    auto selSize = variable.SelectionSize();
+    for (size_t i = 0; i < selSize; ++i)
     {
         m_DataFile << values[i];
-        if (i < variable.SelectionSize() - 1)
+        if (i < selSize - 1)
         {
             m_DataFile << ",";
         }

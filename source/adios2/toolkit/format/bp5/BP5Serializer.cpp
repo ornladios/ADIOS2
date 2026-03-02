@@ -1157,7 +1157,7 @@ void BP5Serializer::OnetimeMarshalAttribute(const core::AttributeBase &baseAttr)
         }
         else
         {
-            Data = &(attribute->m_DataArray[0]);
+            Data = attribute->m_DataArray.data();
         }
     }
 #define per_type_code(T)                                                                           \
@@ -1234,7 +1234,10 @@ void BP5Serializer::OnetimeMarshalAttribute(const char *Name, const DataType Typ
         ThisAttr->Name = TmpName;
         ThisAttr->TotalElementSize = ElemCount * DataTypeSize[(int)Type];
         ThisAttr->Values = (char *)malloc(ThisAttr->TotalElementSize);
-        std::memcpy((void *)ThisAttr->Values, (void *)Array, ThisAttr->TotalElementSize);
+        if (ThisAttr->TotalElementSize > 0)
+        {
+            std::memcpy((void *)ThisAttr->Values, (void *)Array, ThisAttr->TotalElementSize);
+        }
     }
 }
 
