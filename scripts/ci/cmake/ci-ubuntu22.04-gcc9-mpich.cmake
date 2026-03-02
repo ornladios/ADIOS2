@@ -37,6 +37,7 @@ CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
 
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-serial/.spack-env/view/lib/libgomp.so.1
 ")
 
 # TODO: The Kill* and PreciousTimeStep tests fail (due to timeout) when
