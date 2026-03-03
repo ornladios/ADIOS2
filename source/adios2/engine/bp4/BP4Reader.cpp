@@ -79,7 +79,6 @@ void BP4Reader::GetMetadata(char **md, size_t *size)
     p += sizes[0];
     memcpy(p, m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), sizes[1]);
     p += sizes[1];
-    std::cout << "BP4 GetMetadata, size = " << size_t(p - *md) << std::endl;
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)

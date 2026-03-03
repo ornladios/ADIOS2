@@ -755,7 +755,7 @@ void CampaignReader::InitTransports()
                             << "\n  uuid: " << ds.uuid << std::endl;
                     ++atsLines;
                 }
-                else
+                else if (!in_memory_object.size())
                 {
                     if (m_Options.verbose > 0)
                     {
@@ -810,7 +810,7 @@ void CampaignReader::InitTransports()
                     std::cout << "    " << ds.name << " local file " << localPath << "\n";
                 }
             }
-            else
+            else if (!in_memory_object.size())
             {
                 if (m_Options.verbose > 0)
                 {

@@ -112,7 +112,6 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     p += sizes[1];
     memcpy(p, m_MetadataIndex.m_Buffer.data(), sizes[2]);
     p += sizes[2];
-    std::cout << "BP5 GetMetadata, size = " << size_t(p - *md) << std::endl;
 }
 
 void BP5Reader::ProcessMetadataFromMemory(const char *md)
