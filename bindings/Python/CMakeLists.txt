@@ -59,13 +59,17 @@ set_target_properties(adios2_py PROPERTIES
 
 set(install_location "${CMAKE_INSTALL_PYTHONDIR}/adios2")
 if (ADIOS2_USE_PIP)
-  set(install_location ${CMAKE_INSTALL_LIBDIR})
+  set(install_location adios2)
 endif()
 
 string(REGEX REPLACE "[^/]+" ".." relative_base "${install_location}/bindings")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   set_property(TARGET adios2_py APPEND PROPERTY
     INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}"
+  )
+elseif(APPLE)
+  set_property(TARGET adios2_py APPEND PROPERTY
+    INSTALL_RPATH "@loader_path/${relative_base}/${CMAKE_INSTALL_LIBDIR}"
   )
 endif()
 
