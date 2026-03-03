@@ -118,9 +118,10 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
 void BP5Reader::ProcessMetadataFromMemory(const char *md)
 {
     uint64_t size_mdidx, size_md, size_mmd;
-    char header[HEADERLENGTH];
+    char header[HEADERLENGTH + 1];
     const char *p = md;
     memcpy(header, p, HEADERLENGTH);
+    header[HEADERLENGTH] = '\0';
     p = p + HEADERLENGTH;
     std::string h1(BP5HEADER);
     std::string h2(header);

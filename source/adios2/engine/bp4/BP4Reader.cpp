@@ -559,9 +559,10 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollS
 void BP4Reader::ProcessMetadataFromMemory(const char *md)
 {
     uint64_t size_mdidx, size_md;
-    char header[HEADERLENGTH];
+    char header[HEADERLENGTH + 1];
     const char *p = md;
     memcpy(header, p, HEADERLENGTH);
+    header[HEADERLENGTH] = '\0';
     p = p + HEADERLENGTH;
     std::string h1(BP4HEADER);
     std::string h2(header);
