@@ -545,6 +545,10 @@ if(ADIOS2_HAVE_IME)
   target_link_libraries(adios2_core PRIVATE IME::IME)
 endif()
 
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^Intel")
+  target_link_libraries(adios2_core PRIVATE stdc++fs)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   set(maybe_adios2_c_mpi adios2_c_mpi)
   set(maybe_adios2_cxx_mpi adios2_cxx_mpi)
