@@ -434,16 +434,36 @@ if(NOT SHARED_LIBS_SUPPORTED)
   endif()
 endif()
 
+# nanobind requires Python >= 3.9. Stable ABI (abi3) support requires >= 3.12.
+option(ADIOS2_USE_PythonStableABI
+  "Build Python bindings as a stable-ABI extension (.abi3.so) compatible with \
+any Python >= 3.12. Requires CMake >= 3.26 and Python >= 3.12." OFF)
+
+if(ADIOS2_USE_PythonStableABI)
+  if(CMAKE_VERSION VERSION_LESS "3.26")
+    message(FATAL_ERROR "ADIOS2_USE_PythonStableABI requires CMake >= 3.26 "
+      "(found ${CMAKE_VERSION})")
+  endif()
+  set(adios2_python_min_ver 3.12)
+  set(maybe_python_sabi_component Development.SABIModule)
+else()
+  set(adios2_python_min_ver 3.9)
+  set(maybe_python_sabi_component)
+endif()
+
 if(ADIOS2_USE_PIP)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+  find_package(Python ${adios2_python_min_ver} REQUIRED
+    COMPONENTS Interpreter Development.Module ${maybe_python_sabi_component})
   set(ADIOS2_HAVE_PIP TRUE)
 elseif(ADIOS2_USE_Python STREQUAL AUTO)
-  find_package(Python 3.8 COMPONENTS Interpreter Development)
+  find_package(Python ${adios2_python_min_ver}
+    COMPONENTS Interpreter Development.Module ${maybe_python_sabi_component})
   if(Python_FOUND AND ADIOS2_HAVE_MPI)
     find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
 elseif(ADIOS2_USE_Python)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
+  find_package(Python ${adios2_python_min_ver} REQUIRED
+    COMPONENTS Interpreter Development.Module ${maybe_python_sabi_component})
   if(ADIOS2_HAVE_MPI)
     find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
