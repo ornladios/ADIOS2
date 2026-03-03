@@ -203,7 +203,7 @@ is written locally so that readers can auto-detect the S3 location.
 .. code-block:: c++
 
    io.SetEngine("BP5");
-   io.SetParameter("DataTransport", "awssdk");
+   io.SetParameter("DataFileTransport", "awssdk");
    io.SetParameter("S3Endpoint", "https://s3.amazonaws.com");
    io.SetParameter("S3Bucket", "mybucket");
 
@@ -211,7 +211,7 @@ Credentials can be provided as engine parameters (``S3AccessKeyID``, ``S3SecretK
 ``S3SessionToken``) or via standard AWS environment variables (``AWS_ACCESS_KEY_ID``,
 ``AWS_SECRET_ACCESS_KEY``, ``AWS_SESSION_TOKEN``).
 
-``AsyncWrite`` is automatically enabled when ``DataTransport`` is set, unless explicitly overridden.
+``AsyncWrite`` is automatically enabled when ``DataFileTransport`` is set, unless explicitly overridden.
 
 The default multi-object mode stores each data segment as a separate S3 object
 (``data.0.0``, ``data.0.1``, ...) for automatic crash recovery. On ``Open(Write)``,
@@ -222,7 +222,7 @@ are supported: append discovers existing segments and continues numbering;
 =============================== ===================== ===========================================================
  **Key**                        **Value Format**      **Default** and Examples
 =============================== ===================== ===========================================================
- DataTransport                   string                **""**, ``awssdk``
+ DataFileTransport                   string                **""**, ``awssdk``
  S3Endpoint                      string                **""**, ``https://s3.amazonaws.com``, ``http://localhost:9000``
  S3Bucket                        string                **""**, ``mybucket``
  S3ObjectMode                    string                **multi**, ``single``

@@ -137,7 +137,7 @@ BP5 can now write data files to S3-compatible object storage (Amazon S3, MinIO,
 Ceph, etc.) while keeping metadata on the local filesystem. This hybrid model
 provides cheap bulk storage for data with fast local metadata access.
 
-Set ``DataTransport=awssdk``, ``S3Endpoint``, and ``S3Bucket`` as engine
+Set ``DataFileTransport=awssdk``, ``S3Endpoint``, and ``S3Bucket`` as engine
 parameters. Credentials are accepted as parameters or via standard AWS
 environment variables (``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``).
 

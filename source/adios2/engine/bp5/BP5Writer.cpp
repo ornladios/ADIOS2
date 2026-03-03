@@ -1221,7 +1221,7 @@ void BP5Writer::InitParameters()
 
     // For S3/object storage, disable stripe alignment to avoid non-sequential writes
     // S3 multipart upload requires sequential writes; StripeSize=1 means no padding
-    if (m_Parameters.DataTransport == "awssdk")
+    if (m_Parameters.DataFileTransport == "awssdk")
     {
         m_Parameters.StripeSize = 1;
     }
@@ -1594,14 +1594,14 @@ void BP5Writer::InitMetadataTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    // Set up data transport parameters - use different transport if DataTransport is specified
-    if (!m_Parameters.DataTransport.empty())
+    // Set up data transport parameters - use different transport if DataFileTransport is specified
+    if (!m_Parameters.DataFileTransport.empty())
     {
         // User specified a different transport for data files (e.g., "awssdk" for S3)
         Params dataTransportParams;
         // Set transport type to "file" and library to the specified transport library
         dataTransportParams["transport"] = "file";
-        dataTransportParams["library"] = m_Parameters.DataTransport;
+        dataTransportParams["library"] = m_Parameters.DataFileTransport;
 
         // Pass through S3-specific parameters if set
         if (!m_Parameters.S3Endpoint.empty())
@@ -1679,7 +1679,7 @@ void BP5Writer::InitMetadataTransports()
                                      m_Parameters.NodeLocal || m_WriteToBB);
 
     // Write s3.json sidecar so readers can auto-detect hybrid S3 storage
-    if (m_Comm.Rank() == 0 && !m_Parameters.DataTransport.empty())
+    if (m_Comm.Rank() == 0 && !m_Parameters.DataFileTransport.empty())
     {
         std::string sidecarPath = m_Name + PathSeparator + "s3.json";
         std::ofstream sf(sidecarPath);
@@ -1687,7 +1687,7 @@ void BP5Writer::InitMetadataTransports()
         {
             sf << "{\n";
             sf << "  \"version\": 1,\n";
-            sf << "  \"transport\": \"" << m_Parameters.DataTransport << "\"";
+            sf << "  \"transport\": \"" << m_Parameters.DataFileTransport << "\"";
             if (!m_Parameters.S3Endpoint.empty())
             {
                 sf << ",\n  \"endpoint\": \"" << m_Parameters.S3Endpoint << "\"";
