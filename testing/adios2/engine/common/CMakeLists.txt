@@ -30,10 +30,10 @@ endif()
 
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SST.FFS
-    EXTRA_ARGS "SST" "0" "MarshalMethod:FFS"
+    EXTRA_ARGS "SST" "0" "MarshalMethod=FFS"
   )
   gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SST.BP
-    EXTRA_ARGS "SST" "0" "MarshalMethod:BP"
+    EXTRA_ARGS "SST" "0" "MarshalMethod=BP"
   )
 endif()
 

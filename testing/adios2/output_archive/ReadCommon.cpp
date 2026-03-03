@@ -12,6 +12,8 @@
 
 #include <adios2.h>
 
+#include "../engine/ParamsHelpers.h"
+
 #include <gtest/gtest.h>
 
 #include "TestData.h"
@@ -286,34 +288,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     // Close the file
     engine.Close();
-}
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, '=');
-        if (!std::getline(ss2, ParamValue, '='))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
 }
 
 void ParseArgs(int argc, char **argv)
