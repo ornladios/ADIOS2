@@ -71,7 +71,9 @@ namespace
 {
 std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     {"bp3", {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
-    {"bp4", {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
+    {"bp4",
+     {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>,
+      IO::MakeEngineWithMD<engine::BP4Reader>}},
     {"bp5",
 #ifdef ADIOS2_HAVE_BP5
      {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>,
@@ -735,7 +737,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {
-        if (md && mode_to_use == Mode::ReadRandomAccess)
+        if (md && (mode == Mode::ReadRandomAccess || mode_to_use == Mode::Read))
         {
             engine =
                 f->second.MakeReaderWithMD(*this, name, mode_to_use, std::move(comm), md, mdsize);
