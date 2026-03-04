@@ -140,7 +140,7 @@ size_t CompressSZ3::Operate(const char *dataIn, const Dims &blockStart, const Di
         }
     }
 
-    size_t szBufferSize;
+    size_t szBufferSize = 0;
     char *szBuffer = nullptr;
 
     try

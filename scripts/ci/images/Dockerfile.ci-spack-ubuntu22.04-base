@@ -27,8 +27,8 @@ WORKDIR /spack
 
 # Install base specs
 RUN . /spack/share/spack/setup-env.sh && \
+    spack repo update --branch "releases/v2025.07" builtin && \
     if test -n "${EXTERNAL_PACKAGES}"; then spack external find ${EXTERNAL_PACKAGES}; fi && \
-    spack info adios2 && \
     if test -n "${PATCH_VARIANT_XROOTD}"; then cd ~/.spack/package_repos/fncqgg4 && git apply /spack/0002-adios2-add-xrootd-variant.patch && cd /spack; fi && \
     spack mirror add binaries "${SPACK_MIRROR}" && \
     export ADIOS_SPEC_NO_MPI="adios2~mpi${EXTRA_VARIANTS}" && \
@@ -38,34 +38,46 @@ RUN . /spack/share/spack/setup-env.sh && \
     spack config add "config:build_jobs:$(nproc)" && \
     spack config add "concretizer:unify:true" && \
     if echo "$ENABLED_ENVS" | grep -q serial; then \
-    spack env create adios2-ci-serial && \
-    spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} ${EXTRA_SPECS} && \
-    spack -e adios2-ci-serial concretize && \
-    spack -e adios2-ci-serial install \
-      --include-build-deps \
-      --no-check-signature \
-      --fail-fast \
-      --only dependencies; \
+      spack env create adios2-ci-serial && \
+      spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} ${EXTRA_SPECS} && \
+      spack -e adios2-ci-serial concretize && \
+      spack -e adios2-ci-serial install \
+        --include-build-deps \
+        --no-check-signature \
+        --fail-fast \
+        --only dependencies ${ADIOS_SPEC_NO_MPI} && \
+      { [ -n "${EXTRA_SPECS}" ] && spack -e adios2-ci-serial install \
+        --no-check-signature \
+        --fail-fast \
+        ${EXTRA_SPECS}; }; \
     fi && \
     if echo "$ENABLED_ENVS" | grep -q ompi ; then \
-    spack env create adios2-ci-ompi && \
-    spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} ${EXTRA_SPECS} && \
-    spack -e adios2-ci-ompi concretize && \
-    spack -e adios2-ci-ompi install \
-      --include-build-deps \
-      --no-check-signature \
-      --fail-fast \
-      --only dependencies; \
+      spack env create adios2-ci-ompi && \
+      spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} ${EXTRA_SPECS} && \
+      spack -e adios2-ci-ompi concretize && \
+      spack -e adios2-ci-ompi install \
+        --include-build-deps \
+        --no-check-signature \
+        --fail-fast \
+        --only dependencies && \
+      { [ -n "${EXTRA_SPECS}" ] && spack -e adios2-ci-ompi install \
+        --no-check-signature \
+        --fail-fast \
+        ${EXTRA_SPECS}; }; \
     fi && \
     if echo "$ENABLED_ENVS" | grep -q mpich; then \
-    spack env create adios2-ci-mpich && \
-    spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} ${EXTRA_SPECS} && \
-    spack -e adios2-ci-mpich concretize && \
-    spack -e adios2-ci-mpich install \
-      --include-build-deps \
-      --no-check-signature \
-      --fail-fast \
-      --only dependencies; \
+      spack env create adios2-ci-mpich && \
+      spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} ${EXTRA_SPECS} && \
+      spack -e adios2-ci-mpich concretize && \
+      spack -e adios2-ci-mpich install \
+        --include-build-deps \
+        --no-check-signature \
+        --fail-fast \
+        --only dependencies && \
+      { [ -n "${EXTRA_SPECS}" ] && spack -e adios2-ci-mpich install \
+        --no-check-signature \
+        --fail-fast \
+        ${EXTRA_SPECS}; }; \
     fi && \
     spack clean -a && \
     echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh

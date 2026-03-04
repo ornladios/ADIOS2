@@ -107,12 +107,21 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(SZ)
   endif()
 
+  set(ADIOS2_HAVE_SZ3 @ADIOS2_HAVE_SZ3@)
+  if(ADIOS2_HAVE_SZ3)
+    find_dependency(PkgConfig REQUIRED)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
+    endif()
+    find_dependency(SZ3)
+  endif()
+
   set(ADIOS2_HAVE_LIBPRESSIO @ADIOS2_HAVE_LIBPRESSIO@)
   if(ADIOS2_HAVE_LIBPRESSIO)
     find_dependency(LibPressio)
     find_dependency(std_compat)
   endif()
-  
+
   set(ADIOS2_HAVE_MGARD @ADIOS2_HAVE_MGARD@)
   if(ADIOS2_HAVE_MGARD)
     find_dependency(MGARD)
