@@ -109,7 +109,8 @@ private:
     std::string m_MetaMetadataFileName;
     std::string m_MetadataIndexFileName;
 
-    /** Transport parameters for data files (may differ from metadata if DataTransport is set) */
+    /** Transport parameters for data files (may differ from metadata if DataFileTransport is set)
+     */
     std::vector<Params> m_DataTransportsParameters;
     std::vector<std::string> m_DrainMetadataFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;

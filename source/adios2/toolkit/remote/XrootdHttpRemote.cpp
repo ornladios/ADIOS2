@@ -66,9 +66,6 @@ CurlMultiPool::CurlMultiPool()
 
     m_Running = true;
     m_WorkerThread = std::thread(&CurlMultiPool::WorkerLoop, this);
-
-    helper::Log("Remote", "CurlMultiPool", "CurlMultiPool",
-                "Shared CURL multi pool initialized (max 50 connections)", helper::LogMode::INFO);
 }
 
 CurlMultiPool::~CurlMultiPool()

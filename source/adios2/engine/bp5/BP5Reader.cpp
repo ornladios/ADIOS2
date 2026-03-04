@@ -1544,7 +1544,7 @@ void BP5Reader::InitTransports()
     // Auto-detect S3 hybrid storage via s3.json sidecar.
     // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
     // All ranks participate in the broadcast unconditionally so the collective doesn't deadlock.
-    if (m_Parameters.DataTransport.empty())
+    if (m_Parameters.DataFileTransport.empty())
     {
         if (m_Comm.Rank() == 0)
         {
@@ -1577,8 +1577,8 @@ void BP5Reader::InitTransports()
                     return content.substr(pos, end - pos);
                 };
 
-                m_Parameters.DataTransport = extractField("transport");
-                if (!m_Parameters.DataTransport.empty())
+                m_Parameters.DataFileTransport = extractField("transport");
+                if (!m_Parameters.DataFileTransport.empty())
                 {
                     if (m_Parameters.S3Endpoint.empty())
                     {
@@ -1590,8 +1590,8 @@ void BP5Reader::InitTransports()
                     }
                     if (m_Parameters.verbose > 0)
                     {
-                        std::cout << "BP5Reader: detected s3.json sidecar, DataTransport="
-                                  << m_Parameters.DataTransport << std::endl;
+                        std::cout << "BP5Reader: detected s3.json sidecar, DataFileTransport="
+                                  << m_Parameters.DataFileTransport << std::endl;
                     }
                 }
             }
@@ -1616,21 +1616,21 @@ void BP5Reader::InitTransports()
                 }
             }
         };
-        bcastString(m_Parameters.DataTransport);
-        if (!m_Parameters.DataTransport.empty())
+        bcastString(m_Parameters.DataFileTransport);
+        if (!m_Parameters.DataFileTransport.empty())
         {
             bcastString(m_Parameters.S3Endpoint);
             bcastString(m_Parameters.S3Bucket);
         }
     }
 
-    // Set up data transport parameters - use different transport if DataTransport is specified
+    // Set up data transport parameters - use different transport if DataFileTransport is specified
     Params dataTransportParams;
-    if (!m_Parameters.DataTransport.empty())
+    if (!m_Parameters.DataFileTransport.empty())
     {
         // Using a different transport for data files (e.g., "awssdk" for S3)
         dataTransportParams["transport"] = "file";
-        dataTransportParams["library"] = m_Parameters.DataTransport;
+        dataTransportParams["library"] = m_Parameters.DataFileTransport;
 
         // Pass through S3-specific parameters if set
         if (!m_Parameters.S3Endpoint.empty())
