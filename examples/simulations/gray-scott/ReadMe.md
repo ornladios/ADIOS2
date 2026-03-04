@@ -8,18 +8,35 @@ u_t = Du * (u_xx + u_yy + u_zz) - u * v^2 + F * (1 - u)  + noise * randn(-1,1)
 v_t = Dv * (v_xx + v_yy + v_zz) + u * v^2 - (F + k) * v
 ```
 
+#### How to build
+
+This example requires MPI. It can be built standalone against an installed ADIOS2:
+
+```
+$ mkdir gray-scott-build && cd gray-scott-build
+$ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> \
+        -DADIOS2_DIR=<adios2-install-prefix>/lib/cmake/adios2 \
+        <adios2-source>/examples/simulations/gray-scott
+$ make -j4
+$ make install
+```
+
+This installs executables to `<install-prefix>/bin/` and configuration files
+(XML, JSON, scripts) to `<install-prefix>/share/adios2/gray-scott/`.
+
+Alternatively, if you built ADIOS2 from source with `-DADIOS2_BUILD_EXAMPLES=ON`,
+the executables are available in the build tree under `bin/` and the configuration
+files are in the source tree under `examples/simulations/gray-scott/`.
+
 #### How to run
 
 Make sure MPI and ADIOS2 are installed and that the `PYTHONPATH` includes the ADIOS2 package.
-Make sure the adios2/bin installation directory is in the `PATH` (conda and spack installations should take
-care of this aspect).
 
-From a scratch directory copy the config files from your installation of adios2:
+If you did a standalone install, run from the installed example directory:
 
 ```
-$ cp -r <adios2-install-prefix>/share/adios2/gray-scott .
-$ cd gray-scott
-$ mpirun -n 4 adios2_simulations_gray-scott settings-files.json
+$ cd <install-prefix>/share/adios2/gray-scott
+$ mpirun -n 4 <install-prefix>/bin/adios2_simulations_gray-scott settings-files.json
 ========================================
 grid:             64x64x64
 steps:            1000
