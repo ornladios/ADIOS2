@@ -166,7 +166,7 @@ The virtual file abstraction is transparent to BP5Reader.
 io.SetEngine("BP5");
 
 // Route data files to S3
-io.SetParameter("DataTransport", "awssdk");
+io.SetParameter("DataFileTransport", "awssdk");
 
 // S3 endpoint (for non-AWS S3-compatible storage)
 io.SetParameter("S3Endpoint", "https://s3.amazonaws.com");
@@ -254,7 +254,7 @@ On `Open(Write)`, the subfile-0 transport deletes all existing `data.*` objects 
 
 ## Async Write
 
-When `DataTransport` is set (e.g., to `awssdk`), `AsyncWrite` is automatically enabled (`Naive` mode) unless explicitly overridden. `FinalizeSegment()` runs inside the async write thread after data is written, so S3 uploads happen concurrently with the next step's computation.
+When `DataFileTransport` is set (e.g., to `awssdk`), `AsyncWrite` is automatically enabled (`Naive` mode) unless explicitly overridden. `FinalizeSegment()` runs inside the async write thread after data is written, so S3 uploads happen concurrently with the next step's computation.
 
 ## Limitations
 
