@@ -623,6 +623,10 @@ if(Sodium_FOUND)
   set(ADIOS2_HAVE_Sodium TRUE)
 endif()
 
+if(ADIOS2_USE_SealKeygen)
+  set(ADIOS2_HAVE_SealKeygen TRUE)
+endif()
+
 # Catalyst stub library for ParaViewFidesEngine plugin for in situ vis
 if(ADIOS2_USE_Catalyst STREQUAL AUTO)
   find_package(catalyst 2.0 QUIET)
