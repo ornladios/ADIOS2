@@ -25,8 +25,8 @@ option(ADIOS2_USE_EXTERNAL_GTEST
   "Use an externally supplied GTest library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PUGIXML
   "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
-option(ADIOS2_USE_EXTERNAL_PYBIND11
-  "Use an externally supplied pybind11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_NANOBIND
+  "Use an externally supplied nanobind library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON
   "Use an externally supplied nlohmann_json library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_YAMLCPP
@@ -48,12 +48,10 @@ if(BUILD_TESTING)
 endif()
 
 if(ADIOS2_HAVE_Python)
-  if(ADIOS2_USE_EXTERNAL_PYBIND11)
-    find_package(pybind11 REQUIRED)
-    adios2_add_thirdparty_target(pybind11 pybind11::pybind11)
+  if(ADIOS2_USE_EXTERNAL_NANOBIND)
+    find_package(nanobind CONFIG REQUIRED)
   else()
-    add_subdirectory(pybind11)
-    adios2_add_thirdparty_target(pybind11 pybind11)
+    add_subdirectory(nanobind)
   endif()
 endif()
 

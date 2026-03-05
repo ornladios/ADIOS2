@@ -1,5 +1,5 @@
 ARG baseos
-FROM ornladios/adios2:spack-dependencies-${baseos}
+FROM docker.io/ornladios/adios2:spack-dependencies-${baseos}
 
 # Install from CI source
 ARG ci_source_dir=ci-source
@@ -8,7 +8,7 @@ RUN spack dev-build \
         -j$(grep -c '^processor' /proc/cpuinfo) \
         -d /opt/adios2/source \
         --skip-patch \
-        adios2@develop && \
+        adios2@develop ~python && \
     spack clean -a
 
 # Build the environment
