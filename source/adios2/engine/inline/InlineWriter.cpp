@@ -302,6 +302,11 @@ void InlineWriter::DoClose(const int transportIndex)
     {
         std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name << ")\n";
     }
+    for (auto *buf : m_InternalBuffers)
+    {
+        free(buf);
+    }
+    m_InternalBuffers.clear();
     // end of stream
     m_CurrentStep = static_cast<size_t>(-1);
 }
