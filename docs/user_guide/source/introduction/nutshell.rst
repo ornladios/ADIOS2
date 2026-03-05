@@ -15,7 +15,7 @@ between
 The key aspects ADIOS2 are
 
 #. **Modular architecture:** ADIOS2 takes advantage of the major features
-   of C++11. The architecture utilizes a balanced combination of runtime
+   of C++17. The architecture utilizes a balanced combination of runtime
    polymorphism and template meta-programming to expose intuitive abstractions for a broad range of IO applications.
 
 

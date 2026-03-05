@@ -546,7 +546,7 @@ if(ADIOS2_HAVE_IME)
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^Intel")
-  target_link_libraries(adios2_core PRIVATE stdc++fs)
+  target_link_libraries(adios2_core PUBLIC stdc++fs)
 endif()
 
 if(ADIOS2_HAVE_MPI)

@@ -72,7 +72,6 @@ void read_solution()
                   "The std::array on your system does not have the proper "
                   "layout to be correctly deserialized in ADIOS2.");
 
-    auto const &m = io.AvailableVariables();
     for (auto const &[key, val] : io.AvailableVariables())
     {
         auto state_variable = io.InquireVariable<Real>(key);
