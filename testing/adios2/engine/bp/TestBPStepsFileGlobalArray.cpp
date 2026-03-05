@@ -16,10 +16,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
-std::string engineName;   // comes from command line
-std::string aggType = ""; // overridden on command line
+std::string engineName;           // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 
 // Number of elements per process
 const std::size_t Nx = 10;
@@ -87,30 +88,6 @@ std::string ReadModeToString(ReadMode r)
     return "unknown";
 }
 
-std::string AggregationTypeAlias(const std::string &aggregationType)
-{
-    if (aggregationType == "DataSizeBased")
-    {
-        return ".DSB";
-    }
-    else if (aggregationType == "EveryoneWritesSerial")
-    {
-        return ".EWS";
-    }
-    else if (aggregationType == "EveryoneWrites")
-    {
-        return ".EW";
-    }
-    else if (aggregationType == "TwoLevelShm")
-    {
-        return ".TLS";
-    }
-    else
-    {
-        return "";
-    }
-}
-
 class BPStepsFileGlobalArrayReaders : public BPStepsFileGlobalArray,
                                       public ::testing::WithParamInterface<ReadMode>
 {
@@ -122,8 +99,7 @@ protected:
 TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix = "BPStepsFileGlobalArray.EveryStep." + ReadModeToString(readMode) +
-                               AggregationTypeAlias(aggType);
+    std::string fname_prefix = "BPStepsFileGlobalArray.EveryStep." + ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -158,10 +134,8 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             io.SetEngine(engineName);
         }
 
-        if (aggType != "")
-        {
-            io.SetParameter("AggregationType", aggType);
-        }
+        io.SetParameters(engineParams);
+
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -387,8 +361,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix = "BPStepsFileGlobalArray.NewVarPerStep." +
-                               ReadModeToString(readMode) + AggregationTypeAlias(aggType);
+    std::string fname_prefix = "BPStepsFileGlobalArray.NewVarPerStep." + ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -425,10 +398,8 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             io.SetEngine(engineName);
         }
 
-        if (aggType != "")
-        {
-            io.SetParameter("AggregationType", aggType);
-        }
+        io.SetParameters(engineParams);
+
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (int step = 0; step < static_cast<int>(NSteps); ++step)
@@ -681,7 +652,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     const ReadMode readMode = GetReadMode();
     std::string fname_prefix = "BPStepsFileGlobalArray.EveryOtherStep.Steps" +
                                std::to_string(NSteps) + ".Oddity" + std::to_string(Oddity) + "." +
-                               ReadModeToString(readMode) + AggregationTypeAlias(aggType);
+                               ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -719,10 +690,8 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             io.SetEngine(engineName);
         }
 
-        if (aggType != "")
-        {
-            io.SetParameter("AggregationType", aggType);
-        }
+        io.SetParameters(engineParams);
+
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -999,7 +968,7 @@ int main(int argc, char **argv)
 
     if (argc > 2)
     {
-        aggType = std::string(argv[2]);
+        engineParams = ParseEngineParams(argv[2]);
     }
 
     result = RUN_ALL_TESTS();

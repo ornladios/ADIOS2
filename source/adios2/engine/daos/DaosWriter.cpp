@@ -1938,6 +1938,7 @@ void DaosWriter::DoClose(const int transportIndex)
 void DaosWriter::FlushProfiler()
 {
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
+    auto transportNames = m_FileDataManager.GetTransportsNames();
 
     // find first File type output, where we can write the profile
     int fileTransportIdx = -1;
@@ -1952,17 +1953,19 @@ void DaosWriter::FlushProfiler()
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
     auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
+    auto transportNamesMD = m_FileMetadataManager.GetTransportsNames();
     auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
 
     transportTypes.insert(transportTypes.end(), transportTypesMD.begin(), transportTypesMD.end());
-
+    transportNames.insert(transportNames.end(), transportNamesMD.begin(), transportNamesMD.end());
     transportProfilers.insert(transportProfilers.end(), transportProfilersMD.begin(),
                               transportProfilersMD.end());
 
     // m_Profiler.WriteOut(transportTypes, transportProfilers);
 
-    const std::string lineJSON(m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
-                               ",\n");
+    const std::string lineJSON(
+        m_Profiler.GetRankProfilingJSON(transportTypes, transportNames, transportProfilers) +
+        ",\n");
 
     const std::vector<char> profilingJSON(m_Profiler.AggregateProfilingJSON(lineJSON));
 

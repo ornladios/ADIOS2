@@ -13,10 +13,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
-std::string engineName;              // comes from command line
-std::string aggType = "TwoLevelShm"; // comes from command line
+std::string engineName;           // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 
 class ADIOSReadDirectIOTest : public ::testing::Test
 {
@@ -33,7 +34,7 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 
     int mpiRank = 0, mpiSize = 1;
 
-    std::string filename = "ADIOSDirectIO.agg-" + aggType;
+    std::string filename("ADIOSDirectIO");
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -52,7 +53,8 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 #endif
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
-        ioWrite.SetParameter("AggregationType", aggType);
+        ioWrite.SetParameters(engineParams);
+
         ioWrite.SetParameter("DirectIO", "true");
         ioWrite.SetParameter("DirectIOAlignOffset", "4096");
         ioWrite.SetParameter("DirectIOAlignBuffer", "4096");
@@ -150,7 +152,7 @@ int main(int argc, char **argv)
 
     if (argc > 2)
     {
-        aggType = std::string(argv[2]);
+        engineParams = ParseEngineParams(argv[2]);
     }
 
     int result = RUN_ALL_TESTS();

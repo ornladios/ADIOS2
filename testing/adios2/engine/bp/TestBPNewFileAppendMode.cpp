@@ -12,10 +12,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
-std::string engineName;                               // comes from command line
-std::string aggregationType = "EveryoneWritesSerial"; // comes from command line
+std::string engineName;           // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 
 class BPNewFileAppendMode : public ::testing::Test
 {
@@ -27,23 +28,7 @@ public:
 
 TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
 {
-    std::string fname("ADIOS2BPNewFileAppendMode");
-    if (aggregationType == "EveryoneWritesSerial")
-    {
-        fname += "-EWS.bp";
-    }
-    else if (aggregationType == "TwoLevelShm")
-    {
-        fname += "-TLS.bp";
-    }
-    else if (aggregationType == "DataSizeBased")
-    {
-        fname += "-DSB.bp";
-    }
-    else if (aggregationType == "EveryoneWrites")
-    {
-        fname += "-EW.bp";
-    }
+    std::string fname("ADIOS2BPNewFileAppendMode.bp");
 
     const size_t Nx = 6;
 
@@ -63,7 +48,7 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
-        io.SetParameter("AggregationType", aggregationType);
+        io.SetParameters(engineParams);
         io.SetParameter("NumAggregators", "0");
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Append);
@@ -86,7 +71,7 @@ int main(int argc, char **argv)
     }
     if (argc > 2)
     {
-        aggregationType = std::string(argv[2]);
+        engineParams = ParseEngineParams(argv[2]);
     }
 
     result = RUN_ALL_TESTS();

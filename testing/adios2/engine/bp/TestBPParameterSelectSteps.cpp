@@ -18,10 +18,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
-std::string engineName;              // comes from command line
-std::string aggType = "TwoLevelShm"; // overridden on command line
+std::string engineName;           // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 int streamingFileId = 0;
 constexpr std::size_t NSteps = 10;
 const std::size_t Nx = 10;
@@ -80,12 +81,13 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
-        OutputFileName = "ParameterSelectSteps_agg_" + aggType + "_id_" +
+        OutputFileName = std::string("ParameterSelectSteps") + "_id_" +
                          std::to_string(streamingFileId++) + "_size_" + std::to_string(mpiSize) +
                          ".bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
-        ioWrite.SetParameter("AggregationType", aggType);
+        ioWrite.SetParameters(engineParams);
+
         adios2::Engine engine = ioWrite.Open(OutputFileName, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -206,12 +208,12 @@ TEST_P(BPParameterSelectStepsP, Stream)
     adios2::ADIOS adios;
 #endif
 
-    std::string filename = "ParameterSelectStepsStream_agg_" + aggType + "_id_" +
-                           std::to_string(streamingFileId++) + "_size_" + std::to_string(mpiSize) +
-                           ".bp";
+    std::string filename = "ParameterSelectStepsStream_id_" + std::to_string(streamingFileId++) +
+                           "_size_" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
     ioWrite.SetEngine(engineName);
-    ioWrite.SetParameter("AggregationType", aggType);
+    ioWrite.SetParameters(engineParams);
+
     adios2::Engine writer = ioWrite.Open(filename, adios2::Mode::Write);
 
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
@@ -329,7 +331,7 @@ int main(int argc, char **argv)
 
     if (argc > 2)
     {
-        aggType = std::string(argv[2]);
+        engineParams = ParseEngineParams(argv[2]);
     }
 
     result = RUN_ALL_TESTS();

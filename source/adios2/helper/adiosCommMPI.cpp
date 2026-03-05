@@ -68,6 +68,16 @@ const MPI_Datatype DatatypeToMPI[] = {
     MPI_SHORT_INT,
 };
 
+int GetMPISource(int source)
+{
+    if (source == static_cast<int>(Comm::Constants::CommRecvAny))
+    {
+        return MPI_ANY_SOURCE;
+    }
+
+    return source;
+}
+
 MPI_Datatype ToMPI(CommImpl::Datatype dt) { return DatatypeToMPI[int(dt)]; }
 
 void CheckMPIReturn(const int value, const std::string &hint)
@@ -189,6 +199,10 @@ public:
 
     Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                     const std::string &hint) const override;
+
+    Comm::Status Probe(int source, int tag, const std::string &hint) const override;
+
+    Comm::Status Iprobe(int source, int tag, int *flag, const std::string &hint) const override;
 
     Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                   const std::string &hint) const override;
@@ -387,9 +401,9 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype, int s
                                const std::string &hint) const
 {
     MPI_Status mpiStatus;
-    CheckMPIReturn(
-        MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype), source, tag, m_MPIComm, &mpiStatus),
-        hint);
+    CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype), GetMPISource(source),
+                            tag, m_MPIComm, &mpiStatus),
+                   hint);
 
     Comm::Status status;
     status.Source = mpiStatus.MPI_SOURCE;
@@ -447,8 +461,8 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count, Datatype datatype
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        CheckMPIReturn(MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)), batchSize,
-                                 ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
+        CheckMPIReturn(MPI_Isend(const_cast<void *>(buffer), batchSize, ToMPI(datatype), dest, tag,
+                                 m_MPIComm, &mpiReq),
                        " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
     }
@@ -470,7 +484,8 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
             int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position, batchSize,
-                                     ToMPI(datatype), source, tag, m_MPIComm, &mpiReq),
+                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm,
+                                     &mpiReq),
                            "in call to Irecv batch " + std::to_string(b) + " " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
 
@@ -483,7 +498,8 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
             int batchSize = static_cast<int>(remainder);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position, batchSize,
-                                     ToMPI(datatype), source, tag, m_MPIComm, &mpiReq),
+                                     ToMPI(datatype), GetMPISource(source), tag, m_MPIComm,
+                                     &mpiReq),
                            "in call to Irecv remainder batch " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
         }
@@ -492,13 +508,33 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype, int 
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        CheckMPIReturn(
-            MPI_Irecv(buffer, batchSize, ToMPI(datatype), source, tag, m_MPIComm, &mpiReq),
-            " in call to Isend with single batch " + hint + "\n");
+        CheckMPIReturn(MPI_Irecv(buffer, batchSize, ToMPI(datatype), GetMPISource(source), tag,
+                                 m_MPIComm, &mpiReq),
+                       " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
     }
 
     return MakeReq(std::move(req));
+}
+
+Comm::Status CommImplMPI::Probe(int source, int tag, const std::string &hint) const
+{
+    MPI_Status mpiStatus;
+    CheckMPIReturn(MPI_Probe(GetMPISource(source), tag, m_MPIComm, &mpiStatus), hint);
+    Comm::Status status;
+    status.Source = mpiStatus.MPI_SOURCE;
+    status.Tag = mpiStatus.MPI_TAG;
+    return status;
+}
+
+Comm::Status CommImplMPI::Iprobe(int source, int tag, int *flag, const std::string &hint) const
+{
+    MPI_Status mpiStatus;
+    CheckMPIReturn(MPI_Iprobe(GetMPISource(source), tag, m_MPIComm, flag, &mpiStatus), hint);
+    Comm::Status status;
+    status.Source = mpiStatus.MPI_SOURCE;
+    status.Tag = mpiStatus.MPI_TAG;
+    return status;
 }
 
 Comm::Win CommImplMPI::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,

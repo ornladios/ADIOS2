@@ -75,6 +75,7 @@ public:
 
     std::string GetRankProfilingJSON(
         const std::vector<std::string> &transportsTypes,
+        const std::vector<std::string> &transportsNames,
         const std::vector<adios2::profiling::IOChrono *> &transportsProfilers) noexcept;
 
     std::vector<char> AggregateProfilingJSON(const std::string &rankLog) const;

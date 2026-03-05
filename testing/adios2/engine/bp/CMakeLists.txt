@@ -29,6 +29,18 @@ file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/dsb-naive)
 
+# Subdirectories for BP5 tests
+set(EWS_DIR ${BP5_DIR}/ews)
+set(EW_DIR ${BP5_DIR}/ew)
+set(TLS_DIR ${BP5_DIR}/tls)
+set(DSB_DIR ${BP5_DIR}/dsb)
+set(RR_DIR ${BP5_DIR}/rr)
+file(MAKE_DIRECTORY ${EWS_DIR})
+file(MAKE_DIRECTORY ${EW_DIR})
+file(MAKE_DIRECTORY ${TLS_DIR})
+file(MAKE_DIRECTORY ${DSB_DIR})
+file(MAKE_DIRECTORY ${RR_DIR})
+
 macro(bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
@@ -137,9 +149,16 @@ bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
 
 if (ADIOS2_HAVE_MPI)
-  # Extra arguments: aggregation type, num subfiles, num timesteps, verbose level
+  # Extra arguments: engine parameters, number of timesteps
   gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "DataSizeBased" "3" "5" "2"
+    WORKING_DIRECTORY ${DSB_DIR}
+    EXTRA_ARGS
+      "AggregationType=DataSizeBased,EnableWriterRerouting=false,NumSubFiles=3,verbose=2" "5"
+  )
+  gtest_add_tests_helper(DataSizeAggregate MPI_ONLY BP Engine.BP. .BP5.DSB.Rerouting
+    WORKING_DIRECTORY ${RR_DIR}
+    EXTRA_ARGS
+      "AggregationType=DataSizeBased,EnableWriterRerouting=true,NumSubFiles=3,verbose=2" "5"
   )
 endif()
 
@@ -294,13 +313,20 @@ endif()
 
 macro(bp5agg_gtest_add_tests testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.EWS
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "EveryoneWritesSerial")
+    WORKING_DIRECTORY ${EWS_DIR}
+    EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial")
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.EW
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "EveryoneWrites")
+    WORKING_DIRECTORY ${EW_DIR}
+    EXTRA_ARGS "BP5" "AggregationType=EveryoneWrites")
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.TLS
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "TwoLevelShm")
+    WORKING_DIRECTORY ${TLS_DIR}
+    EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm")
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "DataSizeBased")
+    WORKING_DIRECTORY ${DSB_DIR}
+    EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,EnableWriterRerouting=false")
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB.RR
+    WORKING_DIRECTORY ${RR_DIR}
+    EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,EnableWriterRerouting=true")
 endmacro()
 
 # BP5 only for now, so test all the aggregators while we're at it
