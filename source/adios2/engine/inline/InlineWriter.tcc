@@ -62,6 +62,11 @@ void InlineWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         blockInfo.IsValue = true;
         blockInfo.Value = blockInfo.Data[0];
     }
+    else
+    {
+        size_t dataSize = variable.SelectionSize() * variable.m_ElementSize;
+        m_DeferredPuts.push_back({&variable, data, dataSize, variable.m_BlocksInfo.size() - 1});
+    }
 }
 
 } // end namespace engine
