@@ -10,6 +10,7 @@ install(
     adios2/bp5dbg/metadata.py
     adios2/bp5dbg/metametadata.py
     adios2/bp5dbg/idxtable.py
+    adios2/bp5dbg/ffs.py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2/bp5dbg COMPONENT adios2_scripts-runtime
   ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
