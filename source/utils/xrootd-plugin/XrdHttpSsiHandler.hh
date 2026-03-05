@@ -119,7 +119,7 @@ private:
     XrdSysError m_log;             // Error logging
     XrdSsiService *m_ssiService;   // SSI service pointer (obtained via dlsym)
     XrdSsiProvider *m_ssiProvider; // SSI provider pointer
-    std::string m_pathPrefix;      // URL path prefix to match (default: "/ssi")
+    std::string m_pathPrefix;      // URL path prefix to match (default: "/adios")
     std::string m_ssiLibPath;      // Path to SSI library (for dlopen)
     bool m_initialized;            // Whether initialization succeeded
 };

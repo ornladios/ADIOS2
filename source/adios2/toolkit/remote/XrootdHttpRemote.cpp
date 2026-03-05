@@ -314,7 +314,8 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     }
 
     std::ostringstream urlStream;
-    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/ssi";
+    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/adios/"
+              << UrlEncode(m_Filename);
     m_BaseUrl = urlStream.str();
 
     m_OpenSuccess = true;
@@ -327,26 +328,47 @@ std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Ste
                                                  const Dims &Start, const Accuracy &accuracy)
 {
     std::ostringstream reqStream;
-    std::string encodedFilename = UrlEncode(m_Filename);
     std::string encodedVarName = UrlEncode(std::string(VarName));
 
-    reqStream << "get Filename=" << encodedFilename;
-    reqStream << "&RMOrder=" << (m_RowMajorOrdering ? 1 : 0);
-    reqStream << "&Varname=" << encodedVarName;
-    reqStream << "&StepStart=" << Step;
-    reqStream << "&StepCount=" << StepCount;
-    reqStream << "&Block=" << BlockID;
-    reqStream << "&Dims=" << Count.size();
-
-    for (const auto &c : Count)
-        reqStream << "&Count=" << c;
-    for (const auto &s : Start)
-        reqStream << "&Start=" << s;
-
-    reqStream << "&AccuracyError=" << accuracy.error;
-    reqStream << "&AccuracyNorm=" << accuracy.norm;
-    reqStream << "&AccuracyRelative=" << (accuracy.relative ? 1 : 0);
-
+    reqStream << "get&Varname=" << encodedVarName;
+    if (m_RowMajorOrdering)
+    {
+        reqStream << "&RMOrder=1";
+    }
+    if (Step != 0)
+    {
+        reqStream << "&StepStart=" << Step;
+    }
+    if (StepCount != 1)
+    {
+        reqStream << "&StepCount=" << StepCount;
+    }
+    if (BlockID != static_cast<size_t>(-1))
+    {
+        reqStream << "&Block=" << BlockID;
+    }
+    if (!Count.empty())
+    {
+        reqStream << "&Count=" << Count[0];
+        for (size_t i = 1; i < Count.size(); i++)
+        {
+            reqStream << "," << Count[i];
+        }
+    }
+    if (!Start.empty())
+    {
+        reqStream << "&Start=" << Start[0];
+        for (size_t i = 1; i < Start.size(); i++)
+        {
+            reqStream << "," << Start[i];
+        }
+    }
+    if (accuracy.error != 0.0 || accuracy.norm != 0.0 || accuracy.relative)
+    {
+        reqStream << "&AccuracyError=" << accuracy.error;
+        reqStream << "&AccuracyNorm=" << accuracy.norm;
+        reqStream << "&AccuracyRelative=" << (accuracy.relative ? 1 : 0);
+    }
     if (!m_EngineParams.empty())
     {
         reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
@@ -356,7 +378,7 @@ std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Ste
 }
 
 CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &url,
-                                         const std::string &postData)
+                                         const std::string &queryData)
 {
 #ifdef ADIOS2_HAVE_CURL
     CURL *easy = curl_easy_init();
@@ -366,8 +388,9 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
     curl_easy_setopt(easy, CURLOPT_PRIVATE, asyncOp);
     asyncOp->easyHandle = easy;
 
-    curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(easy, CURLOPT_COPYPOSTFIELDS, postData.c_str());
+    std::string fullUrl = url + "?" + queryData;
+    curl_easy_setopt(easy, CURLOPT_URL, fullUrl.c_str());
+    curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(easy, CURLOPT_WRITEDATA, &asyncOp->responseData);
     curl_easy_setopt(easy, CURLOPT_CONNECTTIMEOUT, m_ConnectTimeout);
@@ -389,9 +412,6 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
         }
     }
 
-    asyncOp->headers =
-        curl_slist_append(nullptr, "Content-Type: application/x-www-form-urlencoded");
-    curl_easy_setopt(easy, CURLOPT_HTTPHEADER, asyncOp->headers);
     curl_easy_setopt(easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
 
     return easy;
@@ -403,11 +423,12 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
 std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGetRequest> &requests)
 {
     std::ostringstream reqStream;
-    std::string encodedFilename = UrlEncode(m_Filename);
 
-    reqStream << "batchget Filename=" << encodedFilename;
-    reqStream << "&RMOrder=" << (m_RowMajorOrdering ? 1 : 0);
-    reqStream << "&NVars=" << requests.size();
+    reqStream << "batchget&NVars=" << requests.size();
+    if (m_RowMajorOrdering)
+    {
+        reqStream << "&RMOrder=1";
+    }
     if (!m_EngineParams.empty())
     {
         reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
@@ -416,18 +437,41 @@ std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGet
     for (const auto &req : requests)
     {
         std::string encodedVarName = UrlEncode(std::string(req.VarName));
-        reqStream << "|Varname=" << encodedVarName;
-        reqStream << "&StepStart=" << req.Step;
-        reqStream << "&StepCount=" << req.StepCount;
-        reqStream << "&Block=" << req.BlockID;
-        reqStream << "&Dims=" << req.Count.size();
-        for (const auto &c : req.Count)
-            reqStream << "&Count=" << c;
-        for (const auto &s : req.Start)
-            reqStream << "&Start=" << s;
-        reqStream << "&AccuracyError=" << req.accuracy.error;
-        reqStream << "&AccuracyNorm=" << req.accuracy.norm;
-        reqStream << "&AccuracyRelative=" << (req.accuracy.relative ? 1 : 0);
+        reqStream << "&Varname=" << encodedVarName;
+        if (req.Step != 0)
+        {
+            reqStream << "&StepStart=" << req.Step;
+        }
+        if (req.StepCount != 1)
+        {
+            reqStream << "&StepCount=" << req.StepCount;
+        }
+        if (req.BlockID != static_cast<size_t>(-1))
+        {
+            reqStream << "&Block=" << req.BlockID;
+        }
+        if (!req.Count.empty())
+        {
+            reqStream << "&Count=" << req.Count[0];
+            for (size_t i = 1; i < req.Count.size(); i++)
+            {
+                reqStream << "," << req.Count[i];
+            }
+        }
+        if (!req.Start.empty())
+        {
+            reqStream << "&Start=" << req.Start[0];
+            for (size_t i = 1; i < req.Start.size(); i++)
+            {
+                reqStream << "," << req.Start[i];
+            }
+        }
+        if (req.accuracy.error != 0.0 || req.accuracy.norm != 0.0 || req.accuracy.relative)
+        {
+            reqStream << "&AccuracyError=" << req.accuracy.error;
+            reqStream << "&AccuracyNorm=" << req.accuracy.norm;
+            reqStream << "&AccuracyRelative=" << (req.accuracy.relative ? 1 : 0);
+        }
     }
 
     return reqStream.str();
