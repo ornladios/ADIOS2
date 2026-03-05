@@ -1,6 +1,10 @@
 name: Backport PR
 
 on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       pr:
@@ -10,36 +14,55 @@ on:
         description: Branch to where backport the PR
         required: true
 
-permissions: read-all
+permissions:
+  issues: write
+  pull-requests: read
 
 jobs:
   backport:
-    environment: backport
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'backport:release')) ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: Backport
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.BACKPORT_TOKEN }}
-      - name: Configure Git
-        run: |
-          git config user.name "ornladios-robot"
-          git config user.email "ornladios-robot[bot]@users.noreply.github.com"
-          git remote add fork "https://github.com/ornladios-robot/ADIOS2.git"
-      - name: Create backport
+      - name: Create backport task for Copilot agent
         env:
-          GH_TOKEN: ${{ secrets.BACKPORT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          TARGET_BRANCH: ${{ github.event.inputs.target_branch }}
         run: |
-          export BRANCH=${{ github.event.inputs.target_branch }}
-          export PR=${{ github.event.inputs.pr }}
-          git checkout --track "origin/${BRANCH}"
-          git checkout -b "backport-to-${BRANCH}-${PR}"
-          commit_hash=$(gh pr view "${PR}" --repo ornladios/ADIOS2 --json mergeCommit --jq '.mergeCommit.oid')
-          if [ -z "$commit_hash" ] || [ "$commit_hash" = "null" ]; then
-            echo "Error: PR ${PR} is not merged yet"
-            exit 1
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TITLE="Backport PR #${PR_NUMBER} to release branch"
+            BODY="Please backport PR #${PR_NUMBER} (\"${PR_TITLE}\") to the latest release branch.
+
+          ## Steps
+          1. Find the merge commit for PR #${PR_NUMBER} in the ornladios/ADIOS2 repository
+          2. Identify the latest release branch by listing branches matching the pattern \`release_*\`
+             and selecting the one with the highest version number (e.g., release_211)
+          3. Cherry-pick the merge commit onto the release branch
+          4. Push the changes to a branch in the ornladios-robot/ADIOS2 fork
+             named \`backport-to-<release_branch>-${PR_NUMBER}\`
+          5. Open a pull request from ornladios-robot/ADIOS2 targeting the release branch
+             in ornladios/ADIOS2 with title \"Backport ${PR_NUMBER} to <release_branch>\""
+          else
+            PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo ornladios/ADIOS2 --json title --jq '.title')
+            TITLE="Backport PR #${PR_NUMBER} to ${TARGET_BRANCH}"
+            BODY="Please backport PR #${PR_NUMBER} (\"${PR_TITLE}\") to branch \`${TARGET_BRANCH}\`.
+
+          ## Steps
+          1. Find the merge commit for PR #${PR_NUMBER} in the ornladios/ADIOS2 repository
+          2. Cherry-pick the merge commit onto \`${TARGET_BRANCH}\`
+          3. Push the changes to a branch in the ornladios-robot/ADIOS2 fork
+             named \`backport-to-${TARGET_BRANCH}-${PR_NUMBER}\`
+          4. Open a pull request from ornladios-robot/ADIOS2 targeting \`${TARGET_BRANCH}\`
+             in ornladios/ADIOS2 with title \"Backport ${PR_NUMBER} to ${TARGET_BRANCH}\""
           fi
-          git cherry-pick --mainline 1 -x "${commit_hash}"
-          git push -f fork "backport-to-${BRANCH}-${PR}"
-          gh pr create --repo ornladios/ADIOS2 --head ornladios-robot:backport-to-${BRANCH}-${PR} --base "${BRANCH}" --title "Backport ${PR} to ${BRANCH}" --body "backports: ${PR}"
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "${TITLE}" \
+            --body "${BODY}" \
+            --assignee "copilot"
