@@ -38,6 +38,7 @@ env:
 jobs:
   make_sdist:
     name: Make SDist
+    if: github.repository == 'ornladios/ADIOS2'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,6 +64,7 @@ jobs:
     # wheel for Python 3.12+ (cp312-abi3, valid for all future interpreters).
     # The abi3 variant is enabled per-version via [[tool.cibuildwheel.overrides]].
     name: Wheels (cp39–cp311 + cp312-abi3) on ${{ matrix.os }}
+    if: github.repository == 'ornladios/ADIOS2'
     runs-on: ubuntu-latest
     permissions:
       contents: read
