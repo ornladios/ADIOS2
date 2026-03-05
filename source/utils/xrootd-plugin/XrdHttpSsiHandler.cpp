@@ -382,23 +382,23 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
 
     if (req.verb == "GET")
     {
-        // Query string is in the xrd-http-query header
-        auto it = req.headers.find("xrd-http-query");
+        // Use xrd-http-fullresource which has the raw resource+opaque,
+        // unprocessed by XrdOucEnv (which mangles bare tokens without '=')
+        auto it = req.headers.find("xrd-http-fullresource");
         if (it == req.headers.end() || it->second.empty())
         {
             return SendError(req, 400, "GET request requires query parameters");
         }
-        std::string query = it->second;
 
-        // XrdOucEnv::Env() prepends '&' to the string, strip any leading '&'
-        while (!query.empty() && query[0] == '&')
-        {
-            query.erase(0, 1);
-        }
-        if (query.empty())
+        // fullresource is "/adios/path/to/file?get&Varname=..."
+        // Extract the query string after '?'
+        std::string query;
+        size_t qpos = it->second.find('?');
+        if (qpos == std::string::npos || qpos + 1 >= it->second.size())
         {
             return SendError(req, 400, "GET request requires query parameters");
         }
+        query = it->second.substr(qpos + 1);
 
         // The query string is "verb&key=val&..." (e.g. "batchget&RMOrder=1&...")
         // The SSI tokenizer expects "verb key=val&..." (space after verb).
