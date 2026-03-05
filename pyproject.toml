@@ -53,7 +53,7 @@ Changelog = "https://github.com/ornladios/ADIOS2/releases"
 test-command = "python -m unittest adios2.test.simple_read_write.TestSimpleReadWrite"
 
 [tool.scikit-build]
-wheel.packages = ["adios2"]
+wheel.packages = ["python/adios2"]
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
