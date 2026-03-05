@@ -23,7 +23,8 @@ jobs:
     if: >-
       (github.event_name == 'pull_request' &&
        github.event.pull_request.merged == true &&
-       contains(github.event.pull_request.labels.*.name, 'backport:release')) ||
+       (contains(github.event.pull_request.labels.*.name, 'backport:release') ||
+        contains(github.event.pull_request.body, 'backport:'))) ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: Backport
@@ -33,6 +34,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
           TARGET_BRANCH: ${{ github.event.inputs.target_branch }}
         run: |
           CONFLICT_GUIDANCE="
@@ -61,8 +63,28 @@ jobs:
             in the pull request explaining why and request a human review before merging."
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TITLE="Backport PR #${PR_NUMBER} to release branch"
-            BODY="Please backport PR #${PR_NUMBER} (\"${PR_TITLE}\") to the latest release branch.
+            # Parse "backport: <branch>" instruction from the PR description.
+            # Lines matching "backport: <value>" set the target branch explicitly.
+            # If the value is absent or generic ("release"), fall back to the latest release_* branch.
+            BACKPORT_TARGET=$(echo "${PR_BODY}" | grep -iE 'backport\s*:\s*\S+' | head -1 | sed -E 's/.*[Bb]ackport\s*:\s*(\S+).*/\1/' || true)
+
+            if [ -n "${BACKPORT_TARGET}" ] && [ "${BACKPORT_TARGET,,}" != "release" ]; then
+              # A specific branch was requested in the PR description.
+              TITLE="Backport PR #${PR_NUMBER} to ${BACKPORT_TARGET}"
+              BODY="Please backport PR #${PR_NUMBER} (\"${PR_TITLE}\") to branch \`${BACKPORT_TARGET}\`.
+
+          ## Steps
+          1. Find the merge commit for PR #${PR_NUMBER} in the ornladios/ADIOS2 repository
+          2. Cherry-pick the merge commit onto \`${BACKPORT_TARGET}\`
+          3. Push the changes to a branch in the ornladios-robot/ADIOS2 fork
+             named \`backport-to-${BACKPORT_TARGET}-${PR_NUMBER}\`
+          4. Open a pull request from ornladios-robot/ADIOS2 targeting \`${BACKPORT_TARGET}\`
+             in ornladios/ADIOS2 with title \"Backport ${PR_NUMBER} to ${BACKPORT_TARGET}\"
+          ${CONFLICT_GUIDANCE}"
+            else
+              # No specific branch found — target the latest release_* branch.
+              TITLE="Backport PR #${PR_NUMBER} to release branch"
+              BODY="Please backport PR #${PR_NUMBER} (\"${PR_TITLE}\") to the latest release branch.
 
           ## Steps
           1. Find the merge commit for PR #${PR_NUMBER} in the ornladios/ADIOS2 repository
@@ -74,6 +96,7 @@ jobs:
           5. Open a pull request from ornladios-robot/ADIOS2 targeting the release branch
              in ornladios/ADIOS2 with title \"Backport ${PR_NUMBER} to <release_branch>\"
           ${CONFLICT_GUIDANCE}"
+            fi
           else
             PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo ornladios/ADIOS2 --json title --jq '.title')
             TITLE="Backport PR #${PR_NUMBER} to ${TARGET_BRANCH}"
