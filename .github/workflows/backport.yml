@@ -114,5 +114,4 @@ jobs:
           gh issue create \
             --repo "${{ github.repository }}" \
             --title "${TITLE}" \
-            --body "${BODY}" \
-            --assignee "@copilot"
+            --body "${BODY}"
