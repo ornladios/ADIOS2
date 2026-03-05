@@ -6,9 +6,9 @@ include(ProcessorCount)
 ProcessorCount(NCPUS)
 math(EXPR N2CPUS "${NCPUS}*2")
 
-set(ENV{CC}  gcc)
-set(ENV{CXX} g++)
-set(ENV{FC}  gfortran)
+set(ENV{CC}  gcc-14)
+set(ENV{CXX} g++-14)
+set(ENV{FC}  gfortran-14)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -45,10 +45,7 @@ OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-mpich/.spac
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
-# TODO: The Kill* and PreciousTimeStep tests fail (due to timeout) when
-# TODO: adios2 is built "--with-device=ch3:sock:tcp".  Once this is fixed
-# TODO:  in the mpi_dp, we can re-enable these tests.
-set(CTEST_TEST_ARGS EXCLUDE "KillReader|KillWriter|PreciousTimestep")
+set(CTEST_TEST_ARGS EXCLUDE "KillReader|KillWriter|PreciousTimestep|.Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

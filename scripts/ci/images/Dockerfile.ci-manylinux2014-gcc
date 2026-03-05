@@ -1,0 +1,62 @@
+# vim: ft=dockerfile
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+ARG BASE_IMAGE=quay.io/pypa/manylinux2014_x86_64
+FROM $BASE_IMAGE
+ARG GCC_VERSION=11
+
+# CentOS 7 reached EOL in June 2024; use vault repos
+RUN sed -i \
+        -e 's/mirrorlist=/#mirrorlist=/g' \
+        -e 's|#baseurl=http://mirror.centos.org|baseurl=https://vault.centos.org|g' \
+        /etc/yum.repos.d/CentOS-*.repo && \
+    yum install -y \
+        centos-release-scl \
+        epel-release && \
+    yum clean all
+
+# Fix SCL repos, then install devtoolset and build dependencies
+RUN sed -i \
+        -e 's/mirrorlist=/#mirrorlist=/g' \
+        -e 's|# *baseurl=http://mirror.centos.org|baseurl=https://vault.centos.org|g' \
+        /etc/yum.repos.d/CentOS-SCLo-*.repo && \
+    yum install -y \
+        devtoolset-${GCC_VERSION}-gcc \
+        devtoolset-${GCC_VERSION}-gcc-c++ \
+        devtoolset-${GCC_VERSION}-gcc-gfortran \
+        bzip2-devel \
+        ccache \
+        curl \
+        diffutils \
+        file \
+        findutils \
+        git \
+        hdf5-devel \
+        make \
+        mpich-devel \
+        ninja-build \
+        patch \
+        patchelf \
+        tar \
+        unzip \
+        which \
+        xz \
+        zeromq-devel \
+        zlib-devel && \
+    yum clean all && \
+    update-alternatives --install /usr/bin/gcc gcc \
+        /opt/rh/devtoolset-${GCC_VERSION}/root/usr/bin/gcc ${GCC_VERSION} && \
+    update-alternatives --install /usr/bin/g++ g++ \
+        /opt/rh/devtoolset-${GCC_VERSION}/root/usr/bin/g++ ${GCC_VERSION} && \
+    update-alternatives --install /usr/bin/gfortran gfortran \
+        /opt/rh/devtoolset-${GCC_VERSION}/root/usr/bin/gfortran ${GCC_VERSION}
+
+# Install the latest CMake release binary
+WORKDIR /opt/cmake
+RUN curl -sL https://cmake.org/files/LatestRelease/$(curl https://cmake.org/files/LatestRelease/ | sed -n '/-rc[0-9]\+/d;/linux-x86_64.tar.gz/s/.*>\(cmake[^<]*\)<.*/\1/p' | sort | tail -1) | tar --strip-components=1 -xzv
+
+ENV PATH=/opt/cmake/bin:/usr/lib64/mpich/bin:${PATH}
+
+WORKDIR /
+ENTRYPOINT ["/bin/bash", "--login"]
