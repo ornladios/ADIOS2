@@ -89,14 +89,17 @@ void Engine::PerformDataWrite() { return; }
 
 void Engine::Close(const int transportIndex)
 {
-    DoClose(transportIndex);
-
-    m_IsOpen = false;
-
-    if (transportIndex == -1)
+    if (m_IsOpen)
     {
-        m_Comm.Free("freeing comm in Engine " + m_Name + ", in call to Close");
-        m_IsClosed = true;
+        DoClose(transportIndex);
+
+        m_IsOpen = false;
+
+        if (transportIndex == -1)
+        {
+            m_Comm.Free("freeing comm in Engine " + m_Name + ", in call to Close");
+            m_IsClosed = true;
+        }
     }
 }
 

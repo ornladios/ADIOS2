@@ -347,7 +347,7 @@ void TimeSeriesReader::DoClose(const int transportIndex)
     }
     for (auto &e : m_Engines)
     {
-        if (e)
+        if (e && *e)
         {
             e->Close();
         }
