@@ -15,6 +15,8 @@
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
 
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 namespace adios2
@@ -149,6 +151,25 @@ void InlineWriter::PerformPuts()
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
     }
+    for (auto &def : m_DeferredPuts)
+    {
+        void *buf = malloc(def.DataSize);
+        memcpy(buf, def.Data, def.DataSize);
+        m_InternalBuffers.push_back(buf);
+        const DataType type = def.Variable->m_Type;
+#define declare_type(T)                                                                            \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        dynamic_cast<Variable<T> &>(*def.Variable).m_BlocksInfo[def.BlockIndex].Data =             \
+            reinterpret_cast<T *>(buf);                                                            \
+    }                                                                                              \
+    else
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        {
+        }
+    }
+    m_DeferredPuts.clear();
     m_ResetVariables = true;
 }
 
@@ -166,6 +187,11 @@ void InlineWriter::EndStep()
         std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step " << m_CurrentStep
                   << std::endl;
     }
+    for (auto *buf : m_InternalBuffers)
+    {
+        free(buf);
+    }
+    m_InternalBuffers.clear();
     m_InsideStep = false;
 }
 
@@ -194,6 +220,47 @@ bool InlineWriter::IsInsideStep() const { return m_InsideStep; }
         PutDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                                            \
+    void InlineWriter::DoPut(Variable<T> &variable, typename Variable<T>::Span &span,              \
+                             const bool initialize, const T &value)                                \
+    {                                                                                              \
+        if (m_ResetVariables)                                                                      \
+        {                                                                                          \
+            ResetVariables();                                                                      \
+        }                                                                                          \
+        size_t dataSize = variable.SelectionSize() * sizeof(T);                                    \
+        void *buf = malloc(dataSize);                                                              \
+        if (initialize)                                                                            \
+        {                                                                                          \
+            T *typed = reinterpret_cast<T *>(buf);                                                 \
+            std::fill(typed, typed + variable.SelectionSize(), value);                             \
+        }                                                                                          \
+        span.m_BufferIdx = static_cast<int>(m_InternalBuffers.size());                             \
+        span.m_PayloadPosition = 0;                                                                \
+        m_InternalBuffers.push_back(buf);                                                          \
+        auto &blockInfo = variable.SetBlockInfo(reinterpret_cast<T *>(buf), CurrentStep());        \
+        if (variable.m_ShapeID == ShapeID::GlobalValue ||                                          \
+            variable.m_ShapeID == ShapeID::LocalValue)                                             \
+        {                                                                                          \
+            blockInfo.IsValue = true;                                                              \
+        }                                                                                          \
+    }
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T, L)                                                                         \
+    T *InlineWriter::DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,           \
+                                      const size_t bufferID) noexcept                              \
+    {                                                                                              \
+        if (bufferIdx < 0 || static_cast<size_t>(bufferIdx) >= m_InternalBuffers.size())           \
+        {                                                                                          \
+            return nullptr;                                                                        \
+        }                                                                                          \
+        return reinterpret_cast<T *>(m_InternalBuffers[bufferIdx]);                                \
+    }
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 void InlineWriter::Init()
@@ -235,6 +302,11 @@ void InlineWriter::DoClose(const int transportIndex)
     {
         std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name << ")\n";
     }
+    for (auto *buf : m_InternalBuffers)
+    {
+        free(buf);
+    }
+    m_InternalBuffers.clear();
     // end of stream
     m_CurrentStep = static_cast<size_t>(-1);
 }
