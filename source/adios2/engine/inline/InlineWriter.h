@@ -16,6 +16,8 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 
+#include <vector>
+
 namespace adios2
 {
 namespace core
@@ -70,6 +72,17 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+#define declare_type(T)                                                                            \
+    void DoPut(Variable<T> &, typename Variable<T>::Span &, const bool, const T &) final;
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T, L)                                                                         \
+    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,                         \
+                        const size_t bufferID) noexcept final;
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
     /**
      * Closes a single transport or all transports
      * @param transportIndex, if -1 (default) closes all transports,
@@ -90,6 +103,16 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *data);
 
     void ResetVariables();
+
+    struct DeferredBlock
+    {
+        VariableBase *Variable;
+        const void *Data;
+        size_t DataSize;
+        size_t BlockIndex;
+    };
+    std::vector<DeferredBlock> m_DeferredPuts;
+    std::vector<void *> m_InternalBuffers;
 };
 
 } // end namespace engine
