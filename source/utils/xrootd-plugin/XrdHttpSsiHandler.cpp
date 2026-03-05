@@ -388,7 +388,17 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
         {
             return SendError(req, 400, "GET request requires query parameters");
         }
-        const std::string &query = it->second;
+        std::string query = it->second;
+
+        // XrdOucEnv::Env() prepends '&' to the string, strip any leading '&'
+        while (!query.empty() && query[0] == '&')
+        {
+            query.erase(0, 1);
+        }
+        if (query.empty())
+        {
+            return SendError(req, 400, "GET request requires query parameters");
+        }
 
         // The query string is "verb&key=val&..." (e.g. "batchget&RMOrder=1&...")
         // The SSI tokenizer expects "verb key=val&..." (space after verb).
