@@ -9,6 +9,7 @@
 #include <numeric>
 #include <thread>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
 using namespace adios2;
@@ -17,10 +18,8 @@ namespace
 {
 int worldRank, worldSize;
 uint64_t nSteps = 1;
-std::string aggregationType = "DataSizeBased"; // comes from command line
-std::string numberOfSubFiles = "2";            // comes from command line
-std::string numberOfSteps = "1";               // comes from command line
-std::string verbose = "0";
+std::string numberOfSteps = "1";  // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 
 uint64_t sumFirstN(const std::vector<uint64_t> &vec, uint64_t n)
 {
@@ -81,8 +80,11 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     if (worldRank == 0)
     {
         std::cout << "Number of timesteps: " << nSteps << std::endl;
-        std::cout << "Aggregation type: " << aggregationType << std::endl;
-        std::cout << "Number of subfiles: " << numberOfSubFiles << std::endl;
+        std::cout << "Engine parameters:" << std::endl;
+        for (const auto &item : engineParams)
+        {
+            std::cout << "  " << item.first << ": " << item.second << std::endl;
+        }
         std::cout << "Columns per rank:" << std::endl;
         for (size_t i = 0; i < columnsPerRank.size(); ++i)
         {
@@ -95,18 +97,18 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     uint64_t globalNy = sumFirstN(columnsPerRank, columnsPerRank.size());
     uint64_t largestValue = (globalNx * globalNy) - 1;
 
+    std::string filename("unbalanced_output");
+
     {
         adios2::IO bpIO = adios.DeclareIO("WriteIO");
         bpIO.SetEngine("BPFile");
-        bpIO.SetParameter("AggregationType", aggregationType);
-        bpIO.SetParameter("NumSubFiles", numberOfSubFiles);
-        bpIO.SetParameter("verbose", verbose);
+        bpIO.SetParameters(engineParams);
 
         adios2::Variable<uint64_t> varGlobalArray =
             bpIO.DefineVariable<uint64_t>("GlobalArray", {globalNx, globalNy});
         EXPECT_TRUE(varGlobalArray);
 
-        adios2::Engine bpWriter = bpIO.Open("unbalanced_output.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open(filename, adios2::Mode::Write);
 
         for (size_t step = 0; step < nSteps; ++step)
         {
@@ -155,7 +157,7 @@ TEST_F(DSATest, TestWriteUnbalancedData)
         adios2::IO io = adios.DeclareIO("ReadIO");
 
         io.SetEngine("BPFile");
-        adios2::Engine bpReader = io.Open("unbalanced_output.bp", adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(filename, adios2::Mode::ReadRandomAccess);
 
         auto var_array = io.InquireVariable<uint64_t>("GlobalArray");
         EXPECT_TRUE(var_array);
@@ -208,19 +210,11 @@ int main(int argc, char **argv)
 
     if (argc > 1)
     {
-        aggregationType = std::string(argv[1]);
+        engineParams = ParseEngineParams(argv[1]);
     }
     if (argc > 2)
     {
-        numberOfSubFiles = std::string(argv[2]);
-    }
-    if (argc > 3)
-    {
-        numberOfSteps = std::string(argv[3]);
-    }
-    if (argc > 4)
-    {
-        verbose = std::string(argv[4]);
+        numberOfSteps = std::string(argv[2]);
     }
 
     try

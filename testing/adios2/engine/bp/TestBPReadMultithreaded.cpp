@@ -18,10 +18,11 @@
 
 #include <gtest/gtest.h>
 
+#include "../ParamsHelpers.h"
 #include "../TestHelpers.h"
 
-std::string engineName;              // comes from command line
-std::string aggType = "TwoLevelShm"; // overridden on command line
+std::string engineName;           // comes from command line
+adios2::Params engineParams = {}; // parsed from command line
 constexpr std::size_t NSteps = 4;
 const std::size_t Nx = 10;
 using DataArray = std::array<int32_t, Nx>;
@@ -88,19 +89,19 @@ public:
         std::string filename;
         if (stream)
         {
-            StreamOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
-                                   std::to_string(mpiSize) + "_Stream.bp";
+            StreamOutputFileName =
+                "BPReadMultithreaded_size_" + std::to_string(mpiSize) + "_Stream.bp";
             filename = StreamOutputFileName;
         }
         else
         {
-            FileOutputFileName = "BPReadMultithreaded_agg_" + aggType + "_size_" +
-                                 std::to_string(mpiSize) + "_File.bp";
+            FileOutputFileName = "BPReadMultithreaded_size_" + std::to_string(mpiSize) + "_File.bp";
             filename = FileOutputFileName;
         }
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
-        ioWrite.SetParameter("AggregationType", aggType);
+        ioWrite.SetParameters(engineParams);
+
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
@@ -311,7 +312,7 @@ int main(int argc, char **argv)
 
     if (argc > 2)
     {
-        aggType = std::string(argv[2]);
+        engineParams = ParseEngineParams(argv[2]);
     }
 
     result = RUN_ALL_TESTS();
