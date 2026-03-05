@@ -271,6 +271,8 @@ void CampaignReader::InitParameters()
     }
 }
 
+std::vector<char> in_memory_object;
+
 std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io)
 {
     std::string localPath, cachePath; // same for BP, but for HDF5 localpath=cachepath/<filename>
@@ -357,21 +359,13 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 #endif
     }
 
-    if (ds.format != FileFormat::TEXT)
-    {
-        if (m_Options.verbose > 0)
-        {
-            std::cout << "    use local cache for metadata at " << cachePath << " \n";
-        }
-        helper::CreateDirectory(cachePath);
-    }
-
     std::string newLocalPath = localPath;
 
     // first file is HDF5's file to be opened as path
     // second file is min/max data if available
     // first file if TEXT's file to be opened as path
     bool setHDF5FilePath = true;
+    bool cachedirCreated = false;
     if (rep.files.size())
     {
         for (auto &fileid : rep.files)
@@ -383,6 +377,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             {
                 // TEXT -> create a variable, will read from DB directly, no local path
                 CreateTextVariable(ds.name, cf.lengthOriginal, dsIdx, repIdx, false);
+                newLocalPath = "";
                 continue;
             }
             else if (ds.format == FileFormat::IMAGE)
@@ -391,19 +386,48 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 std::string imgName =
                     ds.name + "/" + std::to_string(rep.x) + "x" + std::to_string(rep.y);
                 CreateImageVariable(imgName, cf.lengthOriginal, dsIdx, repIdx, false);
+                newLocalPath = "";
                 continue;
             }
-            else
+            else if (ds.format == FileFormat::HDF5)
             {
+                if (!cachedirCreated)
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "    use local cache for metadata at " << cachePath << " \n";
+                    }
+                    helper::CreateDirectory(cachePath);
+                    cachedirCreated = true;
+                }
                 m_CampaignData.SaveToFile(path, fileid, keyhex);
-            }
-
-            if (setHDF5FilePath)
-            {
-                if (ds.format == FileFormat::HDF5)
+                if (setHDF5FilePath)
                 {
                     newLocalPath = path;
                     setHDF5FilePath = false;
+                }
+            }
+            else if (ds.format == FileFormat::ADIOS)
+            {
+                if (cf.name == "metadata")
+                {
+                    in_memory_object.resize(cf.lengthOriginal);
+                    m_CampaignData.ReadToMemory(in_memory_object.data(), fileid, keyhex);
+                    newLocalPath = "";
+                }
+                else if (cf.name != "profiling.json")
+                {
+                    if (!cachedirCreated)
+                    {
+                        if (m_Options.verbose > 0)
+                        {
+                            std::cout << "    use local cache for metadata at " << cachePath
+                                      << " \n";
+                        }
+                        helper::CreateDirectory(cachePath);
+                        cachedirCreated = true;
+                    }
+                    m_CampaignData.SaveToFile(path, fileid, keyhex);
                 }
             }
         }
@@ -534,6 +558,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         io.SetParameter("UUID", ds.uuid);
     }
     // Save info in cache directory for cache manager and for humans
+    if (cachedirCreated)
     {
         std::ofstream f(localPath + PathSeparator + "info.txt");
         if (f.is_open())
@@ -730,7 +755,7 @@ void CampaignReader::InitTransports()
                             << "\n  uuid: " << ds.uuid << std::endl;
                     ++atsLines;
                 }
-                else
+                else if (!in_memory_object.size())
                 {
                     if (m_Options.verbose > 0)
                     {
@@ -785,7 +810,7 @@ void CampaignReader::InitTransports()
                     std::cout << "    " << ds.name << " local file " << localPath << "\n";
                 }
             }
-            else
+            else if (!in_memory_object.size())
             {
                 if (m_Options.verbose > 0)
                 {
@@ -1001,7 +1026,30 @@ void CampaignReader::InitTransports()
 void CampaignReader::OpenDatasetWithADIOS(std::string prefixName, FileFormat format,
                                           adios2::core::IO &io, std::string &localPath)
 {
-    adios2::core::Engine &e = io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
+    auto lf_Open = [&]() -> adios2::core::Engine & {
+        if (localPath.empty())
+        {
+            std::string engineName(in_memory_object.data(), 8);
+            helper::RightTrim(engineName);
+            // in memory ADIOS metadata
+            if (m_Options.verbose > 0)
+            {
+                std::cout << "     Open in-memory for " << prefixName << " using engine ["
+                          << engineName << "] \n";
+            }
+            io.SetEngine(engineName);
+            auto &e = io.Open(prefixName, m_OpenMode, m_Comm.Duplicate(), in_memory_object.data(),
+                              in_memory_object.size());
+            in_memory_object.clear();
+            return e;
+        }
+        else
+        {
+            return io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
+        }
+    };
+
+    adios2::core::Engine &e = lf_Open();
 
     m_IOs.push_back(&io);
     m_Engines.push_back(&e);

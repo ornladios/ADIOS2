@@ -84,7 +84,7 @@ private:
     /* m_MDFileAbsolutePos <= m_MDFileProcessedSize <= m_MDFileAlreadyReadSize
      */
 
-    /* transport manager for managing data file(s) - may use S3 if DataTransport is set */
+    /* transport manager for managing data file(s) - may use S3 if DataFileTransport is set */
     std::shared_ptr<FilePool> m_DataFiles;
     /* transport manager for managing metadata file(s) - always local */
     std::shared_ptr<FilePool> m_MetadataFiles;

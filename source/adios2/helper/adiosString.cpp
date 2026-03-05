@@ -14,6 +14,8 @@
 #include "adiosType.h" //BytesFactor
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <iostream>
@@ -172,6 +174,14 @@ bool EndsWith(const std::string &str, const std::string &ending, const bool case
     {
         return false;
     }
+}
+
+void RightTrim(std::string &str)
+{
+    str.erase(
+        std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) { return !std::isspace(ch); })
+            .base(),
+        str.end());
 }
 
 std::vector<std::string> GetParametersValues(const std::string &key,

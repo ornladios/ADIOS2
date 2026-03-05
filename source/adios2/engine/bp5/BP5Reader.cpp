@@ -78,6 +78,9 @@ void BP5Reader::DestructorClose(bool Verbose) noexcept
     m_IsOpen = false;
 }
 
+static const char BP5HEADER[] = "BP5     ";
+constexpr size_t HEADERLENGTH = 8; // this must be the same across all engines
+
 void BP5Reader::GetMetadata(char **md, size_t *size)
 {
     uint64_t sizes[3] = {m_Metadata.Size(), m_MetaMetadata.m_Buffer.size(),
@@ -94,10 +97,13 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
     }
     m_MDFile->Read(mdbuf.data(), sizes[0], 0);
 
-    size_t mdsize = sizes[0] + sizes[1] + sizes[2] + 3 * sizeof(uint64_t);
+    size_t mdsize = HEADERLENGTH + sizeof(sizes) + sizes[0] + sizes[1] + sizes[2];
     *md = (char *)malloc(mdsize);
     *size = mdsize;
     char *p = *md;
+
+    memcpy(p, BP5HEADER, HEADERLENGTH);
+    p += HEADERLENGTH;
     memcpy(p, sizes, sizeof(sizes));
     p += sizeof(sizes);
     memcpy(p, mdbuf.data(), sizes[0]);
@@ -111,7 +117,21 @@ void BP5Reader::GetMetadata(char **md, size_t *size)
 void BP5Reader::ProcessMetadataFromMemory(const char *md)
 {
     uint64_t size_mdidx, size_md, size_mmd;
+    char header[HEADERLENGTH + 1];
     const char *p = md;
+    memcpy(header, p, HEADERLENGTH);
+    header[HEADERLENGTH] = '\0';
+    p = p + HEADERLENGTH;
+    std::string h1(BP5HEADER);
+    std::string h2(header);
+    if (h1 != h2)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "ProcessMetadataFromMemory",
+            "BP5Reader was called with in-memory object but the header is invalid: [" + h2 +
+                "]  for file " + m_Name);
+    }
+
     memcpy(&size_md, p, sizeof(uint64_t));
     p = p + sizeof(uint64_t);
     memcpy(&size_mmd, p, sizeof(uint64_t));
@@ -1524,7 +1544,7 @@ void BP5Reader::InitTransports()
     // Auto-detect S3 hybrid storage via s3.json sidecar.
     // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
     // All ranks participate in the broadcast unconditionally so the collective doesn't deadlock.
-    if (m_Parameters.DataTransport.empty())
+    if (m_Parameters.DataFileTransport.empty())
     {
         if (m_Comm.Rank() == 0)
         {
@@ -1557,8 +1577,8 @@ void BP5Reader::InitTransports()
                     return content.substr(pos, end - pos);
                 };
 
-                m_Parameters.DataTransport = extractField("transport");
-                if (!m_Parameters.DataTransport.empty())
+                m_Parameters.DataFileTransport = extractField("transport");
+                if (!m_Parameters.DataFileTransport.empty())
                 {
                     if (m_Parameters.S3Endpoint.empty())
                     {
@@ -1570,8 +1590,8 @@ void BP5Reader::InitTransports()
                     }
                     if (m_Parameters.verbose > 0)
                     {
-                        std::cout << "BP5Reader: detected s3.json sidecar, DataTransport="
-                                  << m_Parameters.DataTransport << std::endl;
+                        std::cout << "BP5Reader: detected s3.json sidecar, DataFileTransport="
+                                  << m_Parameters.DataFileTransport << std::endl;
                     }
                 }
             }
@@ -1596,21 +1616,21 @@ void BP5Reader::InitTransports()
                 }
             }
         };
-        bcastString(m_Parameters.DataTransport);
-        if (!m_Parameters.DataTransport.empty())
+        bcastString(m_Parameters.DataFileTransport);
+        if (!m_Parameters.DataFileTransport.empty())
         {
             bcastString(m_Parameters.S3Endpoint);
             bcastString(m_Parameters.S3Bucket);
         }
     }
 
-    // Set up data transport parameters - use different transport if DataTransport is specified
+    // Set up data transport parameters - use different transport if DataFileTransport is specified
     Params dataTransportParams;
-    if (!m_Parameters.DataTransport.empty())
+    if (!m_Parameters.DataFileTransport.empty())
     {
         // Using a different transport for data files (e.g., "awssdk" for S3)
         dataTransportParams["transport"] = "file";
-        dataTransportParams["library"] = m_Parameters.DataTransport;
+        dataTransportParams["library"] = m_Parameters.DataFileTransport;
 
         // Pass through S3-specific parameters if set
         if (!m_Parameters.S3Endpoint.empty())

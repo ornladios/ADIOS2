@@ -77,6 +77,13 @@ std::string AddExtension(const std::string &name, const std::string extension) n
 bool EndsWith(const std::string &str, const std::string &ending, const bool caseSensitive = true);
 
 /**
+ * Remove trailing spaces from string
+ * @param str input string
+ * @return an str without spaces at the end
+ */
+void RightTrim(std::string &str);
+
+/**
  * Get values for each param entry of a certain key in a vector.
  * If key not found then string in vector is empty.
  * @param key parameter to be extracted

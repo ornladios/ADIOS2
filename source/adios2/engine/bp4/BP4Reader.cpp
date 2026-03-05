@@ -46,7 +46,7 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode, helper::C
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
     readMetadataFromFile = false;
     Init();
-    // ProcessMetadataFromMemory(md);
+    ProcessMetadataFromMemory(md);
     m_IsOpen = true;
 }
 
@@ -59,15 +59,20 @@ BP4Reader::~BP4Reader()
     m_IsOpen = false;
 }
 
+static const char BP4HEADER[] = "BP4     ";
+constexpr size_t HEADERLENGTH = 8; // this must be the same across all engines
+
 void BP4Reader::GetMetadata(char **md, size_t *size)
 {
     uint64_t sizes[2] = {m_BP4Deserializer.m_Metadata.m_Buffer.size(),
                          m_BP4Deserializer.m_MetadataIndex.m_Buffer.size()};
 
-    size_t mdsize = sizes[0] + sizes[1] + 2 * sizeof(uint64_t);
+    size_t mdsize = HEADERLENGTH + sizeof(sizes) + sizes[0] + sizes[1];
     *md = (char *)malloc(mdsize);
     *size = mdsize;
     char *p = *md;
+    memcpy(p, BP4HEADER, HEADERLENGTH);
+    p += HEADERLENGTH;
     memcpy(p, sizes, sizeof(sizes));
     p += sizeof(sizes);
     memcpy(p, m_BP4Deserializer.m_Metadata.m_Buffer.data(), sizes[0]);
@@ -553,7 +558,23 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollS
 void BP4Reader::ProcessMetadataFromMemory(const char *md)
 {
     uint64_t size_mdidx, size_md;
+    char header[HEADERLENGTH + 1];
     const char *p = md;
+    memcpy(header, p, HEADERLENGTH);
+    header[HEADERLENGTH] = '\0';
+    p = p + HEADERLENGTH;
+    std::string h1(BP4HEADER);
+    std::string h2(header);
+    if (h1 != h2)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP4Reader", "ProcessMetadataFromMemory",
+            "BP4Reader was called with in-memory object but the header is invalid: [" + h2 +
+                "]  for file " + m_Name);
+    }
+
+    std::cout << "BP4 in-memory metadata, header = " << h2 << std::endl;
+
     memcpy(&size_md, p, sizeof(uint64_t));
     p = p + sizeof(uint64_t);
     memcpy(&size_mdidx, p, sizeof(uint64_t));
