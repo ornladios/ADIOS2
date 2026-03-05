@@ -115,4 +115,4 @@ jobs:
             --repo "${{ github.repository }}" \
             --title "${TITLE}" \
             --body "${BODY}" \
-            --assignee "copilot"
+            --assignee "@copilot"
