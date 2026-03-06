@@ -223,9 +223,18 @@ void CurlMultiPool::WorkerLoop()
             continue;
         }
 
-        // Wait for socket activity (up to 100ms)
+        // Skip waiting if new requests are queued -- submit them immediately
+        {
+            std::lock_guard<std::mutex> lock(m_QueueMutex);
+            if (!m_PendingQueue.empty())
+            {
+                continue;
+            }
+        }
+
+        // Wait for socket activity (up to 10ms)
         int numfds;
-        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 100, &numfds);
+        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 10, &numfds);
         if (mc != CURLM_OK)
         {
             helper::Log("Remote", "CurlMultiPool", "WorkerLoop",
