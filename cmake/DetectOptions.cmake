@@ -478,6 +478,21 @@ if(Python_FOUND)
   endif()
 endif()
 
+# Python free-threaded (no-GIL) support (requires Python >= 3.13 with --disable-gil)
+if(ADIOS2_HAVE_Python AND
+   (ADIOS2_USE_PythonFreeThreaded STREQUAL AUTO OR ADIOS2_USE_PythonFreeThreaded))
+  string(REGEX REPLACE "[^-]*-([^-]*)-.*" "\\1" _adios2_py_abi "${Python_SOABI}")
+  if(_adios2_py_abi MATCHES "[0-9]t")
+    set(ADIOS2_HAVE_PythonFreeThreaded TRUE)
+  elseif(NOT ADIOS2_USE_PythonFreeThreaded STREQUAL AUTO)
+    message(FATAL_ERROR
+      "ADIOS2_USE_PythonFreeThreaded requires a free-threaded Python build "
+      "(Python >= 3.13 compiled with --disable-gil), but the detected Python "
+      "${Python_VERSION} does not support it.")
+  endif()
+  unset(_adios2_py_abi)
+endif()
+
 # Even if no python support, we still want the interpreter for tests
 if(BUILD_TESTING AND NOT Python_Interpreter_FOUND)
   find_package(Python REQUIRED COMPONENTS Interpreter)

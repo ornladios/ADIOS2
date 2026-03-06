@@ -4,8 +4,15 @@ else()
   set(maybe_adios2_py_stable_abi)
 endif()
 
+if(ADIOS2_HAVE_PythonFreeThreaded)
+  set(maybe_adios2_py_free_threaded FREE_THREADED)
+else()
+  set(maybe_adios2_py_free_threaded)
+endif()
+
 nanobind_add_module(adios2_py
   ${maybe_adios2_py_stable_abi}
+  ${maybe_adios2_py_free_threaded}
   NB_STATIC
   nbADIOS.cpp
   nbIO.cpp

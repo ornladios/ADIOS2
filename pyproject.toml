@@ -59,6 +59,13 @@ select = "cp312-*"
 config-settings."wheel.py-api" = "cp312"
 config-settings."cmake.define.ADIOS2_USE_PythonStableABI" = "ON"
 
+# For free-threaded Python 3.13t enable the free-threaded (no-GIL) extension.
+# Note: Py_LIMITED_API (abi3) is incompatible with free-threaded builds, so a
+# separate wheel must be built for each future free-threaded Python version.
+[[tool.cibuildwheel.overrides]]
+select = "cp313t-*"
+config-settings."cmake.define.ADIOS2_USE_PythonFreeThreaded" = "ON"
+
 [tool.scikit-build]
 wheel.packages = ["python/adios2"]
 
