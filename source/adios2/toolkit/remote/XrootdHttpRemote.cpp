@@ -11,9 +11,11 @@
 #include "XrootdHttpRemote.h"
 #include "adios2/helper/adiosLog.h"
 
+#include <chrono>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 #ifdef ADIOS2_HAVE_CURL
 #include <curl/curl.h>
@@ -546,30 +548,58 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         subBatches.push_back({startIdx, count, asyncOp});
     }
 
-    // Wait for all sub-batches and parse responses
+    // Wait for all sub-batches, retry transient failures
+    const int maxRetries = 3;
     bool allOk = true;
     for (auto &sb : subBatches)
     {
         bool success = sb.asyncOp->promise.get_future().get();
+        std::string lastErr;
 
-        if (!success || !allOk)
+        if (!success)
         {
-            if (!success && allOk)
-            {
-                std::string errMsg = sb.asyncOp->errorMsg;
-                // Clean up remaining sub-batches before throwing
-                delete sb.asyncOp;
-                for (size_t j = (&sb - &subBatches[0]) + 1; j < subBatches.size(); j++)
-                {
-                    subBatches[j].asyncOp->promise.get_future().get();
-                    delete subBatches[j].asyncOp;
-                }
-                helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "BatchGet",
-                                                  "Sub-batch failed: " + errMsg);
-            }
-            allOk = false;
+            lastErr = sb.asyncOp->errorMsg;
             delete sb.asyncOp;
-            continue;
+            sb.asyncOp = nullptr;
+
+            // Retry this sub-batch
+            for (int retry = 1; retry <= maxRetries; retry++)
+            {
+                helper::Log("Remote", "XrootdHttpRemote", "BatchGet",
+                            "Sub-batch failed (" + lastErr + "), retry " + std::to_string(retry) +
+                                "/" + std::to_string(maxRetries),
+                            helper::LogMode::WARNING);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(100 * retry));
+
+                std::vector<BatchGetRequest> subRequests(requests.begin() + sb.startIdx,
+                                                         requests.begin() + sb.startIdx + sb.count);
+                std::string postData = BuildBatchRequestString(subRequests);
+                AsyncGet *retryOp = new AsyncGet();
+                CURL *easy = CreateEasyHandle(retryOp, m_BaseUrl, postData);
+                if (!easy)
+                {
+                    delete retryOp;
+                    continue;
+                }
+                pool.Submit(easy, retryOp);
+                success = retryOp->promise.get_future().get();
+                if (success)
+                {
+                    sb.asyncOp = retryOp;
+                    break;
+                }
+                lastErr = retryOp->errorMsg;
+                delete retryOp;
+            }
+
+            if (!success)
+            {
+                helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "BatchGet",
+                                                  "Sub-batch failed after " +
+                                                      std::to_string(maxRetries) +
+                                                      " retries: " + lastErr);
+            }
         }
 
         // Parse binary response:

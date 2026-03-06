@@ -119,7 +119,7 @@ void CampaignReader::PerformGets()
         return true;
     };
 
-    size_t nThreads = std::min(nEngines, (size_t)16);
+    size_t nThreads = std::min(nEngines, (size_t)64);
     std::vector<std::future<bool>> futures(nThreads - 1);
 
     // launch Threads-1 threads to process subsets of handles,
