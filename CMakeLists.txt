@@ -193,6 +193,7 @@ adios_option(SysVShMem  "Enable support for SysV Shared Memory IPC on *NIX" AUTO
 adios_option(UCX        "Enable support for UCX DataPlane in SST" AUTO)
 adios_option(Profiling  "Enable support for profiling" AUTO)
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
+adios_option(SealKeygen "Install the adios2_seal_keygen Python script" OFF)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
 adios_option(Campaign   "Enable support for Campaigns (requires SQLite3 and ZLIB)" AUTO)
 adios_option(OpenSSL    "Enable support for OpenSSL" AUTO)
