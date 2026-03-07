@@ -722,7 +722,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         catch (const std::exception &exc)
         {
-            RespondErr("batchget: exception during processing", EINVAL);
+            std::string msg = std::string("batchget: exception during processing: ") + exc.what();
+            RespondErr(msg.c_str(), EINVAL);
         }
         return;
     }
