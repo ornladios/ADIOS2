@@ -9,10 +9,10 @@ add_custom_target(python_api ALL COMMAND ${CMAKE_COMMAND} -E copy_directory
 
 set(install_location ${CMAKE_INSTALL_PYTHONDIR}/adios2)
 if (ADIOS2_USE_PIP)
-  set(install_location ${CMAKE_INSTALL_LIBDIR})
+  set(install_location adios2)
 endif()
 
-install(DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/adios2/
   DESTINATION ${install_location}
   COMPONENT adios2_python-python
   ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}

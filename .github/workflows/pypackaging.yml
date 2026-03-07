@@ -25,6 +25,10 @@ on:
     types:
       - published
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -49,43 +53,117 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
         with:
           name: artifact_sdist
           path: dist/*.tar.gz
 
-  build_wheels:
-    name: Wheel on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  build_wheels_legacy:
+    name: Wheels cp39–cp311
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: write  # for upload-artifact
-    strategy:
-      fail-fast: false
-      matrix:
-        # os: [ubuntu-latest, windows-latest, macos-latest]
-        os: [ubuntu-latest]
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
-
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-
-      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v2.16
+      - uses: pypa/cibuildwheel@v2.22.0
         env:
-          CIBW_BUILD: cp*-manylinux_x86_64
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4
+          CIBW_BUILD: >-
+            cp39-manylinux_x86_64
+            cp310-manylinux_x86_64
+            cp311-manylinux_x86_64
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
         with:
-          name: artifact_wheels
+          name: artifact_wheels_legacy
           path: wheelhouse/*.whl
 
+  build_wheels_stable:
+    name: Wheels cp312-abi3
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        with:
+          fetch-depth: 0
+      - name: Generate common version file
+        run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
+      - uses: pypa/cibuildwheel@v2.22.0
+        env:
+          # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
+          CIBW_BUILD: cp312-manylinux_x86_64
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+        with:
+          name: artifact_wheels_stable
+          path: wheelhouse/*.whl
+
+  build_wheels_freethreaded:
+    name: Wheels cp313t + cp314t
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        with:
+          fetch-depth: 0
+      - name: Generate common version file
+        run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
+      - uses: pypa/cibuildwheel@v2.22.0
+        env:
+          # free-threaded and prerelease are both opt-in groups in cibuildwheel;
+          # cp314t requires both since 3.14 is still prerelease
+          CIBW_ENABLE: cpython-freethreading cpython-prerelease
+          # free-threaded (no-GIL) wheels (enabled via pyproject.toml override)
+          CIBW_BUILD: >-
+            cp313t-manylinux_x86_64
+            cp314t-manylinux_x86_64
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+        with:
+          name: artifact_wheels_freethreaded
+          path: wheelhouse/*.whl
+
+  test_wheels:
+    name: Test wheel on ubuntu
+    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+        with:
+          pattern: artifact_wheels_*
+          path: dist
+          merge-multiple: true
+      - run: python -m pip install --find-links=dist adios2
+      - run: python -c "import adios2"
+
+  test_sdist:
+    name: Test SDist on ${{ matrix.os }}
+    needs: make_sdist
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+        with:
+          name: artifact_sdist
+          path: dist
+      - run: python -m pip install -vvv dist/*.tar.gz
+        shell: bash
+      - run: python -c "import adios2"
+        shell: bash
+
   upload_pypi:
-    needs: [build_wheels, make_sdist]
+    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, make_sdist]
     environment: pypi
     permissions:
       contents: read
@@ -99,7 +177,7 @@ jobs:
         github.event.action == 'published'
       )
     steps:
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           path: dist
           merge-multiple: true
@@ -108,7 +186,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1
 
   upload_test_pypi:
-    needs: [build_wheels, make_sdist]
+    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, make_sdist]
     environment: testpypi
     permissions:
       contents: read
@@ -117,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           path: dist
           merge-multiple: true

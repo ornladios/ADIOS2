@@ -144,7 +144,9 @@ private:
     std::vector<typename Variable<T>::BPInfo> BlocksInfoTCC(const Variable<T> &variable,
                                                             const size_t step) const;
 
-    std::string SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io);
+    void ExtractInMemoryMetadataToDisk(const std::string name, const std::vector<char> &memobj,
+                                       const std::string &cachePath);
+    std::string SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io, bool timeseries);
     void CreateDatasetAttributes(const std::string type, const std::string &name,
                                  const size_t dsIdx, const size_t repIdx,
                                  const std::string localPath);

@@ -20,4 +20,12 @@ if(ADIOS2_HAVE_Sodium)
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
 )
+
+  if(ADIOS2_HAVE_SealKeygen)
+    install(PROGRAMS adios2_seal_keygen.py
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      RENAME adios2_seal_keygen
+      COMPONENT adios2_core-runtime
+    )
+  endif()
 endif()

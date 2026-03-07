@@ -91,8 +91,14 @@ void CampaignReader::PerformGets()
         std::cout << "Campaign Reader " << m_ReaderRank << "     PerformGets()\n";
     }
 
-    size_t nextEngine = 0;
     size_t nEngines = m_Engines.size();
+    if (nEngines == 0)
+    {
+        m_NeedPerformGets = false;
+        return;
+    }
+
+    size_t nextEngine = 0;
     std::mutex mutexNext;
 
     auto lf_GetNext = [&]() -> size_t {
@@ -273,7 +279,94 @@ void CampaignReader::InitParameters()
 
 std::vector<char> in_memory_object;
 
-std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io)
+void CampaignReader::ExtractInMemoryMetadataToDisk(const std::string name,
+                                                   const std::vector<char> &memobj,
+                                                   const std::string &cachePath)
+{
+    auto lf_Save = [&](std::string &path, std::vector<char> &blob) -> void {
+        std::ofstream f;
+        f.rdbuf()->pubsetbuf(0, 0);
+        f.open(path, std::ios::out | std::ios::binary);
+        f.write(blob.data(), blob.size());
+        f.close();
+    };
+
+    if (memobj.size() < 64)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "CampaignReader", "ExtractInMemoryMetadata",
+            "The metadata blob is too small to be an ADIOS metadata object for dataset " + name);
+    }
+
+    constexpr size_t HEADERLENGTH = 8;
+    const std::string BP5HEADER = "BP5     ";
+    const std::string BP4HEADER = "BP4     ";
+    uint64_t size_mdidx, size_md, size_mmd;
+    char header[HEADERLENGTH + 1];
+    const char *p = memobj.data();
+    memcpy(header, p, HEADERLENGTH);
+    header[HEADERLENGTH] = '\0';
+    p = p + HEADERLENGTH;
+    std::string hs(header);
+    std::string path;
+    if (hs == BP5HEADER)
+    {
+        memcpy(&size_md, p, sizeof(uint64_t));
+        p = p + sizeof(uint64_t);
+        memcpy(&size_mmd, p, sizeof(uint64_t));
+        p = p + sizeof(uint64_t);
+        memcpy(&size_mdidx, p, sizeof(uint64_t));
+        p = p + sizeof(uint64_t);
+
+        std::vector<char> blob;
+        blob.resize(size_md);
+        std::memcpy(blob.data(), p, size_md);
+        p = p + size_md;
+        path = cachePath + PathSeparator + "md.0";
+        lf_Save(path, blob);
+
+        blob.resize(size_mmd);
+        std::memcpy(blob.data(), p, size_mmd);
+        p = p + size_mmd;
+        path = cachePath + PathSeparator + "mmd.0";
+        lf_Save(path, blob);
+
+        blob.resize(size_mdidx);
+        std::memcpy(blob.data(), p, size_mdidx);
+        p = p + size_mdidx;
+        path = cachePath + PathSeparator + "md.idx";
+        lf_Save(path, blob);
+    }
+    else if (hs == BP4HEADER)
+    {
+        memcpy(&size_md, p, sizeof(uint64_t));
+        p = p + sizeof(uint64_t);
+        memcpy(&size_mdidx, p, sizeof(uint64_t));
+        p = p + sizeof(uint64_t);
+
+        std::vector<char> blob;
+        blob.resize(size_md);
+        std::memcpy(blob.data(), p, size_md);
+        p = p + size_md;
+        path = cachePath + PathSeparator + "md.0";
+        lf_Save(path, blob);
+
+        blob.resize(size_mdidx);
+        std::memcpy(blob.data(), p, size_mdidx);
+        p = p + size_mdidx;
+        path = cachePath + PathSeparator + "md.idx";
+        lf_Save(path, blob);
+    }
+    else
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "CampaignReader", "ExtractInMemoryMetadata",
+            "The metadata blob is neither BP4 nor BP5 metadata for dataset " + name);
+    }
+}
+
+std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::core::IO &io,
+                                         bool timeseries)
 {
     std::string localPath, cachePath; // same for BP, but for HDF5 localpath=cachepath/<filename>
     CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
@@ -413,7 +506,25 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 {
                     in_memory_object.resize(cf.lengthOriginal);
                     m_CampaignData.ReadToMemory(in_memory_object.data(), fileid, keyhex);
-                    newLocalPath = "";
+                    if (timeseries)
+                    {
+                        // time series does not work with in-memory objects, need to save to disk
+                        if (!cachedirCreated)
+                        {
+                            if (m_Options.verbose > 0)
+                            {
+                                std::cout << "    use local cache for metadata at " << cachePath
+                                          << " \n";
+                            }
+                            helper::CreateDirectory(cachePath);
+                            cachedirCreated = true;
+                        }
+                        ExtractInMemoryMetadataToDisk(ds.name, in_memory_object, cachePath);
+                    }
+                    else
+                    {
+                        newLocalPath = "";
+                    }
                 }
                 else if (cf.name != "profiling.json")
                 {
@@ -667,6 +778,8 @@ void CampaignReader::InitTransports()
         {
             size_t tsid = itTS.first;
             CampaignTimeSeries &ts = itTS.second;
+            if (ts.datasets.empty())
+                continue;
             auto &ds = m_CampaignData.datasets[ts.datasets.begin()->second];
             if (ds.format == FileFormat::IMAGE || ds.format == FileFormat::TEXT)
                 continue;
@@ -739,7 +852,7 @@ void CampaignReader::InitTransports()
             {
                 auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
                 size_t repIdx = reps.front();
-                std::string localPath = SaveRemoteMD(dsIdx, repIdx, io);
+                std::string localPath = SaveRemoteMD(dsIdx, repIdx, io, true);
                 if (!localPath.empty())
                 {
                     if (m_Options.verbose > 0)
@@ -802,7 +915,7 @@ void CampaignReader::InitTransports()
         {
             auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
             size_t repIdx = reps.front();
-            localPath = SaveRemoteMD(dsIdx, repIdx, io);
+            localPath = SaveRemoteMD(dsIdx, repIdx, io, false);
             if (!localPath.empty())
             {
                 if (m_Options.verbose > 0)
@@ -996,7 +1109,7 @@ void CampaignReader::InitTransports()
                 // this is a remote image
                 adios2::core::IO &io =
                     m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(dsIdx));
-                localPath = SaveRemoteMD(dsIdx, repIdx, io);
+                localPath = SaveRemoteMD(dsIdx, repIdx, io, false);
                 if (!localPath.empty())
                 {
                     if (m_Options.verbose > 0)

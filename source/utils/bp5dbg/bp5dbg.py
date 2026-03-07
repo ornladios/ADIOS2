@@ -31,6 +31,9 @@ def SetupArgs():
                         action="store_true")
     parser.add_argument("--no-data", "-d",
                         help="Do not print data data.*", action="store_true")
+    parser.add_argument("--ffs-lib",
+                        help="Path to libadios2_ffs shared library",
+                        default=None)
     args = parser.parse_args()
 
     # default values
@@ -84,6 +87,22 @@ def CheckFileName(args):
         args.dumpMetaMetadata = True
 
 
+def TryCreateFFSDecoder(args):
+    """Try to create an FFSDecoder. Returns None on failure."""
+    try:
+        from adios2.bp5dbg.ffs import FFSDecoder
+        return FFSDecoder(args.ffs_lib)
+    except OSError as e:
+        print(f"Note: {e}")
+        print("  Metadata will not be decoded. "
+              "Set ADIOS2_FFS_LIB or use --ffs-lib.")
+        return None
+    except Exception as e:
+        print(f"Note: FFS decoder init failed: {e}")
+        print("  Metadata will not be decoded.")
+        return None
+
+
 def DumpIndexTableFile(args):
     global MetadataIndexTable
     global WriterMap
@@ -98,17 +117,19 @@ def DumpIndexTableFile(args):
     return status
 
 
-def DumpMetaMetadataFiles(args):
+def DumpMetaMetadataFiles(args, ffsDecoder=None):
     global status
+    mmd_records_all = []
     mdFileList = glob.glob(args.metametadataFileName)
     if len(mdFileList) > 0:
         for fname in mdFileList:
-            status = DumpMetaMetaData(fname)
+            status, mmd_records = DumpMetaMetaData(fname, ffsDecoder)
+            mmd_records_all.extend(mmd_records)
     else:
         print("There are no BP% MetaMetadata files in   " +
               args.metametadataFileName)
         status = False
-    return status
+    return status, mmd_records_all
 
 
 # xxx/md.X to xxx/md.idx
@@ -116,7 +137,7 @@ def GetIndexFileName(MDFileName):
     return MDFileName.rsplit('.', 1)[0] + ".idx"
 
 
-def DumpMetadataFiles(args):
+def DumpMetadataFiles(args, ffsDecoder=None):
     global MetadataIndexTable
     global WriterMap
     global status
@@ -130,7 +151,7 @@ def DumpMetadataFiles(args):
 
         if status:
             for fname in mdFileList:
-                DumpMetaData(fname, MetadataIndexTable, WriterMap)
+                DumpMetaData(fname, MetadataIndexTable, WriterMap, ffsDecoder)
     else:
         print("There are no BP% Metadata files in   " + args.metadataFileName)
         status = False
@@ -151,14 +172,55 @@ if __name__ == "__main__":
     CheckFileName(args)
     # print(args)
 
+    ffsDecoder = None
+    mmd_records = []
+
+    # Try to create FFS decoder if we'll need it
+    if args.dumpMetaMetadata or args.dumpMetadata:
+        ffsDecoder = TryCreateFFSDecoder(args)
+
     if args.dumpIdx:
         status = DumpIndexTableFile(args)
 
     if args.dumpMetaMetadata and status:
-        status = DumpMetaMetadataFiles(args)
+        status, mmd_records = DumpMetaMetadataFiles(args, ffsDecoder)
+
+    # If we have metadata to dump but didn't dump metametadata,
+    # we still need to load mmd records for the decoder
+    if ffsDecoder and args.dumpMetadata and not args.dumpMetaMetadata:
+        # Load metametadata silently for the decoder
+        mmd_files = glob.glob(
+            args.FILE + "/" + "mmd.[0-9]*") if isdir(args.FILE) else []
+        if mmd_files:
+            import numpy as np
+            from os import fstat
+            for fname in mmd_files:
+                with open(fname, "rb") as f:
+                    fileSize = fstat(f.fileno()).st_size
+                    buf = f.read(fileSize)
+                    pos = 0
+                    while pos < fileSize - 1:
+                        mmIDlen = np.frombuffer(
+                            buf, dtype=np.uint64, count=1, offset=pos)
+                        pos += 8
+                        mmInfolen = np.frombuffer(
+                            buf, dtype=np.uint64, count=1, offset=pos)
+                        pos += 8
+                        id_bytes = bytes(
+                            buf[pos:pos + int(mmIDlen[0])])
+                        pos += int(mmIDlen[0])
+                        info_bytes = bytes(
+                            buf[pos:pos + int(mmInfolen[0])])
+                        pos += int(mmInfolen[0])
+                        mmd_records.append((id_bytes, info_bytes))
+            ffsDecoder.load_metametadata(mmd_records)
 
     if args.dumpMetadata and status:
-        status = DumpMetadataFiles(args)
+        status = DumpMetadataFiles(args, ffsDecoder)
+
+    # Note: we intentionally skip ffsDecoder.close() here.
+    # free_FFSContext can crash during Python interpreter shutdown.
+    # The OS will reclaim all resources when the process exits.
 
 #    if args.dumpData:
 #        DumpDataFiles(args)

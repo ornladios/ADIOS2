@@ -7,39 +7,44 @@ on:
         description: Pull Request number
         required: true
       target_branch:
-        description: Branch to where backport the PR
+        description: Branch to backport to
         required: true
 
-permissions: read-all
+permissions: {}
 
 jobs:
   backport:
     environment: backport
     runs-on: ubuntu-latest
     name: Backport
+    env:
+      GH_TOKEN: ${{ secrets.BACKPORT_TOKEN }}
+      BRANCH: ${{ github.event.inputs.target_branch }}
+      PR: ${{ github.event.inputs.pr }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
           token: ${{ secrets.BACKPORT_TOKEN }}
-      - name: Configure Git
-        run: |
-          git config user.name "ornladios-robot"
-          git config user.email "ornladios-robot[bot]@users.noreply.github.com"
-          git remote add fork "https://github.com/ornladios-robot/ADIOS2.git"
       - name: Create backport
-        env:
-          GH_TOKEN: ${{ secrets.BACKPORT_TOKEN }}
         run: |
-          export BRANCH=${{ github.event.inputs.target_branch }}
-          export PR=${{ github.event.inputs.pr }}
-          git checkout --track "origin/${BRANCH}"
-          git checkout -b "backport-to-${BRANCH}-${PR}"
           commit_hash=$(gh pr view "${PR}" --repo ornladios/ADIOS2 --json mergeCommit --jq '.mergeCommit.oid')
           if [ -z "$commit_hash" ] || [ "$commit_hash" = "null" ]; then
             echo "Error: PR ${PR} is not merged yet"
             exit 1
           fi
+
+          git config user.name "ornladios-robot"
+          git config user.email "ornladios-robot[bot]@users.noreply.github.com"
+          gh auth setup-git
+
+          git checkout --track "origin/${BRANCH}"
+          git checkout -b "backport-to-${BRANCH}-${PR}"
           git cherry-pick --mainline 1 -x "${commit_hash}"
-          git push -f fork "backport-to-${BRANCH}-${PR}"
-          gh pr create --repo ornladios/ADIOS2 --head ornladios-robot:backport-to-${BRANCH}-${PR} --base "${BRANCH}" --title "Backport ${PR} to ${BRANCH}" --body "backports: ${PR}"
+          git push -f https://github.com/ornladios-robot/ADIOS2.git "backport-to-${BRANCH}-${PR}"
+          gh api repos/ornladios/ADIOS2/pulls \
+            --method POST \
+            -f head="ornladios-robot:backport-to-${BRANCH}-${PR}" \
+            -f base="${BRANCH}" \
+            -f title="Backport #${PR} to ${BRANCH}" \
+            -f body="Backports #${PR}"

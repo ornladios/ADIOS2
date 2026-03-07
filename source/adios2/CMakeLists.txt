@@ -34,6 +34,7 @@ add_library(adios2_core
   helper/adiosNetwork.cpp
   helper/adiosPartitioner.cpp
   helper/adiosPluginManager.cpp
+  helper/adiosRerouting.cpp
   helper/adiosString.cpp helper/adiosString.tcc
   helper/adiosSystem.cpp
   helper/adiosType.cpp
@@ -58,6 +59,7 @@ add_library(adios2_core
   engine/bp5/BP5Writer.tcc
   engine/bp5/BP5Writer_TwoLevelShm_Async.cpp
   engine/bp5/BP5Writer_TwoLevelShm.cpp
+  engine/bp5/BP5Writer_WithRerouting.cpp
 
   engine/timeseries/TimeSeriesReader.cpp engine/timeseries/TimeSeriesReader.tcc
 
@@ -133,6 +135,10 @@ add_library(adios2_core
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
+
+if (ADIOS2_ENABLE_DELAYED_WRITE)
+  target_compile_definitions(adios2_core PRIVATE ADIOS2_ENABLE_DELAYED_WRITE)
+endif()
 
 set(maybe_adios2_core_derived)
 
@@ -537,6 +543,10 @@ endif()
 if(ADIOS2_HAVE_IME)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileIME.cpp)
   target_link_libraries(adios2_core PRIVATE IME::IME)
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^Intel")
+  target_link_libraries(adios2_core PUBLIC stdc++fs)
 endif()
 
 if(ADIOS2_HAVE_MPI)

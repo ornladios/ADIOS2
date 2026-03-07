@@ -2,18 +2,18 @@
 Installing the ADIOS2 library and the C++ and C bindings
 ********************************************************
 
-By default, ADIOS2 will build the C++11 ``libadios2``  library and the C and C++ bindings.
+By default, ADIOS2 will build the C++17 ``libadios2``  library and the C and C++ bindings.
 
 1. **Minimum requirements:**
 
-    * A C++11 compliant compiler
+    * A C++17 compliant compiler
     * An MPI C implementation on the syspath, or in a location identifiable by CMake.
 
 2. **Linking** ``make install`` will copy the required headers and libraries into the directory specified by ``CMAKE_INSTALL_PREFIX``:
 
     * Libraries:
 
-      - ``lib/libadios2.*``  C++11 and C bindings
+      - ``lib/libadios2.*``  C++17 and C bindings
 
     * Headers:
 
