@@ -12,13 +12,21 @@
 #include "adios2/helper/adiosLog.h"
 
 #include <chrono>
-#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+
+#ifdef _WIN32
+#include <direct.h>
+#include <stdlib.h>
+#define getcwd _getcwd
+#define PATH_MAX _MAX_PATH
+#else
+#include <climits>
 #include <unistd.h>
+#endif
 
 #ifdef ADIOS2_HAVE_CURL
 #include <curl/curl.h>
