@@ -12,10 +12,13 @@
 #include "adios2/helper/adiosLog.h"
 
 #include <chrono>
+#include <climits>
+#include <cstdlib>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <unistd.h>
 
 #ifdef ADIOS2_HAVE_CURL
 #include <curl/curl.h>
@@ -284,7 +287,23 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
                             const std::string filename, const Mode mode, bool RowMajorOrdering,
                             const Params &params)
 {
-    m_Filename = filename;
+    // Ensure filename is absolute so the URL path is clean (no double-slash ambiguity)
+    if (!filename.empty() && filename[0] != '/')
+    {
+        char cwd[PATH_MAX];
+        if (getcwd(cwd, sizeof(cwd)))
+        {
+            m_Filename = std::string(cwd) + "/" + filename;
+        }
+        else
+        {
+            m_Filename = filename;
+        }
+    }
+    else
+    {
+        m_Filename = filename;
+    }
     m_Mode = mode;
     m_RowMajorOrdering = RowMajorOrdering;
 

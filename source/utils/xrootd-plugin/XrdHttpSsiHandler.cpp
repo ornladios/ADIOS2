@@ -370,13 +370,6 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     {
         resource = resource.substr(4); // legacy /ssi prefix
     }
-    // Strip the '/' separator left after prefix removal (e.g. "/adios/file" → "/file" → "file")
-    // Only strip one — absolute paths like "/tmp/file" arrive as "//tmp/file" after prefix removal,
-    // and should become "/tmp/file", not "tmp/file".
-    if (!resource.empty() && resource[0] == '/')
-    {
-        resource = resource.substr(1);
-    }
     if (resource.empty())
     {
         resource = "/";
