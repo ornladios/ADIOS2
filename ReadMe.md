@@ -21,8 +21,8 @@ ADIOS2 focuses on:
 1. **Performance** I/O scalability in high performance computing (HPC) applications.
 2. **Adaptability** unified interfaces to allow for several modes of transport (files, memory-to-memory)
 3. **Ease of Use** two-level application programming interface (APIs)
-* Full APIs for HPC applications: C++11, Fortran 90, C 99, Python 2 and 3
-* Simplified High-Level APIs for data analysis: Python 2 and 3, C++11, Matlab
+* Full APIs for HPC applications: C++, Fortran 90, C 99, Python
+* Simplified High-Level APIs for data analysis: Python, C++, Matlab
 
 In addition, ADIOS2 APIs are based on:
 
@@ -92,7 +92,7 @@ See the accompanying [Copyright.txt](Copyright.txt) for more details.
 
 ## Directory layout
 
-* bindings - public application programming interface, API, language bindings (C++11, C, Fortran, Python and Matlab)
+* bindings - public application programming interface, API, language bindings (C++, C, Fortran, Python and Matlab)
 
 * cmake - Project specific CMake modules
 

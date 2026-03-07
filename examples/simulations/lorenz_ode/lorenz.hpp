@@ -137,7 +137,6 @@ public:
         Real dy0dt = s0[5];
         Real dz0dt = s0[6];
 
-        Real t1 = s1[0];
         Real x1 = s1[1];
         Real y1 = s1[2];
         Real z1 = s1[3];
