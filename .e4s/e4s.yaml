@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 - e4s_product: adios2
   version: 0.1.0
   website: https://github.com/ornladios/adios2

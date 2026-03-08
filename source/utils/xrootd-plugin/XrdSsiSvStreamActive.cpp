@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /******************************************************************************/
 /*                                                                            */
 /*                 X r d S s i S t r e a m A c t i v e . c c                  */

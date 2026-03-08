@@ -1,0 +1,260 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ADIOS2
+Upstream-Contact: adios@ornl.gov
+Source: https://github.com/ornladios/ADIOS2
+
+# -- thirdparty/atl --
+Files: thirdparty/atl/*
+Copyright: 2010 Georgia Tech Research Corporation
+License: BSD-3-Clause
+
+# -- thirdparty/dill --
+Files: thirdparty/dill/*
+Copyright: 2010 Georgia Tech Research Corporation
+License: BSD-3-Clause
+
+# -- thirdparty/EVPath (main) --
+Files: thirdparty/EVPath/EVPath/*
+Copyright: 2010 Georgia Tech Research Corporation
+License: BSD-3-Clause
+
+# -- thirdparty/EVPath bundled zpl-enet --
+Files: thirdparty/EVPath/EVPath/zpl-enet/*
+Copyright: 2002-2016 Lee Salzman
+           2017-2018 Vladyslav Hrytsenko, Dominik Madarász
+License: MIT
+
+# -- thirdparty/ffs --
+Files: thirdparty/ffs/*
+Copyright: 2010 Georgia Tech Research Corporation
+License: BSD-3-Clause
+
+# -- thirdparty/GTest --
+Files: thirdparty/GTest/*
+Copyright: 2008 Google Inc.
+License: BSD-3-Clause
+
+# -- thirdparty/KWSys --
+Files: thirdparty/KWSys/*
+Copyright: 2000-2016 Kitware, Inc. and Contributors
+License: BSD-3-Clause
+
+# -- thirdparty/nanobind --
+Files: thirdparty/nanobind/nanobind/*
+Copyright: 2022 Wenzel Jakob <wenzel.jakob@epfl.ch>
+License: BSD-3-Clause
+
+# -- thirdparty/nanobind bundled robin_map --
+Files: thirdparty/nanobind/nanobind/ext/robin_map/*
+Copyright: 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+License: MIT
+
+# -- thirdparty/enet --
+Files: thirdparty/enet/*
+Copyright: 2002-2020 Lee Salzman
+License: MIT
+
+# -- thirdparty/nlohmann_json --
+# The amalgamated json.hpp embeds a CC0-1.0 code snippet alongside MIT code
+Files: thirdparty/nlohmann_json/*
+Copyright: 2013-2022 Niels Lohmann <http://nlohmann.me>
+License: MIT AND CC0-1.0
+
+# -- thirdparty/perfstubs --
+Files: thirdparty/perfstubs/*
+Copyright: 2019-2022 Kevin Huck and University of Oregon
+License: BSD-3-Clause
+
+# -- thirdparty/pugixml --
+Files: thirdparty/pugixml/*
+Copyright: 2006-2025 Arseny Kapoulkine <arseny.kapoulkine@gmail.com>
+License: MIT
+
+# -- thirdparty/yaml-cpp --
+Files: thirdparty/yaml-cpp/*
+Copyright: 2008-2015 Jesse Beder
+License: MIT
+
+# -- thirdparty/mingw-w64 (public domain runtime headers) --
+Files: thirdparty/mingw-w64/*
+Copyright: mingw-w64 contributors
+License: LicenseRef-public-domain
+
+# -- thirdparty CMakeLists wrappers (ADIOS2-authored) --
+Files: thirdparty/CMakeLists.txt
+       thirdparty/atl/CMakeLists.txt
+       thirdparty/dill/CMakeLists.txt
+       thirdparty/enet/CMakeLists.txt
+       thirdparty/EVPath/CMakeLists.txt
+       thirdparty/ffs/CMakeLists.txt
+       thirdparty/GTest/CMakeLists.txt
+       thirdparty/KWSys/CMakeLists.txt
+       thirdparty/mingw-w64/CMakeLists.txt
+       thirdparty/nanobind/CMakeLists.txt
+       thirdparty/nlohmann_json/CMakeLists.txt
+       thirdparty/perfstubs/CMakeLists.txt
+       thirdparty/pugixml/CMakeLists.txt
+       thirdparty/yaml-cpp/CMakeLists.txt
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- README/update scripts in thirdparty wrappers --
+Files: thirdparty/*/Readme.txt
+       thirdparty/*/update.sh
+       thirdparty/update-common.sh
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Generated/binary files in docs --
+Files: docs/*
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- readthedocs config --
+Files: readthedocs.yml
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- thirdparty root config files (ADIOS2-authored) --
+Files: thirdparty/.clang-tidy
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Root dotfiles and config files --
+Files: .clang-format
+       .clang-tidy
+       .e4s/e4s.yaml
+       .flake8
+       .git-remote-files
+       .gitattributes
+       .gitignore
+       .shellcheck_exclude_paths
+       CODEOWNERS
+       Copyright.txt
+       pyproject.toml
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- CI image config files --
+Files: scripts/ci/images/.gitignore
+       scripts/ci/images/oneAPI.repo
+       scripts/ci/cmake/adios-asan.supp
+       scripts/docker/spin-xrootd/xrootd-http.cfg
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Developer git hooks (shell scripts without extension) --
+Files: scripts/developer/git/setup-hooks
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Bindings/Matlab text files --
+Files: bindings/Matlab/HOWTO-debug.txt
+       bindings/Matlab/README.txt
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Bindings/Matlab binary test data --
+Files: bindings/Matlab/test/heat.bp
+       bindings/Matlab/test/heat.bp.dir/*
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Example XML, JSON, TOML config files --
+Files: examples/basics/queryWorker/configs/*
+       examples/hello/skeleton/*.xml
+       examples/plugins/engine/*.xml
+       examples/plugins/operator/*.xml
+       examples/simulations/GrayScott.jl/.JuliaFormatter.toml
+       examples/simulations/GrayScott.jl/Project.toml
+       examples/simulations/GrayScott.jl/examples/*.json
+       examples/simulations/GrayScott.jl/test/Project.toml
+       examples/simulations/gray-scott/*.xml
+       examples/simulations/gray-scott/catalyst/*.json
+       examples/simulations/gray-scott/simulation/*.json
+       examples/simulations/gray-scott/*.session
+       examples/simulations/gray-scott/*.session.gui
+       examples/simulations/gray-scott-struct/*.xml
+       examples/simulations/gray-scott-struct/catalyst/*.json
+       examples/simulations/gray-scott-struct/simulation/*.json
+       examples/simulations/gray-scott-struct/*.session
+       examples/simulations/gray-scott-struct/*.session.gui
+       examples/simulations/gray-scott-struct/*.json
+       examples/simulations/heatTransfer/*.xml
+       examples/useCases/fidesOneCell/*.json
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Example binary/image files --
+Files: examples/simulations/gray-scott/img/*
+       examples/simulations/gray-scott-struct/img/*
+       examples/simulations/lorenz_ode/*.svg
+       examples/useCases/fidesOneCell/*.png
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Source utility data/config files --
+Files: source/h5vol/READ.ME
+       source/utils/adios_iotest/iotest-config/*
+       source/utils/profiler/sample_data/*
+       source/utils/profiler/tests/commands
+       source/utils/profiler_simplified/data/*
+       source/utils/profiler_simplified/python_plots/*
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing binary data (backward compatibility BP files) --
+Files: testing/adios2/backward_compatibility/*
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing binary data (Python bindings) --
+Files: testing/adios2/bindings/python/heat.bp/*
+       testing/adios2/bindings/python/types_np.h5
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing XML config files --
+Files: testing/adios2/engine/bp/operations/*.xml
+       testing/adios2/xml/*.xml
+       testing/adios2/yaml/*.ats
+       testing/contract/lammps/adios2_config.xml
+       testing/adios2/backward_compatibility/*.xml
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing expected output/log files --
+Files: testing/adios2/engine/skeleton/*.txt
+       testing/adios2/engine/sst/Testing/Temporary/LastTest.log
+       testing/adios2/performance/metadata/README
+       testing/examples/heatTransfer/*.txt
+       testing/utils/bpcmp/*.txt
+       testing/utils/changingshape/*.txt
+       testing/utils/cwriter/*.txt
+       testing/utils/iotest/*.txt
+       testing/adios2/backward_compatibility/*.txt
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing iotest XML/config files --
+Files: testing/utils/iotest/*.xml
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing output archives (binary) --
+Files: testing/adios2/output_archive/zipped_output/*
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing install files --
+Files: testing/install/CatalystEnginePlugin/*.xml
+       testing/install/EncryptionOperator/test-public.key
+       testing/install/EncryptionOperator/test-secret.key
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0
+
+# -- Testing contract test data --
+Files: testing/contract/lammps/in.test
+       testing/contract/scorpio/*.dump
+Copyright: Oak Ridge National Laboratory and Contributors
+License: Apache-2.0

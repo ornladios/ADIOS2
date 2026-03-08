@@ -1,3 +1,7 @@
+c SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+c
+c SPDX-License-Identifier: Apache-2.0
+
 module adios2_functions_allocate_mod
     implicit none
 

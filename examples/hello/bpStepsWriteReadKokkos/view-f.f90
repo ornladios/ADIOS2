@@ -1,3 +1,7 @@
+c SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+c
+c SPDX-License-Identifier: Apache-2.0
+
 module view_f_mod
     use, intrinsic :: iso_c_binding
     use, intrinsic :: iso_fortran_env

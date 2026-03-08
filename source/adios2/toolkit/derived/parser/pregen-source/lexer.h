@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef yyHEADER_H
 #define yyHEADER_H 1
 #define yyIN_HEADER 1

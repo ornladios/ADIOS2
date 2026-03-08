@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set(ENV{CC}  clang-14)
 set(ENV{CXX} clang++-14)
 set(ENV{FC}  gfortran-11)

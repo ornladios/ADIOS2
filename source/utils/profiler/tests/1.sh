@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ####################################################################################
 # usage:
 #   takes two parmeter: a timestep descrption, and a adios profiler file

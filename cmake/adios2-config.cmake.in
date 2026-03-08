@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set(_ADIOS2_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
 list(INSERT CMAKE_MODULE_PATH 0 "@ADIOS2_SOURCE_DIR@/cmake")
 

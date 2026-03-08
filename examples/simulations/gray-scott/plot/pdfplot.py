@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error

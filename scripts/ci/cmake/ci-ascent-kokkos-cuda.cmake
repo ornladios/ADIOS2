@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Client maintainer: vicente.bolea@kitware.com
 
 set(kokkos_install_path $ENV{Kokkos_DIR})

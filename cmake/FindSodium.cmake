@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Written in 2016 by Henrik Steffen Gaßmann <henrik@gassmann.onl>
 #
 # To the extent possible under law, the author(s) have dedicated all

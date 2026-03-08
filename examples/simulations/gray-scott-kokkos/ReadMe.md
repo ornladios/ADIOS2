@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ### ADIOS2 gray-scott-kokkos example
 
 This is a 3D 7-point stencil code to simulate the following [Gray-Scott
