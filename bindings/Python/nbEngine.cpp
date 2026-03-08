@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Engine.cpp
- *
- *  Created on: Mar 15, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include "nbEngine.h"
 
 #include <nanobind/ndarray.h>

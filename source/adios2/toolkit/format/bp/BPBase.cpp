@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BPBase.cpp
- *
- *  Created on: Sep 5, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include "BPBase.h"
 #include "BPBase.tcc"
 

@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * exampleSealedOperatorRead.cpp example showing how to use
- * EncryptionOperator plugin in asymmetric mode (read with both public and secret keys)
- *
- *  Created on: Mar 5, 2026
- *      Author: Vicente Bolea
- */
-
 #include <ios>
 #include <iostream>
 #include <numeric>

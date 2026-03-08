@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adios2_c_internal.inl
- *
- *  Created on: Feb 9, 2019
- *      Author: Kai Germaschewski <kai.germaschewski@unh.edu>
- */
 
 #ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_INTERNAL_INL_
 #define ADIOS2_BINDINGS_C_C_ADIOS2_C_INTERNAL_INL_

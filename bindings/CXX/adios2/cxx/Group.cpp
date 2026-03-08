@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Group.cpp :
- *
- *  Created on: August 25, 2020
- *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
- */
-
 #include "Group.h"
 #include "Group.tcc"
 #include "adios2/core/Group.h"

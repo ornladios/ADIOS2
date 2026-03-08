@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpStepsWriteReadDerived.cpp  Simple example of writing and reading two derived variables
- * one that only stores stats and one that stores data
- */
 #include <algorithm>
 #include <ios>
 #include <iostream>

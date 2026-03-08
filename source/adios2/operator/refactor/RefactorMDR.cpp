@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * RefactorMDR.cpp :
- *
- *  Created on: Sep 14, 2023
- *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
- */
-
 #include "RefactorMDR.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressNull.h"

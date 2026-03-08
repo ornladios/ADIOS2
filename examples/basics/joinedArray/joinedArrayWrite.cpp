@@ -4,37 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Write local arrays from multiple processors and make ADIOS join them
- * at reading to show a global array
- *
- * If every process has an array that is different only in one dimension
- * it can be presented as a global array by joining the arrays together.
- * E.g. if every process has a table with a different number of rows,
- * and one does not want to do a global communication to calculate the offsets
- * in the global table, one can just write the local arrays and let ADIOS
- * calculate the offsets at read time (when all sizes are known by any process).
- *
- * bpls can show the size of each block of the table:
- * bpls -D <file> <variable>
- *
- * Note: only one dimension can be joinable, every other dimension must be the
- * same on each process.
- *
- * Note: the local dimension size in the joinable dimension is allowed to change
- * over time within each processor. However, if the sum of all local sizes
- * changes over time, the result will look like a local array.
- * (Because global arrays with changing global dimension over time can only be
- * handled as local arrays in ADIOS)
- *
- *
- * Created on: Jun 2, 2017
- *      Author: pnorbert
- */
-
 #include <iostream>
 #include <vector>
 

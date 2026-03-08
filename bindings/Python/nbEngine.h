@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * EnginePy.h
- *
- *  Created on: Mar 15, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_BINDINGS_PYTHON_ENGINE_H_
 #define ADIOS2_BINDINGS_PYTHON_ENGINE_H_
 

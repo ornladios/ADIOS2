@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * IOHDF5.cpp: HDF5-specific IO engine factory
- */
-
 #include "IO.h"
 
 #include "adios2/engine/hdf5/HDF5ReaderP.h"

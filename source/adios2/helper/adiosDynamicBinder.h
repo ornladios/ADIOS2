@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DynamicBinder.h
- *
- * Created on: Jul 21, 2017
- *     Author: Chuck Atkins
- */
-
 #ifndef ADIOS2_HELPER_DYNAMICBINDER_H_
 #define ADIOS2_HELPER_DYNAMICBINDER_H_
 

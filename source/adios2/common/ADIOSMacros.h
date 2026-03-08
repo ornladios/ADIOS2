@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOSMacros.h : a set of helper macros used internally
- *
- * Created on: March 23, 2017
- *     Author: Chuck Atkins chuck.atkins@kitware.com
- *             William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_ADIOSMACROS_H
 #define ADIOS2_ADIOSMACROS_H
 

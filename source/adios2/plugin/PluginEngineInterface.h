@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * PluginEngineInterface.h Engines using the plugin interface should derive from
- * this class. External plugin engines only need to include this header and
- * link against adios2_cxx (not adios2_core).
- *
- *  Created on: July 5, 2021
- *      Author: Chuck Atkins <chuck.atkins@kitware.com>
- *              Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_
 #define ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_
 

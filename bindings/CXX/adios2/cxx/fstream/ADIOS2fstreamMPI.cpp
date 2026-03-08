@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adios2fstreamMPI.cpp : MPI interfaces to adios2::fstream C++11 bindings
- */
-
 #include "ADIOS2fstream.h"
 #include "ADIOS2fstream.tcc"
 

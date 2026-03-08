@@ -4,31 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * helloBPReaderHeatMap3D.cpp : Writes a heat map in a regular 3D mesh,
- * values grow from 0 in increments of 1
- *
- * temperature[gNx, Ny, Nz]
- * where: gNx = MPI_size_x * Nx
- *
- * k Map:
- *    k= Nz-1  .          .       .             .
- *   k=1      .          .       .             .
- *  k=0      .          .       .             .
- *        0          1       2  ...     Nz-1
- *       Nz        Nz+1    Nz+2  ...   2*Nz-1
- * ...
- * ...
- *(Ny-1)*Nz   ...                      Ny*Nz-1
- *
- *
- *  Created on: Nov 1, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include <algorithm>
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout

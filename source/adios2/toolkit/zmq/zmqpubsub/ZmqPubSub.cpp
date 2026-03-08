@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ZmqPubSub.cpp
- *
- *  Created on: Jun 1, 2017
- *      Author: Jason Wang wangr1@ornl.gov
- */
-
 #include <chrono>
 #include <cstring>
 #include <iostream>

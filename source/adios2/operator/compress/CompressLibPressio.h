@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressLibPressio.h : wrapper to LibPressio compression library
- *
- *  Created on: Tue Apr 13, 2021
- *      Author: Robert Underwood robertu@g.clemson.edu
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESS_LIBPRESSIO_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESS_LIBPRESSIO_H_
 

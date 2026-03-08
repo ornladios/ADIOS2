@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Utils.h
- *
- *  Created on: Oct 24, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef SOURCE_UTILS_UTILS_H_
 #define SOURCE_UTILS_UTILS_H_
 

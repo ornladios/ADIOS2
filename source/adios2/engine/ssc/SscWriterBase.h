@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SscWriterBase.h
- *
- *  Created on: Mar 3, 2022
- *      Author: Jason Wang
- */
-
 #ifndef ADIOS2_ENGINE_SSCWRITERBASE_H_
 #define ADIOS2_ENGINE_SSCWRITERBASE_H_
 

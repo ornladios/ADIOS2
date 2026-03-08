@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * OperatorFactory.cpp :
- *
- *  Created on: Sep 29, 2021
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "OperatorFactory.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressNull.h"

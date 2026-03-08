@@ -13,8 +13,6 @@
  *    adiosobj: int64 adios object handler
  *    Verbose:  numeric (double)
  *
- * Date: 2018/09/07
- * Author: Norbert Podhorszki <pnorbert@ornl.gov>
  *=================================================================*/
 
 #include "adios2_c.h"

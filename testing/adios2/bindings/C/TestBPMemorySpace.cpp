@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestBPMemorySpace.cpp : test the C bindings related to memory space
- */
-
 #include <adios2_c.h>
 #include <gtest/gtest.h>
 

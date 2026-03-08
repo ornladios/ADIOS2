@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestBPWriteStatsOnly.cpp : test the C bindings when only stats are written
- */
-
 #include <adios2_c.h>
 #include <gtest/gtest.h>
 #include <vector>

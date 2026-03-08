@@ -7,8 +7,6 @@
 /*
  * hdf5Stream.h
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #ifndef HDF5STREAM_H

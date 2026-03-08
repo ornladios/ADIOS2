@@ -7,8 +7,6 @@
 /*
  * hdf5Stream.cpp
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #include "hdf5Stream.h"

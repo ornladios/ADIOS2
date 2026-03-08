@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Query.h : provides type utilities for ADIOS2 C++11 bindings
- *
- *  Created on: Aug 20, 2019
- *      Author: Junmin Gu <jgu@lbl.gov>
- */
-
 #ifndef ADIOS2_BINDINGS_CXX_QUERY_H_
 #define ADIOS2_BINDINGS_CXX_QUERY_H_
 

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * py11Query.h :
- *
- *  Created on: August 5, 2021
- *      Author: Junmin Gu (jgu@lbl.gov)
- */
-
 #ifndef ADIOS2_BINDINGS_PYTHON_QUERY_H_
 #define ADIOS2_BINDINGS_PYTHON_QUERY_H_
 

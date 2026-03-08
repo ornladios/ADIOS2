@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosPartitioner.cpp
- *
- *  Created on: May 13, 2025
- *      Author: Scott Wittenburg scott.wittenburg@kitware.com
- */
-
 #include "adiosPartitioner.h"
 #include "adiosLog.h"
 

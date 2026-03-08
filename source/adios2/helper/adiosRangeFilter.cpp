@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosRangeFilter.cpp
- *
- *  Created on: Feb 4, 2021
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #include "adiosRangeFilter.h"
 #include "adiosLog.h"
 

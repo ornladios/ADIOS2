@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * MPIShmChain.h
- *
- *  Created on: July 5, 2021
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- *
- */
-
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_
 

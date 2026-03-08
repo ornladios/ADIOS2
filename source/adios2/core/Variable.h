@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Variable.h : template class for self-describing primitive variables
- *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy
- */
-
 #ifndef ADIOS2_CORE_VARIABLE_H_
 #define ADIOS2_CORE_VARIABLE_H_
 

@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosComm.h : Communicate in a multi-process environment.
- */
-
 #ifndef ADIOS2_HELPER_ADIOSCOMM_H_
 #define ADIOS2_HELPER_ADIOSCOMM_H_
 

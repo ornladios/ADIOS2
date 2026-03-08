@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ExampleReadPlugin.tcc
- *
- *  Created on: Jul 5, 2021
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef EXAMPLEREADPLUGIN_TCC_
 #define EXAMPLEREADPLUGIN_TCC_
 

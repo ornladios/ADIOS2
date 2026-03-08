@@ -27,7 +27,6 @@
  *  - DLIST, doubly linked list, useful for O(1) removal.
  *  - SLIST, single linked list, useful for O(1) append, head, tail.
  *
- * Author: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
  */
 
 #include "dp_interface.h"

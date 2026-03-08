@@ -4,13 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestDataMan1D.py: test for 1D data transfer by reading in Python
-#  Created on: March 3, 2023
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
 from multiprocessing import Process
 import unittest
 import numpy as np

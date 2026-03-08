@@ -2,10 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""License:
-Distributed under the OSI-approved Apache License, Version 2.0.  See
-accompanying file Copyright.txt for details.
-"""
+""""""
 
 
 class DerivedVariable:

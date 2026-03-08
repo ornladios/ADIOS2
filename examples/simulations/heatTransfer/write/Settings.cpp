@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Settings.cpp
- *
- *  Created on: Feb 2017
- *      Author: Norbert Podhorszki
- */
-
 #include "Settings.h"
 
 #include <errno.h>

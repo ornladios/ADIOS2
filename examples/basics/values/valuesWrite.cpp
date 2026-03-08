@@ -4,26 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Write single values to a file. There are four different cases:
- * 1. Global constant - same on all processes, constant over time
- * 2. Global value - same on all processes, may change over time
- * 3. Local constants - different across processes, constant over time
- * 4. Local value - different across processes, may change over time
- *
- * Constants are not handled separately from time-varying values in ADIOS.
- * Simply write them only in the first step.
- *
- * Writing a global value from multiple processes does not hurt but it is
- * useless.
- *
- * Created on: Jun 2, 2017
- *      Author: pnorbert
- */
-
 #include <iostream>
 #include <string>
 #include <vector>

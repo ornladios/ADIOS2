@@ -2,15 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# dataManReader.py
-#
-#  Created on: Sept 5, 2019
-#      Author: Jason Wang <wangr1@ornl.gov>
-#
 
 from mpi4py import MPI
 import numpy as np

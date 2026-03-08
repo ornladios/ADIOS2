@@ -4,14 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPPNGHighLevelAPI.py
-#
-#  Created on: June 7th, 2019
-#      Author: William F Godoy
 
 import numpy as np
 import random

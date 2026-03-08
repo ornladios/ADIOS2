@@ -4,11 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- */
-
 #include "writer.h"
 
 void define_bpvtk_attribute(const Settings &s, adios2::IO &io)

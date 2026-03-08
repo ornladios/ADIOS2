@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosPluginManager.cpp
- *
- * Created on: Dec 14, 2021
- *     Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #include "adios2/helper/adiosPluginManager.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"

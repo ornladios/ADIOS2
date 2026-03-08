@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Spinlock.cpp
- *
- *  Created on: Oct 12, 2021
- *  Moved out from adios2/toolkit/aggregator/mpi/MPIShmChain.h
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- *
- */
-
 #include "Spinlock.h"
 
 #include <chrono>

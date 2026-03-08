@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Group.h :
- *
- *  Created on: August 25, 2020
- *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
- */
 #ifndef ADIOS2_BINDINGS_CXX_CXX_GROUP_H_
 
 #define ADIOS2_BINDINGS_CXX_CXX_GROUP_H_

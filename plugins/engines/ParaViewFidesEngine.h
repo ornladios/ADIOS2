@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ParaViewFidesEngine.h
- *
- *  Created on: Sep 21, 2022
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef PARAVIEWFIDESENGINE_H
 #define PARAVIEWFIDESENGINE_H
 

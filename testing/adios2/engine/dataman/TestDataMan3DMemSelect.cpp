@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestDataMan3DMemSelect.cpp
- *
- *  Created on: Nov 24, 2018
- *      Author: Jason Wang
- */
-
 #include <adios2.h>
 #include <gtest/gtest.h>
 #include <numeric>

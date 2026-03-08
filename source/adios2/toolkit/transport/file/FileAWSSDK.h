@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileDescriptor.h wrapper of AWSSDK library functions for file I/O over S3
- * protocol
- *
- *  Created on: Dec 5, 2022
- *      Author: Norbert Podhorszki, pnorbert@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_AWSSDK_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_AWSSDK_H_
 

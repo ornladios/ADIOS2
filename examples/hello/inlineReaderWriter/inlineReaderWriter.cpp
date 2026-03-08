@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * inlineReaderWriter.cpp  example borrowed from bpTimeWriter, using
- * the inline engine. Writes a variable using the Advance function for time
- * aggregation. Time step is saved as an additional (global) single value
- * variable, just for tracking purposes.
- *
- *  Created on: Nov 16, 2018
- *      Author: Aron Helser aron.helser@kitware.com
- */
-
 #include <algorithm> //std::for_each
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout

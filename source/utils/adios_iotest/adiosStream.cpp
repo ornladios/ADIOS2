@@ -7,8 +7,6 @@
 /*
  * adiosStream.cpp
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #include "adiosStream.h"

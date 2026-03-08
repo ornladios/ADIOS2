@@ -2,10 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
 
 # This file contains the option and dependency logic.  The configuration
 # options are designed to be tertiary: ON, OFF, or AUTO.  If AUTO, we try to

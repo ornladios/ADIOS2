@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BPBlosc.h
- *
- *  Created on: Jun 21, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BPOPERATION_COMPRESS_BPBLOSC_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP_BPOPERATION_COMPRESS_BPBLOSC_H_
 

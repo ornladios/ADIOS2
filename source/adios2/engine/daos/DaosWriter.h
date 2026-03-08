@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DaosWriter.h
- *
- */
-
 #ifndef ADIOS2_ENGINE_DAOS_DAOSWRITER_H_
 #define ADIOS2_ENGINE_DAOS_DAOSWRITER_H_
 #define DSS_PSETID "daos_server"

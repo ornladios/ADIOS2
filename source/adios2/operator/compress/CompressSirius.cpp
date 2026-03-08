@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressSirius.cpp
- *
- *  Created on: Jul 28, 2021
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "CompressSirius.h"
 #include "adios2/helper/adiosFunctions.h"
 

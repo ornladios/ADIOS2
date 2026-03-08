@@ -4,24 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TimeSeries.h
- * A meta engine to process a series of files using existing engines.
- * File format:
- *   filename1
- *   filename2
- *   filename3
- *   --end--
- *
- * --end-- signals that there is no more files coming to the stream
- *
- *  Created on: Apr 30, 2025
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #ifndef ADIOS2_ENGINE_TIMESERIESREADER_H_
 #define ADIOS2_ENGINE_TIMESERIESREADER_H_
 

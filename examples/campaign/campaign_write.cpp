@@ -4,47 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Write various outputs, that the ADIOS built-in campaign manager records
- * and one can read all data using a single reader engine on the campaign
- * output instead of the individual files
- *
- * Campaign managment handles multiple restarts of the writer, where
- * some existing outputs get appended to (at some specific step) and some
- * other new outputs are created.
- *
- * Campaign management handles BP4/BP5  outputs
- *
- * Campaign management needs to be turned on explicitly at configuration time
- *   -DADIOS2_USE_Campaign=ON
- *
- * Outputs:
- *   dataAll.bp:      written by every process
- *   // dataFirstRank.bp:    written by rank 0 only
- *   // dataLastRank.bp:     written by last rank only
- *   dataStep{N}.bp   a file series every step (written by all)
- *   dataAnother.h5:  written by rank 1..N from another ADIOS object
- *   dataNew{N}.bp :  a new file when restarting from step N
- *   dataFinal.bp:    written by rank 1 from a third ADIOS object at the end
- *
- * After running this example, the adios2_campaign_manager scripts must be used
- * to create/update/delete a campaign archive from this run
- * Then, the Campaign engine can be used in reading codes to use the campaign
- * archive to read the content.
- *
- * E.g.
- *   adios2_campaign_manager -n example_campaign-write_101 -c ~/.campaign-store create
- *   adios2_campaign_manager -n example_campaign-write_101 -c ~/.campaign-store info
- *   bpls -E campaign -P "cachepath=/tmp/campaign" \
- *        ~/.campaign-store/example_campaign-write_101.aca -la
- *
- * Created on: May 17, 2023
- *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
- */
-
 #include <chrono>
 #include <iostream>
 #include <thread>

@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOS.h : ADIOS library starting point, factory class for IO objects
- *  Created on: Oct 3, 2016
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_CORE_ADIOS_H_
 #define ADIOS2_CORE_ADIOS_H_
 

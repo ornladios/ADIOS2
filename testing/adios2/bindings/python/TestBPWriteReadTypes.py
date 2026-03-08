@@ -4,15 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File Write
-#  Created on: Feb 2, 2017
-#      Author: William F Godoy godoywf@ornl.gov
-
-
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import adios2.bindings as adios2

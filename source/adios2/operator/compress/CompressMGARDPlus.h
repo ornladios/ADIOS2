@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressMGARDPlus.h :
- *
- *  Created on: Feb 23, 2022
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARDPLUS_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARDPLUS_H_
 

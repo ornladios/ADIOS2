@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileFStream.h wrapper of C++ fstream for file I/O
- *
- *  Created on: Oct 18, 2016
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILESTREAM_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILESTREAM_H_
 

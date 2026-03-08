@@ -21,8 +21,6 @@ function adiosclose(varargin)
 %   See also ADIOSOPEN, ADIOSREAD, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/09/07
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 %
 % Process arguments.

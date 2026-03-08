@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileIME.cpp file I/O using IME Native library
- *
- *  Created on: Dec 1, 2019
- *      Author: Keichi Takahashi keichi@is.naist.jp
- */
 #include "FileIME.h"
 
 #include "adios2/helper/adiosFunctions.h"

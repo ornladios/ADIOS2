@@ -2,17 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# bpWriter.py : only works with MPI version
-#  Created on: Feb 2, 2017
-#      Authors: William F Godoy godoywf@ornl.gov
-#               Norbert Podhorszki pnorbert@ornl.gov
-#
-# We use adios2.Adios and adios2.IO classes to set up the IO parameters.
-# For default IO, it is sufficient to use the adios2.Stream class alone.
 
 from mpi4py import MPI
 import numpy

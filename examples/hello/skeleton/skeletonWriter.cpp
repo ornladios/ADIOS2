@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- *  Created on: Jan 2018
- *      Author: Norbert Podhorszki
- */
-
 #include <chrono>
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout

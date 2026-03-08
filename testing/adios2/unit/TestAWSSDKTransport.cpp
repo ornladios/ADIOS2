@@ -4,27 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestAWSSDKTransport.cpp - Unit tests for AWS SDK S3 transport
- *
- * These tests require an S3-compatible endpoint (e.g., MinIO) running locally.
- * They are disabled by default and must be run manually:
- *
- *   # Start MinIO first:
- *   minio server /tmp/minio-data --console-address ":9001"
- *   mc alias set local http://localhost:9000 minioadmin minioadmin
- *   mc mb local/testbucket
- *
- *   # Run tests:
- *   ./bin/Test.Unit.AWSSDKTransport.Serial --gtest_also_run_disabled_tests
- *
- * Environment variables:
- *   ADIOS2_S3_ENDPOINT - S3 endpoint URL (default: http://localhost:9000)
- */
-
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>

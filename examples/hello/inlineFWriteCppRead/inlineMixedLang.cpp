@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * inlineMixedLang.cpp example borrowed from bpFWriteCRead example, but using
- * the inline engine. inlineMixedLang.f90 creates data and uses inline writer
- * for making that data available in C++ functions that reads the data.
- *
- *  Created on: Oct 20, 2021
- *      Author: Caitlin Ross caitlin.ross@kitware.com
- */
-
 #include <iostream>
 
 #include "InlineExampleFC.h"

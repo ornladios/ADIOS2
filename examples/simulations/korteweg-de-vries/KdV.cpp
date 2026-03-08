@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Solves the initial value problem for the Korteweg de-Vries equation via the
- * Zabusky and Krustal scheme.
- *
- * See: https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.15.240 Zabusky, Norman
- * J., and Martin D. Kruskal. "Interaction of solitons in a collisionless plasma
- * and the recurrence of initial states." Physical review letters 15.6 (1965): 240.
- */
 #include <adios2.h>
 #include <cmath>
 #include <iostream>

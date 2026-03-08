@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * examplePluginOperatorRead.cpp example showing how to use EncryptionOperator
- * plugin
- *
- *  Created on: July 5, 2021
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception

@@ -2,15 +2,6 @@
 !
 ! SPDX-License-Identifier: Apache-2.0
 
-!
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_operator_mod.f90 : ADIOS2 Fortran bindings for Operator class
-!
-!   Created on: Feb 6, 2019
-!       Author: Kai Germaschewski <kai.germaschewski@unh.edu>
-!
 
 module adios2_operator_mod
     use adios2_parameters_mod

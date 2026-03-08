@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BufferV.cpp
- *
- */
-
 #include "BufferV.h"
 #include <assert.h>
 #include <stddef.h> // max_align_t

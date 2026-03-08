@@ -2,32 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
-#
-# FindDAOS
-# -----------
-#
-# Try to find the DAOS library
-#
-# This module defines the following variables:
-#
-#   DAOS_FOUND        - System has DAOS
-#   DAOS_INCLUDE_DIRS - The DAOS include directory
-#   DAOS_LIBRARIES    - Link these to use DAOS
-#
-# and the following imported targets:
-#   DAOS::DAOS - The core DAOS library
-#
-# You can also set the following variable to help guide the search:
-#   DAOS_ROOT - The install prefix for DAOS containing the
-#                     include and lib folders
-#                     Note: this can be set as a CMake variable or an
-#                           environment variable.  If specified as a CMake
-#                           variable, it will override any setting specified
-#                           as an environment variable.
 
 if((NOT DAOS_ROOT) AND (NOT (ENV{DAOS_ROOT} STREQUAL "")))
   set(DAOS_ROOT "$ENV{DAOS_ROOT}")

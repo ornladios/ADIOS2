@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * HDF5Common.cpp
- *
- *  Created on: April 20, 2017
- *      Author: Junmin
- */
-
 #include "HDF5Common.h"
 #include "HDF5Common.tcc"
 

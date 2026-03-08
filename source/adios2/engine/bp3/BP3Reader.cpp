@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP3Reader.cpp
- *
- *  Created on: Feb 27, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include "BP3Reader.h"
 #include "BP3Reader.tcc"
 

@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BufferV.cpp
- *
- */
-
 #include "MallocV.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"

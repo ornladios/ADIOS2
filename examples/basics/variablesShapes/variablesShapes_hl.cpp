@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * variablesShapes_hl.cpp : adios2 high-level API example to write and read
- *                   supported Variables shapes using stepping (streaming) mode
- *
- *  Created on: Nov 14, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include <cstddef>   //std::size_t
 #include <iostream>  // std::cout
 #include <limits>    // std::numeric_limits

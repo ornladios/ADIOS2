@@ -2,40 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
-#
-# "Universal" Dashboard Script
-#
-# This script contains basic dashboard driver code common to all
-# clients and projects.  It is a combination of the universal.cmake script in
-# the Kitware DashboardScriptsNG repo and cmake_common.cmake used by CMake
-# dashboards.
-#
-# Create a project-specific common script with code of the following form,
-# where the final line includes this script.
-#
-#   set(CTEST_PROJECT_NAME "OpenChemistry")
-#   set(CTEST_DROP_SITE "cdash.openchemistry.org")
-#
-#   set(dashboard_git_url "git://source.openchemistry.org/openchemistry.git")
-#   set(dashboard_root_name "MyTests")
-#   set(dashboard_source_name "openchemistry")
-#
-#   get_filename_component(dir ${CMAKE_CURRENT_LIST_FILE} PATH)
-#   include(${dir}/universal.cmake)
-#
-# The following variables may be set before including this script
-# to configure it:
-#
-#   dashboard_model       = Nightly | Experimental
-#   dashboard_root_name   = Change name of "My Tests" directory
-#   dashboard_source_name = Name of source directory (CMake)
-#   dashboard_binary_name = Name of binary directory (CMake-build)
-#   dashboard_cache       = Initial CMakeCache.txt file content
-#   dashboard_track       = The name of the CDash "Track" to submit to
 
 #   dashboard_do_checkout  = True to enable source checkout via git
 #   dashboard_do_update    = True to enable the Update step

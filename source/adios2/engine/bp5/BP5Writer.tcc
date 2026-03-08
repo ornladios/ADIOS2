@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP5Writer.tcc implementation of template functions with known type
- *
- */
 #ifndef ADIOS2_ENGINE_BP5_BP5WRITER_TCC_
 #define ADIOS2_ENGINE_BP5_BP5WRITER_TCC_
 

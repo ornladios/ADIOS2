@@ -2,18 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI - approved Apache License, Version 2.0. See
-# accompanying file Copyright.txt for details.
-#
-# TestBPWriteRead2D.py
-#
-#
-# Created on : Mar 3rd, 2019
-# Author : Jeremy Logan <lot@ornl.gov>
-#          Kai Germaschewski <kai.germaschewski@unh.edu>
-#          William F Godoy godoywf@ornl.gov
-#
 
 from mpi4py import MPI
 import numpy as np

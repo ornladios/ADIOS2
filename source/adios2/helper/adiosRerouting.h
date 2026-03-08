@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosRerouting.h helpers for BP5 rerouting aggregation
- *
- *  Created on: Sept 26, 2025
- *      Author: Scott Wittenburg scott.wittenburg@kitware.com
- */
-
 #ifndef ADIOS2_HELPER_ADIOSREROUTING_H_
 #define ADIOS2_HELPER_ADIOSREROUTING_H_
 

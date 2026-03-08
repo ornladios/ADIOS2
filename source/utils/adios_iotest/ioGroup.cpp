@@ -7,8 +7,6 @@
 /*
  * ioGroup.cpp
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 #include "ioGroup.h"
 #include "adios2/common/ADIOSConfig.h"

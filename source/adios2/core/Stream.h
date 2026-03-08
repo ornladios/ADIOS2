@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Stream.h : higher-level fstream-like API
- *
- *  Created on: Jan 5, 2018
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_CORE_STREAM_H_
 #define ADIOS2_CORE_STREAM_H_
 

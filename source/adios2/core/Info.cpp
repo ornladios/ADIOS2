@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Info.h
- *
- *  Created on: June 22, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #include "Info.h"
 #include "adios2/common/ADIOSConfig.h"
 

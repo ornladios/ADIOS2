@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Group.h template implementations with fix types and specializations
- *
- *  Created on: August 25, 2020
- *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
- */
 #ifndef ADIOS2_CORE_GROUP_H
 #define ADIOS2_CORE_GROUP_H
 #include "adios2/core/IO.h"

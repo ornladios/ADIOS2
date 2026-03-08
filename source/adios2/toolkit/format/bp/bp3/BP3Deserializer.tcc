@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP3Deserializer.tcc
- *
- *  Created on: Sep 7, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_TCC_
 #define ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_TCC_
 

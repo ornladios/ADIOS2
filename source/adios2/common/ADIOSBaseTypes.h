@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOSBaseTypes.h : fundamental type definitions used across ADIOS2.
- * This header is self-contained (no ADIOS internal dependencies) and
- * serves as the single source of truth for these types. It is used by
- * both internal ADIOS code (via ADIOSTypes.h) and the external plugin
- * operator interface.
- *
- *  Created on: Feb 10, 2026
- */
-
 #ifndef ADIOS2_ADIOSBASETYPES_H_
 #define ADIOS2_ADIOSBASETYPES_H_
 

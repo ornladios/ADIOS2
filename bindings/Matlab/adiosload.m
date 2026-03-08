@@ -18,8 +18,6 @@ function adiosload(file, prefix)
 %   See also ADIOSOPEN, ADIOSCLOSE, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/10/03
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 if (~exist('prefix', 'var'))
     prefix = '';

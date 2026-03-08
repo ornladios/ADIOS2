@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileStream.cpp
- *
- *  Created on: Oct 24, 2016
- *      Author: William F Godoy godoywf@ornl.gov
- */
 #include "FileFStream.h"
 #include "adios2/helper/adiosLog.h"
 #include <cstdio> // remove

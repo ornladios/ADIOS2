@@ -2,16 +2,6 @@
 !
 ! SPDX-License-Identifier: Apache-2.0
 
-!
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_engine_get_by_name.f90 : implementation of adios2_get_by_name
-!  subroutines
-!
-!   Created on: Feb 21, 2018
-!       Author: William F Godoy godoywf@ornl.gov
-!
 
 ! Single values
 subroutine adios2_get_by_name_string(engine, name, data, launch, ierr)

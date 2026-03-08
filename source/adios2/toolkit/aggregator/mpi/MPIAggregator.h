@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * MPIAggregator.h
- *
- *  Created on: Feb 20, 2018
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 

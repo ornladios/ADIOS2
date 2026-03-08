@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * PluginEngine.h Support for an engine implemented outside libadios2
- *
- *  Created on: July 5, 2021
- *      Author: Chuck Atkins <chuck.atkins@kitware.com>
- *              Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 #define ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_
 

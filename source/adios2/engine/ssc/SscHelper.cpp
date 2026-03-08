@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SscHelper.cpp
- *
- *  Created on: Sep 30, 2019
- *      Author: Jason Wang
- */
-
 #include "SscHelper.h"
 
 namespace adios2

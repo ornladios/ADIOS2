@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressBigWhoop.h : wrapper to BigWhoop compression library
- *
- *  Created on: Tue Jan 26, 2024
- *      Author: Gregor Weiss gregor.weiss@hlrs.de
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESS_BIGWHOOP_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESS_BIGWHOOP_H_
 

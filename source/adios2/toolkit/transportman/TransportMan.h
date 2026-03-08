@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TransportMan.h : manages a vector of transports
- *
- */
-
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 

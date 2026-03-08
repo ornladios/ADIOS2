@@ -2,32 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
-#
-# FindDATASPACES
-# -----------
-#
-# Try to find the DataSpaces library
-#
-# This module defines the following variables:
-#
-#   DATASPACES_FOUND        - System has DataSpaces
-#   DATASPACES_INCLUDE_DIRS - The DataSpaces include directory
-#   DATASPACES_LIBRARIES    - Link these to use DataSpaces
-#
-# and the following imported targets:
-#   DataSpaces::DataSpaces - The DataSpaces library target
-#
-# You can also set the following variable to help guide the search:
-#   DATASPACES_ROOT - The install prefix for DataSpaces containing the
-#              include and lib folders
-#              Note: this can be set as a CMake variable or an
-#                    environment variable.  If specified as a CMake
-#                    variable, it will override any setting specified
-#                    as an environment variable.
 
 if(NOT DATASPACES_FOUND)
   if(NOT DATASPACES_ROOT)

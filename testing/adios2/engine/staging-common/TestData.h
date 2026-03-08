@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- */
 #ifndef TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
 #define TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
 

@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * The solver is based on Hiroshi Watanabe's 2D Gray-Scott reaction diffusion
- * code available at:
- * https://github.com/kaityo256/sevendayshpc/tree/master/day5
- */
-
 #include "gray-scott.h"
 
 #include <mpi.h>

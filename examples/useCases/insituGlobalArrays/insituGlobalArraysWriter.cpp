@@ -4,34 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * A Use Case for In Situ visulization frameworks (Conduit, SENSEI)
- *
- * Each processor contributes to a subset of all variables
- * Each variable is written by a subset of all processes
- * The per-writer-blocks in a variable have different sizes
- * The variable cannot be nicely defined as a global array
- *
- * We still define the variables in this writer as global arrays but
- * with k+1 dimensions for each variable, where the extra dimension is
- * used as an index to the writer blocks. The other dimensions are
- * defined as huge numbers to cover all possible dimension sizes on each
- * process.
- *
- * The reader needs to discover the content of each variable block-by-block.
- * It cannot rely on the global shape of the variable as most of it is empty.
- *
- * The global dimensions of a global array MUST NOT change over time.
- * The decomposition of the array across the processes, however, can change
- * between output steps.
- *
- * Created on: Jul 11, 2017
- *      Author: pnorbert
- */
-
 #include <algorithm> // std::transform
 #include <iostream>
 #include <vector>

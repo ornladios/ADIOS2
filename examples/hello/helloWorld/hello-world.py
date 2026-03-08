@@ -2,16 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# hello-world.py : adios2 Python API example to write and read a
-#                   string Variable with a greeting
-#
-#  Created on: 2/2/2021
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
-#
 import sys
 from mpi4py import MPI
 from adios2 import Stream, FileReader

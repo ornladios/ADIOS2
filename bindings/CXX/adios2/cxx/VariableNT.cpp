@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Variable.cpp :
- *
- *  Created on: Apr 18, 2022
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "VariableNT.h"
 #include "Types.h"
 #include "adios2/core/VariableBase.h"

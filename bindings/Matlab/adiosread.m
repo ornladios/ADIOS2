@@ -55,8 +55,6 @@ function [data, attributes] = adiosread(varargin)
 %   See also ADIOSOPEN, ADIOSCLOSE, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/09/07
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 %
 % Process arguments.

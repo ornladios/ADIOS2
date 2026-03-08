@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosNetwork.h
- * Common Network functions needed by staging and streaming engines
- *
- *  Created on: March 22, 2019
- *      Author: Jason Wang
- */
-
 #ifndef ADIOS2_HELPER_ADIOSNETWORK_H_
 #define ADIOS2_HELPER_ADIOSNETWORK_H_
 

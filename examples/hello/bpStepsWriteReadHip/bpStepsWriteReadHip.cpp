@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpStepsWriteReadHip.cpp  Simple example of writing and reading bpFloats through ADIOS2 BP engine
- * with multiple simulations steps for every IO step using HIP
- */
 #include <algorithm>
 #include <ios>
 #include <iostream>

@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosSystem.cpp implementation of adiosSystem.h functions
- *
- *  Created on: May 17, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
 #include "adiosSystem.h"
 #include <chrono> //system_clock, now
 #include <ctime>

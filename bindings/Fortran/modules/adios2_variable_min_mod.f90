@@ -2,15 +2,6 @@
 !
 ! SPDX-License-Identifier: Apache-2.0
 
-!
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_variable_min_mod.f90 : ADIOS2 Fortran bindings for overloaded
-!                                adios2_variable_min subroutine
-!   Created on: Nov 15, 2018
-!       Author: William F Godoy godoywf@ornl.gov
-!
 
 module adios2_variable_min_mod
     use adios2_parameters_mod

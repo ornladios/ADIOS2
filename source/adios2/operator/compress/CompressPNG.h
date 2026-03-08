@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressPNG.h
- *
- *  Created on: Jun 10, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 

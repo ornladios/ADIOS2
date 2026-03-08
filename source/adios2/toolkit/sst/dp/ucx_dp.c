@@ -7,17 +7,13 @@
 /*----------------------------------------------------------------------------
  *
  *  WRF ADIOS2 I/O
- *  Author: Sameeh Jubran
  *          Toga Networks, a Huawei Company
  *          sameeh.jubran@toganetworks.com
- *  Author: Michael Laufer
  *  	    Toga Networks, a Huawei Company
  *  	    michael.laufer@toganetworks.com
- *  Author: Erick Fredj
  *          Toga Networks, a Huawei Company
  *          erick.fredj@toganetworks.com
  *
- *  Date:    December 20, 2022
  *
  *----------------------------------------------------------------------------
  */

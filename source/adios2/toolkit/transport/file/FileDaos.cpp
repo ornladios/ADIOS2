@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileDaos.cpp file I/O using Daos I/O library
- *
- */
 #include "FileDaos.h"
 #include "adios2/helper/adiosLog.h"
 

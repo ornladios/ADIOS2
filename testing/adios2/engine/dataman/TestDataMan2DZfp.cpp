@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestDataMan2DZfp.cpp
- *
- *  Created on: Nov 24, 2020
- *      Author: Jason Wang
- */
-
 #include <adios2.h>
 #include <cmath>
 #include <gtest/gtest.h>

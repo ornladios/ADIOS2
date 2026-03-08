@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOSTypes.inl : inline implementatios for ADIOSTypes.h
- *
- *  Created on: Feb 20, 2019
- *      Author: Kai Germaschewski <kai.germaschewski@unh.edu>
- *              Chuck Atkins chuck.atkins@kitware.com
- *              Norbert Podhorszki pnorbert@ornl.gov
- *              William F Godoy godoywf@ornl.gov
- */
 
 #ifndef ADIOS2_ADIOSTYPES_INL_
 #define ADIOS2_ADIOSTYPES_INL_

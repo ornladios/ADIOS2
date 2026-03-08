@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * hdf5Writer.cpp: Simple self-descriptive example of how to write a
- * variable to a parallel HDF5 File using MPI processes.
- *
- *  Created on: March 20, 2017
- *      Author: Junmin
- */
-
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
 #include <mpi.h>

@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Analysis code for the Gray-Scott application.
- * Reads variable U and V, and computes the PDF for each 2D slices of U and V.
- * Writes the computed PDFs using ADIOS.
- *
- * Norbert Podhorszki, pnorbert@ornl.gov
- *
- */
-
 #include <algorithm>
 #include <chrono>
 #include <cmath>

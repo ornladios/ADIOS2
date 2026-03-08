@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * hdf5Reader.cpp
- *
- *  Created on: Jan 24, 2018
- *      Author: Junmin Gu
- */
-
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception

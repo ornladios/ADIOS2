@@ -4,12 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# generate_pipeline.py
-#
-#   Author: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
 
 from datetime import datetime
 import argparse

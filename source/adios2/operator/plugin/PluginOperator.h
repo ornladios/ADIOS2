@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * PluginOperator.h Support for an operator implemented outside libadios2
- *
- *  Created on: Dec 7, 2021
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATOR_H_
 #define ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATOR_H_
 

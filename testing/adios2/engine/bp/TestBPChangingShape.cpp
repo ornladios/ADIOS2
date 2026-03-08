@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestBPChangingShape.cpp :
- *
- *  Created on: Dec 17, 2018
- *      Author: Norbert Podhorszki, Keichi Takahashi
- */
-
 #include <cstdint>
 #include <cstring>
 

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Types.tcc : implement template functions
- *
- *  Created on: Feb 11, 2019
- *      Author: William F Godoy
- */
-
 #ifndef ADIOS2_BINDINGS_CXX_TYPES_TCC_
 #define ADIOS2_BINDINGS_CXX_TYPES_TCC_
 

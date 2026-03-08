@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * VariableStruct.cpp
- *
- *  Created on: Apr 24, 2022
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "VariableStruct.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosType.h"

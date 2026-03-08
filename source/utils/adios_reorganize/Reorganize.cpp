@@ -4,25 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Reorganize.cpp
- *
- *  Created on: Mar 7, 2018
- *      Author: Norbert Podhorszki, pnorbert@ornl.gov
- *
- * Reorganize global arrays
-   Assumptions:
-     - one output step fits into the memory of the reorganizer.
-       Actually, this means, even more memory is needed than the size of output.
-       We need to read each variable while also buffering all of them for
- output.
-     - output steps contain the same variable set (no changes in variables)
-     - attributes are the same for all steps (will write only once here)
- */
-
 #include "Reorganize.h"
 
 #include <assert.h>

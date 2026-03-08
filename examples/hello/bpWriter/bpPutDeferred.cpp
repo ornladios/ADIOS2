@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpPutDeferred.cpp: Simple self-descriptive example of how to write a
- * variable
- * to a BP File that lives in several MPI processes.
- *
- *  Created on: Feb 16, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception

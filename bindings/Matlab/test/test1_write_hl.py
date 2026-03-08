@@ -2,17 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# Test writer to produce a test dataset for Matlab reading
-# This is serial since the Matlab reader is built with serial ADIOS
-#
-#
-#  Created on: Jan 28, 2019
-#      Author: Norbert Podhorszki, pnorbert@ornl.gov
-#
 
 import numpy
 import adios2

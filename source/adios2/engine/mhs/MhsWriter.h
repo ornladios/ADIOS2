@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * MhsWriter.h
- *
- *  Created on: Apr 6, 2019
- *      Author: Jason Wang w4g@ornl.gov
- */
-
 #ifndef ADIOS2_ENGINE_MHSWRITER_H_
 #define ADIOS2_ENGINE_MHSWRITER_H_
 

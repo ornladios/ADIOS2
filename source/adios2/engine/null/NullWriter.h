@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * NullWriter.h
- *
- *  Created on: 16 Apr 19
- *      Author: Chuck Atkins chuck.atkins@kitware.com
- */
-
 #ifndef ADIOS2_ENGINE_NULL2_NULLWRITER_H_
 #define ADIOS2_ENGINE_NULL2_NULLWRITER_H_
 

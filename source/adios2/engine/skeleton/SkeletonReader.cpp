@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SkeletonReader.cpp
- *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #include "SkeletonReader.h"
 #include "SkeletonReader.tcc"
 

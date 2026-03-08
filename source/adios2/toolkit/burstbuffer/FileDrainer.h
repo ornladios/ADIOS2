@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileDrainer.h
- *
- *  Created on: April 1, 2020
- *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
- */
-
 #ifndef ADIOS2_TOOLKIT_BURSTBUFFER_FILEDRAINER_H_
 #define ADIOS2_TOOLKIT_BURSTBUFFER_FILEDRAINER_H_
 

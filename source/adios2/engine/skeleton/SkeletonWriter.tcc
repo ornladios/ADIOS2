@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SkeletonWriter.tcc implementation of template functions with known type
- *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
 #ifndef ADIOS2_ENGINE_SKELETONWRITER_TCC_
 #define ADIOS2_ENGINE_SKELETONWRITER_TCC_
 

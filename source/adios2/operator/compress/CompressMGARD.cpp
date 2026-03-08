@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressMGARD.cpp :
- *
- *  Created on: Dec 1, 2021
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "CompressMGARD.h"
 #include "CompressNull.h"
 #include "adios2/helper/adiosFunctions.h"

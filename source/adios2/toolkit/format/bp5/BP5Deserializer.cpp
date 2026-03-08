@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP5Deserializer.h
- *
- */
-
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"

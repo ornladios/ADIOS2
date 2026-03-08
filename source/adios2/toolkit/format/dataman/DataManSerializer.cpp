@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DataManSerializer.cpp Serializer class for DataMan streaming format
- *
- *  Created on: May 11, 2018
- *      Author: Jason Wang
- */
-
 #include "DataManSerializer.tcc"
 
 #include <cstring>

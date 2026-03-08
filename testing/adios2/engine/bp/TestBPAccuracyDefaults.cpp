@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestBPAccuracyDefaults.cpp :
- *
- *  Created on: Dec 5, 2023
- *      Author: Norbert Podhorszki
- */
-
 #include <cstdint>
 #include <cstring>
 

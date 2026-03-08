@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CampaignData.cpp
- * Campaign data struct
- *
- *  Created on: May 16, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #include "CampaignData.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"

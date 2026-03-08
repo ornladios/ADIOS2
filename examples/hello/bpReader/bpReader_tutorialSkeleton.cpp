@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpReader.cpp: Simple self-descriptive example of how to read a variable
- * from a BP File.
- *
- *  Created on: Feb 16, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
 #include <mpi.h>

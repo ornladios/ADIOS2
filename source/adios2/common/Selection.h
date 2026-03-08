@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Selection.h : Thread-safe selection specification for Get() operations
- */
-
 #ifndef ADIOS2_CORE_SELECTION_H_
 #define ADIOS2_CORE_SELECTION_H_
 

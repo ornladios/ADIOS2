@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Transport.cpp
- *
- *  Created on: Dec 5, 2016
- *      Author: wfg
- */
-
 #include "Transport.h"
 #include "adios2/core/CoreTypes.h"
 #include <adios2sys/SystemTools.hxx>

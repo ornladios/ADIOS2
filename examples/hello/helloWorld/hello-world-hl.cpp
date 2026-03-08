@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * hello-world-hl.cpp : adios2 high-level API example to write and read a
- *                      std::string Variable with a greeting
- *
- *  Created on: Nov 14, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include <iostream>
 #include <stdexcept>
 

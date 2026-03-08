@@ -9,7 +9,6 @@
  * List the content of a BP file. Rewritten from adios 1.x bpls C code with
  *adios 2.x C++ API
  *
- * Author: Norbert Podhorszki, pnorbert@ornl.gov
  *
  **/
 

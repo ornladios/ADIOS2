@@ -2,13 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# nptypes.py small test data for np types
-#  Created on: Feb 2, 2017
-#      Author: William F Godoy godoywf@ornl.gov
 
 import numpy as np
 import cmath

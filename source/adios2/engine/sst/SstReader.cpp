@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SstReader.cpp
- *
- *  Created on: Aug 17, 2017
- *      Author: Greg Eisenhauer
- */
-
 #include "SstReader.h"
 #include "SstParamParser.h"
 #include "SstReader.tcc"

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DataManWriter.cpp
- *
- *  Created on: Jan 10, 2017
- *      Author: Jason Wang
- */
-
 #include "DataManWriter.tcc"
 
 namespace adios2

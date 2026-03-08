@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOS.h : public ADIOS class using PIMPL for C++11 bindings
- *
- *  Created on: Jun 4, 2018
- *      Author: William F Godoy
- */
-
 #ifndef ADIOS2_BINDINGS_CXX_CXX_ADIOS_H_
 #define ADIOS2_BINDINGS_CXX_CXX_ADIOS_H_
 

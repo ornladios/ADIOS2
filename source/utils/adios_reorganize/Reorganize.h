@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Reorganize.h
- *
- *  Created on: Mar 7, 2018
- *      Author: Norbert Podhorszki, pnorbert@ornl.gov
- */
-
 #ifndef UTILS_REORGANIZE_REORGANIZE_H_
 #define UTILS_REORGANIZE_REORGANIZE_H_
 

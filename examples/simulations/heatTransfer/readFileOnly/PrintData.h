@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * PrintData.h
- *
- *  Created on: Apr 2017
- *      Author: Norbert Podhorszki
- */
-
 #ifndef PRINTDATA_H_
 #define PRINTDATA_H_
 

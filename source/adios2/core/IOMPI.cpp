@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * IOMPI.cpp : MPI-specific IO engine factory registration
- */
-
 #include "IO.h"
 #include "adios2/engine/ssc/SscReader.h"
 #include "adios2/engine/ssc/SscWriter.h"

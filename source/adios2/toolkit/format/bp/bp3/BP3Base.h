@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP3Base.h  base class for BP3Serializer and BP3Deserializer
- *
- *  Created on: Feb 2, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BP3_BP3BASE_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP_BP3_BP3BASE_H_
 

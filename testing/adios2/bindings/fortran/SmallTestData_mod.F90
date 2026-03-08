@@ -2,14 +2,6 @@
 !
 ! SPDX-License-Identifier: Apache-2.0
 
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-! accompanying file Copyright.txt for details.
-!
-! SmallTestData_mod.f90 : small Fortran 90 arrays data for tests
-!
-!  Created on: Aug 9, 2017
-!      Author: William F Godoy godoywf@ornl.gov
-!
 
 module small_test_data
     implicit none

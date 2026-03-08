@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Write a single HEXA8 cell (8 points in space for one box)
- * and provide a fides schema for visualizing it in ParaView 5.12 or later
- *
- * Created on: Nov 30, 2022
- *      Author: pnorbert
- */
-
 #include <adios2.h>
 #include <chrono>
 #include <iostream>

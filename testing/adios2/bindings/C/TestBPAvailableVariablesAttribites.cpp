@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestBPAvailableVariablesAttributes.cpp
- *
- *  Created on: 7/9/21.
- *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
- */
-
 #include <adios2_c.h>
 
 #if ADIOS2_USE_MPI

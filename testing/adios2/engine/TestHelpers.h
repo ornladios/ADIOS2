@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TestHelpers.h : Common helper functions for ADIOS2 engine tests
- */
-
 #ifndef TEST_ADIOS2_ENGINE_TESTHELPERS_H_
 #define TEST_ADIOS2_ENGINE_TESTHELPERS_H_
 

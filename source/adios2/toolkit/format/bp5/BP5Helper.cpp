@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP5Helper.cpp
- */
-
 #include "BP5Helper.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2sys/MD5.h> // Include the MD5 header

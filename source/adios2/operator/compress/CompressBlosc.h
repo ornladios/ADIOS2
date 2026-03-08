@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressBlosc.h
- *
- *  Created on: Jun 18, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- *              Rene Widera r.widera@hzdr.de
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_
 

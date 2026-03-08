@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * HDF5CommonP.h
- *
- *  Created on: March 20, 2017
- *      Author: Junmin
- */
-
 #ifndef ADIOS2_TOOLKIT_INTEROP_HDF5_HDF5COMMON_H_
 #define ADIOS2_TOOLKIT_INTEROP_HDF5_HDF5COMMON_H_
 

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * HeatTransfer.h
- *
- *  Created on: Feb 2017
- *      Author: Norbert Podhorszki
- */
-
 #ifndef HEATTRANSFER_H_
 #define HEATTRANSFER_H_
 

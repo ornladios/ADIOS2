@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BufferMalloc.h
- *
- */
-
 #ifndef ADIOS2_TOOLKIT_FORMAT_BUFFER_HEAP_BUFFERMALLOC_H_
 #define ADIOS2_TOOLKIT_FORMAT_BUFFER_HEAP_BUFFERMALLOC_H_
 

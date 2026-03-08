@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP4Reader.tcc
- *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
- */
-
 #ifndef ADIOS2_ENGINE_BP4_BP4READER_TCC_
 #define ADIOS2_ENGINE_BP4_BP4READER_TCC_
 

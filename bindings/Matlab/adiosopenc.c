@@ -37,8 +37,6 @@
  *
  *
  *
- * Date: 2018/09/07
- * Author: Norbert Podhorszki <pnorbert@ornl.gov>
  *=================================================================*/
 
 #include "adios2_c.h"

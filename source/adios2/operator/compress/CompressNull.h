@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressNull.h
- *
- *  Created on: Dec 1, 2021
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSNULL_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSNULL_H_
 

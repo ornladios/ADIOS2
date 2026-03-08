@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Engine.h Base abstract class for the core Open, Write/Read, Advance, Close
- * functionality. Use toolkit components to build your own Engine extending this
- * class.
- * Examples of derived classes in: adios2/engine/
- *
- *  Created on: Nov 7, 2016
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_CORE_ENGINE_H_
 #define ADIOS2_CORE_ENGINE_H_
 

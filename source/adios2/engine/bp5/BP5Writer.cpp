@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP5Writer.cpp
- *
- */
-
 #include "BP5Writer.h"
 #include "BP5Writer.tcc"
 #include "adios2/toolkit/format/bp5/BP5Helper.h"

@@ -7,8 +7,6 @@
 /*
  * processConfig.h
  *
- *  Created on: Oct 2018
- *      Author: Norbert Podhorszki
  */
 
 #ifndef PROCESS_CONFIG_H

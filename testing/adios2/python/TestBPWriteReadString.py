@@ -4,14 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPWriteReadString.py: test writing/reading Python string type
-# in ADIOS2 File Write
-#  Created on: Oct 19, 2020
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
 import unittest
 from mpi4py import MPI
 from adios2 import Stream

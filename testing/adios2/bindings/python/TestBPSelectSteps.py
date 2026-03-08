@@ -4,14 +4,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPSelectSteps_nompi.py: test step selection by reading in Python
-# in ADIOS2 File Write
-#  Created on: Jan 29, 2021
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
 import unittest
 import numpy as np
 from mpi4py import MPI

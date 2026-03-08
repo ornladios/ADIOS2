@@ -7,8 +7,6 @@
 /*
  * stream.cpp
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #include "adios2/common/ADIOSConfig.h"

@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpStepsWriteReadCBindings.cu  Simple example of writing and reading data through ADIOS2 BP engine
- * with multiple simulations steps for every IO step using CUDA (using the C bindings)
- */
-
 #include <adios2_c.h>
 #include <cuda_runtime.h>
 #include <stdio.h>

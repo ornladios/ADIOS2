@@ -4,18 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CampaignManager.cpp
- *
- * This is NOT a writer Engine but the CampaignReader is a reader Engine.
- *
- *  Created on: May 15, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #include "CampaignManager.h"
 
 #include "adios2/helper/adiosFunctions.h"

@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DataSpacesWriter.cpp
- *
- *  Created on: Dec 5, 2018
- *      Author: Pradeep Subedi
- *      		pradeep.subedi@rutgers.edu
- */
-
 #include <memory>
 
 #include "DataSpacesWriter.h"

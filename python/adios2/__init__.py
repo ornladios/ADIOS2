@@ -2,11 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""The ADIOS2 high-level API module
-License:
-  Distributed under the OSI-approved Apache License, Version 2.0.  See
-  accompanying file Copyright.txt for details.
-"""
+"""The ADIOS2 high-level API module"""
 
 import adios2.bindings
 

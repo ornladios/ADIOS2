@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BP3Base.cpp
- *
- *  Created on: Feb 7, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
 #include "BP3Base.h"
 
 #include <algorithm> // std::transform

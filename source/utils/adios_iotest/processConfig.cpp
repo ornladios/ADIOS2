@@ -7,8 +7,6 @@
 /*
  * processConfig.cpp
  *
- *  Created on: Oct 2018
- *      Author: Norbert Podhorszki
  */
 
 #include <algorithm>

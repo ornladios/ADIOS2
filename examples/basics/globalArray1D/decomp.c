@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Created by Dmitry Ganyushin ganyushindi@ornl.gov
- *
- * Helper functions for all examples
- */
 #include "decomp.h"
 #include "mpivars.h"
 #include <mpi.h>

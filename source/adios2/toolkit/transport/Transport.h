@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Transport.h defines Transport abstract base class
- *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORT_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_TRANSPORT_H_
 

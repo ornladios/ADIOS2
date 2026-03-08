@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosRerouting.cpp
- *
- *  Created on: Sept 26, 2025
- *      Author: Scott Wittenburg scott.wittenburg@kitware.com
- */
-
 #include "adiosRerouting.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosMemory.h"

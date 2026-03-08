@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressMGARDComplex.h :
- *
- *  Created on: Oct 6, 2025
- *      Author: Generated for complex-valued MGARD compression
- */
-
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARDCOMPLEX_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARDCOMPLEX_H_
 

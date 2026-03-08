@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpWriteReadKokkosView.cpp  Simple example of writing and reading Kokkos Views through ADIOS2 BP
- * engine using different combinations of Layouts for the write/read buffers
- */
 #include <ios>
 #include <iostream>
 #include <string>

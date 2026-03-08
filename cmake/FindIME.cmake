@@ -2,32 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
-#
-# FindIME
-# -----------
-#
-# Try to find the IME library
-#
-# This module defines the following variables:
-#
-#   IME_FOUND        - System has IME
-#   IME_INCLUDE_DIRS - The IME include directory
-#   IME_LIBRARIES    - Link these to use IME
-#
-# and the following imported targets:
-#   IME::IME - The DDN IME library target
-#
-# You can also set the following variable to help guide the search:
-#   IME_ROOT - The install prefix for IME containing the
-#              include and lib folders
-#              Note: this can be set as a CMake variable or an
-#                    environment variable.  If specified as a CMake
-#                    variable, it will override any setting specified
-#                    as an environment variable.
 
 if(NOT IME_FOUND)
   if((NOT IME_ROOT) AND (NOT (ENV{IME_ROOT} STREQUAL "")))

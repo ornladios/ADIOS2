@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * InlineReader.tcc
- *
- *  Created on: Nov 16, 2018
- *      Author: Aron Helser aron.helser@kitware.com
- */
-
 #ifndef ADIOS2_ENGINE_INLINEREADER_TCC_
 #define ADIOS2_ENGINE_INLINEREADER_TCC_
 

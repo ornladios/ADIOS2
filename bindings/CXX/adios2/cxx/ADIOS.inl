@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOS.inl :
- *
- *  Created on: Jun 7, 2018
- *      Author: William F Godoy godoywf@ornl.gov
- */
 
 #ifndef ADIOS2_BINDINGS_CXX_CXX_ADIOS_INL_
 #define ADIOS2_BINDINGS_CXX_CXX_ADIOS_INL_

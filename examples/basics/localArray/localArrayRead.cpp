@@ -4,38 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Read local arrays from multiple processors using BlocksInfo and
- * block-selection.
- *
- * If one cannot or does not want to organize arrays present on each process
- * as one global array, still one can write them out with the same name.
- * Reading, however, needs to be handled differently: each process' array has
- * to be read separately, using Block selections. The size of each process
- * block should be discovered by the reading application by inquiring per-block
- * size information of the variable, and allocate memory for reading
- * accordingly.
- *
- * In this example we read v0, v1, v2 and v3, in 5 output steps
- * from localArray_write, where
- * v0 has the same size on every process at every step
- * v1 has different size on each process but fixed over time
- * v2 has different size on each process and that is changing over time
- * v3 is like v2 but also the number of processes writing it changes over time
- *
- * The reading method shown here works for global arrays just as well, since
- * global arrays are nothing but local arrays with extra metadata to present
- * them as global arrays. The only difference is that the block.Start array
- * tells the offset of the block in the global space, while it's empty in
- * this example.
- *
- * Created on: Aug 20, 2019
- *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
- */
-
 #include <algorithm> //std::for_each
 #include <array>
 #include <chrono>

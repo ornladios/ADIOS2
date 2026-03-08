@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * BPBase.inl
- *
- *  Created on: Sep 3, 2019
- *      Author: Kai Germaschewski kai.germaschewski@unh.edu
- *              William F Godoy godoywf@ornl.gov
- *
- */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BPBASE_INL_
 #define ADIOS2_TOOLKIT_FORMAT_BP_BPBASE_INL_

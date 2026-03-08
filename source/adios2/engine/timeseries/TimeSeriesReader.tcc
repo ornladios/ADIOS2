@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * TimeSeriesReader.tcc
- *
- *  Created on: Apr 30, 2025
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #ifndef ADIOS2_ENGINE_TIMESERIESREADER_TCC_
 #define ADIOS2_ENGINE_TIMESERIESREADER_TCC_
 

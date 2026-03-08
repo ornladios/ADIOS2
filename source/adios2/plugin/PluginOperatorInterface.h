@@ -4,21 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * PluginOperatorInterface.h Operators using the plugin interface should derive
- * from this class.
- *
- * This header is self-contained: it depends only on ADIOSBaseTypes.h and
- * standard C++ headers. External plugin operators need only include this
- * file and do NOT need to link against adios2_core.
- *
- *  Created on: Dec 7, 2021
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
- */
-
 #ifndef ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATORINTERFACE_H_
 #define ADIOS2_OPERATOR_PLUGIN_PLUGINOPERATORINTERFACE_H_
 

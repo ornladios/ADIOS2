@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SscHelper.h
- *
- *  Created on: Sep 30, 2019
- *      Author: Jason Wang
- */
-
 #ifndef ADIOS2_ENGINE_SSCHELPER_H_
 #define ADIOS2_ENGINE_SSCHELPER_H_
 

@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * sstWriterKokkos.cpp  Simple example of writing bpFloats through ADIOS2 SST
- * engine with multiple simulations steps for every IO step using Kokkos
- */
 #include <ios>
 #include <iostream>
 #include <vector>

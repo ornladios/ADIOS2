@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * datamanWriterKokkos.cpp  Simple example of writing multiple steps of a 2D float Kokkos::View
- * through ADIOS2 DataMan
- */
 #include <adios2.h>
 #include <adios2/cxx/KokkosView.h>
 #include <iostream>

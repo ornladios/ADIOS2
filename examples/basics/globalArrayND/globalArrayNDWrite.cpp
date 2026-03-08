@@ -4,36 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Write a global array from multiple processors.
- *
- * A global array is an N-dimensional array. A process can write a sub-array
- * into the global array by stating the N-dimensional offset and the size of
- * the sub-array. At reading, one can read back any portion of the array
- * regardless of how many processors wrote that data.
- *
- * Processes are NOT required
- * - to stay in the boundaries of the global dimensions. However, one will not
- * be able to read back data outside of the boundaries.
- * - to fill the whole global array, i.e. one can leave holes in it. At reading,
- * one will get the fill-value set for the array for those coordinates that
- * are not written by any process.
- *
- * The global dimensions of a global array MUST NOT change over time.
- * If they are, then the array should be handled as a local array. Of course, if
- * only a single output step is written to a file, that still shows up at
- * reading as a global array.
- *
- * The decomposition of the array across the processes, however, can change
- * between output steps.
- *
- * Created on: Jun 2, 2017
- *      Author: pnorbert
- */
-
 #include <chrono>
 #include <iostream>
 #include <thread>

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * SstWriter.h
- *
- *  Created on: Aug 17, 2017
- *      Author: Greg Eisenhauer
- */
-
 #ifndef ADIOS2_ENGINE_SST_SST_WRITER_H_
 #define ADIOS2_ENGINE_SST_SST_WRITER_H_
 

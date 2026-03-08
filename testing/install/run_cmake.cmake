@@ -2,10 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
 
 file(REMOVE_RECURSE "${ADIOS2_BINARY_DIR}/testing/install/cmake/${TEST_CASE}")
 if(WIN32)

@@ -4,24 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpThreadWrite.cpp : adios2 low-level API example to write in a threaded
- *                    application using C++11 thread and having adios2 calls
- * inside mutex regions adios2 API are not thread-safe:
- *                    1. launching MPI from a thread is not possible on many
- * supercomputers
- *                    2. I/O is highly serialized (buffering and low-level I/O
- * calls), therefore users must be aware that adios2 might introduce
- * bottlenecks. To run: Do not use MPI, just run the executable
- * ./adios2_hello_bpThreadWrite
- *
- *  Created on: Nov 14, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include <adios2.h>
 
 #include <cstddef> //std::size_t

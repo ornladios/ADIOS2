@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CompressLibPressio.cpp
- *
- *  Created on: Tue Apr 13, 2021
- *      Author: Robert Underwood robertu@g.clemson.edu
- */
-
 #include "CompressLibPressio.h"
 
 #include <cmath>     //std::ceil

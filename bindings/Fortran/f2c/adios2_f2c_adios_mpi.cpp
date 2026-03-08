@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adios2_f2c_adios_mpi.cpp
- */
-
 #include "adios2_f2c_common.h"
 
 #include <mpi.h>

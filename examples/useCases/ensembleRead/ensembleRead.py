@@ -2,23 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# ensembleRead.py
-# A Use Case for reading metadata by one process only, then distribute that
-# among other processes/applications, which can "open" the dataset faster
-# by processing metadata from memory.
-#
-# Data is still read from disk by each process/application.
-#
-# This is an MPI application but every process acts as a separate entity as far as
-# reading with ADIOS goes.
-#
-# Created on: Aug 12, 2025
-#      Author: pnorbert
-#
 
 from mpi4py import MPI
 import numpy

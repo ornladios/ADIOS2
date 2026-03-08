@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * DataManCommon.h
- *
- *  Created on: Jun 2, 2020
- *      Author: Jason Wang
- */
-
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANMONITOR_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANMONITOR_H_
 

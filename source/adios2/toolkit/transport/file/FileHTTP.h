@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * FileDescriptor.h wrapper of POSIX library functions for file I/O
- *
- *  Created on: Jul 7, 2023
- *      Author: Dmitry Ganyushin  ganyushin@gmail.com
- */
 #ifndef ADIOS2_FILEHTTP_H
 #define ADIOS2_FILEHTTP_H
 

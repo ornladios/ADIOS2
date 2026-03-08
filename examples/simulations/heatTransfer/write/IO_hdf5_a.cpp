@@ -4,19 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * IO_hdf5_a.cpp
- *
- * Write output with sequential HDF5, one file per process, one separate set per
- * timestep
- *
- *  Created on: Feb 2017
- *      Author: Norbert Podhorszki
- */
-
 #include "IO.h"
 
 #include <fstream>

@@ -7,8 +7,6 @@
 /*
  * adiosStream.h
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #ifndef ADIOSSTREAM_H

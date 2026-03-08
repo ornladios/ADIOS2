@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * adiosNetwork.cpp implementation of adiosNetwork.h functions
- *
- */
-
 #include "adiosNetwork.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"

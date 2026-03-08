@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * MhsReader.cpp
- *
- *  Created on: Aug 04, 2021
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
- */
-
 #include "MhsReader.tcc"
 #include "adios2/helper/adiosFunctions.h"
 

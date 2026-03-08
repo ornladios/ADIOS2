@@ -4,17 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CoreTypes.h : types used only in the core framework, in contrast to
- *               ADIOSTypes.h, which is a public user-facing header
- *
- *  Created on: Aug 11, 2021
- *      Author:  Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #ifndef ADIOS2_CORETYPES_H_
 #define ADIOS2_CORETYPES_H_
 

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * CampaignReader.tcc
- *
- *  Created on: May 15, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- */
-
 #ifndef ADIOS2_ENGINE_CAMPAIGNREADER_TCC_
 #define ADIOS2_ENGINE_CAMPAIGNREADER_TCC_
 

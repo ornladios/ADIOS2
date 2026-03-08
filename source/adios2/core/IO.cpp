@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * IO.cpp
- *
- *  Created on: Jan 6, 2017
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #include "IO.h"
 #include "IO.tcc"
 

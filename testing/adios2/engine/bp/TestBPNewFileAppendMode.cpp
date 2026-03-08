@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Test using Append mode for writing a new BP file with NumAggregators = 0
- *
- *  Created on: Jul 1, 2025
- *      Author: Caitlin Ross
- */
-
 #include <adios2.h>
 
 #include <gtest/gtest.h>

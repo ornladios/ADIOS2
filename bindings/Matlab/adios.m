@@ -45,7 +45,5 @@ function adios()
 %   See also ADIOSOPEN, ADIOSREAD, ADIOSREADATTR, ADIOSCLOSE
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/09/07
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 help adios

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * ADIOS2fstream.h
- *
- *  Created on: Mar 5, 2018
- *      Author: William F Godoy godoywf@ornl.gov
- */
-
 #ifndef ADIOS2_BINDINGS_CXX_CXX_FSTREAM_ADIOS2FSTREAM_H_
 #define ADIOS2_BINDINGS_CXX_CXX_FSTREAM_ADIOS2FSTREAM_H_
 

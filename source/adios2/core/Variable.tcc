@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * Variable.tcc : implement long template functions
- *
- *  Created on: Jan 31, 2019
- *      Author: William F Godoy
- */
-
 #ifndef ADIOS2_CORE_VARIABLE_TCC_
 #define ADIOS2_CORE_VARIABLE_TCC_
 

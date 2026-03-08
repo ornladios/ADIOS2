@@ -4,15 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
- *
- * bpSZ.cpp : example passing runtime compression arguments
- *
- *  Created on: Aug 3, 2018
- *      Author: William F Godoy godoywf@ornl.gov
- */
 
 #include <algorithm> //std::transform
 #include <ios>       //std::ios_base::failure
