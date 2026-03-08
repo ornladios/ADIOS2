@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ARG BASE_IMAGE=ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-base
 FROM $BASE_IMAGE
 ARG CLANG_VERSION=11

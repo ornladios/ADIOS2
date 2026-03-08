@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ### ADIOS2 korteweg-de-vries example
 
 Solves the initial value problem for the Korteweg de-Vries equation via the Zabusky and Krustal scheme.

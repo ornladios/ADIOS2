@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/CoreTypes.h"
 #include "adios2/core/IO.h"

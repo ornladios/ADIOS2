@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from mpi4py import MPI
 import numpy as np
 from adios2 import Stream, Adios, bindings

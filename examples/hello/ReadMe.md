@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ## ADIOS2 hello examples
 
 The _hello_ examples are meant to introduce you to ADIOS2's IO capabilities and engines.

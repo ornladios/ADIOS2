@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # vim: ft=dockerfile
 ARG BASE_IMAGE=docker.io/ecpe4s/ubuntu22.04-runner-amd64-gcc-11.4:2025.03.01
 FROM $BASE_IMAGE

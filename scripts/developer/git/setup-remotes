@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 GH_UPSTREAM_URL=$(git remote show origin | grep "Fetch URL" | sed 's|.*: \(.*\)|\1|')
 BRANCH="$(git branch | sed -n 's|^\* \(.*\)|\1|p')"
 if [ "${GH_UPSTREAM_URL}" != "https://github.com/ornladios/ADIOS2.git" ] || \

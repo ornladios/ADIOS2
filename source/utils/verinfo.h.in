@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #define ADIOS_INFO_VER_GIT       "@ADIOS2_VERSION_GIT_SHA@"
 #define ADIOS_INFO_COMPILER_ID   "@CMAKE_CXX_COMPILER_ID@"
 #define ADIOS_INFO_COMPILER_VER  "@CMAKE_CXX_COMPILER_VERSION@"

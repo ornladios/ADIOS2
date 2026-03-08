@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "H5VLpublic.h"
 #include "hdf5.h"
 #define H5S_FRIEND // suppress error for H5Spkg

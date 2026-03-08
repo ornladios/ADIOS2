@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ###########################################################################
 ## sample usage:
 ## > source extract.sh ES ../jsons/testMe_default ../jsons/testMe_flatten

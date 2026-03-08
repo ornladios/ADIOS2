@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Ad-hoc build that runs in the ECP Hardware, concretely in OLCF Ascent.
 .setup_env_ecpci: &setup_env_ecpci |
   module purge

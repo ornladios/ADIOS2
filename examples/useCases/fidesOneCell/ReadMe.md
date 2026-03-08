@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ### Single cell example for visualization with Fides schema in ParaView
 
 This example writes 8 points in 3D space, the corners of a box, and then defines a single hexagon cell of those eight

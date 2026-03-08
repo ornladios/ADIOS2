@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 add_executable(Test.Utils.BPcmp TestUtilsBPcmp.cpp)
 
 target_link_libraries(Test.Utils.BPcmp adios2::cxx)

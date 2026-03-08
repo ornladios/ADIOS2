@@ -1,3 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+!
+! SPDX-License-Identifier: Apache-2.0
+
 program bpWriter
 #if ADIOS2_USE_MPI
     use mpi

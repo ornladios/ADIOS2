@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ADIOS_VOL_WRITER_H
 #define ADIOS_VOL_WRITER_H
 

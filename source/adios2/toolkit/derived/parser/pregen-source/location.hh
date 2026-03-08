@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // A Bison parser, made by GNU Bison 3.8.2.
 
 // Locations for Bison parsers in C++

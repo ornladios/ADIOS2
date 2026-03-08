@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ################################################################
 # Usage: ./script.sh <jobID> <scriptsHome> <extractedFilesBase> <timeStep> <aggType>
 # Example: ./script.sh 12345 /path/to/scripts /path/to/extracted 0 <aggType>

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:/opt/rocm/"
 
 update-alternatives --set gcc "$(update-alternatives --list gcc | grep gcc-11)"

@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ## ADIOS2 simulations examples
 
 The _simulations_ examples are meant to demonstrate how to integrate ADIOS2 within your

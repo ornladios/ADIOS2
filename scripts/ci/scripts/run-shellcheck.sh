@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # We need the same sort order
 export LC_ALL=C
 EXCLUDE_SCRIPTS=.shellcheck_exclude_paths
