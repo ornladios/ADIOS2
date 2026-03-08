@@ -37,7 +37,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  'black',
+  'ruff',
   "pip>=21.3",
 ]
 
@@ -91,11 +91,13 @@ ADIOS2_USE_OpenSSL = "OFF"
 BUILD_TESTING = "OFF"
 ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"
 
-[tool.black]
-line-length = 99
-target-version = ['py38', 'py39', 'py310']
-include = 'python/adios2/.*.py|testing/adios2/python/.*.py'
+[tool.ruff]
+line-length = 100
+exclude = ["thirdparty", ".gitlab/config/SpackCIBridge.py"]
 
-[tool.pylint]
-disable = ['E0401', 'W0102', 'R0904', 'R0913', 'R0401']
-good-names = ['io', 'JoinedDim']
+[tool.ruff.lint]
+select = ["E", "F", "W", "PL"]
+# E302/F401/F403/F405/W504: carried over from flake8 config
+# PLR0904: too-many-public-methods (was R0904 in pylint disable list)
+# PLR0913: too-many-arguments (was R0913 in pylint disable list)
+ignore = ["E302", "F401", "F403", "F405", "W504", "PLR0904", "PLR0913"]

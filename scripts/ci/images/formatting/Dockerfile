@@ -9,14 +9,13 @@ RUN dnf update -y && \
     clang-tools-extra \
     curl \
     git \
-    python3-flake8 \
-    python3-pylint \
-    python3-black \
+    python3-pip \
     ShellCheck \
     && \
-    dnf clean all
+    dnf clean all && \
+    pip3 install ruff
 
 # Check that the target programs has been installed
 RUN command -v clang-format > /dev/null && \
-    command -v flake8 > /dev/null && \
+    command -v ruff > /dev/null && \
     command -v shellcheck > /dev/null

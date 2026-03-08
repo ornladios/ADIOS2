@@ -7,9 +7,9 @@
 import os
 import time
 import argparse
-import numpy  # pylint: disable=import-error
-import adios2  # pylint: disable=import-error
-import diagram  # pylint: disable=import-error
+import numpy
+import adios2
+import diagram
 
 
 def run():

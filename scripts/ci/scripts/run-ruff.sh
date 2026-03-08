@@ -15,4 +15,5 @@ then
   cd "${SOURCE_DIR}" || exit
 fi
 
-exec black --check --diff .
+ruff check .
+ruff format --check .
