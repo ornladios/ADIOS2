@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-""""""
+"""ADIOS2 ADIOS Python wrapper."""
 
 from adios2 import bindings
 from adios2.io import IO
