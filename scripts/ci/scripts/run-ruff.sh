@@ -15,5 +15,6 @@ then
   cd "${SOURCE_DIR}" || exit
 fi
 
+pip3 install --quiet ruff
 ruff check .
 ruff format --check .
