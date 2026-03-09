@@ -17,6 +17,6 @@ jobs:
   reuse:
     runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check REUSE compliance
         run: pipx run reuse lint

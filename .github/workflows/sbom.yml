@@ -15,7 +15,7 @@ jobs:
   sbom:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Generate SPDX SBOM
         run: pipx run reuse spdx -o adios2-sbom.spdx

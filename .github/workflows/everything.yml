@@ -588,7 +588,7 @@ jobs:
           ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@c793b717bc78562f491db7b0e93a3a178b099162 # v3
+      uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
       with:
         languages: ${{ matrix.language }}
         source-root: source
@@ -601,7 +601,7 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@c793b717bc78562f491db7b0e93a3a178b099162 # v3
+      uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
       with:
         category: "/language:${{matrix.language}}"
         output: sarif-results
@@ -616,7 +616,7 @@ jobs:
         input: sarif-results/cpp.sarif
         output: sarif-results/cpp.sarif
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@c793b717bc78562f491db7b0e93a3a178b099162 # v3
+      uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
       with:
         sarif_file: sarif-results/cpp.sarif
     - name: Upload loc as a Build Artifact
