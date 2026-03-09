@@ -27,8 +27,7 @@ class MPISetup(object):
         self.nz = args.nz
 
         if not args.nompi:
-
-            from mpi4py import MPI  # pylint: disable=import-error
+            from mpi4py import MPI
 
             self.comm_app = MPI.COMM_WORLD.Split(appID, MPI.COMM_WORLD.Get_rank())
             self.size = self.comm_app.Get_size()
@@ -39,13 +38,9 @@ class MPISetup(object):
                 raise ValueError("nx * ny * nz != num processes")
 
             if (self.ny > 1) and (self.nx > 1) and (self.nz > 1):
-                comm_x = self.comm_app.Split(
-                    self.rank["app"] % self.nx, self.rank["app"]
-                )
+                comm_x = self.comm_app.Split(self.rank["app"] % self.nx, self.rank["app"])
             else:
-                comm_x = self.comm_app.Split(
-                    self.rank["app"] / self.nx, self.rank["app"]
-                )
+                comm_x = self.comm_app.Split(self.rank["app"] / self.nx, self.rank["app"])
             comm_y = self.comm_app.Split(self.rank["app"] / self.ny, self.rank["app"])
             comm_z = self.comm_app.Split(self.rank["app"] / self.nz, self.rank["app"])
 

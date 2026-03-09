@@ -9,7 +9,6 @@ from sys import maxsize
 from typing import Optional
 import numpy as np
 
-# pylint: disable=duplicate-code
 try:
     import cupy as cp
 
@@ -22,7 +21,6 @@ try:
     ADIOS2_HAS_TORCH = True
 except ImportError:
     ADIOS2_HAS_TORCH = False
-# pylint: enable=duplicate-code
 
 from adios2 import bindings, Adios, IO, Variable
 
@@ -64,20 +62,17 @@ def string_to_mode(mode: str) -> [bindings.Mode, bool]:
     return bmode, read_mode
 
 
-# pylint: disable=R0902   # Too many instance attributes
-class Stream:
+class Stream:  # noqa: PLR0902
     """High level implementation of the Stream class from the core API"""
 
     # Default timeout for stream.begin_step()
     DEFAULT_TIMEOUT_SEC = -1.0
 
     @singledispatchmethod
-    def __init__(self, path, mode, comm=None):
-        # pylint: disable=R0912 # Too many branches
+    def __init__(self, path, mode, comm=None):  # noqa: PLR0912
         if comm and not bindings.is_built_with_mpi:
             raise RuntimeError("Cannot use MPI since ADIOS2 was built without MPI support")
 
-        # pylint: disable=E1121
         if comm:
             self._adios = Adios(comm)
         else:
@@ -85,7 +80,6 @@ class Stream:
 
         self._io_name = f"stream:{path}:mode:{mode}"
 
-        # pylint: enable=E1121
         self._io = self._adios.declare_io(self._io_name)
         self._mode, self._read_mode = string_to_mode(mode)
         self._engine = self._io.open(path, self._mode)

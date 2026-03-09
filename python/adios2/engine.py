@@ -6,7 +6,6 @@
 
 import numpy as np
 
-# pylint: disable=duplicate-code
 try:
     import cupy as cp
 
@@ -19,7 +18,6 @@ try:
     ADIOS2_HAS_TORCH = True
 except ImportError:
     ADIOS2_HAS_TORCH = False
-# pylint: enable=duplicate-code
 
 from adios2 import bindings
 

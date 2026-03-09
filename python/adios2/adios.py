@@ -21,11 +21,10 @@ class Adios:
                 self.impl = bindings.ADIOS(config_file, comm)
             else:
                 self.impl = bindings.ADIOS(config_file)
+        elif comm:
+            self.impl = bindings.ADIOS(comm)
         else:
-            if comm:
-                self.impl = bindings.ADIOS(comm)
-            else:
-                self.impl = bindings.ADIOS()
+            self.impl = bindings.ADIOS()
 
     @property
     def impl(self):

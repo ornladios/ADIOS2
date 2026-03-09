@@ -14,12 +14,8 @@ import decomp  # pylint: disable=import-error
 
 def SetupArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--instream", "-i", help="Name of the input stream", required=True
-    )
-    parser.add_argument(
-        "--outfile", "-o", help="Name of the output file", default="screen"
-    )
+    parser.add_argument("--instream", "-i", help="Name of the input stream", required=True)
+    parser.add_argument("--outfile", "-o", help="Name of the output file", default="screen")
     parser.add_argument("--varname", "-v", help="Name of variable read", default="U")
     parser.add_argument(
         "--nompi", "-nompi", help="ADIOS was installed without MPI", action="store_true"
@@ -63,9 +59,7 @@ def PlotPDF(pdf, bins, args, start, count, step, fontsize):
         plt.show()
         plt.pause(displaysec)
     else:
-        imgfile = (
-            args.outfile + "{0:0>5}".format(step) + "_" + str(globalSliceIdx) + ".png"
-        )
+        imgfile = args.outfile + "{0:0>5}".format(step) + "_" + str(globalSliceIdx) + ".png"
         fig.savefig(imgfile)
 
     plt.clf()
@@ -91,9 +85,7 @@ if __name__ == "__main__":
 
     # Read the data from this object
     if not args.nompi:
-        fr = adios2.open(
-            args.instream, "r", mpi.comm_app, "adios2.xml", "PDFAnalysisOutput"
-        )
+        fr = adios2.open(args.instream, "r", mpi.comm_app, "adios2.xml", "PDFAnalysisOutput")
     else:
         fr = adios2.open(args.instream, "r", "adios2.xml", "PDFAnalysisOutput")
 

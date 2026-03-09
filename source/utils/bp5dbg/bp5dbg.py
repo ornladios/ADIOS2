@@ -18,26 +18,22 @@ status = True
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "FILE", help="Name of the input file (.bp, .bp/md.idx, " +
-        ".bp/md.0 or .bp/data.XXX)")
+        "FILE", help="Name of the input file (.bp, .bp/md.idx, " + ".bp/md.0 or .bp/data.XXX)"
+    )
     # parser.add_argument("--printdata", "-p",
     #                    help="Dump data of this variable as well", default="")
-    parser.add_argument("--verbose", "-v",
-                        help="More verbosity", action="count")
-    parser.add_argument("--no-indextable", "-x",
-                        help="Do not print index table md.idx",
-                        action="store_true")
-    parser.add_argument("--no-metadata", "-m",
-                        help="Do not print metadata md.0",
-                        action="store_true")
-    parser.add_argument("--no-metametadata", "-M",
-                        help="Do not print meta-metadata mmd.0",
-                        action="store_true")
-    parser.add_argument("--no-data", "-d",
-                        help="Do not print data data.*", action="store_true")
-    parser.add_argument("--ffs-lib",
-                        help="Path to libadios2_ffs shared library",
-                        default=None)
+    parser.add_argument("--verbose", "-v", help="More verbosity", action="count")
+    parser.add_argument(
+        "--no-indextable", "-x", help="Do not print index table md.idx", action="store_true"
+    )
+    parser.add_argument(
+        "--no-metadata", "-m", help="Do not print metadata md.0", action="store_true"
+    )
+    parser.add_argument(
+        "--no-metametadata", "-M", help="Do not print meta-metadata mmd.0", action="store_true"
+    )
+    parser.add_argument("--no-data", "-d", help="Do not print data data.*", action="store_true")
+    parser.add_argument("--ffs-lib", help="Path to libadios2_ffs shared library", default=None)
     args = parser.parse_args()
 
     # default values
@@ -95,11 +91,11 @@ def TryCreateFFSDecoder(args):
     """Try to create an FFSDecoder. Returns None on failure."""
     try:
         from adios2.bp5dbg.ffs import FFSDecoder
+
         return FFSDecoder(args.ffs_lib)
     except OSError as e:
         print(f"Note: {e}")
-        print("  Metadata will not be decoded. "
-              "Set ADIOS2_FFS_LIB or use --ffs-lib.")
+        print("  Metadata will not be decoded. Set ADIOS2_FFS_LIB or use --ffs-lib.")
         return None
     except Exception as e:
         print(f"Note: FFS decoder init failed: {e}")
@@ -113,8 +109,7 @@ def DumpIndexTableFile(args):
     global status
     indexFileList = glob.glob(args.idxFileName)
     if len(indexFileList) > 0:
-        status, MetadataIndexTable, WriterMap = DumpIndexTable(
-            indexFileList[0], True)
+        status, MetadataIndexTable, WriterMap = DumpIndexTable(indexFileList[0], True)
     else:
         print("There is  no BP% Index Table file as " + args.idxFileName)
         status = False
@@ -130,15 +125,14 @@ def DumpMetaMetadataFiles(args, ffsDecoder=None):
             status, mmd_records = DumpMetaMetaData(fname, ffsDecoder)
             mmd_records_all.extend(mmd_records)
     else:
-        print("There are no BP% MetaMetadata files in   " +
-              args.metametadataFileName)
+        print("There are no BP% MetaMetadata files in   " + args.metametadataFileName)
         status = False
     return status, mmd_records_all
 
 
 # xxx/md.X to xxx/md.idx
 def GetIndexFileName(MDFileName):
-    return MDFileName.rsplit('.', 1)[0] + ".idx"
+    return MDFileName.rsplit(".", 1)[0] + ".idx"
 
 
 def DumpMetadataFiles(args, ffsDecoder=None):
@@ -150,8 +144,7 @@ def DumpMetadataFiles(args, ffsDecoder=None):
         if len(MetadataIndexTable) == 0:
             # need to parse index first
             IndexFileName = GetIndexFileName(mdFileList[0])
-            status, MetadataIndexTable, WriterMap = DumpIndexTable(
-                IndexFileName, False)
+            status, MetadataIndexTable, WriterMap = DumpIndexTable(IndexFileName, False)
 
         if status:
             for fname in mdFileList:
@@ -160,6 +153,7 @@ def DumpMetadataFiles(args, ffsDecoder=None):
         print("There are no BP% Metadata files in   " + args.metadataFileName)
         status = False
     return status
+
 
 # def DumpDataFiles(args):
 #    dataFileList = glob.glob(args.dataFileName)
@@ -171,7 +165,6 @@ def DumpMetadataFiles(args, ffsDecoder=None):
 
 
 if __name__ == "__main__":
-
     args = SetupArgs()
     CheckFileName(args)
     # print(args)
@@ -193,28 +186,24 @@ if __name__ == "__main__":
     # we still need to load mmd records for the decoder
     if ffsDecoder and args.dumpMetadata and not args.dumpMetaMetadata:
         # Load metametadata silently for the decoder
-        mmd_files = glob.glob(
-            args.FILE + "/" + "mmd.[0-9]*") if isdir(args.FILE) else []
+        mmd_files = glob.glob(args.FILE + "/" + "mmd.[0-9]*") if isdir(args.FILE) else []
         if mmd_files:
             import numpy as np
             from os import fstat
+
             for fname in mmd_files:
                 with open(fname, "rb") as f:
                     fileSize = fstat(f.fileno()).st_size
                     buf = f.read(fileSize)
                     pos = 0
                     while pos < fileSize - 1:
-                        mmIDlen = np.frombuffer(
-                            buf, dtype=np.uint64, count=1, offset=pos)
+                        mmIDlen = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)
                         pos += 8
-                        mmInfolen = np.frombuffer(
-                            buf, dtype=np.uint64, count=1, offset=pos)
+                        mmInfolen = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)
                         pos += 8
-                        id_bytes = bytes(
-                            buf[pos:pos + int(mmIDlen[0])])
+                        id_bytes = bytes(buf[pos : pos + int(mmIDlen[0])])
                         pos += int(mmIDlen[0])
-                        info_bytes = bytes(
-                            buf[pos:pos + int(mmInfolen[0])])
+                        info_bytes = bytes(buf[pos : pos + int(mmInfolen[0])])
                         pos += int(mmInfolen[0])
                         mmd_records.append((id_bytes, info_bytes))
             ffsDecoder.load_metametadata(mmd_records)

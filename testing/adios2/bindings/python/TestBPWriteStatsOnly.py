@@ -8,6 +8,7 @@ import numpy as np
 from adios2 import Adios
 import adios2.bindings as bindings
 
+
 class TestBPWriterStatsOnly(unittest.TestCase):
     def test_exception_at_read(self):
         # User data
@@ -27,8 +28,8 @@ class TestBPWriterStatsOnly(unittest.TestCase):
         adios = Adios()
         with adios.declare_io("ioWriter") as ioWrite:
             varTemperature = ioWrite.define_variable(
-                name="temperature2D", content=temperatures,
-                start=start, shape=shape, count=count)
+                name="temperature2D", content=temperatures, start=start, shape=shape, count=count
+            )
             varTemperature.store_stats_only(True)
 
             with ioWrite.open("TestWriteStatsOnly_py.bp", bindings.Mode.Write) as wStream:

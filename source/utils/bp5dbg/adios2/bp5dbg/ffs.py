@@ -37,9 +37,7 @@ class FFSDecoder:
         # Sibling to this script: ../../lib/libadios2_ffs.{dylib,so}
         script_dir = os.path.dirname(os.path.abspath(__file__))
         for ext in ("dylib", "so"):
-            paths_to_try.append(
-                os.path.join(script_dir, "..", "..", "lib",
-                             f"libadios2_ffs.{ext}"))
+            paths_to_try.append(os.path.join(script_dir, "..", "..", "lib", f"libadios2_ffs.{ext}"))
 
         for path in paths_to_try:
             path = os.path.realpath(path)
@@ -57,9 +55,7 @@ class FFSDecoder:
             except OSError:
                 pass
 
-        raise OSError(
-            "Cannot load libadios2_ffs. "
-            "Set ADIOS2_FFS_LIB or use --ffs-lib.")
+        raise OSError("Cannot load libadios2_ffs. Set ADIOS2_FFS_LIB or use --ffs-lib.")
 
     def _setup_prototypes(self):
         lib = self.lib
@@ -79,22 +75,23 @@ class FFSDecoder:
         # FMFormat load_external_format_FMcontext(FMContext, char*, int, char*)
         lib.load_external_format_FMcontext.restype = ctypes.c_void_p
         lib.load_external_format_FMcontext.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p]
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+        ]
 
         # FFSTypeHandle FFSTypeHandle_from_encode(FFSContext, char*)
         lib.FFSTypeHandle_from_encode.restype = ctypes.c_void_p
-        lib.FFSTypeHandle_from_encode.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p]
+        lib.FFSTypeHandle_from_encode.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
         # size_t FFS_est_decode_length(FFSContext, char*, size_t)
         lib.FFS_est_decode_length.restype = ctypes.c_size_t
-        lib.FFS_est_decode_length.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+        lib.FFS_est_decode_length.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
 
         # int FFSdecode_to_buffer(FFSContext, char*, void*)
         lib.FFSdecode_to_buffer.restype = ctypes.c_int
-        lib.FFSdecode_to_buffer.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p]
+        lib.FFSdecode_to_buffer.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p]
 
         # FMFormat FMFormat_of_original(FFSTypeHandle)
         lib.FMFormat_of_original.restype = ctypes.c_void_p
@@ -110,8 +107,7 @@ class FFSDecoder:
 
         # int FMdump_data(FMFormat, void*, int)
         lib.FMdump_data.restype = ctypes.c_int
-        lib.FMdump_data.argtypes = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+        lib.FMdump_data.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
 
         # int FFShas_conversion(FFSTypeHandle)
         lib.FFShas_conversion.restype = ctypes.c_int
@@ -119,8 +115,7 @@ class FFSDecoder:
 
         # void establish_conversion(FFSContext, FFSTypeHandle, FMStructDescList)
         lib.establish_conversion.restype = None
-        lib.establish_conversion.argtypes = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        lib.establish_conversion.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         # FMStructDescList FMcopy_struct_list(FMStructDescList)
         lib.FMcopy_struct_list.restype = ctypes.c_void_p
@@ -141,8 +136,10 @@ class FFSDecoder:
         # int FFSdecode_in_place(FFSContext, char*, void**)
         lib.FFSdecode_in_place.restype = ctypes.c_int
         lib.FFSdecode_in_place.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p,
-            ctypes.POINTER(ctypes.c_void_p)]
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_void_p),
+        ]
 
     def load_metametadata(self, mmd_records):
         """Load metametadata records into the FFS context.
@@ -152,9 +149,8 @@ class FFSDecoder:
         """
         for id_bytes, info_bytes in mmd_records:
             self.lib.load_external_format_FMcontext(
-                self.fm_context,
-                id_bytes, len(id_bytes),
-                info_bytes)
+                self.fm_context, id_bytes, len(id_bytes), info_bytes
+            )
 
     def decode(self, encoded_buf):
         """Decode an FFS-encoded metadata buffer.
@@ -168,24 +164,19 @@ class FFSDecoder:
         """
         buf = ctypes.create_string_buffer(bytes(encoded_buf))
 
-        ffs_type = self.lib.FFSTypeHandle_from_encode(
-            self.ffs_context, buf)
+        ffs_type = self.lib.FFSTypeHandle_from_encode(self.ffs_context, buf)
         if not ffs_type:
             return None
 
         # Establish conversion if needed
         if not self.lib.FFShas_conversion(ffs_type):
-            fm_format = self.lib.FMformat_from_ID(
-                self.fm_context, buf)
-            desc_list = self.lib.FMcopy_struct_list(
-                self.lib.format_list_of_FMFormat(fm_format))
-            self.lib.establish_conversion(
-                self.ffs_context, ffs_type, desc_list)
+            fm_format = self.lib.FMformat_from_ID(self.fm_context, buf)
+            desc_list = self.lib.FMcopy_struct_list(self.lib.format_list_of_FMFormat(fm_format))
+            self.lib.establish_conversion(self.ffs_context, ffs_type, desc_list)
             self.lib.FMfree_struct_list(desc_list)
 
         # Decode
-        decode_len = self.lib.FFS_est_decode_length(
-            self.ffs_context, buf, len(encoded_buf))
+        decode_len = self.lib.FFS_est_decode_length(self.ffs_context, buf, len(encoded_buf))
         decoded = ctypes.create_string_buffer(decode_len)
         self.lib.FFSdecode_to_buffer(self.ffs_context, buf, decoded)
 
@@ -193,7 +184,7 @@ class FFSDecoder:
         fm_format = self.lib.FMFormat_of_original(ffs_type)
         format_name = self.lib.name_of_FMformat(fm_format)
         if format_name:
-            format_name = format_name.decode('utf-8', errors='replace')
+            format_name = format_name.decode("utf-8", errors="replace")
 
         # Extract field list
         desc_list_ptr = self.lib.format_list_of_FMFormat(fm_format)
@@ -221,8 +212,7 @@ class FFSDecoder:
         # Read the field_list pointer (second field in first struct)
         ptr_size = ctypes.sizeof(ctypes.c_void_p)
         # format_name is at offset 0 (ptr), field_list at offset ptr_size
-        field_list_ptr = ctypes.c_void_p.from_address(
-            desc_list_ptr + ptr_size).value
+        field_list_ptr = ctypes.c_void_p.from_address(desc_list_ptr + ptr_size).value
         if not field_list_ptr:
             return []
 
@@ -238,17 +228,14 @@ class FFSDecoder:
             name_ptr = ctypes.c_void_p.from_address(base).value
             if not name_ptr:
                 break
-            type_ptr = ctypes.c_void_p.from_address(
-                base + ptr_size).value
+            type_ptr = ctypes.c_void_p.from_address(base + ptr_size).value
 
-            name = ctypes.string_at(name_ptr).decode(
-                'utf-8', errors='replace')
-            ftype = ctypes.string_at(type_ptr).decode(
-                'utf-8', errors='replace')
-            fsize = ctypes.c_int.from_address(
-                base + 2 * ptr_size).value
+            name = ctypes.string_at(name_ptr).decode("utf-8", errors="replace")
+            ftype = ctypes.string_at(type_ptr).decode("utf-8", errors="replace")
+            fsize = ctypes.c_int.from_address(base + 2 * ptr_size).value
             foffset = ctypes.c_int.from_address(
-                base + 2 * ptr_size + ctypes.sizeof(ctypes.c_int)).value
+                base + 2 * ptr_size + ctypes.sizeof(ctypes.c_int)
+            ).value
 
             fields.append((name, ftype, fsize, foffset))
             i += 1

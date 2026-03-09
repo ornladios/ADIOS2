@@ -1,6 +1,6 @@
 scripts/ci/scripts/github-prs-to-gitlab.sh
 scripts/ci/scripts/run-clang-format.sh
-scripts/ci/scripts/run-flake8.sh
+scripts/ci/scripts/run-ruff.sh
 scripts/developer/git/setup-aliases
 scripts/developer/git/setup-hooks
 scripts/developer/git/setup-remotes

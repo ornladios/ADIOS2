@@ -9,11 +9,11 @@ import unittest
 import numpy as np
 import adios2.bindings as adios2
 import multiprocessing as mp
-mp.set_start_method('fork')
+
+mp.set_start_method("fork")
 
 
 class TestDataMan1D(unittest.TestCase):
-
     def setUp(self):
         self.conf = {
             "IPAddress": "127.0.0.1",
@@ -49,8 +49,7 @@ class TestDataMan1D(unittest.TestCase):
 
         wan.SetParameters(self.conf)
         writer = wan.Open("testdata", adios2.Mode.Write)
-        sendbuffer = wan.DefineVariable("np_data", data, shape,
-                                        start, count, adios2.ConstantDims)
+        sendbuffer = wan.DefineVariable("np_data", data, shape, start, count, adios2.ConstantDims)
         self.assertIsNotNone(sendbuffer)
         if sendbuffer:
             writer.BeginStep()
@@ -84,9 +83,8 @@ class TestDataMan1D(unittest.TestCase):
                 raise StopIteration()
             reader.EndStep()
         reader.Close()
-        self.assertTrue(all([data[0][i] == self.fill_value for i
-                             in range(len(data))]))
+        self.assertTrue(all([data[0][i] == self.fill_value for i in range(len(data))]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

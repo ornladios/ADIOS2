@@ -75,8 +75,7 @@ class TestDerivedVariable(unittest.TestCase):
                 t = f.read("temps", start=[0], count=temps.count())
                 if not (t == self.TEMP).all():
                     raise ValueError(
-                        "ERROR: Reading 'temps' failed. "
-                        f"Data does not match original. data = {t}"
+                        f"ERROR: Reading 'temps' failed. Data does not match original. data = {t}"
                     )
 
                 ts = f.read("derived/storedata", start=[0], count=temps_ds.count())

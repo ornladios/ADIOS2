@@ -15,4 +15,6 @@ then
   cd "${SOURCE_DIR}" || exit
 fi
 
-exec black --check --diff .
+pip3 install --quiet ruff
+ruff check .
+ruff format --check .
