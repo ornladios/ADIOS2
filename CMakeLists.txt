@@ -24,14 +24,13 @@ project(ADIOS2 VERSION ${ADIOS2_VERSION})
 include(GNUInstallDirs)
 
 if (ADIOS2_USE_PIP)
-  # Only UNIX is supported currently
   if (UNIX)
-    # Linux bundles what libraries we have when they're put beside the modules.
     set(CMAKE_INSTALL_LIBDIR "adios2")
     set(CMAKE_INSTALL_INCLUDEDIR "adios2/include")
-    # ELF loader settings.
     set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
     list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN")
+  elseif(WIN32)
+    set(CMAKE_INSTALL_BINDIR "adios2/bindings")
   endif ()
 endif ()
 
