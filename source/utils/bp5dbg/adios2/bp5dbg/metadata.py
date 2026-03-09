@@ -12,19 +12,29 @@ from .utils import GetTypeName
 
 # ADIOS2 DataType enum values (matching ADIOSTypes.h)
 _adios_type_names = {
-    1: "int8_t", 2: "int16_t", 3: "int32_t", 4: "int64_t",
-    5: "uint8_t", 6: "uint16_t", 7: "uint32_t", 8: "uint64_t",
-    9: "float", 10: "double", 11: "long double",
-    12: "float complex", 13: "double complex",
-    14: "string", 15: "char",
+    1: "int8_t",
+    2: "int16_t",
+    3: "int32_t",
+    4: "int64_t",
+    5: "uint8_t",
+    6: "uint16_t",
+    7: "uint32_t",
+    8: "uint64_t",
+    9: "float",
+    10: "double",
+    11: "long double",
+    12: "float complex",
+    13: "double complex",
+    14: "string",
+    15: "char",
 }
 
 _shape_names = {
-    'g': "GlobalValue",
-    'G': "GlobalArray",
-    'J': "JoinedArray",
-    'l': "LocalValue",
-    'L': "LocalArray",
+    "g": "GlobalValue",
+    "G": "GlobalArray",
+    "J": "JoinedArray",
+    "l": "LocalValue",
+    "L": "LocalArray",
 }
 
 _ptr_size = ctypes.sizeof(ctypes.c_void_p)
@@ -71,7 +81,7 @@ def _read_string_ptr(buf, offset):
     ptr = _read_ptr(buf, offset)
     if not ptr:
         return None
-    return ctypes.string_at(ptr).decode('utf-8', errors='replace')
+    return ctypes.string_at(ptr).decode("utf-8", errors="replace")
 
 
 def _parse_field_name(field_name):
@@ -89,31 +99,32 @@ def _parse_field_name(field_name):
         return None
 
     shape_char = field_name[2]
-    if shape_char not in ('g', 'G', 'J', 'l', 'L'):
+    if shape_char not in ("g", "G", "J", "l", "L"):
         return None
 
     sep = field_name[3]
-    is_derived = (sep == '-')
+    is_derived = sep == "-"
 
-    if sep == '_':
+    if sep == "_":
         rest = field_name[4:]
-    elif sep == '-':
+    elif sep == "-":
         # Derived: expression encoded between dashes
         # Find the underscore after the expression
         # Format: BP<shape>-<len>-<base64>_<elemsize>_<typeid>_<name>
         dash_rest = field_name[4:]
         # Skip past the expression: find digits, dash, base64, then underscore
         import re
-        m = re.match(r'(\d+)-([A-Za-z0-9+/=]+)-', dash_rest)
+
+        m = re.match(r"(\d+)-([A-Za-z0-9+/=]+)-", dash_rest)
         if m:
-            rest = dash_rest[m.end():]
+            rest = dash_rest[m.end() :]
         else:
             rest = dash_rest
     else:
         return None
 
     # Try to parse as <elemsize>_<typeid>_<varname>
-    parts = rest.split('_', 2)
+    parts = rest.split("_", 2)
     if len(parts) >= 3:
         try:
             elem_size = int(parts[0])
@@ -136,22 +147,28 @@ def _type_name(type_id):
 
 def _decode_scalar(decoded_buf, field_offset, field_size, type_id):
     """Read a scalar value from decoded buffer at given offset."""
-    raw = bytes(decoded_buf[field_offset:field_offset + field_size])
+    raw = bytes(decoded_buf[field_offset : field_offset + field_size])
     if len(raw) < field_size:
         return "<truncated>"
 
     fmt_map = {
-        1: ('b', 1), 2: ('<h', 2), 3: ('<i', 4), 4: ('<q', 8),  # signed
-        5: ('B', 1), 6: ('<H', 2), 7: ('<I', 4), 8: ('<Q', 8),  # unsigned
-        9: ('<f', 4), 10: ('<d', 8),  # float/double
-        15: ('c', 1),  # char
+        1: ("b", 1),
+        2: ("<h", 2),
+        3: ("<i", 4),
+        4: ("<q", 8),  # signed
+        5: ("B", 1),
+        6: ("<H", 2),
+        7: ("<I", 4),
+        8: ("<Q", 8),  # unsigned
+        9: ("<f", 4),
+        10: ("<d", 8),  # float/double
+        15: ("c", 1),  # char
     }
 
     if type_id == 14:  # string
         ptr = _read_ptr(decoded_buf, field_offset)
         if ptr:
-            return '"' + ctypes.string_at(ptr).decode(
-                'utf-8', errors='replace') + '"'
+            return '"' + ctypes.string_at(ptr).decode("utf-8", errors="replace") + '"'
         return '""'
 
     if type_id in fmt_map:
@@ -163,10 +180,10 @@ def _decode_scalar(decoded_buf, field_offset, field_size, type_id):
     if type_id == 11:  # long double
         return f"<long double, {field_size} bytes>"
     if type_id == 12:  # float complex
-        r, i = struct.unpack('<ff', raw[:8])
+        r, i = struct.unpack("<ff", raw[:8])
         return f"({r}+{i}j)"
     if type_id == 13:  # double complex
-        r, i = struct.unpack('<dd', raw[:16])
+        r, i = struct.unpack("<dd", raw[:16])
         return f"({r}+{i}j)"
 
     return f"<raw {field_size} bytes>"
@@ -181,9 +198,16 @@ def _decode_minmax(ptr, block_count, elem_size, type_id):
     raw = (ctypes.c_char * total_bytes).from_address(ptr)
 
     fmt_map = {
-        1: 'b', 2: '<h', 3: '<i', 4: '<q',
-        5: 'B', 6: '<H', 7: '<I', 8: '<Q',
-        9: '<f', 10: '<d',
+        1: "b",
+        2: "<h",
+        3: "<i",
+        4: "<q",
+        5: "B",
+        6: "<H",
+        7: "<I",
+        8: "<Q",
+        9: "<f",
+        10: "<d",
     }
     fmt = fmt_map.get(type_id)
     if not fmt:
@@ -198,8 +222,9 @@ def _decode_minmax(ptr, block_count, elem_size, type_id):
     return results
 
 
-def _print_array_field(decoded_buf, field_offset, field_type,
-                       var_name, shape_char, elem_size, type_id, indent):
+def _print_array_field(
+    decoded_buf, field_offset, field_type, var_name, shape_char, elem_size, type_id, indent
+):
     """Print decoded array metadata from a MetaArrayRec variant."""
     # Determine variant from field_type
     has_operator = "Op" in field_type
@@ -239,7 +264,7 @@ def _print_array_field(decoded_buf, field_offset, field_type,
 
     shape_name = _shape_names.get(shape_char, "Unknown")
     tname = _type_name(type_id)
-    print(f"{indent}Var \"{var_name}\" ({shape_name}, {tname}, {dims}D)")
+    print(f'{indent}Var "{var_name}" ({shape_name}, {tname}, {dims}D)')
     print(f"{indent}  BlockCount: {block_count}")
 
     shape = _read_size_t_array(shape_ptr, dims)
@@ -249,16 +274,13 @@ def _print_array_field(decoded_buf, field_offset, field_type,
     counts = _read_size_t_array(count_ptr, db_count)
     offsets = _read_size_t_array(offsets_ptr, db_count)
     datalocs = _read_size_t_array(dataloc_ptr, block_count)
-    datasizes = _read_size_t_array(datasize_ptr, block_count) \
-        if has_operator else []
+    datasizes = _read_size_t_array(datasize_ptr, block_count) if has_operator else []
 
-    minmax_vals = _decode_minmax(
-        minmax_ptr, block_count, elem_size, type_id) \
-        if has_minmax else []
+    minmax_vals = _decode_minmax(minmax_ptr, block_count, elem_size, type_id) if has_minmax else []
 
     for b in range(block_count):
-        blk_count = counts[b * dims:(b + 1) * dims] if counts else []
-        blk_offset = offsets[b * dims:(b + 1) * dims] if offsets else []
+        blk_count = counts[b * dims : (b + 1) * dims] if counts else []
+        blk_offset = offsets[b * dims : (b + 1) * dims] if offsets else []
         loc = datalocs[b] if b < len(datalocs) else "?"
         parts = [f"Count {blk_count}"]
         if blk_offset:
@@ -306,12 +328,12 @@ def _print_decoded_metadata(decoded_buf, field_list, kind, indent):
             continue
 
         var_name, shape_char, elem_size, type_id, is_derived = parsed
-        is_array = shape_char in ('G', 'L', 'J')
+        is_array = shape_char in ("G", "L", "J")
 
         if is_array:
-            _print_array_field(decoded_buf, foffset, ftype,
-                               var_name, shape_char, elem_size,
-                               type_id, indent)
+            _print_array_field(
+                decoded_buf, foffset, ftype, var_name, shape_char, elem_size, type_id, indent
+            )
         else:
             # Scalar (GlobalValue or LocalValue)
             shape_name = _shape_names.get(shape_char, "Unknown")
@@ -321,7 +343,7 @@ def _print_decoded_metadata(decoded_buf, field_list, kind, indent):
                 actual_type_id = _ffs_type_to_adios_type(ftype, fsize)
             tname = _type_name(actual_type_id)
             val = _decode_scalar(decoded_buf, foffset, fsize, actual_type_id)
-            print(f"{indent}Var \"{var_name}\" ({shape_name}, {tname})")
+            print(f'{indent}Var "{var_name}" ({shape_name}, {tname})')
             print(f"{indent}  Value: {val}")
 
         i += 1
@@ -337,16 +359,14 @@ def _print_attr_field(decoded_buf, field_list, idx, indent):
         if idx + 1 < len(field_list):
             data_name = field_list[idx + 1][0]
             # Attr name: strip "BP5_" prefix
-            attr_name = data_name[4:] if data_name.startswith("BP5_") else \
-                data_name
-            print(f"{indent}Attr \"{attr_name}\" "
-                  f"(array, {elem_count} elements)")
+            attr_name = data_name[4:] if data_name.startswith("BP5_") else data_name
+            print(f'{indent}Attr "{attr_name}" (array, {elem_count} elements)')
     elif name.startswith("BP5_") or name.startswith("bp5_"):
         # Simple scalar attribute
         attr_name = name[4:]
         # Try to figure out type from field_type
         val = _decode_attr_value(decoded_buf, foffset, ftype, fsize)
-        print(f"{indent}Attr \"{attr_name}\" = {val}")
+        print(f'{indent}Attr "{attr_name}" = {val}')
 
 
 def _decode_attr_value(decoded_buf, offset, ftype, fsize):
@@ -355,23 +375,23 @@ def _decode_attr_value(decoded_buf, offset, ftype, fsize):
         return _read_string_ptr(decoded_buf, offset) or '""'
     if ftype == "integer":
         if fsize == 4:
-            return struct.unpack_from('<i', decoded_buf, offset)[0]
+            return struct.unpack_from("<i", decoded_buf, offset)[0]
         elif fsize == 8:
-            return struct.unpack_from('<q', decoded_buf, offset)[0]
+            return struct.unpack_from("<q", decoded_buf, offset)[0]
         elif fsize == 2:
-            return struct.unpack_from('<h', decoded_buf, offset)[0]
+            return struct.unpack_from("<h", decoded_buf, offset)[0]
         elif fsize == 1:
-            return struct.unpack_from('<b', decoded_buf, offset)[0]
+            return struct.unpack_from("<b", decoded_buf, offset)[0]
     if ftype == "unsigned integer":
         if fsize == 4:
-            return struct.unpack_from('<I', decoded_buf, offset)[0]
+            return struct.unpack_from("<I", decoded_buf, offset)[0]
         elif fsize == 8:
-            return struct.unpack_from('<Q', decoded_buf, offset)[0]
+            return struct.unpack_from("<Q", decoded_buf, offset)[0]
     if ftype == "float":
         if fsize == 4:
-            return struct.unpack_from('<f', decoded_buf, offset)[0]
+            return struct.unpack_from("<f", decoded_buf, offset)[0]
         elif fsize == 8:
-            return struct.unpack_from('<d', decoded_buf, offset)[0]
+            return struct.unpack_from("<d", decoded_buf, offset)[0]
     return f"<{ftype}, {fsize} bytes>"
 
 
@@ -407,19 +427,18 @@ def _decode_step_metadata(f, buf, pos, WriterCount, mdpos, ffsDecoder):
     md_offset = data_offset
     for w in range(WriterCount):
         if var_sizes[w] > 0:
-            encoded = buf[md_offset:md_offset + var_sizes[w]]
+            encoded = buf[md_offset : md_offset + var_sizes[w]]
             result = ffsDecoder.decode(encoded)
             if result:
                 field_list, decoded_data, format_name, fm_format = result
                 print(f"  Writer {w} variable metadata (decoded):")
-                _print_decoded_metadata(
-                    decoded_data, field_list, "variable", "    ")
+                _print_decoded_metadata(decoded_data, field_list, "variable", "    ")
         md_offset += var_sizes[w]
 
     # Decode attribute metadata for each writer
     for w in range(WriterCount):
         if attr_sizes[w] > 0:
-            encoded = buf[md_offset:md_offset + attr_sizes[w]]
+            encoded = buf[md_offset : md_offset + attr_sizes[w]]
             result = ffsDecoder.decode(encoded)
             if result:
                 field_list, decoded_data, format_name, fm_format = result
@@ -427,8 +446,7 @@ def _decode_step_metadata(f, buf, pos, WriterCount, mdpos, ffsDecoder):
                 if format_name == "GenericAttributes":
                     _print_generic_attrs(decoded_data, field_list, "    ")
                 else:
-                    _print_decoded_metadata(
-                        decoded_data, field_list, "attribute", "    ")
+                    _print_decoded_metadata(decoded_data, field_list, "attribute", "    ")
         md_offset += attr_sizes[w]
 
 
@@ -478,7 +496,7 @@ def _decode_attr_name(raw_name):
     if not raw_name or len(raw_name) < 2:
         return raw_name, 0, False
     type_char = ord(raw_name[0])
-    base_type = type_char - ord('0')
+    base_type = type_char - ord("0")
     is_array = False
     if base_type >= 18:
         is_array = True
@@ -493,29 +511,36 @@ def _print_prim_attrs(arr_ptr, count, indent):
     for i in range(count):
         base = arr_ptr + i * rec_size
         name_ptr = ctypes.c_void_p.from_address(base).value
-        total_size = ctypes.c_size_t.from_address(
-            base + _ptr_size).value
-        values_ptr = ctypes.c_void_p.from_address(
-            base + _ptr_size + _size_t_size).value
+        total_size = ctypes.c_size_t.from_address(base + _ptr_size).value
+        values_ptr = ctypes.c_void_p.from_address(base + _ptr_size + _size_t_size).value
         raw_name = ""
         if name_ptr:
-            raw_name = ctypes.string_at(name_ptr).decode(
-                'utf-8', errors='replace')
+            raw_name = ctypes.string_at(name_ptr).decode("utf-8", errors="replace")
         attr_name, type_id, is_array = _decode_attr_name(raw_name)
         tname = _type_name(type_id)
         elem_size = total_size
         if is_array and elem_size > 0:
             # TotalElementSize is total bytes for array attrs
-            type_sz = {1: 1, 2: 2, 3: 4, 4: 8, 5: 1, 6: 2, 7: 4, 8: 8,
-                       9: 4, 10: 8, 12: 8, 13: 16}.get(type_id, 0)
+            type_sz = {
+                1: 1,
+                2: 2,
+                3: 4,
+                4: 8,
+                5: 1,
+                6: 2,
+                7: 4,
+                8: 8,
+                9: 4,
+                10: 8,
+                12: 8,
+                13: 16,
+            }.get(type_id, 0)
             n_elems = total_size // type_sz if type_sz else 0
             val_str = _read_prim_values(values_ptr, type_id, n_elems)
-            print(f"{indent}Attr \"{attr_name}\" ({tname}[{n_elems}])"
-                  f" = {val_str}")
+            print(f'{indent}Attr "{attr_name}" ({tname}[{n_elems}]) = {val_str}')
         else:
             val_str = _read_prim_values(values_ptr, type_id, 1)
-            print(f"{indent}Attr \"{attr_name}\" ({tname})"
-                  f" = {val_str}")
+            print(f'{indent}Attr "{attr_name}" ({tname}) = {val_str}')
 
 
 def _read_prim_values(values_ptr, type_id, n_elems):
@@ -524,9 +549,16 @@ def _read_prim_values(values_ptr, type_id, n_elems):
         return "N/A"
 
     fmt_map = {
-        1: ('b', 1), 2: ('h', 2), 3: ('i', 4), 4: ('q', 8),
-        5: ('B', 1), 6: ('H', 2), 7: ('I', 4), 8: ('Q', 8),
-        9: ('f', 4), 10: ('d', 8),
+        1: ("b", 1),
+        2: ("h", 2),
+        3: ("i", 4),
+        4: ("q", 8),
+        5: ("B", 1),
+        6: ("H", 2),
+        7: ("I", 4),
+        8: ("Q", 8),
+        9: ("f", 4),
+        10: ("d", 8),
     }
     if type_id not in fmt_map:
         return f"<type {type_id}>"
@@ -536,7 +568,7 @@ def _read_prim_values(values_ptr, type_id, n_elems):
     raw = (ctypes.c_char * total).from_address(values_ptr)
     values = []
     for j in range(n_elems):
-        val = struct.unpack_from('<' + fmt, raw, j * sz)[0]
+        val = struct.unpack_from("<" + fmt, raw, j * sz)[0]
         values.append(val)
     if n_elems == 1:
         return str(values[0])
@@ -550,60 +582,56 @@ def _print_str_attrs(arr_ptr, count, indent):
     for i in range(count):
         base = arr_ptr + i * rec_size
         name_ptr = ctypes.c_void_p.from_address(base).value
-        elem_count = ctypes.c_size_t.from_address(
-            base + _ptr_size).value
-        values_ptr = ctypes.c_void_p.from_address(
-            base + _ptr_size + _size_t_size).value
+        elem_count = ctypes.c_size_t.from_address(base + _ptr_size).value
+        values_ptr = ctypes.c_void_p.from_address(base + _ptr_size + _size_t_size).value
         raw_name = ""
         if name_ptr:
-            raw_name = ctypes.string_at(name_ptr).decode(
-                'utf-8', errors='replace')
+            raw_name = ctypes.string_at(name_ptr).decode("utf-8", errors="replace")
         attr_name, type_id, is_array = _decode_attr_name(raw_name)
         if elem_count == 1 and values_ptr:
             str_ptr = ctypes.c_void_p.from_address(values_ptr).value
             if str_ptr:
-                val = ctypes.string_at(str_ptr).decode(
-                    'utf-8', errors='replace')
-                print(f"{indent}Attr \"{attr_name}\" (string) = \"{val}\"")
+                val = ctypes.string_at(str_ptr).decode("utf-8", errors="replace")
+                print(f'{indent}Attr "{attr_name}" (string) = "{val}"')
             else:
-                print(f"{indent}Attr \"{attr_name}\" (string) = \"\"")
+                print(f'{indent}Attr "{attr_name}" (string) = ""')
         elif elem_count > 1 and values_ptr:
             strs = []
             for j in range(elem_count):
-                sp = ctypes.c_void_p.from_address(
-                    values_ptr + j * _ptr_size).value
+                sp = ctypes.c_void_p.from_address(values_ptr + j * _ptr_size).value
                 if sp:
-                    strs.append(ctypes.string_at(sp).decode(
-                        'utf-8', errors='replace'))
+                    strs.append(ctypes.string_at(sp).decode("utf-8", errors="replace"))
                 else:
                     strs.append("")
-            print(f"{indent}Attr \"{attr_name}\" (string[{elem_count}])"
-                  f" = {strs}")
+            print(f'{indent}Attr "{attr_name}" (string[{elem_count}]) = {strs}')
         else:
-            print(f"{indent}Attr \"{attr_name}\" (string) = \"\"")
+            print(f'{indent}Attr "{attr_name}" (string) = ""')
 
 
-def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry,
-                     ffsDecoder=None):
+def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry, ffsDecoder=None):
     # Read metadata of one step
-    step = MetadataEntry['step']
-    mdpos = MetadataEntry['mdpos']
-    mdsize = MetadataEntry['mdsize']
+    step = MetadataEntry["step"]
+    mdpos = MetadataEntry["mdpos"]
+    mdsize = MetadataEntry["mdsize"]
     # flushcount = MetadataEntry['flushcount']
-    WriterCount = WriterMapEntry['WriterCount']
+    WriterCount = WriterMapEntry["WriterCount"]
 
     if mdpos + mdsize > fileSize:
-        print(f"ERROR: step {step} metadata pos {mdpos} + size {mdsize} "
-              f"is beyond the metadata file size {fileSize}")
+        print(
+            f"ERROR: step {step} metadata pos {mdpos} + size {mdsize} "
+            f"is beyond the metadata file size {fileSize}"
+        )
         return False
 
     currentpos = f.tell()
     if mdpos > currentpos:
-        print(f"Offset {currentpos}..{mdpos-1} is a gap unaccounted for")
+        print(f"Offset {currentpos}..{mdpos - 1} is a gap unaccounted for")
 
     if mdpos < currentpos:
-        print(f"ERROR: step {step} metadata pos {mdpos} points before the "
-              f"expected position in file {currentpos}")
+        print(
+            f"ERROR: step {step} metadata pos {mdpos} points before the "
+            f"expected position in file {currentpos}"
+        )
         return False
 
     f.seek(mdpos)
@@ -615,15 +643,16 @@ def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry,
     print(f"Step {step}: ")
     print(f"  Offset = {mdpos}")
 
-    mdsize_in_file = np.frombuffer(buf, dtype=np.uint64, count=1,
-                                   offset=pos)
+    mdsize_in_file = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)
     pos = pos + 8
-    if (mdsize == mdsize_in_file[0] + 8):
+    if mdsize == mdsize_in_file[0] + 8:
         print(f"  Size = {mdsize_in_file[0]}")
     else:
-        print(f"ERROR: md record supposed to be {mdsize-8} + 8 bytes "
-              f"(as recorded in index), but found in file "
-              f"{mdsize_in_file[0]}")
+        print(
+            f"ERROR: md record supposed to be {mdsize - 8} + 8 bytes "
+            f"(as recorded in index), but found in file "
+            f"{mdsize_in_file[0]}"
+        )
 
     MDPosition = mdpos + 2 * 8 * WriterCount
     print("  Variable metadata entries: ")
@@ -631,8 +660,7 @@ def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry,
         a = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)
         thisMDSize = int(a[0])
         pos = pos + 8
-        print(f"    Writer {w}: md size {thisMDSize} "
-              f"offset {MDPosition}")
+        print(f"    Writer {w}: md size {thisMDSize} offset {MDPosition}")
         MDPosition = MDPosition + thisMDSize
 
     print("  Attribute metadata entries: ")
@@ -640,14 +668,15 @@ def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry,
         a = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)
         thisMDSize = int(a[0])
         pos = pos + 8
-        print(f"    Writer {w}: md size {thisMDSize} "
-              f"offset {MDPosition}")
+        print(f"    Writer {w}: md size {thisMDSize} offset {MDPosition}")
         MDPosition = MDPosition + thisMDSize
 
-    if (mdsize_in_file != MDPosition - mdpos):
-        print(f"ERROR: entries supposed to end at start offset+size "
-              f"{mdpos}+{mdsize_in_file[0]}, but it ends instead on offset "
-              f"{MDPosition}")
+    if mdsize_in_file != MDPosition - mdpos:
+        print(
+            f"ERROR: entries supposed to end at start offset+size "
+            f"{mdpos}+{mdsize_in_file[0]}, but it ends instead on offset "
+            f"{MDPosition}"
+        )
 
     # Decode with FFS if available
     if ffsDecoder:
@@ -667,9 +696,8 @@ def DumpMetaData(fileName, MetadataIndexTable, WriterMap, ffsDecoder=None):
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
         for MetadataEntry in MetadataIndexTable:
-            WriterMapEntry = WriterMap[MetadataEntry['writermapindex']]
-            status = ReadMetadataStep(
-                f, fileSize, MetadataEntry, WriterMapEntry, ffsDecoder)
+            WriterMapEntry = WriterMap[MetadataEntry["writermapindex"]]
+            status = ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry, ffsDecoder)
     return status
 
 

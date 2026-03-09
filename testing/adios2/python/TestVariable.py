@@ -9,7 +9,6 @@ import numpy as np
 
 
 class TestVariable(unittest.TestCase):
-
     FILENAME = "pythontestvariable.bp"
     TEMP = np.array([35, 40, 30, 45], dtype=np.int64)
 

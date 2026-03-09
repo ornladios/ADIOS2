@@ -97,7 +97,15 @@ exclude = ["thirdparty", ".gitlab/config/SpackCIBridge.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "PL"]
-# E302/F401/F403/F405/W504: carried over from flake8 config
+# E302/F401/F403/F405: carried over from flake8 config
 # PLR0904: too-many-public-methods (was R0904 in pylint disable list)
 # PLR0913: too-many-arguments (was R0913 in pylint disable list)
-ignore = ["E302", "F401", "F403", "F405", "W504", "PLR0904", "PLR0913"]
+# PLW1641: not previously enforced by pylint
+ignore = ["E302", "F401", "F403", "F405", "PLR0904", "PLR0913", "PLW1641"]
+
+[tool.ruff.lint.per-file-ignores]
+# PL rules only apply to the main Python package (mirrors original pylint scope)
+"bindings/**" = ["PL"]
+"examples/**" = ["PL"]
+"source/**" = ["PL"]
+"testing/**" = ["PL"]

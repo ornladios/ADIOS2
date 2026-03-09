@@ -9,22 +9,22 @@ from os.path import basename, exists, isdir
 import glob
 from adios2.bp4dbg import *
 
+
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "FILE", help="Name of the input file (.bp, .bp/md.idx, " +
-        ".bp/md.0 or .bp/data.XXX)")
+        "FILE", help="Name of the input file (.bp, .bp/md.idx, " + ".bp/md.0 or .bp/data.XXX)"
+    )
     # parser.add_argument("--printdata", "-p",
     #                    help="Dump data of this variable as well", default="")
-    parser.add_argument("--verbose", "-v",
-                        help="More verbosity", action="count")
-    parser.add_argument("--no-indextable", "-x",
-                        help="Do not print index table md.idx",
-                        action="store_true")
-    parser.add_argument("--no-metadata", "-m",
-                        help="Do not print metadata md.0", action="store_true")
-    parser.add_argument("--no-data", "-d",
-                        help="Do not print data data.*", action="store_true")
+    parser.add_argument("--verbose", "-v", help="More verbosity", action="count")
+    parser.add_argument(
+        "--no-indextable", "-x", help="Do not print index table md.idx", action="store_true"
+    )
+    parser.add_argument(
+        "--no-metadata", "-m", help="Do not print metadata md.0", action="store_true"
+    )
+    parser.add_argument("--no-data", "-d", help="Do not print data data.*", action="store_true")
     args = parser.parse_args()
 
     # default values
@@ -96,7 +96,6 @@ def DumpDataFiles(args):
 
 
 if __name__ == "__main__":
-
     args = SetupArgs()
     CheckFileName(args)
     # print(args)

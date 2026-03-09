@@ -31,8 +31,7 @@ io = adios.DeclareIO("writer")
 varStr = io.DefineVariable("note")
 varCols = io.DefineVariable("ncols", npcols)
 varRows = io.DefineVariable("nrows", nprows)
-varT = io.DefineVariable(
-    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
+varT = io.DefineVariable("temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
 
 io.DefineAttribute("aaa", numpy.array([3.1415]))
 io.DefineAttribute("anote", "just a string")

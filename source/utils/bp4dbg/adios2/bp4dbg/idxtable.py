@@ -14,12 +14,18 @@ def ReadIndex(f, fileSize):
     nRows = int(nBytes / 64)
     table = f.read(nBytes)
     print(" ")
-    print("-----------------------------------------------------------------"
-          "------------------------------------------")
-    print("|   Step   |   Rank   |    PGPtr    |   VarPtr    |   AttPtr    |"
-          "   EndPtr    |  Timestamp  |    unused   |")
-    print("+----------------------------------------------------------------"
-          "-----------------------------------------+")
+    print(
+        "-----------------------------------------------------------------"
+        "------------------------------------------"
+    )
+    print(
+        "|   Step   |   Rank   |    PGPtr    |   VarPtr    |   AttPtr    |"
+        "   EndPtr    |  Timestamp  |    unused   |"
+    )
+    print(
+        "+----------------------------------------------------------------"
+        "-----------------------------------------+"
+    )
     for r in range(0, nRows):
         pos = r * 64
         data = np.frombuffer(table, dtype=np.uint64, count=8, offset=pos)
@@ -31,15 +37,37 @@ def ReadIndex(f, fileSize):
         endptr = str(data[5]).rjust(12)
         time = str(data[6]).rjust(12)
         unused = str(data[7]).rjust(12)
-        print("|" + step + " |" + rank + " |" + pgptr + " |" + varptr + " |" +
-              attptr + " |" + endptr + " |" + time + " |" + unused + " |")
+        print(
+            "|"
+            + step
+            + " |"
+            + rank
+            + " |"
+            + pgptr
+            + " |"
+            + varptr
+            + " |"
+            + attptr
+            + " |"
+            + endptr
+            + " |"
+            + time
+            + " |"
+            + unused
+            + " |"
+        )
 
-    print("-----------------------------------------------------------------"
-          "------------------------------------------")
+    print(
+        "-----------------------------------------------------------------"
+        "------------------------------------------"
+    )
 
     if fileSize - f.tell() > 1:
-        print("ERROR: There are {0} bytes at the end of file"
-              " that cannot be interpreted".format(fileSize - f.tell() - 1))
+        print(
+            "ERROR: There are {0} bytes at the end of file that cannot be interpreted".format(
+                fileSize - f.tell() - 1
+            )
+        )
         return False
 
     return True

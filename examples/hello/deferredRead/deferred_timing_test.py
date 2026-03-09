@@ -22,7 +22,7 @@ with Stream(fname, "w") as outf:
     print(f"Write {Nvars} arrays of [{Nx}, {Ny}] shape")
     twrite_start = pc()
     for n in range(Nvars):
-        outf.write(f"data_{n:0>3}", data[n:n + 1, :, :].squeeze(), shape, start, count)
+        outf.write(f"data_{n:0>3}", data[n : n + 1, :, :].squeeze(), shape, start, count)
     outf.write("N", [Nvars, Nx, Ny])  # will be an array in output
     outf.write("Nx", np.array(Nx))  # will be a scalar in output
     outf.write("Ny", Ny)  # will be a scalar in output
@@ -60,7 +60,7 @@ with FileReader(fname) as inpf:
         var = inpf.inquire_variable(f"data_{n:0>3}")
         if var is not None:
             var.set_selection([start, shape])
-            data = inpf.read_in_buffer(var, buffer=in_data[n:n + 1, :, :], defer_read=True)
+            data = inpf.read_in_buffer(var, buffer=in_data[n : n + 1, :, :], defer_read=True)
     inpf.read_complete()
     tread_end = pc()
     print(f"Time of reading at once (Deferred mode): {tread_end - tread_start:0.6f}s")

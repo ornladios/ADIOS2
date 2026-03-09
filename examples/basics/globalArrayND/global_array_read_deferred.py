@@ -20,8 +20,7 @@ with adios2.FileReader("globalArray.bp") as f:
     print(f"Variable GlobalArray shape = {v.shape()}, steps = {v.steps()}")
     data = f.read(v, defer_read=True)
     print(
-        f"WRONG before data is read: data size = {data.size} "
-        f"min = {data.min()}, max = {data.max()}"
+        f"WRONG before data is read: data size = {data.size} min = {data.min()}, max = {data.max()}"
     )
     f.read_complete()
     print(

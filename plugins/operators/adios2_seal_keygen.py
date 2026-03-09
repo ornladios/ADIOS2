@@ -36,6 +36,4 @@ open(a.public_key_file, "wb").write(pk.encode())
 
 print(f"Public key: {a.public_key_file}\n  hex: {pk.encode(nacl.encoding.HexEncoder).decode()}")
 if a.cmd == "generate":
-    print(
-        f"Secret key: {a.secret_key_file}\n  hex: {sk.encode(nacl.encoding.HexEncoder).decode()}"
-    )
+    print(f"Secret key: {a.secret_key_file}\n  hex: {sk.encode(nacl.encoding.HexEncoder).decode()}")

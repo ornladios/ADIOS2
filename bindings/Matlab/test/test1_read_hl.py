@@ -21,6 +21,6 @@ inTemperatures = fr.read("temperature2D")
 print("temperature2d array size = " + str(inTemperatures.size))
 
 for row in inTemperatures:
-    print(''.join(['{:7}'.format(item) for item in row]))
+    print("".join(["{:7}".format(item) for item in row]))
 
 fr.close()

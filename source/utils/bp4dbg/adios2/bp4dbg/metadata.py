@@ -16,11 +16,15 @@ def ReadEncodedStringFromBuffer(buf, pos, ID, limit, lenbytes=2):
     namelen = np.frombuffer(buf, dtype=dt, count=1, offset=pos)[0]
     pos = pos + lenbytes
     if namelen > limit - lenbytes:
-        print("ERROR: " + ID + " string length ({0}) is longer than the "
-              "limit to stay inside the block ({1})".format(
-                  namelen, limit - lenbytes))
+        print(
+            "ERROR: "
+            + ID
+            + " string length ({0}) is longer than the limit to stay inside the block ({1})".format(
+                namelen, limit - lenbytes
+            )
+        )
         return False, "", namelen, pos
-    name = buf[pos:pos + namelen].decode('ascii')
+    name = buf[pos : pos + namelen].decode("ascii")
     pos = pos + namelen
     return True, name, namelen, pos
 
@@ -32,11 +36,14 @@ def ReadEncodedStringArrayFromBuffer(buf, pos, ID, limit, nStrings):
         namelen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
         pos = pos + 2
         if namelen > limit - 2:
-            print("ERROR: " + ID + " string length ({0}) is longer than the "
-                  "limit to stay inside the block ({1})".format(
-                      namelen, limit - 2))
+            print(
+                "ERROR: "
+                + ID
+                + " string length ({0}) is longer than the "
+                "limit to stay inside the block ({1})".format(namelen, limit - 2)
+            )
             return False, s, pos
-        name = buf[pos:pos + namelen].decode('ascii')
+        name = buf[pos : pos + namelen].decode("ascii")
         pos = pos + namelen
         limit = limit - namelen - 2
         s.append(name)
@@ -50,8 +57,11 @@ def ReadDimensionCharacteristics(buf, pos):
     dimLen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
     if dimLen != 24 * ndim:
-        print("ERROR: Encoded dimension length expected size = {0} bytes, "
-              "but found {1} bytes".format(24 * ndim, dimLen))
+        print(
+            "ERROR: Encoded dimension length expected size = {0} bytes, but found {1} bytes".format(
+                24 * ndim, dimLen
+            )
+        )
         return False, pos, ndim, lgo
 
     lgo = np.frombuffer(buf, dtype=np.uint64, count=3 * ndim, offset=pos)
@@ -60,58 +70,43 @@ def ReadDimensionCharacteristics(buf, pos):
 
 
 def bDataToNumpyArray(cData, typeName, nElements, startPos=0):
-    if typeName == 'byte':
-        return np.frombuffer(cData, dtype=np.int8, count=nElements,
-                             offset=startPos)
-    elif typeName == 'char':
-        return np.frombuffer(cData, dtype=np.uint8, count=nElements,
-                             offset=startPos)
-    elif typeName == 'short':
-        return np.frombuffer(cData, dtype=np.int16, count=nElements,
-                             offset=startPos)
-    elif typeName == 'integer':
-        return np.frombuffer(cData, dtype=np.int32, count=nElements,
-                             offset=startPos)
-    elif typeName == 'long':
-        return np.frombuffer(cData, dtype=np.int64, count=nElements,
-                             offset=startPos)
+    if typeName == "byte":
+        return np.frombuffer(cData, dtype=np.int8, count=nElements, offset=startPos)
+    elif typeName == "char":
+        return np.frombuffer(cData, dtype=np.uint8, count=nElements, offset=startPos)
+    elif typeName == "short":
+        return np.frombuffer(cData, dtype=np.int16, count=nElements, offset=startPos)
+    elif typeName == "integer":
+        return np.frombuffer(cData, dtype=np.int32, count=nElements, offset=startPos)
+    elif typeName == "long":
+        return np.frombuffer(cData, dtype=np.int64, count=nElements, offset=startPos)
 
-    elif typeName == 'unsigned_byte':
-        return np.frombuffer(cData, dtype=np.uint8, count=nElements,
-                             offset=startPos)
-    elif typeName == 'unsigned_short':
-        return np.frombuffer(cData, dtype=np.uint16, count=nElements,
-                             offset=startPos)
-    elif typeName == 'unsigned_integer':
-        return np.frombuffer(cData, dtype=np.uint32, count=nElements,
-                             offset=startPos)
-    elif typeName == 'unsigned_long':
-        return np.frombuffer(cData, dtype=np.uint64, count=nElements,
-                             offset=startPos)
+    elif typeName == "unsigned_byte":
+        return np.frombuffer(cData, dtype=np.uint8, count=nElements, offset=startPos)
+    elif typeName == "unsigned_short":
+        return np.frombuffer(cData, dtype=np.uint16, count=nElements, offset=startPos)
+    elif typeName == "unsigned_integer":
+        return np.frombuffer(cData, dtype=np.uint32, count=nElements, offset=startPos)
+    elif typeName == "unsigned_long":
+        return np.frombuffer(cData, dtype=np.uint64, count=nElements, offset=startPos)
 
-    elif typeName == 'real':
-        return np.frombuffer(cData, dtype=np.float32, count=nElements,
-                             offset=startPos)
-    elif typeName == 'double':
-        return np.frombuffer(cData, dtype=np.float64, count=nElements,
-                             offset=startPos)
-    elif typeName == 'long_double':
-        return np.frombuffer(cData, dtype=np.float128, count=nElements,
-                             offset=startPos)
+    elif typeName == "real":
+        return np.frombuffer(cData, dtype=np.float32, count=nElements, offset=startPos)
+    elif typeName == "double":
+        return np.frombuffer(cData, dtype=np.float64, count=nElements, offset=startPos)
+    elif typeName == "long_double":
+        return np.frombuffer(cData, dtype=np.float128, count=nElements, offset=startPos)
 
-    elif typeName == 'complex':
-        return np.frombuffer(cData, dtype=np.complex64, count=nElements,
-                             offset=startPos)
-    elif typeName == 'double_complex':
-        return np.frombuffer(cData, dtype=np.complex128, count=nElements,
-                             offset=startPos)
+    elif typeName == "complex":
+        return np.frombuffer(cData, dtype=np.complex64, count=nElements, offset=startPos)
+    elif typeName == "double_complex":
+        return np.frombuffer(cData, dtype=np.complex128, count=nElements, offset=startPos)
 
     else:
         return np.zeros(1, dtype=np.uint32)
 
 
-def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
-                                    fileOffset, isVarCharacteristics):
+def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID, fileOffset, isVarCharacteristics):
     cStartPosition = pos
     dataTypeName = GetTypeName(typeID)
     print("        Block {0}: ".format(idx))
@@ -136,11 +131,10 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
         cID = np.frombuffer(buf, dtype=np.uint8, count=1, offset=pos)[0]
         pos = pos + 1
         cName = GetCharacteristicName(cID)
-        print("                Type           : {0} ({1}) ".format(
-            cName, cID))
+        print("                Type           : {0} ({1}) ".format(cName, cID))
         cLen = GetCharacteristicDataLength(cID, typeID)
 
-        if cName == 'dimensions':
+        if cName == "dimensions":
             status, pos, ndim, lgo = ReadDimensionCharacteristics(buf, pos)
             if not status:
                 return status, pos
@@ -150,26 +144,26 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                 for d in range(ndim):
                     p = 3 * d
                     nElems = int(nElems * lgo[p])  # need for value later
-                    print("{0}:{1}:{2}".format(lgo[p], lgo[p + 1], lgo[p + 2]),
-                          end="")
+                    print("{0}:{1}:{2}".format(lgo[p], lgo[p + 1], lgo[p + 2]), end="")
                     if d < ndim - 1:
                         print(", ", end="")
                     else:
                         print(")")
 
-        elif cName == 'value' or cName == 'min' or cName == 'max':
-            if dataTypeName == 'string':
+        elif cName == "value" or cName == "min" or cName == "max":
+            if dataTypeName == "string":
                 namelimit = limit - (pos - cStartPosition)
                 status, s, sLen, pos = ReadEncodedStringFromBuffer(
-                    buf, pos, "String Value", namelimit)
+                    buf, pos, "String Value", namelimit
+                )
                 if not status:
                     return False, pos
-                print("                Value          : '" + s +
-                      "' ({0} bytes)".format(sLen))
-            elif dataTypeName == 'string_array':
+                print("                Value          : '" + s + "' ({0} bytes)".format(sLen))
+            elif dataTypeName == "string_array":
                 namelimit = limit - (pos - cStartPosition)
                 status, strList, pos = ReadEncodedStringArrayFromBuffer(
-                    buf, pos, "String Array", namelimit, lgo[0])
+                    buf, pos, "String Array", namelimit, lgo[0]
+                )
                 if not status:
                     return False, pos
                 print("                Value          : [", end="")
@@ -181,15 +175,14 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
 
             else:
                 if isVarCharacteristics:
-                    cData = buf[pos:pos + cLen]
+                    cData = buf[pos : pos + cLen]
                     pos = pos + cLen
                     data = bDataToNumpyArray(cData, dataTypeName, 1)
-                    print("                Value          : {0}"
-                          "  ({1} bytes)".format(data[0], cLen))
+                    print("                Value          : {0}  ({1} bytes)".format(data[0], cLen))
                 else:  # attribute value characteristics are different
                     dataTypeSize = GetTypeSize(typeID)
                     nBytes = int(nElems * dataTypeSize)
-                    cData = buf[pos:pos + nBytes]
+                    cData = buf[pos : pos + nBytes]
                     pos = pos + nBytes
                     data = bDataToNumpyArray(cData, dataTypeName, nElems)
                     print("                Value          : [", end="")
@@ -199,38 +192,31 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                             print(", ", end="")
                     print("]")
 
-        elif cName == 'offset' or cName == 'payload_offset':
-            cData = buf[pos:pos + cLen]
+        elif cName == "offset" or cName == "payload_offset":
+            cData = buf[pos : pos + cLen]
             pos = pos + cLen
-            data = bDataToNumpyArray(cData, 'unsigned_long', 1)
-            print("                Value          : {0}  ({1} bytes)".format(
-                  data[0], cLen))
-        elif cName == 'time_index' or cName == 'file_index':
-            cData = buf[pos:pos + cLen]
+            data = bDataToNumpyArray(cData, "unsigned_long", 1)
+            print("                Value          : {0}  ({1} bytes)".format(data[0], cLen))
+        elif cName == "time_index" or cName == "file_index":
+            cData = buf[pos : pos + cLen]
             pos = pos + cLen
-            data = bDataToNumpyArray(cData, 'unsigned_integer', 1)
-            print("                Value          : {0}  ({1} bytes)".format(
-                data[0], cLen))
-        elif cName == 'minmax':
-            nBlocks = np.frombuffer(
-                buf, dtype=np.uint16, count=1, offset=pos)[0]
+            data = bDataToNumpyArray(cData, "unsigned_integer", 1)
+            print("                Value          : {0}  ({1} bytes)".format(data[0], cLen))
+        elif cName == "minmax":
+            nBlocks = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
             print("                nBlocks        : {0}".format(nBlocks))
             pos = pos + 2
             bminmax = bDataToNumpyArray(buf, dataTypeName, 2, pos)
             pos = pos + 2 * cLen
-            print("                Min/max        : {0} / {1}".format(
-                bminmax[0], bminmax[1]))
+            print("                Min/max        : {0} / {1}".format(bminmax[0], bminmax[1]))
             if nBlocks > 1:
-                method = np.frombuffer(buf, dtype=np.uint8,
-                                       count=1, offset=pos)[0]
+                method = np.frombuffer(buf, dtype=np.uint8, count=1, offset=pos)[0]
                 pos = pos + 1
                 print("                Division method: {0}".format(method))
-                blockSize = np.frombuffer(buf, dtype=np.uint64,
-                                          count=1, offset=pos)[0]
+                blockSize = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)[0]
                 pos = pos + 8
                 print("                Block size     : {0}".format(blockSize))
-                div = np.frombuffer(buf, dtype=np.uint16,
-                                    count=ndim, offset=pos)
+                div = np.frombuffer(buf, dtype=np.uint16, count=ndim, offset=pos)
                 pos = pos + 2 * ndim
                 print("                Division vector: (", end="")
                 for d in range(ndim):
@@ -242,23 +228,25 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                 minmax = bDataToNumpyArray(buf, dataTypeName, 2 * nBlocks, pos)
                 pos = pos + 2 * nBlocks * cLen
                 for i in range(nBlocks):
-                    print("                Min/max        : {0} / {1}".format(
-                        minmax[2 * i], minmax[2 * i + 1]))
+                    print(
+                        "                Min/max        : {0} / {1}".format(
+                            minmax[2 * i], minmax[2 * i + 1]
+                        )
+                    )
         elif cName == "transform_type":
             # Operator name (8 bit length)
             namelimit = limit - (pos - cStartPosition)
             status, s, sLen, pos = ReadEncodedStringFromBuffer(
-                buf, pos, "Operator Name", namelimit, lenbytes=1)
+                buf, pos, "Operator Name", namelimit, lenbytes=1
+            )
             if not status:
                 return False, pos
-            print("                Operator       : '" + s +
-                  "' ({0} bytes)".format(sLen))
+            print("                Operator       : '" + s + "' ({0} bytes)".format(sLen))
 
             # 1 byte TYPE
             typeID = buf[pos]
             pos = pos + 1
-            print("                Pre-type       : {0} ({1}) ".format(
-                GetTypeName(typeID), typeID))
+            print("                Pre-type       : {0} ({1}) ".format(GetTypeName(typeID), typeID))
 
             # Pre-transform dimenstions
             status, pos, ndim, lgo = ReadDimensionCharacteristics(buf, pos)
@@ -270,22 +258,22 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                 for d in range(ndim):
                     p = 3 * d
                     nElems = int(nElems * lgo[p])  # need for value later
-                    print("{0}:{1}:{2}".format(lgo[p], lgo[p + 1], lgo[p + 2]),
-                          end="")
+                    print("{0}:{1}:{2}".format(lgo[p], lgo[p + 1], lgo[p + 2]), end="")
                     if d < ndim - 1:
                         print(", ", end="")
                     else:
                         print(")")
 
             # Operator specific metadata
-            omdlen = np.frombuffer(buf, dtype=np.uint16,
-                                   count=1, offset=pos)[0]
+            omdlen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
             pos = pos + 2
             print("                Op. data length: {0}".format(omdlen))
             pos = pos + omdlen
         else:
-            print("                ERROR: could not understand this "
-                  "characteristics type '{0}' id {1}".format(cName, cID))
+            print(
+                "                ERROR: could not understand this "
+                "characteristics type '{0}' id {1}".format(cName, cID)
+            )
     return True, pos
 
 
@@ -298,36 +286,35 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
     # 2 bytes PG Length + Name length
     pgLength = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
-    print(
-        "        PG length       : {0} bytes (+2 for length)".format(
-            pgLength))
+    print("        PG length       : {0} bytes (+2 for length)".format(pgLength))
     if pgStartPosition + pgLength + 2 > limit:
-        print("ERROR: There is not enough bytes {0} left in PG index block "
-              "to read this single PG index ({1} bytes)").format(
-                  limit - pgStartPosition, pgLength)
+        print(
+            "ERROR: There is not enough bytes {0} left in PG index block "
+            "to read this single PG index ({1} bytes)"
+        ).format(limit - pgStartPosition, pgLength)
         return False, pos
 
     pgNameLen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
     if pgStartPosition + pgNameLen > limit:
-        print("ERROR: There is not enough bytes {0} left in PG index block "
-              "to read the name of this single PG index ({1} bytes)").format(
-                  limit - pos + 2, pgNameLen)
+        print(
+            "ERROR: There is not enough bytes {0} left in PG index block "
+            "to read the name of this single PG index ({1} bytes)"
+        ).format(limit - pos + 2, pgNameLen)
         return False, pos
 
-    pgName = buf[pos:pos + pgNameLen].decode('ascii')
+    pgName = buf[pos : pos + pgNameLen].decode("ascii")
     pos = pos + pgNameLen
-    print("        PG Name         : '" + pgName +
-          "' ({0} bytes)".format(pgNameLen))
+    print("        PG Name         : '" + pgName + "' ({0} bytes)".format(pgNameLen))
 
     # ColumnMajor (host language Fortran) 1 byte, 'y' or 'n'
     isColumnMajor = buf[pos]  # this is an integer value
     pos = pos + 1
-    if isColumnMajor != ord('y') and isColumnMajor != ord('n'):
+    if isColumnMajor != ord("y") and isColumnMajor != ord("n"):
         print(
             "ERROR: Next byte for isColumnMajor must be 'y' or 'n' "
-            "but it isn't = {0} (={1})".format(
-                chr(isColumnMajor), isColumnMajor))
+            "but it isn't = {0} (={1})".format(chr(isColumnMajor), isColumnMajor)
+        )
         return False
     print("        isColumnMajor   : " + chr(isColumnMajor))
 
@@ -338,15 +325,15 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
     pgTimeNameLen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
     if pgStartPosition + pgTimeNameLen > limit:
-        print("ERROR: There is not enough bytes {0} left in PG index block "
-              "to read the name of this single PG index ({1} bytes)").format(
-                  limit - pos + 2, pgTimeNameLen)
+        print(
+            "ERROR: There is not enough bytes {0} left in PG index block "
+            "to read the name of this single PG index ({1} bytes)"
+        ).format(limit - pos + 2, pgTimeNameLen)
         return False, pos
 
-    pgTimeName = buf[pos:pos + pgTimeNameLen].decode('ascii')
+    pgTimeName = buf[pos : pos + pgTimeNameLen].decode("ascii")
     pos = pos + pgTimeNameLen
-    print("        Timestep Name   : '" + pgTimeName +
-          "' ({0} bytes)".format(pgTimeNameLen))
+    print("        Timestep Name   : '" + pgTimeName + "' ({0} bytes)".format(pgTimeNameLen))
 
     step = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
     pos = pos + 4
@@ -368,11 +355,9 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     # 4 bytes VAR Index Length
     varLength = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
     pos = pos + 4
-    print("        Var idx length  : {0} bytes (+4 for idx length)".format(
-        varLength))
+    print("        Var idx length  : {0} bytes (+4 for idx length)".format(varLength))
     if varStartPosition + varLength + 4 > limit:
-        print("ERROR: There is not enough bytes in Var index block "
-              "to read this single Var index")
+        print("ERROR: There is not enough bytes in Var index block to read this single Var index")
         return False, pos
 
     memberID = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
@@ -381,19 +366,17 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
 
     namelimit = limit - (pos - varStartPosition)
     status, grpName, grpNameLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Group Name", namelimit)
+        buf, pos, "Group Name", namelimit
+    )
     if not status:
         return False, pos
-    print("        Group Name      : '" + grpName +
-          "' ({0} bytes)".format(grpNameLen))
+    print("        Group Name      : '" + grpName + "' ({0} bytes)".format(grpNameLen))
 
     namelimit = limit - (pos - varStartPosition)
-    status, varName, varNameLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Var Name", namelimit)
+    status, varName, varNameLen, pos = ReadEncodedStringFromBuffer(buf, pos, "Var Name", namelimit)
     if not status:
         return False, pos
-    print("        Var Name        : '" + varName +
-          "' ({0} bytes)".format(varNameLen))
+    print("        Var Name        : '" + varName + "' ({0} bytes)".format(varNameLen))
 
     # print("        Current offset : {0}".format(varStartOffset + pos))
     # namelimit = limit - (pos - varStartPosition)
@@ -407,11 +390,12 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     # 1 byte ORDER (K, C, F)
     order = buf[pos]  # this is an integer value
     pos = pos + 1
-    if order != ord('K') and order != ord('C') and order != ord('F'):
+    if order != ord("K") and order != ord("C") and order != ord("F"):
         print(
-            "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
-            "but it isn't = {0} (={1})".format(
-                chr(order), order))
+            "ERROR: Next byte for Order must be 'K', 'C', or 'F' but it isn't = {0} (={1})".format(
+                chr(order), order
+            )
+        )
         return False
     print("        Order           : " + chr(order))
 
@@ -423,41 +407,38 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     # 1 byte TYPE
     typeID = buf[pos]
     pos = pos + 1
-    print("        Type            : {0} ({1}) ".format(
-        GetTypeName(typeID), typeID))
+    print("        Type            : {0} ({1}) ".format(GetTypeName(typeID), typeID))
 
     # 8 byte Number of Characteristics Sets
     cSets = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)[0]
     pos = pos + 8
     print("        # of blocks     : {0}".format(cSets))
 
-#   This loop only reads the number of reported blocks
-#     for i in range(cSets):
-#         # one characteristics block
-#         newlimit = limit - (pos - varStartPosition)
-#         fileOffset = varStartOffset + (pos - varStartPosition)
-#         status, pos = ReadCharacteristicsFromMetaData(
-#             buf, i, pos, newlimit, typeID, fileOffset, True)
-#         if not status:
-#             return False
+    #   This loop only reads the number of reported blocks
+    #     for i in range(cSets):
+    #         # one characteristics block
+    #         newlimit = limit - (pos - varStartPosition)
+    #         fileOffset = varStartOffset + (pos - varStartPosition)
+    #         status, pos = ReadCharacteristicsFromMetaData(
+    #             buf, i, pos, newlimit, typeID, fileOffset, True)
+    #         if not status:
+    #             return False
 
-#   This loop reads blocks until the reported length of variable index length
+    #   This loop reads blocks until the reported length of variable index length
     i = 0
     while pos < varStartPosition + varLength:
         # one characteristics block
         newlimit = limit - (pos - varStartPosition)
         fileOffset = varStartOffset + (pos - varStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
-            buf, i, pos, newlimit, typeID, fileOffset, True)
+            buf, i, pos, newlimit, typeID, fileOffset, True
+        )
         if not status:
             return False
         i = i + 1
 
-    if (i != cSets):
-        print(
-            "ERROR: reported # of blocks (={0}) != # of encoded blocks "
-            " (={1})".format(
-                cSets, i))
+    if i != cSets:
+        print("ERROR: reported # of blocks (={0}) != # of encoded blocks  (={1})".format(cSets, i))
 
     return True, pos
 
@@ -471,11 +452,9 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
     # 4 bytes ATTR Index Length
     attrLength = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
     pos = pos + 4
-    print("        Attr idx length : {0} bytes (+4 for idx length)".format(
-        attrLength))
+    print("        Attr idx length : {0} bytes (+4 for idx length)".format(attrLength))
     if attrStartPosition + attrLength + 4 > limit:
-        print("ERROR: There is not enough bytes in Attr index block "
-              "to read this single Attr index")
+        print("ERROR: There is not enough bytes in Attr index block to read this single Attr index")
         return False, pos
 
     memberID = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
@@ -484,34 +463,33 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
 
     namelimit = limit - (pos - attrStartPosition)
     status, grpName, grpNameLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Group Name", namelimit)
+        buf, pos, "Group Name", namelimit
+    )
     if not status:
         return False, pos
-    print("        Group Name      : '" + grpName +
-          "' ({0} bytes)".format(grpNameLen))
+    print("        Group Name      : '" + grpName + "' ({0} bytes)".format(grpNameLen))
 
     namelimit = limit - (pos - attrStartPosition)
     status, attrName, attrNameLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Attr Name", namelimit)
+        buf, pos, "Attr Name", namelimit
+    )
     if not status:
         return False, pos
-    print("        Attr Name       : '" + attrName +
-          "' ({0} bytes)".format(attrNameLen))
+    print("        Attr Name       : '" + attrName + "' ({0} bytes)".format(attrNameLen))
 
     # print("        Current offset : {0}".format(attrStartOffset + pos))
     namelimit = limit - (pos - attrStartPosition)
     status, attrPath, attrPathLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Attr Path", namelimit)
+        buf, pos, "Attr Path", namelimit
+    )
     if not status:
         return False, pos
-    print("        Attr Path       : '" + attrPath +
-          "' ({0} bytes)".format(attrPathLen))
+    print("        Attr Path       : '" + attrPath + "' ({0} bytes)".format(attrPathLen))
 
     # 1 byte TYPE
     typeID = buf[pos]
     pos = pos + 1
-    print("        Type            : {0} ({1}) ".format(
-        GetTypeName(typeID), typeID))
+    print("        Type            : {0} ({1}) ".format(GetTypeName(typeID), typeID))
 
     # 8 byte Number of Characteristics Sets
     cSets = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)[0]
@@ -523,7 +501,8 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
         newlimit = limit - (pos - attrStartPosition)
         fileOffset = attrStartOffset + (pos - attrStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
-            buf, i, pos, newlimit, typeID, fileOffset, False)
+            buf, i, pos, newlimit, typeID, fileOffset, False
+        )
         if not status:
             return False
 
@@ -545,8 +524,7 @@ def ReadMetadataStep(f, fileSize, step):
     pgCount = pgInfo[0]
     pgLength = pgInfo[1]
     print("    # of PGs          : {0}".format(pgCount))
-    print("    PG Index length   : {0} bytes (+16 for count+len)".format(
-        pgLength))
+    print("    PG Index length   : {0} bytes (+16 for count+len)".format(pgLength))
 
     pgStartPosition = f.tell()
     if pgStartPosition + pgLength > fileSize:
@@ -557,8 +535,7 @@ def ReadMetadataStep(f, fileSize, step):
     pgmdPos = 0
     for i in range(pgCount):
         # VMD block
-        status, pgmdPos = ReadPGMD(
-            pgmd, i, pgmdPos, pgLength, pgStartPosition + pgmdPos)
+        status, pgmdPos = ReadPGMD(pgmd, i, pgmdPos, pgLength, pgStartPosition + pgmdPos)
         if not status:
             return False
 
@@ -571,8 +548,7 @@ def ReadMetadataStep(f, fileSize, step):
     varCount = np.fromfile(f, dtype=np.uint32, count=1)[0]
     varLength = np.fromfile(f, dtype=np.uint64, count=1)[0]
     print("    # of Variables    : {0}".format(varCount))
-    print("    Var Index length  : {0} bytes (+12 for count+len)".format(
-        varLength))
+    print("    Var Index length  : {0} bytes (+12 for count+len)".format(varLength))
 
     varsStartPosition = f.tell()
     if varsStartPosition + varLength > fileSize:
@@ -583,8 +559,7 @@ def ReadMetadataStep(f, fileSize, step):
     varmdPos = 0
     for i in range(varCount):
         # VMD block
-        status, varmdPos = ReadVarMD(
-            varmd, i, varmdPos, varLength, varsStartPosition + varmdPos)
+        status, varmdPos = ReadVarMD(varmd, i, varmdPos, varLength, varsStartPosition + varmdPos)
         if not status:
             return False
 
@@ -597,13 +572,11 @@ def ReadMetadataStep(f, fileSize, step):
     attrCount = np.fromfile(f, dtype=np.uint32, count=1)[0]
     attrLength = np.fromfile(f, dtype=np.uint64, count=1)[0]
     print("    # of attriables    : {0}".format(attrCount))
-    print("    Attr Index length  : {0} bytes (+12 for count+len)".format(
-        attrLength))
+    print("    Attr Index length  : {0} bytes (+12 for count+len)".format(attrLength))
 
     attrsStartPosition = f.tell()
     if attrsStartPosition + attrLength > fileSize:
-        print("ERROR: There is not enough bytes in file "
-              "to read the Attribute index")
+        print("ERROR: There is not enough bytes in file to read the Attribute index")
         return False
 
     attrmd = f.read(attrLength)
@@ -611,7 +584,8 @@ def ReadMetadataStep(f, fileSize, step):
     for i in range(attrCount):
         # VMD block
         status, attrmdPos = ReadAttrMD(
-            attrmd, i, attrmdPos, attrLength, attrsStartPosition + attrmdPos)
+            attrmd, i, attrmdPos, attrLength, attrsStartPosition + attrmdPos
+        )
         if not status:
             return False
 
@@ -626,7 +600,7 @@ def DumpMetaData(fileName):
         fileSize = fstat(f.fileno()).st_size
         status = ReadHeader(f, fileSize, "Metadata")
         step = 0
-        while (f.tell() < fileSize - 12 and status):
+        while f.tell() < fileSize - 12 and status:
             status = ReadMetadataStep(f, fileSize, step)
             step = step + 1
     return status

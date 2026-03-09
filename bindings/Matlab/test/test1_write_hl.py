@@ -24,7 +24,7 @@ for i in range(0, NRows):
 
 # ADIOS2 high-level API for Write
 fw = adios2.open("test1.bp", "w")
-fw.write("note", 'This is an ADIOS2 output')
+fw.write("note", "This is an ADIOS2 output")
 fw.write("temperature2D", temperatures, shape, start, count)
 fw.write("nrows", numpy.array([NRows]))
 fw.write("ncols", numpy.array([NCols]))
