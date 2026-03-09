@@ -1,13 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_io_define_variable_mod.f90 : ADIOS2 Fortran bindings for IO class
-!  overloaded (C++ template) function adios2_define_variable
-!
-!   Created on: Mar 13, 2017
-!       Author: William F Godoy godoywf@ornl.gov
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 module adios2_io_define_variable_mod
     use adios2_parameters_mod

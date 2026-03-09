@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # For each test set <S>, we expect to find Write<S>.cpp and Read<S>.cpp as programs to be built.
 # 

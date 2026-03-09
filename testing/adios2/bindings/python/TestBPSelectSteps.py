@@ -1,12 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPSelectSteps_nompi.py: test step selection by reading in Python
-# in ADIOS2 File Write
-#  Created on: Jan 29, 2021
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
+# SPDX-License-Identifier: Apache-2.0
+
 import unittest
 import numpy as np
 from mpi4py import MPI

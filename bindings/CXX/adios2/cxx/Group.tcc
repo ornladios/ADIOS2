@@ -1,12 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * Group.tcc :
- *
- *  Created on: August 25, 2020
- *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef ADIOS2_BINDINGS_CXX_CXX_GROUP_TCC_
 #define ADIOS2_BINDINGS_CXX_CXX_GROUP_TCC_
 

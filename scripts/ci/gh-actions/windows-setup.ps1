@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 $ErrorActionPreference = "Stop"
 
 Write-Host "::group::Setup CONDA"

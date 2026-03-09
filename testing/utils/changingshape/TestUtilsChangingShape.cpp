@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * TestUtilsChangingShape.cpp :
- *
- *  Created on: Dec 17, 2018
- *      Author: Norbert Podhorszki, Keichi Takahashi
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <cstdint>

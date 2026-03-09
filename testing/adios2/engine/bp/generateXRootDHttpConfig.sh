@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Generate XRootD configuration for HTTP-to-SSI bridge testing
 # Usage: generateXRootDHttpConfig.sh <adios2_xrootd_plugin> <adios2_xrootd_http_plugin> [xrd_port] [http_port]
 

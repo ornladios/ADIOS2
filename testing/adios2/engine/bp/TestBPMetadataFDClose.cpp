@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * Test that BP5Reader closes metadata file descriptors (md.idx, md.0, mmd.0)
- * after opening a completed file in ReadRandomAccess mode.
- *
- * Uses /proc/self/fd on Linux and fcntl(F_GETPATH) on macOS to inspect
- * which files the process has open.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <cstdint>

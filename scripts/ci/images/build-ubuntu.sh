@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ###
 ### To run with docker instead of podman, and push to your own repo rather than
 ### the main one, eg:

@@ -1,8 +1,12 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * processConfig.h
  *
- *  Created on: Oct 2018
- *      Author: Norbert Podhorszki
  */
 
 #ifndef PROCESS_CONFIG_H

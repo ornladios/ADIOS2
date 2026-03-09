@@ -1,13 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * BP4Serializer.h
- *
- *  Created on: Aug 1, 2018
- *  Author: William F Godoy godoywf@ornl.gov
- *          Lipeng Wan wanl@ornl.gov
- *          Norbert Podhorszki pnb@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BP4_BP4SERIALIZER_H_

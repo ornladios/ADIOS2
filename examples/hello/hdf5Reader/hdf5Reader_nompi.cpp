@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * hdf5Reader.cpp
- *
- *  Created on: Jan 24, 2018
- *      Author: Junmin Gu
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <ios>       //std::ios_base::failure

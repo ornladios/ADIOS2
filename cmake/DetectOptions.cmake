@@ -1,7 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 
 # This file contains the option and dependency logic.  The configuration
 # options are designed to be tertiary: ON, OFF, or AUTO.  If AUTO, we try to

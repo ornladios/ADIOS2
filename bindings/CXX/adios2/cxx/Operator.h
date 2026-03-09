@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * Operator.h :
- *
- *  Created on: Jun 7, 2018
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_BINDINGS_CXX_CXX_OPERATOR_H_

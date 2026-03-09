@@ -1,12 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * InlineWriter.tcc implementation of template functions with known type
- *
- *  Created on: Nov 16, 2018
- *      Author: Aron Helser aron.helser@kitware.com
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef ADIOS2_ENGINE_INLINEWRITER_TCC_
 #define ADIOS2_ENGINE_INLINEWRITER_TCC_
 

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 From fc4753e9535fa9148728207a29e9ee5a4c630946 Mon Sep 17 00:00:00 2001
 From: Scott Wittenburg <scott.wittenburg@kitware.com>
 Date: Tue, 21 Oct 2025 21:14:18 +0000

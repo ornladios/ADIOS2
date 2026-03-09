@@ -1,13 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * ds_writer.c
- *
- *  Created on: Jan 4, 2019
- *      Author: Pradeep Subedi
- *      		pradeep.subedi@rutgers.edu
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include <assert.h>
 #include <limits.h>
 #include <signal.h>

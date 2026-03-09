@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ### ADIOS2 Lorenz System Example
 
 The [Lorenz system](https://en.wikipedia.org/wiki/Lorenz_system) is a very simple ODE which exhibits large sensitivity

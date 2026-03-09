@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Start XRootD server with HTTP-to-SSI bridge enabled
 # Usage: start_xrootd_http.sh <xrootd_binary> <config_base_dir> [http_port]
 

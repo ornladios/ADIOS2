@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * hdf5Writer_nompi.cpp  no mpi version of helloHDF5Writer.cpp
- *
- *  Created on: March 20, 2017
- *      Author: Junmin
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <ios>       //std::ios_base::failure

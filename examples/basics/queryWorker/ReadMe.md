@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ### ADIOS2 queryWorker example
 
 The _queryWorker_ example demonstrates how to read variables using ADIOS2's BP engine

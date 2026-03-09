@@ -1,13 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * CampaignManager.cpp
- *
- * This is NOT a writer Engine but the CampaignReader is a reader Engine.
- *
- *  Created on: May 15, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "CampaignManager.h"

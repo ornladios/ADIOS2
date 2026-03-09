@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * CompressBlosc.h
- *
- *  Created on: Jun 18, 2019
- *      Author: William F Godoy godoywf@ornl.gov
- *              Rene Widera r.widera@hzdr.de
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_

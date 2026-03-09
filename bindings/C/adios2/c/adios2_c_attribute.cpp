@@ -1,12 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adios2_c_attribute.cpp :
- *
- *  Created on: Jun 11, 2018
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "adios2_c_attribute.h"
 
 #include "adios2/common/ADIOSMacros.h"

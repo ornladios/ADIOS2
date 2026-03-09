@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * hello-world.c : adios2 C API example to write and read a
- *                 char* Variable with a greeting
- *
- *  Created on: Nov 14, 2019
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <stdio.h>  //printf

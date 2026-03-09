@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 echo "Generating config for XRootD with plugin library at $1"
 mkdir -p xroot/var/spool
 mkdir -p xroot/run/xrootd

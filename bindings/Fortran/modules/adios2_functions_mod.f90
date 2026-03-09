@@ -1,12 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_function_mod.f90 : Fortran bindings internal functions
-!
-!   Created on: September 28, 2017
-!       Author: William F Godoy godoywf@ornl.gov
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 module adios2_functions_mod
     use adios2_parameters_mod

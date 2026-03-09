@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 function info = adiosopen(varargin)
 %ADIOSOPEN Open an ADIOS BP file and provide information on it.
 %   
@@ -48,8 +52,6 @@ function info = adiosopen(varargin)
 %   See also ADIOSREAD, ADIOSCLOSE, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/09/07
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 %
 % Process arguments.

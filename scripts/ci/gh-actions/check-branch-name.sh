@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]
 then
   if [ -z "${BASE_REF}" ]

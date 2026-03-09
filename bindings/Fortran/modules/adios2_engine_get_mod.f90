@@ -1,13 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_engine_get_mod.f90 : ADIOS2 Fortran bindings for Engine generic
-!                              get functions
-!
-!   Created on: Aug 22, 2017
-!       Author: William F Godoy godoywf@ornl.gov
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 module adios2_engine_get_mod
     use adios2_variable_mod

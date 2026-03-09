@@ -1,14 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosXMLUnit.h: basic XML parsing functionality using pugixml
- *                 forward declares pugi object to keep the pugi dependency
- *                 private in adios2
- *
- *  Created on: April 28, 2020
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef ADIOS2_HELPER_ADIOSXMLUTIL_H_
 #define ADIOS2_HELPER_ADIOSXMLUTIL_H_
 

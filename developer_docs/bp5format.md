@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 # BP5 Metadata Marshaling, writer-side focus
 
 BP5 Metadata Marshalling is based upon FFS, which provides the ability

@@ -1,15 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * A Use Case for In Situ visulization frameworks (Conduit, SENSEI)
- *
- * Read in the variables that the Writer wrote.
- * Every process should read only what the corresponding Writer wrote
- * This is an N to N case
- *
- * Created on: Jul 11, 2017
- *      Author: pnorbert
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <algorithm> // std::transform

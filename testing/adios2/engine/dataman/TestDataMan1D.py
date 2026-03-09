@@ -1,11 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestDataMan1D.py: test for 1D data transfer by reading in Python
-#  Created on: March 3, 2023
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
+# SPDX-License-Identifier: Apache-2.0
+
 import multiprocessing
 import unittest
 import numpy as np

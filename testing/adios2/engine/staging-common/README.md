@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 # Common Staging Test area
 
 _Note:_ This is a directory designed to hold tests that can be run with a variety of test engines

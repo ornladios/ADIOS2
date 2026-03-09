@@ -1,15 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * CampaignManager.h
- * Campaign manager object created by the ADIOS object as GlobalService.
- * Record all output under the ADIOS object so that CampaignReader can
- * see all data for as a single reader.
- * This is NOT a writer Engine but the CampaignReader is a reader Engine.
- *
- *  Created on: May 15, 2023
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_ENGINE_CAMPAIGNMANAGER_H_

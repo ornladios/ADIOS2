@@ -1,29 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# FindSZ
-# -----------
-#
-# Try to find the SZ library
-#
-# This module defines the following variables:
-#
-#   SZ_FOUND        - System has SZ
-#   SZ_INCLUDE_DIRS - The SZ include directory
-#   SZ_LIBRARIES    - Link these to use SZ
-#
-# and the following imported targets:
-#   SZ::SZ - The SZ compression library target
-#
-# You can also set the following variable to help guide the search:
-#   SZ_ROOT - The install prefix for SZ containing the
-#              include and lib folders
-#              Note: this can be set as a CMake variable or an
-#                    environment variable.  If specified as a CMake
-#                    variable, it will override any setting specified
-#                    as an environment variable.
+# SPDX-License-Identifier: Apache-2.0
+
 
 if(NOT SZ_FOUND)
   if((NOT SZ_ROOT) AND (NOT (ENV{SZ_ROOT} STREQUAL "")))

@@ -1,13 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_engine_get_deferred.f90 : implementation of adios2_get_deferred
-!  subroutines
-!
-!   Created on: Feb 21, 2018
-!       Author: William F Godoy godoywf@ornl.gov
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 ! Single data
 subroutine adios2_get_deferred_string(engine, variable, data, ierr)

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 CONTAINER_DRIVER=${CONTAINER_DRIVER:-docker}
 
 "${CONTAINER_DRIVER[@]}" run -itt --mount type=bind,source="$(pwd)",target=/root/adios2 \

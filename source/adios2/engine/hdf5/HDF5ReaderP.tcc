@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * HDF5ReaderP.tcc
- *
- *  Created on: Oct 30, 2017
- *      Author: jgu@lbl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_ENGINE_HDF5_HDF5FILEREADER_TCC_

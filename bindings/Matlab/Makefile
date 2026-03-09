@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ###  CORI
 ADIOS_DIR=/global/homes/p/pnorbert/adios/master/login
 #ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib64 -L${ADIOS_DIR}/lib64 -ladios2 

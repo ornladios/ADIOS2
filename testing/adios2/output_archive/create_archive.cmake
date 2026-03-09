@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
 
 message(STATUS "Creating archive from ${SOURCE_DIR} into ${ARCHIVE_NAME}")
 file(GLOB files_to_archive "${SOURCE_DIR}/*")

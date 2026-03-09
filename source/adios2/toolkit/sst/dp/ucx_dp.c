@@ -1,17 +1,19 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /*----------------------------------------------------------------------------
  *
  *  WRF ADIOS2 I/O
- *  Author: Sameeh Jubran
  *          Toga Networks, a Huawei Company
  *          sameeh.jubran@toganetworks.com
- *  Author: Michael Laufer
  *  	    Toga Networks, a Huawei Company
  *  	    michael.laufer@toganetworks.com
- *  Author: Erick Fredj
  *          Toga Networks, a Huawei Company
  *          erick.fredj@toganetworks.com
  *
- *  Date:    December 20, 2022
  *
  *----------------------------------------------------------------------------
  */

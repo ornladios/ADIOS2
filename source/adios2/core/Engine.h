@@ -1,14 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * Engine.h Base abstract class for the core Open, Write/Read, Advance, Close
- * functionality. Use toolkit components to build your own Engine extending this
- * class.
- * Examples of derived classes in: adios2/engine/
- *
- *  Created on: Nov 7, 2016
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_CORE_ENGINE_H_

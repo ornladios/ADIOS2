@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 # BP5 Metadata handling, reader-side focus
 
 This document is to read in the context of [BP5 Metadata

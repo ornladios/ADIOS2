@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 if [ $# -ne 1 -a $# -ne 2 ]
 then
   echo "[E] Usage: $0 pr_num [release_branch]"

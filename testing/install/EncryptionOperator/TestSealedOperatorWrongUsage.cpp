@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * TestSealedOperatorWrongUsage.cpp -- negative tests for EncryptionOperator asymmetric mode.
- * Tests decryption failures at InverseOperate time (wrong/missing keys).
- * Note: constructor-level errors (bad key files/hex) cannot be caught through
- * the public API because VariableBase::AddOperation is noexcept.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <iostream>

@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * MPIShmChain.h
- *
- *  Created on: July 5, 2021
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_

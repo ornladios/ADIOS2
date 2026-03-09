@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * Span.tcc
- *
- *  Created on: Apr 17, 2022
- *      Author: Jason Wang jason.ruonan.wang@gmail.com
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_CORE_SPAN_TCC_

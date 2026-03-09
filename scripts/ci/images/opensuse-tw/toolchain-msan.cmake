@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set(CMAKE_C_COMPILER /usr/bin/clang)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 set(_link_flags "-stdlib=libc++ -L /opt/msan/lib -lc++abi -Wl,-rpath,/opt/msan/lib -Wno-unused-command-line-argument")

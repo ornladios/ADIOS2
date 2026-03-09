@@ -1,12 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# Write multiple arrays to a file
-# Compare times to
-#    Reading them back one by one
-#    Reading them back at once with Deferred read mode
-#
+# SPDX-License-Identifier: Apache-2.0
+
 
 import numpy as np
 from adios2 import Stream, FileReader

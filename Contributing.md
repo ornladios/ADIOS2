@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 # Contributor's Guidelines to ADIOS 2
 
 This guide will walk you through how to submit changes to ADIOS 2 and interact

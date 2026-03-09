@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * HDF5Common.tcc
- *
- *  Created on: Jun 1, 2017
- *      Author: Junmin
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_TOOLKIT_INTEROP_HDF5_HDF5COMMON_TCC_

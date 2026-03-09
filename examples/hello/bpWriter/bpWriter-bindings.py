@@ -1,15 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# bpWriter-bindings.py : Low-level Python API example
-#  Created on: Feb 2, 2017
-#      Authors: William F Godoy godoywf@ornl.gov
-#               Norbert Podhorszki pnorbert@ornl.gov
-#
-# adios2.bindings gives access to the low level classes that are compiled from the C++ classes
-# Only necessary to use this when the adios2 python API is insufficient for some reason
-# This example doesn't use anything that is missing from the python API though.
+# SPDX-License-Identifier: Apache-2.0
+
 
 from mpi4py import MPI
 import numpy

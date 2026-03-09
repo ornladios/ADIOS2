@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: REUSE Compliance
+
+on:
+  push:
+    branches:
+      - master
+      - 'release*'
+  pull_request:
+    branches:
+      - master
+      - 'release*'
+jobs:
+  reuse:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check REUSE compliance
+        run: pipx run reuse lint

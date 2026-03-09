@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from adios2 import Stream, Adios
 from adios2.bindings import DerivedVarType, Linf_norm, L2_norm
 import unittest

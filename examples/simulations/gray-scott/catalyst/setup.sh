@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # The ${PARAVIEW_BUILD_PATH}/lib directory should contain `libADIOSInSituPlugin.so`.
 export PARAVIEW_BUILD_PATH=/home/adios/Software/paraview/build
 # Set the following env variables.

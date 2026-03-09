@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * CompressBigWhoop.h : wrapper to BigWhoop compression library
- *
- *  Created on: Tue Jan 26, 2024
- *      Author: Gregor Weiss gregor.weiss@hlrs.de
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESS_BIGWHOOP_H_

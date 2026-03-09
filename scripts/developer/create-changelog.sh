@@ -1,5 +1,9 @@
 #!/bin/bash
-# author: Vicente Bolea <vicente.bolea@kitware.com>
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 
 function require_dependency()
 {

@@ -1,8 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * TestHelpers.h : Common helper functions for ADIOS2 engine tests
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef TEST_ADIOS2_ENGINE_PARAMS_HELPERS_H_

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set(ENV{CC}  icx)
 set(ENV{CXX} icpx)
 set(ENV{FC}  ifort) # oneapi fortran compiler currently has issues
