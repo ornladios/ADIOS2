@@ -4,6 +4,15 @@ SPDX-PackageSupplier = "adios@ornl.gov"
 SPDX-PackageDownloadLocation = "https://github.com/ornladios/ADIOS2"
 
 [[annotations]]
+path = [
+    "ReadMe.md",
+    "Contributing.md",
+    "Copyright.txt"
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
 path = "thirdparty/atl/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2010 Georgia Tech Research Corporation"
