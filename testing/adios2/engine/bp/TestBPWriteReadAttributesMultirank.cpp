@@ -110,11 +110,11 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
         bpRead.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fName);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fName, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fName);
+#endif
 }
 
 //******************************************************************************

@@ -94,11 +94,11 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPLargeMetadata, ManyLongStrings)
@@ -159,17 +159,10 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
     }
 
 #if ADIOS2_USE_MPI
-    int mpiRank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
 #else
-    int mpiRank = 0;
+    CleanupTestFiles(fname);
 #endif
-
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
 }
 
 int main(int argc, char **argv)

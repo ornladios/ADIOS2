@@ -178,11 +178,11 @@ TEST_P(BPParameterSelectStepsP, Read)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 TEST_P(BPParameterSelectStepsP, Stream)
@@ -290,11 +290,11 @@ TEST_P(BPParameterSelectStepsP, Stream)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 const std::vector<size_t> s_0n1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};

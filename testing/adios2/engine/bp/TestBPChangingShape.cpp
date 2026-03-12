@@ -171,10 +171,11 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
     }
 
     // Cleanup generated files
-    if (rank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 int main(int argc, char **argv)

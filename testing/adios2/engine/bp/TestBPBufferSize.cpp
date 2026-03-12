@@ -258,12 +258,15 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         }
 
         // Cleanup generated files
-        if (mpiRank == 0)
-        {
-            CleanupTestFiles(fnameSync);
-            CleanupTestFiles(fnameDeferred);
-            CleanupTestFiles(fnameDeferredPP);
-        }
+#if ADIOS2_USE_MPI
+        CleanupTestFilesMPI(fnameSync, MPI_COMM_WORLD);
+        CleanupTestFilesMPI(fnameDeferred, MPI_COMM_WORLD);
+        CleanupTestFilesMPI(fnameDeferredPP, MPI_COMM_WORLD);
+#else
+        CleanupTestFiles(fnameSync);
+        CleanupTestFiles(fnameDeferred);
+        CleanupTestFiles(fnameDeferredPP);
+#endif
     }
 }
 

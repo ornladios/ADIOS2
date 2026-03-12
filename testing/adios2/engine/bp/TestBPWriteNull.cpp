@@ -170,11 +170,11 @@ TEST_F(BPWriteNullTest, BPWrite1D1x8)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -318,11 +318,11 @@ TEST_F(BPWriteNullTest, BPWrite2D2x4)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -462,11 +462,11 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteNullTest, BPWrite2D4x2_MultiSteps)
@@ -598,11 +598,11 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2_MultiSteps)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 int main(int argc, char **argv)

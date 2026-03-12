@@ -232,11 +232,11 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 // Variable written every other step from 2nd step
@@ -390,11 +390,11 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsFileLocalArray, BPStepsFileLocalArrayReaders,
@@ -579,11 +579,11 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -229,13 +229,10 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 
     // Cleanup generated files
 #if ADIOS2_USE_MPI
-    int mpiRank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    if (mpiRank == 0)
+    CleanupTestFilesMPI(fName, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fName);
 #endif
-    {
-        CleanupTestFiles(fName);
-    }
 }
 
 // ADIOS2 write read for array attributes
@@ -655,13 +652,10 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 
     // Cleanup generated files
 #if ADIOS2_USE_MPI
-    int mpiRank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    if (mpiRank == 0)
+    CleanupTestFilesMPI(fName, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fName);
 #endif
-    {
-        CleanupTestFiles(fName);
-    }
 }
 
 // ADIOS2 write read for array attributes

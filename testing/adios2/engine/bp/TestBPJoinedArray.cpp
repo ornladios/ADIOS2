@@ -188,10 +188,11 @@ TEST_F(BPJoinedArray, MultiBlock)
     }
 
     // Cleanup generated files
-    if (!rank)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 int main(int argc, char **argv)

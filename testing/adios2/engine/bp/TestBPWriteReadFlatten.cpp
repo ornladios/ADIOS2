@@ -349,11 +349,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -677,11 +677,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -996,11 +996,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
@@ -1191,11 +1191,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 // ADIOS2 BP write and read 1D arrays
@@ -1331,11 +1331,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 #else
     return;
 #endif
