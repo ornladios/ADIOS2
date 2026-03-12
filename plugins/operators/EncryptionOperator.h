@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * EncryptionOperator.h
- *
- *  Created on: Dec 7, 2021
- *      Author: Caitlin Ross <caitlin.ross@kitware.com>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ENCRYPTIONOPERATOR_H_

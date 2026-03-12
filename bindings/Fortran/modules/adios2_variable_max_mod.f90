@@ -1,12 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_variable_max_mod.f90 : ADIOS2 Fortran bindings for overloaded
-!                                adios2_variable_max subroutine
-!   Created on: Nov 15, 2018
-!       Author: William F Godoy godoywf@ornl.gov
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 module adios2_variable_max_mod
     use adios2_parameters_mod

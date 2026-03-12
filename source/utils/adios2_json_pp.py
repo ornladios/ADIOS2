@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import json
 import argparse
 from os.path import exists
@@ -6,8 +11,7 @@ from os.path import exists
 
 def SetupArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--indent", "-i", type=int, default=2,
-                        help="indent size, default=2")
+    parser.add_argument("--indent", "-i", type=int, default=2, help="indent size, default=2")
     parser.add_argument("FILE", help="Name of the JSON file")
     args = parser.parse_args()
 
@@ -22,7 +26,6 @@ def CheckFileName(args):
 
 
 if __name__ == "__main__":
-
     args = SetupArgs()
     CheckFileName(args)
 

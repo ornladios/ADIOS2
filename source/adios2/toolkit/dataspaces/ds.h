@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * ds.h
- *
- *  Created on: Jan 4, 2019
- *      Author: Pradeep Subedi
- *      		pradeep.subedi@rutgers.edu
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef SOURCE_ADIOS2_TOOLKIT_DATASPACES_DS_H_

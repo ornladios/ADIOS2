@@ -1,29 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# FindUCX
-# -----------
-#
-# Try to find the UCX library
-#
-# This module defines the following variables:
-#
-#  UCX_FOUND - System has UCX
-#  UCX_INCLUDE_DIRS - The UCX include directories
-#  UCX_LIBRARIES - The libraries needed to use UCX
-#
-# and the following imported targets:
-#   ucx::ucx - The UCX library target
-#
-# You can also set the following variable to help guide the search:
-#   UCX_ROOT - The install prefix for UCX containing the
-#              include and lib folders
-#              Note: this can be set as a CMake variable or an
-#                    environment variable.  If specified as a CMake
-#                    variable, it will override any setting specified
-#                    as an environment variable.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # manually specify library information
 include(FindPackageHandleStandardArgs)

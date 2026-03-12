@@ -1,5 +1,9 @@
 #!/bin/env python3
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Demonstrating deferred read
 # multiple f.read(...) can be scheduled and executed once by
 # f.read_complete()
@@ -16,8 +20,7 @@ with adios2.FileReader("globalArray.bp") as f:
     print(f"Variable GlobalArray shape = {v.shape()}, steps = {v.steps()}")
     data = f.read(v, defer_read=True)
     print(
-        f"WRONG before data is read: data size = {data.size} "
-        f"min = {data.min()}, max = {data.max()}"
+        f"WRONG before data is read: data size = {data.size} min = {data.min()}, max = {data.max()}"
     )
     f.read_complete()
     print(

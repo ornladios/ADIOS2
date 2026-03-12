@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosYAML.h basic YAML parsing functionality for ADIOS config file schema
- *
- *  Created on: Dec 19, 2019
- *      Author: Axel Huebl <axelhuebl@lbl.gov>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_HELPER_ADIOSJSONCOMPLEX_H_

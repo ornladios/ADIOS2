@@ -1,14 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# Test reader in Python that should have the same output
-# as the test1.m Matlab reader
-#
-#
-#  Created on: Jan 28, 2019
-#      Author: Norbert Podhorszki, pnorbert@ornl.gov
-#
+# SPDX-License-Identifier: Apache-2.0
+
 
 import adios2
 
@@ -28,6 +21,6 @@ inTemperatures = fr.read("temperature2D")
 print("temperature2d array size = " + str(inTemperatures.size))
 
 for row in inTemperatures:
-    print(''.join(['{:7}'.format(item) for item in row]))
+    print("".join(["{:7}".format(item) for item in row]))
 
 fr.close()

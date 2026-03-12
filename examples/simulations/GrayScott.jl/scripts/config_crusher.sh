@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 PROJ_DIR=/gpfs/alpine/proj-shared/csc383
 export JULIA_DEPOT_PATH=$PROJ_DIR/etc/crusher/julia_depot
 GS_DIR=$PROJ_DIR/wgodoy/ADIOS2/examples/simulations/GrayScott.jl

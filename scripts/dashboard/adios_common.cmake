@@ -1,35 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# ADIOS Common Dashboard Script
-#
-# This script contains basic dashboard driver code common to all
-# clients.
-#
-#   # Client maintainer: me@mydomain.net
-#   set(CTEST_SITE "machine.site")
-#   set(CTEST_BUILD_NAME "Platform-Compiler")
-#   set(CTEST_CONFIGURATION_TYPE Debug)
-#   set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-#   include(${CTEST_SCRIPT_DIRECTORY}/adios_common.cmake)
-#
-# Then run a scheduled task (cron job) with a command line such as
-#
-#   ctest -S ~/Dashboards/Scripts/my_dashboard.cmake -V
-#
-# By default the source and build trees will be placed in the path
-# "../My Tests/" relative to your script location.
-#
-# The following variables may be set before including this script
-# to configure it:
-#
-#   dashboard_model           = Nightly | Experimental
-#   dashboard_root_name       = Change name of "MyTests" directory
-#   dashboard_source_name     = Name of source directory (adios)
-#   dashboard_binary_name     = Name of binary directory (adios-build)
-#   dashboard_cache           = Initial CMakeCache.txt file content
+# SPDX-License-Identifier: Apache-2.0
+
 
 #   dashboard_do_checkout  = True to enable source checkout via git
 #   dashboard_do_update    = True to enable source update

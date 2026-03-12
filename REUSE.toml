@@ -1,0 +1,229 @@
+version = 1
+SPDX-PackageName = "ADIOS2"
+SPDX-PackageSupplier = "adios@ornl.gov"
+SPDX-PackageDownloadLocation = "https://github.com/ornladios/ADIOS2"
+
+[[annotations]]
+path = [
+    "ReadMe.md",
+    "Contributing.md",
+    "Copyright.txt"
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "thirdparty/atl/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2010 Georgia Tech Research Corporation"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/dill/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2010 Georgia Tech Research Corporation"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/EVPath/EVPath/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2010 Georgia Tech Research Corporation"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/EVPath/EVPath/zpl-enet/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2002-2016 Lee Salzman", "2017-2018 Vladyslav Hrytsenko, Dominik Madarász"]
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "thirdparty/ffs/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2010 Georgia Tech Research Corporation"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/GTest/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2008 Google Inc."
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/KWSys/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2000-2016 Kitware, Inc. and Contributors"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/nanobind/nanobind/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 Wenzel Jakob <wenzel.jakob@epfl.ch>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/nanobind/nanobind/ext/robin_map/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "thirdparty/enet/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2002-2020 Lee Salzman"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "thirdparty/nlohmann_json/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2013-2022 Niels Lohmann <http://nlohmann.me>"
+SPDX-License-Identifier = "MIT AND CC0-1.0"
+
+[[annotations]]
+path = "thirdparty/perfstubs/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019-2022 Kevin Huck and University of Oregon"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "thirdparty/pugixml/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2006-2025 Arseny Kapoulkine <arseny.kapoulkine@gmail.com>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "thirdparty/yaml-cpp/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2008-2015 Jesse Beder"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "thirdparty/mingw-w64/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "mingw-w64 contributors"
+SPDX-License-Identifier = "LicenseRef-public-domain"
+
+[[annotations]]
+path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/enet/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/KWSys/CMakeLists.txt", "thirdparty/mingw-w64/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["thirdparty/**/Readme.txt", "thirdparty/**/update.sh", "thirdparty/update-common.sh"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "docs/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "readthedocs.yml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "thirdparty/.clang-tidy"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [".clang-format", ".clang-tidy", ".e4s/e4s.yaml", ".flake8", ".git-remote-files", ".gitattributes", ".gitignore", ".shellcheck_exclude_paths", "CODEOWNERS", "Copyright.txt", "pyproject.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["scripts/ci/images/.gitignore", "scripts/ci/images/oneAPI.repo", "scripts/ci/cmake/adios-asan.supp", "scripts/docker/spin-xrootd/xrootd-http.cfg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "scripts/developer/git/setup-hooks"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["bindings/Matlab/HOWTO-debug.txt", "bindings/Matlab/README.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["bindings/Matlab/test/heat.bp", "bindings/Matlab/test/heat.bp.dir/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["examples/basics/queryWorker/configs/**", "examples/hello/skeleton/**.xml", "examples/plugins/engine/**.xml", "examples/plugins/operator/**.xml", "examples/simulations/GrayScott.jl/.JuliaFormatter.toml", "examples/simulations/GrayScott.jl/Project.toml", "examples/simulations/GrayScott.jl/examples/**.json", "examples/simulations/GrayScott.jl/test/Project.toml", "examples/simulations/gray-scott/**.xml", "examples/simulations/gray-scott/catalyst/**.json", "examples/simulations/gray-scott/simulation/**.json", "examples/simulations/gray-scott/**.session", "examples/simulations/gray-scott/**.session.gui", "examples/simulations/gray-scott-struct/**.xml", "examples/simulations/gray-scott-struct/catalyst/**.json", "examples/simulations/gray-scott-struct/simulation/**.json", "examples/simulations/gray-scott-struct/**.session", "examples/simulations/gray-scott-struct/**.session.gui", "examples/simulations/gray-scott-struct/**.json", "examples/simulations/heatTransfer/**.xml", "examples/useCases/fidesOneCell/**.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["examples/simulations/gray-scott/img/**", "examples/simulations/gray-scott-struct/img/**", "examples/simulations/lorenz_ode/**.svg", "examples/useCases/fidesOneCell/**.png"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["source/h5vol/READ.ME", "source/utils/adios_iotest/iotest-config/**", "source/utils/profiler/sample_data/**", "source/utils/profiler/tests/commands", "source/utils/profiler_simplified/data/**", "source/utils/profiler_simplified/python_plots/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "testing/adios2/backward_compatibility/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["testing/adios2/bindings/python/heat.bp/**", "testing/adios2/bindings/python/types_np.h5"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["testing/adios2/engine/bp/operations/**.xml", "testing/adios2/xml/**.xml", "testing/adios2/yaml/**.ats", "testing/contract/lammps/adios2_config.xml", "testing/adios2/backward_compatibility/**.xml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["testing/adios2/engine/skeleton/**.txt", "testing/adios2/engine/sst/Testing/Temporary/LastTest.log", "testing/adios2/performance/metadata/README", "testing/examples/heatTransfer/**.txt", "testing/utils/bpcmp/**.txt", "testing/utils/changingshape/**.txt", "testing/utils/cwriter/**.txt", "testing/utils/iotest/**.txt", "testing/adios2/backward_compatibility/**.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "testing/utils/iotest/**.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "testing/adios2/output_archive/zipped_output/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["testing/install/CatalystEnginePlugin/**.xml", "testing/install/EncryptionOperator/test-public.key", "testing/install/EncryptionOperator/test-secret.key"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["testing/contract/lammps/in.test", "testing/contract/scorpio/**.dump"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"

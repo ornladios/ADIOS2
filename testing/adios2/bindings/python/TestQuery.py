@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 #
 from mpi4py import MPI
 import numpy as np
@@ -63,7 +67,7 @@ def createQueryFile():
     queryContent = [
         '<?xml version="1.0"?>\n',
         "<adios-query>\n",
-        '  <io name="query">\n' '  <var name="' + targetVarName + '">\n',
+        '  <io name="query">\n  <var name="' + targetVarName + '">\n',
         '    <op value="AND">\n',
         '      <range  compare="LT" value="15.0"/>\n',
         '      <range  compare="GT" value="4.0"/>\n',

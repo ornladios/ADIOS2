@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * SscHelper.cpp
- *
- *  Created on: Sep 30, 2019
- *      Author: Jason Wang
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "SscHelper.h"

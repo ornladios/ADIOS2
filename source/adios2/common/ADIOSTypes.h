@@ -1,14 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * ADIOSTypes.h : public header that contains "using/typedef" alias, defaults
- * and parameters options as enum classes
- *
- *  Created on: Mar 23, 2017
- *      Author: Chuck Atkins chuck.atkins@kitware.com
- *              Norbert Podhorszki pnorbert@ornl.gov
- *              William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_ADIOSTYPES_H_

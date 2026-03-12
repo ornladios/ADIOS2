@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: adios2
 variables:
   CMAKE_PREFIX_PATH: "C:/Miniconda/envs/adios2/Library;$CMAKE_PREFIX_PATH"

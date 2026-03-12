@@ -1,10 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * FileDaos.cpp file I/O using Daos I/O library
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "FileDaos.h"
 #include "adios2/helper/adiosLog.h"
 

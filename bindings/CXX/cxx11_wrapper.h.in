@@ -1,13 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * @HEADER_NAME@ : deprecated wrapper - use bindings/CXX/adios2/cxx instead
- *
- * DEPRECATION WARNING: The bindings/CXX/adios2/cxx11 directory has been
- * renamed to bindings/CXX/adios2/cxx. Please update your includes to use
- * bindings/CXX/adios2/cxx instead of bindings/CXX/adios2/cxx11.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 
 #ifndef ADIOS2_BINDINGS_CXX_CXX11_@HEADER_NAME@_
 #define ADIOS2_BINDINGS_CXX_CXX11_@HEADER_NAME@_

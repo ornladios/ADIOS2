@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
@@ -72,12 +76,12 @@ if __name__ == "__main__":
         ioType = parseMe.args.ioTypes[i]
 
         inputFile = (
-            parseMe.command_options[parseMe.TAGS["input_dir"]] +
-            ioType +
-            "_" +
-            whichKind +
-            "_" +
-            jsonAttrStr
+            parseMe.command_options[parseMe.TAGS["input_dir"]]
+            + ioType
+            + "_"
+            + whichKind
+            + "_"
+            + jsonAttrStr
         )
         currLabel = ioType + " " + jsonAttrStr + " ( " + whichKind + " )"
         if i == 0:

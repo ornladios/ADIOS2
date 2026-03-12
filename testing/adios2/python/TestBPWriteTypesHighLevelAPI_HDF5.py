@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File
-#                      Write/Read High-Level API
-#  Created on: March 12, 2018
-#      Author: William F Godoy godoywf@ornl.gov
+# SPDX-License-Identifier: Apache-2.0
+
 
 from adios2NPTypes import SmallTestData
 import numpy as np

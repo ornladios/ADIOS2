@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 # ADIOS2 XRootD HTTP Server for NERSC Spin
 
 Docker image that serves ADIOS2 BP5 datasets over HTTPS using the XRootD

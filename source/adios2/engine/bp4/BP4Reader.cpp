@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * BP4Reader.cpp
- *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "BP4Reader.h"

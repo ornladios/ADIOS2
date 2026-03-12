@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "FileHTTPS.h"
 #include "adios2/helper/adiosString.h"
 #include <adios2sys/SystemTools.hxx>

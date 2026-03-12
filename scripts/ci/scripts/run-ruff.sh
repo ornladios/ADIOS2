@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 echo "---------- Begin ENV ----------"
 env | sort
 echo "----------  End ENV  ----------"
@@ -11,4 +15,6 @@ then
   cd "${SOURCE_DIR}" || exit
 fi
 
-exec pylint-3 python/adios2
+pip3 install --quiet ruff
+ruff check .
+ruff format --check .

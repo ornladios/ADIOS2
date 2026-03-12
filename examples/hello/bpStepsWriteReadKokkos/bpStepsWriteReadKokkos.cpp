@@ -1,10 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * bpStepsWriteReadKokkos.cpp  Simple example of writing and reading bpFloats through ADIOS2 BP
- * engine using Kokkos on any memory space
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include <ios>
 #include <iostream>
 #include <string>

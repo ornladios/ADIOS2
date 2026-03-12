@@ -1,7 +1,8 @@
-"""License:
-Distributed under the OSI-approved Apache License, Version 2.0.  See
-accompanying file Copyright.txt for details.
-"""
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+"""ADIOS2 ADIOS Python wrapper."""
 
 from adios2 import bindings
 from adios2.io import IO
@@ -20,11 +21,10 @@ class Adios:
                 self.impl = bindings.ADIOS(config_file, comm)
             else:
                 self.impl = bindings.ADIOS(config_file)
+        elif comm:
+            self.impl = bindings.ADIOS(comm)
         else:
-            if comm:
-                self.impl = bindings.ADIOS(comm)
-            else:
-                self.impl = bindings.ADIOS()
+            self.impl = bindings.ADIOS()
 
     @property
     def impl(self):

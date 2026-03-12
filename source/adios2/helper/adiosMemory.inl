@@ -1,10 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosMemory.inl definition of template functions in adiosMemory.h
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 
 #ifndef ADIOS2_HELPER_ADIOSMEMORY_INL_
 #define ADIOS2_HELPER_ADIOSMEMORY_INL_
@@ -637,7 +636,6 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint, 
 }
 
 //***************Start of NdCopy() and its 8 helpers ***************
-// Author:Shawn Yang, shawnyang610@gmail.com
 //
 // NdCopyRecurDFSeqPadding(): helper function
 // Copys n-dimensional Data from input to output in row major and

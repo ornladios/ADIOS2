@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 function adiosload(file, prefix)
 %ADIOSLOAD Read all variables in an ADIOS BP file
 %
@@ -14,8 +18,6 @@ function adiosload(file, prefix)
 %   See also ADIOSOPEN, ADIOSCLOSE, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/10/03
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 if (~exist('prefix', 'var'))
     prefix = '';

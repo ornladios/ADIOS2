@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 ## ADIOS2 basics examples
 
 The _basics_ examples are meant to introduce you to basic concepts of ADIOS2, such as

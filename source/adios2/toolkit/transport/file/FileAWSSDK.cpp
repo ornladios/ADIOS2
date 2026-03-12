@@ -1,13 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * FileDescriptor.h wrapper of AWSSDK library functions for file I/O over S3
- * protocol
- *
- *  Created on: Dec 5, 2022
- *      Author: Norbert Podhorszki, pnorbert@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "FileAWSSDK.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/helper/adiosLog.h"

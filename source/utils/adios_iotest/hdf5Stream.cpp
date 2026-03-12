@@ -1,8 +1,12 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * hdf5Stream.cpp
  *
- *  Created on: Nov 2018
- *      Author: Norbert Podhorszki
  */
 
 #include "hdf5Stream.h"

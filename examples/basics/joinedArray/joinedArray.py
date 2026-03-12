@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Demonstrates writing joined array with ADIOS.
 # Joined Array is a Global Array, where in one dimension we don't need to

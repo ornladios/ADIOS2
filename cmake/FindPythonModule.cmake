@@ -1,33 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# PythonModule
-# -----------
-#
-# Try to find the path to a python module
-#
-# This module defines the following variables:
-#
-#   PythonModule_${module_NAME}_FOUND - System has the module in question
-#
-# and the following imported targets:
-#   Python::${module_NAME}
-#
-# This is intented to be called by specifying components for the module name
-# and any additional header files and libraries that may be needed to interface
-# with it.
-#
-# For example, say you want to search for mpi4py but you also need it's header
-# files to use for interfacing with your own python bindings that use MPI.
-# You would call:
-#
-# find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
-#
-# If found, this will generate an interface target with the appropriate usage
-# requirements.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 function(__get_filename_label fname var)
   get_filename_component(fname_dir "${fname}" DIRECTORY)
   get_filename_component(fname_nam "${fname}" NAME_WE)

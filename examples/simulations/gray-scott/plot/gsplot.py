@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error
@@ -9,12 +14,8 @@ import decomp  # pylint: disable=import-error
 
 def SetupArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--instream", "-i", help="Name of the input stream", required=True
-    )
-    parser.add_argument(
-        "--outfile", "-o", help="Name of the output file", default="screen"
-    )
+    parser.add_argument("--instream", "-i", help="Name of the input stream", required=True)
+    parser.add_argument("--outfile", "-o", help="Name of the output file", default="screen")
     parser.add_argument("--varname", "-v", help="Name of variable read", default="U")
     parser.add_argument(
         "--nompi", "-nompi", help="ADIOS was installed without MPI", action="store_true"
@@ -99,10 +100,10 @@ def Plot2D(plane_direction, data, args, fullshape, step, fontsize):
         plt.pause(displaysec)
     elif args.outfile.endswith(".bp"):
         global writer
-#        print("plot to file, step = ", step)
-#        if step == 0:
-#            writer = Stream(args.outfile, "w")
-#
+        #        print("plot to file, step = ", step)
+        #        if step == 0:
+        #            writer = Stream(args.outfile, "w")
+        #
         writer.begin_step()
         writer.write(args.varname, data, data.shape, [0, 0], data.shape)
         writer.end_step()
@@ -165,21 +166,15 @@ if __name__ == "__main__":
         #                print("Variable" + pdfvar + " shape is {" + vars_info[pdfvar]["Shape"]+"}")
 
         if args.plane in ("xy", "all"):
-            data = read_data(
-                args, fr_step, [0, 0, int(shape3[2] / 2)], [shape3[0], shape3[1], 1]
-            )
+            data = read_data(args, fr_step, [0, 0, int(shape3[2] / 2)], [shape3[0], shape3[1], 1])
             Plot2D("xy", data, args, fullshape, sim_step, fontsize)
 
         if args.plane in ("xz", "all"):
-            data = read_data(
-                args, fr_step, [0, int(shape3[1] / 2), 0], [shape3[0], 1, shape3[2]]
-            )
+            data = read_data(args, fr_step, [0, int(shape3[1] / 2), 0], [shape3[0], 1, shape3[2]])
             Plot2D("xz", data, args, fullshape, sim_step, fontsize)
 
         if args.plane in ("yz", "all"):
-            data = read_data(
-                args, fr_step, [int(shape3[0] / 2), 0, 0], [1, shape3[1], shape3[2]]
-            )
+            data = read_data(args, fr_step, [int(shape3[0] / 2), 0, 0], [1, shape3[1], shape3[2]])
             Plot2D("yz", data, args, fullshape, sim_step, fontsize)
         plot_step = plot_step + 1
 

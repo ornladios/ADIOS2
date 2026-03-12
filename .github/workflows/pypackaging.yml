@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Python Packaging
 
 on:
@@ -70,7 +74,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v2.22.0
+      - uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_BUILD: >-
             cp39-manylinux_x86_64
@@ -93,7 +97,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v2.22.0
+      - uses: pypa/cibuildwheel@v3.4.0
         env:
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
@@ -114,7 +118,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v2.22.0
+      - uses: pypa/cibuildwheel@v3.4.0
         env:
           # free-threaded and prerelease are both opt-in groups in cibuildwheel;
           # cp314t requires both since 3.14 is still prerelease
@@ -133,7 +137,7 @@ jobs:
     needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           pattern: artifact_wheels_*
           path: dist
@@ -148,12 +152,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           name: artifact_sdist
           path: dist

@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * SerializeProcesses.cpp
- *
- *  Created on: Oct 12, 2021
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "SerializeProcesses.h"

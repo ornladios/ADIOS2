@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 function adios()
 %ADIOS Reader for the ADIOS BP file format
 %   
@@ -41,7 +45,5 @@ function adios()
 %   See also ADIOSOPEN, ADIOSREAD, ADIOSREADATTR, ADIOSCLOSE
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   Date: 2018/09/07
-%   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 help adios

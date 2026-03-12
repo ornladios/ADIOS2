@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import argparse
 from paraview.simple import *
 
@@ -15,6 +19,7 @@ options.ExtractsOutputDirectory = "/tmp"
 # options.ExtractsOutputDirectory = '.'
 
 DISABLE_EXTRACTOR = False
+
 
 # setup and returns the view
 def SetupRenderView():
@@ -65,7 +70,7 @@ def SetupFidesReader(json, bp, sst):
 
 # takes in a producer and view and sets up the visualization pipeline
 def SetupVisPipeline(producer, view):
-    Show(producer, view, 'UniformGridRepresentation')
+    Show(producer, view, "UniformGridRepresentation")
     view.ResetCamera()
 
     # get color transfer function/color map for 'U'
@@ -136,9 +141,7 @@ def ParseArgs():
         type=str,
         required=False,
     )
-    parser.add_argument(
-        "-b", "--bp_filename", help="path to bp file", type=str, required=True
-    )
+    parser.add_argument("-b", "--bp_filename", help="path to bp file", type=str, required=True)
     parser.add_argument("--staging", help="use SST engine", action="store_true")
     args = parser.parse_args()
     return args

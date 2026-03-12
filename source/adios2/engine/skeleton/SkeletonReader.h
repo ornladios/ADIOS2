@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * SkeletonReader.h
- * An empty skeleton engine from which any engine can be built
- *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_ENGINE_SKELETONREADER_H_

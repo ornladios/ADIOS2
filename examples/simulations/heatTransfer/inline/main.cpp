@@ -1,20 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * main.cpp
- *
- * Recreates heat_transfer.f90 (Fortran) ADIOS tutorial example in C++
- * This version is adapted from heatTransfer/write/main.cpp and
- * heatTransfer/read/heatRead.cpp for use with the inline engine,
- * which requires the writer and reader to be created in the same process
- * and the same ADIOS IO object.
- *
- * Created on: May 2020
- *     Author: Norbert Podhorszki
- *             Caitlin Ross
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include <mpi.h>
 
 #include "adios2.h"

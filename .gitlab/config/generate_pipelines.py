@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# generate_pipeline.py
-#
-#   Author: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
+# SPDX-License-Identifier: Apache-2.0
+
 
 from datetime import datetime
 import argparse
@@ -132,9 +130,7 @@ parser.add_argument(
 parser.add_argument(
     "-d", "--days", type=int, default=1, help="How many days back to search for commits"
 )
-parser.add_argument(
-    "-m", "--max", type=int, default=2, help="Maximum amount of pipelines computed"
-)
+parser.add_argument("-m", "--max", type=int, default=2, help="Maximum amount of pipelines computed")
 parser.add_argument(
     "-r",
     "--root-commit",

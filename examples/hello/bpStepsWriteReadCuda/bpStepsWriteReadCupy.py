@@ -1,19 +1,29 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import numpy as np
 import cupy as cp
 from adios2 import Stream
 
+
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     with Stream(fileName, "w") as wStream:
         for _ in wStream.steps(nSteps):
-            wStream.write("cpuArray", cpuArray, cpuArray.shape,
-                          [0] * len(cpuArray.shape), cpuArray.shape)
-            wStream.write("gpuArray", gpuArray, gpuArray.shape,
-                          [0] * len(gpuArray.shape), gpuArray.shape)
+            wStream.write(
+                "cpuArray", cpuArray, cpuArray.shape, [0] * len(cpuArray.shape), cpuArray.shape
+            )
+            wStream.write(
+                "gpuArray", gpuArray, gpuArray.shape, [0] * len(gpuArray.shape), gpuArray.shape
+            )
             # update buffers
             gpuArray = gpuArray * 2
             cpuArray = cpuArray + 1
-    print("Write to file %s: %s data from GPU and %s data from CPU" % (
-        fileName, gpuArray.shape, cpuArray.shape))
+    print(
+        "Write to file %s: %s data from GPU and %s data from CPU"
+        % (fileName, gpuArray.shape, cpuArray.shape)
+    )
+
 
 def read_array(fileName, readGpuShape, readCpuShape):
     with Stream(fileName, "r") as rStream:
@@ -29,7 +39,7 @@ def read_array(fileName, readGpuShape, readCpuShape):
             print("Step %d: read CPU data\n %s" % (step, cpuBuffer))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cpuArray = np.array([[0, 1.0, 2.0], [3.0, 4.0, 5.0]], dtype=np.float32)
     gpuArray = cp.array([[0, 1.0, 2.0], [3.0, 4.0, 5.0]], dtype=np.float32)
     print("Array allocation: ", gpuArray.device)

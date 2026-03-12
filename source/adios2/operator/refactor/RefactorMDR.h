@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * RefactorMDR.h :
- *
- *  Created on: Sep 14, 2023
- *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_OPERATOR_COMPRESS_REFACTORMDR_H_

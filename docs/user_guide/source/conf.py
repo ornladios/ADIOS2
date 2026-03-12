@@ -128,7 +128,7 @@ exclude_patterns = [
     "ecosystem/utilities/adios_reorganize.rst",
     "ecosystem/utilities/bpls.rst",
     "ecosystem/utilities/sst_conn_tool.rst",
-    "ecosystem/visualization.rst" "ecosystem/visualization/vtk.rst" "engines/dataman.rst",
+    "ecosystem/visualization.rstecosystem/visualization/vtk.rstengines/dataman.rst",
     "engines/insitu_mpi.rst",
     "engines/hdf5.rst",
     "engines/bp3.rst",

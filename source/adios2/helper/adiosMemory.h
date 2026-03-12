@@ -1,10 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosMemory.h : Memory copy operations functions using std::copy std::insert
- * and std::memcpy
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_HELPER_ADIOSMEMORY_H_
@@ -197,7 +194,6 @@ template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint, T value = T());
 
 /**
- * Author:Shawn Yang, shawnyang610@gmail.com
  * Copies n-dimensional Data from a source buffer to destination buffer, either
  * can be of any Major and Endianess. Return 1 if no overlap is found.
  * Copying from row-major to row-major of the same endian yields the best speed.

@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# TestChangingShape.py
-#
-#  Created on: April 2nd, 2019
-#      Author: Jeremy Logan
+# SPDX-License-Identifier: Apache-2.0
+
 
 import numpy as np
 from mpi4py import MPI

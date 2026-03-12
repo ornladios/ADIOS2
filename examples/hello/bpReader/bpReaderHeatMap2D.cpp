@@ -1,22 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * bpReaderHeatMap2D.cpp : Writes a heat map in a regular 2D mesh,
- * values grow from 0 in increments of 1
- *
- * temperature[gNx, Ny]
- * where: gNx = MPI_size_x * Nx
- *
- * 0                1       2  ...     Ny-1
- * Ny            Ny+1    Ny+2  ...   2*Ny-1
- * ...
- * ...
- * (gNx-1)*Ny   ...                  gNx*Ny-1
- *
- *
- *  Created on: Nov 1, 2017
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <algorithm>

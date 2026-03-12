@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Usage: 
 #   ./runconf.sh ON lean   (MPI On, minimal adios2)
 #   ./runconf.sh ON        (MPI On, adios2 builds with all dependencies, might need -D*_DIR or -D*_ROOT)

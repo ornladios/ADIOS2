@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * FileStdio.h wrapper of C/C++ stdio.h for file I/O
- *
- *  Created on: Jan 6, 2017
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEPOINTER_H_

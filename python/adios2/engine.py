@@ -1,11 +1,11 @@
-"""License:
-Distributed under the OSI-approved Apache License, Version 2.0.  See
-accompanying file Copyright.txt for details.
-"""
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+"""ADIOS2 Engine Python wrapper."""
 
 import numpy as np
 
-# pylint: disable=duplicate-code
 try:
     import cupy as cp
 
@@ -18,7 +18,6 @@ try:
     ADIOS2_HAS_TORCH = True
 except ImportError:
     ADIOS2_HAS_TORCH = False
-# pylint: enable=duplicate-code
 
 from adios2 import bindings
 

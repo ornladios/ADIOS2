@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ARG INSTALL_PREFIX=/opt/msan
 ARG TOOLCHAIN_FILE=toolchain-msan.cmake
 ARG CFLAGS="-fsanitize=memory -fsanitize-memory-track-origins"

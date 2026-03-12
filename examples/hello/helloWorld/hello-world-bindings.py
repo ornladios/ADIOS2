@@ -1,13 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# hello-world.py : adios2 low-level API example to write and read a
-#                   string Variable with a greeting
-#
-#  Created on: 2/2/2021
-#      Author: Dmitry Ganyushin ganyushindi@ornl.gov
-#
+# SPDX-License-Identifier: Apache-2.0
+
 import sys
 from mpi4py import MPI
 import adios2.bindings as adios2

@@ -1,14 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# Test writer to produce a test dataset for Matlab reading
-# This is serial since the Matlab reader is built with serial ADIOS
-#
-#
-#  Created on: Jan 28, 2019
-#      Author: Norbert Podhorszki, pnorbert@ornl.gov
-#
+# SPDX-License-Identifier: Apache-2.0
+
 
 import numpy
 import adios2
@@ -38,8 +31,7 @@ io = adios.DeclareIO("writer")
 varStr = io.DefineVariable("note")
 varCols = io.DefineVariable("ncols", npcols)
 varRows = io.DefineVariable("nrows", nprows)
-varT = io.DefineVariable(
-    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
+varT = io.DefineVariable("temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
 
 io.DefineAttribute("aaa", numpy.array([3.1415]))
 io.DefineAttribute("anote", "just a string")

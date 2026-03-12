@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Build container image for NERSC Spin deployment
 # This script builds an x86_64 image even on ARM Macs
 # The Dockerfile clones ADIOS2 from GitHub, so no local source is needed

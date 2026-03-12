@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import os
 import time
 import argparse
-import numpy  # pylint: disable=import-error
-import adios2  # pylint: disable=import-error
-import diagram  # pylint: disable=import-error
+import numpy
+import adios2
+import diagram
 
 
 def run():
     parser = argparse.ArgumentParser(description=("Graph KdV equation"))
-    parser.add_argument(
-        "-f", "--filename", help=".bp filename", default="korteweg_de_vries.bp"
-    )
+    parser.add_argument("-f", "--filename", help=".bp filename", default="korteweg_de_vries.bp")
     options = parser.parse_args()
     dgoptions = diagram.DOption()
     dgoptions.mode = "g"

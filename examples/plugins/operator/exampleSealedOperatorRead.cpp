@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * exampleSealedOperatorRead.cpp example showing how to use
- * EncryptionOperator plugin in asymmetric mode (read with both public and secret keys)
- *
- *  Created on: Mar 5, 2026
- *      Author: Vicente Bolea
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <ios>

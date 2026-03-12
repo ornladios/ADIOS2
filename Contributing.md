@@ -1,7 +1,7 @@
 # Contributor's Guidelines to ADIOS 2
 
 This guide will walk you through how to submit changes to ADIOS 2 and interact
-with the project as a developer. Information found on ADIOS 2 wiki: https://github.com/ornladios/ADIOS2/wiki under the Contributing to ADIOS section. 
+with the project as a developer. Information found on ADIOS 2 wiki: https://github.com/ornladios/ADIOS2/wiki under the Contributing to ADIOS section.
 
 Table of Contents
 =================

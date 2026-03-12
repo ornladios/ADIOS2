@@ -1,12 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * CompressBigWhoop.cpp
- *
- *  Created on: Jan 26, 2024
- *      Author: Gregor Weiss gregor.weiss@hlrs.de
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "CompressBigWhoop.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <bwc.h>

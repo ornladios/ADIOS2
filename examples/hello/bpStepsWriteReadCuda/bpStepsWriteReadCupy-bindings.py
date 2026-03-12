@@ -1,19 +1,28 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import numpy as np
 import cupy as cp
 from adios2 import FileReader
 import adios2.bindings as adios2
 
+
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     adios = adios2.ADIOS()
     ioWriter = adios.DeclareIO("cupyWriter")
-    gpuVar = ioWriter.DefineVariable("gpuArray",
-                                     np.array([0], dtype=cpuArray.dtype),
-                                     gpuArray.shape, [0] * len(gpuArray.shape),
-                                     gpuArray.shape)
+    gpuVar = ioWriter.DefineVariable(
+        "gpuArray",
+        np.array([0], dtype=cpuArray.dtype),
+        gpuArray.shape,
+        [0] * len(gpuArray.shape),
+        gpuArray.shape,
+    )
     # optionally the memory space can be set to GPU
     gpuVar.SetMemorySpace(adios2.MemorySpace.GPU)
-    cpuVar = ioWriter.DefineVariable("cpuArray", cpuArray, cpuArray.shape,
-                                     [0] * len(cpuArray.shape), cpuArray.shape)
+    cpuVar = ioWriter.DefineVariable(
+        "cpuArray", cpuArray, cpuArray.shape, [0] * len(cpuArray.shape), cpuArray.shape
+    )
 
     # write both cpu and gpu arrays for each simulation step
     wStream = ioWriter.Open(fileName, adios2.Mode.Write)
@@ -27,8 +36,11 @@ def write_array(fileName, nSteps, gpuArray, cpuArray):
         gpuArray = gpuArray * 2
         cpuArray = cpuArray + 1
     wStream.Close()
-    print("Write to file %s: %s data from GPU and %s data from CPU" % (
-        fileName, gpuArray.shape, cpuArray.shape))
+    print(
+        "Write to file %s: %s data from GPU and %s data from CPU"
+        % (fileName, gpuArray.shape, cpuArray.shape)
+    )
+
 
 def read_array(fileName, nSteps):
     adios = adios2.ADIOS()
@@ -52,7 +64,7 @@ def read_array(fileName, nSteps):
     rStream.Close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # define simulation host data
     cpuArray = np.array([[0, 1.0, 2.0], [3.0, 4.0, 5.0]], dtype=np.float32)
     # copy the data on the device
@@ -64,9 +76,11 @@ if __name__ == '__main__':
     print("Bytes required to store the gpu array", gpuArray.nbytes)
     print("Bytes allocated on the device memory pool", mempool.total_bytes())
     print("Bytes used on the device memory pool", mempool.used_bytes())
-    print("Blocks allocated on the pinned memory pool (The allocated pinned"
-          " memory is released just after the transfer is complete)",
-          pinned_mempool.n_free_blocks())
+    print(
+        "Blocks allocated on the pinned memory pool (The allocated pinned"
+        " memory is released just after the transfer is complete)",
+        pinned_mempool.n_free_blocks(),
+    )
 
     nSteps = 2
     write_array("StepsCuPyBindings.bp", nSteps, gpuArray, cpuArray)

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * ADIOS is freely available under the terms of the BSD license described
  * in the COPYING file in the top level directory of this source distribution.
@@ -21,7 +27,6 @@
  *  - DLIST, doubly linked list, useful for O(1) removal.
  *  - SLIST, single linked list, useful for O(1) append, head, tail.
  *
- * Author: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
  */
 
 #include "dp_interface.h"

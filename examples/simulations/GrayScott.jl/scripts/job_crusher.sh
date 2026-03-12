@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 #SBATCH -A CSC383_crusher
 #SBATCH -J gs-julia-1MPI-1GPU
 #SBATCH -o %x-%j.out

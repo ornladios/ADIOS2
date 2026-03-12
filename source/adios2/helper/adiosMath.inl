@@ -1,12 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosMath.inl
- *
- *  Created on: May 17, 2017
- *      Author: William F Godoy godoywf@ornl.gov
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 
 #ifndef ADIOS2_HELPER_ADIOSMATH_INL_
 #define ADIOS2_HELPER_ADIOSMATH_INL_

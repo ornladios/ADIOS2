@@ -1,14 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#
-# Test writer to produce a test dataset for Matlab reading
-# This is serial since the Matlab reader is built with serial ADIOS
-#
-#
-#  Created on: Jan 28, 2019
-#      Author: Norbert Podhorszki, pnorbert@ornl.gov
-#
+# SPDX-License-Identifier: Apache-2.0
+
 
 import numpy
 import adios2
@@ -31,7 +24,7 @@ for i in range(0, NRows):
 
 # ADIOS2 high-level API for Write
 fw = adios2.open("test1.bp", "w")
-fw.write("note", 'This is an ADIOS2 output')
+fw.write("note", "This is an ADIOS2 output")
 fw.write("temperature2D", temperatures, shape, start, count)
 fw.write("nrows", numpy.array([NRows]))
 fw.write("ncols", numpy.array([NCols]))

@@ -1,11 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * adiosRerouting.cpp
- *
- *  Created on: Sept 26, 2025
- *      Author: Scott Wittenburg scott.wittenburg@kitware.com
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "adiosRerouting.h"

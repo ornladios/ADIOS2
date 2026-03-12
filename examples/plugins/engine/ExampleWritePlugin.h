@@ -1,14 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * ExampleWritePlugin.h Simple file writing engine. Creates directory
- * (called "ExamplePlugin" by default, but can be changed with engine parameter
- * "DirName") and writes variable info to vars.txt and actual data to data.txt.
- *
- *  Created on: Jul 5, 2021
- *      Author: Chuck Atkins <chuck.atkins@kitware.com>
- *              Caitlin Ross <caitlin.ross@kitware.com>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef EXAMPLEWRITEPLUGIN_H_

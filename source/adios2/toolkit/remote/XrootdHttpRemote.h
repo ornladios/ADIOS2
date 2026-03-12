@@ -1,12 +1,7 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * XrootdHttpRemote.h - HTTP/HTTPS-based client for XRootD SSI services
- *
- * This provides the same functionality as XrootdRemote but uses HTTP or HTTPS
- * instead of the native XRootD SSI protocol. It connects to an XRootD
- * server running the HTTP-to-SSI bridge handler.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef ADIOS2_XROOTDHTTPREMOTE_H

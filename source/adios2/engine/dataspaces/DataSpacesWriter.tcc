@@ -1,13 +1,9 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
+ * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
  *
- * DataSpacesWriter.tcc
- *
- *  Created on: Dec 5, 2018
- *      Author: Pradeep Subedi
- *				pradeep.subedi@rutgers.edu
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_
 

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from os import fstat
 
 import numpy as np
@@ -19,18 +23,19 @@ from .utils import ReadHeader
 
 
 def ReadWriterMap(bytearray, pos, verbose):
-    data = np.frombuffer(bytearray, dtype=np.uint64, count=3,
-                         offset=pos)
+    data = np.frombuffer(bytearray, dtype=np.uint64, count=3, offset=pos)
     WriterCount = int(data[0])
     AggregatorCount = int(data[1])
     SubfileCount = int(data[2])
     pos = pos + 3 * 8
 
-    data = np.frombuffer(bytearray, dtype=np.uint64, count=WriterCount,
-                         offset=pos)
+    data = np.frombuffer(bytearray, dtype=np.uint64, count=WriterCount, offset=pos)
     if verbose:
-        print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}"
-              .format(WriterCount, AggregatorCount, SubfileCount))
+        print(
+            "  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}".format(
+                WriterCount, AggregatorCount, SubfileCount
+            )
+        )
         print("  =====================")
         print("  |  Rank  |  Subfile |")
         print("  ---------------------")
@@ -57,48 +62,63 @@ def ReadIndex(f, fileSize, verbose):
     WriterMapIdx = -1
     while pos < nBytes:
         if verbose:
-            print("-----------------------------------------------" +
-                  "---------------------------------------------------")
+            print(
+                "-----------------------------------------------"
+                + "---------------------------------------------------"
+            )
         record = chr(table[pos])
         pos = pos + 1
-        reclen = np.frombuffer(table, dtype=np.uint64, count=1,
-                               offset=pos)
+        reclen = np.frombuffer(table, dtype=np.uint64, count=1, offset=pos)
         pos = pos + 8
         if verbose:
             print("Record '{0}', length = {1}".format(record, reclen))
-        if record == 's':
+        if record == "s":
             # print("Step record, length = {0}".format(reclen))
-            data = np.frombuffer(table, dtype=np.uint64, count=3,
-                                 offset=pos)
+            data = np.frombuffer(table, dtype=np.uint64, count=3, offset=pos)
             stepstr = str(step).ljust(6)
             mdatapos = str(data[0]).ljust(10)
             mdatasize = str(data[1]).ljust(10)
             flushcount = str(data[2]).ljust(3)
             FlushCount = data[2]
 
-            md = {"step": step,
-                  "mdpos": int(data[0]),
-                  "mdsize": int(data[1]),
-                  "flushcount": int(data[2]),
-                  "writermapindex": WriterMapIdx}
+            md = {
+                "step": step,
+                "mdpos": int(data[0]),
+                "mdsize": int(data[1]),
+                "flushcount": int(data[2]),
+                "writermapindex": WriterMapIdx,
+            }
             MetadataIndexTable.append(md)
 
             if verbose:
-                print("|   Step = " + stepstr + "| MetadataPos = " +
-                      mdatapos + " |  MetadataSize = " + mdatasize +
-                      "   | FlushCount = " + flushcount + "|")
+                print(
+                    "|   Step = "
+                    + stepstr
+                    + "| MetadataPos = "
+                    + mdatapos
+                    + " |  MetadataSize = "
+                    + mdatasize
+                    + "   | FlushCount = "
+                    + flushcount
+                    + "|"
+                )
 
             pos = pos + 3 * 8
 
             for Writer in range(0, WriterCount):
                 start = " Writer " + str(Writer) + " data "
-                thiswriter = np.frombuffer(table, dtype=np.uint64,
-                                           count=int(FlushCount * 2 + 1),
-                                           offset=pos)
+                thiswriter = np.frombuffer(
+                    table, dtype=np.uint64, count=int(FlushCount * 2 + 1), offset=pos
+                )
 
                 for i in range(0, FlushCount):  # for flushes
-                    start += ("loc:" + str(thiswriter[int(i * 2)]) + " siz:" +
-                              str(thiswriter[i * 2 + 1]) + "; ")
+                    start += (
+                        "loc:"
+                        + str(thiswriter[int(i * 2)])
+                        + " siz:"
+                        + str(thiswriter[i * 2 + 1])
+                        + "; "
+                    )
                 start += "loc:" + str(thiswriter[int(FlushCount * 2)])
                 pos = int(pos + (FlushCount * 2 + 1) * 8)
                 if verbose:
@@ -106,33 +126,38 @@ def ReadIndex(f, fileSize, verbose):
 
             step = step + 1
 
-        elif record == 'w':
+        elif record == "w":
             # print("WriterMap record")
-            pos, WriterCount, AggregatorCount, SubfileCount = ReadWriterMap(
-                table, pos, verbose)
-            wmd = {"StartStep": step,
-                   "WriterCount": WriterCount,
-                   "AggregatorCount": AggregatorCount,
-                   "SubfilesCount": SubfileCount}
+            pos, WriterCount, AggregatorCount, SubfileCount = ReadWriterMap(table, pos, verbose)
+            wmd = {
+                "StartStep": step,
+                "WriterCount": WriterCount,
+                "AggregatorCount": AggregatorCount,
+                "SubfilesCount": SubfileCount,
+            }
             WriterMap.append(wmd)
             WriterMapIdx = WriterMapIdx + 1
 
-        elif record == 'm':
+        elif record == "m":
             if verbose:
                 print("MetaMeta record")
 
         else:
             if verbose:
-                print("Unknown record {0}, lenght = {1}".format(
-                    record, reclen))
+                print("Unknown record {0}, lenght = {1}".format(record, reclen))
 
         if verbose:
-            print("---------------------------------------------------" +
-                  "-----------------------------------------------")
+            print(
+                "---------------------------------------------------"
+                + "-----------------------------------------------"
+            )
 
     if fileSize - f.tell() > 1:
-        print("ERROR: There are {0} bytes at the end of file"
-              " that cannot be interpreted".format(fileSize - f.tell() - 1))
+        print(
+            "ERROR: There are {0} bytes at the end of file that cannot be interpreted".format(
+                fileSize - f.tell() - 1
+            )
+        )
         return False, MetadataIndexTable, WriterMap
 
     return True, MetadataIndexTable, WriterMap
@@ -148,13 +173,11 @@ def DumpIndexTable(fileName, verbose):
     WriterMap = []
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = ReadHeader(
-            f, fileSize, "Index Table", verbose)
+        status = ReadHeader(f, fileSize, "Index Table", verbose)
         if isinstance(status, list):
             status = status[0]
         if status:
-            status, MetadataIndexTable, WriterMap = ReadIndex(
-                f, fileSize, verbose)
+            status, MetadataIndexTable, WriterMap = ReadIndex(f, fileSize, verbose)
     return status, MetadataIndexTable, WriterMap
 
 

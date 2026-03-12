@@ -1,29 +1,7 @@
-#------------------------------------------------------------------------------#
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
-#------------------------------------------------------------------------------#
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
-# FindCaliper
-# -----------
-#
-# Try to find the Caliper library
-#
-# This module defines the following variables:
-#
-#   Caliper_FOUND        - System has Caliper
-#   Caliper_INCLUDE_DIRS - The Caliper include directory
-#   Caliper_LIBRARIES    - Link these to use Caliper
-#
-# and the following imported targets:
-#   Caliper::Caliper - The core Caliper library
-#
-# You can also set the following variable to help guide the search:
-#   Caliper_ROOT - The install prefix for Caliper containing the
-#                     include and lib folders
-#                     Note: this can be set as a CMake variable or an
-#                           environment variable.  If specified as a CMake
-#                           variable, it will override any setting specified
-#                           as an environment variable.
+# SPDX-License-Identifier: Apache-2.0
+
 
 if((NOT Caliper_ROOT) AND (NOT (ENV{Caliper_ROOT} STREQUAL "")))
   set(Caliper_ROOT "$ENV{Caliper_ROOT}")

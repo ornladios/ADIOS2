@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 These are the script I use to plot json profilers.
 In the ADIOS proflier, the important keys are:
    PP PDW ES ES_AWD ES_aggregate_info MetaInfoBcast FixedMetaInfoGather transport_0.wbytes

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 version: 2
 enable-beta-ecosystems: true
 updates:
@@ -14,7 +18,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
     assignees:
       - infrastructure
   - package-ecosystem: "docker"
@@ -24,14 +28,14 @@ updates:
       - "/scripts/ci/images/formatting"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
     assignees:
       - infrastructure
   - package-ecosystem: "conda"
     directory: "/docs/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
     assignees:
       - infrastructure
 

@@ -1,10 +1,7 @@
+! SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 !
-! Distributed under the OSI-approved Apache License, Version 2.0.  See
-!  accompanying file Copyright.txt for details.
-!
-!  adios2_adios_init_mod.F90 : ADIOS2 Fortran bindings for ADIOS class Init
-!                              functions
-!
+! SPDX-License-Identifier: Apache-2.0
+
 
 module adios2_adios_init_mod
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES

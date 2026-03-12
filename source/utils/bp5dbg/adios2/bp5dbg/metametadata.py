@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from os import fstat
 
 import numpy as np
@@ -13,19 +17,18 @@ def ReadMetaMetadataRecord(buf, rec, pos, fileSize):
     pos = pos + 8
 
     id_start = pos
-    id_bytes = bytes(buf[id_start:id_start + int(mmIDlen[0])])
+    id_bytes = bytes(buf[id_start : id_start + int(mmIDlen[0])])
     pos = pos + int(mmIDlen[0])
 
     info_start = pos
-    info_bytes = bytes(buf[info_start:info_start + int(mmInfolen[0])])
+    info_bytes = bytes(buf[info_start : info_start + int(mmInfolen[0])])
     pos = pos + int(mmInfolen[0])
 
     recs = str(rec).rjust(7)
     idlen = str(mmIDlen[0]).rjust(10)
     infolen = str(mmInfolen[0]).rjust(12)
 
-    print(
-        f" | {recs} | {startoffset} | {idlen} | {infolen} |")
+    print(f" | {recs} | {startoffset} | {idlen} | {infolen} |")
 
     return pos, id_bytes, info_bytes
 
@@ -44,9 +47,8 @@ def DumpMetaMetaData(fileName, ffsDecoder=None):
         print(" --------------------------------------------------")
         pos = 0
         rec = 0
-        while (pos < fileSize - 1):
-            pos, id_bytes, info_bytes = ReadMetaMetadataRecord(
-                buf, rec, pos, fileSize)
+        while pos < fileSize - 1:
+            pos, id_bytes, info_bytes = ReadMetaMetadataRecord(buf, rec, pos, fileSize)
             mmd_records.append((id_bytes, info_bytes))
             rec = rec + 1
         print(" --------------------------------------------------")
@@ -66,23 +68,21 @@ def _print_metametadata_fields(mmd_records, ffsDecoder):
         # Load this single record into a temporary context to get its
         # format info. We already loaded all records above, so we can
         # use FMformat_from_ID.
-        fm_format = ffsDecoder.lib.FMformat_from_ID(
-            ffsDecoder.fm_context, id_bytes)
+        fm_format = ffsDecoder.lib.FMformat_from_ID(ffsDecoder.fm_context, id_bytes)
         if not fm_format:
             continue
         format_name = ffsDecoder.lib.name_of_FMformat(fm_format)
         if format_name:
-            format_name = format_name.decode('utf-8', errors='replace')
+            format_name = format_name.decode("utf-8", errors="replace")
         else:
             format_name = f"<record {idx}>"
 
         desc_list_ptr = ffsDecoder.lib.format_list_of_FMFormat(fm_format)
         field_list = ffsDecoder._read_field_list(desc_list_ptr)
 
-        print(f"  Format \"{format_name}\":")
+        print(f'  Format "{format_name}":')
         for name, ftype, fsize, foffset in field_list:
-            print(f"    {name:40s} {ftype:30s} "
-                  f"size={fsize} offset={foffset}")
+            print(f"    {name:40s} {ftype:30s} size={fsize} offset={foffset}")
         print()
 
 
