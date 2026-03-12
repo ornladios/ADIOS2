@@ -316,11 +316,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
@@ -637,11 +637,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
@@ -892,11 +892,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
@@ -1179,11 +1179,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
@@ -1501,11 +1501,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 #ifdef ADIOS2_HAVE_BZIP2
@@ -1581,11 +1581,11 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
         bpWriter.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 #endif
 

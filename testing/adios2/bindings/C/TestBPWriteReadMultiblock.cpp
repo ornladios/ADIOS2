@@ -254,14 +254,11 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
     adios2_finalize(adiosH);
 
     // Cleanup generated files
-    if (rank == 0)
-    {
 #if ADIOS2_USE_MPI
-        CleanupTestFiles("cmblocks_MPI.bp");
+    CleanupTestFilesMPI("cmblocks_MPI.bp", MPI_COMM_WORLD);
 #else
-        CleanupTestFiles("cmblocks.bp");
+    CleanupTestFiles("cmblocks.bp");
 #endif
-    }
 }
 
 //******************************************************************************

@@ -320,11 +320,11 @@ TEST_F(BPEngineTest, ZfpComplex)
 #endif
     Reader(shape, start, count, steps);
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fileName);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fileName, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fileName);
+#endif
 }
 
 int main(int argc, char **argv)

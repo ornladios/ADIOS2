@@ -161,11 +161,11 @@ void BloscAccuracy1D(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BloscAccuracy2D(const std::string accuracy, const std::string threshold,
@@ -310,11 +310,11 @@ void BloscAccuracy2D(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BloscAccuracy3D(const std::string accuracy, const std::string threshold,
@@ -462,11 +462,11 @@ void BloscAccuracy3D(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BloscAccuracy1DSel(const std::string accuracy, const std::string threshold,
@@ -608,11 +608,11 @@ void BloscAccuracy1DSel(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BloscAccuracy2DSel(const std::string accuracy, const std::string threshold,
@@ -757,11 +757,11 @@ void BloscAccuracy2DSel(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BloscAccuracy3DSel(const std::string accuracy, const std::string threshold,
@@ -909,11 +909,11 @@ void BloscAccuracy3DSel(const std::string accuracy, const std::string threshold,
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPWriteReadBlosc

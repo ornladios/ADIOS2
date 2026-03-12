@@ -367,11 +367,11 @@ TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead1D8)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -717,11 +717,11 @@ TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D2x4)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 //******************************************************************************
@@ -1055,11 +1055,11 @@ TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
@@ -1390,11 +1390,11 @@ TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
@@ -1600,11 +1600,11 @@ TEST_P(BPWriteReadTestADIOS2Transport, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow
         EXPECT_THROW(bpReader.Get(var_r64, R64.data()), std::invalid_argument);
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_P(BPWriteReadTestADIOS2Transport, OpenEngineTwice)

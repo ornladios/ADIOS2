@@ -424,10 +424,11 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
     }
 
     // Cleanup generated files
-    if (rank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class ADIOS2_C_API_IO : public ADIOS2_C_API
@@ -503,10 +504,11 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     adios2_close(engineH);
 
     // Cleanup generated files
-    if (rank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(ADIOS2_C_API_IO, EngineDefault)
@@ -530,10 +532,11 @@ TEST_F(ADIOS2_C_API_IO, EngineDefault)
     adios2_close(engineH);
 
     // Cleanup generated files
-    if (rank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)

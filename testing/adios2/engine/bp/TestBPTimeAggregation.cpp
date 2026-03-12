@@ -342,11 +342,11 @@ void TimeAggregation1D8(const std::string flushstepscount)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void TimeAggregation2D4x2(const std::string flushstepscount)
@@ -680,11 +680,11 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPTestTimeAggregation : public ::testing::TestWithParam<std::string>

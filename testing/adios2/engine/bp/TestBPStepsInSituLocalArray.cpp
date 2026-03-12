@@ -225,11 +225,11 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
     writer.Close();
     reader.Close();
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 // A new variable is created and written every step
@@ -357,11 +357,11 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     writer.Close();
     reader.Close();
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayReaders,
@@ -515,11 +515,11 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     writer.Close();
     reader.Close();
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayParameters,

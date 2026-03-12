@@ -21,6 +21,10 @@
 #define NOMINMAX
 #endif
 
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
+
 // Include appropriate headers based on the operating system
 #ifdef _WIN32
 #include <direct.h>
@@ -76,6 +80,21 @@ inline void CleanupTestFiles(const std::string &path)
         exit(EXIT_FAILURE);
     }
 }
+
+// MPI-aware cleanup: barrier ensures all ranks are done before rank 0 deletes files.
+// Without this, rank 0 can rm -rf test files while other ranks still have them open.
+#if ADIOS2_USE_MPI
+inline void CleanupTestFilesMPI(const std::string &path, MPI_Comm comm)
+{
+    MPI_Barrier(comm);
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+    if (rank == 0)
+    {
+        CleanupTestFiles(path);
+    }
+}
+#endif
 
 // Test data for each type.  Make sure our values exceed the range of the
 // previous size to make sure we all bytes for each element

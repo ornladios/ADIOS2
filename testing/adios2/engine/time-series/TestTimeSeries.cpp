@@ -237,12 +237,23 @@ TEST_F(TimeSeries, WriteReadShape2D)
     }
 
     // Cleanup generated files
-    if (rank == 0)
     {
-        CleanupTestFiles(fname + ".ats");
-
-        // Clean up all numbered .bp or .h5 files
         size_t numFiles = (nsteps + stepsPerFile - 1) / stepsPerFile;
+#if ADIOS2_USE_MPI
+        CleanupTestFilesMPI(fname + ".ats", MPI_COMM_WORLD);
+        for (size_t i = 0; i < numFiles; i++)
+        {
+            if (engineName == "HDF5")
+            {
+                CleanupTestFilesMPI(fname + "_" + std::to_string(i) + ".h5", MPI_COMM_WORLD);
+            }
+            else
+            {
+                CleanupTestFilesMPI(fname + "_" + std::to_string(i) + ".bp", MPI_COMM_WORLD);
+            }
+        }
+#else
+        CleanupTestFiles(fname + ".ats");
         for (size_t i = 0; i < numFiles; i++)
         {
             if (engineName == "HDF5")
@@ -254,6 +265,7 @@ TEST_F(TimeSeries, WriteReadShape2D)
                 CleanupTestFiles(fname + "_" + std::to_string(i) + ".bp");
             }
         }
+#endif
     }
 }
 

@@ -153,11 +153,11 @@ void BZIP2Accuracy1D(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy1DLocal(const std::string accuracy)
@@ -289,11 +289,11 @@ void BZIP2Accuracy1DLocal(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy2D(const std::string accuracy)
@@ -431,11 +431,11 @@ void BZIP2Accuracy2D(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy3D(const std::string accuracy)
@@ -576,11 +576,11 @@ void BZIP2Accuracy3D(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy1DSel(const std::string accuracy)
@@ -715,11 +715,11 @@ void BZIP2Accuracy1DSel(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy2DSel(const std::string accuracy)
@@ -857,11 +857,11 @@ void BZIP2Accuracy2DSel(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BZIP2Accuracy3DSel(const std::string accuracy)
@@ -1002,11 +1002,11 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPWriteReadBZIP2 : public ::testing::TestWithParam<std::string>
