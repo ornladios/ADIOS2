@@ -333,11 +333,11 @@ void HDF5Steps1D(const size_t ghostCells)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void HDF5Steps2D4x2(const size_t ghostCells)
@@ -571,11 +571,11 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void HDF5Steps3D8x2x4(const size_t ghostCells)
@@ -852,11 +852,11 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class HDF5WriteMemSelReadVector : public ::testing::TestWithParam<size_t>

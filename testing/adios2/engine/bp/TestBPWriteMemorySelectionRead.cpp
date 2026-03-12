@@ -388,11 +388,11 @@ void BPSteps1D(const size_t ghostCells)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BPSteps2D4x2(const size_t ghostCells)
@@ -622,11 +622,11 @@ void BPSteps2D4x2(const size_t ghostCells)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void BPSteps3D8x2x4(const size_t ghostCells)
@@ -893,11 +893,11 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPWriteMemSelReadVector : public ::testing::TestWithParam<size_t>

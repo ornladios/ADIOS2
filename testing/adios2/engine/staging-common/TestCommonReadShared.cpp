@@ -136,10 +136,15 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     engine2.Close();
 
     // Cleanup generated files (only for file engines, not streaming engines)
-    if (mpiRank == 0 && Cleanup)
+    if (Cleanup)
     {
+#if ADIOS2_USE_MPI
+        CleanupTestFilesMPI(fname1, testComm);
+        CleanupTestFilesMPI(fname2, testComm);
+#else
         CleanupTestFiles(fname1);
         CleanupTestFiles(fname2);
+#endif
     }
 }
 

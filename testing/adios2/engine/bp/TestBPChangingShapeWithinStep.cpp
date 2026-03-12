@@ -235,10 +235,11 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
     }
 
     // Cleanup generated files
-    if (rank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 adios2::Params paccuracy = {{"accuracy", "0.001"}};

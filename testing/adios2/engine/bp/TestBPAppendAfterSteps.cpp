@@ -190,11 +190,11 @@ TEST_P(BPAppendAfterStepsP, Test)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(BPAppendAfterSteps, BPAppendAfterStepsP,

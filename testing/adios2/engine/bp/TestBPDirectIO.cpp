@@ -130,11 +130,11 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
         engine_s.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 int main(int argc, char **argv)

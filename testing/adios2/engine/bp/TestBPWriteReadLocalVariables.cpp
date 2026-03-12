@@ -417,11 +417,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
@@ -800,11 +800,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
@@ -1184,11 +1184,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
@@ -1466,11 +1466,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
@@ -1646,11 +1646,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
@@ -1759,11 +1759,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
@@ -1840,11 +1840,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
         }
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 template <class T>
@@ -2047,10 +2047,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocalVaryingNumberOfBlocks)
 #if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 int main(int argc, char **argv)

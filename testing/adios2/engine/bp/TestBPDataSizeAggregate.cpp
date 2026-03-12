@@ -196,10 +196,11 @@ TEST_F(DSATest, TestWriteUnbalancedData)
     }
 
     // Cleanup generated files
-    if (worldRank == 0)
-    {
-        CleanupTestFiles("unbalanced_output.bp");
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI("unbalanced_output.bp", MPI_COMM_WORLD);
+#else
+    CleanupTestFiles("unbalanced_output.bp");
+#endif
 }
 
 int main(int argc, char **argv)

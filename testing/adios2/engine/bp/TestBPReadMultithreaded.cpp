@@ -207,11 +207,11 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 TEST_P(BPReadMultithreadedTestP, ReadStream)
@@ -282,11 +282,11 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(filename);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(filename, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(filename);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(BPReadMultithreadedTest, BPReadMultithreadedTestP,

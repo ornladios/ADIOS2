@@ -394,11 +394,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
@@ -641,11 +641,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
@@ -891,11 +891,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
         h5Reader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)

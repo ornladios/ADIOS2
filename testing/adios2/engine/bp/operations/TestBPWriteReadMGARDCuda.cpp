@@ -140,11 +140,11 @@ void MGARDAccuracy2D(const std::string tolerance)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void MGARDAccuracySmall(const std::string tolerance)
@@ -272,11 +272,11 @@ void MGARDAccuracySmall(const std::string tolerance)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPWriteReadMGARD : public ::testing::TestWithParam<std::string>

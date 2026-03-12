@@ -142,11 +142,11 @@ void ZfpRate1D(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate2D(const std::string configFile)
@@ -269,11 +269,11 @@ void ZfpRate2D(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate3D(const std::string configFile)
@@ -399,11 +399,11 @@ void ZfpRate3D(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate1DSel(const std::string configFile)
@@ -526,11 +526,11 @@ void ZfpRate1DSel(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate2DSel(const std::string configFile)
@@ -653,11 +653,11 @@ void ZfpRate2DSel(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate3DSel(const std::string configFile)
@@ -783,11 +783,11 @@ void ZfpRate3DSel(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 void ZfpRate2DSmallSel(const std::string configFile)
@@ -912,11 +912,11 @@ void ZfpRate2DSmallSel(const std::string configFile)
         bpReader.Close();
     }
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 class BPWriteReadZfpConfig : public ::testing::TestWithParam<std::string>

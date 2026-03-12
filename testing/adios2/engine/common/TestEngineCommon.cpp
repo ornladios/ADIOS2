@@ -226,11 +226,7 @@ TEST_F(Common, NewAttributeEveryStep)
     }
 
     // Cleanup generated files
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (wrank == 0)
-    {
-        CleanupTestFiles(streamName);
-    }
+    CleanupTestFilesMPI(streamName, MPI_COMM_WORLD);
 
     // Separate each individual test with a big gap in time
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

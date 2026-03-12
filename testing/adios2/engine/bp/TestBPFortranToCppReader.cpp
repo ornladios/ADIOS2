@@ -128,11 +128,11 @@ TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
     EXPECT_EQ(step, 3);
     bpReader.Close();
 
-    // Cleanup generated files
-    if (mpiRank == 0)
-    {
-        CleanupTestFiles(fname);
-    }
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
 }
 
 int main(int argc, char **argv)

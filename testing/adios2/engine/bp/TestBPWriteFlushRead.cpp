@@ -480,16 +480,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
     }
 
     // Cleanup generated files
-    if (mpiRank == 0)
-    {
 #if ADIOS2_USE_MPI
-        CleanupTestFiles("Flush1D_MPI.bp");
-        CleanupTestFiles("Flush2D_MPI.bp");
+    CleanupTestFilesMPI("Flush1D_MPI.bp", MPI_COMM_WORLD);
+    CleanupTestFilesMPI("Flush2D_MPI.bp", MPI_COMM_WORLD);
 #else
-        CleanupTestFiles("Flush1D.bp");
-        CleanupTestFiles("Flush2D.bp");
+    CleanupTestFiles("Flush1D.bp");
+    CleanupTestFiles("Flush2D.bp");
 #endif
-    }
 }
 
 TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
@@ -946,16 +943,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
     }
 
     // Cleanup generated files
-    if (mpiRank == 0)
-    {
 #if ADIOS2_USE_MPI
-        CleanupTestFiles("Flush1Dstdio_MPI.bp");
-        CleanupTestFiles("Flush2Dstdio_MPI.bp");
+    CleanupTestFilesMPI("Flush1Dstdio_MPI.bp", MPI_COMM_WORLD);
+    CleanupTestFilesMPI("Flush2Dstdio_MPI.bp", MPI_COMM_WORLD);
 #else
-        CleanupTestFiles("Flush1Dstdio.bp");
-        CleanupTestFiles("Flush2Dstdio.bp");
+    CleanupTestFiles("Flush1Dstdio.bp");
+    CleanupTestFiles("Flush2Dstdio.bp");
 #endif
-    }
 }
 
 TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
@@ -1413,16 +1407,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
     }
 
     // Cleanup generated files
-    if (mpiRank == 0)
-    {
 #if ADIOS2_USE_MPI
-        CleanupTestFiles("Flush1Dfstream_MPI.bp");
-        CleanupTestFiles("Flush2Dfstream_MPI.bp");
+    CleanupTestFilesMPI("Flush1Dfstream_MPI.bp", MPI_COMM_WORLD);
+    CleanupTestFilesMPI("Flush2Dfstream_MPI.bp", MPI_COMM_WORLD);
 #else
-        CleanupTestFiles("Flush1Dfstream.bp");
-        CleanupTestFiles("Flush2Dfstream.bp");
+    CleanupTestFiles("Flush1Dfstream.bp");
+    CleanupTestFiles("Flush2Dfstream.bp");
 #endif
-    }
 }
 
 //******************************************************************************
