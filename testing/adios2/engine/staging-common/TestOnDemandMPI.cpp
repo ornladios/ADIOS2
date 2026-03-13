@@ -72,9 +72,11 @@ void DoWriter(adios2::IO io)
         engine.Put(var, data_forward.data(), sync);
         engine.Put(stepvar, step);
         engine.EndStep();
+
+        // Pace the writer so readers have time to connect and create
+        // realistic demand patterns (queue sometimes empty, sometimes not)
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
     }
-    // Close the file
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     engine.Close();
     int steps = 0;
     int received_steps = 0;
@@ -102,10 +104,22 @@ void DoReader(adios2::IO io, int Rank)
         size_t writerStep;
         sstReader.Get(floatVar, myFloats);
         sstReader.Get(stepVar, writerStep);
-        //	    std::cout << "Reader " << Rank << " got writerStep " <<
-        // writerStep << std::endl;
         sstReader.EndStep();
         steps += 1;
+
+        // Simulate varying workloads per reader.  Each reader "processes"
+        // for a duration proportional to its rank, so faster readers drain
+        // more steps while slower ones let the queue build up.  After 3
+        // steps every reader pauses for 500ms, guaranteeing the writer-side
+        // request queue drains completely and steps buffer on the writer.
+        if (steps == 3)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(Rank * 20));
+        }
     }
     sstReader.Close();
     std::cout << "Reader " << Rank << " got " << steps << " steps " << std::endl;
@@ -123,6 +137,10 @@ TEST_F(TestOnDemandMPI, ADIOS2OnDemandMPI)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
+    // Limit to 4 readers (ranks 1-4) so demand patterns are more
+    // interesting — with too many readers the queue is never empty.
+    int maxReaders = 4;
+
     // Init without MPI.  MPI only used to coordinate non-MPI actors
     adios2::ADIOS adios;
 
@@ -132,10 +150,16 @@ TEST_F(TestOnDemandMPI, ADIOS2OnDemandMPI)
     {
         DoWriter(io);
     }
+    else if (mpiRank <= maxReaders)
+    {
+        DoReader(io, mpiRank);
+    }
     else
     {
-
-        DoReader(io, mpiRank);
+        // Extra ranks just participate in the MPI_Reduce
+        int steps = 0;
+        int get_count;
+        MPI_Reduce(&steps, &get_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     }
 }
 
@@ -146,7 +170,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
-    NSteps = 100;
+    NSteps = 50;
 
     ParseArgs(argc, argv);
 
