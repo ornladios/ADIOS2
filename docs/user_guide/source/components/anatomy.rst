@@ -57,13 +57,7 @@ Some rules:
 
 *   Variables can be defined any time, before the corresponding Put() call
 *   Attributes can be defined any time before EndStep
-*   The following functions must be treated as Collective operations
-
-  * ADIOS
-  * Open
-  * BeginStep
-  * EndStep
-  * Close
+*   Several Engine functions are collective MPI operations.  See :ref:`engine_collective_table` for details.
 
 .. note::
 
