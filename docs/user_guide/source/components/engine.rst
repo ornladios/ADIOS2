@@ -44,7 +44,7 @@ BeginStep
 
 .. note::
 
-   For most engines, this should be treated as a ``collective`` function.
+   This may be a collective operation depending on the engine.  See :ref:`engine_collective_table`.
 
 EndStep
 -------
@@ -54,10 +54,10 @@ EndStep
 
 .. note::
 
-   For most engines, this is a ``collective`` function.
+   This may be a collective operation depending on the engine.  See :ref:`engine_collective_table`.
 
 .. tip::
-   
+
    To write portable code for a step-by-step access across ADIOS2 engines (file and streaming engines) use ``BeginStep`` and ``EndStep``.
 
 .. danger:: 
@@ -74,7 +74,7 @@ Close
 
 .. note::
 
-   For most engines, this is a ``collective`` function.
+   This may be a collective operation depending on the engine.  See :ref:`engine_collective_table`.
 
 
 Put: modes and memory contracts
@@ -344,7 +344,7 @@ PerformDataWrite
 .. note::
 
    - Currently only supported by the ``BP5`` file engine.   
-   - This is a ``collective`` function.
+   - This is a collective operation.  See :ref:`engine_collective_table`.
 
 
 
@@ -584,17 +584,24 @@ Available Engines
 A particular engine is set within the ``IO`` object that creates it with the ``IO::SetEngine`` function in a case insensitive manner.
 If the ``SetEngine`` function is not invoked the default engine is the ``BPFile``.
 
-+-------------------------+---------+---------------------------------------------+
-| Application             | Engine  | Description                                 |
-+-------------------------+---------+---------------------------------------------+
-| File                    | BP5     | DEFAULT write/read ADIOS2 native bp files   |
-|                         |         |                                             |
-|                         | HDF5    | write/read interoperability with HDF5 files |
-+-------------------------+---------+---------------------------------------------+
-| Wide-Area-Network (WAN) | DataMan | write/read TCP/IP streams                   |
-+-------------------------+---------+---------------------------------------------+
-| Staging                 | SST     | write/read to a "staging" area: *e.g.* RDMA |
-+-------------------------+---------+---------------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 10 55
+
+   * - Application
+     - Engine
+     - Description
+   * - File
+     - BP5
+     - Default engine for reading and writing ADIOS2 native ``.bp`` files
+   * - File
+     - HDF5
+     - Read/write HDF5 files through the ADIOS2 API
+   * - Staging
+     - SST
+     - | Streaming network connection between readers and writers with
+       | MxN data redistribution and many flow control features.
+       | Supports RDMA and TCP (for WAN) connectivity.
 
 
 ``Engine`` polymorphism has two goals:
@@ -607,3 +614,103 @@ Reusable toolkit objects are available inside ADIOS2 for common tasks: bp buffer
 A class that extends ``Engine`` must be thought of as a solution to a range of IO applications.
 Each engine must provide a list of supported parameters, set in the IO object creating this engine using ``IO::SetParameters``, and supported transports (and their parameters) in ``IO::AddTransport``.
 Each Engine's particular options are documented in :ref:`Supported Engines`.
+
+.. _engine_collective_table:
+
+MPI Collective Behavior by Engine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When using ADIOS2 in an MPI application, some Engine API calls are
+*collective*: all ranks in the communicator must call them, and they
+may not return until every rank has participated.  The table below
+summarizes the collective behavior of each API call for the major
+engines.  **C** = always collective, **---** = never collective,
+**N/A** = not applicable for that engine/mode.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 8 8 8 8 8 8 8
+
+   * - API Call
+     - | BP5
+       | Write
+     - | BP5
+       | Read
+     - | BP4
+       | Write
+     - | BP4
+       | Read
+     - | SST
+       | Write
+     - | SST
+       | Read
+     - | HDF5
+   * - Open
+     - C
+     - C
+     - C
+     - C
+     - C
+     - C
+     - C
+   * - BeginStep
+     - C :sup:`1`
+     - C
+     - \---
+     - C
+     - \---
+     - C
+     - C
+   * - EndStep
+     - C
+     - \---
+     - C
+     - \---
+     - C
+     - C
+     - C
+   * - Close
+     - C :sup:`2`
+     - \---
+     - C
+     - \---
+     - C
+     - C
+     - C
+   * - Put / Get
+     - \---
+     - \---
+     - \---
+     - \---
+     - \---
+     - \---
+     - C :sup:`3`
+   * - | PerformPuts /
+       | PerformGets
+     - \---
+     - \---
+     - \---
+     - \---
+     - \---
+     - \---
+     - \---
+   * - PerformDataWrite
+     - C
+     - N/A
+     - N/A
+     - N/A
+     - N/A
+     - N/A
+     - N/A
+   * - Flush
+     - \---
+     - \---
+     - C
+     - \---
+     - \---
+     - \---
+     - \---
+
+| :sup:`1` BP5 Write BeginStep is collective only when ``AsyncWrite=true``.
+| :sup:`2` BP5 Write Close is collective only when ``AsyncWrite=true``; also triggers EndStep if a step is open.
+| :sup:`3` HDF5 Put/Get are independent by default; collective with ``H5CollectiveMPIO=yes``.

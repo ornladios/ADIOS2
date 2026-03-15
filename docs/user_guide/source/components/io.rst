@@ -238,4 +238,4 @@ The available modes are ``adios2::Mode::Read``, ``adios2::Mode::ReadRandomAccess
 .. caution::
 
    Always pass ``MPI_COMM_SELF`` if an ``Engine`` lives in only one MPI process.
-   ``Open`` and ``Close`` are collective operations.
+   ``Open`` and ``Close`` are collective operations.  See :ref:`engine_collective_table` for details.
