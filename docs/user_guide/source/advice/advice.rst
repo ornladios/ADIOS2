@@ -45,7 +45,7 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 7. Read the documentation for :ref:`Supported Engines` before targeting development for a particular engine
 
-8. MPI development: treat ``ADIOS`` constructor/destructor (``adios2_init``/``adios2_finalize``) and Engine ``Open``, ``BeginStep``, ``EndStep``, and ``Close`` always as collective functions.
+8. MPI development: many Engine functions are collective MPI operations.  See :ref:`engine_collective_table` for details.
 
 9. Use `Remove` functions carefully. They create dangling objects/pointers.
 
