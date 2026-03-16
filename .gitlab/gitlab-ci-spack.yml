@@ -6,7 +6,8 @@
 default:
   interruptible: true
   tags:
-    - hpsf-gpu
+    - uo-frank
+    - x86_64
     - linux-5.15
 
 #  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
@@ -44,6 +45,40 @@ default:
   stage: test
   script:
     - bash scripts/ci/gitlab-ci/run.sh memcheck
+
+.common-test:
+  extends:
+    - .common
+  stage: test
+  script:
+    - bash scripts/ci/gitlab-ci/run.sh test
+
+#===============================================================================
+build:uo-manylinux2014-gcc11-mpich:
+  image:
+    name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
+    entrypoint: [""]
+  extends: [.common-build]
+
+build:uo-manylinux2014-gcc11-serial:
+  image:
+    name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
+    entrypoint: [""]
+  extends: [.common-build]
+
+test:uo-manylinux2014-gcc11-mpich:
+  image:
+    name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
+    entrypoint: [""]
+  extends: [.common-test]
+  needs: [build:uo-manylinux2014-gcc11-mpich]
+
+test:uo-manylinux2014-gcc11-serial:
+  image:
+    name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
+    entrypoint: [""]
+  extends: [.common-test]
+  needs: [build:uo-manylinux2014-gcc11-serial]
 
 #===============================================================================
 build:uo-sanitizer-asan:

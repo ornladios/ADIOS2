@@ -52,6 +52,10 @@ RUN sed -i \
     update-alternatives --install /usr/bin/gfortran gfortran \
         /opt/rh/devtoolset-${GCC_VERSION}/root/usr/bin/gfortran ${GCC_VERSION}
 
+RUN ln -s /opt/python/cp312-cp312/bin/python3 /usr/local/bin/python3 && \
+    ln -s /opt/python/cp312-cp312/bin/python3 /usr/local/bin/python && \
+    /opt/python/cp312-cp312/bin/pip install request
+
 # Install the latest CMake release binary
 WORKDIR /opt/cmake
 RUN curl -sL https://cmake.org/files/LatestRelease/$(curl https://cmake.org/files/LatestRelease/ | sed -n '/-rc[0-9]\+/d;/linux-x86_64.tar.gz/s/.*>\(cmake[^<]*\)<.*/\1/p' | sort | tail -1) | tar --strip-components=1 -xzv
