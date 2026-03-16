@@ -58,6 +58,11 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
@@ -87,6 +92,11 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           path: gha
@@ -173,6 +183,11 @@ jobs:
             parallel: mpich
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           path: gha
@@ -241,6 +256,11 @@ jobs:
         parallel: [mpich]
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           path: gha
@@ -316,6 +336,11 @@ jobs:
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           path: gha
@@ -393,6 +418,11 @@ jobs:
         shell: bash
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           path: gha
@@ -430,6 +460,11 @@ jobs:
         baseos: [ubuntu-bionic]
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -507,6 +542,11 @@ jobs:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         if: ${{ matrix.repo != '' }}
         with:
@@ -566,6 +606,11 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+      with:
+        egress-policy: audit
+
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
       with:
         path: gha
@@ -635,4 +680,9 @@ jobs:
     needs: [el8, ubuntu, macos, windows, docker, contract]
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - run: echo "All required jobs complete"

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM --platform=linux/amd64 fedora:latest
+FROM --platform=linux/amd64 fedora:latest@sha256:781b7642e8bf256e9cf75d2aa58d86f5cc695fd2df113517614e181a5eee9138
 
 # Install development tools
 RUN dnf update -y && \

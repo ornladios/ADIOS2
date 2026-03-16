@@ -47,6 +47,11 @@ jobs:
       contents: read
       actions: write  # for upload-artifact
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
@@ -69,12 +74,17 @@ jobs:
       contents: read
       actions: write  # for upload-artifact
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v3.4.0
+      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
           CIBW_BUILD: >-
             cp39-manylinux_x86_64
@@ -92,12 +102,17 @@ jobs:
       contents: read
       actions: write  # for upload-artifact
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v3.4.0
+      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
@@ -113,12 +128,17 @@ jobs:
       contents: read
       actions: write  # for upload-artifact
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@v3.4.0
+      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
           # free-threaded and prerelease are both opt-in groups in cibuildwheel;
           # cp314t requires both since 3.14 is still prerelease
@@ -137,6 +157,11 @@ jobs:
     needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded]
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           pattern: artifact_wheels_*
@@ -154,7 +179,12 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/setup-python@v6
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
@@ -181,6 +211,11 @@ jobs:
         github.event.action == 'published'
       )
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           path: dist
@@ -199,6 +234,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
         with:
           path: dist

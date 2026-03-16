@@ -17,6 +17,11 @@ jobs:
       contents: read
       statuses: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
       - uses: Kitware/cdash-status@697751fc655b300a9e16e285f2e2ee981f59e45a # release
         with:
