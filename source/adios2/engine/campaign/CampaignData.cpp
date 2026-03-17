@@ -265,12 +265,15 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    if (version.version < 0.7)
+    if (version.version != 0.7)
     {
         helper::Throw<std::invalid_argument>(
             "Engine", "CampaignReader", "ReadCampaignData",
-            "Minimum ACA version supported is 0.7, this file has version " + version.versionStr +
-                ". Run 'hpc_campaign manager <aca> upgrade'");
+            "This ADIOS library reads only ACA version 0.7, this file has version " +
+                version.versionStr +
+                (version.version > 0.7
+                     ? ". Use a newer version of the ADIOS library that supports this ACA version."
+                     : ". Run 'hpc_campaign manager <aca> upgrade'"));
     }
 
     sqlcmd = "SELECT keyid FROM key";
