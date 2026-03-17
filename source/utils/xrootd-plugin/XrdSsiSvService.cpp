@@ -466,50 +466,163 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 #define HasPrefix(s, p) (s.compare(0, sizeof(p) - 1, p) == 0)
     if (!strcmp(reqData, "batchget"))
     {
-        // Parse shared params from the header section (before first |)
+        // Parse parameters. Two formats are supported:
+        // Legacy (pipe-delimited): header|var1|var2  (each section is &-separated)
+        // New (flat &-delimited):  header&Varname=x&params&Varname=y&params
+        // Detect by presence of '|' in the args.
         std::string allArgs(reqArgs ? reqArgs : "");
-        std::vector<std::string> sections = split(allArgs, '|');
-        if (sections.empty())
+
+        // If legacy pipe format, replace pipes with &Varname marker boundaries
+        // by expanding "|Varname=" to "&Varname=" and "|" alone to "&"
+        if (allArgs.find('|') != std::string::npos)
         {
-            RespondErr("batchget: no parameters", EINVAL);
-            return;
+            std::string expanded;
+            expanded.reserve(allArgs.size());
+            for (size_t i = 0; i < allArgs.size(); i++)
+            {
+                if (allArgs[i] == '|')
+                {
+                    expanded += '&';
+                }
+                else
+                {
+                    expanded += allArgs[i];
+                }
+            }
+            allArgs = std::move(expanded);
         }
 
-        // Parse shared header: Filename, RMOrder, NVars, EngineParams
+        std::vector<std::string> allParams = split(allArgs, '&');
+
         std::string Filename;
         std::string EngineParams;
         bool ArrayOrder = false;
         size_t NVars = 0;
-        std::vector<std::string> headerParams = split(sections[0], '&');
-        for (auto &param : headerParams)
+
+        struct VarRequest
         {
-            if (HasPrefix(param, "Filename="))
+            std::string VarName;
+            size_t StepStart = 0;
+            size_t StepCount = 1;
+            size_t BlockID = (size_t)-1;
+            adios2::Dims Start, Count;
+            double AccuracyError = 0.0;
+            double AccuracyNorm = 0.0;
+            bool AccuracyRelative = false;
+            size_t dataSize = 0;
+        };
+        std::vector<VarRequest> varRequests;
+        VarRequest *cur = nullptr; // points into varRequests
+
+        for (auto &param : allParams)
+        {
+            if (HasPrefix(param, "Varname="))
             {
+                // Start a new variable section
+                varRequests.emplace_back();
+                cur = &varRequests.back();
                 std::size_t pos = param.find("=") + 1;
-                Filename = UrlDecode(param.substr(pos));
+                cur->VarName = UrlDecode(param.substr(pos));
             }
-            else if (HasPrefix(param, "RMOrder="))
+            else if (cur)
             {
-                std::size_t pos = param.find("=") + 1;
-                std::stringstream sstream(param.substr(pos));
-                size_t A;
-                sstream >> A;
-                ArrayOrder = (bool)A;
+                // Per-variable parameter
+                if (HasPrefix(param, "StepStart="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> cur->StepStart;
+                }
+                else if (HasPrefix(param, "StepCount="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> cur->StepCount;
+                }
+                else if (HasPrefix(param, "Block="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> cur->BlockID;
+                }
+                else if (HasPrefix(param, "Count="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    size_t C;
+                    char comma;
+                    while (sstream >> C)
+                    {
+                        cur->Count.push_back(C);
+                        sstream >> comma;
+                    }
+                }
+                else if (HasPrefix(param, "Start="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    size_t S;
+                    char comma;
+                    while (sstream >> S)
+                    {
+                        cur->Start.push_back(S);
+                        sstream >> comma;
+                    }
+                }
+                else if (HasPrefix(param, "AccuracyError="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> cur->AccuracyError;
+                }
+                else if (HasPrefix(param, "AccuracyNorm="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> cur->AccuracyNorm;
+                }
+                else if (HasPrefix(param, "AccuracyRelative="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    int rel;
+                    sstream >> rel;
+                    cur->AccuracyRelative = (rel != 0);
+                }
             }
-            else if (HasPrefix(param, "NVars="))
+            else
             {
-                std::size_t pos = param.find("=") + 1;
-                std::stringstream sstream(param.substr(pos));
-                sstream >> NVars;
-            }
-            else if (HasPrefix(param, "EngineParams="))
-            {
-                std::size_t pos = param.find("=") + 1;
-                EngineParams = UrlDecode(param.substr(pos));
+                // Shared parameter (before first Varname=)
+                if (HasPrefix(param, "Filename="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    Filename = UrlDecode(param.substr(pos));
+                }
+                else if (HasPrefix(param, "RMOrder="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    size_t A;
+                    sstream >> A;
+                    ArrayOrder = (bool)A;
+                }
+                else if (HasPrefix(param, "NVars="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> NVars;
+                }
+                else if (HasPrefix(param, "EngineParams="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    EngineParams = UrlDecode(param.substr(pos));
+                }
             }
         }
 
-        if (Filename.empty() || NVars == 0 || sections.size() != NVars + 1)
+        NVars = varRequests.size(); // trust actual count over NVars param
+
+        if (Filename.empty() || NVars == 0)
         {
             RespondErr("batchget: invalid parameters", EINVAL);
             return;
@@ -520,89 +633,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
             auto engine = poolEntry.file->m_engine;
             auto io = poolEntry.file->m_io;
-
-            // First pass: parse all variable requests and compute sizes
-            struct VarRequest
-            {
-                std::string VarName;
-                size_t StepStart = 0;
-                size_t StepCount = 1;
-                size_t BlockID = (size_t)-1;
-                adios2::Dims Start, Count;
-                double AccuracyError = 0.0;
-                double AccuracyNorm = 0.0;
-                bool AccuracyRelative = false;
-                size_t dataSize = 0;
-            };
-            std::vector<VarRequest> varRequests(NVars);
-
-            for (size_t v = 0; v < NVars; v++)
-            {
-                auto &vr = varRequests[v];
-                std::vector<std::string> varParams = split(sections[v + 1], '&');
-                for (auto &param : varParams)
-                {
-                    if (HasPrefix(param, "Varname="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        vr.VarName = UrlDecode(param.substr(pos));
-                    }
-                    else if (HasPrefix(param, "StepStart="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        sstream >> vr.StepStart;
-                    }
-                    else if (HasPrefix(param, "StepCount="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        sstream >> vr.StepCount;
-                    }
-                    else if (HasPrefix(param, "Block="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        sstream >> vr.BlockID;
-                    }
-                    else if (HasPrefix(param, "Count="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        size_t C;
-                        sstream >> C;
-                        vr.Count.push_back(C);
-                    }
-                    else if (HasPrefix(param, "Start="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        size_t S;
-                        sstream >> S;
-                        vr.Start.push_back(S);
-                    }
-                    else if (HasPrefix(param, "AccuracyError="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        sstream >> vr.AccuracyError;
-                    }
-                    else if (HasPrefix(param, "AccuracyNorm="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        sstream >> vr.AccuracyNorm;
-                    }
-                    else if (HasPrefix(param, "AccuracyRelative="))
-                    {
-                        std::size_t pos = param.find("=") + 1;
-                        std::stringstream sstream(param.substr(pos));
-                        int rel;
-                        sstream >> rel;
-                        vr.AccuracyRelative = (rel != 0);
-                    }
-                }
-            }
 
             // Compute sizes for each variable and total response size
             // Response format: [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
@@ -698,7 +728,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         catch (const std::exception &exc)
         {
-            RespondErr("batchget: exception during processing", EINVAL);
+            std::string msg = std::string("batchget: exception during processing: ") + exc.what();
+            RespondErr(msg.c_str(), EINVAL);
         }
         return;
     }
@@ -765,16 +796,24 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 std::size_t pos = param.find("=") + 1;
                 std::stringstream sstream(param.substr(pos));
                 size_t C;
-                sstream >> C;
-                Count.push_back(C);
+                char comma;
+                while (sstream >> C)
+                {
+                    Count.push_back(C);
+                    sstream >> comma;
+                }
             }
             else if (HasPrefix(param, "Start="))
             {
                 std::size_t pos = param.find("=") + 1;
                 std::stringstream sstream(param.substr(pos));
                 size_t S;
-                sstream >> S;
-                Start.push_back(S);
+                char comma;
+                while (sstream >> S)
+                {
+                    Start.push_back(S);
+                    sstream >> comma;
+                }
             }
             else if (HasPrefix(param, "AccuracyError="))
             {

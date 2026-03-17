@@ -18,10 +18,35 @@
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
 
+#include <cctype>
 #include <cstring>
 #include <dlfcn.h>
 #include <iostream>
 #include <sstream>
+
+namespace
+{
+std::string UrlEncode(const std::string &s)
+{
+    static const char hex[] = "0123456789ABCDEF";
+    std::string out;
+    out.reserve(s.size());
+    for (unsigned char c : s)
+    {
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c == '/')
+        {
+            out += c;
+        }
+        else
+        {
+            out += '%';
+            out += hex[(c >> 4) & 0x0F];
+            out += hex[c & 0x0F];
+        }
+    }
+    return out;
+}
+} // namespace
 
 XrdVERSIONINFO(XrdHttpGetExtHandler, HttpSsi);
 
@@ -186,7 +211,7 @@ bool XrdHttpSsiRequest::GetResponseInfo(const char *&data, int &len, std::string
 XrdHttpSsiHandler::XrdHttpSsiHandler(XrdSysError *log, const char *config, const char *parms,
                                      XrdOucEnv *myEnv)
 : m_log(log->logger(), "HttpSsi_"), m_ssiService(nullptr), m_ssiProvider(nullptr),
-  m_pathPrefix("/ssi"), m_ssiLibPath(""), m_initialized(false)
+  m_pathPrefix("/adios"), m_ssiLibPath(""), m_initialized(false)
 {
     // Parse parameters if provided (e.g., "prefix=/adios ssilib=/path/to/lib.so")
     if (parms && *parms)
@@ -304,18 +329,27 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
         return false;
     }
 
-    // Accept POST for requests, GET for simple queries and admin
+    // Accept POST and GET
     if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0)
     {
         return false;
     }
 
-    // Match admin paths or SSI prefix
+    // Match admin paths or prefix
     if (strncmp(path, "/_adios", 7) == 0)
     {
         return true;
     }
-    return (strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0);
+    if (strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0)
+    {
+        return true;
+    }
+    // Legacy: accept POST at /ssi
+    if (strcmp(verb, "POST") == 0 && strncmp(path, "/ssi", 4) == 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
@@ -332,32 +366,70 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
         return SendError(req, 503, "SSI service not available");
     }
 
-    // Extract the resource name from the path (after prefix)
+    // Extract the resource name from the path (strip matching prefix)
     std::string resource = req.resource;
-    if (resource.length() > m_pathPrefix.length())
+    if (resource.compare(0, m_pathPrefix.length(), m_pathPrefix) == 0)
     {
         resource = resource.substr(m_pathPrefix.length());
     }
-    else
+    else if (resource.compare(0, 4, "/ssi") == 0)
+    {
+        resource = resource.substr(4); // legacy /ssi prefix
+    }
+    if (resource.empty())
     {
         resource = "/";
     }
 
-    // For GET requests, the SSI command might be in query parameters
-    // For POST requests, the SSI command is in the request body
+    // For GET requests, the command and parameters are in the query string.
+    // For POST requests, the command is in the request body.
+    // Both produce the same ssiCommand format: "verb key=val&key=val..."
     std::string ssiCommand;
 
     if (req.verb == "GET")
     {
-        // Check for xrd-http-query header (contains query string)
-        auto it = req.headers.find("xrd-http-query");
-        if (it != req.headers.end())
+        // Use xrd-http-fullresource which has the raw resource+opaque,
+        // unprocessed by XrdOucEnv (which mangles bare tokens without '=')
+        auto it = req.headers.find("xrd-http-fullresource");
+        if (it == req.headers.end() || it->second.empty())
         {
-            ssiCommand = it->second;
+            return SendError(req, 400, "GET request requires query parameters");
+        }
+
+        // fullresource is "/adios/path/to/file?get&Varname=..."
+        // Extract the query string after '?'
+        std::string query;
+        size_t qpos = it->second.find('?');
+        if (qpos == std::string::npos || qpos + 1 >= it->second.size())
+        {
+            return SendError(req, 400, "GET request requires query parameters");
+        }
+        query = it->second.substr(qpos + 1);
+
+        // The query string is "verb&key=val&..." (e.g. "batchget&RMOrder=1&...")
+        // The SSI tokenizer expects "verb key=val&..." (space after verb).
+        // Split at the first '&' and rejoin with a space.
+        size_t ampPos = query.find('&');
+        if (ampPos == std::string::npos)
+        {
+            // Just a verb, no parameters
+            ssiCommand = query;
         }
         else
         {
-            return SendError(req, 400, "GET request requires query parameters");
+            std::string verb = query.substr(0, ampPos);
+            std::string args = query.substr(ampPos + 1);
+
+            // If the filename is in the URL path (not in query params),
+            // inject Filename= from the resource path
+            if (args.find("Filename=") == std::string::npos && resource != "/")
+            {
+                ssiCommand = verb + " Filename=" + UrlEncode(resource) + "&" + args;
+            }
+            else
+            {
+                ssiCommand = verb + " " + args;
+            }
         }
     }
     else
