@@ -514,7 +514,7 @@ jobs:
           ref: ${{ matrix.ref }}
           path: source
       - name: Download CI docker image
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
         with:
           name: ci-docker ubuntu-bionic ${{ github.sha }}
       - name: Initialize containers
@@ -582,7 +582,7 @@ jobs:
           ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
+      uses: github/codeql-action/init@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
       with:
         languages: ${{ matrix.language }}
         source-root: source
@@ -595,14 +595,14 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
+      uses: github/codeql-action/analyze@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
       with:
         category: "/language:${{matrix.language}}"
         output: sarif-results
         upload: failure-only
         checkout_path: "${{ github.workflow }}/source"
     - name: filter-sarif
-      uses: advanced-security/filter-sarif@f3b8118a9349d88f7b1c0c488476411145b6270d # v1
+      uses: advanced-security/filter-sarif@2da736ff05ef065cb2894ac6892e47b5eac2c3c0 # v1.1
       with:
         patterns: |
           -thirdparty/**/*
@@ -610,7 +610,7 @@ jobs:
         input: sarif-results/cpp.sarif
         output: sarif-results/cpp.sarif
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
+      uses: github/codeql-action/upload-sarif@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
       with:
         sarif_file: sarif-results/cpp.sarif
     - name: Upload loc as a Build Artifact
