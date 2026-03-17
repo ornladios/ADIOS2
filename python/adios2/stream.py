@@ -926,7 +926,7 @@ class Stream:  # noqa: PLR0902
         - 'rra' mode:
             - the global all-step min/max if 'step' is not given,
             - the given step's min/max
-                
+
         If 'bis' is given as the result of previous all_blocks_info() call, it will be used
         instead of querying again.
 
