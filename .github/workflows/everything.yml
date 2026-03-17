@@ -118,7 +118,7 @@ jobs:
       contents: read
       actions: write  # for cache save
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
+      image: ghcr.io/ornladios/adios2/ci-spack-${{ matrix.os }}-${{ matrix.compiler }}:20260313
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
@@ -135,42 +135,34 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu22.04]
-        compiler: [gcc9, gcc10, gcc12, clang11, clang14]
+        compiler: [gcc10, gcc12, gcc14, clang14]
         parallel: [mpich]
         include:
           - os: ubuntu22.04
-            compiler: gcc9
+            compiler: gcc12
             parallel: ompi
           - os: ubuntu22.04
-            compiler: gcc9
+            compiler: gcc12
             parallel: serial
+          - os: ubuntu22.04
+            compiler: gcc12
+            parallel: serial
+            shared: static
           - os: ubuntu22.04
             compiler: clang11
             parallel: ompi
           - os: ubuntu22.04
-            compiler: clang11
+            compiler: clang14
             parallel: serial
           - os: ubuntu22.04
-            compiler: gcc9
-            parallel: serial
-            shared: static
-          - os: ubuntu22.04
-            compiler: gcc9
-            shared: static
+            compiler: gcc14
             parallel: mpich
-            constrains: build_only
-          - os: ubuntu22.04
-            compiler: clang11
             shared: static
-            parallel: mpich
             constrains: build_only
           - os: ubuntu22.04
             compiler: rocm
             parallel: serial
             constrains: build_only
-          - os: ubuntu22.04
-            compiler: gcc11
-            parallel: mpich
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
@@ -220,7 +212,7 @@ jobs:
       contents: read
       actions: write  # for cache save
     container:
-      image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
+      image: ghcr.io/ornladios/adios2/ci-el8-${{ matrix.compiler }}:20260313
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
@@ -237,7 +229,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [el8]
-        compiler: [icc, oneapi]
+        compiler: [oneapi]
         parallel: [mpich]
 
     steps:
@@ -312,6 +304,9 @@ jobs:
             compiler: xcode15_4
           - parallel: serial
             arch: arm64
+        exclude:
+          - image: macos-14
+            shared: static
 
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
