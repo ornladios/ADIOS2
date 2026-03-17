@@ -38,8 +38,7 @@ public:
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
-#ifdef REALLY_WANT_WRITEV
-    /* Actual writev() function, inactive for now */
+#ifndef _MSC_VER
     void WriteV(const core::iovec *iov, const int iovcnt, size_t start = MaxSizeT) final;
 #endif
 
