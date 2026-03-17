@@ -90,7 +90,7 @@ not change over steps: *e.g.* total number of particles, collective norm, number
 This is the most common shape used for storing data that lives in several MPI processes.
 The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
 
-   .. image:: https://i.imgur.com/MKwNe5e.png
+   .. image:: images/global_array_dims.png
    
    .. warning::
 
@@ -120,7 +120,7 @@ These are commonly used to write checkpoint-restart data.
 Reading, however, needs to be handled differently: each process' array has to be read separately, using ``SetSelection`` per rank.
 The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
 
-  .. image:: https://i.imgur.com/XLh2TUG.png
+  .. image:: images/local_array.png
 
 
 .. note::
@@ -170,7 +170,7 @@ dump its content regularly as it progresses. ADIOS2 was designed to:
 1. to do this writing and reading as fast as possible
 2. to enable reading any subsection of the array
 
-.. image:: https://imgur.com/6nX67yq.png
+.. image:: images/global_array_read.png
    :width: 400
 
 The figure above shows a parallel application of 12 processes producing a 2D array. Each process has a 2D array locally
@@ -184,19 +184,19 @@ In the global space:
 
 1. one process can place multiple blocks
 
-  .. image:: https://imgur.com/Pb1s03h.png
+  .. image:: images/global_array_multiblock.png
      :width: 400
 
 2. does NOT need to be fully covered by the blocks
 
-  .. image:: https://imgur.com/qJBXYcQ.png
+  .. image:: images/global_array_sparse.png
      :width: 400
 
   * at reading, unfilled positions will not change the allocated memory
 
 3. blocks can overlap
 
-  .. image:: https://imgur.com/GA59lZ2.png
+  .. image:: images/global_array_overlap.png
      :width: 300
 
   * the reader will get values in an overlapping position from one of the block but there is no control over from which
@@ -212,7 +212,7 @@ Over multiple output steps
 
   * E.g. atom table: global size is fixed but atoms wander around processes, so their block size is changing
 
-    .. image:: https://imgur.com/DorjG2q.png
+    .. image:: images/global_array_changing_blocks.png
        :width: 400
 
 2. the global dimensions CAN change over output steps
@@ -220,7 +220,7 @@ Over multiple output steps
   * but then you cannot read multiple steps at once
   * E.g. particle table size changes due to particles disappearing or appearing
 
-    .. image:: https://imgur.com/nkuHeVX.png
+    .. image:: images/global_array_changing_dims.png
        :width: 400
 
 
