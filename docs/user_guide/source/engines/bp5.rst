@@ -165,9 +165,9 @@ This engine allows the user to fine tune the buffering operations through the fo
       tells the reader to ignore any FlattenSteps parameter supplied
       to the writer.
 
-=============================== ===================== ===========================================================
- **Key**                        **Value Format**      **Default** and Examples
-=============================== ===================== ===========================================================
+================================ ===================== ===========================================================
+ **Key**                         **Value Format**      **Default** and Examples
+================================ ===================== ===========================================================
  OpenTimeoutSecs                 float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
  BeginStepPollingFrequencySecs   float                 **1**, 10.0 
  AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, DataSizeBased, EveryoneWrites
@@ -197,7 +197,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  Threads                         integer >= 0          **0**, 1, 32
  FlattenSteps                    boolean               **off**, on, true, false
  IgnoreFlattenSteps              boolean               **off**, on, true, false
-=============================== ===================== ===========================================================
+================================ ===================== ===========================================================
 
 S3 Object Storage
 -----------------

@@ -27,3 +27,4 @@ Parameters are passed at:
 .. include:: inline.rst
 .. include:: null.rst
 .. include:: plugin.rst
+.. include:: campaign.rst
