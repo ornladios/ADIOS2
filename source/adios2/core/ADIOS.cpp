@@ -10,7 +10,6 @@
 #include <atomic>
 #include <fstream>
 #include <ios> //std::ios_base::failure
-#include <mutex>
 
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
@@ -51,48 +50,21 @@ namespace adios2
 namespace core
 {
 
-class ADIOS::GlobalServices
+static std::atomic_uint adios_count(0); // total adios objects during runtime
+
+#ifdef PERFSTUBS_USE_TIMERS
+struct PerfStubsGuard
 {
-public:
-    GlobalServices() {}
-
-    ~GlobalServices() {}
-
-    void CheckStatus()
+    PerfStubsGuard() { ps_initialize_(); }
+    ~PerfStubsGuard() { ps_finalize_(); }
+    static PerfStubsGuard &GetInstance()
     {
-        if (wasGlobalShutdown)
-        {
-            helper::Throw<std::logic_error>(
-                "Core", "ADIOS::GlobalServices", "CheckStatus",
-                "Global Services was already shutdown. Make sure there is one "
-                "true global ADIOS object that is created first and destructed "
-                "last to ensure Global services are initialized only once");
-        }
+        static PerfStubsGuard guard;
+        return guard;
     }
-
-    void Finalize() { wasGlobalShutdown = true; }
-
-#ifdef ADIOS2_HAVE_KOKKOS
-    void Init_Kokkos_API()
-    {
-        if (isKokkosInitialized)
-            return;
-        if (helper::KokkosIsInitialized())
-            return;
-        helper::KokkosInit();
-        std::atexit(helper::KokkosFinalize);
-        isKokkosInitialized = true;
-    }
-    bool isKokkosInitialized = false;
-#endif
-    bool wasGlobalShutdown = false;
 };
-
-ADIOS::GlobalServices ADIOS::m_GlobalServices;
-
-std::mutex PerfStubsMutex;
-static std::atomic_uint adios_refcount(0); // adios objects at the same time
-static std::atomic_uint adios_count(0);    // total adios objects during runtime
+static void InitPerfStubs() { PerfStubsGuard::GetInstance(); }
+#endif
 
 /** User defined options from ~/.config/adios2/adios2.yaml and ~/.config/hpc-campaign/config.yaml if
  * they exist */
@@ -130,19 +102,9 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
   m_CampaignManager(m_Comm)
 {
-    ++adios_refcount;
     ++adios_count;
 #ifdef PERFSTUBS_USE_TIMERS
-    {
-        std::lock_guard<std::mutex> lck(PerfStubsMutex);
-        static bool perfstubsInit(false);
-        if (!perfstubsInit)
-        {
-            PERFSTUBS_INITIALIZE();
-            perfstubsInit = true;
-            atexit(ps_finalize_);
-        }
-    }
+    InitPerfStubs();
 #endif
     ProcessUserConfig();
     if (!configFile.empty())
@@ -161,9 +123,6 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
             m_ConfigFileContents = YAMLInit(configFile);
         }
     }
-#ifdef ADIOS2_HAVE_KOKKOS
-    m_GlobalServices.Init_Kokkos_API();
-#endif
     if (m_UserOptions.campaign.active)
     {
         std::string campaignName =
@@ -186,11 +145,6 @@ ADIOS::ADIOS(const std::string hostLanguage) : ADIOS("", helper::CommDummy(), ho
 
 ADIOS::~ADIOS()
 {
-    --adios_refcount;
-    if (!adios_refcount)
-    {
-        m_GlobalServices.Finalize();
-    }
     if (m_UserOptions.campaign.active)
     {
         m_CampaignManager.Close();
