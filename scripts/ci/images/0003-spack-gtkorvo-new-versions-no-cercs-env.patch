@@ -1,0 +1,110 @@
+diff --git a/repos/spack_repo/builtin/packages/gtkorvo_atl/package.py b/repos/spack_repo/builtin/packages/gtkorvo_atl/package.py
+--- a/repos/spack_repo/builtin/packages/gtkorvo_atl/package.py
++++ b/repos/spack_repo/builtin/packages/gtkorvo_atl/package.py
+@@ -19,5 +19,6 @@ class GtkorvoAtl(CMakePackage):
+     version("master", branch="master")
+     version("develop", branch="master", deprecated=True)
++    version("2.3.0", sha256="8f5746bc2362fd7fe3aa1814f1704449972570f903b2391a7ae6e4efa4cd60be")
+     version("2.2.1", sha256="7ff2dca93702ed56e3bbfd8eb52da3bb5f0e7bef5006f3ca29aaa468cab89037")
+     version("2.2", sha256="d88b6eaa3926e499317973bfb2ae469c584bb064da198217ea5fede6d919e160")
+     version("2.1", sha256="379b493ba867b76d76eabfe5bfeec85239606e821509c31e8eb93c2dc238e4a8")
+@@ -24,4 +25,6 @@ class GtkorvoAtl(CMakePackage):
+
++    variant("shared", default=True, description="Build shared libraries")
++
+     depends_on("c", type="build")  # generated
+
+-    depends_on("gtkorvo-cercs-env")
++    depends_on("gtkorvo-cercs-env", when="@:2.2.1")
+@@ -30,5 +33,5 @@ class GtkorvoAtl(CMakePackage):
+         args = []
+         if self.spec.satisfies("@2.2:"):
+-            args.append("-DBUILD_SHARED_LIBS=OFF")
+-        else:
++            args.append(self.define_from_variant("BUILD_SHARED_LIBS", "shared"))
++        elif self.spec.satisfies("@:2.1"):
+             args.append("-DENABLE_BUILD_STATIC=STATIC")
+diff --git a/repos/spack_repo/builtin/packages/gtkorvo_dill/package.py b/repos/spack_repo/builtin/packages/gtkorvo_dill/package.py
+--- a/repos/spack_repo/builtin/packages/gtkorvo_dill/package.py
++++ b/repos/spack_repo/builtin/packages/gtkorvo_dill/package.py
+@@ -20,5 +20,10 @@ class GtkorvoDill(CMakePackage):
+     version("develop", branch="master")
++    version("3.3.0", sha256="b29b68ce0cb778ccee614db12405cb72e817b74e914ca909a39e6a4a62fdd9a5")
++    version("3.2.0", sha256="80d7e80a7b4d532e71de860f0b138bdf63db350b4517f08c5a596a4c84a501a4")
++    version("2.4.1", sha256="93c9e3c8e24ab91786639273a89934c2f384638b03aa0dd0f40e58cdf5a8f0f7")
+     version("2.4", sha256="ed7745d13e8c6a556f324dcc0e48a807fc993bdd5bb1daa94c1df116cb7e81fa")
+     version("2.1", sha256="7671e1f3c25ac6a4ec2320cec2c342a2f668efb170e3dba186718ed17d2cf084")
+
++    variant("shared", default=True, description="Build shared libraries")
++
+     depends_on("c", type="build")  # generated
+@@ -32,5 +37,5 @@ class GtkorvoDill(CMakePackage):
+         args = []
+         if self.spec.satisfies("@2.4:"):
+-            args.append("-DBUILD_SHARED_LIBS=OFF")
+-        else:
++            args.append(self.define_from_variant("BUILD_SHARED_LIBS", "shared"))
++        elif self.spec.satisfies("@:2.3"):
+             args.append("-DENABLE_BUILD_STATIC=STATIC")
+diff --git a/repos/spack_repo/builtin/packages/libffs/package.py b/repos/spack_repo/builtin/packages/libffs/package.py
+--- a/repos/spack_repo/builtin/packages/libffs/package.py
++++ b/repos/spack_repo/builtin/packages/libffs/package.py
+@@ -22,6 +22,11 @@ class Libffs(CMakePackage):
+     version("develop", branch="master")
++    version("3.2.0", sha256="885578babae52394c3cabb4479b7a87053443d61b1c0975f777a22c3fd104d8c")
++    version("1.6.0", sha256="2e5f547d9e4994d4f52fc4615cbf2e51e4aa82480c3624faade88a0e709a9172")
+     version("1.5", sha256="e1f3df42eb36fa35c5445887d679e26b7e3c9be697a07cd38e4ae824dbcd8ef8")
+     version("1.1.1", sha256="9c3a82b3357e6ac255b65d4f45003dd270dea3ec0cd7a2aa40b59b3eab4bdb83")
+     version("1.1", sha256="008fd87c5a6cb216cd757b4dc04057fc987b39b7a367623eb4cf0fd32a9fd81e")
+
++    variant("shared", default=True, description="Build shared libraries")
++
+     depends_on("c", type="build")  # generated
++    depends_on("cxx", type="build")  # generated
+@@ -36,5 +41,5 @@ class Libffs(CMakePackage):
+         args = ["-DTARGET_CNL=1"]
+         if self.spec.satisfies("@1.5:"):
+-            args.append("-DBUILD_SHARED_LIBS=OFF")
+-        else:
++            args.append(self.define_from_variant("BUILD_SHARED_LIBS", "shared"))
++        elif self.spec.satisfies("@:1.4"):
+             args.append("-DENABLE_BUILD_STATIC=STATIC")
+diff --git a/repos/spack_repo/builtin/packages/libevpath/package.py b/repos/spack_repo/builtin/packages/libevpath/package.py
+--- a/repos/spack_repo/builtin/packages/libevpath/package.py
++++ b/repos/spack_repo/builtin/packages/libevpath/package.py
+@@ -21,3 +21,4 @@ class Libevpath(CMakePackage):
+     version("develop", branch="master")
++    version("5.0.0", sha256="e55a3f888352b5deeb1a56e3e1b524cf5dc1226c3172163e418626d75a0ee297")
+     version("4.4.0", sha256="c8d20d33c84d8d826493f453760eceb792d601734ff61238662c16fa6243dc29")
+     version("4.2.4", sha256="070698a068798e2e34dd73debb936cf275af23987a4cb0d06aa3e50c481042ff")
+@@ -30,2 +31,3 @@ class Libevpath(CMakePackage):
+     depends_on("c", type="build")  # generated
++    depends_on("cxx", type="build")  # generated
+
+@@ -37,12 +39,21 @@ class Libevpath(CMakePackage):
+         args = ["-DTARGET_CNL=1"]
+-        if self.spec.satisfies("@4.4.0:"):
++        if self.spec.satisfies("@4.4.0"):
+             args.append("-DBUILD_SHARED_LIBS=OFF")
+-        else:
++        elif self.spec.satisfies("@:4.3"):
+             args.append("-DENABLE_BUILD_STATIC=STATIC")
++        else:
++            args.append("-DBUILD_SHARED_LIBS=ON")
+
+-        if self.run_tests:
+-            args.append("-DENABLE_TESTING=1")
++        if self.spec.satisfies("@5.0.0:"):
++            if self.run_tests:
++                args.append("-DBUILD_TESTING=ON")
++            else:
++                args.append("-DBUILD_TESTING=OFF")
++                args.append("-DCMAKE_DISABLE_FIND_PACKAGE_MPI=TRUE")
+         else:
+-            args.append("-DENABLE_TESTING=0")
++            if self.run_tests:
++                args.append("-DENABLE_TESTING=1")
++            else:
++                args.append("-DENABLE_TESTING=0")
+
+         return args
