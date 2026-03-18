@@ -2,7 +2,6 @@ message_start_thirdparty()
 
 if (NOT WIN32 AND BUILD_SHARED_LIBS AND ADIOS2_HAVE_Profiling)
   set(PERFSTUBS_USE_TIMERS ON CACHE INTERNAL "")
-  add_subdirectory(perfstubs)
 else()
   set(PERFSTUBS_USE_TIMERS OFF CACHE INTERNAL "")
 endif()
@@ -19,6 +18,11 @@ target_include_directories(perfstubs-interface INTERFACE
 )
 
 if (PERFSTUBS_USE_TIMERS)
+  if (ADIOS2_USE_EXTERNAL_PERFSTUBS)
+    find_package(perfstubs REQUIRED)
+  else()
+    add_subdirectory(perfstubs)
+  endif()
   target_link_libraries(perfstubs-interface INTERFACE perfstubs)
 endif()
 

@@ -59,6 +59,12 @@ ${BUILD_TOOL} build --rm \
   -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14" \
   .
 
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12" \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc-external \
+  -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12-external" \
+  .
+
 # Tag the ubuntu 22.04 gcc11 img
 ${BUILD_TOOL} tag "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
 
@@ -70,3 +76,4 @@ ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang11"
 ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14"
 ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
 ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12"
+${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12-external"

@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+ARG BASE_IMAGE=ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc12
+FROM $BASE_IMAGE
+
+COPY 0003-spack-gtkorvo-new-versions-no-cercs-env.patch /spack/
+ENV DEPENDENCIES \
+    libevpath \
+    nlohmann-json \
+    perfstubs \
+    pugixml \
+    py-nanobind
+
+RUN . /spack/share/spack/setup-env.sh && \
+    SPACK_PKG_ROOT=$(spack repo list | awk '/builtin/{print $NF}' | sed 's|/repos/.*||') && \
+    cd "${SPACK_PKG_ROOT}" && \
+    patch -p1 --fuzz=3 < /spack/0003-spack-gtkorvo-new-versions-no-cercs-env.patch && \
+    spack compiler find && \
+    spack -e adios2-ci-mpich add ${DEPENDENCIES} && \
+    spack -e adios2-ci-mpich concretize --reuse && \
+    spack -e adios2-ci-mpich install \
+      --no-check-signature \
+      --fail-fast \
+      ${DEPENDENCIES} && \
+    spack clean -a

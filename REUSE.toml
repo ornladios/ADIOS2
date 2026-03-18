@@ -139,7 +139,7 @@ SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["scripts/ci/images/.gitignore", "scripts/ci/images/oneAPI.repo", "scripts/ci/cmake/adios-asan.supp", "scripts/docker/spin-xrootd/xrootd-http.cfg"]
+path = ["scripts/ci/images/.gitignore", "scripts/ci/images/oneAPI.repo", "scripts/ci/images/0003-spack-gtkorvo-new-versions-no-cercs-env.patch", "scripts/ci/cmake/adios-asan.supp", "scripts/docker/spin-xrootd/xrootd-http.cfg"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
