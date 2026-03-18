@@ -35,7 +35,7 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     origMsg.m_DestRank = destRank;
     origMsg.m_Offset = 2138;
     origMsg.m_Size = 1213;
-    origMsg.NonBlockingSendTo(comm, destRank, sendBuffer);
+    adios2::helper::Comm::Req sendReq = origMsg.NonBlockingSendTo(comm, destRank, sendBuffer);
 
     int ready = 0;
     helper::Comm::Status status;
@@ -65,6 +65,9 @@ void SendAndReceiveMessage(helper::Comm &comm, int destRank, int srcRank)
     ASSERT_EQ(receivedMsg.m_DestRank, worldRank);
     ASSERT_EQ(receivedMsg.m_Offset, origMsg.m_Offset);
     ASSERT_EQ(receivedMsg.m_Size, origMsg.m_Size);
+
+    // Make sure the request is complete
+    ASSERT_EQ(sendReq.TestComplete(), true);
 }
 }
 
