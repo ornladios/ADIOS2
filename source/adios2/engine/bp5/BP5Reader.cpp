@@ -560,7 +560,7 @@ void BP5Reader::PerformGets()
             // Determine if using HTTPS or plain HTTP
             const bool useHttps = (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
             auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
-            m_Remote = std::make_unique<XrootdHttpRemote>(m_HostOptions);
+            m_Remote = std::make_unique<XrootdHttpRemote>(ADIOS::GetHostOptions());
             Params params;
             params["UseHttps"] = useHttps ? "true" : "false";
             // For testing, disable SSL verification (only relevant for HTTPS)
@@ -584,7 +584,7 @@ void BP5Reader::PerformGets()
                 m_XrootdTransferProtocol == XRootDTransferProtocol::XRootD)
         {
             auto tup = lf_getXRootDHostPort(1094);
-            m_Remote = std::make_unique<XrootdRemote>(m_HostOptions);
+            m_Remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
             m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
                            RowMajorOrdering);
         }
@@ -1179,8 +1179,8 @@ void BP5Reader::Init()
         if (!m_Parameters.RemoteHost.empty())
         {
             m_RemoteHost = m_Parameters.RemoteHost;
-            auto it = m_HostOptions.find(m_Parameters.RemoteHost);
-            if (it != m_HostOptions.end())
+            auto it = ADIOS::GetHostOptions().find(m_Parameters.RemoteHost);
+            if (it != ADIOS::GetHostOptions().end())
             {
                 for (auto &hc : it->second)
                 {

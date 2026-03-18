@@ -20,7 +20,7 @@ namespace core
 Engine::Engine(const std::string engineType, IO &io, const std::string &name, const Mode openMode,
                helper::Comm comm)
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode), m_Comm(std::move(comm)),
-  m_UserOptions(io.m_ADIOS.GetUserOptions()), m_HostOptions(io.m_ADIOS.GetHostOptions())
+  m_UserOptions(io.m_ADIOS.GetUserOptions())
 {
     m_FailVerbose = (m_Comm.Rank() == 0);
 }
@@ -28,7 +28,7 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name, co
 Engine::Engine(const std::string engineType, IO &io, const std::string &name, const Mode openMode,
                helper::Comm comm, const char *md, const size_t mdsize)
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode), m_Comm(std::move(comm)),
-  m_UserOptions(io.m_ADIOS.GetUserOptions()), m_HostOptions(io.m_ADIOS.GetHostOptions())
+  m_UserOptions(io.m_ADIOS.GetUserOptions())
 {
     ThrowUp("Engine with metadata in memory");
 }

@@ -8,6 +8,7 @@
 #define ADIOS2_ENGINE_BP5_BP5READER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/CoreTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"

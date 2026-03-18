@@ -228,7 +228,7 @@ void CampaignReader::InitParameters()
     }
 
     m_LocalhostAliases.push_back(m_Options.hostname);
-    for (auto &host : m_HostOptions)
+    for (auto &host : ADIOS::GetHostOptions())
     {
         if (host.second.front().protocol == HostAccessProtocol::LocalHost)
             m_LocalhostAliases.push_back(host.first);
@@ -569,8 +569,8 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         // https or s3 protocols handled here
         if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "s3")
         {
-            auto it = m_HostOptions.find(m_CampaignData.hosts[rep.hostIdx].hostname);
-            if (it != m_HostOptions.end())
+            auto it = ADIOS::GetHostOptions().find(m_CampaignData.hosts[rep.hostIdx].hostname);
+            if (it != ADIOS::GetHostOptions().end())
             {
                 const HostConfig &ho = (it->second).front();
                 if (ho.protocol == HostAccessProtocol::S3)
@@ -846,7 +846,7 @@ void CampaignReader::InitTransports()
             size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
             if (!repIdx)
             {
-                auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+                auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, ADIOS::GetHostOptions());
                 size_t repIdx = reps.front();
                 std::string localPath = SaveRemoteMD(dsIdx, repIdx, io, true);
                 if (!localPath.empty())
@@ -909,7 +909,7 @@ void CampaignReader::InitTransports()
         size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
         if (!repIdx)
         {
-            auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+            auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, ADIOS::GetHostOptions());
             size_t repIdx = reps.front();
             localPath = SaveRemoteMD(dsIdx, repIdx, io, false);
             if (!localPath.empty())
@@ -1011,7 +1011,7 @@ void CampaignReader::InitTransports()
         }
 
         size_t localRepIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
-        auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, m_HostOptions);
+        auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, ADIOS::GetHostOptions());
         if (localRepIdx)
         {
             reps.insert(reps.begin(), localRepIdx);
@@ -1507,14 +1507,14 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
 #ifdef ADIOS2_HAVE_XROOTD
     if (getenv("DoXRootD"))
     {
-        remote = std::make_unique<XrootdRemote>(m_HostOptions);
+        remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
         remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
     }
     else
 #endif
 #ifdef ADIOS2_HAVE_SST
     {
-        remote = std::make_unique<EVPathRemote>(m_HostOptions);
+        remote = std::make_unique<EVPathRemote>(ADIOS::GetHostOptions());
         int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
         remote->OpenSimpleFile("localhost", localPort, remotePath);
     }
