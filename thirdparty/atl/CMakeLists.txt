@@ -13,6 +13,12 @@ set(ATL_LIBRARY_COMPONENT adios2_atl-libraries)
 set(ATL_ARCHIVE_COMPONENT adios2_atl-development)
 set(ATL_HEADER_COMPONENT adios2_atl-development)
 
+# Override ATL's default atom server to avoid blocking TCP connect to an
+# external HTTP endpoint.  Compute nodes on machines like Frontier have no
+# route to the internet, causing SST to hang indefinitely during SstWriterOpen
+# / SstReaderOpen.  The old UDP-based default fails fast when unreachable.
+set(ATOM_SERVER_HOST "atomhost.cercs.gatech.edu")
+
 add_subdirectory(atl)
 set(atl_DIR ${CMAKE_CURRENT_BINARY_DIR}/atl CACHE INTERNAL "")
 setup_libversion_dir(atl)
