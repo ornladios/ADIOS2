@@ -54,6 +54,7 @@ namespace helper
 {
 void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 {
+    EnsureKokkosInitialized();
     using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
     Kokkos::View<const char *, mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
         GPUbuffer, byteCount);
@@ -64,6 +65,7 @@ void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 
 void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
 {
+    EnsureKokkosInitialized();
     using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
     Kokkos::View<const char *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
         src, byteCount);
@@ -106,34 +108,52 @@ bool IsGPUbuffer(const void *ptr)
     return false;
 }
 
-void KokkosFinalize() { Kokkos::finalize(); }
-
-void KokkosInit()
+/** RAII guard that initializes Kokkos on first use and finalizes at program exit.
+ *  Replaces the eager init that was previously done in every ADIOS constructor. */
+struct KokkosGuard
 {
-    Kokkos::InitializationSettings settings;
+    bool m_weInitialized = false;
+    KokkosGuard()
+    {
+        if (Kokkos::is_initialized())
+            return;
+        Kokkos::InitializationSettings settings;
 #ifdef ADIOS2_HAVE_KOKKOS_CUDA
-    int device_id;
-    cudaGetDevice(&device_id);
-    settings.set_device_id(device_id);
+        int device_id;
+        cudaGetDevice(&device_id);
+        settings.set_device_id(device_id);
 #endif
 #ifdef ADIOS2_HAVE_KOKKOS_HIP
-    int device_id;
-    hipError_t ret;
-    ret = hipGetDevice(&device_id);
-    if (ret == hipSuccess)
-    {
-        settings.set_device_id(device_id);
-    }
+        int device_id;
+        hipError_t ret;
+        ret = hipGetDevice(&device_id);
+        if (ret == hipSuccess)
+        {
+            settings.set_device_id(device_id);
+        }
 #endif
-    // GetDevice not supported for SYCL, use the default device
-    Kokkos::initialize(settings);
-}
+        // GetDevice not supported for SYCL, use the default device
+        Kokkos::initialize(settings);
+        m_weInitialized = true;
+    }
+    ~KokkosGuard()
+    {
+        if (m_weInitialized)
+            Kokkos::finalize();
+    }
+    static KokkosGuard &GetInstance()
+    {
+        static KokkosGuard guard;
+        return guard;
+    }
+};
 
-bool KokkosIsInitialized() { return Kokkos::is_initialized(); }
+void EnsureKokkosInitialized() { KokkosGuard::GetInstance(); }
 
 template <class T>
 void GPUMinMax(const T *values, const size_t size, T &min, T &max)
 {
+    EnsureKokkosInitialized();
     KokkosMinMaxImpl(values, size, min, max);
 }
 

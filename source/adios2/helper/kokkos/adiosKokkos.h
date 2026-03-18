@@ -31,9 +31,7 @@ ADIOS2_EXPORT void GPUMinMax(const T *values, const size_t size, T &min, T &max)
 ADIOS2_EXPORT void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount);
 ADIOS2_EXPORT void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount);
 
-ADIOS2_EXPORT void KokkosFinalize();
-ADIOS2_EXPORT void KokkosInit();
-ADIOS2_EXPORT bool KokkosIsInitialized();
+ADIOS2_EXPORT void EnsureKokkosInitialized();
 ADIOS2_EXPORT bool IsGPUbuffer(const void *ptr);
 
 } // helper
