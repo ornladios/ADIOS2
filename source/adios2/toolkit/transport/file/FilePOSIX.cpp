@@ -27,7 +27,8 @@
 #include <sys/types.h> // open
 #include <thread>
 #ifndef _MSC_VER
-#include <unistd.h> // write, close, ftruncate
+#include <sys/uio.h> // writev
+#include <unistd.h>  // write, close, ftruncate
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -295,6 +296,11 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
 
 void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 {
+    if (size == 0 && start == MaxSizeT)
+    {
+        return;
+    }
+
     auto lf_Write = [&](const char *buffer, size_t size) {
         while (size > 0)
         {
@@ -362,7 +368,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
     }
 }
 
-#ifdef REALLY_WANT_WRITEV
+#ifndef _MSC_VER
 void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 {
     auto lf_Write = [&](const core::iovec *iov, const int iovcnt) {
@@ -442,6 +448,10 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
         }
     }
 
+    // writev() is limited to ~2GB total per call on some platforms
+    // (macOS returns EINVAL above INT32_MAX).  Compute total size for
+    // each batch and fall back to sequential Write() if too large.
+    static constexpr size_t WritevMaxBytes = INT32_MAX;
     int cntTotal = 0;
     while (cntTotal < iovcnt)
     {
@@ -450,7 +460,25 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
         {
             cnt = 8;
         }
-        lf_Write(iov + cntTotal, cnt);
+        // Check total size for this batch
+        size_t batchBytes = 0;
+        for (int i = 0; i < cnt; ++i)
+        {
+            batchBytes += iov[cntTotal + i].iov_len;
+        }
+        if (batchBytes > WritevMaxBytes)
+        {
+            // Fall back to individual write() calls
+            for (int i = 0; i < cnt; ++i)
+            {
+                Write(static_cast<const char *>(iov[cntTotal + i].iov_base),
+                      iov[cntTotal + i].iov_len);
+            }
+        }
+        else
+        {
+            lf_Write(iov + cntTotal, cnt);
+        }
         cntTotal += cnt;
     }
 }
