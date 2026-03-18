@@ -22,32 +22,68 @@
 
 namespace
 {
+struct ManagedBuffer
+{
+    std::vector<char> m_Data;
+    adios2::helper::Comm::Req m_Request;
+    bool m_Active = false;
+};
 
 class BufferPool
 {
 public:
-    BufferPool(int size) { m_Pool.resize(size); }
+    BufferPool(size_t size) { m_Pool.resize(size); }
 
     ~BufferPool() = default;
 
-    std::vector<char> &GetNextBuffer()
+    ManagedBuffer &GetNextBuffer()
     {
-        size_t bufferIdx = m_CurrentBufferIdx;
+        size_t startIdx = m_CurrentBufferIdx;
 
-        if (m_CurrentBufferIdx < m_Pool.size() - 1)
+        while (true)
         {
-            m_CurrentBufferIdx += 1;
-        }
-        else
-        {
-            m_CurrentBufferIdx = 0;
-        }
+            ManagedBuffer &mb = m_Pool[m_CurrentBufferIdx];
 
-        return m_Pool[bufferIdx];
+            // Advance index for next call
+            m_CurrentBufferIdx = (m_CurrentBufferIdx + 1) % m_Pool.size();
+
+            // If buffer was never used, it's safe
+            if (!mb.m_Active)
+            {
+                return mb;
+            }
+
+            // Check if the previous MPI_Isend using this buffer is complete
+            if (mb.m_Request.Test())
+            {
+                mb.m_Active = false;
+                return mb;
+            }
+
+            // If we've circled the whole pool and none have completed, we MUST wait
+            if (m_CurrentBufferIdx == startIdx)
+            {
+                mb.m_Request.Wait();
+                mb.m_Active = false;
+                return mb;
+            }
+        }
+    }
+
+    void Flush()
+    {
+        for (auto &mb : m_Pool)
+        {
+            if (mb.m_Active)
+            {
+                mb.m_Request.Wait();
+                mb.m_Active = false;
+            }
+        }
     }
 
     size_t m_CurrentBufferIdx = 0;
-    std::vector<std::vector<char>> m_Pool;
+    std::vector<ManagedBuffer> m_Pool;
 };
 
 struct WriterGroupState
@@ -186,30 +222,7 @@ void BP5Writer::ReroutingCommunicationLoop()
     m_Profiler.AddTimerWatch("Rerouting_Send_NB");
     m_Profiler.AddTimerWatch("Rerouting_Send_B");
     m_Profiler.AddTimerWatch("Rerouting_Recv_NB");
-
-    auto lf_SendNonBlocking = [](RerouteMessage &msg, adios2::helper::Comm &comm, int toRank,
-                                 std::vector<char> &buffer,
-                                 adios2::profiling::JSONProfiler &profiler) {
-        profiler.Start("Rerouting_Send_NB");
-        msg.NonBlockingSendTo(comm, toRank, buffer);
-        profiler.Stop("Rerouting_Send_NB");
-    };
-
-    auto lf_SendBlocking = [](RerouteMessage &msg, adios2::helper::Comm &comm, int toRank,
-                              std::vector<char> &buffer,
-                              adios2::profiling::JSONProfiler &profiler) {
-        profiler.Start("Rerouting_Send_B");
-        msg.BlockingSendTo(comm, toRank, buffer);
-        profiler.Stop("Rerouting_Send_B");
-    };
-
-    auto lf_RecvBlocking = [](RerouteMessage &msg, adios2::helper::Comm &comm, int fromRank,
-                              std::vector<char> &buffer,
-                              adios2::profiling::JSONProfiler &profiler) {
-        profiler.Start("Rerouting_Recv_NB");
-        msg.BlockingRecvFrom(comm, fromRank, buffer);
-        profiler.Stop("Rerouting_Recv_NB");
-    };
+    m_Profiler.AddTimerWatch("Rerouting_GetNextBuffer");
 
     int subCoord = m_Aggregator->m_AggregatorRank;
     bool iAmSubCoord = m_RankMPI == subCoord;
@@ -234,8 +247,21 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     // Most sends are currently non-blocking. We use the pool to avoid a
     // situation where the buffer is destructed before the send is complete.
-    BufferPool sendBuffers(100);
-    std::vector<char> recvBuffer;
+    size_t poolSize = 1;
+    if (iAmGlobalCoord)
+    {
+        // twice the number of subcoordinators
+        poolSize = 2 * m_Partitioning.m_Partitions.size();
+    }
+    else if (iAmSubCoord)
+    {
+        // twice the number of ranks in my writer chain/group
+        poolSize = 2 * m_Partitioning.m_Partitions[m_Aggregator->m_SubStreamIndex].size();
+    }
+    BufferPool sendBuffers(poolSize);
+
+    std::vector<char> recvBuffer; // For blocking recvs
+    std::vector<char> sendBuffer; // For blocking sends
     int writingRank = -1;
     uint64_t currentFilePos = 0;
     uint64_t writeMoreCount = 0;
@@ -246,6 +272,32 @@ void BP5Writer::ReroutingCommunicationLoop()
     bool receivedGroupClose = false;
     bool expectingWriteCompletion = false;
     bool sentIdle = false;
+
+    auto lf_SendNonBlocking = [&sendBuffers](RerouteMessage &msg, adios2::helper::Comm &comm,
+                                             int toRank,
+                                             adios2::profiling::JSONProfiler &profiler) {
+        profiler.Start("Rerouting_Send_NB");
+        profiler.Start("Rerouting_GetNextBuffer");
+        ManagedBuffer &buffer = sendBuffers.GetNextBuffer();
+        profiler.Stop("Rerouting_GetNextBuffer");
+        buffer.m_Request = msg.NonBlockingSendTo(comm, toRank, buffer.m_Data);
+        buffer.m_Active = true;
+        profiler.Stop("Rerouting_Send_NB");
+    };
+
+    auto lf_SendBlocking = [&sendBuffer](RerouteMessage &msg, adios2::helper::Comm &comm,
+                                         int toRank, adios2::profiling::JSONProfiler &profiler) {
+        profiler.Start("Rerouting_Send_B");
+        msg.BlockingSendTo(comm, toRank, sendBuffer);
+        profiler.Stop("Rerouting_Send_B");
+    };
+
+    auto lf_RecvBlocking = [&recvBuffer](RerouteMessage &msg, adios2::helper::Comm &comm,
+                                         int fromRank, adios2::profiling::JSONProfiler &profiler) {
+        profiler.Start("Rerouting_Recv_NB");
+        msg.BlockingRecvFrom(comm, fromRank, recvBuffer);
+        profiler.Stop("Rerouting_Recv_NB");
+    };
 
     if (iAmGlobalCoord)
     {
@@ -299,6 +351,7 @@ void BP5Writer::ReroutingCommunicationLoop()
 
     while (lf_keepGoing())
     {
+        bool workDone = false; // Flag to decide whether to yield on this iteration
         int msgReady = 0;
         helper::Comm::Status status =
             m_Comm.Iprobe(static_cast<int>(helper::Comm::Constants::CommRecvAny), 0, &msgReady);
@@ -307,7 +360,8 @@ void BP5Writer::ReroutingCommunicationLoop()
         if (msgReady)
         {
             RerouteMessage message;
-            lf_RecvBlocking(message, m_Comm, status.Source, recvBuffer, m_Profiler);
+            lf_RecvBlocking(message, m_Comm, status.Source, m_Profiler);
+            workDone = true;
 
             switch ((RerouteMessage::MessageType)message.m_MsgType)
             {
@@ -383,8 +437,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 closeAckMsg.m_SrcRank = m_RankMPI;
                 closeAckMsg.m_DestRank = globalCoord;
                 closeAckMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
-                lf_SendBlocking(closeAckMsg, m_Comm, globalCoord, sendBuffers.GetNextBuffer(),
-                                m_Profiler);
+                lf_SendBlocking(closeAckMsg, m_Comm, globalCoord, m_Profiler);
                 break;
             case RerouteMessage::MessageType::GROUP_CLOSE_ACK:
                 // msg for global coordinator
@@ -433,8 +486,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                                 inquiryMsg.m_MsgType = RerouteMessage::MessageType::STATUS_INQUIRY;
                                 inquiryMsg.m_SrcRank = m_RankMPI;
                                 inquiryMsg.m_DestRank = scRank;
-                                lf_SendNonBlocking(inquiryMsg, m_Comm, scRank,
-                                                   sendBuffers.GetNextBuffer(), m_Profiler);
+                                lf_SendNonBlocking(inquiryMsg, m_Comm, scRank, m_Profiler);
                             }
                         }
 
@@ -471,8 +523,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                 // The response to the status query is my subfile and queue size
                 replyMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
                 replyMsg.m_Size = static_cast<uint64_t>(writerQueue.size());
-                lf_SendNonBlocking(replyMsg, m_Comm, globalCoord, sendBuffers.GetNextBuffer(),
-                                   m_Profiler);
+                lf_SendNonBlocking(replyMsg, m_Comm, globalCoord, m_Profiler);
                 break;
             case RerouteMessage::MessageType::STATUS_REPLY:
                 if (m_Parameters.verbose > 3)
@@ -507,8 +558,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                     rejectMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_REJECT;
                     rejectMsg.m_SrcRank = message.m_SrcRank;
                     rejectMsg.m_DestRank = message.m_DestRank;
-                    lf_SendNonBlocking(rejectMsg, m_Comm, globalCoord, sendBuffers.GetNextBuffer(),
-                                       m_Profiler);
+                    lf_SendNonBlocking(rejectMsg, m_Comm, globalCoord, m_Profiler);
                 }
                 else
                 {
@@ -527,8 +577,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                     ackMsg.m_SrcRank = message.m_SrcRank;
                     ackMsg.m_DestRank = message.m_DestRank;
                     ackMsg.m_WildCard = reroutedRank;
-                    lf_SendNonBlocking(ackMsg, m_Comm, globalCoord, sendBuffers.GetNextBuffer(),
-                                       m_Profiler);
+                    lf_SendNonBlocking(ackMsg, m_Comm, globalCoord, m_Profiler);
                 }
                 break;
             case RerouteMessage::MessageType::REROUTE_REJECT:
@@ -579,8 +628,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                     adios2::helper::RerouteMessage writeMoreMsg;
                     writeMoreMsg.m_MsgType = RerouteMessage::MessageType::WRITE_MORE;
                     writeMoreMsg.m_WildCard = message.m_WildCard; // i.e. the rerouted writer rank
-                    lf_SendNonBlocking(writeMoreMsg, m_Comm, message.m_DestRank,
-                                       sendBuffers.GetNextBuffer(), m_Profiler);
+                    lf_SendNonBlocking(writeMoreMsg, m_Comm, message.m_DestRank, m_Profiler);
 
                     groupIdlesNeeded.insert(message.m_DestRank);
 
@@ -643,8 +691,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                     // done at this point. However, I need to do a blocking send because I
                     // am about to return from this function, at which point my buffer pool
                     // goes away.
-                    lf_SendBlocking(writeCompleteMsg, m_Comm, m_TargetCoordinator,
-                                    sendBuffers.GetNextBuffer(), m_Profiler);
+                    lf_SendBlocking(writeCompleteMsg, m_Comm, m_TargetCoordinator, m_Profiler);
 
                     receivedGroupClose = true;
                     continue;
@@ -657,10 +704,10 @@ void BP5Writer::ReroutingCommunicationLoop()
                                   << m_TargetCoordinator << ") of write completion -- NONBLOCKING"
                                   << std::endl;
                     }
-                    lf_SendNonBlocking(writeCompleteMsg, m_Comm, m_TargetCoordinator,
-                                       sendBuffers.GetNextBuffer(), m_Profiler);
+                    lf_SendNonBlocking(writeCompleteMsg, m_Comm, m_TargetCoordinator, m_Profiler);
                 }
 
+                workDone = true;
                 sentFinished = true;
             }
         }
@@ -679,16 +726,34 @@ void BP5Writer::ReroutingCommunicationLoop()
                               << std::endl;
                 }
                 writerQueue.pop();
-                adios2::helper::RerouteMessage writeMsg;
-                writeMsg.m_MsgType = RerouteMessage::MessageType::DO_WRITE;
-                writeMsg.m_SrcRank = m_RankMPI;
-                writeMsg.m_DestRank = nextWriter;
-                writeMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
-                writeMsg.m_Offset = currentFilePos;
-                writingRank = nextWriter;
-                expectingWriteCompletion = true;
-                lf_SendNonBlocking(writeMsg, m_Comm, nextWriter, sendBuffers.GetNextBuffer(),
-                                   m_Profiler);
+
+                if (nextWriter == m_RankMPI)
+                {
+                    // Don't use MPI to tell ourselves to write
+                    std::unique_lock<std::mutex> lck(m_WriteMutex);
+                    m_TargetIndex = static_cast<int>(m_Aggregator->m_SubStreamIndex);
+                    m_DataPos = currentFilePos;
+                    m_TargetCoordinator = m_RankMPI;
+                    m_ReadyToWrite = true;
+                    m_WriteCV.notify_one();
+
+                    writingRank = m_RankMPI;
+                    expectingWriteCompletion = true;
+                }
+                else
+                {
+                    adios2::helper::RerouteMessage writeMsg;
+                    writeMsg.m_MsgType = RerouteMessage::MessageType::DO_WRITE;
+                    writeMsg.m_SrcRank = m_RankMPI;
+                    writeMsg.m_DestRank = nextWriter;
+                    writeMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
+                    writeMsg.m_Offset = currentFilePos;
+                    writingRank = nextWriter;
+                    expectingWriteCompletion = true;
+                    lf_SendNonBlocking(writeMsg, m_Comm, nextWriter, m_Profiler);
+                }
+
+                workDone = true;
             }
             else if (!sentIdle)
             {
@@ -713,9 +778,9 @@ void BP5Writer::ReroutingCommunicationLoop()
                 idleMsg.m_SrcRank = m_RankMPI;
                 idleMsg.m_DestRank = globalCoord;
                 idleMsg.m_WildCard = static_cast<int>(m_Aggregator->m_SubStreamIndex);
-                lf_SendNonBlocking(idleMsg, m_Comm, globalCoord, sendBuffers.GetNextBuffer(),
-                                   m_Profiler);
+                lf_SendNonBlocking(idleMsg, m_Comm, globalCoord, m_Profiler);
                 sentIdle = true;
+                workDone = true;
             }
         }
 
@@ -751,11 +816,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                 rerouteReqMsg.m_MsgType = RerouteMessage::MessageType::REROUTE_REQUEST;
                 rerouteReqMsg.m_SrcRank = writerSubcoordRank;
                 rerouteReqMsg.m_DestRank = idleSubcoordRank;
-                lf_SendNonBlocking(rerouteReqMsg, m_Comm, writerSubcoordRank,
-                                   sendBuffers.GetNextBuffer(), m_Profiler);
+                lf_SendNonBlocking(rerouteReqMsg, m_Comm, writerSubcoordRank, m_Profiler);
 
                 groupState[idleIdx].m_currentStatus = WriterGroupState::Status::PENDING;
                 groupState[writerIdx].m_currentStatus = WriterGroupState::Status::PENDING;
+
+                workDone = true;
             }
             else if (result == StateTraversal::SearchResult::FINISHED && groupIdlesNeeded.empty())
             {
@@ -785,8 +851,7 @@ void BP5Writer::ReroutingCommunicationLoop()
                         }
                         adios2::helper::RerouteMessage closeMsg;
                         closeMsg.m_MsgType = RerouteMessage::MessageType::GROUP_CLOSE;
-                        lf_SendNonBlocking(closeMsg, m_Comm, subCoordRanks[scIdx],
-                                           sendBuffers.GetNextBuffer(), m_Profiler);
+                        lf_SendNonBlocking(closeMsg, m_Comm, subCoordRanks[scIdx], m_Profiler);
                     }
                 }
 
@@ -858,6 +923,12 @@ void BP5Writer::ReroutingCommunicationLoop()
                 }
             }
         }
+
+        if (!workDone)
+        {
+            // Yield to avoid busy-cycling the CPU when nothing productive was done
+            std::this_thread::yield();
+        }
     }
 
     // Before leaving this method, subcoordinators need to update the variable tracking
@@ -866,6 +937,15 @@ void BP5Writer::ReroutingCommunicationLoop()
     {
         m_DataPos = currentFilePos;
     }
+
+    if (m_Parameters.verbose > 3)
+    {
+        std::cout << "Rank " << m_RankMPI << " flushing pending sends..." << std::endl;
+    }
+
+    // Ensure all ISends associated with buffers in the pool are complete
+    // before we let the pool go out of scope
+    sendBuffers.Flush();
 
     if (m_Parameters.verbose > 3)
     {
