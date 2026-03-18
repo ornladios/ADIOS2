@@ -23,7 +23,8 @@ namespace adios2
 namespace helper
 {
 
-void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer)
+helper::Comm::Req RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank,
+                                                    std::vector<char> &buffer)
 {
     size_t pos = 0;
     buffer.resize(REROUTE_MESSAGE_SIZE);
@@ -45,7 +46,7 @@ void RerouteMessage::NonBlockingSendTo(helper::Comm &comm, int destRank, std::ve
 
     // std::cout << ss.str();
 
-    comm.Isend(buffer.data(), buffer.size(), destRank, 0);
+    return comm.Isend(buffer.data(), buffer.size(), destRank, 0);
 }
 
 void RerouteMessage::BlockingSendTo(helper::Comm &comm, int destRank, std::vector<char> &buffer)
