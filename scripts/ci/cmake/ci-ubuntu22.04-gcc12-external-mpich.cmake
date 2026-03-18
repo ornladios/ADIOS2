@@ -9,6 +9,7 @@ math(EXPR N2CPUS "${NCPUS}*2")
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{perfstubs_DIR} /spack/var/spack/environments/adios2-ci-mpich/.spack-env/view/lib/cmake)
 
 execute_process(
   COMMAND "python3-config" "--prefix"

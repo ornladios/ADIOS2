@@ -31,6 +31,8 @@ option(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON
   "Use an externally supplied nlohmann_json library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_YAMLCPP
   "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_PERFSTUBS
+  "Use an externally supplied perfstubs library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
 add_subdirectory(KWSys)
 
