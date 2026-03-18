@@ -89,8 +89,6 @@ public:
 };
 
 ADIOS::GlobalServices ADIOS::m_GlobalServices;
-adios2::HostOptions *StaticHostOptions = nullptr;
-static std::mutex StaticHostOptionsMutex;
 
 std::mutex PerfStubsMutex;
 static std::atomic_uint adios_refcount(0); // adios objects at the same time
@@ -101,9 +99,32 @@ static std::atomic_uint adios_count(0);    // total adios objects during runtime
 const adios2::UserOptions &ADIOS::GetUserOptions() { return m_UserOptions; };
 
 /** A constant reference to the host options from ~/.config/hpc-campaign/hosts.yaml */
-const adios2::HostOptions &ADIOS::GetHostOptions() { return m_HostOptions; };
-/** A constant reference to the host options from ~/.config/hpc-campaign/hosts.yaml */
-const adios2::HostOptions &ADIOS::StaticGetHostOptions() { return *StaticHostOptions; };
+const adios2::HostOptions &ADIOS::GetHostOptions()
+{
+    static adios2::HostOptions hostOptions = LoadHostConfig();
+    return hostOptions;
+}
+
+const adios2::HostOptions &ADIOS::StaticGetHostOptions() { return GetHostOptions(); }
+
+adios2::HostOptions ADIOS::LoadHostConfig()
+{
+    adios2::HostOptions hostOptions;
+    std::string homePath;
+#ifdef _WIN32
+    homePath = getenv("HOMEPATH");
+#else
+    homePath = getenv("HOME");
+#endif
+    const std::string cfgFile = homePath + PathSeparator + ".config" + PathSeparator +
+                                "hpc-campaign" + PathSeparator + "hosts.yaml";
+    if (adios2sys::SystemTools::FileExists(cfgFile))
+    {
+        helper::Comm comm = helper::CommDummy();
+        helper::ParseHostOptionsFile(comm, cfgFile, hostOptions, homePath);
+    }
+    return hostOptions;
+}
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
@@ -124,7 +145,6 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
     }
 #endif
     ProcessUserConfig();
-    ProcessHostConfig();
     if (!configFile.empty())
     {
         if (!adios2sys::SystemTools::FileExists(configFile))
@@ -211,27 +231,6 @@ void ADIOS::ProcessUserConfig()
     if (adios2sys::SystemTools::FileExists(cfgFile2))
     {
         helper::ParseUserOptionsFile(m_Comm, cfgFile2, m_UserOptions, homePath);
-    }
-}
-
-void ADIOS::ProcessHostConfig()
-{
-    // read config parameters from config file
-    std::string homePath;
-#ifdef _WIN32
-    homePath = getenv("HOMEPATH");
-#else
-    homePath = getenv("HOME");
-#endif
-    const std::string cfgFile = homePath + PathSeparator + ".config" + PathSeparator +
-                                "hpc-campaign" + PathSeparator + "hosts.yaml";
-    if (adios2sys::SystemTools::FileExists(cfgFile))
-    {
-        helper::ParseHostOptionsFile(m_Comm, cfgFile, m_HostOptions, homePath);
-    }
-    {
-        std::lock_guard<std::mutex> lck(StaticHostOptionsMutex);
-        StaticHostOptions = &m_HostOptions;
     }
 }
 

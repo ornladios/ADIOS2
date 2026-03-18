@@ -166,8 +166,9 @@ public:
      */
     const adios2::UserOptions &GetUserOptions();
 
-    /** A constant reference to the host options from ~/.config/hpc-campaign/hosts.yaml */
-    const adios2::HostOptions &GetHostOptions();
+    /** A constant reference to the host options from ~/.config/hpc-campaign/hosts.yaml.
+     *  Parsed lazily on first access as a singleton. */
+    static const adios2::HostOptions &GetHostOptions();
 
 private:
     /** Communicator given to parallel constructor. */
@@ -210,11 +211,10 @@ private:
                     core::IO &io);
 
     adios2::UserOptions m_UserOptions;
-    adios2::HostOptions m_HostOptions;
     adios2::HostConfig m_Test;
     void SetUserOptionDefaults();
     void ProcessUserConfig();
-    void ProcessHostConfig();
+    static adios2::HostOptions LoadHostConfig();
 
 private:
     /* Global services that we want to initialize at most once and shutdown

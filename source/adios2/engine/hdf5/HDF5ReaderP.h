@@ -7,6 +7,7 @@
 #ifndef ADIOS2_ENGINE_HDF5_HDF5READERP_H_
 #define ADIOS2_ENGINE_HDF5_HDF5READERP_H_
 
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
