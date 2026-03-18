@@ -64,6 +64,15 @@ public:
 
     void Start(const std::string process) { m_Profiler.Start(process); };
     void Stop(const std::string process) { m_Profiler.Stop(process); };
+
+    /** Look up a timer once; returns null if inactive or not found. */
+    Timer *GetTimer(const std::string &process) noexcept
+    {
+        if (!m_Profiler.m_IsActive)
+            return nullptr;
+        auto it = m_Profiler.m_Timers.find(process);
+        return (it != m_Profiler.m_Timers.end()) ? &it->second : nullptr;
+    }
     void AddBytes(const std::string process, size_t bytes)
     {
         m_Profiler.m_Bytes[process] += bytes;
@@ -85,16 +94,19 @@ private:
 class ProfilerGuard
 {
 public:
-    explicit ProfilerGuard(JSONProfiler &host, const std::string &tag)
-    : m_HostProfiler(host), m_Tag(tag)
+    explicit ProfilerGuard(JSONProfiler &host, const std::string &tag) : m_Timer(host.GetTimer(tag))
     {
-        m_HostProfiler.Start(tag);
+        if (m_Timer)
+            m_Timer->Resume();
     }
-    ~ProfilerGuard() { m_HostProfiler.Stop(m_Tag); }
+    ~ProfilerGuard()
+    {
+        if (m_Timer)
+            m_Timer->Pause();
+    }
 
 private:
-    JSONProfiler &m_HostProfiler;
-    std::string m_Tag;
+    Timer *m_Timer;
 };
 } // end namespace profiling
 } // end namespace adios

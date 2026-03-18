@@ -326,27 +326,34 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
             MDataTotalSize += sizeof(uint64_t);
         }
     }
+    // Assemble all output into a single WriteV call:
+    //   [header: MDataTotalSize|SizeVector|AttrSizeVector] [ContigMetaData] [AttributeBlocks...]
     MetaDataSize = 0;
-    m_MetadataFile->Write((char *)&MDataTotalSize, sizeof(uint64_t));
-    MetaDataSize += sizeof(uint64_t);
-    m_MetadataFile->Write((char *)SizeVector.data(), sizeof(uint64_t) * SizeVector.size());
-    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
-    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-    {
-        profiling::ProfilerGuard g(m_Profiler, "WriteMD_Blocks");
-        m_MetadataFile->Write(ContigMetaData.data(), ContigMetaData.size());
-    }
+    std::vector<uint64_t> headerBuf;
+    headerBuf.reserve(1 + SizeVector.size() + AttrSizeVector.size());
+    headerBuf.push_back(static_cast<uint64_t>(MDataTotalSize));
+    for (auto s : SizeVector)
+        headerBuf.push_back(static_cast<uint64_t>(s));
+    headerBuf.insert(headerBuf.end(), AttrSizeVector.begin(), AttrSizeVector.end());
 
-    MetaDataSize += ContigMetaData.size();
-
+    std::vector<core::iovec> iovs;
+    iovs.reserve(2 + AttributeBlocks.size());
+    iovs.push_back({headerBuf.data(), sizeof(uint64_t) * headerBuf.size()});
+    if (!ContigMetaData.empty())
+        iovs.push_back({ContigMetaData.data(), ContigMetaData.size()});
     for (auto &b : AttributeBlocks)
-    {
-        if (!b.iov_base)
-            continue;
-        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
-        MetaDataSize += b.iov_len;
-    }
+        if (b.iov_base && b.iov_len)
+            iovs.push_back(b);
+
+    m_MetadataFile->WriteV(iovs.data(), static_cast<int>(iovs.size()));
+
+    MetaDataSize += sizeof(uint64_t);                         // MDataTotalSize field
+    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size(); // SizeVector fields
+    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size(); // AttrSizeVector fields
+    MetaDataSize += ContigMetaData.size();
+    for (auto &b : AttributeBlocks)
+        if (b.iov_base && b.iov_len)
+            MetaDataSize += b.iov_len;
 
     m_MetadataFile->Flush();
 
@@ -850,6 +857,43 @@ void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo
     size_t AlignedMetadataSize = (TSInfo.MetaEncodeBuffer->m_FixedSize + 7) & ~0x7;
     MetaEncodeSize.push_back(AlignedMetadataSize);
 
+    if (m_Comm.Size() == 1 && UniqueMetaMetaBlocks.empty())
+    {
+        // Single rank with no new MetaMetaBlocks: skip the aggregation
+        // ceremony (MPI gather/bcast, MD5 hashing, profiler string
+        // construction) and go directly to write.  We cannot take this
+        // path when UniqueMetaMetaBlocks is non-empty because the
+        // aggregation path aligns MetaMetaInfoLen to 8 bytes and
+        // produces malloc'd copies; skipping that changes the .mmd
+        // file layout.
+
+        // The aggregation path aligns attribute block sizes to 8 bytes
+        // and zeroes the padding.  Match that here.
+        if (!AttributeBlocks.empty() && AttributeBlocks[0].iov_base)
+        {
+            size_t origLen = AttributeBlocks[0].iov_len;
+            size_t alignedLen = (origLen + 7) & ~0x7;
+            if (alignedLen > origLen)
+            {
+                std::memset(static_cast<char *>(const_cast<void *>(AttributeBlocks[0].iov_base)) +
+                                origLen,
+                            0, alignedLen - origLen);
+            }
+            AttributeBlocks[0].iov_len = alignedLen;
+        }
+
+        m_LatestMetaDataPos = m_MetaDataPos;
+        std::vector<char> ContigMetadata(AlignedMetadataSize);
+        std::memcpy(ContigMetadata.data(), TSInfo.MetaEncodeBuffer->Data(),
+                    TSInfo.MetaEncodeBuffer->m_FixedSize);
+        m_LatestMetaDataSize = WriteMetadata(ContigMetadata, MetaEncodeSize, AttributeBlocks);
+        // AttributeBlocks[0].iov_base points into TSInfo.AttributeEncodeBuffer
+        // (a shared_ptr) — do NOT free it; the shared_ptr owns that memory.
+        if (!m_Parameters.AsyncWrite)
+            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+        return;
+    }
+
     {
         std::string aggInfo_str = agg_str + "_AggInfo";
         m_Profiler.AddTimerWatch(aggInfo_str);
@@ -1073,6 +1117,7 @@ void BP5Writer::EndStep()
     }
 
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (!m_IO.GetDerivedVariables().empty())
     {
         profiling::ProfilerGuard g(m_Profiler, "ES_DeriveVars");
         ComputeDerivedVariables();
