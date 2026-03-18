@@ -180,6 +180,17 @@ Comm::Status Comm::Req::Wait(const std::string &hint)
     return status;
 }
 
+bool Comm::Req::Test(const std::string &hint)
+{
+    bool result = false;
+    if (m_Impl)
+    {
+        result = m_Impl->Test(hint);
+        m_Impl.reset();
+    }
+    return result;
+}
+
 Comm::Win::Win() = default;
 
 Comm::Win::Win(std::unique_ptr<CommWinImpl> impl) : m_Impl(std::move(impl)) {}
