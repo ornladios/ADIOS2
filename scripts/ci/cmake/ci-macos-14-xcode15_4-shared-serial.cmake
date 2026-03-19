@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Client maintainer: vicente.bolea@kitware.com
-set(ENV{CC}  clang)
-set(ENV{CXX} clang++)
+set(ENV{CC}  /usr/bin/clang)
+set(ENV{CXX} /usr/bin/clang++)
 set(ENV{FC} gfortran-13)
 
 set(dashboard_cache "
