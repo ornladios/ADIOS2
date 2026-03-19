@@ -239,9 +239,18 @@ void FileAWSSDK::SetParameters(const Params &params)
     {
         aws_credentials = {m_accessKeyID, m_secretKey};
     }
-    s3Client =
-        new Aws::S3::S3Client(aws_credentials, *s3ClientConfig,
-                              Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, false);
+
+    if (m_accessKeyID.empty() && m_secretKey.empty() && m_sessionToken.empty())
+    {
+        // last hope user set AWS_PROFILE (CampaignReader does this)
+        s3Client = new Aws::S3::S3Client(*s3ClientConfig);
+    }
+    else
+    {
+        s3Client =
+            new Aws::S3::S3Client(aws_credentials, *s3ClientConfig,
+                                  Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, false);
+    }
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
