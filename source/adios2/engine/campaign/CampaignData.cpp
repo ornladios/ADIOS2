@@ -8,6 +8,7 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 
+#include <assert.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -72,15 +73,6 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignHost ch;
-    /*
-    std::cout << "SQL: host record: ";
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL")
-                  << std::endl;
-    }
-    std::cout << std::endl;
-    */
     ch.hostname = std::string(argv[1]);
     if (argv[2])
         ch.longhostname = std::string(argv[2]);
@@ -132,54 +124,83 @@ static int sqlcb_timeseries(void *p, int argc, char **argv, char **azColName)
 
 static int sqlcb_dataset(void *p, int argc, char **argv, char **azColName)
 {
+    /*
+        0   d.rowid             AS ds_id,
+        1   d.name              AS ds_name,
+        2   d.uuid              AS ds_uuid,
+        3   d.modtime           AS ds_modtime,
+        4   d.deltime           AS ds_deltime,
+        5   d.fileformat        AS ds_fileformat,
+        6   d.tsid              AS ds_tsid,
+        7   d.tsorder           AS ds_tsorder,
+        8   r.rowid             AS rep_id,
+        9   r.hostid            AS hostid,
+        10  r.dirid             AS dirid,
+        11  r.archiveid         AS archiveid,
+        12  r.name              AS rep_name,
+        13  r.modtime           AS rep_modtime,
+        14  r.deltime           AS rep_deltime,
+        15  r.keyid             AS keyid,
+        16  r.size              AS rep_size,
+        17  rf.fileid           AS repfile_id
+
+        for images only:
+        18  res.x               AS res_x,
+        19  res.y               AS res_y
+    */
+
+    assert(argc > 17 && !strcmp(azColName[17], "repfile_id"));
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    CampaignDataset cds;
     size_t dsid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+
+    CampaignDataset &cds = cdp->datasets[dsid];
     cds.name = argv[1];
     cds.uuid = std::string(argv[2]);
-    cds.deleted = (std::strcmp("0", argv[3]) != 0);
-    cds.format = FileFormat(std::string(argv[4]));
-    cds.tsid = helper::StringToSizeT(std::string(argv[5]), hint_text_to_int);
-    cds.tsorder = helper::StringToSizeT(std::string(argv[6]), hint_text_to_int);
+    // modtime not used, argv[3]
+    cds.deleted = (std::strcmp("0", argv[4]) != 0);
+    cds.format = FileFormat(std::string(argv[5]));
+    cds.tsid = helper::StringToSizeT(std::string(argv[6]), hint_text_to_int);
+    cds.tsorder = helper::StringToSizeT(std::string(argv[7]), hint_text_to_int);
     if (cds.tsid)
     {
         cdp->timeseries[cds.tsid].datasets[cds.tsorder] = dsid;
     }
-    cdp->datasets[dsid] = cds;
-    return 0;
-};
 
-static int sqlcb_replica(void *p, int argc, char **argv, char **azColName)
-{
-    CampaignDataset *cds = reinterpret_cast<CampaignDataset *>(p);
-    CampaignReplica cdr;
-    size_t repid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
-    size_t dsid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
-    size_t hostid = helper::StringToSizeT(std::string(argv[2]), hint_text_to_int);
-    size_t dirid = helper::StringToSizeT(std::string(argv[3]), hint_text_to_int);
-    size_t archiveid = helper::StringToSizeT(std::string(argv[4]), hint_text_to_int);
+    // replica
+    size_t repid = helper::StringToSizeT(std::string(argv[8]), hint_text_to_int);
+    CampaignReplica &cdr = cds.replicas[repid];
+
+    size_t hostid = helper::StringToSizeT(std::string(argv[9]), hint_text_to_int);
+    size_t dirid = helper::StringToSizeT(std::string(argv[10]), hint_text_to_int);
+    size_t archiveid = helper::StringToSizeT(std::string(argv[11]), hint_text_to_int);
     cdr.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cdr.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
     cdr.datasetIdx = dsid;
     cdr.archiveIdx = archiveid;
-    cdr.name = argv[5];
-    cdr.deleted = (std::strcmp("0", argv[6]) != 0);
+    cdr.name = argv[12];
+    //  modtime is not used
+    cdr.deleted = (std::strcmp("0", argv[14]) != 0);
     cdr.hasKey = false;
     cdr.keyIdx = 0;
-    size_t keyid = helper::StringToSizeT(std::string(argv[7]), hint_text_to_int);
+    size_t keyid = helper::StringToSizeT(std::string(argv[15]), hint_text_to_int);
     cdr.hasKey = (keyid); // keyid == 0 means there is no key used
     cdr.keyIdx = size_t(keyid - 1);
-    cdr.size = helper::StringToSizeT(std::string(argv[8]), hint_text_to_int);
-    cds->replicas[repid] = cdr;
-    return 0;
-};
+    cdr.size = helper::StringToSizeT(std::string(argv[16]), hint_text_to_int);
 
-static int sqlcb_repfile(void *p, int argc, char **argv, char **azColName)
-{
-    CampaignDataset *cds = reinterpret_cast<CampaignDataset *>(p);
-    size_t repid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
-    size_t fileid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
-    cds->replicas[repid].files.push_back(fileid);
+    // file
+    if (argv[17])
+    {
+        size_t repfileid = helper::StringToSizeT(std::string(argv[17]), hint_text_to_int);
+        cdr.files.push_back(repfileid);
+    }
+
+    // resolution
+    if (argc > 18)
+    {
+        cdr.x = helper::StringToSizeT(std::string(argv[18]), hint_text_to_int);
+        cdr.y = helper::StringToSizeT(std::string(argv[19]), hint_text_to_int);
+    }
+
     return 0;
 };
 
@@ -201,38 +222,6 @@ static int sqlcb_file(void *p, int argc, char **argv, char **azColName)
     return 0;
 };
 
-/*
-static int sqlcb_file(void *p, int argc, char **argv, char **azColName)
-{
-    CampaignDataset *cds = reinterpret_cast<CampaignDataset *>(p);
-    CampaignFile cf;
-    size_t fileidx = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
-    cf.name = std::string(argv[1]);
-    int comp = helper::StringTo<int>(std::string(argv[2]), hint_text_to_int);
-    cf.compressed = (bool)comp;
-    cf.lengthOriginal = helper::StringToSizeT(std::string(argv[3]), hint_text_to_int);
-    cf.lengthCompressed = helper::StringToSizeT(std::string(argv[4]), hint_text_to_int);
-    cf.modtime =
-        helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert modtime to int");
-    cf.checksum = argv[6];
-
-    CampaignReplica &cdr = cds->replicas[cf.replicaIdx];
-    cf.datasetIdx = cdr.datasetIdx;
-    cdr.files.push_back(cf);
-    return 0;
-};
-*/
-
-static int sqlcb_resolution(void *p, int argc, char **argv, char **azColName)
-{
-    CampaignDataset *cds = reinterpret_cast<CampaignDataset *>(p);
-    size_t replicaIdx = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
-    CampaignReplica &cdr = cds->replicas[replicaIdx];
-    cdr.x = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
-    cdr.y = helper::StringToSizeT(std::string(argv[2]), hint_text_to_int);
-    return 0;
-};
-
 void CampaignData::Open(const std::string path)
 {
     sqlite3 *db;
@@ -246,6 +235,109 @@ void CampaignData::Open(const std::string path)
     }
     m_DB = reinterpret_cast<void *>(db);
 }
+
+static const char SELECT_DATA_CMD[] = R"SQL_COMMAND(
+SELECT
+    d.rowid             AS ds_id, 
+    d.name              AS ds_name,
+    d.uuid              AS ds_uuid,
+    d.modtime           AS ds_modtime, 
+    d.deltime           AS ds_deltime,
+    d.fileformat        AS ds_fileformat,
+    d.tsid              AS ds_tsid,
+    d.tsorder           AS ds_tsorder,
+
+    r.rowid             AS rep_id,
+    r.hostid            AS hostid,
+    r.dirid             AS dirid,
+    r.archiveid         AS archiveid,
+    r.name              AS rep_name,
+    r.modtime           AS rep_modtime,
+    r.deltime           AS rep_deltime,
+    r.keyid             AS keyid,
+    r.size              AS rep_size,
+
+    rf.fileid           AS repfile_id
+
+FROM dataset AS d
+JOIN replica AS r
+    ON r.datasetid = d.rowid
+LEFT JOIN repfiles AS rf
+    ON rf.replicaid = r.rowid
+LEFT JOIN accuracy AS acc
+    ON acc.replicaid = r.rowid
+WHERE d.fileformat = 'ADIOS' OR d.fileformat = 'HDF5' AND d.deltime = 0 AND r.deltime = 0
+ORDER BY d.rowid, r.rowid;
+)SQL_COMMAND";
+
+static const char SELECT_IMAGES_CMD[] = R"SQL_COMMAND(
+SELECT
+    d.rowid             AS ds_id, 
+    d.name              AS ds_name,
+    d.uuid              AS ds_uuid,
+    d.modtime           AS ds_modtime, 
+    d.deltime           AS ds_deltime,
+    d.fileformat        AS ds_fileformat,
+    d.tsid              AS ds_tsid,
+    d.tsorder           AS ds_order,
+
+    r.rowid             AS rep_id,
+    r.hostid            AS hostid,
+    r.dirid             AS dirid,
+    r.archiveid         AS archiveid,
+    r.name              AS rep_name,
+    r.modtime           AS rep_modtime,
+    r.deltime           AS rep_deltime,
+    r.keyid             AS keyid,
+    r.size              AS rep_size,
+
+    rf.fileid           AS repfile_id,
+
+    res.x               AS res_x,
+    res.y               AS res_y
+
+FROM dataset AS d
+JOIN replica AS r
+    ON r.datasetid = d.rowid
+LEFT JOIN repfiles AS rf
+    ON rf.replicaid = r.rowid
+LEFT JOIN resolution AS res
+    ON res.replicaid = r.rowid
+WHERE d.fileformat = 'IMAGE' AND d.deltime = 0 AND r.deltime = 0
+ORDER BY d.rowid, r.rowid;
+)SQL_COMMAND";
+
+static const char SELECT_TEXTS_CMD[] = R"SQL_COMMAND(
+SELECT
+    d.rowid             AS ds_id, 
+    d.name              AS ds_name,
+    d.uuid              AS ds_uuid,
+    d.modtime           AS ds_modtime, 
+    d.deltime           AS ds_deltime,
+    d.fileformat        AS ds_fileformat,
+    d.tsid              AS ds_tsid,
+    d.tsorder           AS ds_order,
+
+    r.rowid             AS rep_id,
+    r.hostid            AS hostid,
+    r.dirid             AS dirid,
+    r.archiveid         AS archiveid,
+    r.name              AS rep_name,
+    r.modtime           AS rep_modtime,
+    r.deltime           AS rep_deltime,
+    r.keyid             AS keyid,
+    r.size              AS rep_size,
+
+    rf.fileid           AS repfile_id
+
+FROM dataset AS d
+JOIN replica AS r
+    ON r.datasetid = d.rowid
+LEFT JOIN repfiles AS rf
+    ON rf.replicaid = r.rowid
+WHERE d.fileformat = 'TEXT' AND d.deltime = 0 AND r.deltime = 0
+ORDER BY d.rowid, r.rowid;
+)SQL_COMMAND";
 
 void CampaignData::ReadDatabase()
 {
@@ -347,79 +439,37 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    /* Get datasets filtering out the deleted ones */
-    sqlcmd = "SELECT rowid, name, uuid, deltime, fileformat, tsid, tsorder FROM dataset where "
-             "deltime = 0 ORDER BY rowid";
-    rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_dataset, this, &zErrMsg);
+    /* Get ADIOS/HDF5 datasets filtering out the deleted ones */
+    rc = sqlite3_exec(db, SELECT_DATA_CMD, sqlcb_dataset, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
-                                             "SQL error on reading 'dataset' records:" + m);
+                                             "SQL error on reading ADIOS/HDF5 records:" + m);
         sqlite3_free(zErrMsg);
     }
 
-    for (auto &it : datasets)
+    /* Get IMAGE datasets filtering out the deleted ones */
+    rc = sqlite3_exec(db, SELECT_IMAGES_CMD, sqlcb_dataset, this, &zErrMsg);
+    if (rc != SQLITE_OK)
     {
-        size_t dsIdx = it.first;
-        CampaignDataset &ds = it.second;
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        std::string m(zErrMsg);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading IMAGE records:" + m);
+        sqlite3_free(zErrMsg);
+    }
 
-        /* Get replicas of each dataset filtering out the deleted ones */
-        sqlcmd =
-            "SELECT rowid, datasetid, hostid, dirid, archiveid, name, deltime, keyid, size FROM "
-            "replica "
-            "where deltime = 0 and datasetid = " +
-            std::to_string(dsIdx) + " ORDER BY rowid";
-        rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_replica, &ds, &zErrMsg);
-        if (rc != SQLITE_OK)
-        {
-            std::cout << "SQL error: " << zErrMsg << std::endl;
-            std::string m(zErrMsg);
-            helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
-                                                 "SQL error on reading 'replica' records:" + m);
-            sqlite3_free(zErrMsg);
-        }
-
-        for (auto &it : datasets[dsIdx].replicas)
-        {
-            size_t repIdx = it.first;
-            /* Get files of each replica */
-
-            /* 1. get the file indices pointed by the replica in repfiles*/
-            sqlcmd = "SELECT replicaid, fileid "
-                     "FROM repfiles where replicaid = " +
-                     std::to_string(repIdx) + " ORDER BY fileid";
-
-            rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_repfile, &ds, &zErrMsg);
-            if (rc != SQLITE_OK)
-            {
-                std::cout << "SQL error: " << zErrMsg << std::endl;
-                std::string m(zErrMsg);
-                helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
-                                                     "SQL error on reading 'repfile' records:" + m);
-                sqlite3_free(zErrMsg);
-            }
-
-            /* process per-replica information one by one*/
-            // CampaignReplica &rep = ds.replicas[repIdx];
-            /* resolution info*/
-            if (ds.format == FileFormat::IMAGE)
-            {
-                sqlcmd = "SELECT replicaid, x, y FROM resolution where replicaid = " +
-                         std::to_string(repIdx) + " ORDER BY replicaid";
-                rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_resolution, &ds, &zErrMsg);
-                if (rc != SQLITE_OK)
-                {
-                    std::cout << "SQL error: " << zErrMsg << std::endl;
-                    std::string m(zErrMsg);
-                    helper::Throw<std::invalid_argument>(
-                        "Engine", "CampaignReader", "ReadCampaignData",
-                        "SQL error on reading 'resolution' records:" + m);
-                    sqlite3_free(zErrMsg);
-                }
-            }
-        }
+    /* Get TEXT datasets filtering out the deleted ones */
+    rc = sqlite3_exec(db, SELECT_TEXTS_CMD, sqlcb_dataset, this, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        std::string m(zErrMsg);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading TEXT records:" + m);
+        sqlite3_free(zErrMsg);
     }
 }
 
