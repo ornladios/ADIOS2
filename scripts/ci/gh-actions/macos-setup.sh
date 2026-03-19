@@ -21,14 +21,6 @@ fi
 sudo xcode-select --switch "/Applications/Xcode_${XCODE_VER}.app"
 sudo ln -v -s "$(which gfortran-13)" /usr/local/bin/gfortran
 
-# Set CC/CXX compiler to be Xcode's clang
-CC=$(xcrun -find clang)
-CXX=$(xcrun -find clang++)
-export CC
-export CXX
-echo "export CC=${CC}" >> /Users/runner/.bash_profile
-echo "export CXX=${CXX}" >> /Users/runner/.bash_profile
-
 echo "Installing Miniconda"
 
 if [ "${RUNNER_ARCH}" = "X64" ]
