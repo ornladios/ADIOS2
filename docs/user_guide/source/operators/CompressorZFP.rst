@@ -10,7 +10,7 @@ write random access to individual array elements. ZFP also supports serial and
 parallel (OpenMP and CUDA) compression of whole arrays, e.g., for applications
 that read and write large data sets to and from disk.
 
-ADIOS2 provides a ``CompressorZFP`` operator that lets you compress an
+ADIOS2 provides a ``CompressorZFP`` operator that lets you compress an 
 decompress variables. Below there is an example of how to invoke
 ``CompressorZFP`` operator:
 

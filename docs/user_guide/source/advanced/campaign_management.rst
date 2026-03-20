@@ -8,7 +8,7 @@ The .ACA campaign file can be opened by ADIOS2 and all the metadata can be proce
 
 .. warning::
 
-    Campaign Management is fairly new, currently at version 0.5. It will change substantially in the future and campaign files produced by this version will have to be updated to newer versions. Make sure to use a compatible versions of ADIOS2 and hpc-campaign.
+    Campaign Management is fairly new, currently at version 0.7. It will change substantially in the future and campaign files produced by this version will have to be updated to newer versions. Make sure to use a compatible versions of ADIOS2 and hpc-campaign.
 
 Requirements
 ============
@@ -20,7 +20,6 @@ Limitations
 ===========
 
 - The Campaign Reader engine only supports ReadRandomAccess mode, not step-by-step reading. Campaign management will need to change in the future to support sorting the steps from different outputs to a coherent order. 
-- Updates to moving data for other location is not supported yet
 
 Example
 -------
@@ -40,30 +39,30 @@ Assuming we are in
     $ ls -d *.bp
     ckpt.bp gs.bp
 
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 delete --campaign
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 create
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 dataset gs.bp ckpt.bp
+    $ ACA=demoproject/frontier_gray-scott_100
+    $ hpc_campaign manager $ACA --truncate data gs.bp --name gs
+    $ hpc_campaign manager $ACA data ckpt.bp --name checkpoint
     
     $ mpirun -n 3 adios2_simulations_gray-scott_pdf-calc gs.bp pdf.bp 1000
     $ ls -d *.bp
     ckpt.bp gs.bp pdf.bp
 
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 dataset pdf.bp
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 text settings-files.json --store
+    $ hpc_campaign manager $ACA data pdf.bp --name pdf
+    $ hpc_campaign manager $ACA text settings-files.json --store --name input/settings.json
 
-    $ hpc_campaign manager demoproject/frontier_gray-scott_100 info
+    $ hpc_campaign manager $ACA info
     =============================
-    ADIOS Campaign Archive, version 0.5, created on Sep 10 14:29
+    ADIOS Campaign Archive, version 0.7, created on Mar 20 08:19
 
     Hosts and directories:
       OLCF   longhostname = frontier05341.frontier.olcf.ornl.gov
         1. /lustre/orion/csc143/proj-shared/demo/gray-scott
 
     Other Datasets:
-        3a4bf0b14cc33424a470862bd67ed007  ADIOS  Sep 10 14:25   ckpt.bp
-        0fce4b1173f432f7ae5d2282df9077a6  ADIOS  Sep 10 14:25   gs.bp
-        b42d0da4a0793adca341ace1ff6e628d  ADIOS  Sep 10 14:28   pdf.bp
-        85a0b724b22f37a4a79ad8a0cf1127d1  TEXT   Sep 10 14:24   settings-files.json
+        0fce4b1173f432f7ae5d2282df9077a6  ADIOS  Sep 10 14:25   gs
+        3a4bf0b14cc33424a470862bd67ed007  ADIOS  Sep 10 14:25   checkpoint
+        b42d0da4a0793adca341ace1ff6e628d  ADIOS  Sep 10 14:28   pdf
+        85a0b724b22f37a4a79ad8a0cf1127d1  TEXT   Sep 10 14:24   input/settings.json
 
     # The campaign archive is small compared to the data it points to 
     $ du -sh *bp
@@ -71,27 +70,27 @@ Assuming we are in
     385M    gs.bp
     104K    pdf.bp
 
-    $ du -sh /lustre/orion/csc143/proj-shared/adios-campaign-store/demoproject/frontier_gray-scott_100.aca
+    $ du -sh /lustre/orion/csc143/proj-shared/adios-campaign-store/$ACA
     97K     /lustre/orion/csc143/proj-shared/adios-campaign-store/demoproject/frontier_gray-scott_100.aca
 
     # ADIOS can list the content of the campaign archive
-    $ bpls -l demoproject/frontier_gray-scott_100
-        double   ckpt.bp/U      {4, 34, 34, 66} = 0.171103 / 1
-        double   ckpt.bp/V      {4, 34, 34, 66} = 1.71086e-19 / 0.438921
-        int32_t  ckpt.bp/step   scalar = 700
-        double   gs.bp/U        100*{64, 64, 64} = 0.0908114 / 1
-        double   gs.bp/V        100*{64, 64, 64} = 0 / 0.674804
-        int32_t  gs.bp/step     100*scalar = 10 / 1000
-        double   pdf.bp/U/bins  100*{1000} = 0.0908235 / 1
-        double   pdf.bp/U/pdf   100*{64, 1000} = 0 / 4096
-        double   pdf.bp/V/bins  100*{1000} = 0 / 0.67413
-        double   pdf.bp/V/pdf   100*{64, 1000} = 0 / 4096
-        int32_t  pdf.bp/step    100*scalar = 10 / 1000
-        char     settings-files.json  {440} = A / Z
+    $ bpls -l $ACA
+        double   checkpoint/U         {4, 34, 34, 66} = 0.171103 / 1
+        double   checkpoint/V         {4, 34, 34, 66} = 1.71086e-19 / 0.438921
+        int32_t  checkpoint/step      scalar = 700
+        double   gs/U                 100*{64, 64, 64} = 0.0908114 / 1
+        double   gs/V                 100*{64, 64, 64} = 0 / 0.674804
+        int32_t  gs/step              100*scalar = 10 / 1000
+        double   pdf/U/bins           100*{1000} = 0.0908235 / 1
+        double   pdf/U/pdf            100*{64, 1000} = 0 / 4096
+        double   pdf/V/bins           100*{1000} = 0 / 0.67413
+        double   pdf/V/pdf            100*{64, 1000} = 0 / 4096
+        int32_t  pdf/step             100*scalar = 10 / 1000
+        char     input/settings.json  {440} = A / Z
 
     # scalar over steps is available in metadata
-    $ bpls -l demoproject/frontier_gray-scott_100 -d pdf.bp/step -n 10
-      int32_t  pdf.bp/step    10*scalar = 100 / 1000
+    $ bpls -l $ACA -d pdf/step -n 10
+      int32_t  pdf/step    10*scalar = 100 / 1000
         ( 0)    10 20 30 40 50 60 70 80 90 100
         (10)    110 120 130 140 150 160 170 180 190 200
         (20)    210 220 230 240 250 260 270 280 290 300
@@ -104,8 +103,8 @@ Assuming we are in
         (90)    910 920 930 940 950 960 970 980 990 1000
 
     # Array decomposition including min/max are available in metadata
-    $ bpls -l demoproject/frontier_gray-scott_100 -D gs.bp/V
-      double   gs.bp/V        10*{64, 64, 64} = 8.24719e-63 / 0.515145
+    $ bpls -l $ACA -D gs/V
+      double   gs/V        10*{64, 64, 64} = 8.24719e-63 / 0.515145
         step 0:
           block 0: [ 0:63,  0:31,  0:31] = 0 / 0.600691
           block 1: [ 0:63, 32:63,  0:31] = 0 / 0.600691
@@ -119,20 +118,29 @@ Assuming we are in
           block 3: [ 0:63, 32:63, 32:63] = 3.99955e-09 / 0.441833
 
     # Array data is only available if data is local
-    $ ./bin/bpls -l demoproject/frontier_gray-scott_100 -d pdf.bp/U/bins -n 10 -c "1,-1"
-      double   pdf.bp/U/bins  100*{1000} = 0.0908235 / 1
+    $ bpls -l $ACA -d pdf/U/bins -n 10 -c "1,-1"
+      double   pdf/U/bins  100*{1000} = 0.0908235 / 1
         slice (0:0, 0:999)
         (0,  0)    0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992
         ...
         (0,990)    1 1 1 1 1 1 1 1 1 1
 
-    $ ./bin/bpls -l demoproject/frontier_gray-scott_100 -d pdf.bp/U/bins -n 10 -s "-1,0" -c "1,-1"
-      double   pdf.bp/U/bins  100*{1000} = 0.0908235 / 1
+    $ bpls -l $ACA -d pdf/U/bins -n 10 -s "-1,0" -c "1,-1"
+      double   pdf/U/bins  100*{1000} = 0.0908235 / 1
         slice (99:99, 0:999)
         (0,  0)    0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992 0.999992
         ...
         (0,990)    1 1 1 1 1 1 1 1 1 1
 
+    # TEXT data can be dumped if it is local, or stored in the ACA file itself (see --store option)
+    $ bpls -l $ACA -dSy input/settings.json
+      ; char     input/settings.json  {440} = A / Z
+      "{
+          "L": 64,
+      ...
+          "mesh_type": "image"
+      }
+      "
 
 Remote access
 =============
@@ -146,19 +154,20 @@ Assuming the campaign archive was synced to a local machine's campaign store und
     csc143/demoproject/frontier_gray-scott_100.aca
 
     $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca
-      double   ckpt.bp/U            {4, 34, 34, 66} = 0.171103 / 1
+      double   ckpt/U            {4, 34, 34, 66} = 0.171103 / 1
       ...
-      char     settings-files.json  {440} = A / Z
+      char     input/settings.json  {440} = A / Z
 
-    # data stored inside the campaign can be read easily
+    # metadata stored inside the campaign can be read without remote access
     $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca -d pdf.bp/step
-      int32_t  pdf.bp/step    10*scalar = 100 / 1000
+      int32_t  pdf/step    10*scalar = 100 / 1000
         ( 0)    10 20 30 40 50 60 70 80 90 100
         ...
         (90)    910 920 930 940 950 960 970 980 990 1000
 
-    $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca -dyS settings-files.json
-      ; char     settings-files.json  {440} = A / Z
+    # text (and image) files stored (embedded) in the ACA file can be read without remote access
+    $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca -dyS input/settings.json
+      ; char     input/settings.json  {440} = A / Z
       "{
           "L": 64,
           ...
@@ -199,8 +208,8 @@ Assuming the campaign archive was synced to a local machine's campaign store und
 
     # array data is requested from the remote server
     # read 16 values (4x4x4) from U from last step, from offset 30,30,30
-    $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca  -d gs.bp/U -s "-1,30,30,30" -c "1,4,4,4" -n 4
-    double   gs.bp/U              100*{64, 64, 64} = 0.0908114 / 1
+    $ bpls -l csc143/demoproject/frontier_gray-scott_100.aca  -d gs/U -s "-1,30,30,30" -c "1,4,4,4" -n 4
+    double   gs/U              100*{64, 64, 64} = 0.0908114 / 1
       slice (99:99, 30:33, 30:33, 30:33)
       (99,30,30,30)    0.891887 0.899848 0.899847 0.891884
       (99,30,31,30)    0.899851 0.908275 0.908275 0.899849
