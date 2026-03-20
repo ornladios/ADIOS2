@@ -131,7 +131,7 @@ can be read on little-endian systems and vice versa without any special build
 configuration.
 
 S3 Object Storage for BP5 Data
--------------------------------
+------------------------------
 
 BP5 can now write data files to S3-compatible object storage (Amazon S3, MinIO,
 Ceph, etc.) while keeping metadata on the local filesystem. This hybrid model
@@ -162,9 +162,6 @@ What's new in 2.11?
 This is a major release with new features and lots of bug fixes. The main
 highlights include enhanced derived variables, remote data access, GPU
 improvements, campaign management overhaul, and advanced compression operators.
-
-Summary
-=======
 
 Derived Variables
 -----------------
@@ -229,7 +226,7 @@ In 2.10, there is officially one Python API, written in Python, which in turn us
    Old scripts that used the high-level API must be modified to make them work with the new API, see :ref:`Transition from old API to new API`
 
 
-See :ref:`Python API`
+See :ref:`Python APIs`
 
 
 New/updated features
@@ -250,9 +247,6 @@ Packaging
 ==================
 What's new in 2.9?
 ==================
-
-Summary
-=======
 
 This is a major release with new features and lots of bug fixes.
 

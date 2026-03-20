@@ -8,8 +8,9 @@ If ADIOS can find libsodium at configure time, this plugin will be built.
 
 The encryption mode is selected automatically based on the parameters supplied.
 
+~~~~~~~~~~~~~~
 Symmetric Mode
-==============
+~~~~~~~~~~~~~~
 
 In symmetric mode, the operator generates a secret key and encrypts the data with the key and a
 nonce as described in the libsodium `secret key cryptography docs
@@ -27,8 +28,9 @@ Symmetric mode is activated when ``SecretKeyFile`` is provided without any publi
  SecretKeyFile                  string                Required. Path to secret key file
 ============================== ===================== ===========================================================
 
+~~~~~~~~~~~~~~~
 Asymmetric Mode
-===============
+~~~~~~~~~~~~~~~
 
 In asymmetric mode, a random per-write session key is sealed with the recipient's Curve25519 public
 key using ``crypto_box_seal``, and the bulk data is encrypted with that session key via

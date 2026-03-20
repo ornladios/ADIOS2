@@ -163,7 +163,7 @@ The resulting bpls output should contain the "vtk.xml" attribute and the variabl
 
 This BP file should be recognize by Paraview:
 
-.. image:: images/paraview_vtk.png
+.. image:: visualization/images/paraview_vtk.png
    :alt: Paraview VTK visualization
 
 
@@ -210,5 +210,5 @@ The resulting `bpls` output for unstructured grid data types:
  
 and resulting visualization in Paraview for different "cell" types:
 
-.. image:: images/paraview_vtu.png
+.. image:: visualization/images/paraview_vtu.png
    :alt: Paraview VTU visualization

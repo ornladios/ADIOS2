@@ -30,7 +30,7 @@ The ``CompressorSZ3`` operator accepts the following operator specific
 parameters:
 
 +--------------------+--------------------------------------------------------------+
-| ``CompressorSZ3`` available parameters                                          |
+| ``CompressorSZ3`` available parameters                                            |
 +====================+==============================================================+
 | ``accuracy``       | Alias for ``absolute``, fixed absolute error tolerance       |
 +--------------------+--------------------------------------------------------------+
@@ -56,15 +56,15 @@ parameters:
 +--------------------+--------------------------------------------------------------+
 | ``l2normerrbound`` | L2 norm error bound                                          |
 +--------------------+--------------------------------------------------------------+
-| ``mode``           | Error bound mode: ``ABS``, ``REL``, ``PSNR``, ``L2NORM``,   |
+| ``mode``           | Error bound mode: ``ABS``, ``REL``, ``PSNR``, ``L2NORM``,    |
 |                    | ``ABS_AND_REL``, ``ABS_OR_REL``                              |
 +--------------------+--------------------------------------------------------------+
 | ``errorboundmode`` | Error bound mode (same options as ``mode``)                  |
 +--------------------+--------------------------------------------------------------+
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CompressorSZ3 Supported Data Types
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``CompressorSZ3`` supports the following data types:
 
