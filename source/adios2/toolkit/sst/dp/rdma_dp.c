@@ -274,7 +274,7 @@ static void *make_progress(void *params_)
          * fi_cq_sread(). Some providers don't make progress in a timely fashion otherwise (e.g.
          * shm).
          */
-        make_some_progress(params, -1, CQEntries, batch_size);
+        make_some_progress(params, 100, CQEntries, batch_size);
     }
     return NULL;
 }
