@@ -102,6 +102,38 @@ file(GENERATE
   OUTPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py.$<CONFIG>
   INPUT ${CMAKE_CURRENT_BINARY_DIR}/run_test.py.gen)
 
+# MultiStreamBiDir test - standalone (no gtest), exercises multiple
+# simultaneous bidirectional SST streams with three process groups.
+add_executable(TestMultiStreamBiDir TestMultiStreamBiDir.cpp)
+if(ADIOS2_HAVE_MPI)
+  target_link_libraries(TestMultiStreamBiDir adios2::cxx_mpi MPI::MPI_CXX)
+else()
+  target_link_libraries(TestMultiStreamBiDir adios2::cxx)
+endif()
+configure_file(
+  run_multi_stream.py.gen.in
+  ${CMAKE_CURRENT_BINARY_DIR}/run_multi_stream.py.gen
+  @ONLY
+)
+file(GENERATE
+  OUTPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_stream.py.$<CONFIG>
+  INPUT ${CMAKE_CURRENT_BINARY_DIR}/run_multi_stream.py.gen)
+
+if(ADIOS2_HAVE_SST)
+  add_test(NAME Staging.MultiStreamBiDir.1x1.SST
+    COMMAND ${PYTHON_EXECUTABLE}
+      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_stream.py.$<CONFIG> SST 1)
+  set_tests_properties(Staging.MultiStreamBiDir.1x1.SST PROPERTIES
+    TIMEOUT 60 RUN_SERIAL TRUE)
+  if(ADIOS2_HAVE_MPI)
+    add_test(NAME Staging.MultiStreamBiDir.2x2.SST
+      COMMAND ${PYTHON_EXECUTABLE}
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_stream.py.$<CONFIG> SST 2)
+    set_tests_properties(Staging.MultiStreamBiDir.2x2.SST PROPERTIES
+      TIMEOUT 60 RUN_SERIAL TRUE)
+  endif()
+endif()
+
 include (TestSupp.cmake )
 
 if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
