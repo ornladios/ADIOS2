@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 5.0.0 LANGUAGES C CXX)
+project(EVPath VERSION 5.0.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
