@@ -659,7 +659,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     pthread_mutex_lock(&fabric_mutex);
     if (global_fabric_refcount == 0)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "opening fabric with provider %s\n",
+        Svcs->verbose(CP_Stream, DPSummaryVerbose, "opening fabric with provider %s\n",
                       info->fabric_attr->prov_name);
         result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
         if (result != FI_SUCCESS)
