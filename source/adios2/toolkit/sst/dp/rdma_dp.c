@@ -257,7 +257,7 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
             cq_manual_progress_push(params, next_item);
         }
     }
-    params->Svcs->verbose(params->Stream, DPCriticalVerbose, "falling out of make_some_progress\n");
+    params->Svcs->verbose(params->Stream, DPTraceVerbose, "falling out of make_some_progress\n");
 }
 
 static void *make_progress(void *params_)
@@ -781,7 +781,7 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         result = fi_cq_signal(fabric->cq_signal);
         if (result != FI_SUCCESS)
         {
-            Svcs->verbose(CP_Stream, DPCriticalVerbose, "fi_cq_signal failed with %d (%s).\n",
+            Svcs->verbose(CP_Stream, DPTraceVerbose, "fi_cq_signal failed with %d (%s).\n",
                           result, fi_strerror(result));
             if (fabric->pthread_id)
             {
