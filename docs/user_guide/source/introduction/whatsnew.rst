@@ -1,5 +1,5 @@
 ======================
-What's new in master?
+What's new in v2.12?
 ======================
 
 C API Improvements
@@ -154,6 +154,108 @@ Key features:
 
 See :ref:`BP5 S3 Object Storage<S3 Object Storage>` for configuration details.
 
+C++17 Minimum Requirement
+--------------------------
+
+The minimum C++ standard required to build ADIOS2 has been raised from C++14
+to C++17.
+
+Python Bindings: Nanobind Migration
+-------------------------------------
+
+The Python bindings have been migrated from pybind11 to nanobind. Nanobind
+produces smaller, faster extension modules and enables stable-ABI (``abi3``)
+wheels for Python 3.12 and later, so a single wheel binary works across
+multiple Python versions without recompilation.
+
+Asymmetric Encryption Operator
+--------------------------------
+
+A new ``Encryption`` operator supports asymmetric encryption of variable data
+using libsodium's sealed-box construction (X25519 key exchange +
+XSalsa20-Poly1305). Writers encrypt data using the recipient's public key;
+only the holder of the corresponding private key can decrypt. No writer
+keypair is required, so the data producer does not need to be trusted with
+decryption credentials.
+
+SZ3 Compression Operator
+--------------------------
+
+A new ``SZ3`` operator is available for lossy data compression using the SZ3
+library, extending the available compression options alongside SZ, ZFP, MGARD,
+and BigWhoop.
+
+RefactorProDM Operator
+-----------------------
+
+A new ``RefactorProDM`` operator integrates ADIOS2 with ProDM, a data
+decomposition library by Dr. Xin Liang. When ProDM is available at build time,
+this operator provides decomposition-based data reduction as an alternative to
+traditional compressors.
+
+Python Free-Threading Support
+------------------------------
+
+The Python bindings are now compatible with free-threaded Python (PEP 703,
+``python3.13t``), allowing ADIOS2 to operate without the GIL in environments
+that support it.
+
+HTTPS Transport for Remote Access
+-----------------------------------
+
+An HTTPS-based remote transport (``XrootdHttpsRemote``) using libcurl has been
+added as an alternative to the native XRootD protocol. This enables reading
+ADIOS2 datasets over standard HTTPS URLs from XRootD SSI services, useful in
+environments where native XRootD connectivity is unavailable.
+
+Campaign Reader Improvements
+------------------------------
+
+The campaign reader received several improvements: host aliases in
+``~/.config/hpc-campaign/hosts.yaml`` allow symbolic machine names to be
+defined once and reused across dataset entries; XRootD connections can now be
+declared as host entries; in-memory metadata caching reduces repeated file
+access overhead; and the reader now strictly accepts ACA version 0.7, rejecting
+unsupported versions with a clear error. For large archives the SQLite query was
+rewritten as a single join across the dataset, replica, file, and resolution
+tables, reducing open time from ~27 seconds to under one second for collections
+of thousands of images.
+
+TAR File Reading
+-----------------
+
+The BP5 reader now supports datasets packaged inside TAR archives. When a TAR
+index is provided, BP5 datasets, text files, and images can be read from a
+local TAR, an HTTPS-hosted TAR, or a TAR accessible via the remote server. This
+is primarily used by the campaign reader to access archived datasets.
+
+Python Stream: minmax()
+------------------------
+
+``adios2.Stream`` gains a new ``minmax(name, [step], [block_info_list])`` method
+that returns the minimum and maximum values of a variable. In read mode or when
+a step is specified it returns per-step statistics; in random-access mode
+without a step argument it returns the global min/max.
+
+Inline Engine Buffering
+------------------------
+
+The inline engine now supports basic output buffering, a step toward full
+feature parity with file-based engines for in-situ workflows.
+
+Windows and macOS pip Wheel Support
+-------------------------------------
+
+Automated integration tests for pip ``sdist`` and wheel builds on Windows and
+macOS have been added to CI, verifying correct library loading and packaging
+under ``pip install`` workflows.
+
+REUSE License Compliance
+-------------------------
+
+ADIOS2 now complies with the REUSE specification, ensuring every source file
+carries a machine-readable SPDX license and copyright notice.
+
 
 ===================
 What's new in 2.11?
@@ -224,6 +326,7 @@ In 2.10, there is officially one Python API, written in Python, which in turn us
    Old scripts that used the full API can still run without almost any modification, just change the import line from ``import adios2`` to ``import adios2.bindings as adios2``
 
    Old scripts that used the high-level API must be modified to make them work with the new API, see :ref:`Transition from old API to new API`
+u
 
 
 See :ref:`Python APIs`
