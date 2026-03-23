@@ -1020,6 +1020,125 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
 #endif
 }
 
+void SZMemorySelection3D(const std::string accuracy)
+{
+    // BP3/BP4 don't support compression + MemorySelection
+    if (engineName == "BP3" || engineName == "BP4")
+        GTEST_SKIP();
+
+    // Write a 3D sub-region from a larger in-memory buffer (with ghost cells)
+    // using SetMemorySelection + compression. Verifies that compression
+    // works correctly with strided memory layouts (GitHub issue #4965).
+
+    const size_t Nx = 10, Ny = 12, Nz = 8;
+    const size_t ghost = 1;
+    const size_t Mx = Nx + 2 * ghost;
+    const size_t My = Ny + 2 * ghost;
+    const size_t Mz = Nz + 2 * ghost;
+
+    // Fill the interior of a halo'd buffer with known values.
+    // Buffer layout is row-major with dims {Mx, My, Mz}: index = (i*My + j)*Mz + k
+    std::vector<double> full(Mx * My * Mz, -1.0);
+    for (size_t i = ghost; i < Nx + ghost; ++i)
+        for (size_t j = ghost; j < Ny + ghost; ++j)
+            for (size_t k = ghost; k < Nz + ghost; ++k)
+                full[(i * My + j) * Mz + k] = static_cast<double>(i + j * Nx + k * Nx * Ny);
+
+#if ADIOS2_USE_MPI
+    const std::string fname("BPWRSZ3DMemSel_" + accuracy + "_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string fname("BPWRSZ3DMemSel_" + accuracy + ".bp");
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+            io.SetEngine(engineName);
+
+        auto var = io.DefineVariable<double>("data", {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz},
+                                             adios2::ConstantDims);
+
+        adios2::Operator szOp = adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
+        var.AddOperation(szOp, {{adios2::ops::sz::key::accuracy, accuracy}});
+
+        var.SetMemorySelection({{ghost, ghost, ghost}, {Mx, My, Mz}});
+
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        writer.Put(var, full.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    auto checkInterior = [&](const std::vector<double> &result, const double tol) {
+        for (size_t i = 0; i < Nx; ++i)
+            for (size_t j = 0; j < Ny; ++j)
+                for (size_t k = 0; k < Nz; ++k)
+                {
+                    double expected =
+                        static_cast<double>((i + ghost) + (j + ghost) * Nx + (k + ghost) * Nx * Ny);
+                    size_t idx = (i * Ny + j) * Nz + k;
+                    ASSERT_NEAR(result[idx], expected, tol)
+                        << "Mismatch at (" << i << "," << j << "," << k << ")";
+                }
+    };
+
+    // Read back into a contiguous buffer (verify write path)
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+            io.SetEngine(engineName);
+
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        reader.BeginStep();
+        auto var = io.InquireVariable<double>("data");
+        ASSERT_TRUE(var);
+        ASSERT_EQ(var.Shape().size(), 3);
+        ASSERT_EQ(var.Shape()[0], Nx);
+        ASSERT_EQ(var.Shape()[1], Ny);
+        ASSERT_EQ(var.Shape()[2], Nz);
+
+        std::vector<double> result(Nx * Ny * Nz);
+        reader.Get(var, result.data(), adios2::Mode::Sync);
+        reader.EndStep();
+        reader.Close();
+
+        checkInterior(result, std::stod(accuracy));
+    }
+
+    // Read back with MemorySelection into a halo'd buffer (verify read path)
+    {
+        adios2::IO io = adios.DeclareIO("ReadMemSelIO");
+        if (!engineName.empty())
+            io.SetEngine(engineName);
+
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        reader.BeginStep();
+        auto var = io.InquireVariable<double>("data");
+        ASSERT_TRUE(var);
+
+        const size_t Rx = Nx + 2 * ghost;
+        const size_t Ry = Ny + 2 * ghost;
+        const size_t Rz = Nz + 2 * ghost;
+        std::vector<double> readBuf(Rx * Ry * Rz, -1.0);
+        var.SetMemorySelection({{ghost, ghost, ghost}, {Rx, Ry, Rz}});
+        reader.Get(var, readBuf.data(), adios2::Mode::Sync);
+        reader.EndStep();
+        reader.Close();
+
+        // Extract interior from the halo'd read buffer into a contiguous buffer
+        std::vector<double> result(Nx * Ny * Nz);
+        for (size_t i = 0; i < Nx; ++i)
+            for (size_t j = 0; j < Ny; ++j)
+                for (size_t k = 0; k < Nz; ++k)
+                    result[(i * Ny + j) * Nz + k] =
+                        readBuf[((i + ghost) * Ry + (j + ghost)) * Rz + (k + ghost)];
+
+        checkInterior(result, std::stod(accuracy));
+    }
+}
+
 class BPWriteReadSZ : public ::testing::TestWithParam<std::string>
 {
 public:
@@ -1035,6 +1154,7 @@ TEST_P(BPWriteReadSZ, BPWRSZ1DSel) { SZAccuracy1DSel(GetParam()); }
 TEST_P(BPWriteReadSZ, BPWRSZ2DSel) { SZAccuracy2DSel(GetParam()); }
 TEST_P(BPWriteReadSZ, BPWRSZ3DSel) { SZAccuracy3DSel(GetParam()); }
 TEST_F(BPWriteReadSZ, BPWRSZ2DSmallSel) { SZAccuracy2DSmallSel("0.01"); }
+TEST_F(BPWriteReadSZ, BPWRSZ3DMemSel) { SZMemorySelection3D("0.01"); }
 
 INSTANTIATE_TEST_SUITE_P(SZAccuracy, BPWriteReadSZ,
                          ::testing::Values("0.01", "0.001", "0.0001", "0.00001"));
