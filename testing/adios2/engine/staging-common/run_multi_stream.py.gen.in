@@ -1,0 +1,96 @@
+#!@PYTHON_EXECUTABLE@
+
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Launch three process groups for the MultiStreamBiDir test:
+#   server (role -1), client0 (role 0), client1 (role 1)
+
+import subprocess
+import sys
+import os
+import shutil
+import atexit
+
+
+def test_setup(testname):
+    testdir = testname + "_testdir"
+    if os.path.exists(testdir):
+        shutil.rmtree(testdir)
+    os.mkdir(testdir)
+    os.chdir(testdir)
+
+
+def test_teardown(testname):
+    testdir = testname + "_testdir"
+    os.chdir('..')
+    shutil.rmtree(testdir)
+
+
+script_directory = sys.path[0]
+test_executable = os.path.abspath(
+    os.path.join(script_directory, '$<TARGET_FILE_NAME:TestMultiStreamBiDir>'))
+
+engine = sys.argv[1] if len(sys.argv) > 1 else 'SST'
+nprocs = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+
+mpiexec = '@MPIEXEC_EXECUTABLE@'
+use_mpi = (mpiexec != '' and mpiexec != 'IGNORE' and
+           mpiexec != 'MPIEXEC_EXECUTABLE-NOTFOUND')
+
+extra_flags = '@MPIEXEC_EXTRA_FLAGS@'.split(';') if '@MPIEXEC_EXTRA_FLAGS@' else []
+numproc_flag = '@MPIEXEC_NUMPROC_FLAG@'.split(' ')
+
+
+def build_cmd(role):
+    if use_mpi:
+        cmd = [mpiexec] + extra_flags + numproc_flag + [str(nprocs)]
+        cmd += [test_executable, engine, str(role)]
+    else:
+        cmd = [test_executable, engine, str(role)]
+    return cmd
+
+
+test_setup("MultiStreamBiDir")
+atexit.register(test_teardown, "MultiStreamBiDir")
+
+server_cmd = build_cmd(-1)
+client0_cmd = build_cmd(0)
+client1_cmd = build_cmd(1)
+
+print("TestDriver: Server command:  " + " ".join(server_cmd))
+print("TestDriver: Client0 command: " + " ".join(client0_cmd))
+print("TestDriver: Client1 command: " + " ".join(client1_cmd))
+sys.stdout.flush()
+
+# Start server first (creates .sst contact files), then clients
+server = subprocess.Popen(server_cmd)
+client0 = subprocess.Popen(client0_cmd)
+client1 = subprocess.Popen(client1_cmd)
+
+client0.wait()
+print("TestDriver: Client0 exit status was " + str(client0.returncode))
+client1.wait()
+print("TestDriver: Client1 exit status was " + str(client1.returncode))
+server.wait()
+print("TestDriver: Server exit status was " + str(server.returncode))
+sys.stdout.flush()
+
+return_code = 0
+if client0.returncode != 0:
+    print("TestDriver: Client0 failed")
+    return_code = 1
+if client1.returncode != 0:
+    print("TestDriver: Client1 failed")
+    return_code = 1
+if server.returncode != 0:
+    print("TestDriver: Server failed")
+    return_code = 1
+
+if return_code == 0:
+    print("TestDriver: MultiStreamBiDir test PASSED")
+else:
+    print("TestDriver: MultiStreamBiDir test FAILED")
+
+sys.exit(return_code)
