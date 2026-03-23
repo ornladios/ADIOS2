@@ -257,6 +257,7 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
             cq_manual_progress_push(params, next_item);
         }
     }
+    params->Svcs->verbose(params->Stream, DPTraceVerbose, "falling out of make_some_progress\n");
 }
 
 static void *make_progress(void *params_)
@@ -782,7 +783,16 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         {
             Svcs->verbose(CP_Stream, DPTraceVerbose, "fi_cq_signal failed with %d (%s).\n", result,
                           fi_strerror(result));
-            // Thread will still exit via do_continue check within 100ms.
+            if (fabric->pthread_id)
+            {
+                result = pthread_cancel(fabric->pthread_id);
+                if (result != 0)
+                {
+                    Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                                  "pthread_cancel failed with result %d\n", result);
+                }
+                fabric->pthread_id = 0;
+            }
         }
 
         if (fabric->pthread_id != 0)
