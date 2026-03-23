@@ -9,8 +9,8 @@ extern "C" {
 
 typedef struct _FMContextStruct *FMContext;
 
-extern FMContext create_FMcontext();
-extern FMContext create_local_FMcontext();
+extern FMContext create_FMcontext(void);
+extern FMContext create_local_FMcontext(void);
 extern void set_ignore_default_values_FMcontext(FMContext c);
 extern void free_FMcontext(FMContext c);
 extern void ffs_free(void *ptr);
