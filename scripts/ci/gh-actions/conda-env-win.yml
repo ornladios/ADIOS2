@@ -12,3 +12,4 @@ dependencies:
   - msmpi
   - numpy >=1.19,<=2.3.4 # 2.3.5 makes `import numpy` to fail mysteriously
   - python >=3.8,<=3.13
+  - zlib

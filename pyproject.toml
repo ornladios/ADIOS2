@@ -52,6 +52,9 @@ Changelog = "https://github.com/ornladios/ADIOS2/releases"
 # Trigger an install of the package, and run a basic test
 test-command = "python -m unittest adios2.test.simple_read_write.TestSimpleReadWrite"
 
+[tool.cibuildwheel.linux]
+before-all = "yum install -y openssl-devel"
+
 # For Python 3.12+ enable the stable ABI so a single wheel covers all future
 # interpreters. For 3.9–3.11 a standard per-version wheel is built instead.
 [[tool.cibuildwheel.overrides]]
@@ -87,9 +90,16 @@ ADIOS2_USE_DataMan = "OFF"
 ADIOS2_USE_SZ = "OFF"
 ADIOS2_USE_ZeroMQ = "OFF"
 ADIOS2_USE_ZFP = "OFF"
-ADIOS2_USE_OpenSSL = "OFF"
+ADIOS2_USE_OpenSSL = "ON"
+ADIOS2_USE_Curl = "ON"
 BUILD_TESTING = "OFF"
 ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "win32"
+cmake.define.ADIOS2_USE_OpenSSL = "OFF"
+cmake.define.ADIOS2_USE_Curl = "OFF"
+inherit.cmake.define = "append"
 
 [tool.ruff]
 line-length = 100
