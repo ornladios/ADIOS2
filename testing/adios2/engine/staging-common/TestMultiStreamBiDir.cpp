@@ -168,12 +168,22 @@ int main(int argc, char **argv)
 #if ADIOS2_USE_MPI
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
+    // Split MPI_COMM_WORLD by role so that each role group gets its own
+    // communicator.  This allows the test to be launched either as three
+    // separate MPI jobs or in a single MPMD srun invocation.
+    MPI_Comm roleComm;
+    int color = role + 2; // map {-1,0,1} -> {1,2,3} so every color is non-negative
+    int key;
+    MPI_Comm_rank(MPI_COMM_WORLD, &key);
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &roleComm);
+
+    MPI_Comm_rank(roleComm, &mpiRank);
+    MPI_Comm_size(roleComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(roleComm);
 #else
     adios2::ADIOS adios;
 #endif
@@ -194,6 +204,7 @@ int main(int argc, char **argv)
     }
 
 #if ADIOS2_USE_MPI
+    MPI_Comm_free(&roleComm);
     MPI_Finalize();
 #endif
 
