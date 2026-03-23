@@ -781,8 +781,8 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         result = fi_cq_signal(fabric->cq_signal);
         if (result != FI_SUCCESS)
         {
-            Svcs->verbose(CP_Stream, DPTraceVerbose, "fi_cq_signal failed with %d (%s).\n",
-                          result, fi_strerror(result));
+            Svcs->verbose(CP_Stream, DPTraceVerbose, "fi_cq_signal failed with %d (%s).\n", result,
+                          fi_strerror(result));
             if (fabric->pthread_id)
             {
                 result = pthread_cancel(fabric->pthread_id);
