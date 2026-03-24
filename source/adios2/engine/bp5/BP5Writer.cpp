@@ -2622,13 +2622,6 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
 
         int DimCount = (int)variable.m_Count.size();
         helper::DimsArray ZeroDims(DimCount, (size_t)0);
-        // get a temporary span then fill with memselection now
-        format::BufferV::BufferPos bp5span(0, 0, 0);
-
-        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
-                                false, &bp5span);
-        void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
         if (!sourceRowMajor)
         {
@@ -2636,11 +2629,40 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
             std::reverse(MemoryCount.begin(), MemoryCount.end());
             std::reverse(varCount.begin(), varCount.end());
         }
-        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
-                       sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
-                       false, (int)ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */, memSpace,
-                       /* duringWrite */ true);
+
+        if (!variable.m_Operations.empty())
+        {
+            // Compression needs contiguous data upfront, so copy the
+            // selected sub-region into a temp buffer first, then let
+            // Marshal compress from it via the normal data path.
+            size_t n = helper::GetTotalSize(variable.m_Count) * ObjSize;
+            std::vector<char> tmpBuf(n);
+
+            helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
+                           sourceRowMajor, false, tmpBuf.data(), MemoryStart, varCount,
+                           sourceRowMajor, false, (int)ObjSize, helper::CoreDims(),
+                           helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+                           false /* safemode */, memSpace, /* duringWrite */ true);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                    variable.m_ElementSize, DimCount, Shape, Count, Start,
+                                    tmpBuf.data(), sync, nullptr);
+        }
+        else
+        {
+            // No compression: allocate space in the output buffer via span,
+            // then NdCopy directly into it (avoids an extra copy).
+            format::BufferV::BufferPos bp5span(0, 0, 0);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                    variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
+                                    false, &bp5span);
+            void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
+
+            helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
+                           sourceRowMajor, false, (char *)ptr, MemoryStart, varCount,
+                           sourceRowMajor, false, (int)ObjSize, helper::CoreDims(),
+                           helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+                           false /* safemode */, memSpace, /* duringWrite */ true);
+        }
     }
     else
     {
