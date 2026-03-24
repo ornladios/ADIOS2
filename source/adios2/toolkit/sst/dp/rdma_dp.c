@@ -257,7 +257,6 @@ static void make_some_progress(struct cq_manual_progress *params, int timeout,
             cq_manual_progress_push(params, next_item);
         }
     }
-    params->Svcs->verbose(params->Stream, DPTraceVerbose, "falling out of make_some_progress\n");
 }
 
 static void *make_progress(void *params_)
@@ -276,6 +275,7 @@ static void *make_progress(void *params_)
          */
         make_some_progress(params, 100, CQEntries, batch_size);
     }
+    params->Svcs->verbose(params->Stream, DPSummaryVerbose, "make_progress thread exiting\n");
     return NULL;
 }
 
@@ -773,26 +773,16 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         int result;
 
         fabric->cq_manual_progress->do_continue = 0;
-        // make_progress() is still cluelessly waiting for anything to happen
-        // before it gets the chance to check the do_continue flag.
-        // so we give it some event.
-        Svcs->verbose(CP_Stream, DPTraceVerbose, "FI_CQ_SIGNAL to waiting thread Waiting.\n");
+        // make_progress() checks do_continue every 100ms and will exit.
+        // Try fi_cq_signal to wake it sooner if supported.
+        Svcs->verbose(CP_Stream, DPTraceVerbose, "Stopping progress thread.\n");
 
         result = fi_cq_signal(fabric->cq_signal);
         if (result != FI_SUCCESS)
         {
             Svcs->verbose(CP_Stream, DPTraceVerbose, "fi_cq_signal failed with %d (%s).\n", result,
                           fi_strerror(result));
-            if (fabric->pthread_id)
-            {
-                result = pthread_cancel(fabric->pthread_id);
-                if (result != 0)
-                {
-                    Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                                  "pthread_cancel failed with result %d\n", result);
-                }
-                fabric->pthread_id = 0;
-            }
+            // Thread will still exit via do_continue check within 100ms.
         }
 
         if (fabric->pthread_id != 0)
