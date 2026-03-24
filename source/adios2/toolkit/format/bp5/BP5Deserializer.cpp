@@ -2276,7 +2276,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         const Box<Dims> BlockBox = helper::StartEndBox(Dims(inStart.begin(), inStart.end()),
                                                        Dims(inCount.begin(), inCount.end()));
         const Box<Dims> IntersectionBox = helper::IntersectionBox(selectionBox, BlockBox);
-        VirtualIncomingData = Read.DestinationAddr; //  Don't do the fake offset thing
+        VirtualIncomingData = IncomingData; //  Don't do the fake offset thing
         helper::DimsArray intersectStart(IntersectionBox.first);
         helper::DimsArray intersectCount(IntersectionBox.second);
         helper::DimsArray blockStart(BlockBox.first);
