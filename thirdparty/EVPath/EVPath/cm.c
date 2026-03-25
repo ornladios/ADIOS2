@@ -3045,25 +3045,33 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 }
 	 return;
      } else {
-	 conn->queued_data.buffer_to_free = NULL;
-     }
-     if (j >= 0) {
-	 CMtrace_out(conn->cm, CMLowLevelVerbose, "Removing from pbio_vec at offset %d\n", (int) j);
+	 /*
+	  * FFS data — copy remaining into an independent CMbuffer so that
+	  * subsequent FFSencode_vector calls cannot corrupt queued data.
+	  */
+	 size_t data_length = remaining_bytes - conn->queued_data.rem_attr_len - conn->queued_data.rem_header_len;
+	 size_t length = data_length + (sizeof(tmp_vec[0])*2);
+	 char *ptr;
+	 int k;
+	 CMbuffer buf;
+	 FFSEncodeVector vec;
 	 pbio_vec[j].iov_len -= actual_bytes_written;
-	 pbio_vec[j].iov_base = (char*)pbio_vec[j].iov_base + 
+	 pbio_vec[j].iov_base = (char*)pbio_vec[j].iov_base +
 	     actual_bytes_written;
-     } else {
-	 j = 0;  /* nothing written */
+	 buf = cm_get_data_buf(conn->cm, length);
+	 vec = buf->buffer;
+	 vec[0].iov_len = data_length;
+	 vec[0].iov_base = ((char*)buf->buffer) + (sizeof(tmp_vec[0])*2);
+	 vec[1].iov_len = 0;
+	 vec[1].iov_base = NULL;
+	 conn->queued_data.buffer_to_free = buf;
+	 conn->queued_data.vector_data = vec;
+	 ptr = vec[0].iov_base;
+	 for (k = j; pbio_vec[k].iov_base != NULL; k++) {
+	     memcpy(ptr, pbio_vec[k].iov_base, pbio_vec[k].iov_len);
+	     ptr += pbio_vec[k].iov_len;
+	 }
      }
-
-     /* 
-      * copy application data (which had been left in place) into temporary
-      * PBIO buffer as well.
-      */
-     conn->queued_data.vector_data = 
-	 copy_all_to_FFSBuffer(conn->io_out_buffer, &pbio_vec[j]);
-     tmp_vec = conn->queued_data.vector_data;
-     i = 0; 
  }
 
  static void
