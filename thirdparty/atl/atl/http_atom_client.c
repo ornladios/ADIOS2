@@ -48,7 +48,6 @@
 #endif
 
 #include "atl.h"
-typedef int atom_t;
 #include "atom_internal.h"
 
 /* Parsed URL components */
