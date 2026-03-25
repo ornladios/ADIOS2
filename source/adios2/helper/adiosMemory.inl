@@ -206,8 +206,15 @@ template <class T>
 inline void ReverseCopyFromBuffer(const char *buffer, size_t &position, T *destination,
                                   const size_t elements) noexcept
 {
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
     std::reverse_copy(buffer + position, buffer + position + sizeof(T) * elements,
                       reinterpret_cast<char *>(destination));
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14
+#pragma GCC diagnostic pop
+#endif
     position += elements * sizeof(T);
 }
 
