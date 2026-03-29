@@ -24,6 +24,7 @@ enum ExpressionOperator
     OP_INDEX,
     OP_ADD,
     OP_SUBTRACT,
+    OP_NEGATE,
     OP_MULT,
     OP_DIV,
     OP_SQRT,
@@ -42,20 +43,25 @@ enum ExpressionOperator
 
 namespace derived
 {
+
+enum class ChildType
+{
+    EXPR_CHILD,
+    VAR_CHILD,
+    CONST_CHILD
+};
+
 /*
  A Note on Expression:
- - Sub expressions can include another operation nodes or variable names
-    - the third entry in the tuple distinguishes between variable and operation
+ - Sub expressions can include operation nodes, variable names, or constants
+    - ChildType distinguishes between expression, variable, and constant children
  - The type of the operation
- - Constants are used to compute the operation [e.g. log_2, var + 2, etc.]
  */
 class Expression
 {
     adios2::detail::ExpressionOperator m_Operator;
-    // the subexpressions can be other expressions or variables
-    std::vector<std::tuple<Expression, std::string, bool>> m_SubExprs;
-    // a set of constants attached to the operation
-    std::vector<std::string> m_Consts;
+    // children: (sub-expression, name-or-value string, child type)
+    std::vector<std::tuple<Expression, std::string, ChildType>> m_SubExprs;
 
     Dims m_Shape;
     Dims m_Start;
@@ -75,8 +81,7 @@ public:
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::tuple<Dims, Dims, Dims>
     GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
-    std::vector<std::tuple<Expression, std::string, bool>> GetChildren();
-    std::vector<std::string> GetConstants();
+    std::vector<std::tuple<Expression, std::string, ChildType>> GetChildren();
 
     void SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     void SetOperationType(adios2::detail::ExpressionOperator op);

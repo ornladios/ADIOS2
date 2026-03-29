@@ -45,23 +45,6 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
-template <class T, class Op>
-T ApplyExprOnConst(const std::vector<std::string> &vec, T init, Op op)
-{
-    T result = init;
-    for (const auto &s : vec)
-    {
-        std::istringstream iss(s);
-        T value;
-        if (!(iss >> value) || !iss.eof())
-        {
-            throw std::invalid_argument("Invalid conversion from string to target type.");
-        }
-        result = op(result, value);
-    }
-    return result;
-};
-
 template <class T>
 T *AggregateOnLastDim(T *data, size_t dataSize, size_t nVariables, std::function<T(T, T)> compFct)
 {
@@ -177,20 +160,16 @@ DerivedData AddFunc(ExprData exprData)
     auto inputData = exprData.Data;
     auto type = exprData.OutType;
     // if there is only one element return the aggregate result
-    if (inputData.size() == 1 && exprData.Const.size() == 0)
+    if (inputData.size() == 1)
         return AddAggregatedFunc(inputData[0], type);
 
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
-    // apply the expression over the constants
-    // and then apply the expression over the variables and constant
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T initVal = detail::ApplyExprOnConst<T, std::plus<T>>(exprData.Const, 0, std::plus<T>());  \
-        T *addValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin(), inputData.end(), dataSize, [](auto a, auto b) { return a + b; },    \
-            initVal);                                                                              \
+        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
+                                                [](auto a, auto b) { return a + b; });             \
         return DerivedData({(void *)addValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
@@ -227,6 +206,35 @@ DerivedData SubtractFunc(ExprData exprData)
     return DerivedData();
 }
 
+// Negate all elements in the variable
+DerivedData NegateFunc(ExprData exprData)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::NegateFunc");
+    auto inputData = exprData.Data;
+    if (inputData.size() != 1)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "NegateFunc",
+                                             "Invalid number of arguments passed to NegateFunc");
+    }
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+    DataType inputType = inputData[0].Type;
+
+#define declare_type_negate(T)                                                                     \
+    if (inputType == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        T *negValues = (T *)malloc(dataSize * sizeof(T));                                          \
+        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
+                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, negValues,             \
+                       [](T &a) { return -a; });                                                   \
+        return DerivedData({(void *)negValues});                                                   \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_negate)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "NegateFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 // Perform a reduce multiply over all variables in the std::vector
 DerivedData MultFunc(ExprData exprData)
 {
@@ -239,11 +247,9 @@ DerivedData MultFunc(ExprData exprData)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T initVal = detail::ApplyExprOnConst<T, std::multiplies<T>>(exprData.Const, 1,             \
-                                                                    std::multiplies<T>());         \
         T *multValues = detail::ApplyOneToOne<T>(                                                  \
             inputData.begin(), inputData.end(), dataSize, [](auto a, auto b) { return a * b; },    \
-            initVal);                                                                              \
+            (T)1);                                                                                 \
         return DerivedData({(void *)multValues});                                                  \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -316,12 +322,13 @@ DerivedData SqrtFunc(ExprData exprData)
     return DerivedData();
 }
 
-// Apply Pow over all elements in the variable
+// Apply Pow over all elements: base array raised to exponent array element-wise
+// With 1 operand, defaults to squaring; with 2 operands, uses second as exponent
 DerivedData PowFunc(ExprData exprData)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
     auto inputData = exprData.Data;
-    if (inputData.size() != 1 || exprData.Const.size() > 1)
+    if (inputData.size() < 1 || inputData.size() > 2)
     {
         helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
                                              "Invalid number of arguments passed to PowFunc");
@@ -329,25 +336,42 @@ DerivedData PowFunc(ExprData exprData)
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
     DataType inputType = inputData[0].Type;
-    size_t base = 2;
-    if (exprData.Const.size() > 0)
-        base = static_cast<size_t>(std::stoull(exprData.Const[0]));
 
     if (inputType == DataType::LongDouble)
     {
         long double *powValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
-                       [base](auto &a) { return std::pow(a, base); });
+        if (inputData.size() == 2)
+        {
+            long double *expData = reinterpret_cast<long double *>(inputData[1].Data);
+            for (size_t i = 0; i < dataSize; i++)
+                powValues[i] =
+                    std::pow(reinterpret_cast<long double *>(inputData[0].Data)[i], expData[i]);
+        }
+        else
+        {
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
+                           [](auto &a) { return std::pow(a, 2); });
+        }
         return DerivedData({(void *)powValues});
     }
 #define declare_type_pow(T)                                                                        \
     else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
         double *powValues = (double *)malloc(dataSize * sizeof(double));                           \
-        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
-                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
-                       [base](T &a) { return std::pow(a, base); });                                \
+        if (inputData.size() == 2)                                                                 \
+        {                                                                                          \
+            T *expData = reinterpret_cast<T *>(inputData[1].Data);                                 \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                powValues[i] =                                                                     \
+                    std::pow(reinterpret_cast<T *>(inputData[0].Data)[i], (double)expData[i]);     \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
+                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
+                           [](T &a) { return std::pow(a, 2); });                                   \
+        }                                                                                          \
         return DerivedData({(void *)powValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
@@ -762,8 +786,7 @@ DerivedData Curl3DFunc(const ExprData exprData)
  * Input: A list of variable dimensions (start, count, shape)
  * Output: (start, count, shape) of the output operation */
 
-std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                          bool constants)
+std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
@@ -786,11 +809,10 @@ std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
     return {{}, {}, {}};
 }
 
-std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                                 bool constants)
+std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
-    if (input.size() > 1 || constants)
-        return SameDimsFunc(input, constants);
+    if (input.size() > 1)
+        return SameDimsFunc(input);
     if (input.size() == 0)
     {
         helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsAgrFunc",
@@ -806,8 +828,7 @@ std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Di
     return {outStart, outCount, outShape};
 }
 
-std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                             bool constants)
+std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
@@ -835,8 +856,7 @@ std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, 
 }
 
 // Input Dims are the same, output is combination of all inputs
-std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                          bool constants)
+std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)

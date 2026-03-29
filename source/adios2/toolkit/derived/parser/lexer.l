@@ -104,7 +104,7 @@
 
 id    [a-zA-Z][a-zA-Z_0-9_]*
 path  [a-zA-Z][a-zA-Z0-9._\/]*
-num   [-+]?[0-9]+(\.[0-9]+)?
+num   [0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?
 blank [ \t\r]
 
 %{
@@ -128,8 +128,15 @@ blank [ \t\r]
 ")"        return adios2::detail::parser::make_R_PAREN (loc);
 "["        return adios2::detail::parser::make_L_BRACE (loc);
 "]"        return adios2::detail::parser::make_R_BRACE (loc);
+"+"        return adios2::detail::parser::make_PLUS    (loc);
+"-"        return adios2::detail::parser::make_MINUS   (loc);
+"**"       return adios2::detail::parser::make_CARET   (loc);
+"*"        return adios2::detail::parser::make_STAR    (loc);
+"/"        return adios2::detail::parser::make_SLASH   (loc);
+"^"        return adios2::detail::parser::make_CARET   (loc);
 
 {num}      return make_NUM (yytext, loc);
+`[^`]+`    { std::string s(yytext + 1, yyleng - 2); return adios2::detail::parser::make_VARNAME (s, loc); }
 {id}       return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 {path}     return adios2::detail::parser::make_VARNAME (yytext, loc);
 .          {

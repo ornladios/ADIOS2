@@ -24,7 +24,6 @@ struct DerivedData
 struct ExprData
 {
     std::vector<DerivedData> Data;
-    std::vector<std::string> Const;
     DataType OutType;
 };
 }
