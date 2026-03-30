@@ -25,6 +25,8 @@ struct ExprData
 {
     std::vector<DerivedData> Data;
     DataType OutType;
+    void *Output = nullptr; // pre-allocated output buffer
+    size_t OutputSize = 0;  // number of elements in output
 };
 }
 }

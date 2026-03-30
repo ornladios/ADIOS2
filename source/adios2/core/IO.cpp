@@ -7,6 +7,8 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -948,8 +950,9 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
         }
     }
 
-    derived::Expression derived_exp(exp_string);
-    std::vector<std::string> var_list = derived_exp.VariableNameList();
+    // Parse expression string into ExprNode tree
+    derived::ExprNode exprTree = detail::ParseToExprNode(exp_string);
+    std::vector<std::string> var_list = derived::VariableNameList(exprTree);
     bool isConstant = true;
     std::map<std::string, DataType> name_to_type;
     std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
@@ -969,18 +972,40 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
                              {(itVariable->second)->m_Start, (itVariable->second)->m_Count,
                               (itVariable->second)->m_Shape}});
     }
-    // set the type of the expression and check correcness
-    DataType expressionType = derived_exp.GetType(name_to_type);
-    // set the initial shape of the expression and check correcness
-    derived_exp.SetDims(name_to_dims);
-    // std::cout << "Derived variable " << name << ": PASS : initial variable dimensions are valid"
-    //          << std::endl;
 
-    // create derived variable with the expression
+    // Build the expression code stream: GenerateCode -> ResolveTypes -> ConstantFold -> PlanBuffers
+    derived::ExprCodeStream codeStream = derived::GenerateCode(exprTree);
+    derived::ResolveTypes(codeStream, name_to_type);
+    derived::ConstantFold(codeStream);
+    derived::PlanBuffers(codeStream);
+    codeStream.ExprString = exp_string;
+    DataType expressionType = codeStream.OutputType;
+
+    {
+        static bool verbose = (getenv("DerivedVerbose") != nullptr);
+        if (verbose)
+            std::cerr << derived::DumpCodeStream(codeStream);
+    }
+
+    // Pass the first input variable's shape to VariableBase for ShapeID detection.
+    // The actual shape/start/count are set per-step via UpdateExprDim.
+    Dims inputShape;
+    if (!var_list.empty())
+    {
+        auto it = m_Variables.find(var_list[0]);
+        if (it != m_Variables.end())
+            inputShape = it->second->m_Shape;
+    }
+
+    // create derived variable with the compiled code stream
     auto itVariablePair = m_VariablesDerived.emplace(
-        name, std::make_unique<VariableDerived>(name, derived_exp, expressionType, isConstant,
+        name, std::make_unique<VariableDerived>(name, std::move(exprTree), std::move(codeStream),
+                                                exp_string, expressionType, inputShape, isConstant,
                                                 varType, name_to_type));
     VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
+
+    // Set initial dims (shape may differ from input for cross/curl which add dimensions)
+    variable.UpdateExprDim(name_to_dims);
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);

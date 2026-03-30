@@ -8,7 +8,8 @@
 #define ADIOS2_CORE_VARIABLE_DERIVED_H_
 
 #include "adios2/core/VariableBase.h"
-#include "adios2/toolkit/derived/Expression.h"
+#include "adios2/toolkit/derived/ExprCodeStream.h"
+#include "adios2/toolkit/derived/ExprNode.h"
 
 namespace adios2
 {
@@ -28,10 +29,14 @@ class VariableDerived : public VariableBase
                     size_t numBlocks);
 
 public:
-    adios2::derived::Expression m_Expr;
-    VariableDerived(const std::string &name, adios2::derived::Expression expr,
-                    const DataType exprType, const bool isConstant, const DerivedVarType varType,
-                    const std::map<std::string, DataType> nameToType);
+    adios2::derived::ExprNode m_ExprTree;
+    adios2::derived::ExprCodeStream m_CodeStream;
+    std::string m_ExprString;
+
+    VariableDerived(const std::string &name, adios2::derived::ExprNode exprTree,
+                    adios2::derived::ExprCodeStream codeStream, const std::string &exprString,
+                    const DataType exprType, const Dims &shape, const bool isConstant,
+                    const DerivedVarType varType, const std::map<std::string, DataType> nameToType);
     ~VariableDerived() = default;
 
     DerivedVarType GetDerivedType();

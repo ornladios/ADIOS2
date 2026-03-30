@@ -814,6 +814,46 @@ TEST_P(DerivedCorrectnessP, PowerInfixTest)
     reader.Close();
 }
 
+TEST_P(DerivedCorrectnessP, ConstantFoldingTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPConstFoldWrite");
+
+    const size_t N = 10;
+    std::vector<double> simA(N);
+    for (size_t i = 0; i < N; ++i)
+        simA[i] = (double)(i + 1);
+
+    auto A = bpOut.DefineVariable<double>("A", {N}, {0}, {N});
+    // (3 + 4) * A — the 3+4 should be folded to 7 at compile time
+    bpOut.DefineDerivedVariable("derFold", "(3 + 4) * A", mode);
+    // 2 ^ 3 * A — the 2^3 should fold to 8
+    bpOut.DefineDerivedVariable("derFold2", "2 ^ 3 * A", mode);
+
+    adios2::Engine writer = bpOut.Open("BPConstFold.bp", adios2::Mode::Write);
+    writer.BeginStep();
+    writer.Put(A, simA.data());
+    writer.EndStep();
+    writer.Close();
+
+    adios2::IO bpIn = adios.DeclareIO("BPConstFoldRead");
+    adios2::Engine reader = bpIn.Open("BPConstFold.bp", adios2::Mode::Read);
+    reader.BeginStep();
+    std::vector<double> readFold, readFold2;
+    reader.Get(bpIn.InquireVariable<double>("derFold"), readFold);
+    reader.Get(bpIn.InquireVariable<double>("derFold2"), readFold2);
+    reader.EndStep();
+
+    double epsilon = 0.01;
+    for (size_t i = 0; i < N; ++i)
+    {
+        EXPECT_NEAR(readFold[i], 7.0 * simA[i], epsilon);
+        EXPECT_NEAR(readFold2[i], 8.0 * simA[i], epsilon);
+    }
+    reader.Close();
+}
+
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
                          ::testing::Values(adios2::DerivedVarType::StatsOnly,
                                            adios2::DerivedVarType::ExpressionString,
