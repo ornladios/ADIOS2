@@ -219,8 +219,9 @@ typedef struct extern_entry {
     void *extern_value;
 } cod_extern_entry;
 #define COD_EXTERN_ENTRY_DEFINED
-#else
+#elif !defined(COD_EXTERN_ENTRY_DEFINED)
 typedef struct extern_entry cod_extern_entry;
+#define COD_EXTERN_ENTRY_DEFINED
 #endif
 typedef struct _extern_routine_struct {
     char *extern_decl;
