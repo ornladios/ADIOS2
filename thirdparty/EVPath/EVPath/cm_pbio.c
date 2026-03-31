@@ -49,83 +49,28 @@ inet_ntoa(struct in_addr ina)
 #include "cm_internal.h"
 
 /*
- * The main function there is CMpbio_get_format_rep_callback, the routine
- * that is passed to create_server_IOcontext() as the get_format_rep
- * callback value.  It's job is to get a format body representation from
- * another CM.  It works with the format ID, the host_IP and host_port
- * embedded in the format ID (but supplied separately).  Additionally, in
- * some circumstances, the app_context value will be a CMConnection.  If
- * present, that connection is the link the message containing this format
- * came in on and presumably then the link to the remote context that can
- * give us the format body.  Once we get the connection, we just send out a
- * format request message and wait for an answer. 
+ * CM_pbio_query is the message handler for CM/PBIO messages.  CM/PBIO
+ * messages are not ordinary CM messages (since they are not encoded with
+ * PBIO themselves — that would be a nasty recursion) but instead are
+ * handled as foreign messages.  CM_pbio_query supports three types of
+ * incoming message:  QUERY (a format request), RESPONSE (the return
+ * message after a query), and CACHE_PUSH (an unsolicited format ID/body
+ * pair to be entered into the local context).  Message encoding is network
+ * byte order for a simple structure of 4-byte integers.  A magic number
+ * 'PBIO' as 4 bytes in ascii hex precedes all messages and is the foreign
+ * message tag used by CM to recognize CM/PBIO messages.
  *
- * The routine CM_pbio_query is the message handler for CM/PBIO messages.
- * CM/PBIO messages are not ordinary CM messages (since they are not encoded
- * with PBIO themselves (that would be a nasty recursion)) but instead are 
- * handled as foreign messages.  At this time, CM_pbio_query supports three
- * types of incoming message.  A QUERY (I.E. the format request from the
- * previous paragraph), a RESPONSE (the return message after a query), and a
- * CACHE_PUSH (an unsolicited format ID/body pair to be entered into the local
- * context).   Message encoding is network byte order for a simple structure
- * of 4-byte integers.  A magic number 'PBIO' as 4 bytes in ascii hex,
- * precedes all messages and is the foreign message tag used by CM to
- * recognize CM/PBIO messages.   
- *
- * For formats that CM knows about (I.E. not CM user formats, but CM message
- * formats), CM uses the CACHE_PUSH messages to preload needed formats
+ * For formats that CM knows about (I.E. not CM user formats, but CM
+ * message formats), CM uses CACHE_PUSH messages to preload needed formats
  * before a message is sent.  Which formats have been preloaded are tracked
- * on aper-connection basis.  (Code for this is in cm_formats.c, subroutine
- * CMformat_preload(). )  Generally, this means that QUERY messages are not 
- * generated for CM message formats.  However, they are necessary for CM user
- * formats, such as those that are used to encode ECho event messages.  CM is
- * generally unaware of those formats as the encoded data appears as a byte
- * array in CM messages.  So, when encoded ECho event data is presented to
- *  PBIO for decoding on the remote host, the following steps occur:
+ * on a per-connection basis (see cm_formats.c, CMformat_preload()).
+ * Generally this means QUERY messages are not generated for CM message
+ * formats.  However, they are necessary for CM user formats, such as those
+ * used to encode ECho event messages.
  *
- * PBIO searches for a matching in the local server_IOcontext in the
- *	destination CM.
- * If it is not found, a callback to the get_format_rep routine
- *	(CMpbio_get_format_rep_callback()) is performed.
- * CMpbio_get_format_rep_callback() finds the appropriate CM connection and
- *	sends a QUERY message to the originating CM and waits for a response
- *	on a CMcondition.  (This suspends execution of the callback 
- *	subroutine.)
- * The originating CM receives the QUERY message and looks up the requested
- *	format and its subformats.
- * The subformats are sent on the connection with CACHE_PUSH messages (they
- *	would have been requested anyway if we didn't push them).
- * The server_format_rep of the base format is sent via a RESPONSE message.
- * The destination CM receives the CACHE_PUSH messages and loads the
- *	subformats into its server_IOcontext (if not present already).
- * The destination CM receives the RESPONSE message and wakes the callback
- *	subroutine, which returns the server_format_rep.
- *
- * In order to make the above happen with reasonable locking, we have
- * separated the locking from several routines (such as INT_CMget_conn()) to
- * create internal versions that assume the CManager is already locked.  The
- * care taken with locking also means that some ways of using CM that used
- * to work will no longer.  As far as I know, the only
- * backwards-incompatible changes are in the use of user_contexts and
- * user_formats.  Previously once you'd done a INT_CMget_user_type_context to
- * get an IOContext, or INT_CMregister_user_format to get an IOFormat, you could
- * pretty much use the basic PBIO routines on those items.  That is no
- * longer true.  In particular, you can't use get_format_IOcontext(),
- * set_IOconversion_IOcontext(), get_subformats_IOcontext(), or
- * get_IOformat_by_name() without CManager being locked.  Since we don't
- * export the CM locking routines, there are now CM versions of the routines
- * in the list above. 
- * 
- * At the present time, you must choose between having CM be its own format
- * server and using an external format server.  A CM that is doing one can't
- * talk with a CM that is doing the other.  For backwards compatibility, the
- * default is to use an external format server.  At some point in the
- * not-so-distant future, this will change.  You should get notice before that
- * happens.  In the meantime, you can explicitly select CM being its own
- * format server by setting the "CMSelfFormats" environment variable.
- * Alternatively, you can force the use of an external format server with
- * the "CMExternalFormats" variable.
- * 
+ * You can select CM self-hosted formats by setting the "CMSelfFormats"
+ * environment variable, or force the use of an external format server with
+ * "CMExternalFormats".
  */
 
 static int
@@ -236,109 +181,6 @@ signal_requests(CManager cm, char *server_rep, int condition)
 	    cm->pbio_requests[i].condition = -1;
 	}
     }
-}
-
-extern void *
-CMpbio_get_format_rep_callback(void *format_ID, int format_ID_length, 
-			       int host_IP, int host_port, void *app_context,
-			       void *client_data)
-{
-    CManager cm = (CManager) client_data;
-    CMConnection conn = (CMConnection) app_context;
-    char *server_rep;
-    struct in_addr in;
-    char *host_string;
-    int cond;
-    attr_list contact_attrs = CMcreate_attr_list(cm);
-
-    assert(CManager_locked(cm));
-
-    in.s_addr = host_IP;
-    host_string =  inet_ntoa(in);
-    CMtrace_out(cm, CMFormatVerbose, "CMpbio request for format from host %x, port %d\n", host_IP, host_port);
-#ifndef MODULE
-    if (CMtrace_on(cm, CMFormatVerbose)) {
-	fprintf(cm->CMTrace_file, "CMpbio request is for format ");
-	fprint_server_ID(cm->CMTrace_file, format_ID);
-	fprintf(cm->CMTrace_file, "\n");
-    }
-#endif
-
-    cond = INT_CMCondition_get(cm, conn);
-    INT_CMCondition_set_client_data(cm, cond, &server_rep);
-
-    if (request_in_pending(cm, format_ID, format_ID_length) == -1) {
-        add_request_to_pending(cm, format_ID, format_ID_length, cond);
-	if ((conn == NULL) || (conn->closed)) {
-	    static atom_t CM_IP_HOSTNAME = -1;
-	    static atom_t CM_IP_PORT = -1;
-	    CMtrace_out(cm, CMFormatVerbose, 
-			"CMpbio connection not available, trying to reestablish, conn %p, host %s, port %d\n", 
-			conn, host_string, host_port);
-	    if (CM_IP_HOSTNAME == -1) {
-		CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
-		CM_IP_PORT = attr_atom_from_string("IP_PORT");
-	    }
-	    set_string_attr(contact_attrs, CM_IP_HOSTNAME, 
-			    strdup(host_string));
-	    set_int_attr(contact_attrs, CM_IP_PORT, host_port);
-	    
-	    conn = CMinternal_get_conn(cm, contact_attrs);
-	
-	    if (conn == NULL) {
-		CMtrace_out(cm, CMFormatVerbose, "CMpbio failed to reestablish connection, returning NULL\n");
-		return NULL;
-	    }
-	    CMtrace_out(cm, CMFormatVerbose, "CMpbio got connection %p\n", 
-			conn);
-	} else {
-	    conn->conn_ref_count++;
-	    CMtrace_out(cm, CMFormatVerbose, "CMpbio Request format on connection %p\n",
-			conn);
-	}
-	if (CMpbio_send_format_request(format_ID, format_ID_length, conn,
-				       cond) != 1) {
-	    CMtrace_out(cm, CMFormatVerbose, "CMpbio write failed\n");
-	    return NULL;
-	}
-    } else {
-        add_request_to_pending(cm, format_ID, format_ID_length, cond);
-	CMtrace_out(cm, CMFormatVerbose, 
-		    "CMpbio - add duplicate pending request\n");
-    }
-    CMtrace_out(cm, CMFormatVerbose, "CMpbio waiting on condition %d\n", cond);
-    CManager_unlock(cm);
-    if (INT_CMCondition_wait(cm, cond) != 1) {
-	CMtrace_out(cm, CMFormatVerbose, "CMpbio Connection failed %p\n",
-		    conn);
-	return NULL;
-    } else {
-	CMtrace_out(cm, CMFormatVerbose, "CMpbio Request returned\n");
-    }
-    CManager_lock(cm);
-    return server_rep;
-}
-
-extern int CMpbio_get_port_callback(void *client_data)
-{
-    CManager cm = (CManager) client_data;
-    attr_list contact_attrs = INT_CMget_contact_list(cm);
-    atom_t CM_IP_PORT = -1;
-    int int_port_num;
-
-    if (contact_attrs == NULL) {
-	CMinternal_listen(cm, NULL, 1);
-    }
-    contact_attrs = INT_CMget_contact_list(cm);
-    if (CM_IP_PORT == -1) {
-	CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    }
-    if (!get_int_attr(contact_attrs, CM_IP_PORT, &int_port_num)) {
-	CMtrace_out(cm, CMFormatVerbose, "CMpbio port callback found no IP_PORT attribute\n");
-	return 0;
-    }
-    CMtrace_out(cm, CMFormatVerbose, "CMpbio port callback returning %d\n", int_port_num);
-    return int_port_num;
 }
 
 #define MAGIC 0x5042494f
@@ -483,9 +325,7 @@ CMinit_local_formats(CManager cm)
 	}
     }
     if (CMself_hosted_formats == 1) {
-	FMContext fmc = 
-	    create_local_FMcontext(CMpbio_get_format_rep_callback, 
-				   CMpbio_get_port_callback, cm);
+	FMContext fmc = create_local_FMcontext();
 	cm->FFScontext = create_FFSContext_FM(fmc);
 	CMtrace_out(cm, CMFormatVerbose, 
 		    "\nUsing self-hosted PBIO formats\n");
