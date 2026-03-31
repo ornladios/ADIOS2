@@ -1,5 +1,5 @@
 
-set(TESTS basic_call general t1 opt branch prefix_test mixed_params)
+set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg)
 
 if(NATIVE_CG)
   list(APPEND TESTS pkg_test multi_test)
@@ -37,6 +37,9 @@ if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
      CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
      set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
 ENDIF()
+
+set_tests_properties(vtest_loop_reg
+  PROPERTIES PASS_REGULAR_EXPRESSION "No errors!")
 
 set_tests_properties(vtest_basic_call
   PROPERTIES PASS_REGULAR_EXPRESSION "########## A

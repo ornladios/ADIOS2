@@ -83,12 +83,16 @@ typedef struct _FMformat_list {
 
   This is used to associate textual names with addresses.
 */
-typedef struct extern_entry {
+struct extern_entry {
     /*! the textual name of the external entry */
     char *extern_name;
     /*! the address of the external entry */
     void *extern_value;
-} cod_extern_entry;
+};
+#ifndef COD_EXTERN_ENTRY_DEFINED
+typedef struct extern_entry cod_extern_entry;
+#define COD_EXTERN_ENTRY_DEFINED
+#endif
 
 /*!
  * A list of cod_extern_entry structures.  This is used to specify the
