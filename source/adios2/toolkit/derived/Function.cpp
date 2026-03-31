@@ -26,8 +26,17 @@ void ApplyOneToOne(T *outValues, Iterator inputBegin, Iterator inputEnd, size_t 
     for (Iterator variable = inputBegin; variable != inputEnd; ++variable)
     {
         T *src = reinterpret_cast<T *>((*variable).Data);
-        for (size_t i = 0; i < dataSize; i++)
-            outValues[i] = op(outValues[i], src[i]);
+        if ((*variable).IsScalar)
+        {
+            T val = src[0];
+            for (size_t i = 0; i < dataSize; i++)
+                outValues[i] = op(outValues[i], val);
+        }
+        else
+        {
+            for (size_t i = 0; i < dataSize; i++)
+                outValues[i] = op(outValues[i], src[i]);
+        }
     }
 }
 
@@ -162,12 +171,21 @@ DerivedData SubtractFunc(ExprData exprData)
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *subtractValues = reinterpret_cast<T *>(exprData.Output);                                \
-        detail::ApplyOneToOne<T>(subtractValues, inputData.begin() + 1, inputData.end(), dataSize, \
+        T *out = reinterpret_cast<T *>(exprData.Output);                                           \
+        detail::ApplyOneToOne<T>(out, inputData.begin() + 1, inputData.end(), dataSize,            \
                                  [](auto a, auto b) { return a + b; });                            \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
-            subtractValues[i] =                                                                    \
-                *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
+        T *lhs = reinterpret_cast<T *>(inputData[0].Data);                                         \
+        if (inputData[0].IsScalar)                                                                 \
+        {                                                                                          \
+            T val = lhs[0];                                                                        \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                out[i] = val - out[i];                                                             \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                out[i] = lhs[i] - out[i];                                                          \
+        }                                                                                          \
         return DerivedData({exprData.Output});                                                     \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
@@ -240,12 +258,22 @@ DerivedData DivFunc(ExprData exprData)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = reinterpret_cast<T *>(exprData.Output);                                     \
+        T *out = reinterpret_cast<T *>(exprData.Output);                                           \
         detail::ApplyOneToOne<T>(                                                                  \
-            divValues, inputData.begin() + 1, inputData.end(), dataSize,                           \
+            out, inputData.begin() + 1, inputData.end(), dataSize,                                 \
             [](auto a, auto b) { return a * b; }, (T)1);                                           \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
-            divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
+        T *lhs = reinterpret_cast<T *>(inputData[0].Data);                                         \
+        if (inputData[0].IsScalar)                                                                 \
+        {                                                                                          \
+            T val = lhs[0];                                                                        \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                out[i] = val / out[i];                                                             \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                out[i] = lhs[i] / out[i];                                                          \
+        }                                                                                          \
         return DerivedData({exprData.Output});                                                     \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
@@ -306,39 +334,55 @@ DerivedData PowFunc(ExprData exprData)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *powValues = reinterpret_cast<long double *>(exprData.Output);
+        long double *out = reinterpret_cast<long double *>(exprData.Output);
+        long double *base = reinterpret_cast<long double *>(inputData[0].Data);
         if (inputData.size() == 2)
         {
             long double *expData = reinterpret_cast<long double *>(inputData[1].Data);
-            for (size_t i = 0; i < dataSize; i++)
-                powValues[i] =
-                    std::pow(reinterpret_cast<long double *>(inputData[0].Data)[i], expData[i]);
+            if (inputData[1].IsScalar)
+            {
+                long double exp = expData[0];
+                if (exp == 2.0L)
+                    for (size_t i = 0; i < dataSize; i++)
+                        out[i] = base[i] * base[i];
+                else
+                    for (size_t i = 0; i < dataSize; i++)
+                        out[i] = std::pow(base[i], exp);
+            }
+            else
+                for (size_t i = 0; i < dataSize; i++)
+                    out[i] = std::pow(base[i], expData[i]);
         }
         else
-        {
-            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
-                           [](auto &a) { return std::pow(a, 2); });
-        }
+            for (size_t i = 0; i < dataSize; i++)
+                out[i] = base[i] * base[i];
         return DerivedData({exprData.Output});
     }
 #define declare_type_pow(T)                                                                        \
     else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        double *powValues = reinterpret_cast<double *>(exprData.Output);                           \
+        double *out = reinterpret_cast<double *>(exprData.Output);                                 \
+        T *base = reinterpret_cast<T *>(inputData[0].Data);                                        \
         if (inputData.size() == 2)                                                                 \
         {                                                                                          \
             T *expData = reinterpret_cast<T *>(inputData[1].Data);                                 \
-            for (size_t i = 0; i < dataSize; i++)                                                  \
-                powValues[i] =                                                                     \
-                    std::pow(reinterpret_cast<T *>(inputData[0].Data)[i], (double)expData[i]);     \
+            if (inputData[1].IsScalar)                                                             \
+            {                                                                                      \
+                double exp = (double)expData[0];                                                   \
+                if (exp == 2.0)                                                                    \
+                    for (size_t i = 0; i < dataSize; i++)                                          \
+                        out[i] = (double)base[i] * (double)base[i];                                \
+                else                                                                               \
+                    for (size_t i = 0; i < dataSize; i++)                                          \
+                        out[i] = std::pow((double)base[i], exp);                                   \
+            }                                                                                      \
+            else                                                                                   \
+                for (size_t i = 0; i < dataSize; i++)                                              \
+                    out[i] = std::pow((double)base[i], (double)expData[i]);                        \
         }                                                                                          \
         else                                                                                       \
-        {                                                                                          \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
-                           [](T &a) { return std::pow(a, 2); });                                   \
-        }                                                                                          \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                out[i] = (double)base[i] * (double)base[i];                                        \
         return DerivedData({exprData.Output});                                                     \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)

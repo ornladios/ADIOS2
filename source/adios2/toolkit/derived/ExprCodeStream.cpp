@@ -718,20 +718,20 @@ static size_t ElementSize(DataType type)
     return s;
 }
 
-// Fill a pre-allocated buffer with a typed constant value
-static void FillConstant(void *buf, const TypedConstant &c, size_t count, DataType type)
+// Allocate a single-element buffer for a typed constant
+static void *AllocScalarConstant(const TypedConstant &c, DataType type)
 {
+    size_t elemSize = ElementSize(type);
+    void *buf = malloc(elemSize);
     bool isInt = IsIntegerType(type);
-#define declare_type_fill(T)                                                                       \
+#define declare_type_scalar(T)                                                                     \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *out = reinterpret_cast<T *>(buf);                                                       \
-        T val = isInt ? (T)c.IntVal : (T)c.DoubleVal;                                              \
-        for (size_t i = 0; i < count; i++)                                                         \
-            out[i] = val;                                                                          \
-        return;                                                                                    \
+        *reinterpret_cast<T *>(buf) = isInt ? (T)c.IntVal : (T)c.DoubleVal;                        \
+        return buf;                                                                                \
     }
-    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_fill)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_scalar)
+    return buf;
 }
 
 std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
@@ -740,45 +740,26 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
     std::vector<DerivedData> outputData(numBlocks);
     std::vector<BufferSlot> pool;
 
+    // Allocate scalar constant buffers once (persist across blocks)
+    std::vector<void *> constBufs(cs.Buffers.size(), nullptr);
+    for (size_t i = 0; i < cs.Buffers.size(); i++)
+    {
+        if (cs.Buffers[i].IsConstant)
+            constBufs[i] = AllocScalarConstant(cs.Buffers[i].ConstVal, cs.Buffers[i].Type);
+    }
+
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
         std::vector<DerivedData> bufData(cs.Buffers.size());
 
-        // Set up input buffers from caller data
-        for (size_t i = 0; i < cs.Buffers.size(); i++)
-        {
-            if (cs.Buffers[i].IsInput)
-                bufData[i] = nameToData[cs.Buffers[i].VarName][blk];
-        }
-
-        // Determine reference shape for constant broadcast
-        size_t refDataSize = 0;
-        Dims refStart, refCount;
-        for (size_t i = 0; i < cs.Buffers.size(); i++)
-        {
-            if (cs.Buffers[i].IsInput)
-            {
-                refStart = bufData[i].Start;
-                refCount = bufData[i].Count;
-                refDataSize = std::accumulate(refCount.begin(), refCount.end(), (size_t)1,
-                                              std::multiplies<size_t>());
-                break;
-            }
-        }
-        if (refDataSize == 0)
-            refDataSize = 1;
-
-        // Materialize constants into pool slots
+        // Set up input and constant buffers
         for (size_t i = 0; i < cs.Buffers.size(); i++)
         {
             const auto &buf = cs.Buffers[i];
-            if (buf.IsConstant)
-            {
-                size_t bytes = refDataSize * ElementSize(buf.Type);
-                void *ptr = PoolAlloc(pool, buf.PhysicalSlot, bytes);
-                FillConstant(ptr, buf.ConstVal, refDataSize, buf.Type);
-                bufData[i] = {ptr, refStart, refCount, buf.Type};
-            }
+            if (buf.IsInput)
+                bufData[i] = nameToData[buf.VarName][blk];
+            else if (buf.IsConstant)
+                bufData[i] = {constBufs[i], {}, {}, buf.Type, true};
         }
 
         // Execute instructions — allocate output from pool, compute writes directly into it
@@ -790,11 +771,26 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
             for (size_t bufID : instr.InputBufs)
                 instrInputs.push_back(bufData[bufID]);
 
-            // Compute output dims
+            // Compute output dims — use reference dims for scalar constants
+            Dims scalarStart, scalarCount;
+            for (size_t bufID : instr.InputBufs)
+            {
+                if (!bufData[bufID].IsScalar)
+                {
+                    scalarStart = bufData[bufID].Start;
+                    scalarCount = bufData[bufID].Count;
+                    break;
+                }
+            }
             std::vector<std::tuple<Dims, Dims, Dims>> instrDims;
             for (size_t bufID : instr.InputBufs)
-                instrDims.push_back(
-                    {bufData[bufID].Start, bufData[bufID].Count, bufData[bufID].Count});
+            {
+                if (bufData[bufID].IsScalar)
+                    instrDims.push_back({scalarStart, scalarCount, scalarCount});
+                else
+                    instrDims.push_back(
+                        {bufData[bufID].Start, bufData[bufID].Count, bufData[bufID].Count});
+            }
 
             auto opIt = OpFunctions.find(instr.Op);
             auto outDims = opIt->second.DimsFct(instrDims);
@@ -823,6 +819,9 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
         outputData[blk] = {callerBuf, finalBuf.Start, finalBuf.Count, finalBuf.Type};
     }
 
+    // Free scalar constants and pool
+    for (auto ptr : constBufs)
+        free(ptr);
     PoolFreeAll(pool);
     return outputData;
 }

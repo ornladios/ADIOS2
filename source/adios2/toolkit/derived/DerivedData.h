@@ -19,6 +19,7 @@ struct DerivedData
     Dims Start;
     Dims Count;
     DataType Type;
+    bool IsScalar = false; // true = Data points to one element, broadcast by compute functions
 };
 
 struct ExprData
