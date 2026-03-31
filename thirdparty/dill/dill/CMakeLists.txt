@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 3.3.0 LANGUAGES C CXX)
+project(DILL VERSION 3.4.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
