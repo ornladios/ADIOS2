@@ -35,8 +35,9 @@ public:
 
     VariableDerived(const std::string &name, adios2::derived::ExprNode exprTree,
                     adios2::derived::ExprCodeStream codeStream, const std::string &exprString,
-                    const DataType exprType, const Dims &shape, const bool isConstant,
-                    const DerivedVarType varType, const std::map<std::string, DataType> nameToType);
+                    const DataType exprType, const Dims &shape, const Dims &start,
+                    const Dims &count, const bool isConstant, const DerivedVarType varType,
+                    const std::map<std::string, DataType> nameToType);
     ~VariableDerived() = default;
 
     DerivedVarType GetDerivedType();

@@ -15,10 +15,10 @@ namespace core
 VariableDerived::VariableDerived(const std::string &name, adios2::derived::ExprNode exprTree,
                                  adios2::derived::ExprCodeStream codeStream,
                                  const std::string &exprString, const DataType exprType,
-                                 const Dims &shape, const bool isConstant,
-                                 const DerivedVarType varType,
+                                 const Dims &shape, const Dims &start, const Dims &count,
+                                 const bool isConstant, const DerivedVarType varType,
                                  const std::map<std::string, DataType> nameToType)
-: VariableBase(name, exprType, helper::GetDataTypeSize(exprType), shape, {}, {}, isConstant),
+: VariableBase(name, exprType, helper::GetDataTypeSize(exprType), shape, start, count, isConstant),
   m_DerivedType(varType), m_NameToType(nameToType), m_ExprTree(std::move(exprTree)),
   m_CodeStream(std::move(codeStream)), m_ExprString(exprString)
 {
@@ -36,6 +36,8 @@ void VariableDerived::UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims,
     m_Shape = std::get<2>(outDims);
     m_Start = std::get<0>(outDims);
     m_Count = std::get<1>(outDims);
+    if (!m_Shape.empty())
+        m_ShapeID = ShapeID::GlobalArray;
 }
 
 std::vector<std::tuple<void *, Dims, Dims>>
