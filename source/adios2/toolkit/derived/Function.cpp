@@ -211,9 +211,9 @@ DerivedData NegateFunc(ExprData exprData)
     if (inputType == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         T *negValues = reinterpret_cast<T *>(exprData.Output);                                     \
-        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
-                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, negValues,             \
-                       [](T &a) { return -a; });                                                   \
+        T *src = reinterpret_cast<T *>(inputData[0].Data);                                         \
+        for (size_t i = 0; i < dataSize; i++)                                                      \
+            negValues[i] = static_cast<T>(0) - src[i];                                             \
         return DerivedData({exprData.Output});                                                     \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_negate)
