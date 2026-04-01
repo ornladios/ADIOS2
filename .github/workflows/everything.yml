@@ -189,7 +189,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -209,7 +209,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s | tee $GITHUB_STEP_SUMMARY
       - name: Save cache
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -257,7 +257,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -277,7 +277,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -334,7 +334,7 @@ jobs:
       - name: Setup
         run: gha/scripts/ci/gh-actions/macos-setup.sh
       - name: Restore cache
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -352,7 +352,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -581,7 +581,7 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
-    - uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+    - uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
       id: restore-cache
       with:
         path: .ccache
@@ -590,7 +590,7 @@ jobs:
           ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
+      uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v3
       with:
         languages: ${{ matrix.language }}
         source-root: source
@@ -603,7 +603,7 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
+      uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v3
       with:
         category: "/language:${{matrix.language}}"
         output: sarif-results
@@ -618,7 +618,7 @@ jobs:
         input: sarif-results/cpp.sarif
         output: sarif-results/cpp.sarif
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v3
+      uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v3
       with:
         sarif_file: sarif-results/cpp.sarif
     - name: Upload loc as a Build Artifact
@@ -628,7 +628,7 @@ jobs:
         path: sarif-results
         retention-days: 1
     - run: ccache -s | tee "${GITHUB_STEP_SUMMARY}"
-    - uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+    - uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v4
       if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
       id: save-cache
       with:
