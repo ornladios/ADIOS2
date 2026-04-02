@@ -103,6 +103,12 @@ SPDX-FileCopyrightText = "mingw-w64 contributors"
 SPDX-License-Identifier = "LicenseRef-public-domain"
 
 [[annotations]]
+path = "source/adios2/toolkit/derived/parser/pregen-source/*"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
 path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/enet/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/KWSys/CMakeLists.txt", "thirdparty/mingw-w64/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
