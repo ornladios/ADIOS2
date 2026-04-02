@@ -1,16 +1,10 @@
-/*
- * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #ifndef yyHEADER_H
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "lexer.h"
+#line 5 "pregen-source/lexer.h"
 
-#line 7 "lexer.h"
+#line 7 "pregen-source/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -476,9 +470,9 @@ extern int yylex (void);
 #undef yyTABLES_NAME
 #endif
 
-#line 135 "../lexer.l"
+#line 148 "lexer.l"
 
 
-#line 476 "lexer.h"
+#line 476 "pregen-source/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
