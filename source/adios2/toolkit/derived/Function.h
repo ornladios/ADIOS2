@@ -13,30 +13,31 @@ namespace adios2
 {
 namespace derived
 {
-DerivedData AddFunc(ExprData input);
-DerivedData SubtractFunc(ExprData input);
-DerivedData NegateFunc(ExprData input);
-DerivedData SinFunc(ExprData input);
-DerivedData CosFunc(ExprData input);
-DerivedData TanFunc(ExprData input);
-DerivedData AsinFunc(ExprData input);
-DerivedData AcosFunc(ExprData input);
-DerivedData AtanFunc(ExprData input);
-DerivedData MultFunc(ExprData input);
-DerivedData DivFunc(ExprData input);
-DerivedData SqrtFunc(ExprData input);
-DerivedData PowFunc(ExprData input);
-DerivedData MagnitudeFunc(ExprData input);
-DerivedData Cross3DFunc(ExprData input);
-DerivedData Curl3DFunc(ExprData input);
+DerivedData AddFunc(const ExprData &input);
+DerivedData SubtractFunc(const ExprData &input);
+DerivedData NegateFunc(const ExprData &input);
+DerivedData SinFunc(const ExprData &input);
+DerivedData CosFunc(const ExprData &input);
+DerivedData TanFunc(const ExprData &input);
+DerivedData AsinFunc(const ExprData &input);
+DerivedData AcosFunc(const ExprData &input);
+DerivedData AtanFunc(const ExprData &input);
+DerivedData MultFunc(const ExprData &input);
+DerivedData DivFunc(const ExprData &input);
+DerivedData SqrtFunc(const ExprData &input);
+DerivedData PowFunc(const ExprData &input);
+DerivedData MagnitudeFunc(const ExprData &input);
+DerivedData Cross3DFunc(const ExprData &input);
+DerivedData Curl3DFunc(const ExprData &input);
 
 std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 
-DataType SameTypeFunc(DataType input);
-DataType FloatTypeFunc(DataType input);
+/** Promote (type-convert) an array element by element. */
+void PromoteArray(DataType outType, DataType inType, void *out, void *in, size_t N);
+
 }
 }
 #endif
