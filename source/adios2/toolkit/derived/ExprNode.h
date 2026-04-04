@@ -7,8 +7,16 @@
 #ifndef ADIOS2_DERIVED_ExprNode_H_
 #define ADIOS2_DERIVED_ExprNode_H_
 
+#include <map>
 #include <string>
 #include <vector>
+
+namespace adios2
+{
+// Forward-declare DataType so ExprNode can store it without pulling in ADIOSTypes.h
+// (ExprNode.h is used by the parser library which doesn't have the full ADIOS includes)
+enum class DataType;
+}
 
 namespace adios2
 {
@@ -37,7 +45,8 @@ enum ExpressionOperator
     OP_ATAN,
     OP_MAGN,
     OP_CROSS,
-    OP_CURL
+    OP_CURL,
+    OP_PROMOTE
 };
 
 }
@@ -56,6 +65,7 @@ struct ExprNode
     std::vector<ExprNode> Children;
     std::string VarName; // set for variable leaves
     std::string Const;   // set for numeric constant leaves
+    DataType Type{};     // resolved by ResolveTreeTypes (default: DataType::None = 0)
 
     bool IsLeaf() const { return Children.empty(); }
     bool IsVar() const { return IsLeaf() && !VarName.empty(); }

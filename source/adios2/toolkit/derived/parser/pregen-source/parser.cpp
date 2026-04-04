@@ -38,7 +38,7 @@
 
 
 
-#include "parser.h"
+#include "pregen-source/parser.h"
 
 
 // Unqualified %code blocks.
@@ -46,9 +46,10 @@
 
 #include "ASTDriver.h"
 #include "ASTNode.h"
+#include <sstream>
 #include <string>
 
-#line 52 "pregen-source/parser.cpp"
+#line 53 "pregen-source/parser.cpp"
 
 
 #ifndef YY_
@@ -141,7 +142,7 @@
 
 #line 12 "parser.y"
 namespace adios2 { namespace detail {
-#line 145 "pregen-source/parser.cpp"
+#line 146 "pregen-source/parser.cpp"
 
   /// Build a parser object.
   parser::parser (ASTDriver& drv_yyarg)
@@ -629,139 +630,139 @@ namespace adios2 { namespace detail {
           switch (yyn)
             {
   case 2: // lines: assignment lines
-#line 76 "parser.y"
+#line 77 "parser.y"
                    {}
-#line 635 "pregen-source/parser.cpp"
+#line 636 "pregen-source/parser.cpp"
     break;
 
   case 3: // lines: exp
-#line 77 "parser.y"
+#line 78 "parser.y"
       {}
-#line 641 "pregen-source/parser.cpp"
+#line 642 "pregen-source/parser.cpp"
     break;
 
   case 4: // assignment: "identifier" "=" VARNAME
-#line 81 "parser.y"
+#line 82 "parser.y"
                             { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
-#line 647 "pregen-source/parser.cpp"
+#line 648 "pregen-source/parser.cpp"
     break;
 
   case 5: // assignment: "identifier" "=" "identifier"
-#line 82 "parser.y"
+#line 83 "parser.y"
                                { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
-#line 653 "pregen-source/parser.cpp"
+#line 654 "pregen-source/parser.cpp"
     break;
 
   case 6: // assignment: "identifier" "=" VARNAME "[" indices_list "]"
-#line 83 "parser.y"
+#line 84 "parser.y"
                                                          { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 659 "pregen-source/parser.cpp"
+#line 660 "pregen-source/parser.cpp"
     break;
 
   case 7: // assignment: "identifier" "=" "identifier" "[" indices_list "]"
-#line 84 "parser.y"
+#line 85 "parser.y"
                                                             { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 665 "pregen-source/parser.cpp"
+#line 666 "pregen-source/parser.cpp"
     break;
 
   case 8: // exp: NUM
-#line 88 "parser.y"
+#line 89 "parser.y"
       { drv.add_number(yystack_[0].value.as < double > ()); }
-#line 671 "pregen-source/parser.cpp"
+#line 672 "pregen-source/parser.cpp"
     break;
 
   case 9: // exp: exp "+" exp
-#line 89 "parser.y"
+#line 90 "parser.y"
                 { drv.createNode("ADD", 2); }
-#line 677 "pregen-source/parser.cpp"
+#line 678 "pregen-source/parser.cpp"
     break;
 
   case 10: // exp: exp "-" exp
-#line 90 "parser.y"
+#line 91 "parser.y"
                 { drv.createNode("SUBTRACT", 2); }
-#line 683 "pregen-source/parser.cpp"
+#line 684 "pregen-source/parser.cpp"
     break;
 
   case 11: // exp: exp "*" exp
-#line 91 "parser.y"
+#line 92 "parser.y"
                 { drv.createNode("MULT", 2); }
-#line 689 "pregen-source/parser.cpp"
+#line 690 "pregen-source/parser.cpp"
     break;
 
   case 12: // exp: exp "/" exp
-#line 92 "parser.y"
+#line 93 "parser.y"
                 { drv.createNode("DIV", 2); }
-#line 695 "pregen-source/parser.cpp"
+#line 696 "pregen-source/parser.cpp"
     break;
 
   case 13: // exp: exp "^" exp
-#line 93 "parser.y"
+#line 94 "parser.y"
                 { drv.createNode("POW", 2); }
-#line 701 "pregen-source/parser.cpp"
+#line 702 "pregen-source/parser.cpp"
     break;
 
   case 14: // exp: "-" exp
-#line 94 "parser.y"
+#line 95 "parser.y"
                         { drv.createNode("NEGATE", 1); }
-#line 707 "pregen-source/parser.cpp"
+#line 708 "pregen-source/parser.cpp"
     break;
 
   case 15: // exp: "(" exp ")"
-#line 95 "parser.y"
+#line 96 "parser.y"
               {  }
-#line 713 "pregen-source/parser.cpp"
+#line 714 "pregen-source/parser.cpp"
     break;
 
   case 16: // exp: "identifier" "(" list ")"
-#line 96 "parser.y"
+#line 97 "parser.y"
                           { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < int > ()); }
-#line 719 "pregen-source/parser.cpp"
+#line 720 "pregen-source/parser.cpp"
     break;
 
   case 17: // exp: "identifier" "[" indices_list "]"
-#line 97 "parser.y"
+#line 98 "parser.y"
                                   { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 725 "pregen-source/parser.cpp"
+#line 726 "pregen-source/parser.cpp"
     break;
 
   case 18: // exp: "identifier"
-#line 98 "parser.y"
+#line 99 "parser.y"
               { drv.createNode(yystack_[0].value.as < std::string > ()); }
-#line 731 "pregen-source/parser.cpp"
+#line 732 "pregen-source/parser.cpp"
     break;
 
   case 19: // exp: VARNAME
-#line 99 "parser.y"
+#line 100 "parser.y"
            { drv.createNode(yystack_[0].value.as < std::string > ()); }
-#line 737 "pregen-source/parser.cpp"
+#line 738 "pregen-source/parser.cpp"
     break;
 
   case 20: // indices_list: %empty
-#line 104 "parser.y"
+#line 105 "parser.y"
          { yylhs.value.as < std::vector<std::tuple<int, int, int>> > () = {}; }
-#line 743 "pregen-source/parser.cpp"
+#line 744 "pregen-source/parser.cpp"
     break;
 
   case 21: // list: %empty
-#line 127 "parser.y"
+#line 128 "parser.y"
          { yylhs.value.as < int > () = 0; }
-#line 749 "pregen-source/parser.cpp"
+#line 750 "pregen-source/parser.cpp"
     break;
 
   case 22: // list: exp "," list
-#line 128 "parser.y"
+#line 129 "parser.y"
                  { yylhs.value.as < int > () = yystack_[0].value.as < int > () + 1; }
-#line 755 "pregen-source/parser.cpp"
+#line 756 "pregen-source/parser.cpp"
     break;
 
   case 23: // list: exp
-#line 129 "parser.y"
+#line 130 "parser.y"
       { yylhs.value.as < int > () = 1; }
-#line 761 "pregen-source/parser.cpp"
+#line 762 "pregen-source/parser.cpp"
     break;
 
 
-#line 765 "pregen-source/parser.cpp"
+#line 766 "pregen-source/parser.cpp"
 
             default:
               break;
@@ -1307,9 +1308,9 @@ namespace adios2 { namespace detail {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    76,    76,    77,    81,    82,    83,    84,    88,    89,
-      90,    91,    92,    93,    94,    95,    96,    97,    98,    99,
-     104,   127,   128,   129
+       0,    77,    77,    78,    82,    83,    84,    85,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
+     105,   128,   129,   130
   };
 
   void
@@ -1342,13 +1343,16 @@ namespace adios2 { namespace detail {
 
 #line 12 "parser.y"
 } } // adios2::detail
-#line 1346 "pregen-source/parser.cpp"
+#line 1347 "pregen-source/parser.cpp"
 
-#line 130 "parser.y"
+#line 131 "parser.y"
 
 
 void
 adios2::detail::parser::error (const location_type& l, const std::string& m)
 {
-  std::cerr << l << ": " << m << '\n';
+  std::ostringstream os;
+  os << l << ": " << m;
+  drv.hasError = true;
+  drv.errorMessage = os.str();
 }

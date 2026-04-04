@@ -103,7 +103,7 @@
 #else
 # define YY_CONSTEXPR
 #endif
-# include "location.hh"
+# include "pregen-source/location.hh"
 #include <typeinfo>
 #ifndef YY_ASSERT
 # include <cassert>

@@ -29,8 +29,10 @@ ASTDriver::~ASTDriver()
 
 ASTNode *ASTDriver::getAST()
 {
+    if (hasError)
+        throw std::invalid_argument("Failed to parse derived expression: " + errorMessage);
     if (holding.size() == 0)
-        throw std::runtime_error("ERROR: the derived expression is null");
+        throw std::invalid_argument("Derived expression is empty");
     resolve(holding.top());
     return holding.top();
 }
