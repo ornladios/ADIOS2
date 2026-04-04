@@ -39,6 +39,7 @@
 %code {
 #include "ASTDriver.h"
 #include "ASTNode.h"
+#include <sstream>
 #include <string>
 }
 
@@ -132,5 +133,8 @@ list:
 void
 adios2::detail::parser::error (const location_type& l, const std::string& m)
 {
-  std::cerr << l << ": " << m << '\n';
+  std::ostringstream os;
+  os << l << ": " << m;
+  drv.hasError = true;
+  drv.errorMessage = os.str();
 }

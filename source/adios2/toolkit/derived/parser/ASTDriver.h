@@ -58,6 +58,10 @@ public:
     // The token's location used by the scanner.
     adios2::detail::location location;
 
+    // Parser error state — set by parser::error callback
+    bool hasError = false;
+    std::string errorMessage;
+
 private:
     // While parsing, holds ASTNodes until parent node is created
     // (since root node is created last from bottom up design)

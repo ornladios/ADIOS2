@@ -218,12 +218,11 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         std::vector<float> readMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readConstMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readDiv(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readPow(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readPow3(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readSqrt(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readPow(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readPow3(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readSqrt(mpiSize * Nx * Ny * Nz);
 
         float calcFloat;
-        double calcDouble;
         float epsilon = (float)0.01;
         bpFileReader.BeginStep();
         auto varUx = bpIn.InquireVariable<float>(varname[0]);
@@ -236,9 +235,9 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         auto varMult = bpIn.InquireVariable<float>(derMultName);
         auto varConstMult = bpIn.InquireVariable<float>(derConstMult);
         auto varDiv = bpIn.InquireVariable<float>(derDivName);
-        auto varPow = bpIn.InquireVariable<double>(derPowName);
-        auto varPow3 = bpIn.InquireVariable<double>(derPow3Name);
-        auto varSqrt = bpIn.InquireVariable<double>(derSqrtName);
+        auto varPow = bpIn.InquireVariable<float>(derPowName);
+        auto varPow3 = bpIn.InquireVariable<float>(derPow3Name);
+        auto varSqrt = bpIn.InquireVariable<float>(derSqrtName);
 
         bpFileReader.Get(varUx, readUx);
         bpFileReader.Get(varUy, readUy);
@@ -276,14 +275,14 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
             calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
 
-            calcDouble = std::pow(readUx[ind], 2);
-            EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
+            calcFloat = static_cast<float>(std::pow(readUx[ind], 2));
+            EXPECT_TRUE(fabs(calcFloat - readPow[ind]) < epsilon);
 
-            calcDouble = std::pow(readUx[ind], 3);
-            EXPECT_TRUE(fabs(calcDouble - readPow3[ind]) < epsilon);
+            calcFloat = static_cast<float>(std::pow(readUx[ind], 3));
+            EXPECT_TRUE(fabs(calcFloat - readPow3[ind]) < epsilon);
 
-            calcDouble = std::sqrt(readUx[ind]);
-            EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
+            calcFloat = std::sqrt(readUx[ind]);
+            EXPECT_TRUE(fabs(calcFloat - readSqrt[ind]) < epsilon);
         }
 
         for (size_t ind = 0; ind < Nx * Ny; ++ind)
