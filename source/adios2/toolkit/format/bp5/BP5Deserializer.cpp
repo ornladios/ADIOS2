@@ -10,6 +10,7 @@
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
+#include "adios2/toolkit/derived/ExprCodeStream.h"
 
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
@@ -1778,6 +1779,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             std::vector<std::string> derivedVarInputNameList;
             std::vector<VariableBase *> derivedVarInputVarList;
             std::map<std::string, std::unique_ptr<MinVarInfo>> *nameToVarInfo = nullptr;
+            std::map<std::string, std::pair<Dims, Dims>> derivedInputSelections;
+            bool derivedNeedsHalo = false;
 
             if (m_FlattenSteps)
             {
@@ -1798,8 +1801,12 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
                 derivedVarInputNameList = derivedVar->VariableNameList();
                 nameToVarInfo = new std::map<std::string, std::unique_ptr<MinVarInfo>>();
-                // to create a mapping between variable name and the varInfo (dim and data pointer)
                 Req->DerivedInputMap = nameToVarInfo;
+                derivedNeedsHalo = adios2::derived::HasHalo(derivedVar->m_CodeStream);
+                // Compute what input regions each variable needs for this output selection
+                derivedInputSelections = adios2::derived::ComputeInputSelections(
+                    derivedVar->m_CodeStream, Dims(Req->Start.begin(), Req->Start.end()),
+                    Dims(Req->Count.begin(), Req->Count.end()));
                 for (auto varName : derivedVarInputNameList)
                 {
                     auto itVariable = var_map.find(varName);
@@ -1932,43 +1939,243 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
                                     for (auto varBase : derivedVarInputVarList)
                                     {
-                                        ReadRequest RR;
                                         BP5VarRec *VarPrimaryRec = VarByName.at(varBase->m_Name);
                                         MetaArrayRecOperator *writer_meta_base_input =
                                             (MetaArrayRecOperator *)GetMetadataBase(
                                                 VarPrimaryRec, Step, WriterRank);
+                                        if (!writer_meta_base_input)
+                                            continue;
+                                        size_t InputStartDim = Block * writer_meta_base_input->Dims;
+
+                                        ReadRequest RR;
                                         RR.Timestep = Step;
                                         RR.WriterRank = WriterRank;
-                                        RR.StartOffset =
-                                            writer_meta_base_input->DataBlockLocation[Block];
-                                        // read whole block
-                                        size_t InputStartDim = Block * writer_meta_base_input->Dims;
-                                        RR.ReadLength =
-                                            helper::GetDataTypeSize(VarPrimaryRec->Type) *
-                                            CalcBlockLength(
-                                                writer_meta_base_input->Dims,
-                                                &writer_meta_base_input->Count[InputStartDim]);
-                                        RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                         RR.DirectToAppMemory = false;
                                         RR.ReqIndex = ReqIndex;
                                         RR.BlockID = Block;
-                                        RR.OffsetInBlock = 0;
-                                        Ret.push_back(RR);
-                                        auto mvi = m_Engine->MinBlocksInfo(*varBase, Step,
-                                                                           WriterRank, Block);
-                                        mvi->BlocksInfo[0].BufferP = RR.DestinationAddr;
-                                        if ((*nameToVarInfo)[varBase->m_Name] == nullptr)
+
+                                        if (derivedNeedsHalo)
                                         {
-                                            // new blocks info for this input variable
-                                            (*nameToVarInfo)[varBase->m_Name] =
-                                                std::unique_ptr<MinVarInfo>(std::move(mvi));
+                                            // Halo path: read only the sub-region
+                                            // needed for stencil computation
+                                            size_t InputDims = writer_meta_base_input->Dims;
+                                            size_t ElemSize =
+                                                helper::GetDataTypeSize(VarPrimaryRec->Type);
+
+                                            auto selIt =
+                                                derivedInputSelections.find(varBase->m_Name);
+                                            if (selIt == derivedInputSelections.end())
+                                                continue;
+                                            auto varSelStart = selIt->second.first;
+                                            auto varSelCount = selIt->second.second;
+
+                                            // Resolve 0 = "full extent" entries
+                                            for (size_t Dim = 0; Dim < InputDims; Dim++)
+                                            {
+                                                if (Dim < varSelCount.size() &&
+                                                    varSelCount[Dim] == 0)
+                                                {
+                                                    varSelStart[Dim] = 0;
+                                                    varSelCount[Dim] =
+                                                        writer_meta_base_input
+                                                            ->Count[InputStartDim + Dim];
+                                                }
+                                            }
+                                            while (varSelStart.size() < InputDims)
+                                            {
+                                                varSelStart.push_back(0);
+                                                varSelCount.push_back(
+                                                    writer_meta_base_input
+                                                        ->Count[InputStartDim + varSelStart.size() -
+                                                                1]);
+                                            }
+
+                                            // Intersect with this block
+                                            std::array<size_t, helper::MAX_DIMS>
+                                                inputIntersectStart;
+                                            std::array<size_t, helper::MAX_DIMS>
+                                                inputIntersectCount;
+                                            if (!IntersectionStartCount(
+                                                    InputDims, varSelStart.data(),
+                                                    varSelCount.data(),
+                                                    &writer_meta_base_input->Offsets[InputStartDim],
+                                                    &writer_meta_base_input->Count[InputStartDim],
+                                                    &inputIntersectStart[0],
+                                                    &inputIntersectCount[0]))
+                                                continue;
+
+                                            // Byte range covering the intersection
+                                            std::array<size_t, helper::MAX_DIMS> localStart,
+                                                localEnd;
+                                            for (size_t Dim = 0; Dim < InputDims; Dim++)
+                                            {
+                                                localStart[Dim] =
+                                                    inputIntersectStart[Dim] -
+                                                    writer_meta_base_input
+                                                        ->Offsets[InputStartDim + Dim];
+                                                localEnd[Dim] =
+                                                    localStart[Dim] + inputIntersectCount[Dim] - 1;
+                                            }
+                                            size_t StartOffsetInBlock =
+                                                ElemSize *
+                                                LinearIndex(
+                                                    InputDims,
+                                                    &writer_meta_base_input->Count[InputStartDim],
+                                                    &localStart[0], m_ReaderIsRowMajor);
+                                            size_t EndOffsetInBlock =
+                                                ElemSize *
+                                                (LinearIndex(
+                                                     InputDims,
+                                                     &writer_meta_base_input->Count[InputStartDim],
+                                                     &localEnd[0], m_ReaderIsRowMajor) +
+                                                 1);
+
+                                            if (writer_meta_base_input->DataBlockLocation[Block] ==
+                                                (size_t)-1)
+                                                helper::Throw<std::runtime_error>(
+                                                    "Toolkit", "BP5Deserializer",
+                                                    "GenerateReadRequests",
+                                                    "No data exists for derived "
+                                                    "input variable " +
+                                                        varBase->m_Name);
+
+                                            RR.StartOffset =
+                                                writer_meta_base_input->DataBlockLocation[Block] +
+                                                StartOffsetInBlock;
+                                            RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                                            RR.OffsetInBlock = StartOffsetInBlock;
+                                            Ret.push_back(RR);
+
+                                            auto mvi = m_Engine->MinBlocksInfo(*varBase, Step,
+                                                                               WriterRank, Block);
+                                            // Virtual pointer: lets NdCopy address
+                                            // from block start
+                                            mvi->BlocksInfo[0].BufferP =
+                                                RR.DestinationAddr - StartOffsetInBlock;
+                                            if ((*nameToVarInfo)[varBase->m_Name] == nullptr)
+                                            {
+                                                (*nameToVarInfo)[varBase->m_Name] =
+                                                    std::unique_ptr<MinVarInfo>(std::move(mvi));
+                                            }
+                                            else
+                                            {
+                                                (*nameToVarInfo)[varBase->m_Name]
+                                                    ->BlocksInfo.push_back(mvi->BlocksInfo[0]);
+                                                delete mvi;
+                                            }
                                         }
                                         else
                                         {
-                                            // add to existing blocks info for this input variable
-                                            (*nameToVarInfo)[varBase->m_Name]->BlocksInfo.push_back(
-                                                mvi->BlocksInfo[0]);
-                                            delete mvi;
+                                            // Non-halo path: read only the
+                                            // sub-region intersecting the
+                                            // user's selection
+                                            size_t InputDims = writer_meta_base_input->Dims;
+                                            size_t ElemSize =
+                                                helper::GetDataTypeSize(VarPrimaryRec->Type);
+
+                                            auto selIt =
+                                                derivedInputSelections.find(varBase->m_Name);
+                                            if (selIt == derivedInputSelections.end())
+                                                continue;
+                                            auto varSelStart = selIt->second.first;
+                                            auto varSelCount = selIt->second.second;
+
+                                            // Resolve 0 = "full extent" entries
+                                            for (size_t Dim = 0; Dim < InputDims; Dim++)
+                                            {
+                                                if (Dim < varSelCount.size() &&
+                                                    varSelCount[Dim] == 0)
+                                                {
+                                                    varSelStart[Dim] = 0;
+                                                    varSelCount[Dim] =
+                                                        writer_meta_base_input
+                                                            ->Count[InputStartDim + Dim];
+                                                }
+                                            }
+                                            while (varSelStart.size() < InputDims)
+                                            {
+                                                varSelStart.push_back(0);
+                                                varSelCount.push_back(
+                                                    writer_meta_base_input
+                                                        ->Count[InputStartDim + varSelStart.size() -
+                                                                1]);
+                                            }
+
+                                            // Intersect with this block
+                                            std::array<size_t, helper::MAX_DIMS>
+                                                inputIntersectStart;
+                                            std::array<size_t, helper::MAX_DIMS>
+                                                inputIntersectCount;
+                                            if (!IntersectionStartCount(
+                                                    InputDims, varSelStart.data(),
+                                                    varSelCount.data(),
+                                                    &writer_meta_base_input->Offsets[InputStartDim],
+                                                    &writer_meta_base_input->Count[InputStartDim],
+                                                    &inputIntersectStart[0],
+                                                    &inputIntersectCount[0]))
+                                                continue;
+
+                                            // Byte range covering the intersection
+                                            std::array<size_t, helper::MAX_DIMS> localStart,
+                                                localEnd;
+                                            for (size_t Dim = 0; Dim < InputDims; Dim++)
+                                            {
+                                                localStart[Dim] =
+                                                    inputIntersectStart[Dim] -
+                                                    writer_meta_base_input
+                                                        ->Offsets[InputStartDim + Dim];
+                                                localEnd[Dim] =
+                                                    localStart[Dim] + inputIntersectCount[Dim] - 1;
+                                            }
+                                            size_t StartOffsetInBlock =
+                                                ElemSize *
+                                                LinearIndex(
+                                                    InputDims,
+                                                    &writer_meta_base_input->Count[InputStartDim],
+                                                    &localStart[0], m_ReaderIsRowMajor);
+                                            size_t EndOffsetInBlock =
+                                                ElemSize *
+                                                (LinearIndex(
+                                                     InputDims,
+                                                     &writer_meta_base_input->Count[InputStartDim],
+                                                     &localEnd[0], m_ReaderIsRowMajor) +
+                                                 1);
+
+                                            if (writer_meta_base_input->DataBlockLocation[Block] ==
+                                                (size_t)-1)
+                                                helper::Throw<std::runtime_error>(
+                                                    "Toolkit", "BP5Deserializer",
+                                                    "GenerateReadRequests",
+                                                    "No data exists for derived "
+                                                    "input variable " +
+                                                        varBase->m_Name);
+
+                                            RR.StartOffset =
+                                                writer_meta_base_input->DataBlockLocation[Block] +
+                                                StartOffsetInBlock;
+                                            RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                                            RR.OffsetInBlock = StartOffsetInBlock;
+                                            Ret.push_back(RR);
+
+                                            auto mvi = m_Engine->MinBlocksInfo(*varBase, Step,
+                                                                               WriterRank, Block);
+                                            // Virtual pointer: lets NdCopy address
+                                            // from block start
+                                            mvi->BlocksInfo[0].BufferP =
+                                                RR.DestinationAddr - StartOffsetInBlock;
+                                            if ((*nameToVarInfo)[varBase->m_Name] == nullptr)
+                                            {
+                                                (*nameToVarInfo)[varBase->m_Name] =
+                                                    std::unique_ptr<MinVarInfo>(std::move(mvi));
+                                            }
+                                            else
+                                            {
+                                                (*nameToVarInfo)[varBase->m_Name]
+                                                    ->BlocksInfo.push_back(mvi->BlocksInfo[0]);
+                                                delete mvi;
+                                            }
                                         }
                                     }
 #endif
@@ -2076,6 +2283,21 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     }
                 }
             }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+            // Verify all derived input variables got data from at least one block
+            if (VarRec->Derived && nameToVarInfo)
+            {
+                for (auto &[varName, mvi] : *nameToVarInfo)
+                {
+                    if (!mvi)
+                        helper::Throw<std::invalid_argument>(
+                            "Toolkit", "BP5Deserializer", "GenerateReadRequests",
+                            "derived variable " + std::string(VarRec->VarName) +
+                                " requires input variable " + varName +
+                                " which has no data on this step");
+                }
+            }
+#endif
         }
     }
     catch (...)
@@ -2324,27 +2546,108 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
         auto derivedVar = static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
 
         auto nameToVarInfo = Req.DerivedInputMap;
-        auto DerivedBlockData = derivedVar->ApplyExpression(*nameToVarInfo);
+        bool needsHalo = adios2::derived::HasHalo(derivedVar->m_CodeStream);
+
+        // Gather sub-region reads into contiguous per-variable buffers.
+        // Both halo and non-halo paths read sub-regions; the halo path's
+        // selections include expanded regions for stencil neighbors.
+        auto inputSelections =
+            adios2::derived::ComputeInputSelections(derivedVar->m_CodeStream, Req.Start, Req.Count);
+
+        // Storage for Start/Count arrays (MinBlockInfo uses raw pointers).
+        std::vector<std::vector<size_t>> startStorage, countStorage;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> gatheredInputs;
+        for (auto &[varName, sel] : inputSelections)
+        {
+            auto selStart = sel.first;
+            auto selCount = sel.second;
+
+            // Resolve 0 = "full extent" and clamp to actual array bounds
+            auto &inputMvi = (*nameToVarInfo)[varName];
+            if (!inputMvi)
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "BP5Deserializer", "FinalizeDerivedGets",
+                    "no data read for derived input variable " + varName);
+            if (!inputMvi->BlocksInfo.empty())
+            {
+                for (size_t d = 0; d < selCount.size() && d < static_cast<size_t>(inputMvi->Dims);
+                     d++)
+                {
+                    size_t extent =
+                        inputMvi->Shape ? inputMvi->Shape[d] : inputMvi->BlocksInfo[0].Count[d];
+                    if (selCount[d] == 0)
+                    {
+                        selStart[d] = 0;
+                        selCount[d] = extent;
+                    }
+                    if (selStart[d] + selCount[d] > extent)
+                        selCount[d] = extent - selStart[d];
+                }
+            }
+
+            size_t selSize = 1;
+            for (auto d : selCount)
+                selSize *= d;
+            DataType type = derivedVar->m_NameToType[varName];
+            size_t elemSize = helper::GetDataTypeSize(type);
+            char *contiguousBuf = (char *)calloc(selSize, elemSize);
+
+            // NdCopy from each block into the contiguous buffer
+            auto &mvi = (*nameToVarInfo)[varName];
+            for (auto &blk : mvi->BlocksInfo)
+            {
+                Dims blkStart(blk.Start, blk.Start + mvi->Dims);
+                Dims blkCount(blk.Count, blk.Count + mvi->Dims);
+                helper::NdCopy((const char *)blk.BufferP, blkStart, blkCount, true, true,
+                               contiguousBuf, selStart, selCount, true, true, (int)elemSize,
+                               CoreDims(), CoreDims(), CoreDims(), CoreDims(), false,
+                               MemorySpace::Host);
+            }
+
+            int dims = static_cast<int>(selStart.size());
+            startStorage.push_back(std::vector<size_t>(selStart.begin(), selStart.end()));
+            countStorage.push_back(std::vector<size_t>(selCount.begin(), selCount.end()));
+
+            auto gathered = std::make_unique<MinVarInfo>(dims, countStorage.back().data());
+            gathered->Step = 0;
+            gathered->WasLocalValue = false;
+            MinBlockInfo gatherBlock = {};
+            gatherBlock.BufferP = contiguousBuf;
+            gatherBlock.Start = startStorage.back().data();
+            gatherBlock.Count = countStorage.back().data();
+            gathered->BlocksInfo.push_back(gatherBlock);
+            gatheredInputs[varName] = std::move(gathered);
+        }
+
+        // Execute the expression on gathered input data.
+        // For halo ops, pass outputStart/outputCount so Execute can trim
+        // the halo-expanded result. For non-halo ops, the gathered inputs
+        // already match the output selection so no trimming occurs.
+        auto DerivedBlockData = derivedVar->ApplyExpression(
+            gatheredInputs, true, needsHalo ? Req.Start : Dims{}, needsHalo ? Req.Count : Dims{});
 
         for (size_t i = 0; i < DerivedBlockData.size(); i++)
         {
             auto &DBlock = DerivedBlockData[i];
-
-            auto inStart = std::get<1>(DBlock);
-            auto inCount = std::get<2>(DBlock);
-            auto values = std::get<0>(DBlock);
-            helper::NdCopy((const char *)values, inStart, inCount, true, true, (char *)Req.Data,
-                           Req.Start, Req.Count, true, true, VarRec->ElementSize, CoreDims(),
-                           CoreDims(), CoreDims(), CoreDims(), false, Req.MemSpace);
+            helper::NdCopy((const char *)std::get<0>(DBlock), std::get<1>(DBlock),
+                           std::get<2>(DBlock), true, true, (char *)Req.Data, Req.Start, Req.Count,
+                           true, true, VarRec->ElementSize, CoreDims(), CoreDims(), CoreDims(),
+                           CoreDims(), false, Req.MemSpace);
             free(std::get<0>(DBlock));
         }
-        // free the temporary blocks malloc'd in generateReadRequests
-        for (auto &entry : *nameToVarInfo)
+
+        // Free gathered input buffers
+        for (auto &[name, mvi] : gatheredInputs)
         {
-            for (auto &mbi : entry.second->BlocksInfo)
-            {
+            for (auto &mbi : mvi->BlocksInfo)
                 free(mbi.BufferP);
-            }
+        }
+
+        // Free read buffers (actual allocations, not virtual pointers)
+        for (auto &Read : Reads)
+        {
+            if (Read.ReqIndex == ReqIndex)
+                free(Read.DestinationAddr);
         }
         delete nameToVarInfo;
     }

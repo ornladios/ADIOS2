@@ -92,9 +92,17 @@ std::tuple<Dims, Dims, Dims>
 GetDims(const ExprCodeStream &cs,
         const std::map<std::string, std::tuple<Dims, Dims, Dims>> &nameToDims);
 
-/** Execute the code stream over numBlocks of data. */
+/** Execute the code stream over numBlocks of data.
+    If outputStart/outputCount are provided, the output is sized to that selection
+    (used when inputs include halo for stencil ops). */
 std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
-                                 std::map<std::string, std::vector<DerivedData>> &nameToData);
+                                 std::map<std::string, std::vector<DerivedData>> &nameToData,
+                                 const Dims &outputStart = {}, const Dims &outputCount = {});
+
+/** Return true if the expression requires halo/stencil gathering (e.g. curl).
+    When true, inputs must be gathered into contiguous buffers before Execute.
+    When false, inputs can be processed block-by-block without gathering. */
+bool HasHalo(const ExprCodeStream &cs);
 
 /** Compute input selections needed for a given output selection.
     Walks instructions backward, applying each SelectionRule.
