@@ -38,7 +38,7 @@ static ExpressionOperator ConvertOp(const std::string &opname)
     auto it = string_to_op_new.find(upper);
     if (it == string_to_op_new.end())
     {
-        throw std::invalid_argument("Parser cannot recognize operator '" + opname + "'");
+        throw std::invalid_argument("Unrecognized operator '" + opname + "' in derived expression");
     }
     return it->second;
 }

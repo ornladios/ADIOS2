@@ -854,6 +854,74 @@ TEST_P(DerivedCorrectnessP, ConstantFoldingTest)
     reader.Close();
 }
 
+TEST_P(DerivedCorrectnessP, MixedTypeTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPMixedTypeWrite");
+
+    const size_t N = 10;
+    std::vector<float> floatData(N);
+    std::vector<double> doubleData(N);
+    for (size_t i = 0; i < N; ++i)
+    {
+        floatData[i] = static_cast<float>(i) * 1.5f;
+        doubleData[i] = static_cast<double>(i) * 2.5;
+    }
+
+    std::vector<int16_t> intData(N);
+    for (size_t i = 0; i < N; ++i)
+        intData[i] = static_cast<int16_t>(i * 3);
+
+    auto varF = bpOut.DefineVariable<float>("F", {N}, {0}, {N});
+    auto varD = bpOut.DefineVariable<double>("D", {N}, {0}, {N});
+    auto varI = bpOut.DefineVariable<int16_t>("I", {N}, {0}, {N});
+    // float + double => double output (inline mixed-type dispatch)
+    bpOut.DefineDerivedVariable("derAdd", "F + D", mode);
+    // float * double => double output (inline mixed-type dispatch)
+    bpOut.DefineDerivedVariable("derMul", "F * D", mode);
+    // int16 + double => double output (exercises PROMOTE path)
+    bpOut.DefineDerivedVariable("derPromote", "I + D", mode);
+
+    adios2::Engine bpFileWriter = bpOut.Open("BPMixedType.bp", adios2::Mode::Write);
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(varF, floatData.data());
+    bpFileWriter.Put(varD, doubleData.data());
+    bpFileWriter.Put(varI, intData.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    {
+        adios2::IO bpIn = adios.DeclareIO("BPMixedTypeRead");
+        adios2::Engine bpFileReader = bpIn.Open("BPMixedType.bp", adios2::Mode::Read);
+        bpFileReader.BeginStep();
+        auto varAdd = bpIn.InquireVariable<double>("derAdd");
+        auto varMul = bpIn.InquireVariable<double>("derMul");
+        auto varProm = bpIn.InquireVariable<double>("derPromote");
+        ASSERT_TRUE(varAdd);
+        ASSERT_TRUE(varMul);
+        ASSERT_TRUE(varProm);
+
+        std::vector<double> readAdd(N), readMul(N), readProm(N);
+        bpFileReader.Get(varAdd, readAdd);
+        bpFileReader.Get(varMul, readMul);
+        bpFileReader.Get(varProm, readProm);
+        bpFileReader.EndStep();
+
+        double epsilon = 0.01;
+        for (size_t i = 0; i < N; ++i)
+        {
+            double expectedAdd = static_cast<double>(floatData[i]) + doubleData[i];
+            double expectedMul = static_cast<double>(floatData[i]) * doubleData[i];
+            double expectedProm = static_cast<double>(intData[i]) + doubleData[i];
+            EXPECT_NEAR(readAdd[i], expectedAdd, epsilon);
+            EXPECT_NEAR(readMul[i], expectedMul, epsilon);
+            EXPECT_NEAR(readProm[i], expectedProm, epsilon);
+        }
+        bpFileReader.Close();
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
                          ::testing::Values(adios2::DerivedVarType::StatsOnly,
                                            adios2::DerivedVarType::ExpressionString,

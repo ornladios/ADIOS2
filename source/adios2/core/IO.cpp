@@ -970,12 +970,12 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
                               (itVariable->second)->m_Shape}});
     }
 
-    // Build the expression code stream: GenerateCode -> ResolveTypes -> ConstantFold -> PlanBuffers
+    // Resolve types on tree, then generate code, then run linear passes
+    derived::ResolveTreeTypes(exprTree, name_to_type);
     derived::ExprCodeStream codeStream = derived::GenerateCode(exprTree);
-    derived::ResolveTypes(codeStream, name_to_type);
-    derived::ConstantFold(codeStream);
-    derived::PlanBuffers(codeStream);
     codeStream.ExprString = exp_string;
+    derived::SemanticsPass(codeStream, name_to_type);
+    derived::PlanBuffers(codeStream);
     DataType expressionType = codeStream.OutputType;
 
     {
