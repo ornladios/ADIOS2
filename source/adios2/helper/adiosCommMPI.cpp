@@ -112,6 +112,7 @@ public:
     ~CommReqImplMPI() override;
 
     Comm::Status Wait(const std::string &hint) override;
+    bool Test(const std::string &hint) override;
 
     /** Encapsulated MPI datatype of the requested operation.  */
     MPI_Datatype m_MPIDatatype = MPI_DATATYPE_NULL;
@@ -656,6 +657,28 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
     }
 
     return status;
+}
+
+bool CommReqImplMPI::Test(const std::string &hint)
+{
+    if (m_MPIReqs.empty())
+    {
+        return false;
+    }
+
+    MPI_Status mpiStatus;
+    int flag = 0;
+
+    for (auto &mpiReq : m_MPIReqs)
+    {
+        CheckMPIReturn(MPI_Test(&mpiReq, &flag, &mpiStatus), hint);
+        if (flag == 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 int CommWinImplMPI::Free(const std::string &hint) { return MPI_Win_free(&m_Win); }
