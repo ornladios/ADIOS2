@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
+      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_BUILD: >-
             cp39-manylinux_x86_64
@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
+      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
@@ -118,7 +118,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
+      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           # free-threaded and prerelease are both opt-in groups in cibuildwheel;
           # cp314t requires both since 3.14 is still prerelease
@@ -187,7 +187,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1
 
   upload_test_pypi:
     needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, make_sdist]
@@ -205,6 +205,6 @@ jobs:
           merge-multiple: true
       - run: ls -R dist
       - name: Publish package distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1
         with:
           repository-url: https://test.pypi.org/legacy/
