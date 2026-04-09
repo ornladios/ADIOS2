@@ -247,6 +247,16 @@ void ResolveTreeTypes(ExprNode &tree, const std::map<std::string, DataType> &var
     ResolveTreeTypesNode(tree, varTypes, DataType::None);
 }
 
+// --- HasHalo ---
+
+bool HasHalo(const ExprCodeStream &cs)
+{
+    for (const auto &instr : cs.Instructions)
+        if (instr.SelRule == SelectionRule::ExpandHalo)
+            return true;
+    return false;
+}
+
 // --- ComputeInputSelections ---
 
 std::map<std::string, std::pair<Dims, Dims>>
@@ -287,27 +297,96 @@ ComputeInputSelections(const ExprCodeStream &cs, const Dims &outputStart, const 
                 inCount = outCount;
                 break;
 
-            case SelectionRule::ExpandHalo:
-                // Stencil: expand each spatial dimension by halo
-                inStart.resize(outStart.size());
-                inCount.resize(outCount.size());
-                for (size_t d = 0; d < outStart.size(); d++)
+            case SelectionRule::ExpandHalo: {
+                // Stencil ops (curl): output has trailing component dim (3).
+                // Separated curl (3 inputs, each 3D): strip the component dim.
+                // Aggregated curl (1 input, 4D [x,y,z,3]): keep the component dim
+                // but use 0 (= full extent) so it picks up all components.
+                size_t spatialDims = outStart.size();
+                if (instr.Op == detail::ExpressionOperator::OP_CURL && spatialDims > 0 &&
+                    (outCount.back() == 3 || outCount.back() == 0))
+                    spatialDims--; // strip component dim from output
+
+                inStart = Dims(outStart.begin(), outStart.begin() + spatialDims);
+                inCount = Dims(outCount.begin(), outCount.begin() + spatialDims);
+
+                // Expand each spatial dimension by the halo size
+                for (size_t d = 0; d < spatialDims; d++)
                 {
                     size_t halo = static_cast<size_t>(instr.HaloSize);
-                    inStart[d] = (outStart[d] >= halo) ? outStart[d] - halo : 0;
-                    inCount[d] = outCount[d] + 2 * halo;
+                    inStart[d] = (inStart[d] >= halo) ? inStart[d] - halo : 0;
+                    inCount[d] = inCount[d] + 2 * halo;
                     // Clamp will happen at read time when actual array bounds are known
                 }
+
+                if (instr.InputBufs.size() == 1 && instr.Op == detail::ExpressionOperator::OP_CURL)
+                {
+                    // Aggregated curl: input is 4D [x,y,z,components].
+                    // Add component dim back with 0 = full extent.
+                    inStart.push_back(0);
+                    inCount.push_back(0);
+                }
                 break;
+            }
 
             case SelectionRule::Reshape:
-                // Dimension-changing ops (cross, magnitude): pass through spatial dims.
-                // The exact mapping depends on the operator; for now propagate as-is.
-                // Cross adds a trailing dim of 3 to output — input selection is output
-                // without that trailing dim. Magnitude with aggregated input adds the
-                // component dimension back.
-                inStart = outStart;
-                inCount = outCount;
+                // Dimension-changing ops: reverse the dimension transformation.
+                if (instr.Op == detail::ExpressionOperator::OP_CROSS)
+                {
+                    // Cross output has trailing dim of 3. Input doesn't.
+                    inStart = Dims(outStart.begin(), outStart.end() - 1);
+                    inCount = Dims(outCount.begin(), outCount.end() - 1);
+                }
+                else if (instr.Op == detail::ExpressionOperator::OP_MAGN &&
+                         instr.InputBufs.size() == 1)
+                {
+                    // Aggregated magnitude: output removed last dim.
+                    // Input needs spatial dims + full component dim.
+                    // We don't know the component count here, so use 0
+                    // to signal "read full extent" for that dimension.
+                    inStart = outStart;
+                    inStart.push_back(0);
+                    inCount = outCount;
+                    inCount.push_back(0); // 0 = full extent, resolved at read time
+                }
+                else if (instr.Op == detail::ExpressionOperator::OP_ADD &&
+                         instr.InputBufs.size() == 1)
+                {
+                    // Aggregated add: output removed last dim.
+                    // Input needs spatial dims + full last dim.
+                    inStart = outStart;
+                    inStart.push_back(0);
+                    inCount = outCount;
+                    inCount.push_back(0); // 0 = full extent, resolved at read time
+                }
+                else if (instr.Op == detail::ExpressionOperator::OP_CURL &&
+                         instr.InputBufs.size() == 1)
+                {
+                    // Aggregated curl: output removed last dim and added 3.
+                    // Input: spatial dims + full component dim.
+                    inStart = Dims(outStart.begin(), outStart.end() - 1);
+                    inStart.push_back(0);
+                    inCount = Dims(outCount.begin(), outCount.end() - 1);
+                    inCount.push_back(0);
+                }
+                else
+                {
+                    // Separated multi-input ops (magnitude, curl with 3 inputs):
+                    // each input has same spatial dims as output (minus any trailing
+                    // component dim)
+                    if (!outCount.empty() && (outCount.back() == 3 || outCount.back() == 0) &&
+                        (instr.Op == detail::ExpressionOperator::OP_CURL ||
+                         instr.Op == detail::ExpressionOperator::OP_CROSS))
+                    {
+                        inStart = Dims(outStart.begin(), outStart.end() - 1);
+                        inCount = Dims(outCount.begin(), outCount.end() - 1);
+                    }
+                    else
+                    {
+                        inStart = outStart;
+                        inCount = outCount;
+                    }
+                }
                 break;
             }
 
@@ -1008,8 +1087,10 @@ static void *AllocScalarConstant(const TypedConstant &c, DataType type)
 }
 
 std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
-                                 std::map<std::string, std::vector<DerivedData>> &nameToData)
+                                 std::map<std::string, std::vector<DerivedData>> &nameToData,
+                                 const Dims &outputStart, const Dims &outputCount)
 {
+    bool hasOutputSelection = !outputCount.empty();
     std::vector<DerivedData> outputData(numBlocks);
     std::vector<BufferSlot> pool;
 
@@ -1090,12 +1171,13 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
                 outCount = std::get<1>(dims);
             }
 
+            bool isFinal = (instr.OutputBuf == cs.OutputBufID);
+
             size_t outSize = std::accumulate(outCount.begin(), outCount.end(), (size_t)1,
                                              std::multiplies<size_t>());
 
             // Allocate output: final instruction writes directly to caller buffer
             size_t outBytes = outSize * ElementSize(instr.OutputType);
-            bool isFinal = (instr.OutputBuf == cs.OutputBufID);
             void *outBuf;
             if (isFinal)
                 outBuf = malloc(outBytes);
@@ -1119,9 +1201,25 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
 
             bufData[instr.OutputBuf] = {outBuf, outStart, outCount, instr.OutputType};
         }
-
         DerivedData &finalBuf = bufData[cs.OutputBufID];
-        outputData[blk] = {finalBuf.Data, finalBuf.Start, finalBuf.Count, finalBuf.Type};
+        if (hasOutputSelection && finalBuf.Count != outputCount)
+        {
+            // Output is larger than requested (e.g. curl with halo). Trim to selection.
+            size_t trimSize = std::accumulate(outputCount.begin(), outputCount.end(), (size_t)1,
+                                              std::multiplies<size_t>());
+            size_t trimBytes = trimSize * ElementSize(finalBuf.Type);
+            void *trimBuf = malloc(trimBytes);
+            helper::NdCopy((const char *)finalBuf.Data, finalBuf.Start, finalBuf.Count, true, true,
+                           (char *)trimBuf, outputStart, outputCount, true, true,
+                           ElementSize(finalBuf.Type), helper::CoreDims(), helper::CoreDims(),
+                           helper::CoreDims(), helper::CoreDims(), false, MemorySpace::Host);
+            free(finalBuf.Data);
+            outputData[blk] = {trimBuf, outputStart, outputCount, finalBuf.Type};
+        }
+        else
+        {
+            outputData[blk] = {finalBuf.Data, finalBuf.Start, finalBuf.Count, finalBuf.Type};
+        }
     }
 
     // Free scalar constants and pool

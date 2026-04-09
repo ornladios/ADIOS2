@@ -922,6 +922,169 @@ TEST_P(DerivedCorrectnessP, MixedTypeTest)
     }
 }
 
+TEST_P(DerivedCorrectnessP, SubSelectionTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPSubSelWrite");
+
+    const size_t Nx = 100, Ny = 100;
+    std::vector<float> Ux(Nx * Ny), Uy(Nx * Ny);
+    for (size_t i = 0; i < Nx * Ny; ++i)
+    {
+        Ux[i] = static_cast<float>(i) * 0.1f;
+        Uy[i] = static_cast<float>(i) * 0.2f;
+    }
+
+    auto varUx = bpOut.DefineVariable<float>("Ux", {Nx, Ny}, {0, 0}, {Nx, Ny});
+    auto varUy = bpOut.DefineVariable<float>("Uy", {Nx, Ny}, {0, 0}, {Nx, Ny});
+    bpOut.DefineDerivedVariable("derAdd", "Ux + Uy", mode);
+
+    adios2::Engine bpFileWriter = bpOut.Open("BPSubSel.bp", adios2::Mode::Write);
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(varUx, Ux.data());
+    bpFileWriter.Put(varUy, Uy.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    {
+        // Read a sub-selection of the derived variable
+        adios2::IO bpIn = adios.DeclareIO("BPSubSelRead");
+        adios2::Engine bpFileReader = bpIn.Open("BPSubSel.bp", adios2::Mode::Read);
+        bpFileReader.BeginStep();
+        auto varAdd = bpIn.InquireVariable<float>("derAdd");
+        ASSERT_TRUE(varAdd);
+
+        // Request a sub-region: rows 10-19, cols 20-29
+        size_t selNx = 10, selNy = 10;
+        size_t startX = 10, startY = 20;
+        varAdd.SetSelection({{startX, startY}, {selNx, selNy}});
+
+        std::vector<float> readAdd(selNx * selNy);
+        bpFileReader.Get(varAdd, readAdd);
+        bpFileReader.EndStep();
+
+        float epsilon = 0.01f;
+        for (size_t x = 0; x < selNx; ++x)
+        {
+            for (size_t y = 0; y < selNy; ++y)
+            {
+                size_t globalIdx = (startX + x) * Ny + (startY + y);
+                float expected = Ux[globalIdx] + Uy[globalIdx];
+                EXPECT_NEAR(readAdd[x * selNy + y], expected, epsilon);
+            }
+        }
+        bpFileReader.Close();
+    }
+}
+
+TEST_P(DerivedCorrectnessP, CurlSubSelectionTest)
+{
+    const size_t Nx = 25, Ny = 70, Nz = 13;
+    float error_limit = 0.0000001f;
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
+
+    std::vector<float> simArray1(Nx * Ny * Nz);
+    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<float> simArray3(Nx * Ny * Nz);
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                simArray1[idx] = (6 * x * y) + (7 * z);
+                simArray2[idx] = (4 * x * z) + powf(y, 2);
+                simArray3[idx] = sqrtf(z) + (2 * x * y);
+            }
+        }
+    }
+
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPCurlSubSelWrite");
+    std::vector<std::string> varname = {"sim4/VX", "sim4/VY", "sim4/VZ"};
+    std::string derivedname = "derived/curlSubSel";
+
+    auto VX = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto VY = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto VZ = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derivedname,
+                                "Vx =" + varname[0] + " \n"
+                                "Vy =" + varname[1] + " \n"
+                                "Vz =" + varname[2] + " \n"
+                                "curl(Vx,Vy,Vz)",
+                                mode);
+    // clang-format on
+    std::string filename = "ADIOS2BPWriteDerivedCurlSubSel.bp";
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(VX, simArray1.data());
+    bpFileWriter.Put(VY, simArray2.data());
+    bpFileWriter.Put(VZ, simArray3.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    // Read a sub-selection of the curl output
+    const size_t selX = 5, selY = 10, selZ = 2;
+    const size_t selNx = 10, selNy = 20, selNz = 5;
+
+    adios2::IO bpIn = adios.DeclareIO("BPCurlSubSelRead");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto varCurl = bpIn.InquireVariable<float>(derivedname);
+    ASSERT_TRUE(varCurl);
+
+    EXPECT_EQ(varCurl.Shape().size(), 4);
+    EXPECT_EQ(varCurl.Shape()[0], Nx);
+    EXPECT_EQ(varCurl.Shape()[1], Ny);
+    EXPECT_EQ(varCurl.Shape()[2], Nz);
+    EXPECT_EQ(varCurl.Shape()[3], 3);
+
+    // Select an interior sub-region: all 3 components
+    varCurl.SetSelection({{selX, selY, selZ, 0}, {selNx, selNy, selNz, 3}});
+    std::vector<float> readCurl(selNx * selNy * selNz * 3);
+    bpFileReader.Get(varCurl, readCurl);
+    bpFileReader.EndStep();
+
+    double sum_x = 0, sum_y = 0, sum_z = 0;
+    for (size_t i = 0; i < selNx; ++i)
+    {
+        for (size_t j = 0; j < selNy; ++j)
+        {
+            for (size_t k = 0; k < selNz; ++k)
+            {
+                size_t idx = (i * selNy * selNz) + (j * selNz) + k;
+                float x = static_cast<float>(selX + i);
+                float y = static_cast<float>(selY + j);
+                float z = static_cast<float>(selZ + k);
+                float curl_x = -(2 * x);
+                float curl_y = 7 - (2 * y);
+                float curl_z = (4 * z) - (6 * x);
+                float err_x = fabs(curl_x - readCurl[3 * idx]) /
+                              (fabs(curl_x) < 1 ? (1 + fabs(curl_x)) : fabs(curl_x));
+                float err_y = fabs(curl_y - readCurl[3 * idx + 1]) /
+                              (fabs(curl_y) < 1 ? (1 + fabs(curl_y)) : fabs(curl_y));
+                float err_z = fabs(curl_z - readCurl[3 * idx + 2]) /
+                              (fabs(curl_z) < 1 ? (1 + fabs(curl_z)) : fabs(curl_z));
+                sum_x += err_x;
+                sum_y += err_y;
+                sum_z += err_z;
+            }
+        }
+    }
+    bpFileReader.Close();
+    EXPECT_LT(sum_x / (selNx * selNy * selNz), error_limit);
+    EXPECT_LT(sum_y / (selNx * selNy * selNz), error_limit);
+    EXPECT_LT(sum_z / (selNx * selNy * selNz), error_limit);
+}
+
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
                          ::testing::Values(adios2::DerivedVarType::StatsOnly,
                                            adios2::DerivedVarType::ExpressionString,

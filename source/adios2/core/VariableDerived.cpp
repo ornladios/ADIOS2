@@ -42,7 +42,7 @@ void VariableDerived::UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims,
 
 std::vector<std::tuple<void *, Dims, Dims>>
 VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToMVI,
-                                 bool DoCompute)
+                                 bool DoCompute, const Dims &outputStart, const Dims &outputCount)
 {
     size_t numBlocks = 0;
     // check that all variables have the same number of blocks
@@ -85,7 +85,7 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
         inputData.insert({variable.first, varData});
     }
     std::vector<adios2::derived::DerivedData> outputData =
-        adios2::derived::Execute(m_CodeStream, numBlocks, inputData);
+        adios2::derived::Execute(m_CodeStream, numBlocks, inputData, outputStart, outputCount);
 
     std::vector<std::tuple<void *, Dims, Dims>> blockData;
     for (size_t i = 0; i < numBlocks; i++)

@@ -22,13 +22,13 @@ namespace core
 class VariableDerived : public VariableBase
 {
     DerivedVarType m_DerivedType;
-    std::map<std::string, DataType> m_NameToType;
 
     std::vector<std::tuple<void *, Dims, Dims>>
     CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo,
                     size_t numBlocks);
 
 public:
+    std::map<std::string, DataType> m_NameToType;
     adios2::derived::ExprNode m_ExprTree;
     adios2::derived::ExprCodeStream m_CodeStream;
     std::string m_ExprString;
@@ -45,7 +45,8 @@ public:
     void UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
 
     std::vector<std::tuple<void *, Dims, Dims>>
-    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true);
+    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true,
+                    const Dims &outputStart = {}, const Dims &outputCount = {});
 };
 
 } // end namespace core
