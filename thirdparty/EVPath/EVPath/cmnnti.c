@@ -1,7 +1,7 @@
 /***** Includes *****/
 #include "config.h"
 #include <sys/types.h>
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 #include <enet/enet.h>
 #endif
 
@@ -118,7 +118,7 @@ typedef struct nnti_transport_data {
     int request_size;
     struct nnti_connection_data **request_list;
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     /* enet support */
     ENetHost *enet_server;
 #endif
@@ -163,7 +163,7 @@ typedef struct nnti_connection_data {
     int remote_IP;
     int remote_contact_port;
     int use_enet;
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     ENetPeer *peer;
     ENetPacket *packet;
 #endif
@@ -184,7 +184,7 @@ typedef enum {enet, nnti} control_transport;
 typedef struct _send_handle {
     control_transport t;
     int size;
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     ENetPacket *packet;
 #endif
     nnti_conn_data_ptr ncd;
@@ -221,7 +221,7 @@ get_control_message_buffer(nnti_conn_data_ptr ncd, struct client_message **mp,
     memset(&ret, 0, sizeof(ret));
     if (ncd->use_enet) {
 	ret.t = enet;
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 	/* Create a reliable packet of the right size */
 	ret.packet = enet_packet_create (NULL, size,
 					 ENET_PACKET_FLAG_RELIABLE);
@@ -244,7 +244,7 @@ send_control_message(send_handle h)
     CManager cm = h.ncd->ntd->cm;
     CMtrans_services svc = h.ncd->ntd->svc;
     if (h.t == enet) {
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
         svc->trace_out(cm, "CMNNTI/ENET control write of %d bytes on peer %p",
 		       h.size, h.ncd->peer);
 	/* Send the packet to the peer over channel id 0. */
@@ -300,7 +300,7 @@ send_control_message(send_handle h)
     return 1;
 }
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 extern void
 enet_non_blocking_listen(CManager cm, CMtrans_services svc,
 			 transport_entry trans, attr_list listen_info);
@@ -417,7 +417,7 @@ attr_list conn_attr_list;
         libcmnnti_LTX_non_blocking_listen(cm, svc, trans, NULL);
     }
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     if (ntd->enet_server == NULL) {
 	enet_non_blocking_listen(cm, svc, trans, NULL);
     }
@@ -490,7 +490,7 @@ attr_list conn_attr_list;
     return 1;
 }
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 static void nnti_enet_service_network(CManager cm, void *void_trans);
 
 extern void
@@ -604,7 +604,7 @@ initiate_enet_link(CManager cm, CMtrans_services svc, transport_entry trans,
 }
 #endif
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 static int
 initiate_enet_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 	      attr_list attrs, nnti_conn_data_ptr nnti_conn_data,
@@ -666,7 +666,7 @@ attr_list attrs;
     /* this size might be overridden */
     nnti_conn_data->piggyback_size_max = NNTI_REQUEST_BUFFER_SIZE;
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     int enet_conn_status;
     sleep(1);
 
@@ -1057,7 +1057,7 @@ listen_thread_func(void *vlsp)
     }
 }
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 static void *
 enet_accept_conn(nnti_transport_data_ptr ntd, transport_entry trans, 
 		 ENetAddress *address);
@@ -1179,7 +1179,7 @@ handle_control_request(nnti_conn_data_ptr ncd, CMtrans_services svc, transport_e
 
 }
 
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
 /* 
  * Accept enet connection
  */

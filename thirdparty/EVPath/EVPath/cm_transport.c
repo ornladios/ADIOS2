@@ -218,7 +218,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 							 * pointer */
 	(void) add_transport_to_cm(cm, transport);
     }
-#ifdef NNTI_FOUND
+#ifdef EVPATH_HAS_NNTI
     if (strcmp(trans_name, "nnti") == 0) {
 	extern transport_entry cmnnti_add_static_transport(CManager cm,
 							   CMtrans_services
@@ -231,7 +231,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
-#ifdef LIBFABRIC_FOUND
+#ifdef EVPATH_HAS_LIBFABRIC
     if (strcmp(trans_name, "fabric") == 0) {
 	extern transport_entry cmfabric_add_static_transport(CManager cm,
 							     CMtrans_services
@@ -245,7 +245,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
-#ifdef IB_FOUND
+#ifdef EVPATH_HAS_IB
     if (strcmp(trans_name, "ib") == 0) {
 	extern transport_entry cmib_add_static_transport(CManager cm,
 							 CMtrans_services
@@ -258,7 +258,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
-#ifdef ENET_FOUND
+#ifdef EVPATH_HAS_ENET
     if (strcmp(trans_name, "enet") == 0) {
 	extern transport_entry cmenet_add_static_transport(CManager cm,
 							   CMtrans_services
@@ -271,7 +271,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
-#ifdef ZPL_ENET_AVAILABLE
+#ifdef EVPATH_HAS_ZPL_ENET
     if (strcmp(trans_name, "zplenet") == 0) {
 	extern transport_entry cmzplenet_add_static_transport(CManager cm,
 							   CMtrans_services
@@ -284,7 +284,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
-#ifdef UDT4_FOUND
+#ifdef EVPATH_HAS_UDT4
     if (strcmp(trans_name, "udt4") == 0) {
 	extern transport_entry cmudt4_add_static_transport(CManager cm,
 							   CMtrans_services
