@@ -10,7 +10,9 @@
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
 #include "adios2/toolkit/derived/ExprCodeStream.h"
+#endif
 
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
@@ -1779,8 +1781,10 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             std::vector<std::string> derivedVarInputNameList;
             std::vector<VariableBase *> derivedVarInputVarList;
             std::map<std::string, std::unique_ptr<MinVarInfo>> *nameToVarInfo = nullptr;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
             std::map<std::string, std::pair<Dims, Dims>> derivedInputSelections;
             bool derivedNeedsHalo = false;
+#endif
 
             if (m_FlattenSteps)
             {
