@@ -33,11 +33,8 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
 endif()
 
 if(ADIOS2_HAVE_SST)
-  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SST.FFS
-    EXTRA_ARGS "SST" "0" "MarshalMethod=FFS"
-  )
-  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SST.BP
-    EXTRA_ARGS "SST" "0" "MarshalMethod=BP"
+  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SST
+    EXTRA_ARGS "SST" "0"
   )
 endif()
 

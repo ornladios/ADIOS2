@@ -8,7 +8,16 @@
 # ------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  set(MPIEXEC_EXTRA_FLAGS "" CACHE STRING
+  # Default to yielding idle MPI ranks for OpenMPI to avoid 100% CPU spin
+  # in collectives when some ranks are waiting (e.g. StagingMPMD tests).
+  set(_default_mpiexec_extra_flags "")
+  execute_process(
+    COMMAND ${MPIEXEC_EXECUTABLE} --version
+    OUTPUT_VARIABLE _mpiexec_version ERROR_VARIABLE _mpiexec_version)
+  if(_mpiexec_version MATCHES "Open MPI")
+    set(_default_mpiexec_extra_flags "--mca;mpi_yield_when_idle;1")
+  endif()
+  set(MPIEXEC_EXTRA_FLAGS "${_default_mpiexec_extra_flags}" CACHE STRING
     "Extra flags to set after mpiexec and before the num_procs flag"
   )
   mark_as_advanced(MPIEXEC_EXTRA_FLAGS)
