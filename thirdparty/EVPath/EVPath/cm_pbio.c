@@ -73,60 +73,8 @@ inet_ntoa(struct in_addr ina)
  * "CMExternalFormats".
  */
 
-static int
-CMpbio_send_format_request(char *format_ID, int format_ID_length,
-			   CMConnection conn, int cond);
 extern int CM_pbio_query(CMConnection conn, CMTransport trans,
 			 char *buffer, size_t length);
-
-static int
-request_in_pending(CManager cm, void *format_ID, int format_id_length)
-{
-    int i;
-    for (i=0; i<cm->pending_request_max; i++) {
-	if ((cm->pbio_requests[i].server_id != NULL) &&
-	    (format_id_length = cm->pbio_requests[i].id_length) &&
-	    (memcmp(cm->pbio_requests[i].server_id, format_ID,
-		    format_id_length) == 0))
-	    return i;
-    }
-    return -1;
-}
-
-static void
-add_request_to_pending(CManager cm, void *format_ID, int format_id_length,
-		       int cond)
-{
-    int i;
-    /* tag any duplicates as no longer the most recent request */
-    for (i=0; i<cm->pending_request_max; i++) {
-	if ((cm->pbio_requests[i].server_id != NULL) &&
-	    (format_id_length = cm->pbio_requests[i].id_length) &&
-	    (memcmp(cm->pbio_requests[i].server_id, format_ID,
-		    format_id_length) == 0)) {
-	    cm->pbio_requests[i].top_request = 0;
-	}
-    }
-    /* find an insertion spot */
-    for (i=0; i<cm->pending_request_max; i++) {
-	if (cm->pbio_requests[i].server_id == NULL) {
-	    cm->pbio_requests[i].server_id = format_ID;
-	    cm->pbio_requests[i].id_length = format_id_length;
-	    cm->pbio_requests[i].condition = cond;
-	    cm->pbio_requests[i].top_request = 1;
-	    return;
-	}
-    }
-    cm->pbio_requests = realloc(cm->pbio_requests, 
-				(cm->pending_request_max + 1) * 
-				sizeof(struct _pending_format_requests));
-    i = cm->pending_request_max++;
-    cm->pbio_requests[i].server_id = format_ID;
-    cm->pbio_requests[i].id_length = format_id_length;
-    cm->pbio_requests[i].condition = cond;
-    cm->pbio_requests[i].top_request = 1;
-    return;
-}
 
 /*
  *  This is a bit tricky as we might have multiple pending format requests
@@ -200,35 +148,6 @@ struct pbio_exchange_msg {
 };
 
 extern struct CMtrans_services_s CMstatic_trans_svcs;
-
-static int
-CMpbio_send_format_request(char *format_ID, int format_ID_length,
-			   CMConnection conn, int cond)
-{
-    struct pbio_exchange_msg msg;
-    struct FFSEncodeVec vec[2];
-    int actual;
-
-    msg.magic = MAGIC;
-    msg.msg_len = sizeof(msg) - 8 + format_ID_length;
-    msg.msg_type = PBIO_QUERY;
-    msg.payload1_length = format_ID_length;
-    msg.payload2_length = 0;
-    msg.cond = cond;
-    vec[0].iov_base = &msg;
-    vec[0].iov_len = sizeof(msg);
-    vec[1].iov_base = format_ID;
-    vec[1].iov_len = format_ID_length;
-    CMtrace_out(conn->cm, CMLowLevelVerbose, "CMpbio send format request - total %d bytes in writev\n", (int)(format_ID_length + sizeof(msg)));
-    actual = conn->trans->writev_func(&CMstatic_trans_svcs, 
-				      conn->transport_data, 
-				      &vec[0], 2, NULL);
-    if (actual != 2) {
-	internal_connection_close(conn);
-	return 0;
-    }
-    return 1;
-}
 
 static int
 CMpbio_send_format_response(FMFormat ioformat, CMConnection conn, 

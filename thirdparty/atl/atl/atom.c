@@ -592,9 +592,19 @@ NULL};
 static void
 preload_in_use_atoms(atom_server as)
 {
-    int i=0;
+    int i = 0;
+
+    /*
+     * These atoms are compiled into every client, so every process
+     * already knows the string<->value mapping.  Just populate the
+     * local cache — no server contact needed.
+     */
     while (in_use_values[i] != NULL) {
-	(void) atom_from_string(as, in_use_values[i++]);
+	send_get_atom_msg tmp;
+	tmp.atom = ATLget_hash(in_use_values[i]);
+	tmp.atom_string = in_use_values[i];
+	enter_atom_into_cache(as, &tmp);
+	i++;
     }
 }
 
