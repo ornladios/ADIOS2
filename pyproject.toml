@@ -94,6 +94,7 @@ ADIOS2_USE_OpenSSL = "ON"
 ADIOS2_USE_Curl = "ON"
 BUILD_TESTING = "OFF"
 ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"
+EVPATH_TRANSPORT_MODULES = "OFF"
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "win32"
