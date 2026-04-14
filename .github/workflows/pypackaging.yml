@@ -76,6 +76,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
           CIBW_BUILD: >-
             cp39-manylinux_x86_64
             cp310-manylinux_x86_64
@@ -99,6 +100,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
@@ -120,6 +122,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
           # free-threaded and prerelease are both opt-in groups in cibuildwheel;
           # cp314t requires both since 3.14 is still prerelease
           CIBW_ENABLE: cpython-freethreading cpython-prerelease
