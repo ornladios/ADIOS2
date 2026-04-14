@@ -57,7 +57,7 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
         with:
           name: artifact_sdist
           path: dist/*.tar.gz
@@ -81,7 +81,7 @@ jobs:
             cp39-manylinux_x86_64
             cp310-manylinux_x86_64
             cp311-manylinux_x86_64
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
         with:
           name: artifact_wheels_legacy
           path: wheelhouse/*.whl
@@ -103,7 +103,7 @@ jobs:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
         with:
           name: artifact_wheels_stable
           path: wheelhouse/*.whl
@@ -130,7 +130,7 @@ jobs:
           CIBW_BUILD: >-
             cp313t-manylinux_x86_64
             cp314t-manylinux_x86_64
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
         with:
           name: artifact_wheels_freethreaded
           path: wheelhouse/*.whl
