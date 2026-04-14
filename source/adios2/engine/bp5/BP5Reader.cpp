@@ -25,6 +25,7 @@
 
 #include "BP5Reader.h"
 #include "BP5Reader.tcc"
+#include "adios2/toolkit/derived/ExprNode.h"
 
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
@@ -1508,8 +1509,8 @@ std::string BP5Reader::VariableExprStr(const VariableBase &Var)
     char *expPtr = m_BP5Deserializer->VariableExprStr(Var);
     if (expPtr != nullptr)
     {
-        derived::Expression expr(expPtr);
-        return expr.toStringExpr();
+        derived::ExprNode node = detail::ParseToExprNode(expPtr);
+        return derived::ToStringExpr(node);
     }
 #endif
     std::string noDerive("");

@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // A Bison parser, made by GNU Bison 3.8.2.
 
 // Locations for Bison parsers in C++
@@ -37,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file location.hh
+ ** \file pregen-source/location.hh
  ** Define the adios2::detail::location class.
  */
 
-#ifndef YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED
-# define YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED
+#ifndef YY_YY_PREGEN_SOURCE_LOCATION_HH_INCLUDED
+# define YY_YY_PREGEN_SOURCE_LOCATION_HH_INCLUDED
 
 # include <iostream>
 # include <string>
@@ -59,9 +53,9 @@
 #  endif
 # endif
 
-#line 6 "../parser.y"
+#line 12 "parser.y"
 namespace adios2 { namespace detail {
-#line 59 "location.hh"
+#line 59 "pregen-source/location.hh"
 
   /// A point in a source file.
   class position
@@ -305,8 +299,8 @@ namespace adios2 { namespace detail {
     return ostr;
   }
 
-#line 6 "../parser.y"
+#line 12 "parser.y"
 } } // adios2::detail
-#line 305 "location.hh"
+#line 305 "pregen-source/location.hh"
 
-#endif // !YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_LOCATION_HH_INCLUDED
+#endif // !YY_YY_PREGEN_SOURCE_LOCATION_HH_INCLUDED

@@ -15,6 +15,7 @@ namespace derived
 {
 DerivedData AddFunc(ExprData input);
 DerivedData SubtractFunc(ExprData input);
+DerivedData NegateFunc(ExprData input);
 DerivedData SinFunc(ExprData input);
 DerivedData CosFunc(ExprData input);
 DerivedData TanFunc(ExprData input);
@@ -29,14 +30,10 @@ DerivedData MagnitudeFunc(ExprData input);
 DerivedData Cross3DFunc(ExprData input);
 DerivedData Curl3DFunc(ExprData input);
 
-std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                          bool constants);
-std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                                 bool constants);
-std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                             bool constants);
-std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input,
-                                          bool constants);
+std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
+std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
+std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
+std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 
 DataType SameTypeFunc(DataType input);
 DataType FloatTypeFunc(DataType input);

@@ -19,13 +19,15 @@ struct DerivedData
     Dims Start;
     Dims Count;
     DataType Type;
+    bool IsScalar = false; // true = Data points to one element, broadcast by compute functions
 };
 
 struct ExprData
 {
     std::vector<DerivedData> Data;
-    std::vector<std::string> Const;
     DataType OutType;
+    void *Output = nullptr; // pre-allocated output buffer
+    size_t OutputSize = 0;  // number of elements in output
 };
 }
 }

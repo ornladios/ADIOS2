@@ -1777,7 +1777,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             VariableBase *VB = static_cast<VariableBase *>(VarRec->Variable);
             std::vector<std::string> derivedVarInputNameList;
             std::vector<VariableBase *> derivedVarInputVarList;
-            std::map<std::string, std::unique_ptr<MinVarInfo>> *nameToVarInfo;
+            std::map<std::string, std::unique_ptr<MinVarInfo>> *nameToVarInfo = nullptr;
 
             if (m_FlattenSteps)
             {

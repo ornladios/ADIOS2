@@ -149,7 +149,7 @@ set(maybe_adios2_core_derived)
 if(ADIOS2_HAVE_Derived_Variable)
   target_sources(adios2_core PRIVATE
     core/VariableDerived.cpp
-    toolkit/derived/Expression.cpp
+    toolkit/derived/ExprCodeStream.cpp
     toolkit/derived/Function.cpp)
   set_target_properties(adios2_core PROPERTIES
     INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
@@ -182,17 +182,18 @@ if(ADIOS2_HAVE_Derived_Variable)
   elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
   elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    SET_SOURCE_FILES_PROPERTIES(toolkit/derived/Expression.cpp toolkit/derived/Function.cpp PROPERTIES COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H")
+    SET_SOURCE_FILES_PROPERTIES(toolkit/derived/ExprCodeStream.cpp toolkit/derived/Function.cpp PROPERTIES COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H")
   endif()
 
   add_library(adios2_core_derived
     ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
     toolkit/derived/parser/ASTDriver.cpp
-    toolkit/derived/parser/ASTNode.cpp)
+    toolkit/derived/parser/ASTNode.cpp
+    toolkit/derived/parser/ASTToExprNode.cpp)
   set_target_properties(adios2_core_derived PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
-    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>"
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>"
     EXPORT_NAME core_derived
     OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_derived)
   target_link_libraries(adios2_core PRIVATE adios2_core_derived)
