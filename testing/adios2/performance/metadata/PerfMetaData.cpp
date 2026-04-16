@@ -9494,13 +9494,10 @@ void DoReader()
                     else
                     {
                         // local, go through blocks
-                        for (int rank = 0; rank < WriterSize; rank++)
+                        for (auto blk : reader.BlocksInfo(Var, reader.CurrentStep()))
                         {
-                            for (auto blk : reader.BlocksInfo(Var, reader.CurrentStep()))
-                            {
-                                Var.SetBlockSelection(blk.BlockID);
-                                reader.Get(Var, in.data());
-                            }
+                            Var.SetBlockSelection(blk.BlockID);
+                            reader.Get(Var, in.data());
                         }
                     }
                 }
