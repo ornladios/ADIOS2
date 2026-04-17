@@ -204,6 +204,7 @@ jobs:
       - name: Configure cache
         run: ccache -z
       - name: Setup
+        if: ${{ !matrix.arch }}
         run: gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
         run: gha/scripts/ci/gh-actions/run.sh update
