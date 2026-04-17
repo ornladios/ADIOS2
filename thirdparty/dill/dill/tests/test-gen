@@ -892,7 +892,7 @@ get_reg_pair(dill_stream s, int type1, int *reg1p, int type2, int *reg2p,
 int main(int argc, char *argv[])
 {
     dill_stream s = dill_create_raw_stream();
-    char		dc, s1c;
+    signed char		dc, s1c;
     unsigned char	duc, s1uc;
     short		ds, s1s;
     unsigned short	dus, s2us, s1us;
@@ -900,7 +900,7 @@ int main(int argc, char *argv[])
     unsigned     	du, s1u, s2u;
     UIMM_TYPE   	dul, s1ul, s2ul;
     IMM_TYPE     		s1l, s2l;
-    char		s2c;
+    signed char		s2c;
     short		s2s;
     unsigned char	s2uc;
     float		df, s1f, s2f;
@@ -1107,7 +1107,7 @@ sub initialize {
 
 	%type = (
         	"uc", "unsigned char",
-        	"c", "char",
+        	"c", "signed char",
         	"us", "unsigned short",
         	"s", "short",
         	"u", "unsigned",
