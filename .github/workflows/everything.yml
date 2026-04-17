@@ -113,23 +113,23 @@ jobs:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner || 'ubuntu-22.04' }}
     permissions:
       contents: read
       actions: write  # for cache save
+    env:
+      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ matrix.parallel }}
+      GH_YML_BASE_OS: Linux
+      GH_YML_MATRIX_OS: ${{ matrix.os }}
+      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+      CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.deps == 'external' && '-external' || '' }}
+      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}${{ matrix.deps == 'external' && '-external' || '' }}
       options: --shm-size=1g
-      env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ matrix.parallel }}
-        GH_YML_BASE_OS: Linux
-        GH_YML_MATRIX_OS: ${{ matrix.os }}
-        GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
-        GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
-        CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
-        CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
-        CCACHE_COMPRESS: true
-        CCACHE_COMPRESSLEVEL: 6
 
     strategy:
       fail-fast: false
@@ -179,6 +179,11 @@ jobs:
             compiler: gcc12
             parallel: mpich
             deps: external
+          - os: ubuntu22.04
+            compiler: gcc
+            parallel: mpich
+            runner: ubuntu-22.04-arm
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
@@ -193,9 +198,9 @@ jobs:
         id: restore-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ github.sha }}
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ github.sha }}
           restore-keys: |
-            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}
+            ccache-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}
       - name: Configure cache
         run: ccache -z
       - name: Setup
@@ -214,7 +219,7 @@ jobs:
         id: save-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ github.sha }}
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ github.sha }}
       - name: Test
         if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
