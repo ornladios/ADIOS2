@@ -50,7 +50,7 @@ if not rank:
         print(f"Incoming nproc = {in_nproc}")
         # array attribute is read as a numpy array or string list
         in_dims = ibpFile.read_attribute("temperature2D/dimensions")
-        print(f"Incoming diumensions = {in_dims}")
+        print(f"Incoming dimensions = {in_dims}")
 
         # On option is to inquire a variable to know its type, shape
         # directly, not as strings, and then we can use the variable
