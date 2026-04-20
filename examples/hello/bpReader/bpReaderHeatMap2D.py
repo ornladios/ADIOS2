@@ -52,7 +52,7 @@ if not rank:
         in_dims = ibpFile.read_attribute("temperature2D/dimensions")
         print(f"Incoming dimensions = {in_dims}")
 
-        # On option is to inquire a variable to know its type, shape
+        # One option is to inquire a variable to know its type, shape
         # directly, not as strings, and then we can use the variable
         # object to set selection and/or set steps to read
         var_inTemperature = ibpFile.inquire_variable("temperature2D")
