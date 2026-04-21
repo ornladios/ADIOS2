@@ -972,6 +972,7 @@ typedef struct _Rdma_RS_Stream
     uint64_t *RecvCounter;
     int PreloadAvail;
 
+    SstStats Stats;
     struct _SstParams *Params;
     struct _RdmaReaderContactInfo *ContactInfo;
 
@@ -1413,6 +1414,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
+    Stream->Stats = Stats;
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
@@ -2249,17 +2251,25 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
     Rdma_RS_Stream Stream = Handle->CPStream;
+    int Ret;
 
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Rank %d, %s\n", Stream->Rank, __func__);
 
     if (Stream->PreloadPosted && Handle->PreloadBuffer)
     {
-        return (DoPushWait(Svcs, Stream, Handle));
+        Ret = DoPushWait(Svcs, Stream, Handle);
     }
     else
     {
-        return (DoPullWait(Svcs, Stream, Handle));
+        Ret = DoPullWait(Svcs, Stream, Handle);
     }
+
+    if (Ret == 1)
+    {
+        Stream->Stats->DataBytesReceived += Handle->Length;
+    }
+
+    return Ret;
 }
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,

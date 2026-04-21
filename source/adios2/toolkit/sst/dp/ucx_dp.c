@@ -195,6 +195,7 @@ typedef struct _Ucx_RS_Stream
     void *CP_Stream;
     int Rank;
     FabricState Fabric;
+    SstStats Stats;
     struct _SstParams *Params;
 
     /* writer info */
@@ -263,6 +264,7 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream, void **Read
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
+    Stream->Stats = Stats;
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
@@ -587,6 +589,7 @@ static int UcxWaitForCompletion(CP_Services Svcs, void *Handle_v)
 
     if (status == UCS_OK)
     {
+        Stream->Stats->DataBytesReceived += Handle->Length;
         free(Handle);
         return 1;
     }

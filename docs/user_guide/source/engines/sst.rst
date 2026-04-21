@@ -157,8 +157,8 @@ the underlying network communication mechanism to use for exchanging
 data in SST.  Generally this is chosen by SST based upon what is
 available on the current platform.  However, specifying this engine
 parameter allows overriding SST's choice.  Current allowed values are
-**"UCX"**, **"MPI"**, **"RDMA"**, and **"WAN"**.  (**ib** and **fabric** are accepted as
-equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
+**"UCX"**, **"MPI"**, **"RDMA"**, **"Mercury"**, and **"WAN"**.  (**ib** and **fabric**
+are accepted as equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
 Generally both the reader and writer should be using the same network
 transport, and the network transport chosen may be dictated by the
 situation.  For example, the RDMA transport generally operates only
@@ -176,7 +176,19 @@ must be a data transport known to EVPath, such as **"sockets"**,
 be using the same EVPath-level data transport.  This value is
 interpreted by both SST Writer and Reader engines.
 
-8. ``ControlTransport``: Default **tcp**.  This string value specifies
+8. ``MercuryProtocol``: Default **"tcp"**.  If the SST **DataTransport**
+parameter is **"Mercury"**, this string value specifies the underlying
+Mercury NA (Network Abstraction) plugin and protocol string to use, in
+the form that Mercury accepts.  Typical values are **"cxi://"**
+(Slingshot/HPE-Cray interconnects such as Frontier and Perlmutter),
+**"ofi+tcp"** (libfabric over TCP), **"ofi+verbs"** (InfiniBand via
+libfabric), **"bmi+tcp"**, and **"na+sm"** (shared memory). If this
+parameter is not set, SST falls back to the ``SST_MERCURY_PROTOCOL``
+environment variable, and then to **"tcp"**.  Generally both the reader
+and writer should use the same protocol.  This value is interpreted by
+both SST Writer and Reader engines.
+
+9. ``ControlTransport``: Default **tcp**.  This string value specifies
 the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
 sockets, which are very reliable and efficient, but which are limited
@@ -188,7 +200,7 @@ equivalent to **scalable**.  Generally both the reader and writer
 should be using the same control transport.  This value is interpreted
 by both SST Writer and Reader engines.
 
-9. ``NetworkInterface``: Default **NULL**.  In situations in which
+10. ``NetworkInterface``: Default **NULL**.  In situations in which
 there are multiple possible network interfaces available to SST, this
 string value specifies which should be used to generate SST's contact
 information for writers.  Generally this should *NOT* be specified
@@ -201,14 +213,14 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-10. ``ControlInterface``: Default **NULL**.  This value is similar to the
+11. ``ControlInterface``: Default **NULL**.  This value is similar to the
 NetworkInterface parameter, but only applies to the SST layer which does
 messaging for control (open, close, flow and timestep management, but not
 actual data transfer).  Generally the NetworkInterface parameter can be used
 to control this, but that also aplies to the Data Plane.  Use
 ControlInterface in the event of conflicting specifications.
 
-11. ``DataInterface``: Default **NULL**.  This value is similar to the
+12. ``DataInterface``: Default **NULL**.  This value is similar to the
 NetworkInterface parameter, but only applies to the SST layer which does
 messaging for data transfer, not control (open, close, flow and timestep
 management).  Generally the NetworkInterface parameter can be used to
@@ -216,7 +228,7 @@ control this, but that also aplies to the Control Plane.  Use DataInterface
 in the event of conflicting specifications.  In the case of the RDMA data
 plane, this parameter controls the libfabric interface choice.
 
-12. ``FirstTimestepPrecious``: Default **FALSE**.
+13. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
 FirstTimestepPrecious is **TRUE**, then the first timestep is
@@ -232,7 +244,7 @@ other reader-side operations (like requesting the LatestAvailable
 timestep in Engine parameters) might still cause the timestep to be skipped.
 This value is interpreted by only by the SST Writer engine.
 
-13. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
+14. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
 AlwaysProvideLatestTimestep is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
 AlwaysProvideLatestTimestep is **TRUE**, then if there are multiple
@@ -240,14 +252,14 @@ timesteps available to the reader, older timesteps will be skipped and
 the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.
 
-14. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
+15. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
 parameter that specifies the number of seconds SST is to wait for a peer
 connection on Open().  Currently this is only implemented on the Reader side
 of SST, and is a timeout for locating the contact information file created
 by Writer-side Open, not for completing the entire Open() handshake.
 Currently value is interpreted by only by the SST Reader engine.
 
-15. ``SpeculativePreloadMode``: Default **AUTO**.  In some
+16. ``SpeculativePreloadMode``: Default **AUTO**.  In some
 circumstances, SST eagerly sends all data from writers to every
 readers without first waiting for read requests.  Generally this
 improves performance if every reader needs all the data, but can be
@@ -260,14 +272,14 @@ is less than or equal to the value of the ``SpecAutoNodeThreshold``
 engine parameter (Default value 1), eager sending is initiated.
 Currently value is interpreted by only by the SST Reader engine.
 
-16.  ``SpecAutoNodeThreshold``:  Default **1**.  If the size of the
+17.  ``SpecAutoNodeThreshold``:  Default **1**.  If the size of the
 reader cohort is less than or equal to this value *and* the
 ``SpeculativePreloadMode`` parameter is **AUTO**, SST will initiate
 eager data sending of all data from each writer to all readers.
 Currently value is interpreted by only by the SST Reader engine.
 
 
-17. ``StepDistributionMode``: Default **"AllToAll"**.  This value
+18. ``StepDistributionMode``: Default **"AllToAll"**.  This value
 controls how steps are distributed, particularly when there are
 multiple readers.  By default, the value is **"AllToAll"**, which
 means that all timesteps are to be delivered to all readers (subject
@@ -288,8 +300,9 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   QueueLimit                    integer               **0** (no queue limits)
   QueueFullPolicy               string                **Block**, Discard
   ReserveQueueLimit             integer               **0** (no queue limits)
-  DataTransport                 string                **default varies by platform**, UCX, MPI, RDMA, WAN
+  DataTransport                 string                **default varies by platform**, UCX, MPI, RDMA, Mercury, WAN
   WANDataTransport              string                **sockets**, enet, ib
+  MercuryProtocol               string                **tcp**, cxi://, ofi+tcp, ofi+verbs, bmi+tcp, na+sm
   ControlTransport              string                **TCP**, Scalable
   MarshalMethod                 string                **BP5**, BP, FFS
   NetworkInterface              string                **NULL**
@@ -325,3 +338,11 @@ Additionally to the above controls, finetuning for technical parameters of the d
     * ``SST_UCX_PROGRESS_THREAD``: Some setups of UCX may require progress threads. Unlike in the RDMA data plane, progress threads are not opened automatically, but must be requested by defining this environment variable as either ``1``, ``on`` or ``yes``. Any other value as well as no definition of the environment variable at all will not create progress threads.
 
     * Tip: For restricting UCX to communication with shared memory only, set ``UCX_TLS=shm``. Progress threads must be used on the writer and reader side. It might be necessary to additionally set ``UCX_POSIX_USE_PROC_LINK=n`` on some systems.
+
+* By the **Mercury data plane**:
+
+    * ``SST_MERCURY_PROTOCOL``: Fallback for the ``MercuryProtocol`` engine parameter. If ``MercuryProtocol`` is not set on the engine, this environment variable is consulted before falling back to the default of ``tcp``. Useful when the same binary needs to run on different interconnects without rebuilding or re-parameterizing.
+
+    * On Slingshot/CXI systems (e.g. Frontier, Perlmutter), the Mercury data plane automatically supplies an OFI auth key to Mercury's NA layer when ``SLINGSHOT_VNIS`` is defined in the environment (set by the batch system). No user action is required; specifying ``MercuryProtocol=cxi://`` (or the env-var fallback) is sufficient. Without the auth key, RDMA bulk transfers fail with ``EXDEV``.
+
+    * Platform guidance: use ``cxi://`` on HPE-Cray Slingshot systems, ``ofi+verbs`` or ``ofi+tcp`` on InfiniBand / Ethernet clusters, and ``na+sm`` for single-node shared-memory testing. Generally the same protocol string should be used on both writer and reader.
