@@ -1,3 +1,21 @@
+==============================
+What's new in Development
+==============================
+
+SST Mercury Data Plane
+-----------------------
+
+A new ``Mercury`` data plane for SST uses the Mercury/margo RPC framework
+to carry data, supporting multiple network backends through a single
+implementation: ``cxi://`` for HPE-Cray Slingshot (Frontier, Perlmutter),
+``ofi+tcp`` / ``ofi+verbs`` for libfabric-based fabrics, ``bmi+tcp``, and
+``na+sm`` for shared memory. The backend is selected at runtime via the
+``MercuryProtocol`` engine parameter, with an ``SST_MERCURY_PROTOCOL``
+environment-variable fallback. On Slingshot, the required OFI auth key is
+supplied automatically from ``SLINGSHOT_VNIS``. See the SST engine
+documentation for details.
+
+
 ======================
 What's new in v2.12?
 ======================
