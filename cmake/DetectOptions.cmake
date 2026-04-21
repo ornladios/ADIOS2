@@ -579,6 +579,19 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     set(ADIOS2_SST_HAVE_UCX TRUE)
     set(ADIOS2_HAVE_UCX TRUE)
   endif()
+
+  # Mercury
+  if(ADIOS2_USE_Mercury STREQUAL AUTO)
+    find_package(MERCURY 2.0.0 QUIET)
+    find_package(MARGO QUIET)
+  elseif(ADIOS2_USE_Mercury)
+    find_package(MERCURY 2.0.0 REQUIRED)
+    find_package(MARGO REQUIRED)
+  endif()
+  if(MERCURY_FOUND AND MARGO_FOUND)
+    set(ADIOS2_SST_HAVE_MERCURY TRUE)
+    set(ADIOS2_HAVE_MERCURY TRUE)
+  endif()
 endif()
 
 # DAOS
