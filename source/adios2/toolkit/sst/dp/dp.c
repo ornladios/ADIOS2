@@ -33,6 +33,9 @@ extern CP_DP_Interface LoadDaosDP();
 #ifdef ADIOS2_HAVE_MPI
 extern CP_DP_Interface LoadMpiDP();
 #endif /* ADIOS2_HAVE_MPI */
+#ifdef SST_HAVE_MERCURY
+extern CP_DP_Interface LoadMercuryDP();
+#endif /* SST_HAVE_MERCURY */
 extern CP_DP_Interface LoadEVpathDP();
 
 typedef struct _DPElement
@@ -84,6 +87,10 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
 #ifdef SST_HAVE_DAOS
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadDaosDP(), "daos", Params);
 #endif /* SST_HAVE_DAOS */
+
+#ifdef SST_HAVE_MERCURY
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadMercuryDP(), "mercury", Params);
+#endif /* SST_HAVE_MERCURY */
 
 #ifdef ADIOS2_HAVE_MPI
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadMpiDP(), "mpi", Params);

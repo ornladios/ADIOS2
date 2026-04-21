@@ -54,6 +54,11 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(sst PRIVATE MPI::MPI_C)
 endif()
 
+if(ADIOS2_SST_HAVE_MERCURY)
+  target_sources(sst PRIVATE dp/mercury_dp.c)
+  target_link_libraries(sst PRIVATE mercury::mercury margo::margo)
+endif()
+
 # Set library version information
 set_target_properties(sst PROPERTIES
   OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_sst
@@ -67,6 +72,7 @@ set_target_properties(sst PROPERTIES
 set(SST_CONFIG_OPTS
   LIBFABRIC
   UCX
+  MERCURY
   FI_GNI
   CRAY_DRC
   CRAY_CXI

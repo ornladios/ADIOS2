@@ -66,6 +66,7 @@ typedef struct _SstStats
     MACRO(StepDistributionMode, StepDistributionMode, size_t, StepsAllToAll)                       \
     MACRO(DataTransport, String, char *, NULL)                                                     \
     MACRO(WANDataTransport, String, char *, NULL)                                                  \
+    MACRO(MercuryProtocol, String, char *, NULL)                                                   \
     MACRO(OpenTimeoutSecs, Int, int, 60)                                                           \
     MACRO(RendezvousReaderCount, Int, int, 1)                                                      \
     MACRO(QueueLimit, Int, int, 0)                                                                 \
