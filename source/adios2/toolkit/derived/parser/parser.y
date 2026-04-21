@@ -39,6 +39,7 @@
 %code {
 #include "ASTDriver.h"
 #include "ASTNode.h"
+#include <sstream>
 #include <string>
 }
 
@@ -51,16 +52,24 @@
   R_PAREN ")"
   L_BRACE "["
   R_BRACE "]"
+  PLUS    "+"
+  MINUS   "-"
+  STAR    "*"
+  SLASH   "/"
+  CARET   "^"
 ;
 
-%token <std::string> OPERATOR
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
 %token <double> NUM
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
-%left OPERATOR
+
+%left PLUS MINUS
+%left STAR SLASH
+%precedence UMINUS
+%right CARET
 
 %%
 %start lines;
@@ -78,11 +87,17 @@ assignment:
 
 exp:
   NUM { drv.add_number($1); }
-| exp OPERATOR exp { drv.createNode($2, 2); }
+| exp "+" exp   { drv.createNode("ADD", 2); }
+| exp "-" exp   { drv.createNode("SUBTRACT", 2); }
+| exp "*" exp   { drv.createNode("MULT", 2); }
+| exp "/" exp   { drv.createNode("DIV", 2); }
+| exp "^" exp   { drv.createNode("POW", 2); }
+| "-" exp %prec UMINUS  { drv.createNode("NEGATE", 1); }
 | "(" exp ")" {  }
 | IDENTIFIER "(" list ")" { drv.createNode($1, $3); }
 | IDENTIFIER "[" indices_list "]" { drv.createNode($1, $3); }
 | IDENTIFIER  { drv.createNode($1); }
+| VARNAME  { drv.createNode($1); }
 ;
 
 
@@ -118,5 +133,8 @@ list:
 void
 adios2::detail::parser::error (const location_type& l, const std::string& m)
 {
-  std::cerr << l << ": " << m << '\n';
+  std::ostringstream os;
+  os << l << ": " << m;
+  drv.hasError = true;
+  drv.errorMessage = os.str();
 }

@@ -29,8 +29,10 @@ ASTDriver::~ASTDriver()
 
 ASTNode *ASTDriver::getAST()
 {
+    if (hasError)
+        throw std::invalid_argument("Failed to parse derived expression: " + errorMessage);
     if (holding.size() == 0)
-        throw std::runtime_error("ERROR: the derived expression is null");
+        throw std::invalid_argument("Derived expression is empty");
     resolve(holding.top());
     return holding.top();
 }
@@ -39,10 +41,17 @@ void ASTDriver::resolve(ASTNode *node)
 {
     if (!node->get_alias().empty())
     {
-        std::tuple<std::string, indx_type> var_info;
-        var_info = lookup_var(node->get_alias());
-        node->set_varname(std::get<0>(var_info));
-        node->set_indices(std::get<1>(var_info));
+        auto it = aliases.find(node->get_alias());
+        if (it != aliases.end())
+        {
+            node->set_varname(std::get<0>(it->second));
+            node->set_indices(std::get<1>(it->second));
+        }
+        else
+        {
+            // No alias defined — treat the name as a direct variable reference
+            node->set_varname(node->get_alias());
+        }
     }
     for (ASTNode *subexpr : node->get_subexprs())
     {

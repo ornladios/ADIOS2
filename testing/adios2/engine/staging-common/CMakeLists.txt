@@ -10,11 +10,9 @@
 find_package(Threads REQUIRED)
 
 if(ADIOS2_HAVE_SST)
-  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
-  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST" EXTRA_ARGS "SST")
   gtest_add_tests_helper(OnDemandMPI MPI_ONLY "" Engine.Staging. ".SST" EXTRA_ARGS "SST" "OnDemandContact")
-  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=FFS")
-  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=BP")
+  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST" EXTRA_ARGS "SST")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".BP4_stream" EXTRA_ARGS "BP4"  "--engine_params" "OpenTimeoutSecs=5")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".FileStream" EXTRA_ARGS "FileStream")
 endif()
@@ -215,20 +213,7 @@ MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
-MutateTestSet( BP5_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
-MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
-
-# no SSE engine does Joined
-list (FILTER BP_SST_TESTS EXCLUDE REGEX "Joined*")
-
-set (SST_TESTS "")
-LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS})
-
-# Zero Data tests are unreliable with SST and BP marshaling
-list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
-
-# BP Marshalling doesn't support Struct data
-list (FILTER SST_TESTS EXCLUDE REGEX "1x1Struct.*BP$")
+MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)

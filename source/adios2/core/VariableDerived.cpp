@@ -12,13 +12,15 @@ namespace adios2
 namespace core
 {
 
-VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expression expr,
-                                 const DataType exprType, const bool isConstant,
-                                 const DerivedVarType varType,
+VariableDerived::VariableDerived(const std::string &name, adios2::derived::ExprNode exprTree,
+                                 adios2::derived::ExprCodeStream codeStream,
+                                 const std::string &exprString, const DataType exprType,
+                                 const Dims &shape, const Dims &start, const Dims &count,
+                                 const bool isConstant, const DerivedVarType varType,
                                  const std::map<std::string, DataType> nameToType)
-: VariableBase(name, exprType, helper::GetDataTypeSize(exprType), expr.GetShape(), expr.GetStart(),
-               expr.GetCount(), isConstant),
-  m_DerivedType(varType), m_NameToType(nameToType), m_Expr(expr)
+: VariableBase(name, exprType, helper::GetDataTypeSize(exprType), shape, start, count, isConstant),
+  m_DerivedType(varType), m_NameToType(nameToType), m_ExprTree(std::move(exprTree)),
+  m_CodeStream(std::move(codeStream)), m_ExprString(exprString)
 {
     if (varType != DerivedVarType::StoreData)
         m_WriteData = false;
@@ -26,18 +28,21 @@ VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expre
 
 DerivedVarType VariableDerived::GetDerivedType() { return m_DerivedType; }
 
-std::vector<std::string> VariableDerived::VariableNameList() { return m_Expr.VariableNameList(); }
+std::vector<std::string> VariableDerived::VariableNameList() { return m_CodeStream.InputVarNames; }
+
 void VariableDerived::UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
-    m_Expr.SetDims(NameToDims);
-    m_Shape = m_Expr.GetShape();
-    m_Start = m_Expr.GetStart();
-    m_Count = m_Expr.GetCount();
+    auto outDims = adios2::derived::GetDims(m_CodeStream, NameToDims);
+    m_Shape = std::get<2>(outDims);
+    m_Start = std::get<0>(outDims);
+    m_Count = std::get<1>(outDims);
+    if (!m_Shape.empty())
+        m_ShapeID = ShapeID::GlobalArray;
 }
 
 std::vector<std::tuple<void *, Dims, Dims>>
 VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToMVI,
-                                 bool DoCompute)
+                                 bool DoCompute, const Dims &outputStart, const Dims &outputCount)
 {
     size_t numBlocks = 0;
     // check that all variables have the same number of blocks
@@ -80,7 +85,7 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
         inputData.insert({variable.first, varData});
     }
     std::vector<adios2::derived::DerivedData> outputData =
-        m_Expr.ApplyExpression(numBlocks, inputData);
+        adios2::derived::Execute(m_CodeStream, numBlocks, inputData, outputStart, outputCount);
 
     std::vector<std::tuple<void *, Dims, Dims>> blockData;
     for (size_t i = 0; i < numBlocks; i++)
@@ -115,7 +120,7 @@ VariableDerived::CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInf
             nameToDims.insert({variable.first, varDims});
         }
 
-        auto outputDims = m_Expr.GetDims(nameToDims);
+        auto outputDims = adios2::derived::GetDims(m_CodeStream, nameToDims);
 
         blockData.push_back({nullptr, std::get<0>(outputDims), std::get<1>(outputDims)});
     }

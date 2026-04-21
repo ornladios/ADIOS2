@@ -218,12 +218,11 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         std::vector<float> readMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readConstMult(mpiSize * Nx * Ny * Nz);
         std::vector<float> readDiv(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readPow(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readPow3(mpiSize * Nx * Ny * Nz);
-        std::vector<double> readSqrt(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readPow(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readPow3(mpiSize * Nx * Ny * Nz);
+        std::vector<float> readSqrt(mpiSize * Nx * Ny * Nz);
 
         float calcFloat;
-        double calcDouble;
         float epsilon = (float)0.01;
         bpFileReader.BeginStep();
         auto varUx = bpIn.InquireVariable<float>(varname[0]);
@@ -236,9 +235,9 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
         auto varMult = bpIn.InquireVariable<float>(derMultName);
         auto varConstMult = bpIn.InquireVariable<float>(derConstMult);
         auto varDiv = bpIn.InquireVariable<float>(derDivName);
-        auto varPow = bpIn.InquireVariable<double>(derPowName);
-        auto varPow3 = bpIn.InquireVariable<double>(derPow3Name);
-        auto varSqrt = bpIn.InquireVariable<double>(derSqrtName);
+        auto varPow = bpIn.InquireVariable<float>(derPowName);
+        auto varPow3 = bpIn.InquireVariable<float>(derPow3Name);
+        auto varSqrt = bpIn.InquireVariable<float>(derSqrtName);
 
         bpFileReader.Get(varUx, readUx);
         bpFileReader.Get(varUy, readUy);
@@ -276,14 +275,14 @@ TEST_P(DerivedCorrectnessMPIP, ScalarFunctionsCorrectnessTest)
             calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
 
-            calcDouble = std::pow(readUx[ind], 2);
-            EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
+            calcFloat = static_cast<float>(std::pow(readUx[ind], 2));
+            EXPECT_TRUE(fabs(calcFloat - readPow[ind]) < epsilon);
 
-            calcDouble = std::pow(readUx[ind], 3);
-            EXPECT_TRUE(fabs(calcDouble - readPow3[ind]) < epsilon);
+            calcFloat = static_cast<float>(std::pow(readUx[ind], 3));
+            EXPECT_TRUE(fabs(calcFloat - readPow3[ind]) < epsilon);
 
-            calcDouble = std::sqrt(readUx[ind]);
-            EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
+            calcFloat = std::sqrt(readUx[ind]);
+            EXPECT_TRUE(fabs(calcFloat - readSqrt[ind]) < epsilon);
         }
 
         for (size_t ind = 0; ind < Nx * Ny; ++ind)
@@ -455,6 +454,132 @@ TEST_P(DerivedCorrectnessMPIP, TrigCorrectnessTest)
             EXPECT_TRUE(fabs(calcTrig - readAtan[ind]) < epsilon);
         }
         bpFileReader.Close();
+    }
+}
+
+TEST_P(DerivedCorrectnessMPIP, CurlSubSelectionTest)
+{
+    int mpiRank = 0, mpiSize = 1;
+    adios2::DerivedVarType mode = GetParam();
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string filename("ADIOS2BPWriteDerivedCurlSubSel_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string filename("ADIOS2BPWriteDerivedCurlSubSelMPISerial.bp");
+    adios2::ADIOS adios;
+#endif
+
+    // Each rank writes a slab of Nx in the X dimension
+    const size_t Nx = 10, Ny = 30, Nz = 13;
+    const size_t globalNx = Nx * mpiSize;
+
+    std::vector<float> simArray1(Nx * Ny * Nz);
+    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<float> simArray3(Nx * Ny * Nz);
+    for (size_t i = 0; i < Nx; ++i)
+    {
+        for (size_t j = 0; j < Ny; ++j)
+        {
+            for (size_t k = 0; k < Nz; ++k)
+            {
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(mpiRank * Nx + i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
+                simArray1[idx] = (6 * x * y) + (7 * z);
+                simArray2[idx] = (4 * x * z) + powf(y, 2);
+                simArray3[idx] = sqrtf(z) + (2 * x * y);
+            }
+        }
+    }
+
+    adios2::IO bpOut = adios.DeclareIO("BPCurlSubSelMPIWrite");
+    std::vector<std::string> varname = {"sim5/VX", "sim5/VY", "sim5/VZ"};
+    std::string derivedname = "derived/curlSubSelMPI";
+
+    auto VX = bpOut.DefineVariable<float>(varname[0], {globalNx, Ny, Nz},
+                                          {Nx * (size_t)mpiRank, 0, 0}, {Nx, Ny, Nz});
+    auto VY = bpOut.DefineVariable<float>(varname[1], {globalNx, Ny, Nz},
+                                          {Nx * (size_t)mpiRank, 0, 0}, {Nx, Ny, Nz});
+    auto VZ = bpOut.DefineVariable<float>(varname[2], {globalNx, Ny, Nz},
+                                          {Nx * (size_t)mpiRank, 0, 0}, {Nx, Ny, Nz});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derivedname,
+                                "Vx =" + varname[0] + " \n"
+                                "Vy =" + varname[1] + " \n"
+                                "Vz =" + varname[2] + " \n"
+                                "curl(Vx,Vy,Vz)",
+                                mode);
+    // clang-format on
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(VX, simArray1.data());
+    bpFileWriter.Put(VY, simArray2.data());
+    bpFileWriter.Put(VZ, simArray3.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    if (mpiRank == 0)
+    {
+        // Read a sub-selection of curl that spans multiple blocks
+        adios2::ADIOS adiosRead;
+        adios2::IO bpIn = adiosRead.DeclareIO("BPCurlSubSelMPIRead");
+        adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+        bpFileReader.BeginStep();
+        auto varCurl = bpIn.InquireVariable<float>(derivedname);
+        ASSERT_TRUE(varCurl);
+
+        EXPECT_EQ(varCurl.Shape().size(), 4);
+        EXPECT_EQ(varCurl.Shape()[0], globalNx);
+        EXPECT_EQ(varCurl.Shape()[1], Ny);
+        EXPECT_EQ(varCurl.Shape()[2], Nz);
+        EXPECT_EQ(varCurl.Shape()[3], 3);
+
+        // Select a region that spans across rank boundaries.
+        // Each rank writes Nx=10 in x, so start near the end of rank 0's block
+        // to guarantee we span into rank 1's block (when mpiSize >= 2).
+        size_t selX = Nx - 3, selY = 5, selZ = 1;
+        size_t selNx = std::min(Nx, globalNx - selX); // 10 elements spanning the boundary
+        size_t selNy = 10, selNz = 5;
+        varCurl.SetSelection({{selX, selY, selZ, 0}, {selNx, selNy, selNz, 3}});
+
+        std::vector<float> readCurl(selNx * selNy * selNz * 3);
+        bpFileReader.Get(varCurl, readCurl);
+        bpFileReader.EndStep();
+
+        float error_limit = 0.0000001f;
+        double sum_x = 0, sum_y = 0, sum_z = 0;
+        for (size_t i = 0; i < selNx; ++i)
+        {
+            for (size_t j = 0; j < selNy; ++j)
+            {
+                for (size_t k = 0; k < selNz; ++k)
+                {
+                    size_t idx = (i * selNy * selNz) + (j * selNz) + k;
+                    float x = static_cast<float>(selX + i);
+                    float y = static_cast<float>(selY + j);
+                    float z = static_cast<float>(selZ + k);
+                    float curl_x = -(2 * x);
+                    float curl_y = 7 - (2 * y);
+                    float curl_z = (4 * z) - (6 * x);
+                    float err_x = fabs(curl_x - readCurl[3 * idx]) /
+                                  (fabs(curl_x) < 1 ? (1 + fabs(curl_x)) : fabs(curl_x));
+                    float err_y = fabs(curl_y - readCurl[3 * idx + 1]) /
+                                  (fabs(curl_y) < 1 ? (1 + fabs(curl_y)) : fabs(curl_y));
+                    float err_z = fabs(curl_z - readCurl[3 * idx + 2]) /
+                                  (fabs(curl_z) < 1 ? (1 + fabs(curl_z)) : fabs(curl_z));
+                    sum_x += err_x;
+                    sum_y += err_y;
+                    sum_z += err_z;
+                }
+            }
+        }
+        bpFileReader.Close();
+        EXPECT_LT(sum_x / (selNx * selNy * selNz), error_limit);
+        EXPECT_LT(sum_y / (selNx * selNy * selNz), error_limit);
+        EXPECT_LT(sum_z / (selNx * selNy * selNz), error_limit);
     }
 }
 

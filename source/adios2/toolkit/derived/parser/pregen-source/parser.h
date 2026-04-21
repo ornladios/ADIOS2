@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // A Bison parser, made by GNU Bison 3.8.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
@@ -38,7 +32,7 @@
 
 
 /**
- ** \file parser.h
+ ** \file pregen-source/parser.h
  ** Define the adios2::detail::parser class.
  */
 
@@ -48,10 +42,10 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
-#ifndef YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_PARSER_H_INCLUDED
-# define YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_PARSER_H_INCLUDED
+#ifndef YY_YY_PREGEN_SOURCE_PARSER_H_INCLUDED
+# define YY_YY_PREGEN_SOURCE_PARSER_H_INCLUDED
 // "%code requires" blocks.
-#line 11 "../parser.y"
+#line 17 "parser.y"
 
   #include <tuple>
   #include <vector>
@@ -64,7 +58,7 @@
     }
   }
 
-#line 62 "parser.h"
+#line 62 "pregen-source/parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -109,7 +103,7 @@
 #else
 # define YY_CONSTEXPR
 #endif
-# include "location.hh"
+# include "pregen-source/location.hh"
 #include <typeinfo>
 #ifndef YY_ASSERT
 # include <cassert>
@@ -203,9 +197,9 @@
 # define YYDEBUG 1
 #endif
 
-#line 6 "../parser.y"
+#line 12 "parser.y"
 namespace adios2 { namespace detail {
-#line 203 "parser.h"
+#line 203 "pregen-source/parser.h"
 
 
 
@@ -430,7 +424,6 @@ namespace adios2 { namespace detail {
       // list
       char dummy2[sizeof (int)];
 
-      // OPERATOR
       // "identifier"
       // VARNAME
       char dummy3[sizeof (std::string)];
@@ -496,10 +489,15 @@ namespace adios2 { namespace detail {
     TOK_R_PAREN = 7,               // ")"
     TOK_L_BRACE = 8,               // "["
     TOK_R_BRACE = 9,               // "]"
-    TOK_OPERATOR = 10,             // OPERATOR
-    TOK_IDENTIFIER = 11,           // "identifier"
-    TOK_VARNAME = 12,              // VARNAME
-    TOK_NUM = 13                   // NUM
+    TOK_PLUS = 10,                 // "+"
+    TOK_MINUS = 11,                // "-"
+    TOK_STAR = 12,                 // "*"
+    TOK_SLASH = 13,                // "/"
+    TOK_CARET = 14,                // "^"
+    TOK_IDENTIFIER = 15,           // "identifier"
+    TOK_VARNAME = 16,              // VARNAME
+    TOK_NUM = 17,                  // NUM
+    TOK_UMINUS = 18                // UMINUS
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -516,7 +514,7 @@ namespace adios2 { namespace detail {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 14, ///< Number of tokens.
+        YYNTOKENS = 19, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -528,16 +526,21 @@ namespace adios2 { namespace detail {
         S_R_PAREN = 7,                           // ")"
         S_L_BRACE = 8,                           // "["
         S_R_BRACE = 9,                           // "]"
-        S_OPERATOR = 10,                         // OPERATOR
-        S_IDENTIFIER = 11,                       // "identifier"
-        S_VARNAME = 12,                          // VARNAME
-        S_NUM = 13,                              // NUM
-        S_YYACCEPT = 14,                         // $accept
-        S_lines = 15,                            // lines
-        S_assignment = 16,                       // assignment
-        S_exp = 17,                              // exp
-        S_indices_list = 18,                     // indices_list
-        S_list = 19                              // list
+        S_PLUS = 10,                             // "+"
+        S_MINUS = 11,                            // "-"
+        S_STAR = 12,                             // "*"
+        S_SLASH = 13,                            // "/"
+        S_CARET = 14,                            // "^"
+        S_IDENTIFIER = 15,                       // "identifier"
+        S_VARNAME = 16,                          // VARNAME
+        S_NUM = 17,                              // NUM
+        S_UMINUS = 18,                           // UMINUS
+        S_YYACCEPT = 19,                         // $accept
+        S_lines = 20,                            // lines
+        S_assignment = 21,                       // assignment
+        S_exp = 22,                              // exp
+        S_indices_list = 23,                     // indices_list
+        S_list = 24                              // list
       };
     };
 
@@ -582,7 +585,6 @@ namespace adios2 { namespace detail {
         value.move< int > (std::move (that.value));
         break;
 
-      case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
         value.move< std::string > (std::move (that.value));
@@ -703,7 +705,6 @@ switch (yykind)
         value.template destroy< int > ();
         break;
 
-      case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
         value.template destroy< std::string > ();
@@ -811,7 +812,8 @@ switch (yykind)
       {
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::TOK_YYEOF
-                   || (token::TOK_YYerror <= tok && tok <= token::TOK_R_BRACE));
+                   || (token::TOK_YYerror <= tok && tok <= token::TOK_CARET)
+                   || tok == token::TOK_UMINUS);
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -835,7 +837,7 @@ switch (yykind)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
-        YY_ASSERT ((token::TOK_OPERATOR <= tok && tok <= token::TOK_VARNAME));
+        YY_ASSERT ((token::TOK_IDENTIFIER <= tok && tok <= token::TOK_VARNAME));
 #endif
       }
     };
@@ -1039,16 +1041,76 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_OPERATOR (std::string v, location_type l)
+      make_PLUS (location_type l)
       {
-        return symbol_type (token::TOK_OPERATOR, std::move (v), std::move (l));
+        return symbol_type (token::TOK_PLUS, std::move (l));
       }
 #else
       static
       symbol_type
-      make_OPERATOR (const std::string& v, const location_type& l)
+      make_PLUS (const location_type& l)
       {
-        return symbol_type (token::TOK_OPERATOR, v, l);
+        return symbol_type (token::TOK_PLUS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_MINUS (location_type l)
+      {
+        return symbol_type (token::TOK_MINUS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_MINUS (const location_type& l)
+      {
+        return symbol_type (token::TOK_MINUS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_STAR (location_type l)
+      {
+        return symbol_type (token::TOK_STAR, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_STAR (const location_type& l)
+      {
+        return symbol_type (token::TOK_STAR, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SLASH (location_type l)
+      {
+        return symbol_type (token::TOK_SLASH, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SLASH (const location_type& l)
+      {
+        return symbol_type (token::TOK_SLASH, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CARET (location_type l)
+      {
+        return symbol_type (token::TOK_CARET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CARET (const location_type& l)
+      {
+        return symbol_type (token::TOK_CARET, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1094,6 +1156,21 @@ switch (yykind)
       make_NUM (const double& v, const location_type& l)
       {
         return symbol_type (token::TOK_NUM, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_UMINUS (location_type l)
+      {
+        return symbol_type (token::TOK_UMINUS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_UMINUS (const location_type& l)
+      {
+        return symbol_type (token::TOK_UMINUS, l);
       }
 #endif
 
@@ -1204,7 +1281,7 @@ switch (yykind)
 
 #if YYDEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-    static const signed char yyrline_[];
+    static const unsigned char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
@@ -1440,9 +1517,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 37,     ///< Last index in yytable_.
+      yylast_ = 58,     ///< Last index in yytable_.
       yynnts_ = 6,  ///< Number of nonterminal symbols.
-      yyfinal_ = 12 ///< Termination state number.
+      yyfinal_ = 15 ///< Termination state number.
     };
 
 
@@ -1475,7 +1552,6 @@ switch (yykind)
         value.copy< int > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
         value.copy< std::string > (YY_MOVE (that.value));
@@ -1524,7 +1600,6 @@ switch (yykind)
         value.move< int > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_OPERATOR: // OPERATOR
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
         value.move< std::string > (YY_MOVE (s.value));
@@ -1599,11 +1674,11 @@ switch (yykind)
   }
 
 
-#line 6 "../parser.y"
+#line 12 "parser.y"
 } } // adios2::detail
-#line 1599 "parser.h"
+#line 1680 "pregen-source/parser.h"
 
 
 
 
-#endif // !YY_YY_USERS_95J_SOFTWARE_BUILD_ADIOS2_SOURCE_ADIOS2_PARSER_H_INCLUDED
+#endif // !YY_YY_PREGEN_SOURCE_PARSER_H_INCLUDED

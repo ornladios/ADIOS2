@@ -7,6 +7,8 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -948,9 +950,9 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
         }
     }
 
-    derived::Expression derived_exp(exp_string);
-    std::vector<std::string> var_list = derived_exp.VariableNameList();
-    bool isConstant = true;
+    // Parse expression string into ExprNode tree
+    derived::ExprNode exprTree = detail::ParseToExprNode(exp_string);
+    std::vector<std::string> var_list = derived::VariableNameList(exprTree);
     std::map<std::string, DataType> name_to_type;
     std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
     // check correctness for the variable names and types within the expression
@@ -963,22 +965,32 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
                                                      " in defining the derived variable " + name);
         DataType var_type = InquireVariableType(var_name);
         name_to_type.insert({var_name, var_type});
-        if ((itVariable->second)->IsConstantDims() == false)
-            isConstant = false;
         name_to_dims.insert({var_name,
                              {(itVariable->second)->m_Start, (itVariable->second)->m_Count,
                               (itVariable->second)->m_Shape}});
     }
-    // set the type of the expression and check correcness
-    DataType expressionType = derived_exp.GetType(name_to_type);
-    // set the initial shape of the expression and check correcness
-    derived_exp.SetDims(name_to_dims);
-    // std::cout << "Derived variable " << name << ": PASS : initial variable dimensions are valid"
-    //          << std::endl;
 
-    // create derived variable with the expression
+    // Resolve types on tree, then generate code, then run linear passes
+    derived::ResolveTreeTypes(exprTree, name_to_type);
+    derived::ExprCodeStream codeStream = derived::GenerateCode(exprTree);
+    codeStream.ExprString = exp_string;
+    derived::SemanticsPass(codeStream, name_to_type);
+    derived::PlanBuffers(codeStream);
+    DataType expressionType = codeStream.OutputType;
+
+    {
+        static bool verbose = (getenv("DerivedVerbose") != nullptr);
+        if (verbose)
+            std::cerr << derived::DumpCodeStream(codeStream);
+    }
+
+    // Compute output dims before construction (VariableBase validates in InitShapeType)
+    auto outDims = derived::GetDims(codeStream, name_to_dims);
+
     auto itVariablePair = m_VariablesDerived.emplace(
-        name, std::make_unique<VariableDerived>(name, derived_exp, expressionType, isConstant,
+        name, std::make_unique<VariableDerived>(name, std::move(exprTree), std::move(codeStream),
+                                                exp_string, expressionType, std::get<2>(outDims),
+                                                std::get<0>(outDims), std::get<1>(outDims), false,
                                                 varType, name_to_type));
     VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
 

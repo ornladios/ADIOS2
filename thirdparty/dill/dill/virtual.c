@@ -528,15 +528,15 @@ dump_bbs(dill_stream c)
 
 #if defined(__GNUC__) && !defined(__clang__)
 #if defined __GNUC__ && defined __GNUC_MINOR__
-# define __GNUC_PREREQ(maj, min) \
-        ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+#define __GNUC_PREREQ(maj, min)                                                \
+    ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
 #else
-# define __GNUC_PREREQ(maj, min) 0
+#define __GNUC_PREREQ(maj, min) 0
 #endif
-#  if __GNUC_PREREQ(4,6)
+#if __GNUC_PREREQ(4, 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
-#  endif
+#endif
 #endif
 /* overflow is confused about operation on bit_vec->vec, suppress warning */
 static int
@@ -567,9 +567,9 @@ remove_regs(bit_vec dest, bit_vec src)
     }
 }
 #if defined(__GNUC__) && !defined(__clang__)
-#  if __GNUC_PREREQ(4,6)
+#if __GNUC_PREREQ(4, 6)
 #pragma GCC diagnostic pop
-#  endif
+#endif
 #endif
 
 static void
@@ -1581,6 +1581,106 @@ do_register_assign(dill_stream c,
     }
 }
 
+typedef struct {
+    int vreg_idx;
+    int score;
+    int typ;
+} global_assign_candidate;
+
+static int
+compare_candidates(const void* a, const void* b)
+{
+    const global_assign_candidate* ca = (const global_assign_candidate*)a;
+    const global_assign_candidate* cb = (const global_assign_candidate*)b;
+    return cb->score - ca->score; /* descending by score */
+}
+
+static void
+do_global_assign(dill_stream c, virtual_mach_info vmi)
+{
+    int i, j;
+    int candidate_count = 0;
+    global_assign_candidate* candidates;
+
+    /* Initialize all vregs */
+    for (i = 0; i < c->p->vreg_count; i++) {
+        c->p->vregs[i].preg = -1;
+        c->p->vregs[i].need_assign = 0;
+    }
+
+    /* Collect cross-block vregs: those live_at_end in any basic block */
+    candidates = malloc(sizeof(global_assign_candidate) * c->p->vreg_count);
+    for (i = 0; i < c->p->vreg_count; i++) {
+        int is_cross_block = 0;
+        if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V)
+            continue;
+        if (c->p->vregs[i].use_info.use_count == 0 &&
+            c->p->vregs[i].use_info.def_count == 0)
+            continue;
+        for (j = 0; j < vmi->bbcount; j++) {
+            if (bit_vec_is_set(vmi->bblist[j].live_at_end, i)) {
+                is_cross_block = 1;
+                break;
+            }
+        }
+        if (is_cross_block) {
+            candidates[candidate_count].vreg_idx = i;
+            candidates[candidate_count].score =
+                c->p->vregs[i].use_info.use_count +
+                c->p->vregs[i].use_info.def_count;
+            candidates[candidate_count].typ = c->p->vregs[i].typ;
+            candidate_count++;
+        }
+    }
+
+    /* Sort by score descending — most-used vregs get registers first */
+    if (candidate_count > 0)
+        qsort(candidates, candidate_count, sizeof(global_assign_candidate),
+              compare_candidates);
+
+    /* Allocate physical registers for top candidates.
+     * Reserve MIN_ONDEMAND registers so the on-demand allocator in
+     * select_reg() can still function for non-pre-assigned vregs.
+     */
+#define MIN_ONDEMAND_RESERVE 3
+    for (i = 0; i < candidate_count; i++) {
+        int preg;
+        int idx = candidates[i].vreg_idx;
+        int probe[MIN_ONDEMAND_RESERVE];
+        int got, k;
+
+        if (dill_raw_getreg(c, &preg, candidates[i].typ, DILL_VAR) == 0)
+            break; /* no more registers available */
+
+        /* Verify enough registers remain for on-demand allocation */
+        got = 0;
+        for (k = 0; k < MIN_ONDEMAND_RESERVE; k++) {
+            if (dill_raw_getreg(c, &probe[k], candidates[i].typ, DILL_VAR))
+                got++;
+            else
+                break;
+        }
+        /* Return probe registers */
+        for (k = 0; k < got; k++)
+            dill_raw_putreg(c, probe[k], candidates[i].typ);
+
+        if (got < MIN_ONDEMAND_RESERVE) {
+            /* Pool is too depleted — return this register and stop */
+            dill_raw_putreg(c, preg, candidates[i].typ);
+            break;
+        }
+
+        c->p->vregs[idx].preg = preg;
+        c->p->vregs[idx].need_assign = 1;
+        if (c->dill_debug)
+            printf("Global assign: vreg %d (score %d) -> preg %d\n", idx + 100,
+                   candidates[i].score, preg);
+        /* Don't putreg — keep it reserved for the lifetime of the function */
+    }
+
+    free(candidates);
+}
+
 static int
 preg_of(dill_stream c, basic_block bb, int vreg)
 {
@@ -1785,7 +1885,7 @@ typedef struct label_translation {
     int old_location;
     int old_label;
     int new_label;
-} * label_translation_table;
+}* label_translation_table;
 
 static int
 get_new_label(int old_label, label_translation_table ltable)
@@ -2653,11 +2753,39 @@ init_reg_state(reg_state* state, dill_stream c)
 }
 
 static void
+ensure_preg_capacity(reg_state* state, int preg)
+{
+    if (preg >= state->reg_count) {
+        int i;
+        state->fpregs = realloc(state->fpregs, sizeof(preg_info) * (preg + 1));
+        state->ipregs = realloc(state->ipregs, sizeof(preg_info) * (preg + 1));
+        for (i = state->reg_count; i <= preg; i++) {
+            state->ipregs[i].holds = state->fpregs[i].holds = -1;
+        }
+        state->reg_count = preg + 1;
+    }
+}
+
+static void
 reset_reg_state(reg_state* state)
 {
     int i;
+    dill_stream c = state->c;
     for (i = 0; i < state->reg_count; i++) {
         state->fpregs[i].holds = state->ipregs[i].holds = -1;
+    }
+    /* Re-populate pre-assigned register holdings */
+    for (i = 0; i < c->p->vreg_count; i++) {
+        if (c->p->vregs[i].need_assign == 1 && c->p->vregs[i].preg != -1) {
+            int preg = c->p->vregs[i].preg;
+            int typ = c->p->vregs[i].typ;
+            ensure_preg_capacity(state, preg);
+            if (typ == DILL_F || typ == DILL_D) {
+                state->fpregs[preg].holds = i + 100;
+            } else {
+                state->ipregs[preg].holds = i + 100;
+            }
+        }
     }
 }
 
@@ -2828,6 +2956,13 @@ spill_current_pregs(reg_state* state)
         for (i = 0; i < state->reg_count; i++) {
             int vreg = pregs[i].holds;
             if (vreg >= 100) {
+                int is_preassigned = (vregs[vreg - 100].need_assign == 1 &&
+                                      vregs[vreg - 100].preg == i);
+                if (is_preassigned) {
+                    /* Pre-assigned: value stays in register across blocks.
+                     * No spill, no release. */
+                    continue;
+                }
                 if (update_in_reg(state, vreg) && live_at_end(bb, vreg)) {
                     int offset = offset_of(c, vreg);
                     int typ = dill_type_of(c, vreg);
@@ -3119,6 +3254,14 @@ new_emit_insns(dill_stream c,
                 (c->p->vregs[j].last_use - c->p->vregs[j].value_in_mem + 1);
             c->p->vregs[j].value_in_mem = bit_vec_is_set(bb->regs_used, (int)j);
         }
+        /* Set up pre-assigned vreg state: value is in the physical register */
+        for (j = 0; j < (size_t)c->p->vreg_count; j++) {
+            if (c->p->vregs[j].need_assign == 1 && c->p->vregs[j].preg != -1) {
+                c->p->vregs[j].in_reg = c->p->vregs[j].preg;
+                c->p->vregs[j].update_in_reg = 0;
+                c->p->vregs[j].value_in_mem = 0; /* value is in register */
+            }
+        }
         for (j = 0; j < (size_t)c->p->c_param_count; j++) {
             if (c->p->c_param_args[j].is_register) {
                 state.param_info[j].update_in_reg = 0;
@@ -3132,7 +3275,8 @@ new_emit_insns(dill_stream c,
         }
         reset_reg_state(&state);
         if (c->dill_debug) {
-            printf("============= Starting basic block %d ===========\n", (int)i);
+            printf("============= Starting basic block %d ===========\n",
+                   (int)i);
             dump_bb(c, bb, (int)i);
         }
         insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
@@ -4498,8 +4642,8 @@ virtual_do_end(dill_stream s, int package)
         if (vmi->prefix_code_start == -1) {
             dill_retii(s, 0);
             s->p->virtual.cur_ip = s->p->cur_ip;
-	    s->p->virtual.code_base = s->p->code_base;
-	    s->p->virtual.code_limit = s->p->code_limit;
+            s->p->virtual.code_base = s->p->code_base;
+            s->p->virtual.code_limit = s->p->code_limit;
         }
         setup_VM_proc(s);
 #endif
@@ -4532,6 +4676,7 @@ virtual_do_end(dill_stream s, int package)
             do_register_assign(s, insns, code_end, virtual_local_pointer, vmi);
             emit_insns(s, insns, ltable, vmi);
         } else {
+            do_global_assign(s, vmi);
             new_emit_insns(s, insns, ltable, vmi);
         }
         free_bbs(vmi);
@@ -4618,7 +4763,7 @@ dill_free_exec_context(dill_exec_ctx ec)
 }
 
 extern void
-dill_free(void *ptr)
+dill_free(void* ptr)
 {
     free(ptr);
 }
