@@ -92,6 +92,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
     double tolerance = 0.0;
     double s = 0.0;
     auto errorBoundType = mgard_x::error_bound_type::REL;
+    mgard_x::Config config;
+    config.lossless = mgard_x::lossless_type::Huffman_Zstd;
 
     // input size under this bound will not compress
     size_t thresholdSize = 100000;
@@ -135,6 +137,24 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
             errorBoundType = mgard_x::error_bound_type::REL;
         }
     }
+    if (auto itLosslessType = m_Parameters.find("lossless_type");
+        itLosslessType != m_Parameters.end())
+    {
+        if (itLosslessType->second == "huffman")
+        {
+            config.lossless = mgard_x::lossless_type::Huffman;
+        }
+        else if (itLosslessType->second == "huffman_zstd")
+        {
+            config.lossless = mgard_x::lossless_type::Huffman_Zstd;
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>(
+                "Operator", "CompressMGARD", "Operate",
+                "MGARD only supports huffman/huffman_zstd lossless types");
+        }
+    }
 
     // let mgard know the output buffer size
     size_t sizeOut = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
@@ -146,9 +166,6 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
         headerSize = bufferOutOffset;
         return 0;
     }
-
-    mgard_x::Config config;
-    config.lossless = mgard_x::lossless_type::Huffman_Zstd;
 
     PutParameter(bufferOut, bufferOutOffset, true);
     void *compressedData = bufferOut + bufferOutOffset;
