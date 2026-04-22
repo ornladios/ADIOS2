@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
+#include <dirent.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -91,6 +92,48 @@
 #define STREAM_ASSERT_LOCKED(Stream)
 #endif
 
+#ifndef _MSC_VER
+/* On NFS, a failed fopen() of a not-yet-existing file populates the client's
+ * negative dcache; subsequent fopen() calls return NULL from that cache for
+ * up to acdirmax seconds (~30s on many defaults), even after the writer has
+ * created the file on the server. Forcing a readdir() on the containing
+ * directory causes the NFS client to re-fetch directory entries from the
+ * server, invalidating the stale negative cache. */
+static void invalidate_dir_cache(const char *FileName)
+{
+    char *last_slash = strrchr(FileName, '/');
+    const char *dir;
+    char *owned = NULL;
+    if (last_slash == NULL)
+    {
+        dir = ".";
+    }
+    else if (last_slash == FileName)
+    {
+        dir = "/";
+    }
+    else
+    {
+        size_t dlen = (size_t)(last_slash - FileName);
+        owned = malloc(dlen + 1);
+        memcpy(owned, FileName, dlen);
+        owned[dlen] = '\0';
+        dir = owned;
+    }
+    DIR *d = opendir(dir);
+    if (d)
+    {
+        struct dirent *ent;
+        while ((ent = readdir(d)) != NULL)
+        {
+            (void)ent;
+        }
+        closedir(d);
+    }
+    free(owned);
+}
+#endif
+
 static char *readContactInfoFile(const char *Name, SstStream Stream, int Timeout)
 {
     size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
@@ -113,6 +156,10 @@ redo:
         Sleep(SleepInterval / 1000);
 #else
         usleep(SleepInterval);
+        /* Invalidate NFS negative dcache before retrying; otherwise a failed
+         * first fopen can mask a file the writer created milliseconds later
+         * for the full acdirmax window (~30s). */
+        invalidate_dir_cache(FileName);
 #endif
         TimeoutRemainingMsec -= (SleepInterval / 1000);
         WaitWarningRemainingMsec -= (SleepInterval / 1000);
