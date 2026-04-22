@@ -89,7 +89,6 @@ size_t CompressMGARDComplex::Operate(const char *dataIn, const Dims &blockStart,
     mgard_x::Config config;
     config.lossless = mgard_x::lossless_type::Huffman_Zstd;
 
-
     // input size under this bound will not compress
     size_t thresholdSize = 100000;
 
