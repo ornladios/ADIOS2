@@ -144,15 +144,24 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
         {
             config.lossless = mgard_x::lossless_type::Huffman;
         }
+        else if (itLosslessType->second == "huffman_lz4")
+        {
+            config.lossless = mgard_x::lossless_type::Huffman_LZ4;
+        }
         else if (itLosslessType->second == "huffman_zstd")
         {
             config.lossless = mgard_x::lossless_type::Huffman_Zstd;
+        }
+        else if (itLosslessType->second == "cpu_lossless")
+        {
+            config.lossless = mgard_x::lossless_type::CPU_Lossless;
         }
         else
         {
             helper::Throw<std::invalid_argument>(
                 "Operator", "CompressMGARD", "Operate",
-                "MGARD only supports huffman/huffman_zstd lossless types");
+                "MGARD lossless_type must be one of: "
+                "huffman, huffman_lz4, huffman_zstd, cpu_lossless");
         }
     }
 
