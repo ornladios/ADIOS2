@@ -25,5 +25,6 @@ Parameters are passed at:
 
 .. include:: CompressorZFP.rst
 .. include:: CompressorSZ3.rst
+.. include:: CompressorMGARD.rst
 .. include:: plugin.rst
 .. include:: encryption.rst
