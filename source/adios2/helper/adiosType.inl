@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #ifndef ADIOS2_HELPER_ADIOSTYPE_INL_
 #define ADIOS2_HELPER_ADIOSTYPE_INL_
 #ifndef ADIOS2_HELPER_ADIOSTYPE_H_
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include <algorithm> //std::transform
-#include <sstream>   //std::ostringstream
+#include <algorithm>   //std::transform
+#include <sstream>     //std::ostringstream
+#include <type_traits> //std::is_floating_point_v
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adiosLog.h"
@@ -110,8 +110,7 @@ template <class T, class U>
 std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize)
 {
     std::vector<U> out(inSize);
-    std::transform(in, in + inSize, out.begin(),
-                   [](T value) { return static_cast<U>(value); });
+    std::transform(in, in + inSize, out.begin(), [](T value) { return static_cast<U>(value); });
     return out;
 }
 
@@ -149,12 +148,12 @@ inline std::string ValueToString(const std::string value) noexcept
     return "\"" + value + "\"";
 }
 
-#define declare_template_instantiation(C)                                      \
-    template <>                                                                \
-    inline std::string ValueToString(const C value) noexcept                   \
-    {                                                                          \
-        const int valueInt = static_cast<int>(value);                          \
-        return std::to_string(valueInt);                                       \
+#define declare_template_instantiation(C)                                                          \
+    template <>                                                                                    \
+    inline std::string ValueToString(const C value) noexcept                                       \
+    {                                                                                              \
+        const int valueInt = static_cast<int>(value);                                              \
+        return std::to_string(valueInt);                                                           \
     }
 ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -163,6 +162,10 @@ template <class T>
 inline std::string ValueToString(const T value) noexcept
 {
     std::ostringstream valueSS;
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        valueSS << std::scientific;
+    }
     valueSS << value;
     const std::string valueStr(valueSS.str());
     return valueStr;
@@ -188,26 +191,26 @@ inline std::string VectorToCSV(const std::vector<std::string> &input) noexcept
     return csv;
 }
 
-#define declare_template_instantiation(C)                                      \
-    template <>                                                                \
-    inline std::string VectorToCSV(const std::vector<C> &input) noexcept       \
-    {                                                                          \
-        if (input.empty())                                                     \
-        {                                                                      \
-            return std::string();                                              \
-        }                                                                      \
-                                                                               \
-        std::ostringstream valueSS;                                            \
-        for (const auto &value : input)                                        \
-        {                                                                      \
-            const int valueInt = static_cast<int>(value);                      \
-            valueSS << valueInt << ", ";                                       \
-        }                                                                      \
-        std::string csv(valueSS.str());                                        \
-        csv.pop_back();                                                        \
-        csv.pop_back();                                                        \
-                                                                               \
-        return csv;                                                            \
+#define declare_template_instantiation(C)                                                          \
+    template <>                                                                                    \
+    inline std::string VectorToCSV(const std::vector<C> &input) noexcept                           \
+    {                                                                                              \
+        if (input.empty())                                                                         \
+        {                                                                                          \
+            return std::string();                                                                  \
+        }                                                                                          \
+                                                                                                   \
+        std::ostringstream valueSS;                                                                \
+        for (const auto &value : input)                                                            \
+        {                                                                                          \
+            const int valueInt = static_cast<int>(value);                                          \
+            valueSS << valueInt << ", ";                                                           \
+        }                                                                                          \
+        std::string csv(valueSS.str());                                                            \
+        csv.pop_back();                                                                            \
+        csv.pop_back();                                                                            \
+                                                                                                   \
+        return csv;                                                                                \
     }
 ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -237,8 +240,7 @@ void CheckForNullptr(T *pointer, const std::string hint)
 {
     if (pointer == nullptr)
     {
-        helper::Throw<std::invalid_argument>("Helper", "adiosType",
-                                             "CheckForNullPtr",
+        helper::Throw<std::invalid_argument>("Helper", "adiosType", "CheckForNullPtr",
                                              "found null pointer " + hint);
     }
 }

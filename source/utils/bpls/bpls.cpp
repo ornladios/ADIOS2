@@ -918,7 +918,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<T> *attr
     DataType adiosvartype = attribute->m_Type;
     if (attribute->m_IsSingleValue)
     {
-        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, true);
+        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, false);
     }
     else
     {
@@ -926,7 +926,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<T> *attr
         size_t nelems = attribute->m_DataArray.size();
         for (size_t j = 0; j < nelems; j++)
         {
-            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, true);
+            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, false);
             if (j < nelems - 1)
             {
                 fprintf(outf, ", ");
@@ -953,7 +953,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<std::str
         }
         if (printDataAnyway)
         {
-            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, true);
+            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, false);
         }
     }
     else
@@ -969,7 +969,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<std::str
             }
             if (printDataAnyway)
             {
-                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, true);
+                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, false);
             }
             if (j < nelems - 1)
             {
@@ -3072,18 +3072,47 @@ int print_data(const void *data, int item, DataType adiosvartype, bool allowform
         fprintf(outf, (f ? fmt : "%lld"), ((signed long long *)data)[item]);
         break;
 
-    case DataType::Float:
-        fprintf(outf, (f ? fmt : "%g"), ((float *)data)[item]);
+    case DataType::Float: {
+        float v = ((float *)data)[item];
+        if (allowformat)
+            fprintf(outf, (f ? fmt : "%g"), v);
+        else
+        {
+            if (-10000.0 < v && v < 100000.0)
+                fprintf(outf, "%g", v);
+            else
+                fprintf(outf, "%e", v);
+        }
         break;
+    }
 
-    case DataType::Double:
-        fprintf(outf, (f ? fmt : "%g"), ((double *)data)[item]);
+    case DataType::Double: {
+        double v = ((double *)data)[item];
+        if (allowformat)
+            fprintf(outf, (f ? fmt : "%g"), v);
+        else
+        {
+            if (-10000.0 < v && v < 100000.0)
+                fprintf(outf, "%g", v);
+            else
+                fprintf(outf, "%e", v);
+        }
         break;
+    }
 
-    case DataType::LongDouble:
-        fprintf(outf, (f ? fmt : "%Lg"), ((long double *)data)[item]);
-        // fprintf(outf,(f ? fmt : "????????"));
+    case DataType::LongDouble: {
+        long double v = ((long double *)data)[item];
+        if (allowformat)
+            fprintf(outf, (f ? fmt : "%Lg"), v);
+        else
+        {
+            if (-10000.0 < v && v < 100000.0)
+                fprintf(outf, "%Lg", v);
+            else
+                fprintf(outf, "%Le", v);
+        }
         break;
+    }
 
     case DataType::FloatComplex:
         fprintf(outf, (f ? fmt : "(%g,i%g)"), ((float *)data)[2 * item],
