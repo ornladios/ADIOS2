@@ -13,14 +13,14 @@ updates:
       all-actions:
         patterns: [ "*" ]
     assignees:
-      - infrastructure
+      - ornladios/infrastructure
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0
     assignees:
-      - infrastructure
+      - ornladios/infrastructure
   - package-ecosystem: "docker"
     directories:
       - "/scripts/ci/images"
@@ -30,12 +30,12 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 0
     assignees:
-      - infrastructure
+      - ornladios/infrastructure
   - package-ecosystem: "conda"
     directory: "/docs/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0
     assignees:
-      - infrastructure
+      - ornladios/infrastructure
 
