@@ -304,10 +304,8 @@ endif(ADIOS2_HAVE_Campaign)
 
 if(ADIOS2_HAVE_DAOS)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp
+    toolkit/format/buffer/chunk/DaosChunkV.cpp
     engine/daos/DaosEngine.cpp
-    engine/daos/DaosWriter_EveryoneWrites_Async.cpp
-    engine/daos/DaosWriter_TwoLevelShm_Async.cpp
-    engine/daos/DaosWriter_TwoLevelShm.cpp
     engine/daos/DaosReader.cpp engine/daos/DaosReader.tcc
     engine/daos/DaosWriter.cpp engine/daos/DaosWriter.tcc)
   set(maybe_CaliperLib)

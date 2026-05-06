@@ -241,63 +241,6 @@ void DaosEngine::ParseParams(IO &io, struct DAOSParams &Params)
         return false;
     };
 
-    auto lf_SetBufferVTypeParameter = [&](const std::string key, int &parameter, int def) {
-        const std::string lkey = helper::LowerCase(std::string(key));
-        auto itKey = params_lowercase.find(lkey);
-        parameter = def;
-        if (itKey != params_lowercase.end())
-        {
-            std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-            if (value == "malloc")
-            {
-                parameter = (int)BufferVType::MallocVType;
-            }
-            else if (value == "chunk")
-            {
-                parameter = (int)BufferVType::ChunkVType;
-            }
-            else
-            {
-                helper::Throw<std::invalid_argument>("Engine", "DaosEngine", "ParseParams",
-                                                     "Unknown BP5 BufferVType parameter \"" +
-                                                         value +
-                                                         "\" (must be \"malloc\" or \"chunk\"");
-            }
-        }
-    };
-
-    auto lf_SetAggregationTypeParameter = [&](const std::string key, int &parameter, int def) {
-        const std::string lkey = helper::LowerCase(std::string(key));
-        auto itKey = params_lowercase.find(lkey);
-        parameter = def;
-        if (itKey != params_lowercase.end())
-        {
-            std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-            if (value == "everyonewrites" || value == "auto")
-            {
-                parameter = (int)AggregationType::EveryoneWrites;
-            }
-            else if (value == "everyonewritesserial")
-            {
-                parameter = (int)AggregationType::EveryoneWritesSerial;
-            }
-            else if (value == "twolevelshm")
-            {
-                parameter = (int)AggregationType::TwoLevelShm;
-            }
-            else
-            {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "DaosEngine", "ParseParams",
-                    "Unknown BP5 AggregationType parameter \"" + value +
-                        "\" (must be \"auto\", \"everyonewrites\" or "
-                        "\"twolevelshm\"");
-            }
-        }
-    };
-
     auto lf_SetAsyncWriteParameter = [&](const std::string key, int &parameter, int def) {
         const std::string lkey = helper::LowerCase(std::string(key));
         auto itKey = params_lowercase.find(lkey);

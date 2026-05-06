@@ -10,7 +10,6 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -90,23 +89,6 @@ public:
 
     std::string GetBPVersionFileName(const std::string &name) const noexcept;
 
-    enum class BufferVType
-    {
-        MallocVType,
-        ChunkVType,
-        Auto
-    };
-
-    BufferVType UseBufferV = BufferVType::ChunkVType;
-
-    enum class AggregationType
-    {
-        EveryoneWrites,
-        EveryoneWritesSerial,
-        TwoLevelShm,
-        Auto
-    };
-
     enum class AsyncWrite
     {
         Sync = 0, // enable using AsyncWriteMode as bool expression
@@ -114,43 +96,16 @@ public:
         Guided
     };
 
-    /**
-     * sub-block size for min/max calculation of large arrays in number of
-     * elements (not bytes). The default big number per Put() default will
-     * result in the original single min/max value-pair per block
-     */
-    const size_t DefaultStatsBlockSize = 1125899906842624ULL;
-
 #define DAOS_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                                   \
     MACRO(OpenTimeoutSecs, Float, float, -1.0f)                                                    \
     MACRO(BeginStepPollingFrequencySecs, Float, float, 1.0f)                                       \
-    MACRO(StreamReader, Bool, bool, false)                                                         \
-    MACRO(BurstBufferDrain, Bool, bool, true)                                                      \
-    MACRO(BurstBufferPath, String, std::string, "")                                                \
     MACRO(NodeLocal, Bool, bool, false)                                                            \
     MACRO(verbose, Int, int, 0)                                                                    \
-    MACRO(CollectiveMetadata, Bool, bool, true)                                                    \
-    MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
-    MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
-    MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
-    MACRO(StripeSize, UInt, unsigned int, 4096)                                                    \
-    MACRO(DirectIO, Bool, bool, false)                                                             \
-    MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
-    MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                                              \
-    MACRO(AggregationType, AggregationType, int, (int)AggregationType::TwoLevelShm)                \
-    MACRO(AsyncOpen, Bool, bool, true)                                                             \
     MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                                      \
-    MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)                                   \
-    MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)                          \
     MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)                              \
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)                              \
-    MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                                        \
-    MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)                             \
-    MACRO(AppendAfterSteps, Int, int, INT_MAX)                                                     \
     MACRO(SelectSteps, String, std::string, "")                                                    \
-    MACRO(ReaderShortCircuitReads, Bool, bool, false)                                              \
     MACRO(StatsLevel, UInt, unsigned int, 1)                                                       \
-    MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)

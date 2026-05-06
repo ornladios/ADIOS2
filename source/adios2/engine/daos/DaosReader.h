@@ -111,7 +111,7 @@ private:
     char m_pool_label[100], m_cont_label[100];
 
     /* Declare variables for pool and container handles */
-    daos_handle_t poh, coh;
+    daos_handle_t poh{}, coh{};
 
     enum DAOS_handleType
     {
@@ -120,7 +120,7 @@ private:
     };
 
     /* Declare variables for the Array object */
-    daos_handle_t oh, mdsize_oh;
+    daos_handle_t oh{}, mdsize_oh{};
     daos_obj_id_t oid, mdsize_oid;
     daos_array_iod_t iod;
     daos_range_t rg;
@@ -130,17 +130,33 @@ private:
     /* Declare variables for the KV object */
     daos_handle_t eq;
     daos_event_t ev[MAX_KV_GET_REQS], *evp[MAX_KV_GET_REQS];
+    char attrkey[MAX_KV_GET_REQS][1000];
 
-    enum class DaosEngine
+    /* Per-rank DAOS data array.  Located via <m_Name>/data_oids.txt
+     * (required, written by DaosWriter::PersistDataOidsIndex).
+     * ReadData issues daos_array_read directly against the writer
+     * rank's array. */
+    /// Per-writer-rank array OIDs read from the index file.
+    std::vector<daos_obj_id_t> m_DataOids;
+    /// Per-writer-rank open array handles (parallel to m_DataOids).
+    std::vector<daos_handle_t> m_DataArrayHandles;
+    void LoadDataOidsIndex();
+    void OpenDataArrays();
+    void CloseDataArrays();
+
+    /// How per-rank metadata is laid out in DAOS.  Selectable via the
+    /// DAOS_METADATA_LAYOUT environment variable; ARRAY_1MB_ALIGNED is
+    /// the default.  The data path is identical across all values; only
+    /// metadata storage differs.
+    enum class MetadataLayout
     {
-        DAOS_ARRAY,
-        DAOS_ARRAY_1MB_ALIGNED,
-        DAOS_KV,
-        UNKNOWN
+        ARRAY,
+        ARRAY_1MB_ALIGNED,
+        KV
     };
-    DaosEngine daosEngine;
+    MetadataLayout metadataLayout;
 
-    void SetDaosEngine();
+    void SetMetadataLayout();
     void SetPoolAndContName();
 
     enum class DataFlag

@@ -133,6 +133,20 @@ public:
 
     int m_StatsLevel = 1;
 
+    // Per-call accumulators for sub-Marshal profiling.  Engines may read
+    // these to attribute time inside Marshal between GetMinMax, the buffer's
+    // data-append path, and the rest.  Accumulate over the lifetime of the
+    // serializer; engines compute deltas as needed.  Updated only on the
+    // ordinary array-data branch (not String / Operator / Span), so the
+    // call count is the count of array Put calls.
+    //
+    // m_BufferAppendSecs is wall time inside CurDataBuffer->AddToVec — the
+    // cost is dominated by memcpy in MallocV/ChunkV and by async submit
+    // (plus memcpy) in DaosChunkV.
+    double m_GetMinMaxSecs = 0.0;
+    double m_BufferAppendSecs = 0.0;
+    size_t m_BufferAppendCalls = 0;
+
     /* Variables to help appending to existing file */
     size_t m_PreMetaMetadataFileLength = 0;
 
