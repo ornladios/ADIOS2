@@ -20,6 +20,7 @@ Parameters are passed at:
 .. include:: bp4.rst
 .. include:: bp3.rst
 .. include:: hdf5.rst
+.. include:: daos.rst
 .. include:: sst.rst
 .. include:: ssc.rst
 .. include:: dataman.rst

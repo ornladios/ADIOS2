@@ -33,6 +33,17 @@ ChunkV::~ChunkV()
     }
 }
 
+void ChunkV::Reset()
+{
+    BufferV::Reset();
+    // Wind back to the first chunk; chunks themselves are kept so their
+    // pointers stay stable across steps (key for libfabric MR caching
+    // and for avoiding per-step first-touch page-fault zeroing).
+    m_TailChunk = nullptr;
+    m_TailChunkPos = 0;
+    m_NextActiveChunk = 0;
+}
+
 size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
 {
     // try to alloc/realloc a buffer to requested size
@@ -97,24 +108,31 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align, bool C
 
         if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
         {
-            // No room in current chunk, close it out
-            // realloc down to used size (helpful?) and set size in array
-            /*std::cout << "    downsize ptr = " << m_Chunks.back().Ptr
-                      << " to size = " << m_TailChunkPos << std::endl;*/
-            Chunk &c = m_Chunks.back();
-            size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
-            size_t alignment = actualsize - m_TailChunkPos;
-            if (alignment)
+            // No room in current chunk, close it out.  Subclasses that need
+            // pointer stability across the chunk's lifetime (DaosChunkV)
+            // set m_NoShrink and skip the realloc.
+            if (!m_NoShrink)
             {
-                auto p = c.Ptr + m_TailChunkPos;
-                std::fill(p, p + alignment, 0);
+                /*std::cout << "    downsize ptr = " << m_Chunks.back().Ptr
+                          << " to size = " << m_TailChunkPos << std::endl;*/
+                // Use m_TailChunk rather than m_Chunks.back(): with
+                // recycling the tail can be middle-of-vector, not the
+                // physical last element.
+                Chunk &c = *m_TailChunk;
+                size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
+                size_t alignment = actualsize - m_TailChunkPos;
+                if (alignment)
+                {
+                    auto p = c.Ptr + m_TailChunkPos;
+                    std::fill(p, p + alignment, 0);
+                }
+                retOffset += alignment;
+                // Update entry in DataV as size and potentiall ptr has changed
+                // Learned from sanitizer: downsizing realloc still may change pointer
+                VecEntry &dv = DataV.back();
+                dv.Size = actualsize;
+                dv.Base = c.Ptr;
             }
-            retOffset += alignment;
-            // Update entry in DataV as size and potentiall ptr has changed
-            // Learned from sanitizer: downsizing realloc still may change pointer
-            VecEntry &dv = DataV.back();
-            dv.Size = actualsize;
-            dv.Base = c.Ptr;
             m_TailChunkPos = 0;
             m_TailChunk = nullptr;
             AppendPossible = false;
@@ -131,16 +149,33 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align, bool C
         }
         else
         {
-            // We need a new chunk, get the larger of size or m_ChunkSize
-            /*  std::cout << "    get a new chunk size = " << m_ChunkSize
-                      << std::endl; */
+            // We need a new chunk.  After Reset() (or on the first Put),
+            // m_Chunks may already hold previously-allocated chunks from
+            // earlier steps — claim one of those first to keep its
+            // address stable across steps (no fresh page-fault, MR
+            // cache stays hot).  Only fall through to ChunkAlloc if the
+            // pool is exhausted or this Put is bigger than what's
+            // available at the cursor.
             size_t NewSize = m_ChunkSize;
             if (size > m_ChunkSize)
                 NewSize = size;
-            Chunk c{nullptr, nullptr, 0};
-            ChunkAlloc(c, NewSize);
-            m_Chunks.push_back(c);
-            m_TailChunk = &m_Chunks.back();
+            if (m_NextActiveChunk < m_Chunks.size() && m_Chunks[m_NextActiveChunk].Size >= size)
+            {
+                m_TailChunk = &m_Chunks[m_NextActiveChunk];
+            }
+            else
+            {
+                Chunk c{nullptr, nullptr, 0};
+                ChunkAlloc(c, NewSize);
+                m_FreshAllocCount++;
+                // Insert at the cursor so recycled chunks stay before
+                // freshly-allocated ones in vector order — preserves
+                // the DataVec() iteration order and lets the next step
+                // continue claiming in-order from index 0.
+                m_Chunks.insert(m_Chunks.begin() + m_NextActiveChunk, c);
+                m_TailChunk = &m_Chunks[m_NextActiveChunk];
+            }
+            ++m_NextActiveChunk;
             CopyDataToBuffer(size, buf, 0, MemSpace);
             m_TailChunkPos = size;
             VecEntry entry = {false, m_TailChunk->Ptr, 0, size};
@@ -182,22 +217,27 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
 
     if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
     {
-        // No room in current chunk, close it out
-        // realloc down to used size (helpful?) and set size in array
-        Chunk &c = m_Chunks.back();
-        size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
-        size_t alignment = actualsize - m_TailChunkPos;
-        if (alignment)
+        // No room in current chunk, close it out.  See AddToVec for why
+        // m_NoShrink suppresses the realloc.
+        if (!m_NoShrink)
         {
-            auto p = c.Ptr + m_TailChunkPos;
-            std::fill(p, p + alignment, 0);
-            CurOffset += alignment;
+            // Use m_TailChunk rather than m_Chunks.back(): with recycling
+            // the tail can be middle-of-vector.
+            Chunk &c = *m_TailChunk;
+            size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
+            size_t alignment = actualsize - m_TailChunkPos;
+            if (alignment)
+            {
+                auto p = c.Ptr + m_TailChunkPos;
+                std::fill(p, p + alignment, 0);
+                CurOffset += alignment;
+            }
+            // Update entry in DataV as size and potentiall ptr has changed
+            // Learned from sanitizer: downsizing realloc still may change pointer
+            VecEntry &dv = DataV.back();
+            dv.Size = actualsize;
+            dv.Base = c.Ptr;
         }
-        // Update entry in DataV as size and potentiall ptr has changed
-        // Learned from sanitizer: downsizing realloc still may change pointer
-        VecEntry &dv = DataV.back();
-        dv.Size = actualsize;
-        dv.Base = c.Ptr;
         m_TailChunkPos = 0;
         m_TailChunk = nullptr;
         AppendPossible = false;
@@ -213,14 +253,25 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
     }
     else
     {
-        // We need a new chunk, get the larger of size or m_ChunkSize
+        // We need a new chunk.  Try recycling first (see AddToVec for
+        // rationale): claim the chunk at m_NextActiveChunk if it's still
+        // in m_Chunks and large enough, else allocate fresh.
         size_t NewSize = m_ChunkSize;
         if (size > m_ChunkSize)
             NewSize = size;
-        Chunk c{nullptr, nullptr, 0};
-        ChunkAlloc(c, NewSize);
-        m_Chunks.push_back(c);
-        m_TailChunk = &m_Chunks.back();
+        if (m_NextActiveChunk < m_Chunks.size() && m_Chunks[m_NextActiveChunk].Size >= size)
+        {
+            m_TailChunk = &m_Chunks[m_NextActiveChunk];
+        }
+        else
+        {
+            Chunk c{nullptr, nullptr, 0};
+            ChunkAlloc(c, NewSize);
+            m_FreshAllocCount++;
+            m_Chunks.insert(m_Chunks.begin() + m_NextActiveChunk, c);
+            m_TailChunk = &m_Chunks[m_NextActiveChunk];
+        }
+        ++m_NextActiveChunk;
         bufferPos = 0;
         m_TailChunkPos = size;
         VecEntry entry = {false, m_TailChunk->Ptr, 0, size};

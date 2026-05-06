@@ -12,31 +12,21 @@
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/helper/adiosMath.h"      // SetWithinLimit
 #include "adios2/helper/adiosMemory.h"    // NdCopy
+#include "adios2/toolkit/format/bp5/BP5Helper.h"
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
-#include "adios2/toolkit/format/buffer/malloc/MallocV.h"
+#include "adios2/toolkit/format/buffer/chunk/DaosChunkV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
-#include <adios2-perfstubs-interface.h>
 
+#include <adios2-perfstubs-interface.h>
+#include <daos_array.h>
+
+#include <chrono>
+#include <cstdlib> // getenv
 #include <ctime>
+#include <fstream>
 #include <iomanip> // setw
 #include <iostream>
 #include <memory> // make_shared
-
-#define DEBUG_BADALLOC
-#undef DEBUG_BADALLOC
-
-#define FAIL(fmt, ...)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
-        exit(1);                                                                                   \
-    } while (0)
-#define ASSERT(cond, ...)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if (!(cond))                                                                               \
-            FAIL(__VA_ARGS__);                                                                     \
-    } while (0)
 
 namespace adios2
 {
@@ -49,8 +39,8 @@ using namespace adios2::format;
 
 DaosWriter::DaosWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("DaosWriter", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_FileDataManager(io, m_Comm), m_FileMetadataManager(io, m_Comm),
-  m_FileMetadataIndexManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm)
+  m_FileMetadataManager(io, m_Comm), m_FileMetadataIndexManager(io, m_Comm),
+  m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("DaosWriter::Open");
@@ -62,6 +52,17 @@ DaosWriter::DaosWriter(IO &io, const std::string &name, const Mode mode, helper:
 
 StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    // Close the BetweenSteps timer (started at end of last EndStep).  Skip
+    // on the very first BeginStep since there was no prior EndStep.  This
+    // attributes iotest's data-generation gap to "BetweenSteps" so it can
+    // be subtracted when comparing against the bench.
+    if (m_WriterStep > 0)
+    {
+        m_Profiler.Stop("BetweenSteps");
+    }
+
+    profiling::ProfilerGuard bs(m_Profiler, "BS");
+
     if (m_BetweenStepPairs)
     {
         helper::Throw<std::logic_error>("Engine", "DaosWriter", "BeginStep",
@@ -69,21 +70,7 @@ StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                                         "without an intervening EndStep()");
     }
 
-    Seconds ts = Now() - m_EngineStart;
-    // std::cout << "BEGIN STEP starts at: " << ts.count() << std::endl;
     m_BetweenStepPairs = true;
-
-    if (m_WriterStep > 0)
-    {
-        m_LastTimeBetweenSteps = Now() - m_EndStepEnd;
-        m_TotalTimeBetweenSteps += m_LastTimeBetweenSteps;
-        m_AvgTimeBetweenSteps = m_TotalTimeBetweenSteps / m_WriterStep;
-        m_ExpectedTimeBetweenSteps = m_LastTimeBetweenSteps;
-        if (m_ExpectedTimeBetweenSteps > m_AvgTimeBetweenSteps)
-        {
-            m_ExpectedTimeBetweenSteps = m_AvgTimeBetweenSteps;
-        }
-    }
 
     if ((m_WriterStep == 0) && m_Parameters.UseOneTimeAttributes)
     {
@@ -93,52 +80,40 @@ StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         {
             m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
         }
+        // Mirrors BP5Writer: prevents EndStep::MarshalAttributes() from
+        // running the regular MarshalAttribute path on top of these,
+        // which double-registers attributes through two different
+        // BP5Serializer code paths and produces an attribute block with
+        // a different FFS format ID than BP5 does.
+        m_MarshalAttributesNecessary = false;
     }
 
-    if (m_Parameters.AsyncWrite)
+    // DaosChunkV submits async daos_array_writes during AddToVec at
+    // chunk-finalize boundaries (and immediately for deferred-extern
+    // entries).  EndStep / WriteData drains.  The event queue is
+    // engine-lifetime (created once in OpenDataArray) —
+    // daos_eq_create is ~300 ms so doing it per-step was a major
+    // BeginStep bottleneck.
+    //
+    // m_DataBuf is engine-lifetime: allocated once on the first
+    // step, Reset() between steps so chunk pointers stay stable across
+    // steps.  Stable addresses keep the libfabric MR cache hot and
+    // avoid per-step first-touch page-fault zeroing — empirically
+    // ~30% per-iter savings vs fresh chunks at this workload.
+    if (!m_DataBuf)
     {
-        m_AsyncWriteLock.lock();
-        m_flagRush = true;
-        m_AsyncWriteLock.unlock();
-        TimePoint wait_start = Now();
-        if (m_WriteFuture.valid())
-        {
-            m_Profiler.Start("BS_WaitOnAsync");
-            m_WriteFuture.get();
-            m_Comm.Barrier();
-            AsyncWriteDataCleanup();
-            Seconds wait = Now() - wait_start;
-            if (m_Comm.Rank() == 0)
-            {
-                WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
-                if (m_Parameters.verbose > 0)
-                {
-                    std::cout << "BeginStep, wait on async write was = " << wait.count()
-                              << " time since EndStep was = " << m_LastTimeBetweenSteps.count()
-                              << " expect next one to be = " << m_ExpectedTimeBetweenSteps.count()
-                              << std::endl;
-                }
-            }
-            m_Profiler.Stop("BS_WaitOnAsync");
-        }
-    }
-
-    if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
-    {
-        m_BP5Serializer.InitStep(new MallocV(
+        m_DataBuf.reset(new format::DaosChunkV(
             "DaosWriter", false, m_BP5Serializer.m_BufferAlign, m_BP5Serializer.m_BufferBlockSize,
-            m_Parameters.InitialBufferSize, m_Parameters.GrowthFactor));
+            m_Parameters.BufferChunkSize, m_DataArrayOH, m_DataEQ, m_DataArrayCursor, m_Profiler));
     }
     else
     {
-        m_BP5Serializer.InitStep(new ChunkV("DaosWriter", false, m_BP5Serializer.m_BufferAlign,
-                                            m_BP5Serializer.m_BufferBlockSize,
-                                            m_Parameters.BufferChunkSize));
+        m_DataBuf->Reset();
+        m_DataBuf->SetBaseArrayOffset(m_DataArrayCursor);
     }
+    m_BP5Serializer.InitStep(m_DataBuf.get());
     m_ThisTimestepDataSize = 0;
 
-    ts = Now() - m_EngineStart;
-    // std::cout << "BEGIN STEP ended at: " << ts.count() << std::endl;
     return StepStatus::OK;
 }
 
@@ -148,7 +123,7 @@ void DaosWriter::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("DaosWriter::PerformPuts");
     m_Profiler.Start("PP");
-    m_BP5Serializer.PerformPuts(m_Parameters.AsyncWrite || m_Parameters.DirectIO);
+    m_BP5Serializer.PerformPuts(m_Parameters.AsyncWrite);
     m_Profiler.Stop("PP");
     return;
 }
@@ -156,6 +131,7 @@ void DaosWriter::PerformPuts()
 void DaosWriter::WriteMetaMetadata(
     const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks)
 {
+    profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
     for (auto &b : MetaMetaBlocks)
     {
         m_FileMetaMetadataManager.WriteFiles((char *)&b.MetaMetaIDLen, sizeof(size_t));
@@ -167,47 +143,31 @@ void DaosWriter::WriteMetaMetadata(
 
 uint64_t DaosWriter::WriteAttributes(const std::vector<core::iovec> &AttributeBlocks)
 {
+    profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
-    // std::vector<uint64_t> SizeVector;
     std::vector<uint64_t> AttrSizeVector;
-    /*
-    SizeVector.reserve(MetaDataBlocks.size());
-    for (auto &b : MetaDataBlocks)
-    {
-        MDataTotalSize += sizeof(uint64_t) + b.iov_len;
-        SizeVector.push_back(b.iov_len);
-    }*/
     for (auto &b : AttributeBlocks)
     {
         MDataTotalSize += sizeof(uint64_t) + b.iov_len;
         AttrSizeVector.push_back(b.iov_len);
-        // std::cout << "AttrSizeVector = " << b.iov_len << std::endl;
     }
-
-    // std::cout << "MDataTotalSize = " << MDataTotalSize << std::endl;
-
-    MetaDataSize = 0;
+    // Pad AttrSizeVector to one entry per writer rank, matching BP5's
+    // SelectiveAggregationMetadata layout that DaosReader's
+    // InstallMetadataForTimestep expects.  Ranks beyond
+    // AttributeBlocks.size() get a 0-sized "block" the reader will skip.
+    const size_t writerCount = static_cast<size_t>(m_Comm.Size());
+    while (AttrSizeVector.size() < writerCount)
+    {
+        AttrSizeVector.push_back(0);
+        MDataTotalSize += sizeof(uint64_t);
+    }
 
     m_FileMetadataManager.WriteFiles((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
-    /*
-    m_FileMetadataManager.WriteFiles((char *)SizeVector.data(),
-                                     sizeof(uint64_t) * SizeVector.size());
-
-    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();*/
     m_FileMetadataManager.WriteFiles((char *)AttrSizeVector.data(),
                                      sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
-
-    /*
-    for (auto &b : MetaDataBlocks)
-    {
-        if (!b.iov_base)
-            continue;
-        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
-        MetaDataSize += b.iov_len;
-    }*/
 
     for (auto &b : AttributeBlocks)
     {
@@ -215,162 +175,102 @@ uint64_t DaosWriter::WriteAttributes(const std::vector<core::iovec> &AttributeBl
             continue;
         m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
-
-#ifdef ATTRIBUTE_DEBUG
-        // Print the hex dump from offset b.iov_base to length b.iov_len
-        //  Print the hex dump directly
-        unsigned char *data = (unsigned char *)b.iov_base;
-        size_t len = b.iov_len;
-
-        for (size_t i = 0; i < len; i++)
-        {
-            if (i % 16 == 0)
-            {
-                printf("\n%08zx  ", (size_t)(data + i));
-            }
-            printf("%02x ", data[i]);
-        }
-        printf("\n");
-#endif
     }
 
     m_MetaDataPos += MetaDataSize;
     return MetaDataSize;
 }
 
-void DaosWriter::AsyncWriteDataCleanup()
-{
-    if (m_Parameters.AsyncWrite)
-    {
-        switch (m_Parameters.AggregationType)
-        {
-        case (int)AggregationType::EveryoneWrites:
-        case (int)AggregationType::EveryoneWritesSerial:
-            AsyncWriteDataCleanup_EveryoneWrites();
-            break;
-        case (int)AggregationType::TwoLevelShm:
-            AsyncWriteDataCleanup_TwoLevelShm();
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 void DaosWriter::WriteData(format::BufferV *Data)
 {
-    if (m_Parameters.AsyncWrite)
+    // DaosChunkV has been submitting async writes during AddToVec.
+    // Drain pending events, then write any tail (still-filling chunk +
+    // any externs that raced) synchronously to the per-rank array.
+    auto *daosBuf = static_cast<format::DaosChunkV *>(Data);
     {
-        switch (m_Parameters.AggregationType)
+        profiling::ProfilerGuard g(m_Profiler, "WD_Drain");
+        daosBuf->Drain();
+    }
+
+    auto tail = daosBuf->UnflushedTail();
+    if (!tail.empty())
+    {
+        profiling::ProfilerGuard g(m_Profiler, "WD_Tail");
+        // One synchronous daos_array_write covering the unflushed tail
+        // with one iov per VecEntry in the SGL.  Same shape as
+        // DaosChunkV's async submits, just synchronous and last.
+        daos_size_t total = 0;
+        std::vector<d_iov_t> sgiovs;
+        sgiovs.reserve(tail.size());
+        for (const auto &e : tail)
         {
-        case (int)AggregationType::EveryoneWrites:
-            WriteData_EveryoneWrites_Async(Data, false);
-            break;
-        case (int)AggregationType::EveryoneWritesSerial:
-            WriteData_EveryoneWrites_Async(Data, true);
-            break;
-        case (int)AggregationType::TwoLevelShm:
-            WriteData_TwoLevelShm_Async(Data);
-            break;
-        default:
-            helper::Throw<std::invalid_argument>("Engine", "DaosWriter", "WriteData",
-                                                 "Aggregation method " +
-                                                     std::to_string(m_Parameters.AggregationType) +
-                                                     "is not supported in BP5");
+            if (e.iov_len == 0)
+                continue;
+            d_iov_t v;
+            v.iov_buf = const_cast<void *>(e.iov_base);
+            v.iov_buf_len = e.iov_len;
+            v.iov_len = e.iov_len;
+            sgiovs.push_back(v);
+            total += e.iov_len;
+        }
+        if (total > 0)
+        {
+            daos_range_t rg;
+            rg.rg_idx = m_DataArrayCursor + daosBuf->SubmittedHigh();
+            rg.rg_len = total;
+            daos_array_iod_t iod;
+            iod.arr_nr = 1;
+            iod.arr_rgs = &rg;
+            d_sg_list_t sgl;
+            sgl.sg_nr = static_cast<uint32_t>(sgiovs.size());
+            sgl.sg_nr_out = 0;
+            sgl.sg_iovs = sgiovs.data();
+            int rc = daos_array_write(m_DataArrayOH, DAOS_TX_NONE, &iod, &sgl, NULL);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosWriter", "WriteData",
+                                                  "tail daos_array_write failed rc=" +
+                                                      std::to_string(rc));
+            }
         }
     }
-    else
-    {
-        switch (m_Parameters.AggregationType)
-        {
-        case (int)AggregationType::EveryoneWrites:
-            WriteData_EveryoneWrites(Data, false);
-            break;
-        case (int)AggregationType::EveryoneWritesSerial:
-            WriteData_EveryoneWrites(Data, true);
-            break;
-        case (int)AggregationType::TwoLevelShm:
-            WriteData_TwoLevelShm(Data);
-            break;
-        default:
-            helper::Throw<std::invalid_argument>("Engine", "DaosWriter", "WriteData",
-                                                 "Aggregation method " +
-                                                     std::to_string(m_Parameters.AggregationType) +
-                                                     "is not supported in BP5");
-        }
-        delete Data;
-    }
-}
 
-void DaosWriter::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
-{
-    const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
-
-    // new step writing starts at offset m_DataPos on aggregator
-    // others will wait for the position to arrive from the rank below
-
-    if (a->m_Comm.Rank() > 0)
-    {
-        a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
-                       "Chain token in DaosWriter::WriteData");
-    }
-
-    // align to PAGE_SIZE
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
-    m_StartDataPos = m_DataPos;
-
-    if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
-    {
-        /* Send the token before writing so everyone can start writing asap */
-        uint64_t nextWriterPos = m_DataPos + Data->Size();
-        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
-                        "Chain token in DaosWriter::WriteData");
-    }
-
-    m_DataPos += Data->Size();
-    std::vector<core::iovec> DataVec = Data->DataVec();
-    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
-
-    if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
-    {
-        /* send token now, effectively serializing the writers in the chain */
-        uint64_t nextWriterPos = m_DataPos;
-        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
-                        "Chain token in DaosWriter::WriteData");
-    }
-
-    if (a->m_Comm.Size() > 1)
-    {
-        // at the end, last rank sends back the final data pos to first rank
-        // so it can update its data pos
-        if (a->m_Comm.Rank() == a->m_Comm.Size() - 1)
-        {
-            a->m_Comm.Isend(&m_DataPos, 1, 0, 0, "Final chain token in DaosWriter::WriteData");
-        }
-        if (a->m_Comm.Rank() == 0)
-        {
-            a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
-                           "Chain token in DaosWriter::WriteData");
-        }
-    }
+    // Record the array offset where this step's data begins so the
+    // BP5 metadata index records the right "data position" for readers.
+    m_StartDataPos = m_DataArrayCursor;
+    m_DataPos = m_DataArrayCursor + Data->Size();
+    m_Profiler.AddBytes("totalBytes", Data->Size());
+    m_DataArrayCursor += Data->Size();
+    // DON'T delete Data: with chunk recycling, Data == m_DataBuf.get()
+    // and is engine-lifetime.  Next BeginStep calls Reset() and reuses it.
 }
 
 void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize)
 {
+    profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
     m_FileMetadataManager.FlushFiles();
 
-    // bufsize: Step record
-    size_t bufsize =
-        1 + (4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
+    const uint64_t writerCount = static_cast<uint64_t>(m_Comm.Size());
+    const uint64_t flushCount = static_cast<uint64_t>(FlushPosSizeInfo.size());
+
+    // First-call layout:
+    //   header (m_IndexHeaderSize bytes)
+    //   WriterMapRecord (1 + 8 + (3 + writerCount) * 8 bytes)
+    //   StepRecord      (1 + 8 + stepBody)
+    // Subsequent calls: just StepRecord.
+    //
+    // The WriterMapRecord populates the reader's m_WriterMap so its
+    // m_WriterMap[step].WriterCount is non-zero — without this,
+    // DaosArrayReadMetadata's daos_kv_get for the per-step metadata
+    // sizes is called with writer_count=0 and deadlocks.  The subfile
+    // indices in the map are nominal (every rank "owns" its own
+    // subfile slot); the actual data is reached via data_oids.txt.
+    const size_t stepBodyBytes = (3 + writerCount * (2 * flushCount + 1)) * sizeof(uint64_t);
+    size_t bufsize = 1 + sizeof(uint64_t) + stepBodyBytes;
     if (MetaDataPos == 0)
     {
-        //  First time, write the headers
         bufsize += m_IndexHeaderSize;
-    }
-    if (!m_WriterSubfileMap.empty())
-    {
-        // WriterMap record
-        bufsize += 1 + (4 + m_Comm.Size()) * sizeof(uint64_t);
+        bufsize += 1 + sizeof(uint64_t) + (3 + writerCount) * sizeof(uint64_t);
     }
 
     std::vector<char> buf(bufsize);
@@ -380,66 +280,49 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
 
     if (MetaDataPos == 0)
     {
-        //  First time, write the headers
         MakeHeader(buf, pos, "Index Table", true);
-    }
 
-    // WriterMap record
-    if (!m_WriterSubfileMap.empty())
-    {
+        // WriterMapRecord
         record = WriterMapRecord;
-        helper::CopyToBuffer(buf, pos, &record, 1); // record type
-        d = (3 + m_Comm.Size()) * sizeof(uint64_t);
-        helper::CopyToBuffer(buf, pos, &d, 1); // record length
-        d = static_cast<uint64_t>(m_Comm.Size());
-        helper::CopyToBuffer(buf, pos, &d, 1);
-        d = static_cast<uint64_t>(m_Aggregator->m_NumAggregators);
-        helper::CopyToBuffer(buf, pos, &d, 1);
-        d = static_cast<uint64_t>(m_Aggregator->m_SubStreams);
-        helper::CopyToBuffer(buf, pos, &d, 1);
-        helper::CopyToBuffer(buf, pos, m_WriterSubfileMap.data(), m_Comm.Size());
-        m_WriterSubfileMap.clear();
+        helper::CopyToBuffer(buf, pos, &record, 1);
+        d = (3 + writerCount) * sizeof(uint64_t);
+        helper::CopyToBuffer(buf, pos, &d, 1);           // record length
+        helper::CopyToBuffer(buf, pos, &writerCount, 1); // WriterCount
+        helper::CopyToBuffer(buf, pos, &writerCount, 1); // AggregatorCount = N
+        helper::CopyToBuffer(buf, pos, &writerCount, 1); // SubfileCount = N
+        for (uint64_t i = 0; i < writerCount; ++i)
+        {
+            helper::CopyToBuffer(buf, pos, &i, 1); // RankToSubfile[i] = i
+        }
     }
 
-    // Step record
+    // StepRecord
     record = StepRecord;
-    helper::CopyToBuffer(buf, pos, &record, 1); // record type
-    d = (3 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) * sizeof(uint64_t);
+    helper::CopyToBuffer(buf, pos, &record, 1);
+    d = stepBodyBytes;
     helper::CopyToBuffer(buf, pos, &d, 1); // record length
     helper::CopyToBuffer(buf, pos, &MetaDataPos, 1);
     helper::CopyToBuffer(buf, pos, &MetaDataSize, 1);
-    d = static_cast<uint64_t>(FlushPosSizeInfo.size());
-    helper::CopyToBuffer(buf, pos, &d, 1);
+    helper::CopyToBuffer(buf, pos, &flushCount, 1);
 
-    for (int writer = 0; writer < m_Comm.Size(); writer++)
+    // Per-writer block: for each writer, FlushCount (pos,size) pairs +
+    // m_WriterDataPos[writer].  data_oids.txt locates the per-rank array;
+    // m_WriterDataPos[writer] is the byte offset within that array where
+    // this step's data begins.  The reader's ReadData walks this block
+    // (2*FlushCount+1 uint64s per writer) to compute the read offset --
+    // the trailing m_WriterDataPos[writer] becomes ThisDataPos when
+    // FlushCount==0, which is the steady-state case.
+    for (uint64_t writer = 0; writer < writerCount; ++writer)
     {
-        for (size_t flushNum = 0; flushNum < FlushPosSizeInfo.size(); flushNum++)
+        for (uint64_t f = 0; f < flushCount; ++f)
         {
-            // add two numbers here
-            helper::CopyToBuffer(buf, pos, &FlushPosSizeInfo[flushNum][2 * writer], 2);
+            helper::CopyToBuffer(buf, pos, &FlushPosSizeInfo[f][2 * writer], 2);
         }
         helper::CopyToBuffer(buf, pos, &m_WriterDataPos[writer], 1);
     }
 
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
 
-#ifdef DUMPDATALOCINFO
-    std::cout << "Flush count is :" << FlushPosSizeInfo.size() << std::endl;
-    std::cout << "Write Index positions = {" << std::endl;
-
-    for (size_t i = 0; i < m_Comm.Size(); ++i)
-    {
-        std::cout << "Writer " << i << " has data at: " << std::endl;
-        uint64_t eachWriterSize = FlushPosSizeInfo.size() * 2 + 1;
-        for (size_t j = 0; j < FlushPosSizeInfo.size(); ++j)
-        {
-            std::cout << "loc:" << buf[3 + eachWriterSize * i + j * 2]
-                      << " siz:" << buf[3 + eachWriterSize * i + j * 2 + 1] << std::endl;
-        }
-        std::cout << "loc:" << buf[3 + eachWriterSize * (i + 1) - 1] << std::endl;
-    }
-    std::cout << "}" << std::endl;
-#endif
     /* reset for next timestep */
     FlushPosSizeInfo.clear();
 }
@@ -534,41 +417,22 @@ void DaosWriter::MarshalAttributes()
 
 void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
 {
-    /* Use MPI_Allgather to gather list_metadata_size from all processes */
-    uint64_t *list_metadata_size = (uint64_t *)malloc(sizeof(uint64_t) * m_Comm.Size());
+    /* Allgather metadata sizes from all processes; absorbs cross-rank
+       skew left by the no-Barrier-after-SelAgg decision in EndStep. */
+    std::vector<uint64_t> list_metadata_size(m_Comm.Size());
     m_Comm.Allgather((uint64_t *)&TSInfo.MetaEncodeBuffer->m_FixedSize, 1,
-                     (uint64_t *)list_metadata_size, 1);
+                     list_metadata_size.data(), 1);
 
     size_t offset = 0;
-    if (daosEngine == DaosEngine::DAOS_ARRAY)
+    if (metadataLayout == MetadataLayout::ARRAY)
     {
-        // Use DAOS-ARRAY interface
-        for (int i = 0; i < m_Comm.Size(); i++)
-        {
-            if (i < m_Comm.Rank())
-                offset += list_metadata_size[i];
-        }
+        for (int i = 0; i < m_Comm.Rank(); i++)
+            offset += list_metadata_size[i];
     }
-    else if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    else if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
-        // Use DAOS-ARRAY-1MB-ALIGN interface
         offset = m_Comm.Rank() * chunk_size_1mb;
     }
-
-    /*
-    if (m_Comm.Rank() == 0) {
-        std::cout << "rank 0, metadata size: " << list_metadata_size[0] << std::endl;
-    }
-    */
-
-#ifdef DEBUG_BADALLOC
-    char *ptr = TSInfo.MetaEncodeBuffer->Data();
-    printf("DaosWriter::EndStep() Metadatablock, step = %d, WriterRank = %d\n", m_WriterStep,
-           m_Comm.Rank());
-    for (int i = 0; i < 12; i++)
-        printf("%02x ", ptr[i]);
-    printf("\n");
-#endif
 
     // Setup I/O Descriptor
     iod.arr_nr = 1;
@@ -584,7 +448,11 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
     // Write Metadata
     CALI_MARK_BEGIN("DaosWriter::daos_array_write");
     int rc = daos_array_write(oh, DAOS_TX_NONE, &iod, &sgl, NULL);
-    ASSERT(rc == 0, "daos_array_write() failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "DaosArrayWriteMetadata",
+                                          "daos_array_write failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosWriter::daos_array_write");
 
     m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
@@ -595,12 +463,17 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
         char key[1000];
         sprintf(key, "step%zu", m_WriterStep);
         CALI_MARK_BEGIN("DaosWriter::daos_kv_put");
-        int rc = daos_kv_put(mdsize_oh, DAOS_TX_NONE, 0, key, sizeof(uint64_t) * m_Comm.Size(),
-                             list_metadata_size, NULL);
-        ASSERT(rc == 0, "daos_kv_put() failed with %d", rc);
+        rc = daos_kv_put(mdsize_oh, DAOS_TX_NONE, 0, key,
+                         sizeof(uint64_t) * list_metadata_size.size(), list_metadata_size.data(),
+                         NULL);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "DaosArrayWriteMetadata",
+                                              "daos_kv_put (mdsize) failed rc=" +
+                                                  std::to_string(rc));
+        }
         CALI_MARK_END("DaosWriter::daos_kv_put");
     }
-    free(list_metadata_size);
 }
 
 void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
@@ -611,26 +484,25 @@ void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo
     CALI_MARK_BEGIN("DaosWriter::daos_kv_put");
     rc = daos_kv_put(oh, DAOS_TX_NONE, 0, key, TSInfo.MetaEncodeBuffer->m_FixedSize,
                      TSInfo.MetaEncodeBuffer->Data(), NULL);
-    ASSERT(rc == 0, "daos_kv_put() failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "DaosKVWriteMetadata",
+                                          "daos_kv_put failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosWriter::daos_kv_put");
 }
 
 void DaosWriter::WriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
 {
-    // Create a switch case based on daosinterface
-    switch (daosEngine)
+    profiling::ProfilerGuard g(m_Profiler, "MD_Daos");
+    switch (metadataLayout)
     {
-    case DaosEngine::DAOS_ARRAY:
-    case DaosEngine::DAOS_ARRAY_1MB_ALIGNED:
+    case MetadataLayout::ARRAY:
+    case MetadataLayout::ARRAY_1MB_ALIGNED:
         DaosArrayWriteMetadata(TSInfo);
         break;
-    case DaosEngine::DAOS_KV:
+    case MetadataLayout::KV:
         DaosKVWriteMetadata(TSInfo);
-        break;
-        // Add appropriate function call or handling code here
-        break;
-    default:
-        // Handle unknown or unsupported interface
         break;
     }
 }
@@ -641,182 +513,132 @@ void DaosWriter::EndStep()
       std::cout << "END STEP starts at: " << ts.count() << std::endl; */
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("DaosWriter::EndStep");
-    m_Profiler.Start("ES");
+    profiling::ProfilerGuard es(m_Profiler, "ES");
 
     m_Profiler.Start("ES_CloseTS");
     MarshalAttributes();
 
     // true: advances step
-    auto TSInfo = m_BP5Serializer.CloseTimestep(m_WriterStep,
-                                                m_Parameters.AsyncWrite || m_Parameters.DirectIO);
-
-    /* TSInfo includes NewMetaMetaBlocks, the MetaEncodeBuffer, the
-     * AttributeEncodeBuffer and the data encode Vector */
-
+    auto TSInfo = m_BP5Serializer.CloseTimestep(m_WriterStep, m_Parameters.AsyncWrite);
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
     m_Profiler.Stop("ES_CloseTS");
 
-    m_Profiler.Start("ES_WriteData");
-
-    // TSInfo destructor would delete the DataBuffer so we need to save it
-    // for async IO and let the writer free it up when not needed anymore
-    adios2::format::BufferV *databuf = TSInfo.DataBuffer;
-    TSInfo.DataBuffer = nullptr;
-    m_AsyncWriteLock.lock();
-    m_flagRush = false;
-    m_AsyncWriteLock.unlock();
-    // If m_DataFlag is ON, write else just free databuf
-    if (m_DataFlag == DataFlag::ON)
     {
+        profiling::ProfilerGuard wd(m_Profiler, "ES_WriteData");
+        adios2::format::BufferV *databuf = TSInfo.DataBuffer;
+        TSInfo.DataBuffer = nullptr;
         CALI_MARK_BEGIN("DaosWriter::WriteData");
         WriteData(databuf);
         CALI_MARK_END("DaosWriter::WriteData");
     }
-    else
-        delete databuf;
-
-    m_Profiler.Stop("ES_WriteData");
 
     /*
-     * Two-step metadata aggregation
+     * BP5-style selective metadata aggregation.
+     *
+     * Cheap fixed-size gather + bcast that reaches collective consensus
+     * on which MetaMetaBlocks and Attribute blocks are unique and need
+     * to be written by rank 0.  After step 0 in stable HPC apps, the
+     * bitmap is empty almost every step and rank 0 has no writes —
+     * eliminating the per-step coordination cost.  Per-variable
+     * metadata is unaffected (it goes per-rank to DAOS via WriteMetadata
+     * below, outside this block).  No trailing m_Comm.Barrier — the
+     * Allgather inside DaosArrayWriteMetadata absorbs skew.
+     *
+     * Rank 0 also emits a step record to md.idx every step (even when
+     * the gate says no new content) — the reader's attribute path
+     * uses m_MetadataIndexTable[Step][4] to locate attributes in md.0,
+     * so an entry per step is required for attribute reads to work.
+     *
+     * Cheap collective gate: blocking Allreduce of a 1-byte "anyone has
+     * new content?" flag.  Aurora's MPI doesn't auto-progress
+     * non-blocking collectives, so an MPI_Iallreduce + Wait version
+     * offered no improvement (verified empirically).  Keep it blocking;
+     * the cost is ~80-100 ms/step at 32 ranks, which is the floor for
+     * one MPI collective at scale on this network.
      */
-    m_Profiler.Start("ES_meta1");
-    std::vector<char> MetaBuffer;
-    // core::iovec m{TSInfo.MetaEncodeBuffer->Data(),
-    // TSInfo.MetaEncodeBuffer->m_FixedSize};
-    core::iovec m{nullptr, 0};
-    core::iovec a{nullptr, 0};
-    if (TSInfo.AttributeEncodeBuffer)
+    unsigned char localHasContent =
+        (!TSInfo.NewMetaMetaBlocks.empty() ||
+         (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0))
+            ? 1
+            : 0;
+    unsigned char anyHasContent = 0;
+    m_Profiler.Start("ES_Gate");
+    m_Comm.Allreduce(&localHasContent, &anyHasContent, 1, helper::Comm::Op::Max);
+    m_Profiler.Stop("ES_Gate");
+
+    std::vector<core::iovec> AttributeBlocks;
+    if (anyHasContent)
     {
-        a = {TSInfo.AttributeEncodeBuffer->Data(), TSInfo.AttributeEncodeBuffer->m_FixedSize};
-    }
-    MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-        TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
+        profiling::ProfilerGuard g(m_Profiler, "ES_SelAgg");
 
-    CALI_MARK_BEGIN("DaosWriter::meta_lvl1");
-    if (m_Aggregator->m_Comm.Size() > 1)
-    { // level 1
-        m_Profiler.Start("ES_meta1_gather");
-        CALI_MARK_BEGIN("DaosWriter::meta_gather1");
-        size_t LocalSize = MetaBuffer.size();
-        std::vector<size_t> RecvCounts = m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
-        std::vector<char> RecvBuffer;
-        if (m_Aggregator->m_Comm.Rank() == 0)
+        std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks =
+            TSInfo.NewMetaMetaBlocks;
+        if (TSInfo.AttributeEncodeBuffer)
         {
-            uint64_t TotalSize = 0;
-            for (auto &n : RecvCounts)
-                TotalSize += n;
-            RecvBuffer.resize(TotalSize);
-            /*std::cout << "MD Lvl-1: rank " << m_Comm.Rank() << " gather "
-                      << TotalSize << " bytes from aggregator group"
-                      << std::endl;*/
+            AttributeBlocks.push_back(
+                {TSInfo.AttributeEncodeBuffer->Data(), TSInfo.AttributeEncodeBuffer->m_FixedSize});
         }
-        m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                           RecvCounts.size(), RecvBuffer.data(), 0);
-        CALI_MARK_END("DaosWriter::meta_gather1");
-        m_Profiler.Stop("ES_meta1_gather");
-        if (m_Aggregator->m_Comm.Rank() == 0)
-        {
-            std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
-            std::vector<uint64_t> DataSizes;
-            std::vector<uint64_t> WriterDataPositions;
-            std::vector<core::iovec> AttributeBlocks;
-            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-                RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
-                WriterDataPositions);
+        std::vector<size_t> MetaEncodeSize{
+            TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0};
+        std::vector<uint64_t> WriterDataPos{m_StartDataPos};
 
-            MetaBuffer.clear();
-            MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-                UniqueMetaMetaBlocks, Metadata, AttributeBlocks, DataSizes, WriterDataPositions);
-        }
-    } // level 1
-    CALI_MARK_END("DaosWriter::meta_lvl1");
-    m_Profiler.Stop("ES_meta1");
-    m_Profiler.Start("ES_meta2");
-    // level 2
-    CALI_MARK_BEGIN("DaosWriter::meta_lvl2");
-    if (m_Aggregator->m_Comm.Rank() == 0)
-    {
-        std::vector<char> RecvBuffer;
-        std::vector<char> *buf;
-        std::vector<size_t> RecvCounts;
-        size_t LocalSize = MetaBuffer.size();
-        if (m_CommAggregators.Size() > 1)
-        {
-            CALI_MARK_BEGIN("DaosWriter::meta_gather2");
-            m_Profiler.Start("ES_meta2_gather");
-            RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
-            if (m_CommAggregators.Rank() == 0)
-            {
-                uint64_t TotalSize = 0;
-                for (auto &n : RecvCounts)
-                    TotalSize += n;
-                RecvBuffer.resize(TotalSize);
-                /*std::cout << "MD Lvl-2: rank " << m_Comm.Rank() << " gather "
-                          << TotalSize << " bytes from aggregator group"
-                          << std::endl;*/
-            }
+        format::BP5Helper::BP5AggregateInformation(m_Comm, m_Profiler, UniqueMetaMetaBlocks,
+                                                   AttributeBlocks, MetaEncodeSize, WriterDataPos);
 
-            m_CommAggregators.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                            RecvCounts.size(), RecvBuffer.data(), 0);
-            buf = &RecvBuffer;
-            CALI_MARK_END("DaosWriter::meta_gather2");
-            m_Profiler.Stop("ES_meta2_gather");
-        }
-        else
+        if (m_Comm.Rank() == 0 && !UniqueMetaMetaBlocks.empty())
         {
-            buf = &MetaBuffer;
-            RecvCounts.push_back(LocalSize);
-        }
-
-        if (m_CommAggregators.Rank() == 0)
-        {
-            std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
-            std::vector<uint64_t> DataSizes;
-            std::vector<core::iovec> AttributeBlocks;
-            m_WriterDataPos.resize(0);
-            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-                *buf, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks, DataSizes,
-                m_WriterDataPos);
-            assert(m_WriterDataPos.size() == static_cast<size_t>(m_Comm.Size()));
             WriteMetaMetadata(UniqueMetaMetaBlocks);
-            m_LatestMetaDataPos = m_MetaDataPos;
-            m_LatestMetaDataSize = WriteAttributes(AttributeBlocks);
-            // m_LatestMetaDataPos = 0;
-            // m_LatestMetaDataSize = 0;
-            if (!m_Parameters.AsyncWrite)
+            for (auto &mm : UniqueMetaMetaBlocks)
             {
-                WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+                free((void *)mm.MetaMetaInfo);
+                free((void *)mm.MetaMetaID);
             }
         }
-    } // level 2
-    m_Profiler.Stop("ES_meta2");
-    // Barrier to exclude stragglers from MPI_Allgather()
-    m_Comm.Barrier();
-    CALI_MARK_END("DaosWriter::meta_lvl2");
+        // No trailing Barrier — the next collective is the Allgather
+        // inside DaosArrayWriteMetadata, which itself synchronizes and
+        // will absorb cross-rank skew.
+    }
+
+    // Always gather per-rank data start offsets into m_WriterDataPos so
+    // WriteMetadataFileIndex emits the right offsets every step.
+    // BP5AggregateInformation only runs when anyHasContent is true, so
+    // we can't rely on its WriterDataPos vector for steady-state steps.
+    {
+        profiling::ProfilerGuard gw(m_Profiler, "ES_GatherPos");
+        std::vector<uint64_t> tmp;
+        if (m_Comm.Rank() == 0)
+        {
+            tmp.resize(m_Comm.Size());
+        }
+        m_Comm.GatherArrays(&m_StartDataPos, 1, tmp.data(), 0);
+        if (m_Comm.Rank() == 0)
+        {
+            m_WriterDataPos = std::move(tmp);
+        }
+    }
+
+    // Rank 0 always emits an attribute record to md.0 (even when empty —
+    // WriteAttributes pads AttrSizeVector to writerCount zeros).  This
+    // keeps the reader's per-step bookkeeping consistent every step.
+    // Then emits the corresponding md.idx step record.
+    if (m_Comm.Rank() == 0)
+    {
+        m_LatestMetaDataPos = m_MetaDataPos;
+        m_LatestMetaDataSize = WriteAttributes(AttributeBlocks);
+        WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+    }
 
     CALI_MARK_BEGIN("DaosWriter::metadata-stabilization");
     WriteMetadata(TSInfo);
     CALI_MARK_END("DaosWriter::metadata-stabilization");
 
-    if (m_Parameters.AsyncWrite)
-    {
-        /* Start counting computation blocks between EndStep and next BeginStep
-         * each time */
-        {
-            m_AsyncWriteLock.lock();
-            m_ComputationBlockTimes.clear();
-            m_ComputationBlocksLength = 0.0;
-            m_ComputationBlockID = 0;
-            m_AsyncWriteLock.unlock();
-        }
-    }
-
-    m_Profiler.Stop("ES");
     m_WriterStep++;
-    m_EndStepEnd = Now();
-    /* Seconds ts2 = Now() - m_EngineStart;
-     std::cout << "END STEP ended at: " << ts2.count() << std::endl;*/
+    // Open the BetweenSteps timer; the next BeginStep closes it.  This
+    // attributes iotest's data-generation gap (or whatever the workload
+    // does between EndStep return and the next BeginStep call) to a
+    // named timer so it can be subtracted when comparing against the
+    // bench, which has no equivalent gap.
+    m_Profiler.Start("BetweenSteps");
 }
 
 // PRIVATE
@@ -825,329 +647,76 @@ void DaosWriter::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
-    InitAggregator();
     InitTransports();
     CALI_MARK_BEGIN("DaosWriter::InitDAOS");
     InitDAOS();
     CALI_MARK_END("DaosWriter::InitDAOS");
+
+    RegisterProfilerTimers();
+    OpenDataArray();
+
     InitBPBuffer();
+}
+
+void DaosWriter::RegisterProfilerTimers()
+{
+    // Standard BP5-style timers (BS, ES, ES_CloseTS, ES_WriteData, PP)
+    // are pre-registered by the JSONProfiler ctor; only the DAOS-engine-
+    // specific names need to be added here.  Names are reused at every
+    // ProfilerGuard call site and as keys in profiling.json.
+    m_Profiler.AddTimerWatch("OpenSetup");
+    m_Profiler.AddTimerWatch("PersistOids");
+    m_Profiler.AddTimerWatch("WD_Drain");
+    m_Profiler.AddTimerWatch("WD_Tail");
+    m_Profiler.AddTimerWatch("MD_Daos");
+    m_Profiler.AddTimerWatch("MD_Posix");
+    m_Profiler.AddTimerWatch("PutCommon");
+    m_Profiler.AddTimerWatch("PutCommon_Marshal");
+    m_Profiler.AddTimerWatch("ES_Gate");
+    m_Profiler.AddTimerWatch("ES_SelAgg");
+    m_Profiler.AddTimerWatch("BetweenSteps");
+    // DaosChunkV sub-timers (called via the profiler reference passed
+    // to its constructor).
+    m_Profiler.AddTimerWatch("atvMemcpy");
+    m_Profiler.AddTimerWatch("atvReap");
+    m_Profiler.AddTimerWatch("atvSubmit");
+    m_Profiler.AddTimerWatch("subSetup");
+    m_Profiler.AddTimerWatch("subEventInit");
+    m_Profiler.AddTimerWatch("subWriteCall");
+    // Mirrors of accumulators that live outside m_Profiler
+    // (BP5Serializer's per-call sub-Marshal counters and DaosChunkV's
+    // fresh-allocation count).  Values are copied in at DoClose by
+    // SyncExternalCountersToProfiler so they appear in profiling.json.
+    m_Profiler.AddTimerWatch("BP5_BufferAppend");
+    m_Profiler.AddTimerWatch("BP5_GetMinMax");
+    m_Profiler.AddTimerWatch("FreshChunkAllocs");
+}
+
+void DaosWriter::SyncExternalCountersToProfiler()
+{
+    auto setTimer = [&](const std::string &name, double secs, uint64_t calls) {
+        auto *t = m_Profiler.GetTimer(name);
+        if (t)
+        {
+            t->m_ProcessTime = static_cast<int64_t>(secs * 1.0e6);
+            t->m_nCalls = calls;
+        }
+    };
+
+    setTimer("BP5_BufferAppend", m_BP5Serializer.m_BufferAppendSecs,
+             static_cast<uint64_t>(m_BP5Serializer.m_BufferAppendCalls));
+    // m_GetMinMaxSecs has no call counter; use a sentinel so the
+    // timer entry is emitted whenever any time was accumulated.
+    setTimer("BP5_GetMinMax", m_BP5Serializer.m_GetMinMaxSecs,
+             m_BP5Serializer.m_GetMinMaxSecs > 0 ? 1 : 0);
+    setTimer("FreshChunkAllocs", 0.0,
+             m_DataBuf ? static_cast<uint64_t>(m_DataBuf->FreshAllocCount()) : 0);
 }
 
 void DaosWriter::InitParameters()
 {
     ParseParams(m_IO, m_Parameters);
-    m_WriteToBB = !(m_Parameters.BurstBufferPath.empty());
-    m_DrainBB = m_WriteToBB && m_Parameters.BurstBufferDrain;
-
-    unsigned int nproc = (unsigned int)m_Comm.Size();
-    m_Parameters.NumAggregators = helper::SetWithinLimit(m_Parameters.NumAggregators, 0U, nproc);
-    m_Parameters.NumSubFiles = helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, nproc);
-    m_Parameters.AggregatorRatio = helper::SetWithinLimit(m_Parameters.AggregatorRatio, 0U, nproc);
-    if (m_Parameters.NumAggregators == 0)
-    {
-        if (m_Parameters.AggregatorRatio > 0)
-        {
-            m_Parameters.NumAggregators =
-                helper::SetWithinLimit(nproc / m_Parameters.AggregatorRatio, 0U, nproc);
-        }
-        else if (m_Parameters.NumSubFiles > 0)
-        {
-            m_Parameters.NumAggregators =
-                helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, nproc);
-        }
-    }
-    m_Parameters.NumSubFiles =
-        helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, m_Parameters.NumAggregators);
-
-    // Limiting to max 64MB page size
-    m_Parameters.StripeSize = helper::SetWithinLimit(m_Parameters.StripeSize, 0U, 67108864U);
-    if (m_Parameters.StripeSize == 0)
-    {
-        m_Parameters.StripeSize = 4096;
-    }
-
-    if (m_Parameters.DirectIO)
-    {
-        if (m_Parameters.DirectIOAlignBuffer == 0)
-        {
-            m_Parameters.DirectIOAlignBuffer = m_Parameters.DirectIOAlignOffset;
-        }
-        m_BP5Serializer.m_BufferBlockSize = m_Parameters.DirectIOAlignOffset;
-        m_BP5Serializer.m_BufferAlign = m_Parameters.DirectIOAlignBuffer;
-        if (m_Parameters.StripeSize % m_Parameters.DirectIOAlignOffset)
-        {
-            size_t k = m_Parameters.StripeSize / m_Parameters.DirectIOAlignOffset + 1;
-            m_Parameters.StripeSize = k * m_Parameters.DirectIOAlignOffset;
-        }
-        if (m_Parameters.BufferChunkSize % m_Parameters.DirectIOAlignOffset)
-        {
-            size_t k = m_Parameters.BufferChunkSize / m_Parameters.DirectIOAlignOffset + 1;
-            m_Parameters.BufferChunkSize = k * m_Parameters.DirectIOAlignOffset;
-        }
-    }
-
     m_BP5Serializer.m_StatsLevel = m_Parameters.StatsLevel;
-}
-
-uint64_t DaosWriter::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
-{
-    const auto &buffer = bufferSTL.m_Buffer;
-    size_t &position = bufferSTL.m_Position;
-
-    if (buffer.size() < m_IndexHeaderSize)
-    {
-        m_AppendMetadataPos = 0;
-        m_AppendMetaMetadataPos = 0;
-        m_AppendMetadataIndexPos = 0;
-        m_AppendDataPos.resize(m_Aggregator->m_NumAggregators,
-                               0ULL); // safe bet
-        return 0;
-    }
-
-    // Check endinanness
-    position = m_EndianFlagPosition;
-    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
-    bool IsLittleEndian = (endianness == 0) ? true : false;
-    if (helper::IsLittleEndian() != IsLittleEndian)
-    {
-        std::string m = (IsLittleEndian ? "Little" : "Big");
-
-        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CountStepsInMetadataIndex",
-                                          "ADIOS2 BP5 Engine only supports appending with the same "
-                                          "endianness. The existing file is " +
-                                              m + "Endian");
-    }
-
-    // BP version
-    position = m_BPVersionPosition;
-    uint8_t Version = helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
-    if (Version != 5)
-    {
-        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CountStepsInMetadataIndex",
-                                          "ADIOS2 BP5 Engine only supports bp format "
-                                          "version 5, found " +
-                                              std::to_string(Version) + " version");
-    }
-
-    // BP minor version
-    position = m_BPMinorVersionPosition;
-    uint8_t minorVersion = helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
-    if (minorVersion != m_BP5MinorVersion)
-    {
-        helper::Throw<std::runtime_error>(
-            "Engine", "DaosWriter", "CountStepsInMetadataIndex",
-            "Current ADIOS2 BP5 Engine can only append to bp format 5." +
-                std::to_string(m_BP5MinorVersion) + " but this file is 5." +
-                std::to_string(minorVersion) + " version");
-    }
-
-    position = m_ColumnMajorFlagPosition;
-    const uint8_t columnMajor = helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
-    const uint8_t NowColumnMajor = (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
-    if (columnMajor != NowColumnMajor)
-    {
-        std::string m = (columnMajor == 'y' ? "column" : "row");
-        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CountStepsInMetadataIndex",
-                                          "ADIOS2 BP5 Engine only supports appending with the same "
-                                          "column/row major settings as it was written."
-                                          " Existing file is " +
-                                              m + " major");
-    }
-
-    position = m_IndexHeaderSize; // after the header
-    // Just count the steps first
-    unsigned int availableSteps = 0;
-    uint64_t nDataFiles = 0;
-    while (position < buffer.size())
-    {
-        const unsigned char recordID =
-            helper::ReadValue<unsigned char>(buffer, position, IsLittleEndian);
-        position += sizeof(uint64_t); // recordLength
-
-        switch (recordID)
-        {
-        case IndexRecord::WriterMapRecord: {
-            m_AppendWriterCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendAggregatorCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendSubfileCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            if (m_AppendSubfileCount > nDataFiles)
-            {
-                nDataFiles = m_AppendSubfileCount;
-            }
-            // jump over writermap
-            position += m_AppendWriterCount * sizeof(uint64_t);
-            break;
-        }
-        case IndexRecord::StepRecord: {
-            position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
-            const uint64_t FlushCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            // jump over the metadata positions
-            position += sizeof(uint64_t) * m_AppendWriterCount * ((2 * FlushCount) + 1);
-            availableSteps++;
-            break;
-        }
-        }
-    }
-
-    unsigned int targetStep = 0;
-
-    if (m_Parameters.AppendAfterSteps < 0)
-    {
-        // -1 means append after last step
-        int s = (int)availableSteps + m_Parameters.AppendAfterSteps + 1;
-        if (s < 0)
-        {
-            s = 0;
-        }
-        targetStep = static_cast<unsigned int>(s);
-    }
-    else
-    {
-        targetStep = static_cast<unsigned int>(m_Parameters.AppendAfterSteps);
-    }
-    if (targetStep > availableSteps)
-    {
-        targetStep = availableSteps;
-    }
-
-    m_AppendDataPos.resize(nDataFiles, 0ULL);
-
-    if (!targetStep)
-    {
-        // append at 0 is like writing new file
-        m_AppendMetadataPos = 0;
-        m_AppendMetaMetadataPos = 0;
-        m_AppendMetadataIndexPos = 0;
-        return 0;
-    }
-
-    m_AppendMetadataPos = MaxSizeT; // size of header
-    m_AppendMetaMetadataPos = MaxSizeT;
-    m_AppendMetadataIndexPos = MaxSizeT;
-    std::fill(m_AppendDataPos.begin(), m_AppendDataPos.end(), MaxSizeT);
-
-    if (targetStep == availableSteps)
-    {
-        // append after existing steps
-        return targetStep;
-    }
-
-    // append but not at 0 and not after existing steps
-    // Read each record now completely to get offsets at step+1
-    position = m_IndexHeaderSize;
-    unsigned int currentStep = 0;
-    std::vector<uint64_t> writerToFileMap;
-    // reading one step beyond target to get correct offsets
-    while (currentStep <= targetStep && position < buffer.size())
-    {
-        const unsigned char recordID =
-            helper::ReadValue<unsigned char>(buffer, position, IsLittleEndian);
-        position += sizeof(uint64_t); // recordLength
-
-        switch (recordID)
-        {
-        case IndexRecord::WriterMapRecord: {
-            m_AppendWriterCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendAggregatorCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendSubfileCount = helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-
-            // Get the process -> subfile map
-            writerToFileMap.clear();
-            for (uint64_t i = 0; i < m_AppendWriterCount; i++)
-            {
-                const uint64_t subfileIdx =
-                    helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-                writerToFileMap.push_back(subfileIdx);
-            }
-            break;
-        }
-        case IndexRecord::StepRecord: {
-            m_AppendMetadataIndexPos =
-                position - sizeof(unsigned char) - sizeof(uint64_t); // pos of RecordID
-            const uint64_t MetadataPos =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            position += sizeof(uint64_t); // MetadataSize
-            const uint64_t FlushCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-
-            m_AppendMetadataPos = static_cast<size_t>(MetadataPos);
-
-            if (currentStep == targetStep)
-            {
-                // we need the very first (smallest) write position to each
-                // subfile Offsets and sizes,  2*FlushCount + 1 per writer
-                for (uint64_t i = 0; i < m_AppendWriterCount; i++)
-                {
-                    // first flush/write position will do
-                    const size_t FirstDataPos = static_cast<size_t>(
-                        helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian));
-                    position += sizeof(uint64_t) * 2 * FlushCount; // no need to read
-                    /* std::cout << "Writer " << i << " subfile " <<
-                       writerToFileMap[i]  << "  first data loc:" <<
-                       FirstDataPos << std::endl; */
-                    if (FirstDataPos < m_AppendDataPos[writerToFileMap[i]])
-                    {
-                        m_AppendDataPos[writerToFileMap[i]] = FirstDataPos;
-                    }
-                }
-            }
-            else
-            {
-                // jump over all data offsets in this step
-                position += sizeof(uint64_t) * m_AppendWriterCount * (1 + 2 * FlushCount);
-            }
-            currentStep++;
-            break;
-        }
-        }
-    }
-    return targetStep;
-}
-
-void DaosWriter::InitAggregator()
-{
-    // in BP5, aggregation is "always on", but processes may be alone, so
-    // m_Aggregator.m_IsActive is always true
-    // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
-    // m_Aggregator.m_SubFileIndex is always set
-
-    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
-        m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
-    {
-        m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
-        m_AggregatorEveroneWrites.Init(m_Parameters.NumAggregators, m_Parameters.NumSubFiles,
-                                       m_Comm);
-        m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
-        m_IAmWritingData = true;
-        DataWritingComm = &m_AggregatorEveroneWrites.m_Comm;
-        m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorEveroneWrites);
-    }
-    else
-    {
-        size_t numNodes = m_AggregatorTwoLevelShm.PreInit(m_Comm);
-        (void)numNodes;
-        m_AggregatorTwoLevelShm.Init(m_Parameters.NumAggregators, m_Parameters.NumSubFiles, m_Comm);
-
-        /*std::cout << "Rank " << m_RankMPI << " aggr? "
-                  << m_AggregatorTwoLevelShm.m_IsAggregator << " master? "
-                  << m_AggregatorTwoLevelShm.m_IsMasterAggregator
-                  << " aggr size = " << m_AggregatorTwoLevelShm.m_Size
-                  << " rank = " << m_AggregatorTwoLevelShm.m_Rank
-                  << " subfile = " << m_AggregatorTwoLevelShm.m_SubStreamIndex
-                  << " type = " << m_Parameters.AggregationType << std::endl;*/
-
-        m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
-        m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;
-        DataWritingComm = &m_AggregatorTwoLevelShm.m_AggregatorChainComm;
-        m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
-    }
-
-    /* comm for Aggregators only.
-     *  We are only interested in the chain of rank 0s
-     */
-    int color = m_Aggregator->m_Comm.Rank();
-    m_CommAggregators = m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
 }
 
 void DaosWriter::InitTransports()
@@ -1159,46 +728,12 @@ void DaosWriter::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    if (m_WriteToBB)
-    {
-        m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
-    }
-    else
-    {
-        m_BBName = m_Name;
-    }
-    /* From this point, engine writes to m_BBName, which points to either
-        the BB file system if BB is turned on, or to the target file system.
-        m_Name always points to the target file system, to which the drainer
-        should write if BB is turned on
-    */
-
-    // Names passed to IO AddTransport option with key "Name"
+    // Compute paths for the BP5 metadata files (md.0, mmd.0, md.idx) and
+    // the DAOS-engine OID file.  No data subfiles: data lives in per-rank
+    // DAOS arrays located via data_oids.txt (written separately by
+    // PersistDataOidsIndex).
     const std::vector<std::string> transportsNames =
-        transportman::TransportMan::GetFilesBaseNames(m_BBName, m_IO.m_TransportsParameters);
-
-    // /path/name.bp.dir/name.bp.rank
-    m_SubStreamNames = GetBPSubStreamNames(transportsNames, m_Aggregator->m_SubStreamIndex);
-
-    if (m_IAmDraining)
-    {
-        // Only (master)aggregators will run draining processes
-        if (m_DrainBB)
-        {
-            const std::vector<std::string> drainTransportNames =
-                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
-            m_DrainSubStreamNames =
-                GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
-            /* start up BB thread */
-            //            m_FileDrainer.SetVerbose(
-            //				     m_Parameters.BurstBufferVerbose,
-            //				     m_Comm.Rank());
-            m_FileDrainer.Start();
-        }
-    }
-
-    /* Create the directories either on target or burst buffer if used */
-    //    m_BP4Serializer.m_Profiler.Start("mkdir");
+        transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
 
     if (m_Comm.Rank() == 0)
     {
@@ -1208,128 +743,53 @@ void DaosWriter::InitTransports()
         m_OIDFileName = GetOIDFileName(transportsNames[0]);
     }
     m_FileMetadataManager.MkDirsBarrier(m_MetadataFileNames, m_IO.m_TransportsParameters,
-                                        m_Parameters.NodeLocal || m_WriteToBB);
-    /* Create the directories on burst buffer if used */
-    if (m_DrainBB)
-    {
-        /* Create the directories on target anyway by main thread */
-        m_FileDataManager.MkDirsBarrier(m_DrainSubStreamNames, m_IO.m_TransportsParameters,
                                         m_Parameters.NodeLocal);
-    }
-
-    /* Everyone opens its data file. Each aggregation chain opens
-       one data file and does so in chain, not everyone at once */
-    if (m_Parameters.AsyncOpen)
-    {
-        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
-        {
-            m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
-        }
-    }
-
-    if (m_Parameters.DirectIO)
-    {
-        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
-        {
-            m_IO.m_TransportsParameters[i]["DirectIO"] = "true";
-        }
-    }
 
     bool useProfiler = true;
 
-    if (m_IAmWritingData)
-    {
-        m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
-                                    useProfiler, *DataWritingComm);
-    }
-
-    if (m_IAmDraining)
-    {
-        if (m_DrainBB)
-        {
-            for (const auto &name : m_DrainSubStreamNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
-        }
-    }
-
     if (m_Comm.Rank() == 0)
     {
-        // force turn off directio to metadata files
-        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
-        {
-            m_IO.m_TransportsParameters[i]["DirectIO"] = "false";
-        }
         m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
                                             m_IO.m_TransportsParameters, useProfiler);
-
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters, useProfiler);
-
         m_FileMetadataIndexManager.OpenFiles(m_MetadataIndexFileNames, m_OpenMode,
                                              m_IO.m_TransportsParameters, useProfiler);
-
-        if (m_DrainBB)
-        {
-            const std::vector<std::string> drainTransportNames =
-                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
-            m_DrainMetadataFileNames = GetBPMetadataFileNames(drainTransportNames);
-            m_DrainMetadataIndexFileNames = GetBPMetadataIndexFileNames(drainTransportNames);
-
-            for (const auto &name : m_DrainMetadataFileNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
-            for (const auto &name : m_DrainMetadataIndexFileNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
-        }
     }
 }
 
-void DaosWriter::SetDataFlag()
+/// Pick the metadata-layout from the DAOS_METADATA_LAYOUT environment
+/// variable.  Defaults to ARRAY_1MB_ALIGNED when unset.  An unrecognized
+/// value is rejected so a typo doesn't silently fall back.
+void DaosWriter::SetMetadataLayout()
 {
-    // Read environment variable DATA_STATE and set m_datastate accordingly
-    const char *datastate = std::getenv("DATA_FLAG");
-    if (!datastate)
-    {
-        // By default, set m_DataFlag to ON
-        return;
-    }
-
-    // Set m_DataFlag based on the environment variable value
-    m_DataFlag = (std::string(datastate) == "OFF") ? DataFlag::OFF : DataFlag::ON;
-}
-
-// Function to set DAOS interface from the environment variable
-void DaosWriter::SetDaosEngine()
-{
-    const char *env = std::getenv("DAOS_ENGINE");
+    const char *env = std::getenv("DAOS_METADATA_LAYOUT");
     if (!env)
     {
-        daosEngine = DaosEngine::UNKNOWN;
+        metadataLayout = MetadataLayout::ARRAY_1MB_ALIGNED;
         return;
     }
 
-    std::string interfaceStr(env);
-    std::transform(interfaceStr.begin(), interfaceStr.end(), interfaceStr.begin(), ::tolower);
-    if (interfaceStr == "daos-array")
+    std::string layoutStr(env);
+    std::transform(layoutStr.begin(), layoutStr.end(), layoutStr.begin(), ::tolower);
+    if (layoutStr == "array")
     {
-        daosEngine = DaosEngine::DAOS_ARRAY;
+        metadataLayout = MetadataLayout::ARRAY;
     }
-    else if (interfaceStr == "daos-array-1mb-aligned")
+    else if (layoutStr == "array-1mb-aligned")
     {
-        daosEngine = DaosEngine::DAOS_ARRAY_1MB_ALIGNED;
+        metadataLayout = MetadataLayout::ARRAY_1MB_ALIGNED;
     }
-    else if (interfaceStr == "daos-kv")
+    else if (layoutStr == "kv")
     {
-        daosEngine = DaosEngine::DAOS_KV;
+        metadataLayout = MetadataLayout::KV;
     }
     else
     {
-        daosEngine = DaosEngine::UNKNOWN;
+        helper::Throw<std::invalid_argument>("Engine", "DaosWriter", "SetMetadataLayout",
+                                             "DAOS_METADATA_LAYOUT='" + layoutStr +
+                                                 "' is not recognized; expected one of "
+                                                 "'array', 'array-1mb-aligned', 'kv'");
     }
 }
 
@@ -1340,8 +800,9 @@ void DaosWriter::SetPoolAndContName()
     const char *cont = std::getenv("DAOS_CONT");
     if (!pool || !cont)
     {
-        std::cout << "DAOS_POOL or DAOS_CONT not set" << std::endl;
-        exit(1);
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosWriter", "SetPoolAndContName",
+            "DAOS_POOL and DAOS_CONT environment variables must both be set");
     }
 
     strncpy(m_pool_label, pool, sizeof(m_pool_label) - 1);
@@ -1356,15 +817,22 @@ void DaosWriter::InitDAOS()
     int rc;
     CALI_MARK_BEGIN("DaosWriter::daos_init");
     rc = daos_init();
-    ASSERT(rc == 0, "daos_init failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                          "daos_init failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosWriter::daos_init");
 
     rc = gethostname(node, sizeof(node));
-    ASSERT(rc == 0, "buffer for hostname too small");
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                          "gethostname failed (buffer too small)");
+    }
 
-    SetDaosEngine();
+    SetMetadataLayout();
     SetPoolAndContName();
-    SetDataFlag();
 
     CALI_MARK_BEGIN("DaosWriter::daos_pool_connect");
     if (m_Comm.Rank() == 0)
@@ -1373,7 +841,11 @@ void DaosWriter::InitDAOS()
         rc = daos_pool_connect(m_pool_label, DSS_PSETID, DAOS_PC_RW /* read write access */,
                                &poh /* returned pool handle */, NULL /* returned pool info */,
                                NULL /* event */);
-        ASSERT(rc == 0, "pool connect failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                              "daos_pool_connect failed rc=" + std::to_string(rc));
+        }
     }
     CALI_MARK_END("DaosWriter::daos_pool_connect");
 
@@ -1387,7 +859,11 @@ void DaosWriter::InitDAOS()
     {
         /** open container */
         rc = daos_cont_open(poh, m_cont_label, DAOS_COO_RW, &coh, NULL, NULL);
-        ASSERT(rc == 0, "container open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                              "daos_cont_open failed rc=" + std::to_string(rc));
+        }
     }
     CALI_MARK_END("DaosWriter::daos_cont_open");
 
@@ -1398,19 +874,15 @@ void DaosWriter::InitDAOS()
 
     if (m_Comm.Rank() == 0)
     {
-        switch (daosEngine)
+        switch (metadataLayout)
         {
-        case DaosEngine::DAOS_ARRAY:
-        case DaosEngine::DAOS_ARRAY_1MB_ALIGNED:
+        case MetadataLayout::ARRAY:
+        case MetadataLayout::ARRAY_1MB_ALIGNED:
             CreateDaosArrayObject();
             break;
-        case DaosEngine::DAOS_KV:
+        case MetadataLayout::KV:
             CreateDaosKVObject();
             break;
-        // Add other cases here if needed
-        default:
-            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
-                                              "Unsupported DAOS interface");
         }
     }
 
@@ -1425,17 +897,19 @@ void DaosWriter::WriteObjectIDsToFile()
     FILE *fp = fopen(m_OIDFileName.c_str(), "w");
     if (fp == NULL)
     {
-        perror("fopen");
-        exit(1);
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "WriteObjectIDsToFile",
+                                          "fopen failed for " + m_OIDFileName + ": " +
+                                              std::string(strerror(errno)));
     }
-    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY ||
+        metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
 
         fprintf(fp, "%" PRIu64 "\n%" PRIu64 "\n", oid.hi, oid.lo);
         fprintf(fp, "%" PRIu64 "\n%" PRIu64 "\n", mdsize_oid.hi, mdsize_oid.lo);
         fclose(fp);
     }
-    else if (daosEngine == DaosEngine::DAOS_KV)
+    else if (metadataLayout == MetadataLayout::KV)
     {
         fprintf(fp, "%" PRIu64 "\n%" PRIu64 "\n", oid.hi, oid.lo);
         fclose(fp);
@@ -1444,20 +918,25 @@ void DaosWriter::WriteObjectIDsToFile()
 
 void DaosWriter::OpenDaosObjAndShare()
 {
-    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY ||
+        metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
         /** share array object handle with peer tasks */
         CALI_MARK_BEGIN("DaosWriter::array_oh_share");
         array_oh_share(&oh);
         CALI_MARK_END("DaosWriter::array_oh_share");
     }
-    else if (daosEngine == DaosEngine::DAOS_KV)
+    else if (metadataLayout == MetadataLayout::KV)
     {
         m_Comm.Bcast((char *)&oid, sizeof(daos_obj_id_t), 0);
         // Open KV object
         CALI_MARK_BEGIN("DaosWriter::daos_kv_open");
         int rc = daos_kv_open(coh, oid, DAOS_OO_RW, &oh, NULL);
-        ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "OpenDaosObjAndShare",
+                                              "daos_kv_open failed rc=" + std::to_string(rc));
+        }
         CALI_MARK_END("DaosWriter::daos_kv_open");
     }
 }
@@ -1471,7 +950,12 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     {
         /** fetch size of global handle */
         rc = daos_array_local2global(*oh, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "array_oh_share",
+                                              "daos_array_local2global (size) failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast size of global handle to all peers */
@@ -1485,7 +969,12 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     {
         /** generate actual global handle to share with peer tasks */
         rc = daos_array_local2global(*oh, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "array_oh_share",
+                                              "daos_array_local2global failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast global handle to all peers */
@@ -1495,7 +984,12 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     {
         /** unpack global handle */
         rc = daos_array_global2local(coh, ghdl, 0, oh);
-        ASSERT(rc == 0, "global2local failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "array_oh_share",
+                                              "daos_array_global2local failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     free(ghdl.iov_buf);
@@ -1632,184 +1126,35 @@ void DaosWriter::UpdateActiveFlag(const bool active)
     m_FileMetadataIndexManager.WriteFileAt(&activeChar, 1, m_ActiveFlagPosition);
     m_FileMetadataIndexManager.FlushFiles();
     m_FileMetadataIndexManager.SeekToFileEnd();
-    if (m_DrainBB)
-    {
-        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
-        {
-            m_FileDrainer.AddOperationWriteAt(m_DrainMetadataIndexFileNames[i],
-                                              m_ActiveFlagPosition, 1, &activeChar);
-            m_FileDrainer.AddOperationSeekEnd(m_DrainMetadataIndexFileNames[i]);
-        }
-    }
 }
 
 void DaosWriter::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        format::BufferSTL preMetadataIndex;
-        size_t preMetadataIndexFileSize;
-
-        if (m_Comm.Rank() == 0)
-        {
-            preMetadataIndexFileSize = m_FileMetadataIndexManager.GetFileSize(0);
-            preMetadataIndex.m_Buffer.resize(preMetadataIndexFileSize);
-            preMetadataIndex.m_Buffer.assign(preMetadataIndex.m_Buffer.size(), '\0');
-            preMetadataIndex.m_Position = 0;
-            m_FileMetadataIndexManager.ReadFile(preMetadataIndex.m_Buffer.data(),
-                                                preMetadataIndexFileSize);
-        }
-        m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
-        m_WriterStep = CountStepsInMetadataIndex(preMetadataIndex);
-
-        // truncate and seek
-        if (m_Aggregator->m_IsAggregator)
-        {
-            const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
-            if (off < MaxSizeT)
-            {
-                m_FileDataManager.Truncate(off);
-                // Seek is needed since truncate does not seek.
-                // SeekTo instead of SeetToFileEnd in case a transport
-                // does not support actual truncate.
-                m_FileDataManager.SeekTo(off);
-                m_DataPos = off;
-            }
-            else
-            {
-                m_DataPos = m_FileDataManager.GetFileSize(0);
-            }
-        }
-
-        if (m_Comm.Rank() == 0)
-        {
-            // Truncate existing metadata file
-            if (m_AppendMetadataPos < MaxSizeT)
-            {
-                m_MetaDataPos = m_AppendMetadataPos;
-                m_FileMetadataManager.Truncate(m_MetaDataPos);
-                m_FileMetadataManager.SeekTo(m_MetaDataPos);
-            }
-            else
-            {
-                m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
-                m_FileMetadataManager.SeekToFileEnd();
-            }
-
-            // Truncate existing meta-meta file
-            if (m_AppendMetaMetadataPos < MaxSizeT)
-            {
-                m_FileMetaMetadataManager.Truncate(m_AppendMetaMetadataPos);
-                m_FileMetaMetadataManager.SeekTo(m_AppendMetaMetadataPos);
-            }
-            else
-            {
-                m_FileMetadataIndexManager.SeekToFileEnd();
-            }
-
-            // Set the flag in the header of metadata index table to 1 again
-            // to indicate a new run begins
-            UpdateActiveFlag(true);
-
-            // Truncate existing index file
-            if (m_AppendMetadataIndexPos < MaxSizeT)
-            {
-                m_FileMetadataIndexManager.Truncate(m_AppendMetadataIndexPos);
-                m_FileMetadataIndexManager.SeekTo(m_AppendMetadataIndexPos);
-            }
-            else
-            {
-                m_FileMetadataIndexManager.SeekToFileEnd();
-            }
-        }
-        m_AppendDataPos.clear();
+        helper::Throw<std::invalid_argument>("Engine", "DaosWriter", "InitBPBuffer",
+                                             "Append mode is not supported by the DAOS engine "
+                                             "(each Open allocates a new per-rank DAOS array)");
     }
 
-    if (!m_WriterStep)
-    {
-        /* This is a new file or append at 0
-         * Make headers in data buffer and metadata buffer (but do not write
-         * them yet so that Open() can stay free of writing to disk)
-         */
-        if (m_Comm.Rank() == 0)
-        {
-            m_FileMetadataIndexManager.SeekToFileBegin();
-            m_FileMetadataManager.SeekToFileBegin();
-            m_FileMetaMetadataManager.SeekToFileBegin();
-        }
-        // last attempt to clean up datafile if called with append mode,
-        // data existed but index was missing
-        if (m_Aggregator->m_IsAggregator)
-        {
-            m_FileDataManager.SeekTo(0);
-        }
-    }
-
+    /* New file: prepare metadata streams and a slot per writer for
+     * the per-step data position (legacy WriterMap is not emitted —
+     * DaosReader locates per-rank arrays via data_oids.txt). */
     if (m_Comm.Rank() == 0)
     {
+        m_FileMetadataIndexManager.SeekToFileBegin();
+        m_FileMetadataManager.SeekToFileBegin();
+        m_FileMetaMetadataManager.SeekToFileBegin();
         m_WriterDataPos.resize(m_Comm.Size());
-    }
-
-    if (!m_WriterStep || m_AppendWriterCount != static_cast<unsigned int>(m_Comm.Size()) ||
-        m_AppendAggregatorCount != static_cast<unsigned int>(m_Aggregator->m_NumAggregators) ||
-        m_AppendSubfileCount != static_cast<unsigned int>(m_Aggregator->m_SubStreams))
-    {
-        // new Writer Map is needed, generate now, write later
-        const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
-        m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
-    }
-}
-
-void DaosWriter::EnterComputationBlock() noexcept
-{
-    if (m_Parameters.AsyncWrite && !m_BetweenStepPairs)
-    {
-        m_ComputationBlockStart = Now();
-        {
-            m_AsyncWriteLock.lock();
-            m_InComputationBlock = true;
-            m_AsyncWriteLock.unlock();
-        }
-    }
-}
-
-void DaosWriter::ExitComputationBlock() noexcept
-{
-    if (m_Parameters.AsyncWrite && m_InComputationBlock)
-    {
-        double t = Seconds(Now() - m_ComputationBlockStart).count();
-        {
-            m_AsyncWriteLock.lock();
-            if (t > 0.1) // only register long enough intervals
-            {
-                m_ComputationBlockTimes.emplace_back(m_ComputationBlockID, t);
-                m_ComputationBlocksLength += t;
-            }
-            m_InComputationBlock = false;
-            ++m_ComputationBlockID;
-            m_AsyncWriteLock.unlock();
-        }
     }
 }
 
 void DaosWriter::FlushData(const bool isFinal)
 {
-    BufferV *DataBuf;
-    if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
-    {
-        DataBuf = m_BP5Serializer.ReinitStepData(
-            new MallocV("DaosWriter", false, m_BP5Serializer.m_BufferAlign,
-                        m_BP5Serializer.m_BufferBlockSize, m_Parameters.InitialBufferSize,
-                        m_Parameters.GrowthFactor),
-            m_Parameters.AsyncWrite || m_Parameters.DirectIO);
-    }
-    else
-    {
-        DataBuf = m_BP5Serializer.ReinitStepData(
-            new ChunkV("DaosWriter", false, m_BP5Serializer.m_BufferAlign,
-                       m_BP5Serializer.m_BufferBlockSize, m_Parameters.BufferChunkSize),
-            m_Parameters.AsyncWrite || m_Parameters.DirectIO);
-    }
+    BufferV *DataBuf = m_BP5Serializer.ReinitStepData(
+        new ChunkV("DaosWriter", false, m_BP5Serializer.m_BufferAlign,
+                   m_BP5Serializer.m_BufferBlockSize, m_Parameters.BufferChunkSize),
+        m_Parameters.AsyncWrite);
 
     auto databufsize = DataBuf->Size();
     WriteData(DataBuf);
@@ -1878,65 +1223,69 @@ void DaosWriter::DoClose(const int transportIndex)
         EndStep();
     }
 
-    TimePoint wait_start = Now();
-    Seconds wait(0.0);
-    if (m_WriteFuture.valid())
-    {
-        m_Profiler.Start("DC_WaitOnAsync1");
-        m_AsyncWriteLock.lock();
-        m_flagRush = true;
-        m_AsyncWriteLock.unlock();
-        m_WriteFuture.get();
-        wait += Now() - wait_start;
-        m_Profiler.Stop("DC_WaitOnAsync1");
-    }
-
-    m_FileDataManager.CloseFiles(transportIndex);
-    // Delete files from temporary storage if draining was on
+    SyncExternalCountersToProfiler();
+    CloseDataArray();
 
     if (m_Comm.Rank() == 0)
     {
-        // close metadata file
+        // close metadata files
         m_FileMetadataManager.CloseFiles();
-
-        // close metametadata file
         m_FileMetaMetadataManager.CloseFiles();
-    }
 
-    if (m_Parameters.AsyncWrite)
-    {
-        // wait until all process' writing thread completes
-        m_Profiler.Start("DC_WaitOnAsync2");
-        wait_start = Now();
-        m_Comm.Barrier();
-        AsyncWriteDataCleanup();
-        wait += Now() - wait_start;
-        if (m_Comm.Rank() == 0 && m_Parameters.verbose > 0)
-        {
-            std::cout << "Close waited " << wait.count() << " seconds on async threads"
-                      << std::endl;
-        }
-        m_Profiler.Stop("DC_WaitOnAsync2");
-    }
-
-    if (m_Comm.Rank() == 0)
-    {
-        if (m_Parameters.AsyncWrite)
-        {
-            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
-        }
         // close metadata index file
         UpdateActiveFlag(false);
         m_FileMetadataIndexManager.CloseFiles();
     }
+
+    // Release DAOS handles in reverse of init order.  Without these the
+    // container/pool stay connected past Engine::Close until process exit;
+    // long-running apps that open many engines in one process leaked
+    // handles otherwise.  daos_fini's refcount lets libpil4dfs (if loaded)
+    // continue to own its own daos_init reference safely.
+    if (oh.cookie != 0)
+    {
+        if (metadataLayout == MetadataLayout::ARRAY ||
+            metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
+            daos_array_close(oh, NULL);
+        else if (metadataLayout == MetadataLayout::KV)
+            daos_kv_close(oh, NULL);
+        oh = {};
+    }
+    if (mdsize_oh.cookie != 0)
+    {
+        daos_kv_close(mdsize_oh, NULL);
+        mdsize_oh = {};
+    }
+    if (coh.cookie != 0)
+    {
+        daos_cont_close(coh, NULL);
+        coh = {};
+    }
+    if (m_Comm.Rank() == 0 && poh.cookie != 0)
+    {
+        daos_pool_disconnect(poh, NULL);
+        poh = {};
+    }
+    // No daos_fini() here.  We tried adding it (commit 0edc8cf94) on
+    // the assumption that libdaos would safely refcount fini/init pairs;
+    // it doesn't.  Any subsequent daos_init() in the same process — e.g.
+    // a reader open after the writer close, which the staging-common
+    // tests exercise — produced d_hhash_link_lookup errors at init and
+    // an obj_ec_update_iod_size assertion during the read.  Refcounting
+    // on our side wouldn't help: the failure is in libdaos's reinit
+    // path, not in our balance of init/fini calls.  So libdaos stays
+    // initialized until process exit, where the OS reaps it.  The
+    // per-handle close calls above ARE safe and do the work that
+    // matters in long-running multi-engine processes.
 
     FlushProfiler();
 }
 
 void DaosWriter::FlushProfiler()
 {
-    auto transportTypes = m_FileDataManager.GetTransportsTypes();
-    auto transportNames = m_FileDataManager.GetTransportsNames();
+    auto transportTypes = m_FileMetadataManager.GetTransportsTypes();
+    auto transportNames = m_FileMetadataManager.GetTransportsNames();
+    auto transportProfilers = m_FileMetadataManager.GetTransportsProfilers();
 
     // find first File type output, where we can write the profile
     int fileTransportIdx = -1;
@@ -1948,19 +1297,6 @@ void DaosWriter::FlushProfiler()
         }
     }
 
-    auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
-
-    auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
-    auto transportNamesMD = m_FileMetadataManager.GetTransportsNames();
-    auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
-
-    transportTypes.insert(transportTypes.end(), transportTypesMD.begin(), transportTypesMD.end());
-    transportNames.insert(transportNames.end(), transportNamesMD.begin(), transportNamesMD.end());
-    transportProfilers.insert(transportProfilers.end(), transportProfilersMD.begin(),
-                              transportProfilersMD.end());
-
-    // m_Profiler.WriteOut(transportTypes, transportProfilers);
-
     const std::string lineJSON(
         m_Profiler.GetRankProfilingJSON(transportTypes, transportNames, transportProfilers) +
         ",\n");
@@ -1969,42 +1305,20 @@ void DaosWriter::FlushProfiler()
 
     if (m_RankMPI == 0)
     {
-        // std::cout << "write profiling file!" << std::endl;
         std::string profileFileName;
-        if (m_DrainBB)
+        std::vector<std::string> bpBaseNames = {m_Name};
+        if (fileTransportIdx > -1)
         {
-            // auto bpTargetNames =
-            // m_BP4Serializer.GetBPBaseNames({m_Name});
-            std::vector<std::string> bpTargetNames = {m_Name};
-            if (fileTransportIdx > -1)
-            {
-                profileFileName = bpTargetNames[fileTransportIdx] + "/profiling.json";
-            }
-            else
-            {
-                profileFileName = bpTargetNames[0] + "_profiling.json";
-            }
-            m_FileDrainer.AddOperationWrite(profileFileName, profilingJSON.size(),
-                                            profilingJSON.data());
+            profileFileName = bpBaseNames[fileTransportIdx] + "/profiling.json";
         }
         else
         {
-            transport::FileFStream profilingJSONStream(m_Comm);
-            // auto bpBaseNames =
-            // m_BP4Serializer.GetBPBaseNames({m_BBName});
-            std::vector<std::string> bpBaseNames = {m_Name};
-            if (fileTransportIdx > -1)
-            {
-                profileFileName = bpBaseNames[fileTransportIdx] + "/profiling.json";
-            }
-            else
-            {
-                profileFileName = bpBaseNames[0] + "_profiling.json";
-            }
-            profilingJSONStream.Open(profileFileName, Mode::Write);
-            profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
-            profilingJSONStream.Close();
+            profileFileName = bpBaseNames[0] + "_profiling.json";
         }
+        transport::FileFStream profilingJSONStream(m_Comm);
+        profilingJSONStream.Open(profileFileName, Mode::Write);
+        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
+        profilingJSONStream.Close();
     }
 }
 
@@ -2015,6 +1329,7 @@ size_t DaosWriter::DebugGetDataBufferSize() const
 
 void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync)
 {
+    profiling::ProfilerGuard pc(m_Profiler, "PutCommon");
     if (!m_BetweenStepPairs)
     {
         BeginStep(StepMode::Update);
@@ -2072,9 +1387,12 @@ void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync
         std::vector<size_t> ZeroDims(DimCount);
         // get a temporary span then fill with memselection now
         format::BufferV::BufferPos bp5span(0, 0, 0);
-        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
-                                false, &bp5span);
+        {
+            profiling::ProfilerGuard m(m_Profiler, "PutCommon_Marshal");
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                    variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
+                                    false, &bp5span);
+        }
         void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
         const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
@@ -2085,20 +1403,21 @@ void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync
                        helper::CoreDims(), helper::CoreDims(), false /* safemode */,
                        variable.m_MemSpace);
     }
+    else if (variable.m_Type == DataType::String)
+    {
+        std::string &source = *(std::string *)values;
+        void *p = &(source[0]);
+        profiling::ProfilerGuard m(m_Profiler, "PutCommon_Marshal");
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                variable.m_ElementSize, DimCount, Shape, Count, Start, &p, sync,
+                                nullptr);
+    }
     else
     {
-        if (variable.m_Type == DataType::String)
-        {
-            std::string &source = *(std::string *)values;
-            void *p = &(source[0]);
-            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                    variable.m_ElementSize, DimCount, Shape, Count, Start, &p, sync,
-                                    nullptr);
-        }
-        else
-            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                    variable.m_ElementSize, DimCount, Shape, Count, Start, values,
-                                    sync, nullptr);
+        profiling::ProfilerGuard m(m_Profiler, "PutCommon_Marshal");
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                variable.m_ElementSize, DimCount, Shape, Count, Start, values, sync,
+                                nullptr);
     }
 }
 
@@ -2159,7 +1478,12 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
             rc = daos_pool_local2global(*hdl, &ghdl);
         else
             rc = daos_cont_local2global(*hdl, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "daos_handle_share",
+                                              "local2global (size) failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast size of global handle to all peers */
@@ -2178,7 +1502,11 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
             rc = daos_pool_local2global(*hdl, &ghdl);
         else
             rc = daos_cont_local2global(*hdl, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "daos_handle_share",
+                                              "local2global failed rc=" + std::to_string(rc));
+        }
     }
 
     /** broadcast global handle to all peers */
@@ -2198,7 +1526,11 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
         {
             rc = daos_cont_global2local(poh, ghdl, hdl);
         }
-        ASSERT(rc == 0, "global2local failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "daos_handle_share",
+                                              "global2local failed rc=" + std::to_string(rc));
+        }
     }
 
     free(ghdl.iov_buf);
@@ -2217,21 +1549,42 @@ void DaosWriter::CreateDaosArrayObject()
     oid.hi = 0;
     oid.lo = getpid();
     rc = daos_array_generate_oid(coh, &oid, true, 0, 0, 0);
-    ASSERT(rc == 0, "daos_obj_generate_oid failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosArrayObject",
+                                          "daos_array_generate_oid failed rc=" +
+                                              std::to_string(rc));
+    }
     rc = daos_array_create(coh, oid, DAOS_TX_NONE, cell_size, chunk_size, &oh, NULL);
-    ASSERT(rc == 0, "daos_array_create failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosArrayObject",
+                                          "daos_array_create failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosWriter::create-daos-array");
 
     /** Create a DAOS KV object to store metadata sizes */
     mdsize_oid.hi = 0;
     mdsize_oid.lo = getpid() + 1;
-    rc = daos_obj_generate_oid(coh, &mdsize_oid, DAOS_OT_KV_HASHED, OC_SX, 0, 0);
-    ASSERT(rc == 0, "daos_obj_generate_oid failed with %d", rc);
+    // cid=0 (OC_UNKNOWN) so DAOS picks an object class consistent with the
+    // container's rd_fac.  Aurora's pool requires rd_fac>=3 and rejects
+    // OC_SX (single, no replica) with DER_INVAL.
+    rc = daos_obj_generate_oid(coh, &mdsize_oid, DAOS_OT_KV_HASHED, 0, 0, 0);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosArrayObject",
+                                          "daos_obj_generate_oid (mdsize) failed rc=" +
+                                              std::to_string(rc));
+    }
 
     // Open array object
     CALI_MARK_BEGIN("DaosWriter::daos_kv_open");
     rc = daos_kv_open(coh, mdsize_oid, DAOS_OO_RW, &mdsize_oh, NULL);
-    ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosArrayObject",
+                                          "daos_kv_open (mdsize) failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosWriter::daos_kv_open");
 }
 
@@ -2239,11 +1592,130 @@ void DaosWriter::CreateDaosKVObject()
 {
     /** Open a DAOS KV object */
     int rc;
-    // rc = daos_obj_generate_oid(coh, &oid, DAOS_OT_KV_HASHED, OC_SX, 0, 0);
-    // rc = daos_obj_generate_oid(coh, &oid, DAOS_OF_KV_FLAT, OC_S1, 0, 0);
-    rc = daos_obj_generate_oid(coh, &oid, DAOS_OT_KV_HASHED, OC_SX, 0, 0);
-    // rc = daos_obj_generate_oid(coh, &oid, DAOS_OT_KV_HASHED, OC_RP_2GX, 0, 0);
-    ASSERT(rc == 0, "daos_obj_generate_oid failed with %d", rc);
+    // cid=0 (OC_UNKNOWN) so DAOS picks an object class consistent with the
+    // container's rd_fac (Aurora pool requires rd_fac>=3 and rejects OC_SX).
+    rc = daos_obj_generate_oid(coh, &oid, DAOS_OT_KV_HASHED, 0, 0, 0);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosKVObject",
+                                          "daos_obj_generate_oid failed rc=" + std::to_string(rc));
+    }
+}
+
+void DaosWriter::OpenDataArray()
+{
+    {
+        profiling::ProfilerGuard openSetup(m_Profiler, "OpenSetup");
+        // Per-rank DAOS array for the data path.  Each rank has
+        // its own OID inside the same container that holds metadata; the
+        // (rank -> OID) mapping is persisted out-of-band by the engine
+        // (currently TODO: wire into the dataset directory's index file).
+        // OID is allocated server-side via daos_cont_alloc_oids so multiple
+        // ranks/processes don't collide.
+        uint64_t oid_lo = 0;
+        int rc = daos_cont_alloc_oids(coh, 1, &oid_lo, NULL);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "OpenDataArray",
+                                              "daos_cont_alloc_oids failed rc=" +
+                                                  std::to_string(rc));
+        }
+
+        m_DataArrayOid.lo = oid_lo;
+        m_DataArrayOid.hi = 0;
+        rc = daos_array_generate_oid(coh, &m_DataArrayOid, /*add_attr=*/true,
+                                     /*cid=*/0, /*hints=*/0, /*args=*/0);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "OpenDataArray",
+                                              "daos_array_generate_oid failed rc=" +
+                                                  std::to_string(rc));
+        }
+
+        daos_size_t cell_size = 1;
+        daos_size_t chunk_size =
+            m_Parameters.BufferChunkSize ? m_Parameters.BufferChunkSize : (1ULL << 20);
+        rc = daos_array_create(coh, m_DataArrayOid, DAOS_TX_NONE, cell_size, chunk_size,
+                               &m_DataArrayOH, NULL);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "OpenDataArray",
+                                              "daos_array_create failed rc=" + std::to_string(rc));
+        }
+
+        // Create the shared event queue once; DaosChunkV instances
+        // constructed each BeginStep borrow it.
+        rc = daos_eq_create(&m_DataEQ);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "OpenDataArray",
+                                              "daos_eq_create failed rc=" + std::to_string(rc));
+        }
+
+        m_DataArrayCursor = 0;
+    } // end OpenSetup scope
+
+    // PersistOids is timed separately so we can attribute the
+    // OID-gather collective if it ever shows up.
+    profiling::ProfilerGuard persistOids(m_Profiler, "PersistOids");
+    PersistDataOidsIndex();
+}
+
+void DaosWriter::PersistDataOidsIndex()
+{
+    const int rank = m_Comm.Rank();
+    const int size = m_Comm.Size();
+
+    // Each rank contributes (lo, hi); rank 0 collects.
+    uint64_t myOid[2] = {m_DataArrayOid.lo, m_DataArrayOid.hi};
+    std::vector<uint64_t> allOids;
+    if (rank == 0)
+    {
+        allOids.resize(static_cast<size_t>(size) * 2);
+    }
+    m_Comm.GatherArrays(myOid, 2, rank == 0 ? allOids.data() : nullptr, 0);
+
+    if (rank != 0)
+    {
+        return;
+    }
+
+    // m_Name is the dataset directory by the time InitTransports has
+    // run.  Write a small human-readable text index.  Format is one
+    // record per line: "<rank> <oid_lo> <oid_hi>".  Header lines start
+    // with '#'.
+    std::string indexPath = m_Name + "/data_oids.txt";
+    std::ofstream f(indexPath);
+    if (!f)
+    {
+        std::cerr << "DaosWriter: WARNING: failed to write " << indexPath
+                  << " (continuing; reader will not find data arrays)" << std::endl;
+        return;
+    }
+    f << "# DAOS per-rank data array OID index\n";
+    f << "# format: rank oid_lo oid_hi\n";
+    f << "# nranks: " << size << "\n";
+    f << "# pool: " << m_pool_label << "\n";
+    f << "# container: " << m_cont_label << "\n";
+    for (int r = 0; r < size; ++r)
+    {
+        f << r << " " << allOids[2 * r] << " " << allOids[2 * r + 1] << "\n";
+    }
+    f.close();
+}
+
+void DaosWriter::CloseDataArray()
+{
+    if (m_DataArrayOH.cookie != 0)
+    {
+        daos_array_close(m_DataArrayOH, NULL);
+        m_DataArrayOH = {};
+    }
+    if (m_DataEQ.cookie != 0)
+    {
+        daos_eq_destroy(m_DataEQ, /*flags=*/0);
+        m_DataEQ = {};
+    }
 }
 
 } // end namespace engine

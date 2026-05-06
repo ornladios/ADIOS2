@@ -16,6 +16,7 @@
 #include "adios2/operator/OperatorFactory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
 
+#include <chrono>
 #include <stddef.h> // max_align_t
 
 #include <cstring>
@@ -831,7 +832,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             ((m_StatsLevel > 0) && !DerivedWithoutStats && TypeHasMinMax((DataType)Rec->Type));
         if (DoMinMax && !Span)
         {
+            auto _gmm_t0 = std::chrono::steady_clock::now();
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax, MemSpace);
+            m_GetMinMaxSecs +=
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - _gmm_t0).count();
         }
 
         if (Rec->OperatorType)
@@ -871,9 +875,14 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         {
             if (!DeferAddToVec)
             {
+                m_BufferAppendCalls++;
+                auto _ba_t0 = std::chrono::steady_clock::now();
                 DataOffset =
                     m_PriorDataBufferSizeTotal +
                     CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync, MemSpace);
+                m_BufferAppendSecs +=
+                    std::chrono::duration<double>(std::chrono::steady_clock::now() - _ba_t0)
+                        .count();
             }
         }
         else

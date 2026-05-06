@@ -12,32 +12,20 @@
 
 #include <chrono>
 #include <errno.h>
+#include <fstream>
 #include <iomanip>
 #include <mutex>
+#include <sstream>
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
 
+#include <daos_array.h>
+
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
 #define DURATION(T1, T2) static_cast<double>((T2 - T1).count()) / 1000000000.0;
-
-#define DEBUG_BADALLOC
-#undef DEBUG_BADALLOC
-
-#define FAIL(fmt, ...)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
-        exit(1);                                                                                   \
-    } while (0)
-#define ASSERT(cond, ...)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if (!(cond))                                                                               \
-            FAIL(__VA_ARGS__);                                                                     \
-    } while (0)
 
 namespace adios2
 {
@@ -85,13 +73,13 @@ void DaosReader::ReadMetadata(size_t Step)
     // Reader rank 0 - reads all metadata
     if (m_Comm.Rank() == 0)
     {
-        switch (daosEngine)
+        switch (metadataLayout)
         {
-        case DaosEngine::DAOS_ARRAY:
-        case DaosEngine::DAOS_ARRAY_1MB_ALIGNED:
+        case MetadataLayout::ARRAY:
+        case MetadataLayout::ARRAY_1MB_ALIGNED:
             DaosArrayReadMetadata(Step, WriterCount);
             break;
-        case DaosEngine::DAOS_KV:
+        case MetadataLayout::KV:
             DaosKVReadMetadata(Step, WriterCount);
             break;
         // Add other cases here if needed
@@ -113,7 +101,6 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
 {
     std::vector<size_t> list_writer_mdsize;
     list_writer_mdsize.reserve(WriterCount);
-    char key[1000];
     int rc;
     size_t total_mdsize = 0;
     size_t buffer_size = 0;
@@ -130,11 +117,16 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         // Start batch
         while (WriterRank < WriterCount && batchLimit < MAX_KV_GET_REQS)
         {
-            sprintf(key, "step%zu-rank%zu", Step, WriterRank);
+            sprintf(attrkey[batchLimit], "step%zu-rank%zu", Step, WriterRank);
             CALI_MARK_BEGIN("DaosReader::daos_kv_get_size");
-            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &list_writer_mdsize[WriterRank], NULL,
-                             &ev[batchLimit]);
-            ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, attrkey[batchLimit],
+                             &list_writer_mdsize[WriterRank], NULL, &ev[batchLimit]);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosKVReadMetadata",
+                                                  "daos_kv_get (size) failed rc=" +
+                                                      std::to_string(rc));
+            }
             CALI_MARK_END("DaosReader::daos_kv_get_size");
 
             WriterRank++;
@@ -146,7 +138,12 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         {
             CALI_MARK_BEGIN("DaosReader::daos_eq_poll_getsize");
             rc = daos_eq_poll(eq, 1, DAOS_EQ_WAIT, batchLimit, evp);
-            ASSERT(rc > 0, "daos_eq_poll() failed with %d", rc);
+            if (rc < 0)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosKVReadMetadata",
+                                                  "daos_eq_poll (size) failed rc=" +
+                                                      std::to_string(rc));
+            }
             CALI_MARK_END("DaosReader::daos_eq_poll_getsize");
 
             // If no events are processed, sleep for a short duration before polling again
@@ -173,8 +170,6 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
     off_attr = off_attr + sizeof(size_t);
 
-    // std::cout << "Total attribute size: " << total_attr_size << std::endl;
-
     // Allocate memory for m_Metadata
     buffer_size = sizeof(uint64_t) * (WriterCount + 1) + total_mdsize + total_attr_size;
     m_Metadata.Resize(buffer_size, "allocating metadata buffer, in call to DaosReader Open");
@@ -192,11 +187,6 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
     off_attr = off_attr + sizeof(uint64_t) * WriterCount;
 
-    /*
-    for (WriterRank = 0; WriterRank < WriterCount; WriterRank++) {
-       // std::cout << "Attributesize for writer " << WriterRank << " is " << ptr[index] <<
-    std::endl; index++;
-    }*/
     // Skip over the already read attribute sizes
     index += WriterCount;
 
@@ -217,11 +207,15 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         {
             ThisMDSize = list_writer_mdsize[WriterRank];
 
-            sprintf(key, "step%zu-rank%zu", Step, WriterRank);
+            sprintf(attrkey[batchLimit], "step%zu-rank%zu", Step, WriterRank);
             CALI_MARK_BEGIN("DaosReader::daos_kv_get");
-            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, key, &ThisMDSize, &meta_buff[index],
-                             &ev[batchLimit]);
-            ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+            rc = daos_kv_get(oh, DAOS_TX_NONE, 0, attrkey[batchLimit],
+                             &list_writer_mdsize[WriterRank], &meta_buff[index], &ev[batchLimit]);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosKVReadMetadata",
+                                                  "daos_kv_get failed rc=" + std::to_string(rc));
+            }
             CALI_MARK_END("DaosReader::daos_kv_get");
 
             index += ThisMDSize;
@@ -236,7 +230,11 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         {
             CALI_MARK_BEGIN("DaosReader::daos_eq_poll");
             rc = daos_eq_poll(eq, 1, DAOS_EQ_WAIT, batchLimit, evp);
-            ASSERT(rc > 0, "daos_eq_poll() failed with %d", rc);
+            if (rc < 0)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosKVReadMetadata",
+                                                  "daos_eq_poll failed rc=" + std::to_string(rc));
+            }
             CALI_MARK_END("DaosReader::daos_eq_poll");
 
             // If no events are processed, sleep for a short duration before polling again
@@ -250,15 +248,6 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
             if (i >= batchLimit)
                 break;
         }
-
-#ifdef DEBUG_BADALLOC
-        // Print metadata block for the last writer in the batch
-        printf("DaosReader::ReadMetadata MetadataBlock\n");
-        char *tmp_ptr = &meta_buff[index - ThisMDSize];
-        for (int i = 0; i < 20; i++)
-            printf("%02x ", tmp_ptr[i]);
-        printf("\n");
-#endif
     }
     CALI_MARK_END("DaosReader::loop-get");
 
@@ -278,7 +267,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     // Get list of Metadata sizes for all writers
     char key[1000];
 
-    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
         list_rg = (daos_range_t *)malloc(WriterCount * sizeof(daos_range_t));
     }
@@ -289,18 +278,18 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     CALI_MARK_BEGIN("DaosReader::daos_kv_get_list_of_mdsize");
     int rc = daos_kv_get(mdsize_oh, DAOS_TX_NONE, 0, key, &sizeof_list_writer_mdsize,
                          list_writer_mdsize, NULL);
-    ASSERT(rc == 0, "daos_kv_get() failed to read metadata with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
+                                          "daos_kv_get (mdsize list) failed rc=" +
+                                              std::to_string(rc));
+    }
     CALI_MARK_END("DaosReader::daos_kv_get_list_of_mdsize");
 
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         total_mdsize += list_writer_mdsize[WriterRank];
     }
-
-#ifdef DEBUG_BADALLOC
-    std::cout << "ReadMetadata() - Step: " << Step << ", WriterCount: " << WriterCount
-              << ", total_mdsize: " << total_mdsize << std::endl;
-#endif
 
     // Reading total size of attribute includes vector of sizes of attributes and also the attribute
     // buffers
@@ -322,7 +311,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         ptr[index] = list_writer_mdsize[WriterRank];
-        if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+        if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
         {
             list_rg[WriterRank].rg_len = list_writer_mdsize[WriterRank];
             list_rg[WriterRank].rg_idx = m_step_offset + WriterRank * chunk_size_1mb;
@@ -340,12 +329,12 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
 
     // Now read in the actual metadata for each writer
     // Setup I/O Descriptor
-    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
         iod.arr_nr = WriterCount;
         iod.arr_rgs = list_rg;
     }
-    else if (daosEngine == DaosEngine::DAOS_ARRAY)
+    else if (metadataLayout == MetadataLayout::ARRAY)
     {
         iod.arr_nr = 1;
         rg.rg_len = total_mdsize;
@@ -361,22 +350,16 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     // Write Metadata
     CALI_MARK_BEGIN("DaosReader::daos_array_read");
     rc = daos_array_read(oh, DAOS_TX_NONE, &iod, &sgl, NULL);
-    ASSERT(rc == 0, "daos_array_read() failed to read metadata with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
+                                          "daos_array_read (metadata) failed rc=" +
+                                              std::to_string(rc));
+    }
     CALI_MARK_END("DaosReader::daos_array_read");
 
     m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
-#ifdef DEBUG_BADALLOC
-    size_t offset = 0;
-    for (int j = 0; j < WriterCount; j++)
-    {
-        printf("ReadMetadata() Metadatablock, step = %lu, WriterRank = %d\n", Step, j);
-        offset += list_writer_mdsize[j];
-        for (int i = 0; i < 12; i++)
-            printf("%02x ", meta_buff[offset + i]);
-        printf("\n");
-    }
-#endif
-    if (daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
         free(list_rg);
 
     index += total_mdsize;
@@ -429,18 +412,6 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
 StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("DaosReader::BeginStep");
-
-    // const char* fileName = "/home/hpcvenk1/benchmarks/wait-for-gdb.txt";
-    // struct stat buffer;
-
-    // if (m_Comm.Rank() == 0) {
-    //     while (stat(fileName, &buffer) != 0) {
-    //         sleep(1);  // Sleep for 1 second before checking again
-    //     }
-    //
-    //     printf("File '%s' has been created!\n", fileName);
-    // }
-    // MPI_Barrier(MPI_COMM_WORLD);
 
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
@@ -568,59 +539,73 @@ std::pair<double, double> DaosReader::ReadData(adios2::transportman::TransportMa
      */
     size_t FlushCount = m_MetadataIndexTable[Timestep][2];
     size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
-    size_t SubfileNum =
-        static_cast<size_t>(m_WriterMap[m_WriterMapIndex[Timestep]].RankToSubfile[WriterRank]);
 
-    // check if subfile is already opened
-    TP startSubfile = NOW();
-    if (FileManager.m_Transports.count(SubfileNum) == 0)
+    // Read directly from the writer rank's per-rank DAOS array.  We still
+    // walk the flush table because a single step may include data from
+    // multiple flushes; for each flush, ThisDataPos is the byte offset
+    // within the writer rank's array (since the writer set m_StartDataPos
+    // = its array cursor before each flush's data was committed).
+    if (WriterRank >= m_DataArrayHandles.size())
     {
-        const std::string subFileName =
-            GetBPSubStreamName(m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
-        if (FileManager.m_Transports.size() >= maxOpenFiles)
-        {
-            auto m = FileManager.m_Transports.begin();
-            FileManager.CloseFiles((int)m->first);
-        }
-        FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read, m_IO.m_TransportsParameters[0],
-                               /*{{"transport", "File"}},*/ false);
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
+                                          "WriterRank " + std::to_string(WriterRank) +
+                                              " has no entry in OID index (size=" +
+                                              std::to_string(m_DataArrayHandles.size()) + ")");
     }
-    TP endSubfile = NOW();
-    double timeSubfile = DURATION(startSubfile, endSubfile);
-
-    /* Each block is in exactly one flush. The StartOffset was calculated
-       as if all the flushes were in a single contiguous block in file.
-    */
+    daos_handle_t aoh = m_DataArrayHandles[WriterRank];
     TP startRead = NOW();
     size_t InfoStartPos = DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t SumDataSize = 0; // count in contiguous space
-    for (size_t flush = 0; flush < FlushCount; flush++)
+    size_t SumDataSize = 0;
+    size_t arrayOffset = 0;
+    bool found = false;
+    for (size_t flush = 0; flush < FlushCount && !found; ++flush)
     {
         size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                                          m_Minifooter.IsLittleEndian);
         size_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                                           m_Minifooter.IsLittleEndian);
-
         if (StartOffset < SumDataSize + ThisDataSize)
         {
-            // discount offsets of skipped flushes
-            size_t Offset = StartOffset - SumDataSize;
-            FileManager.ReadFile(Destination, Length, ThisDataPos + Offset, SubfileNum);
-            TP endRead = NOW();
-            double timeRead = DURATION(startRead, endRead);
-            return std::make_pair(timeSubfile, timeRead);
+            arrayOffset = ThisDataPos + (StartOffset - SumDataSize);
+            found = true;
+            break;
         }
         SumDataSize += ThisDataSize;
     }
+    if (!found)
+    {
+        // last (post-last-flush) record
+        size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                         m_Minifooter.IsLittleEndian);
+        arrayOffset = ThisDataPos + (StartOffset - SumDataSize);
+    }
 
-    size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                     m_Minifooter.IsLittleEndian);
-    size_t Offset = StartOffset - SumDataSize;
-    FileManager.ReadFile(Destination, Length, ThisDataPos + Offset, SubfileNum);
-
+    daos_range_t rgr;
+    rgr.rg_idx = arrayOffset;
+    rgr.rg_len = Length;
+    daos_array_iod_t iodr;
+    iodr.arr_nr = 1;
+    iodr.arr_rgs = &rgr;
+    d_iov_t iovr;
+    iovr.iov_buf = Destination;
+    iovr.iov_buf_len = Length;
+    iovr.iov_len = Length;
+    d_sg_list_t sglr;
+    sglr.sg_nr = 1;
+    sglr.sg_nr_out = 0;
+    sglr.sg_iovs = &iovr;
+    int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
+                                          "daos_array_read failed rc=" + std::to_string(rc) +
+                                              " WriterRank=" + std::to_string(WriterRank) +
+                                              " offset=" + std::to_string(arrayOffset) +
+                                              " len=" + std::to_string(Length));
+    }
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);
-    return std::make_pair(timeSubfile, timeRead);
+    return std::make_pair(0.0, timeRead);
 }
 
 void DaosReader::PerformGets()
@@ -791,6 +776,24 @@ void DaosReader::Init()
     CALI_MARK_BEGIN("DaosReader::InitDAOS");
     InitDAOS();
     CALI_MARK_END("DaosReader::InitDAOS");
+
+    // Per-rank DAOS data array: data_oids.txt is required (written by
+    // DaosWriter::PersistDataOidsIndex).  Older datasets that pre-date
+    // the per-rank-array writer are no longer supported.
+    {
+        std::string indexPath = m_Name + "/data_oids.txt";
+        struct stat st;
+        if (::stat(indexPath.c_str(), &st) != 0)
+        {
+            helper::Throw<std::runtime_error>(
+                "Engine", "DaosReader", "InitDAOS",
+                "missing required OID index " + indexPath +
+                    " (dataset must be produced by current DaosWriter)");
+        }
+        LoadDataOidsIndex();
+        OpenDataArrays();
+    }
+
     if (!m_Parameters.SelectSteps.empty())
     {
         m_SelectedSteps.ParseSelection(m_Parameters.SelectSteps);
@@ -1042,7 +1045,12 @@ void DaosReader::array_oh_share(daos_handle_t *oh)
     {
         /** fetch size of global handle */
         rc = daos_array_local2global(*oh, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "array_oh_share",
+                                              "daos_array_local2global failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast size of global handle to all peers */
@@ -1056,7 +1064,12 @@ void DaosReader::array_oh_share(daos_handle_t *oh)
     {
         /** generate actual global handle to share with peer tasks */
         rc = daos_array_local2global(*oh, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "array_oh_share",
+                                              "daos_array_local2global failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast global handle to all peers */
@@ -1066,7 +1079,12 @@ void DaosReader::array_oh_share(daos_handle_t *oh)
     {
         /** unpack global handle */
         rc = daos_array_global2local(coh, ghdl, 0, oh);
-        ASSERT(rc == 0, "global2local failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "array_oh_share",
+                                              "daos_array_global2local failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     free(ghdl.iov_buf);
@@ -1088,33 +1106,38 @@ void DaosReader::SetDataFlag()
     m_DataFlag = (std::string(datastate) == "OFF") ? DataFlag::OFF : DataFlag::ON;
 }
 
-// Function to set DAOS interface from the environment variable
-void DaosReader::SetDaosEngine()
+/// Pick the metadata-layout from the DAOS_METADATA_LAYOUT environment
+/// variable.  Defaults to ARRAY_1MB_ALIGNED when unset.  An unrecognized
+/// value is rejected so a typo doesn't silently fall back.
+void DaosReader::SetMetadataLayout()
 {
-    const char *env = std::getenv("DAOS_ENGINE");
+    const char *env = std::getenv("DAOS_METADATA_LAYOUT");
     if (!env)
     {
-        daosEngine = DaosEngine::UNKNOWN;
+        metadataLayout = MetadataLayout::ARRAY_1MB_ALIGNED;
         return;
     }
 
-    std::string interfaceStr(env);
-    std::transform(interfaceStr.begin(), interfaceStr.end(), interfaceStr.begin(), ::tolower);
-    if (interfaceStr == "daos-array")
+    std::string layoutStr(env);
+    std::transform(layoutStr.begin(), layoutStr.end(), layoutStr.begin(), ::tolower);
+    if (layoutStr == "array")
     {
-        daosEngine = DaosEngine::DAOS_ARRAY;
+        metadataLayout = MetadataLayout::ARRAY;
     }
-    else if (interfaceStr == "daos-array-1mb-aligned")
+    else if (layoutStr == "array-1mb-aligned")
     {
-        daosEngine = DaosEngine::DAOS_ARRAY_1MB_ALIGNED;
+        metadataLayout = MetadataLayout::ARRAY_1MB_ALIGNED;
     }
-    else if (interfaceStr == "daos-kv")
+    else if (layoutStr == "kv")
     {
-        daosEngine = DaosEngine::DAOS_KV;
+        metadataLayout = MetadataLayout::KV;
     }
     else
     {
-        daosEngine = DaosEngine::UNKNOWN;
+        helper::Throw<std::invalid_argument>("Engine", "DaosReader", "SetMetadataLayout",
+                                             "DAOS_METADATA_LAYOUT='" + layoutStr +
+                                                 "' is not recognized; expected one of "
+                                                 "'array', 'array-1mb-aligned', 'kv'");
     }
 }
 
@@ -1125,8 +1148,9 @@ void DaosReader::SetPoolAndContName()
     const char *cont = std::getenv("DAOS_CONT");
     if (!pool || !cont)
     {
-        std::cout << "DAOS_POOL or DAOS_CONT not set" << std::endl;
-        exit(1);
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosReader", "SetPoolAndContName",
+            "DAOS_POOL and DAOS_CONT environment variables must both be set");
     }
 
     strncpy(m_pool_label, pool, sizeof(m_pool_label) - 1);
@@ -1141,29 +1165,27 @@ void DaosReader::ReadObjectIDsFromFile()
     FILE *fp = fopen(OIDFileName.c_str(), "r");
     if (fp == NULL)
     {
-        perror("fopen");
-        exit(1);
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadObjectIDsFromFile",
+                                          "fopen failed for " + OIDFileName + ": " +
+                                              std::string(strerror(errno)));
     }
-    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    auto badRead = [&]() {
+        fclose(fp);
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadObjectIDsFromFile",
+                                          "malformed OID file " + OIDFileName);
+    };
+    if (metadataLayout == MetadataLayout::ARRAY ||
+        metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
         if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &oid.hi, &oid.lo) != 2)
-        {
-            fprintf(stderr, "Error reading OID from file\n");
-            exit(1);
-        }
+            badRead();
         if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &mdsize_oid.hi, &mdsize_oid.lo) != 2)
-        {
-            fprintf(stderr, "Error reading OID from file\n");
-            exit(1);
-        }
+            badRead();
     }
-    else if (daosEngine == DaosEngine::DAOS_KV)
+    else if (metadataLayout == MetadataLayout::KV)
     {
         if (fscanf(fp, "%" SCNu64 "\n%" SCNu64 "\n", &oid.hi, &oid.lo) != 2)
-        {
-            fprintf(stderr, "Error reading OID from file\n");
-            exit(1);
-        }
+            badRead();
     }
     fclose(fp);
 }
@@ -1171,30 +1193,48 @@ void DaosReader::ReadObjectIDsFromFile()
 void DaosReader::OpenDAOSObjects()
 {
     int rc;
-    if (daosEngine == DaosEngine::DAOS_ARRAY || daosEngine == DaosEngine::DAOS_ARRAY_1MB_ALIGNED)
+    if (metadataLayout == MetadataLayout::ARRAY ||
+        metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
         daos_size_t cell_size = 1;
         daos_size_t chunk_size = 1048576;
         rc =
             daos_array_open(coh, oid, DAOS_TX_NONE, DAOS_OO_RO, &cell_size, &chunk_size, &oh, NULL);
-        ASSERT(rc == 0, "daos_array_open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDAOSObjects",
+                                              "daos_array_open failed rc=" + std::to_string(rc));
+        }
 
         rc = daos_kv_open(coh, mdsize_oid, DAOS_OO_RO, &mdsize_oh, NULL);
-        ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDAOSObjects",
+                                              "daos_kv_open (mdsize) failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
-    else if (daosEngine == DaosEngine::DAOS_KV)
+    else if (metadataLayout == MetadataLayout::KV)
     {
         // Open KV object
         CALI_MARK_BEGIN("DaosReader::daos_kv_open");
         rc = daos_kv_open(coh, oid, DAOS_OO_RO, &oh, NULL);
-        ASSERT(rc == 0, "daos_kv_open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDAOSObjects",
+                                              "daos_kv_open failed rc=" + std::to_string(rc));
+        }
         CALI_MARK_END("DaosReader::daos_kv_open");
 
         // Create event queue;
         CALI_MARK_BEGIN("DaosReader::EventQueueCreation");
         rc = daos_eq_create(&eq);
         CALI_MARK_END("DaosReader::EventQueueCreation");
-        ASSERT(rc == 0, "daos_eq_create() failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDAOSObjects",
+                                              "daos_eq_create failed rc=" + std::to_string(rc));
+        }
 
         // Init events
         for (int i = 0; i < MAX_KV_GET_REQS; i++)
@@ -1202,7 +1242,12 @@ void DaosReader::OpenDAOSObjects()
             CALI_MARK_BEGIN("DaosReader::EventInitialization");
             rc = daos_event_init(&ev[i], eq, NULL);
             CALI_MARK_END("DaosReader::EventInitialization");
-            ASSERT(rc == 0, "event init failed with %d", rc);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDAOSObjects",
+                                                  "daos_event_init failed rc=" +
+                                                      std::to_string(rc));
+            }
         }
     }
 }
@@ -1213,13 +1258,21 @@ void DaosReader::InitDAOS()
     int rc;
     CALI_MARK_BEGIN("DaosReader::daos_init");
     rc = daos_init();
-    ASSERT(rc == 0, "daos_init failed with %d", rc);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "InitDAOS",
+                                          "daos_init failed rc=" + std::to_string(rc));
+    }
     CALI_MARK_END("DaosReader::daos_init");
 
     rc = gethostname(node, sizeof(node));
-    ASSERT(rc == 0, "buffer for hostname too small");
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "InitDAOS",
+                                          "gethostname failed (buffer too small)");
+    }
 
-    SetDaosEngine();
+    SetMetadataLayout();
     SetPoolAndContName();
     SetDataFlag();
 
@@ -1231,7 +1284,11 @@ void DaosReader::InitDAOS()
                                // DAOS_PC_EX ,
                                DAOS_PC_RO /* read only access */, &poh /* returned pool handle */,
                                NULL /* returned pool info */, NULL /* event */);
-        ASSERT(rc == 0, "pool connect failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "InitDAOS",
+                                              "daos_pool_connect failed rc=" + std::to_string(rc));
+        }
     }
 
     CALI_MARK_END("DaosReader::daos_pool_connect");
@@ -1248,7 +1305,11 @@ void DaosReader::InitDAOS()
     {
         /** open container */
         rc = daos_cont_open(poh, m_cont_label, DAOS_COO_RO, &coh, NULL, NULL);
-        ASSERT(rc == 0, "container open failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "InitDAOS",
+                                              "daos_cont_open failed rc=" + std::to_string(rc));
+        }
     }
     CALI_MARK_END("DaosReader::daos_cont_open");
 
@@ -1569,24 +1630,6 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 // absolute pos in file before read
                 ptrs.push_back(MetadataPos);
                 m_MetadataIndexTable[m_StepsCount] = ptrs;
-#ifdef DUMPDATALOCINFO
-                for (uint64_t i = 0; i < m_WriterCount; i++)
-                {
-                    size_t DataPosPos = ptrs[3];
-                    std::cout << "Writer " << i << " data at ";
-                    for (uint64_t j = 0; j < FlushCount; j++)
-                    {
-                        const uint64_t DataPos = helper::ReadValue<uint64_t>(
-                            buffer, DataPosPos, m_Minifooter.IsLittleEndian);
-                        const uint64_t DataSize = helper::ReadValue<uint64_t>(
-                            buffer, DataPosPos, m_Minifooter.IsLittleEndian);
-                        std::cout << "loc:" << DataPos << " siz:" << DataSize << "; ";
-                    }
-                    const uint64_t DataPos = helper::ReadValue<uint64_t>(
-                        buffer, DataPosPos, m_Minifooter.IsLittleEndian);
-                    std::cout << "loc:" << DataPos << std::endl;
-                }
-#endif
                 minfo_size += MetadataSize;
                 metadataSizeToRead += MetadataSize;
                 m_StepsCount++;
@@ -1771,6 +1814,34 @@ void DaosReader::DoClose(const int transportIndex)
     {
         fileManagers[i].CloseFiles();
     }
+    CloseDataArrays();
+
+    // Release DAOS handles in reverse of init order; mirrors DaosWriter::DoClose.
+    if (oh.cookie != 0)
+    {
+        if (metadataLayout == MetadataLayout::ARRAY ||
+            metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
+            daos_array_close(oh, NULL);
+        else if (metadataLayout == MetadataLayout::KV)
+            daos_kv_close(oh, NULL);
+        oh = {};
+    }
+    if (mdsize_oh.cookie != 0)
+    {
+        daos_kv_close(mdsize_oh, NULL);
+        mdsize_oh = {};
+    }
+    if (coh.cookie != 0)
+    {
+        daos_cont_close(coh, NULL);
+        coh = {};
+    }
+    if (m_Comm.Rank() == 0 && poh.cookie != 0)
+    {
+        daos_pool_disconnect(poh, NULL);
+        poh = {};
+    }
+    // Don't daos_fini() — see matching comment in DaosWriter::DoClose.
 }
 
 size_t DaosReader::DoSteps() const { return m_StepsCount; }
@@ -1809,7 +1880,12 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
             rc = daos_pool_local2global(*hdl, &ghdl);
         else
             rc = daos_cont_local2global(*hdl, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "daos_handle_share",
+                                              "local2global (size) failed rc=" +
+                                                  std::to_string(rc));
+        }
     }
 
     /** broadcast size of global handle to all peers */
@@ -1828,7 +1904,11 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
             rc = daos_pool_local2global(*hdl, &ghdl);
         else
             rc = daos_cont_local2global(*hdl, &ghdl);
-        ASSERT(rc == 0, "local2global failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "daos_handle_share",
+                                              "local2global failed rc=" + std::to_string(rc));
+        }
     }
 
     /** broadcast global handle to all peers */
@@ -1848,13 +1928,94 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
         {
             rc = daos_cont_global2local(poh, ghdl, hdl);
         }
-        ASSERT(rc == 0, "global2local failed with %d", rc);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "daos_handle_share",
+                                              "global2local failed rc=" + std::to_string(rc));
+        }
     }
 
     free(ghdl.iov_buf);
 
     m_Comm.Barrier();
     CALI_MARK_END("DaosReader::global2local+barrier");
+}
+
+void DaosReader::LoadDataOidsIndex()
+{
+    // Parse <m_Name>/data_oids.txt written by DaosWriter::PersistDataOidsIndex.
+    // Format: comment lines starting with '#', then one record per line:
+    //   "<rank> <oid_lo> <oid_hi>"
+    const std::string indexPath = m_Name + "/data_oids.txt";
+    std::ifstream f(indexPath);
+    if (!f)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "LoadDataOidsIndex",
+                                          "failed to open " + indexPath);
+    }
+
+    // Two-pass: find max rank to size the vector, then populate.
+    std::vector<std::tuple<int, uint64_t, uint64_t>> records;
+    std::string line;
+    int maxRank = -1;
+    while (std::getline(f, line))
+    {
+        if (line.empty() || line[0] == '#')
+            continue;
+        std::istringstream ls(line);
+        int r;
+        uint64_t lo, hi;
+        if (!(ls >> r >> lo >> hi))
+            continue;
+        records.emplace_back(r, lo, hi);
+        if (r > maxRank)
+            maxRank = r;
+    }
+    if (maxRank < 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "LoadDataOidsIndex",
+                                          "no records parsed from " + indexPath);
+    }
+
+    m_DataOids.assign(static_cast<size_t>(maxRank + 1), daos_obj_id_t{});
+    for (auto &rec : records)
+    {
+        int r = std::get<0>(rec);
+        m_DataOids[r].lo = std::get<1>(rec);
+        m_DataOids[r].hi = std::get<2>(rec);
+    }
+}
+
+void DaosReader::OpenDataArrays()
+{
+    m_DataArrayHandles.assign(m_DataOids.size(), daos_handle_t{});
+    daos_size_t cell_size_out = 0;
+    daos_size_t chunk_size_out = 0;
+    for (size_t r = 0; r < m_DataOids.size(); ++r)
+    {
+        int rc = daos_array_open(coh, m_DataOids[r], DAOS_TX_NONE, DAOS_OO_RO, &cell_size_out,
+                                 &chunk_size_out, &m_DataArrayHandles[r], NULL);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDataArrays",
+                                              "daos_array_open failed for rank " +
+                                                  std::to_string(r) + " rc=" + std::to_string(rc));
+        }
+    }
+}
+
+void DaosReader::CloseDataArrays()
+{
+    for (auto &h : m_DataArrayHandles)
+    {
+        if (h.cookie != 0)
+        {
+            daos_array_close(h, NULL);
+            h = {};
+        }
+    }
+    m_DataArrayHandles.clear();
+    m_DataOids.clear();
 }
 
 } // end namespace engine
