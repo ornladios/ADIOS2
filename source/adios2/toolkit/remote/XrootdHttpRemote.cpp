@@ -265,26 +265,38 @@ XrootdHttpRemote::XrootdHttpRemote(const adios2::HostOptions &hostOptions) : Rem
 
 XrootdHttpRemote::~XrootdHttpRemote() { Close(); }
 
-std::string XrootdHttpRemote::UrlEncode(const std::string &str)
+// Base64url encoding (RFC 4648 §5).  Uses only A-Za-z0-9, '-', '_' —
+// all path-safe characters that no HTTP intermediary will mangle.
+// No padding ('=') is emitted; the decoder infers it from length.
+std::string XrootdHttpRemote::Base64urlEncode(const std::string &str)
 {
-#ifdef ADIOS2_HAVE_CURL
-    if (str.empty())
-        return str;
-
-    CURL *curl = curl_easy_init();
-    if (!curl)
-        return str;
-
-    char *encoded = curl_easy_escape(curl, str.c_str(), static_cast<int>(str.length()));
-    std::string result = encoded ? std::string(encoded) : str;
-
-    if (encoded)
-        curl_free(encoded);
-    curl_easy_cleanup(curl);
-    return result;
-#else
-    return str;
-#endif
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    std::string out;
+    const auto *src = reinterpret_cast<const unsigned char *>(str.data());
+    size_t len = str.size();
+    out.reserve((len * 4 + 2) / 3);
+    size_t i = 0;
+    for (; i + 2 < len; i += 3)
+    {
+        out += table[(src[i] >> 2) & 0x3F];
+        out += table[((src[i] & 0x03) << 4) | (src[i + 1] >> 4)];
+        out += table[((src[i + 1] & 0x0F) << 2) | (src[i + 2] >> 6)];
+        out += table[src[i + 2] & 0x3F];
+    }
+    if (i < len)
+    {
+        out += table[(src[i] >> 2) & 0x3F];
+        if (i + 1 < len)
+        {
+            out += table[((src[i] & 0x03) << 4) | (src[i + 1] >> 4)];
+            out += table[(src[i + 1] & 0x0F) << 2];
+        }
+        else
+        {
+            out += table[(src[i] & 0x03) << 4];
+        }
+    }
+    return out;
 }
 
 void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
@@ -348,71 +360,20 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     }
 
     std::ostringstream urlStream;
-    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/adios/"
-              << UrlEncode(m_Filename);
+    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/adios"
+              << m_Filename;
     m_BaseUrl = urlStream.str();
+
+    // Per-engine constants (RMOrder + EngineParams) are packed once into
+    // the file-config path segment and reused on every request.
+    m_FileConfigSegment = BuildFileConfigSegment();
 
     m_OpenSuccess = true;
 }
 
 void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 
-std::string XrootdHttpRemote::BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
-                                                 size_t BlockID, const Dims &Count,
-                                                 const Dims &Start, const Accuracy &accuracy)
-{
-    std::ostringstream reqStream;
-    std::string encodedVarName = UrlEncode(std::string(VarName));
-
-    reqStream << "get&Varname=" << encodedVarName;
-    if (m_RowMajorOrdering)
-    {
-        reqStream << "&RMOrder=1";
-    }
-    if (Step != 0)
-    {
-        reqStream << "&StepStart=" << Step;
-    }
-    if (StepCount != 1)
-    {
-        reqStream << "&StepCount=" << StepCount;
-    }
-    if (BlockID != static_cast<size_t>(-1))
-    {
-        reqStream << "&Block=" << BlockID;
-    }
-    if (!Count.empty())
-    {
-        reqStream << "&Count=" << Count[0];
-        for (size_t i = 1; i < Count.size(); i++)
-        {
-            reqStream << "," << Count[i];
-        }
-    }
-    if (!Start.empty())
-    {
-        reqStream << "&Start=" << Start[0];
-        for (size_t i = 1; i < Start.size(); i++)
-        {
-            reqStream << "," << Start[i];
-        }
-    }
-    if (accuracy.error != 0.0 || accuracy.norm != 0.0 || accuracy.relative)
-    {
-        reqStream << "&AccuracyError=" << accuracy.error;
-        reqStream << "&AccuracyNorm=" << accuracy.norm;
-        reqStream << "&AccuracyRelative=" << (accuracy.relative ? 1 : 0);
-    }
-    if (!m_EngineParams.empty())
-    {
-        reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
-    }
-
-    return reqStream.str();
-}
-
-CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &url,
-                                         const std::string &queryData)
+CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &url)
 {
 #ifdef ADIOS2_HAVE_CURL
     CURL *easy = curl_easy_init();
@@ -422,8 +383,7 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
     curl_easy_setopt(easy, CURLOPT_PRIVATE, asyncOp);
     asyncOp->easyHandle = easy;
 
-    std::string fullUrl = url + "?" + queryData;
-    curl_easy_setopt(easy, CURLOPT_URL, fullUrl.c_str());
+    curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
     curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(easy, CURLOPT_WRITEDATA, &asyncOp->responseData);
@@ -454,61 +414,103 @@ CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &u
 #endif
 }
 
-std::string XrootdHttpRemote::BuildBatchRequestString(const std::vector<BatchGetRequest> &requests)
+// ---------------------------------------------------------------------
+// Path-encoded URL builders (Pelican/XCache-friendly form).
+//
+// Full URL: <scheme>://<host>:<port>/adios<filename>/<file-config>/<request>
+//
+// The filename keeps its literal slashes (it is not URL-encoded), so
+// it occupies multiple path segments.  The server identifies the last
+// two segments as file-config and request and rejoins everything
+// before them as the filename.
+//
+// Per-segment grammar:
+//   file-config:   r<digit>(p<base64url-EP>)?       (always at least r0/r1)
+//   single get:    g~<base64url-var>~<paramstring>  (`_` if no params)
+//   batch get:     b~N~<v1>~<p1>~<v2>~<p2>~...~<vN>~<pN>
+//
+// Variable names and EngineParams are base64url-encoded (RFC 4648 §5)
+// so they never collide with our delimiters and so HTTP intermediaries
+// can't normalize them in transit.  Paramstring fields are letter-
+// prefixed and self-delimiting; vector elements use `,` (e.g.
+// `c4,8,12`); outer delimiter is `~`; floats keep `.` as decimal
+// separator without colliding with anything.
+// ---------------------------------------------------------------------
+
+std::string XrootdHttpRemote::BuildFileConfigSegment()
 {
-    std::ostringstream reqStream;
-
-    reqStream << "batchget&NVars=" << requests.size();
-    if (m_RowMajorOrdering)
-    {
-        reqStream << "&RMOrder=1";
-    }
+    std::ostringstream s;
+    // Always emit RMOrder so the server doesn't have to guess the default.
+    s << "r" << (m_RowMajorOrdering ? "1" : "0");
     if (!m_EngineParams.empty())
-    {
-        reqStream << "&EngineParams=" << UrlEncode(m_EngineParams);
-    }
+        s << "p" << Base64urlEncode(m_EngineParams);
+    std::string out = s.str();
+    // Empty file-config gets a placeholder so the path segment is non-
+    // empty; some intermediaries normalize empty segments away.
+    return out.empty() ? std::string("_") : out;
+}
 
-    for (const auto &req : requests)
+std::string XrootdHttpRemote::BuildPerRequestParamString(size_t Step, size_t StepCount,
+                                                         size_t BlockID, const Dims &Count,
+                                                         const Dims &Start,
+                                                         const Accuracy &accuracy)
+{
+    std::ostringstream s;
+    if (BlockID != static_cast<size_t>(-1))
+        s << "b" << BlockID;
+    if (Step != 0)
+        s << "s" << Step;
+    if (StepCount != 1)
+        s << "S" << StepCount;
+    if (!Count.empty())
     {
-        std::string encodedVarName = UrlEncode(std::string(req.VarName));
-        reqStream << "&Varname=" << encodedVarName;
-        if (req.Step != 0)
-        {
-            reqStream << "&StepStart=" << req.Step;
-        }
-        if (req.StepCount != 1)
-        {
-            reqStream << "&StepCount=" << req.StepCount;
-        }
-        if (req.BlockID != static_cast<size_t>(-1))
-        {
-            reqStream << "&Block=" << req.BlockID;
-        }
-        if (!req.Count.empty())
-        {
-            reqStream << "&Count=" << req.Count[0];
-            for (size_t i = 1; i < req.Count.size(); i++)
-            {
-                reqStream << "," << req.Count[i];
-            }
-        }
-        if (!req.Start.empty())
-        {
-            reqStream << "&Start=" << req.Start[0];
-            for (size_t i = 1; i < req.Start.size(); i++)
-            {
-                reqStream << "," << req.Start[i];
-            }
-        }
-        if (req.accuracy.error != 0.0 || req.accuracy.norm != 0.0 || req.accuracy.relative)
-        {
-            reqStream << "&AccuracyError=" << req.accuracy.error;
-            reqStream << "&AccuracyNorm=" << req.accuracy.norm;
-            reqStream << "&AccuracyRelative=" << (req.accuracy.relative ? 1 : 0);
-        }
+        s << "c" << Count[0];
+        for (size_t i = 1; i < Count.size(); ++i)
+            s << "," << Count[i];
     }
+    if (!Start.empty())
+    {
+        s << "o" << Start[0];
+        for (size_t i = 1; i < Start.size(); ++i)
+            s << "," << Start[i];
+    }
+    // `a`/`N` (not `e`/`n`) so the letters don't collide with characters
+    // that appear in float formatting: `e` in scientific notation
+    // (`1e-5`), `n` in `nan`/`inf`.  None of {a, N, R} appear in float
+    // output, so a value is always self-delimiting.
+    if (accuracy.error != 0.0)
+        s << "a" << accuracy.error;
+    if (accuracy.norm != 0.0)
+        s << "N" << accuracy.norm;
+    if (accuracy.relative)
+        s << "R1";
+    std::string out = s.str();
+    // Same `_` placeholder convention as file-config: an all-default
+    // request is the empty string and would collapse adjacent `~`s in
+    // batch sub-requests.
+    return out.empty() ? std::string("_") : out;
+}
 
-    return reqStream.str();
+std::string XrootdHttpRemote::BuildSingleGetSegment(const char *VarName, size_t Step,
+                                                    size_t StepCount, size_t BlockID,
+                                                    const Dims &Count, const Dims &Start,
+                                                    const Accuracy &accuracy)
+{
+    return "g~" + Base64urlEncode(std::string(VarName)) + "~" +
+           BuildPerRequestParamString(Step, StepCount, BlockID, Count, Start, accuracy);
+}
+
+std::string XrootdHttpRemote::BuildBatchGetSegment(const std::vector<BatchGetRequest> &requests)
+{
+    std::ostringstream s;
+    s << "b~" << requests.size();
+    for (const auto &r : requests)
+    {
+        s << "~" << Base64urlEncode(std::string(r.VarName)) << "~"
+          << BuildPerRequestParamString(r.Step, r.StepCount, r.BlockID, r.Count, r.Start,
+                                        r.accuracy);
+    }
+    return s.str();
 }
 
 bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
@@ -551,10 +553,11 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
         std::vector<BatchGetRequest> subRequests(requests.begin() + startIdx,
                                                  requests.begin() + startIdx + count);
-        std::string postData = BuildBatchRequestString(subRequests);
+        std::string url =
+            m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
 
         AsyncGet *asyncOp = new AsyncGet();
-        CURL *easy = CreateEasyHandle(asyncOp, m_BaseUrl, postData);
+        CURL *easy = CreateEasyHandle(asyncOp, url);
         if (!easy)
         {
             delete asyncOp;
@@ -597,9 +600,11 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
                 std::vector<BatchGetRequest> subRequests(requests.begin() + sb.startIdx,
                                                          requests.begin() + sb.startIdx + sb.count);
-                std::string postData = BuildBatchRequestString(subRequests);
+                std::string url =
+                    m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
+
                 AsyncGet *retryOp = new AsyncGet();
-                CURL *easy = CreateEasyHandle(retryOp, m_BaseUrl, postData);
+                CURL *easy = CreateEasyHandle(retryOp, url);
                 if (!easy)
                 {
                     delete retryOp;
@@ -703,9 +708,10 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
     AsyncGet *asyncOp = new AsyncGet();
     asyncOp->destBuffer = dest;
 
-    std::string postData =
-        BuildRequestString(VarName, Step, StepCount, BlockID, Count, Start, accuracy);
-    CURL *easy = CreateEasyHandle(asyncOp, m_BaseUrl, postData);
+    std::string url =
+        m_BaseUrl + "/" + m_FileConfigSegment + "/" +
+        BuildSingleGetSegment(VarName, Step, StepCount, BlockID, Count, Start, accuracy);
+    CURL *easy = CreateEasyHandle(asyncOp, url);
     if (!easy)
     {
         delete asyncOp;
