@@ -124,16 +124,32 @@ public:
     void SetVerifySSL(bool verify) { m_VerifySSL = verify; }
 
 private:
-    std::string BuildRequestString(const char *VarName, size_t Step, size_t StepCount,
-                                   size_t BlockID, const Dims &Count, const Dims &Start,
-                                   const Accuracy &accuracy);
-    std::string BuildBatchRequestString(const std::vector<BatchGetRequest> &requests);
-    std::string UrlEncode(const std::string &str);
-    CURL *CreateEasyHandle(AsyncGet *asyncOp, const std::string &url, const std::string &postData);
+    /** Path-encoded request builders.  Each produces one URL path segment.
+     *  See developer notes for the wire grammar; summary:
+     *    file-config:  r0?p<base64url-EP>?    (`_` placeholder if empty)
+     *    single get:   g~<base64url-var>~<paramstring>     (`_` if no params)
+     *    batch get:    b~N~<v1>~<p1>~…~<vN>~<pN>
+     *  Varnames and EngineParams are base64url-encoded (RFC 4648 §5).
+     *  Paramstring fields are letter-prefixed and self-delimiting; vector
+     *  elements use `,`; outer delimiter is `~`; floats use `.` as decimal. */
+    std::string BuildFileConfigSegment();
+    std::string BuildPerRequestParamString(size_t Step, size_t StepCount, size_t BlockID,
+                                           const Dims &Count, const Dims &Start,
+                                           const Accuracy &accuracy);
+    std::string BuildSingleGetSegment(const char *VarName, size_t Step, size_t StepCount,
+                                      size_t BlockID, const Dims &Count, const Dims &Start,
+                                      const Accuracy &accuracy);
+    std::string BuildBatchGetSegment(const std::vector<BatchGetRequest> &requests);
+
+    static std::string Base64urlEncode(const std::string &str);
+    CURL *CreateEasyHandle(AsyncGet *asyncOp, const std::string &url);
 
     std::string m_BaseUrl;
     std::string m_Filename;
     std::string m_EngineParams;
+    /** Per-engine `<file-config>` path segment, computed once at Open()
+     *  from RMOrder + EngineParams.  Reused on every request. */
+    std::string m_FileConfigSegment;
     Mode m_Mode;
     bool m_RowMajorOrdering;
     bool m_OpenSuccess = false;

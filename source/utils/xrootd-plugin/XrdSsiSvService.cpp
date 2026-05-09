@@ -496,7 +496,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 
         std::string Filename;
         std::string EngineParams;
-        bool ArrayOrder = false;
+        bool ArrayOrder = true;
         size_t NVars = 0;
 
         struct VarRequest
@@ -739,9 +739,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         std::string VarName;
         std::string EngineParams;
         adios2::Dims Start, Count;
-        size_t BlockID, DimCount, StepStart;
+        size_t BlockID = (size_t)-1, DimCount = 0, StepStart = 0;
         size_t StepCount = 1;
-        bool ArrayOrder = false;
+        bool ArrayOrder = true;
         // Accuracy parameters
         double AccuracyError = 0.0;
         double AccuracyNorm = 0.0;
