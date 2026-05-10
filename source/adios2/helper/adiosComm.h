@@ -331,6 +331,11 @@ public:
      */
     Comm::Status Wait(const std::string &hint = std::string());
 
+    /**
+     * @brief Test for completion of a request.
+     */
+    bool Test(const std::string &hint = std::string());
+
 private:
     friend class CommImpl;
 
@@ -523,6 +528,7 @@ class CommReqImpl
 public:
     virtual ~CommReqImpl() = 0;
     virtual Comm::Status Wait(const std::string &hint) = 0;
+    virtual bool Test(const std::string &hint) = 0;
 };
 
 class CommWinImpl

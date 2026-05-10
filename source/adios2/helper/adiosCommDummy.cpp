@@ -35,6 +35,7 @@ public:
     ~CommReqImplDummy() override;
 
     Comm::Status Wait(const std::string &hint) override;
+    bool Test(const std::string &hint) override;
 };
 
 CommReqImplDummy::~CommReqImplDummy() = default;
@@ -333,6 +334,8 @@ Comm::Status CommReqImplDummy::Wait(const std::string &hint)
     Comm::Status status;
     return status;
 }
+
+bool CommReqImplDummy::Test(const std::string &hint) { return true; }
 
 int CommWinImplDummy::Free(const std::string &hint) { return 0; }
 
