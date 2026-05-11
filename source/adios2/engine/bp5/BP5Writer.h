@@ -215,6 +215,13 @@ private:
     void WriteMyOwnData(format::BufferV *Data);
     void SendDataToAggregator(format::BufferV *Data);
     void WriteOthersData(const size_t TotalSize);
+    /* Like WriteOthersData but always drains the shm chain so
+       non-aggregators can exit SendDataToAggregator.  Captures
+       (and respects) a pre-existing exception_ptr, and converts
+       a mid-loop WriteFiles failure into one as well.  Used by
+       WriteData_TwoLevelShm to avoid stranding non-aggregators
+       in shm waits when the aggregator's WriteFiles throws. */
+    void WriteOthersData_DrainOnError(const size_t TotalSize, std::exception_ptr &eptr);
 
     template <class T>
     void PerformPutCommon(Variable<T> &variable);
