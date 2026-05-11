@@ -1,0 +1,35 @@
+{
+  "mpi_launcher": "mpirun -n {ranks}",
+  "output_dir": "../runs",
+  "common_args": {
+    "nx": 64,
+    "ny": 64,
+    "tfinal": 0.1,
+    "cfl": 0.3,
+    "gamma": 1.6666666666666667,
+    "output_every_steps": 30,
+    "output_every_time": 0.05,
+    "log_every_steps": 30,
+    "glm_ch": 1.0,
+    "glm_damping": 0.1,
+    "save_initial": true
+  },
+  "runs": [
+    {
+      "name": "hll_first_order",
+      "solver": "hll",
+      "ranks": 1,
+      "prepend_var_names" : "hll_"
+    },
+    {
+      "name": "rusanov_first_order",
+      "solver": "rusanov",
+      "ranks": 1
+    },
+    {
+      "name": "muscl_hll",
+      "solver": "muscl_hll",
+      "ranks": 1
+    }
+  ]
+}

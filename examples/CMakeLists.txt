@@ -9,6 +9,7 @@
 
 add_subdirectory(basics)
 add_subdirectory(hello)
+add_subdirectory(mhd_orszag_tang)
 add_subdirectory(plugins)
 add_subdirectory(simulations)
 add_subdirectory(useCases)

@@ -1,0 +1,54 @@
+{
+  "mpi_launcher": "mpirun -n {ranks}",
+  "output_dir": "../runs_resolution_sweep",
+  "default_ranks": 4,
+  "common_args": {
+    "tfinal": 1.0,
+    "cfl": 0.3,
+    "gamma": 1.6666666666666667,
+    "output_every_steps": 30,
+    "output_every_time": 0.05,
+    "log_every_steps": 30,
+    "glm_ch": 1.0,
+    "glm_damping": 0.1,
+    "save_initial": true
+  },
+  "runs": [
+    {
+      "name": "hll_128",
+      "solver": "hll",
+      "nx": 128,
+      "ny": 128
+    },
+    {
+      "name": "rusanov_128",
+      "solver": "rusanov",
+      "nx": 128,
+      "ny": 128
+    },
+    {
+      "name": "muscl_hll_128",
+      "solver": "muscl_hll",
+      "nx": 128,
+      "ny": 128
+    },
+    {
+      "name": "hll_256",
+      "solver": "hll",
+      "nx": 256,
+      "ny": 256
+    },
+    {
+      "name": "rusanov_256",
+      "solver": "rusanov",
+      "nx": 256,
+      "ny": 256
+    },
+    {
+      "name": "muscl_hll_256",
+      "solver": "muscl_hll",
+      "nx": 256,
+      "ny": 256
+    }
+  ]
+}
