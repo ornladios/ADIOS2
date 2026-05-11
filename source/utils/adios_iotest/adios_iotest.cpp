@@ -380,6 +380,9 @@ int main(int argc, char *argv[])
     }
     catch (std::exception &e) // if some unknown error occurs
     {
+        // Print from ANY failing rank so non-rank-0 failures surface
+        // before MPI_Abort kills rank 0 mid-collective.
+        std::cerr << "[rank " << settings.myRank << "] FATAL: " << e.what() << std::endl;
         if (!settings.myRank)
         {
             std::cout << "ADIOS " << e.what() << std::endl;

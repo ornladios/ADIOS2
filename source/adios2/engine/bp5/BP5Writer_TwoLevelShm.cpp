@@ -65,6 +65,11 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
 
     shm::TokenChain<uint64_t> tokenChain(&a->m_Comm);
 
+    // Aggregator-side exception capture.  Set on the aggregator if
+    // WriteMyOwnData or a mid-drain WriteFiles failed.  Re-thrown
+    // at end of function so DestroyShm still runs.
+    std::exception_ptr eptr;
+
     if (a->m_IsAggregator)
     {
         // In each aggregator chain, send from master down the line
@@ -103,18 +108,33 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
         uint64_t nextWriterPos = m_DataPos + Data->Size();
         tokenChain.SendToken(nextWriterPos);
 
-        WriteMyOwnData(Data);
+        // Capture an exception from either WriteMyOwnData or a mid-
+        // drain WriteFiles failure, but always finish draining the
+        // shm chain so non-aggregator ranks can exit
+        // SendDataToAggregator and reach the next MPI collective
+        // (where MPI_Abort can find them).  Without this, an
+        // aggregator throw here strands local non-aggregators in
+        // futex/sem waits indefinitely.
+        try
+        {
+            WriteMyOwnData(Data);
+        }
+        catch (...)
+        {
+            eptr = std::current_exception();
+        }
 
-        /* Write from shm until every non-aggr sent all data */
         if (a->m_Comm.Size() > 1)
         {
-            WriteOthersData(myTotalSize - Data->Size());
+            WriteOthersData_DrainOnError(myTotalSize - Data->Size(), eptr);
         }
 
         // Master aggregator needs to know where the last writing ended by the
         // last aggregator in the chain, so that it can start from the correct
-        // position at the next output step
-        if (a->m_AggregatorChainComm.Size() > 1 && !a->m_AggregatorChainComm.Rank())
+        // position at the next output step.  Skip if we are already failing;
+        // downstream aggregators are also failing or will be killed by the
+        // upcoming MPI_Abort.
+        if (!eptr && a->m_AggregatorChainComm.Size() > 1 && !a->m_AggregatorChainComm.Rank())
         {
             a->m_AggregatorChainComm.Recv(&m_DataPos, 1, a->m_AggregatorChainComm.Size() - 1, 0,
                                           "Chain token in BP5Writer::WriteData");
@@ -139,6 +159,15 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     if (a->m_Comm.Size() > 1)
     {
         a->DestroyShm();
+    }
+
+    // Re-throw any captured aggregator-side fault now, after shm
+    // teardown.  Non-aggregators don't reach here with a fault;
+    // their own throws (e.g. from SendDataToAggregator) propagate
+    // naturally because eptr is empty for them.
+    if (eptr)
+    {
+        std::rethrow_exception(eptr);
     }
 }
 
@@ -259,23 +288,49 @@ void BP5Writer::WriteOthersData(size_t TotalSize)
         // potentially blocking call waiting on some non-aggr process
         aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
 
-        /*std::cout << "Rank " << m_Comm.Rank()
-                  << " write from shm, data_size = " << b->actual_size
-                  << " total so far = " << wrote
-                  << " buf = " << static_cast<void *>(b->buf) << " = "
-                  << DoubleBufferToString((double *)b->buf,
-                                          b->actual_size / sizeof(double))
-                  << std::endl;*/
-        /*<< " buf = " << static_cast<void *>(b->buf) << " = ["
-        << (int)b->buf[0] << (int)b->buf[1] << "..."
-        << (int)b->buf[b->actual_size - 2]
-        << (int)b->buf[b->actual_size - 1] << "]" << std::endl;*/
-
         // b->actual_size: how much we need to write
         aggData->m_FileDataManager.WriteFiles(b->buf, b->actual_size);
 
         wrote += b->actual_size;
 
+        a->UnlockConsumerBuffer();
+    }
+    m_DataPos += TotalSize;
+}
+
+void BP5Writer::WriteOthersData_DrainOnError(const size_t TotalSize, std::exception_ptr &eptr)
+{
+    /* Only an Aggregator calls this function.  Same loop as
+       WriteOthersData but never aborts mid-drain: even after a
+       WriteFiles failure, we keep consuming shm buffers so that
+       non-aggregator ranks can exit their SendDataToAggregator
+       loops (which block in LockProducerBuffer waiting for the
+       aggregator to release a slot).  Without this, an
+       aggregator-side throw strands all local non-aggregators in
+       futex/semaphore waits where MPI_Abort cannot reach them
+       reliably. */
+    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+
+    AggTransportData *aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
+    size_t wrote = 0;
+    bool fault = static_cast<bool>(eptr);
+    while (wrote < TotalSize)
+    {
+        aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
+        if (!fault)
+        {
+            try
+            {
+                aggData->m_FileDataManager.WriteFiles(b->buf, b->actual_size);
+            }
+            catch (...)
+            {
+                eptr = std::current_exception();
+                fault = true;
+                // Subsequent iterations just discard the shm contents.
+            }
+        }
+        wrote += b->actual_size;
         a->UnlockConsumerBuffer();
     }
     m_DataPos += TotalSize;
