@@ -16,33 +16,23 @@ namespace adios2
 namespace plugin
 {
 
-/** EncryptionOperator that uses libsodium. The encryption mode is determined
- * automatically by the parameters supplied.
+/** EncryptionOperator: libsodium-based encryption plugin.
  *
- * --- Symmetric mode (crypto_secretbox) ---
- * Activated when 'SecretKeyFile' is provided without any public-key params.
- * Both writer and reader must share the same secret key file.
+ * Mode is selected automatically. Setting any asymmetric env var or public-key
+ * parameter activates asymmetric mode; otherwise symmetric mode is used.
  *
- *   SecretKeyFile  - path to the secret key file; if the file does not exist
- *                    a new key is generated and written there.
+ * Symmetric (XSalsa20-Poly1305 / crypto_secretbox):
+ *   Key lookup: ADIOS2_SECRET_KEY env (hex) → SecretKeyFile param → SecretKey param.
+ *   SecretKeyFile generates a new key on first write if the file does not exist.
  *
- * --- Asymmetric mode (hybrid crypto_box_seal) ---
- * Activated when 'PublicKeyFile' or 'PublicKey' is provided. A random session
- * key is sealed with the recipient's Curve25519 public key; bulk data is
- * encrypted with that session key via crypto_secretbox. Only the public key
- * is needed for writing; both keys are needed for reading.
+ * Asymmetric (Curve25519 + XSalsa20-Poly1305 hybrid):
+ *   Writer needs the public key; reader needs the secret key.
+ *   Public key lookup:  ADIOS2_PUBLIC_KEY_FILE → ADIOS2_PUBLIC_KEY → PublicKeyFile → PublicKey
+ *   Secret key lookup:  ADIOS2_ASYM_SECRET_KEY_FILE → ADIOS2_ASYM_SECRET_KEY
+ *                       → SecretKeyFile → SecretKey
+ *   If only the secret key is supplied, the public key is derived automatically.
  *
- *   PublicKeyFile  - path to a 32-byte Curve25519 public key file
- *   PublicKey      - hex-encoded public key (64 hex chars)
- *   SecretKeyFile  - path to a 32-byte secret key file (reading only)
- *   SecretKey      - hex-encoded secret key (64 hex chars, reading only)
- *
- * Secret key lookup order (asymmetric): SecretKeyFile param, SecretKey param,
- *   ADIOS2_SECRET_KEY_FILE env var, ADIOS2_SECRET_KEY env var.
- * When only the secret key is supplied, the public key is derived automatically
- * via Curve25519 (sk * basepoint).
- *
- * Use adios2_seal_keygen to generate asymmetric key pairs.
+ * Use adios2_seal_keygen to generate Curve25519 key pairs.
  */
 class EncryptionOperator : public PluginOperatorInterface
 {
