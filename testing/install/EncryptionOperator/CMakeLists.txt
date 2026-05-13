@@ -77,3 +77,25 @@ add_test(NAME adios_plugin_sealed_operator_wrong_usage_test
 )
 set_tests_properties(adios_plugin_sealed_operator_wrong_usage_test PROPERTIES
   DEPENDS adios_plugin_sealed_keygen_fixture)
+
+# Step 5: env var key loading tests (no key params on reader side)
+add_executable(adios_plugin_env_var_keys_test
+  TestEnvVarKeys.cpp
+)
+target_link_libraries(adios_plugin_env_var_keys_test adios2::cxx)
+add_test(NAME adios_plugin_env_var_keys_test
+  COMMAND adios_plugin_env_var_keys_test
+)
+set_tests_properties(adios_plugin_env_var_keys_test PROPERTIES
+  DEPENDS adios_plugin_sealed_keygen_fixture)
+
+# Step 6: reader mode selection from env vars
+add_executable(adios_plugin_reader_mode_from_env_test
+  TestReaderModeFromEnv.cpp
+)
+target_link_libraries(adios_plugin_reader_mode_from_env_test adios2::cxx)
+add_test(NAME adios_plugin_reader_mode_from_env_test
+  COMMAND adios_plugin_reader_mode_from_env_test
+)
+set_tests_properties(adios_plugin_reader_mode_from_env_test PROPERTIES
+  DEPENDS adios_plugin_sealed_keygen_fixture)

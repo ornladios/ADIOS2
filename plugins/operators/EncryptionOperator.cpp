@@ -159,6 +159,40 @@ struct EncryptionOperator::EncryptImpl
         }
         this->SecretKeyValid = true;
     }
+
+    // --- Symmetric key helpers (read-only, no generate) ---
+
+    void ReadSymKey(const std::string &filename)
+    {
+        std::ifstream keyFile(filename, std::ios::binary);
+        if (!keyFile)
+        {
+            throw std::runtime_error("EncryptionOperator: could not open symmetric key file: " +
+                                     filename);
+        }
+        keyFile.read(reinterpret_cast<char *>(this->Key), crypto_secretbox_KEYBYTES);
+        if (!keyFile)
+        {
+            throw std::runtime_error("EncryptionOperator: symmetric key file is too short: " +
+                                     filename);
+        }
+        keyFile.close();
+        if (sodium_mlock(this->Key, crypto_secretbox_KEYBYTES) == -1)
+        {
+            throw std::runtime_error("EncryptionOperator: unable to lock memory for symmetric key");
+        }
+        this->KeyValid = true;
+    }
+
+    void SetSymKeyHex(const std::string &hex)
+    {
+        HexDecode(hex, this->Key, crypto_secretbox_KEYBYTES);
+        if (sodium_mlock(this->Key, crypto_secretbox_KEYBYTES) == -1)
+        {
+            throw std::runtime_error("EncryptionOperator: unable to lock memory for symmetric key");
+        }
+        this->KeyValid = true;
+    }
 };
 
 EncryptionOperator::EncryptionOperator(const Params &parameters)
@@ -169,57 +203,56 @@ EncryptionOperator::EncryptionOperator(const Params &parameters)
         throw std::runtime_error("libsodium could not be initialized");
     }
 
-    // Detect mode: asymmetric when any public-key param is present.
+    // Env vars for key loading (read once for both mode detection and loading).
+    // Asymmetric public key:  ADIOS2_PUBLIC_KEY_FILE (file) / ADIOS2_PUBLIC_KEY (hex).
+    // Asymmetric secret key:  ADIOS2_ASYM_SECRET_KEY_FILE (file) / ADIOS2_ASYM_SECRET_KEY (hex).
+    //   Setting any asymmetric env var triggers asymmetric mode.
+    //   If no public key is provided the public key is derived from the secret key.
+    // Symmetric: ADIOS2_SECRET_KEY (hex).
+    const char *envPKFile = std::getenv("ADIOS2_PUBLIC_KEY_FILE");
+    const char *envPKHex = std::getenv("ADIOS2_PUBLIC_KEY");
+    const char *envASKFile = std::getenv("ADIOS2_ASYM_SECRET_KEY_FILE");
+    const char *envASKHex = std::getenv("ADIOS2_ASYM_SECRET_KEY");
+    const char *envSKHex = std::getenv("ADIOS2_SECRET_KEY");
+
     auto pkFileIt = m_Parameters.find("publickeyfile");
     auto pkHexIt = m_Parameters.find("publickey");
-    bool hasAsymParam = (pkFileIt != m_Parameters.end() || pkHexIt != m_Parameters.end());
+    auto skFileIt = m_Parameters.find("secretkeyfile");
+    auto skHexIt = m_Parameters.find("secretkey");
+    auto modeParamIt = m_Parameters.find("mode");
 
-    if (hasAsymParam)
+    // Mode detection: any asym env var → mode param → public key param presence.
+    bool hasAsymEnv = (envPKFile && envPKFile[0] != '\0') || (envPKHex && envPKHex[0] != '\0') ||
+                      (envASKFile && envASKFile[0] != '\0') || (envASKHex && envASKHex[0] != '\0');
+    bool hasPKParam = pkFileIt != m_Parameters.end() || pkHexIt != m_Parameters.end();
+    bool hasModeParam = modeParamIt != m_Parameters.end() && modeParamIt->second == "asymmetric";
+    bool isAsymmetric = hasAsymEnv || hasPKParam || hasModeParam;
+
+    if (isAsymmetric)
     {
         Impl->EncryptionMode = EncryptImpl::Mode::Asymmetric;
 
-        // Load public key: file param takes priority, then hex param.
-        if (pkFileIt != m_Parameters.end())
-        {
+        // Load public key: env file → env hex → param file → param hex.
+        if (envPKFile && envPKFile[0] != '\0')
+            Impl->ReadPublicKey(std::string(envPKFile));
+        else if (envPKHex && envPKHex[0] != '\0')
+            Impl->SetPublicKeyHex(std::string(envPKHex));
+        else if (pkFileIt != m_Parameters.end())
             Impl->ReadPublicKey(pkFileIt->second);
-        }
-        else
-        {
+        else if (pkHexIt != m_Parameters.end())
             Impl->SetPublicKeyHex(pkHexIt->second);
-        }
 
-        // Load secret key for decryption.
-        // Lookup order: SecretKeyFile param, SecretKey param (hex),
-        //   ADIOS2_SECRET_KEY_FILE env var, ADIOS2_SECRET_KEY env var (hex).
-        auto skFileIt = m_Parameters.find("secretkeyfile");
-        auto skHexIt = m_Parameters.find("secretkey");
-        if (skFileIt != m_Parameters.end())
-        {
+        // Load secret key: env file → env hex → param file → param hex.
+        if (envASKFile && envASKFile[0] != '\0')
+            Impl->ReadSecretKey(std::string(envASKFile));
+        else if (envASKHex && envASKHex[0] != '\0')
+            Impl->SetSecretKeyHex(std::string(envASKHex));
+        else if (skFileIt != m_Parameters.end())
             Impl->ReadSecretKey(skFileIt->second);
-        }
         else if (skHexIt != m_Parameters.end())
-        {
             Impl->SetSecretKeyHex(skHexIt->second);
-        }
-        else
-        {
-            const char *envSKFile = std::getenv("ADIOS2_SECRET_KEY_FILE");
-            if (envSKFile && envSKFile[0] != '\0')
-            {
-                Impl->ReadSecretKey(std::string(envSKFile));
-            }
-            else
-            {
-                const char *envSKHex = std::getenv("ADIOS2_SECRET_KEY");
-                if (envSKHex && envSKHex[0] != '\0')
-                {
-                    Impl->SetSecretKeyHex(std::string(envSKHex));
-                }
-            }
-        }
 
-        // If we have a secret key but no public key, derive the public key
-        // from the secret key (Curve25519: pk = sk * basepoint).
+        // Derive public key from secret key when only the secret key was provided.
         if (Impl->SecretKeyValid && !Impl->PublicKeyValid)
         {
             if (crypto_scalarmult_base(Impl->PublicKey, Impl->SecretKey) != 0)
@@ -237,16 +270,16 @@ EncryptionOperator::EncryptionOperator(const Params &parameters)
     }
     else
     {
-        // Symmetric mode: in the case "secretkeyfile" is found, so we know
-        // the operator should be calling Operate(). If "secretkeyfile" is not
-        // found, then the operator should be calling InverseOperate(), due to
-        // ADIOS calling InverseOperate() not allowing Parameters to be passed.
-        auto skFileIt = m_Parameters.find("secretkeyfile");
-        if (skFileIt != m_Parameters.end())
+        // Symmetric mode: env hex → param file (with generate) → param hex.
+        if (envSKHex && envSKHex[0] != '\0')
+            Impl->SetSymKeyHex(std::string(envSKHex));
+        else if (skFileIt != m_Parameters.end())
         {
             Impl->KeyFilename = skFileIt->second;
             Impl->GenerateOrReadKey();
         }
+        else if (skHexIt != m_Parameters.end())
+            Impl->SetSymKeyHex(skHexIt->second);
     }
 }
 
@@ -403,6 +436,15 @@ EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn, ch
     }
     else
     {
+        if (!Impl->KeyValid)
+        {
+            throw std::runtime_error(
+                "EncryptionOperator::InverseOperate (symmetric) was called, but"
+                " a valid secret key has not been loaded. "
+                "Set SecretKeyFile/SecretKey param, or set"
+                " ADIOS2_SECRET_KEY_FILE or ADIOS2_SECRET_KEY env var.");
+        }
+
         size_t offset = 0;
 
         // need to grab any parameter(s) we saved in Operate()
