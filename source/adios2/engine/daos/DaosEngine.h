@@ -24,12 +24,10 @@ class DaosEngine
 {
 public:
     int m_RankMPI = 0;
-    /* metadata index table
+    /* metadata index table (Phase-1 layout)
             0: pos in memory for step (after filtered read)
             1: size of metadata
-            2: flush count
-            3: pos in index where data offsets are enumerated
-            4: abs. pos in metadata File for step
+            2: abs. pos in metadata File for step
     */
     std::unordered_map<uint64_t, std::vector<uint64_t>> m_MetadataIndexTable;
 
@@ -53,6 +51,10 @@ public:
     static constexpr size_t m_BPMinorVersionPosition = 38;
     static constexpr size_t m_ActiveFlagPosition = 39;
     static constexpr size_t m_ColumnMajorFlagPosition = 40;
+    /// Phase-2: 0 = aggregated metadata (Phase 1 / default), 1 = per-rank
+    /// metadata (each rank carries its own MetaMetaBlocks + Attribute
+    /// content in its metadata blob; rank 0 does no aggregation).
+    static constexpr size_t m_PerRankMetadataFlagPosition = 41;
     static constexpr size_t m_VersionTagPosition = 0;
     static constexpr size_t m_VersionTagLength = 32;
 

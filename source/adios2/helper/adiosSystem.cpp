@@ -182,6 +182,14 @@ char BPVersion(const std::string &name, helper::Comm &comm,
     return version;
 }
 
+bool IsDAOSDataset(const std::string &name) noexcept
+{
+    // The DAOS engine writes a data_oids.txt index alongside its
+    // metadata files; BP3/BP4/BP5 never produce this file, so it is the
+    // unambiguous marker for a DAOS-engine dataset directory.
+    return adios2sys::SystemTools::PathExists(name + PathSeparator + "data_oids.txt");
+}
+
 unsigned int NumHardwareThreadsPerNode() { return std::thread::hardware_concurrency(); }
 
 size_t RaiseLimitNoFile()

@@ -76,6 +76,15 @@ bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
 char BPVersion(const std::string &name, helper::Comm &comm,
                const std::vector<Params> &transportsParameters) noexcept;
 
+/** Return true if 'name' is a dataset directory written by the DAOS
+ *  engine.  Identified by the data_oids.txt index file the DAOS engine
+ *  produces (mapping writer ranks to DAOS array object IDs); no
+ *  BP3/BP4/BP5 dataset contains this file.  Used by IO::Open to
+ *  auto-detect the DAOS engine -- a DAOS dataset directory also carries
+ *  an mmd.0 and would otherwise mis-detect as BP5.
+ */
+bool IsDAOSDataset(const std::string &name) noexcept;
+
 /** Return the number of available hardware threads on the node.
  * It might return 0 if the detection does not work
  */

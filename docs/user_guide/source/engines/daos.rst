@@ -52,6 +52,38 @@ The engine **does** require:
 The pool and container must already exist before the writer opens the
 engine; the engine does not create them.
 
+.. note::
+
+   HPC sites that ship a DAOS client module (for example
+   ``daos/base`` on ALCF Aurora) typically use it to export
+   libfabric and Mercury tuning environment variables — on
+   Slingshot fabrics these include ``FI_CXI_DEFAULT_CQ_SIZE``,
+   ``FI_CXI_RX_MATCH_MODE``, ``FI_MR_CACHE_MAX_COUNT``, and
+   ``NA_OFI_CXI_PROTO_RNR``.  These are needed for the DAOS client
+   to sustain the network load of many concurrent ranks.
+
+   ``module load`` sets these in the launching shell, but they are
+   **not** automatically propagated to ranks by every MPI launcher.
+   Propagate them explicitly:
+
+   * MPICH / PALS ``mpiexec``: ``-genvall``, or specific variables
+     via ``--env NAME=VALUE``.
+   * SLURM ``srun``: ``--export=ALL`` (or list specific variables).
+   * OpenMPI ``mpirun``: typically propagates by default; ``-x NAME``
+     to be explicit.
+
+   Without propagation the ranks run with libfabric defaults that
+   are too small for high-rank-count concurrent DAOS reads.  The
+   visible symptom is ``DER_HG`` (Mercury transport error) followed
+   by ``DER_TIMEDOUT`` after ~120 s during multi-node reads; the
+   workload completes but read throughput drops by one to two
+   orders of magnitude.
+
+   On Aurora specifically, propagating the full module env to BP5
+   ranks running on Lustre has been observed to break MPICH/Lustre
+   I/O.  When a single submit script runs both DAOS and BP5 phases,
+   apply ``-genvall`` only to the DAOS-phase ``mpiexec`` line.
+
 Usage
 =====
 
