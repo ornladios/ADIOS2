@@ -59,14 +59,15 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 | Platform            | Package                                                                                                                                                    |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Summary             | [![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions)                       |
-| Conda               | [![Conda Version](https://img.shields.io/conda/v/conda-forge/libadios2)](https://anaconda.org/conda-forge/adios2)                                            |
+| Conda               | [![Conda Version](https://img.shields.io/conda/v/conda-forge/libadios2)](https://anaconda.org/conda-forge/adios2)                                          |
 | Spack               | [![Spack package](https://repology.org/badge/version-for-repo/spack/adios2.svg)](https://repology.org/project/adios2/versions)                             |
 | Homebrew            | [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/adios2.svg)](https://repology.org/project/adios2/versions)                       |
 | Ubuntu 24.04        | [![Ubuntu 24.04 package](https://repology.org/badge/version-for-repo/ubuntu_24_04/adios2.svg)](https://repology.org/project/adios2/versions)               |
-| Debian 13           | [![Debian 13 package](https://repology.org/badge/version-for-repo/debian_13/adios2.svg)](https://repology.org/project/adios2/versions)                     |
+| Ubuntu 26.04        | [![Ubuntu 26.04 package](https://repology.org/badge/version-for-repo/ubuntu_26_04/adios2.svg)](https://repology.org/project/adios2/versions)               |
 | Debian Unstable     | [![Debian Unstable package](https://repology.org/badge/version-for-repo/debian_unstable/adios2.svg)](https://repology.org/project/adios2/versions)         |
+| Arch                | [![Arch Linux package](https://repology.org/badge/version-for-repo/arch/adios2.svg)](https://repology.org/project/adios2/versions)                         |
 | OpenSUSE TumbleWeed | [![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/adios2.svg)](https://repology.org/project/adios2/versions) |
-| OpenSUSE Leap 15.6  | [![openSUSE Leap 15.6 package](https://repology.org/badge/version-for-repo/opensuse_leap_15_6/adios2.svg)](https://repology.org/project/adios2/versions)   |
+| Nix unstable        | [![nixpkgs unstable package](https://repology.org/badge/version-for-repo/nix_unstable/adios2.svg)](https://repology.org/project/adios2/versions)           |
 | vcpkg               | [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/adios2.svg)](https://repology.org/project/adios2/versions)                             |
 | Dockerhub           | ![Docker Image Version](https://img.shields.io/docker/v/ornladios/adios2)                                                                                  |
 
