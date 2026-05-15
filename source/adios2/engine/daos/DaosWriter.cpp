@@ -22,6 +22,7 @@
 
 #include <chrono>
 #include <cstdlib> // getenv
+#include <cstring> // memcpy
 #include <ctime>
 #include <fstream>
 #include <iomanip> // setw
@@ -113,6 +114,10 @@ StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     m_BP5Serializer.InitStep(m_DataBuf.get());
     m_ThisTimestepDataSize = 0;
+    // Snapshot the cursor at step begin.  Phase-1 design: each rank's
+    // metadata blob carries its own step-start array offset as a trailer,
+    // so the reader can compute arrayOffset = step_start + StartOffset.
+    m_StepStartDataPos = m_DataArrayCursor;
 
     return StepStatus::OK;
 }
@@ -235,10 +240,6 @@ void DaosWriter::WriteData(format::BufferV *Data)
         }
     }
 
-    // Record the array offset where this step's data begins so the
-    // BP5 metadata index records the right "data position" for readers.
-    m_StartDataPos = m_DataArrayCursor;
-    m_DataPos = m_DataArrayCursor + Data->Size();
     m_Profiler.AddBytes("totalBytes", Data->Size());
     m_DataArrayCursor += Data->Size();
     // DON'T delete Data: with chunk recycling, Data == m_DataBuf.get()
@@ -251,23 +252,27 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
     m_FileMetadataManager.FlushFiles();
 
     const uint64_t writerCount = static_cast<uint64_t>(m_Comm.Size());
-    const uint64_t flushCount = static_cast<uint64_t>(FlushPosSizeInfo.size());
 
+    // Phase-1 StepRecord layout: only (MetaDataPos, MetaDataSize).  Each
+    // rank's step-start data offset rides on its own metadata-blob
+    // trailer in DAOS, so md.idx no longer carries any per-writer block.
+    //
     // First-call layout:
     //   header (m_IndexHeaderSize bytes)
     //   WriterMapRecord (1 + 8 + (3 + writerCount) * 8 bytes)
-    //   StepRecord      (1 + 8 + stepBody)
+    //   StepRecord      (1 + 8 + 16 bytes)
     // Subsequent calls: just StepRecord.
     //
-    // The WriterMapRecord populates the reader's m_WriterMap so its
+    // The WriterMapRecord still populates the reader's m_WriterMap so
     // m_WriterMap[step].WriterCount is non-zero — without this,
     // DaosArrayReadMetadata's daos_kv_get for the per-step metadata
     // sizes is called with writer_count=0 and deadlocks.  The subfile
     // indices in the map are nominal (every rank "owns" its own
     // subfile slot); the actual data is reached via data_oids.txt.
-    const size_t stepBodyBytes = (3 + writerCount * (2 * flushCount + 1)) * sizeof(uint64_t);
+    const size_t stepBodyBytes = 2 * sizeof(uint64_t);
     size_t bufsize = 1 + sizeof(uint64_t) + stepBodyBytes;
-    if (MetaDataPos == 0)
+    const bool isFirstCall = m_FirstIndexCall;
+    if (isFirstCall)
     {
         bufsize += m_IndexHeaderSize;
         bufsize += 1 + sizeof(uint64_t) + (3 + writerCount) * sizeof(uint64_t);
@@ -278,7 +283,7 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
     uint64_t d;
     unsigned char record;
 
-    if (MetaDataPos == 0)
+    if (isFirstCall)
     {
         MakeHeader(buf, pos, "Index Table", true);
 
@@ -294,6 +299,7 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
         {
             helper::CopyToBuffer(buf, pos, &i, 1); // RankToSubfile[i] = i
         }
+        m_FirstIndexCall = false;
     }
 
     // StepRecord
@@ -303,28 +309,8 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
     helper::CopyToBuffer(buf, pos, &d, 1); // record length
     helper::CopyToBuffer(buf, pos, &MetaDataPos, 1);
     helper::CopyToBuffer(buf, pos, &MetaDataSize, 1);
-    helper::CopyToBuffer(buf, pos, &flushCount, 1);
-
-    // Per-writer block: for each writer, FlushCount (pos,size) pairs +
-    // m_WriterDataPos[writer].  data_oids.txt locates the per-rank array;
-    // m_WriterDataPos[writer] is the byte offset within that array where
-    // this step's data begins.  The reader's ReadData walks this block
-    // (2*FlushCount+1 uint64s per writer) to compute the read offset --
-    // the trailing m_WriterDataPos[writer] becomes ThisDataPos when
-    // FlushCount==0, which is the steady-state case.
-    for (uint64_t writer = 0; writer < writerCount; ++writer)
-    {
-        for (uint64_t f = 0; f < flushCount; ++f)
-        {
-            helper::CopyToBuffer(buf, pos, &FlushPosSizeInfo[f][2 * writer], 2);
-        }
-        helper::CopyToBuffer(buf, pos, &m_WriterDataPos[writer], 1);
-    }
 
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
-
-    /* reset for next timestep */
-    FlushPosSizeInfo.clear();
 }
 
 void DaosWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
@@ -415,13 +401,84 @@ void DaosWriter::MarshalAttributes()
     }
 }
 
+std::vector<char> DaosWriter::BuildMetadataBlob(format::BP5Serializer::TimestepInfo &TSInfo)
+{
+    const size_t metaSize = TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0;
+
+    if (!m_PerRankMetadata)
+    {
+        // Aggregated mode (Phase 1): [MetaEncode][step_start u64].
+        std::vector<char> buf(metaSize + sizeof(uint64_t));
+        if (metaSize > 0)
+            std::memcpy(buf.data(), TSInfo.MetaEncodeBuffer->Data(), metaSize);
+        std::memcpy(buf.data() + metaSize, &m_StepStartDataPos, sizeof(uint64_t));
+        return buf;
+    }
+
+    // Per-rank mode (Phase 2): pack MetaEncode + MetaMetaBlocks +
+    // AttributeEncodeBuffer + 24-byte footer.  Footer is
+    // (mmb_size, attr_size, step_start) — sizes count only the
+    // serialized body bytes, not the footer itself.
+    const auto &mmbs = TSInfo.NewMetaMetaBlocks;
+    uint64_t mmbBodySize = sizeof(uint64_t); // count prefix
+    for (const auto &m : mmbs)
+        mmbBodySize += 2 * sizeof(uint64_t) + m.MetaMetaIDLen + m.MetaMetaInfoLen;
+
+    const uint64_t attrSize =
+        (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0)
+            ? static_cast<uint64_t>(TSInfo.AttributeEncodeBuffer->m_FixedSize)
+            : 0;
+    const size_t footerSize = 3 * sizeof(uint64_t);
+    const size_t total = metaSize + mmbBodySize + attrSize + footerSize;
+
+    std::vector<char> buf(total);
+    size_t pos = 0;
+    if (metaSize > 0)
+    {
+        std::memcpy(buf.data() + pos, TSInfo.MetaEncodeBuffer->Data(), metaSize);
+        pos += metaSize;
+    }
+    // MetaMetaBlocks body: count + (idLen, infoLen, id, info)+
+    const uint64_t mmbCount = static_cast<uint64_t>(mmbs.size());
+    std::memcpy(buf.data() + pos, &mmbCount, sizeof(uint64_t));
+    pos += sizeof(uint64_t);
+    for (const auto &m : mmbs)
+    {
+        const uint64_t idLen = m.MetaMetaIDLen;
+        const uint64_t infoLen = m.MetaMetaInfoLen;
+        std::memcpy(buf.data() + pos, &idLen, sizeof(uint64_t));
+        pos += sizeof(uint64_t);
+        std::memcpy(buf.data() + pos, &infoLen, sizeof(uint64_t));
+        pos += sizeof(uint64_t);
+        std::memcpy(buf.data() + pos, m.MetaMetaID, idLen);
+        pos += idLen;
+        std::memcpy(buf.data() + pos, m.MetaMetaInfo, infoLen);
+        pos += infoLen;
+    }
+    // AttributeEncodeBuffer
+    if (attrSize > 0)
+    {
+        std::memcpy(buf.data() + pos, TSInfo.AttributeEncodeBuffer->Data(), attrSize);
+        pos += attrSize;
+    }
+    // Footer
+    std::memcpy(buf.data() + pos, &mmbBodySize, sizeof(uint64_t));
+    pos += sizeof(uint64_t);
+    std::memcpy(buf.data() + pos, &attrSize, sizeof(uint64_t));
+    pos += sizeof(uint64_t);
+    std::memcpy(buf.data() + pos, &m_StepStartDataPos, sizeof(uint64_t));
+    pos += sizeof(uint64_t);
+    return buf;
+}
+
 void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
 {
     /* Allgather metadata sizes from all processes; absorbs cross-rank
        skew left by the no-Barrier-after-SelAgg decision in EndStep. */
+    std::vector<char> blob = BuildMetadataBlob(TSInfo);
+    const uint64_t myMetaTotal = static_cast<uint64_t>(blob.size());
     std::vector<uint64_t> list_metadata_size(m_Comm.Size());
-    m_Comm.Allgather((uint64_t *)&TSInfo.MetaEncodeBuffer->m_FixedSize, 1,
-                     list_metadata_size.data(), 1);
+    m_Comm.Allgather(&myMetaTotal, 1, list_metadata_size.data(), 1);
 
     size_t offset = 0;
     if (metadataLayout == MetadataLayout::ARRAY)
@@ -431,18 +488,23 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
     }
     else if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
-        offset = m_Comm.Rank() * chunk_size_1mb;
+        // 64-bit multiply: chunk_size_1mb and Comm::Rank() are both int, so
+        // an int*int product overflows at rank 2048 (2048 * 1 MiB == 2^31).
+        // The reader computes this offset in size_t and reads the correct
+        // location, so an overflow here silently strands every blob from
+        // rank 2048 on.  Cast the rank to widen the whole expression.
+        offset = static_cast<size_t>(m_Comm.Rank()) * chunk_size_1mb;
     }
 
     // Setup I/O Descriptor
     iod.arr_nr = 1;
-    rg.rg_len = list_metadata_size[m_Comm.Rank()];
+    rg.rg_len = myMetaTotal;
     rg.rg_idx = m_step_offset + offset;
     iod.arr_rgs = &rg;
 
-    /** set memory location */
+    /** memory location: single contiguous blob */
+    d_iov_set(&iov, blob.data(), myMetaTotal);
     sgl.sg_nr = 1;
-    d_iov_set(&iov, TSInfo.MetaEncodeBuffer->Data(), TSInfo.MetaEncodeBuffer->m_FixedSize);
     sgl.sg_iovs = &iov;
 
     // Write Metadata
@@ -481,9 +543,14 @@ void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo
     char key[1000];
     int rc;
     sprintf(key, "step%zu-rank%d", m_WriterStep, m_Comm.Rank());
+
+    // Value = composite blob (see BuildMetadataBlob).  Either Phase-1
+    // (MetaEncode + 8-byte trailer) or Phase-2 (MetaEncode + MetaMeta
+    // + Attr + 24-byte footer) depending on m_PerRankMetadata.
+    std::vector<char> blob = BuildMetadataBlob(TSInfo);
+
     CALI_MARK_BEGIN("DaosWriter::daos_kv_put");
-    rc = daos_kv_put(oh, DAOS_TX_NONE, 0, key, TSInfo.MetaEncodeBuffer->m_FixedSize,
-                     TSInfo.MetaEncodeBuffer->Data(), NULL);
+    rc = daos_kv_put(oh, DAOS_TX_NONE, 0, key, blob.size(), blob.data(), NULL);
     if (rc)
     {
         helper::Throw<std::runtime_error>("Engine", "DaosWriter", "DaosKVWriteMetadata",
@@ -546,7 +613,7 @@ void DaosWriter::EndStep()
      *
      * Rank 0 also emits a step record to md.idx every step (even when
      * the gate says no new content) — the reader's attribute path
-     * uses m_MetadataIndexTable[Step][4] to locate attributes in md.0,
+     * uses m_MetadataIndexTable[Step][2] to locate attributes in md.0,
      * so an entry per step is required for attribute reads to work.
      *
      * Cheap collective gate: blocking Allreduce of a 1-byte "anyone has
@@ -556,76 +623,78 @@ void DaosWriter::EndStep()
      * the cost is ~80-100 ms/step at 32 ranks, which is the floor for
      * one MPI collective at scale on this network.
      */
-    unsigned char localHasContent =
-        (!TSInfo.NewMetaMetaBlocks.empty() ||
-         (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0))
-            ? 1
-            : 0;
-    unsigned char anyHasContent = 0;
-    m_Profiler.Start("ES_Gate");
-    m_Comm.Allreduce(&localHasContent, &anyHasContent, 1, helper::Comm::Op::Max);
-    m_Profiler.Stop("ES_Gate");
-
     std::vector<core::iovec> AttributeBlocks;
-    if (anyHasContent)
+    if (!m_PerRankMetadata)
     {
-        profiling::ProfilerGuard g(m_Profiler, "ES_SelAgg");
+        // ---- aggregated mode (Phase 1 / default) ----
+        unsigned char localHasContent =
+            (!TSInfo.NewMetaMetaBlocks.empty() ||
+             (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0))
+                ? 1
+                : 0;
+        unsigned char anyHasContent = 0;
+        m_Profiler.Start("ES_Gate");
+        m_Comm.Allreduce(&localHasContent, &anyHasContent, 1, helper::Comm::Op::Max);
+        m_Profiler.Stop("ES_Gate");
 
-        std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks =
-            TSInfo.NewMetaMetaBlocks;
-        if (TSInfo.AttributeEncodeBuffer)
+        if (anyHasContent)
         {
-            AttributeBlocks.push_back(
-                {TSInfo.AttributeEncodeBuffer->Data(), TSInfo.AttributeEncodeBuffer->m_FixedSize});
-        }
-        std::vector<size_t> MetaEncodeSize{
-            TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0};
-        std::vector<uint64_t> WriterDataPos{m_StartDataPos};
+            profiling::ProfilerGuard g(m_Profiler, "ES_SelAgg");
 
-        format::BP5Helper::BP5AggregateInformation(m_Comm, m_Profiler, UniqueMetaMetaBlocks,
-                                                   AttributeBlocks, MetaEncodeSize, WriterDataPos);
-
-        if (m_Comm.Rank() == 0 && !UniqueMetaMetaBlocks.empty())
-        {
-            WriteMetaMetadata(UniqueMetaMetaBlocks);
-            for (auto &mm : UniqueMetaMetaBlocks)
+            std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks =
+                TSInfo.NewMetaMetaBlocks;
+            if (TSInfo.AttributeEncodeBuffer)
             {
-                free((void *)mm.MetaMetaInfo);
-                free((void *)mm.MetaMetaID);
+                AttributeBlocks.push_back({TSInfo.AttributeEncodeBuffer->Data(),
+                                           TSInfo.AttributeEncodeBuffer->m_FixedSize});
             }
-        }
-        // No trailing Barrier — the next collective is the Allgather
-        // inside DaosArrayWriteMetadata, which itself synchronizes and
-        // will absorb cross-rank skew.
-    }
+            std::vector<size_t> MetaEncodeSize{
+                TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0};
+            // Aggregated WriterDataPositions output is no longer used —
+            // each rank carries its own step-start position in its
+            // metadata trailer.  Pass m_StepStartDataPos as input only
+            // because BP5Helper's fixed-node-contrib packet requires it.
+            std::vector<uint64_t> WriterDataPos{m_StepStartDataPos};
 
-    // Always gather per-rank data start offsets into m_WriterDataPos so
-    // WriteMetadataFileIndex emits the right offsets every step.
-    // BP5AggregateInformation only runs when anyHasContent is true, so
-    // we can't rely on its WriterDataPos vector for steady-state steps.
-    {
-        profiling::ProfilerGuard gw(m_Profiler, "ES_GatherPos");
-        std::vector<uint64_t> tmp;
+            format::BP5Helper::BP5AggregateInformation(m_Comm, m_Profiler, UniqueMetaMetaBlocks,
+                                                       AttributeBlocks, MetaEncodeSize,
+                                                       WriterDataPos);
+
+            if (m_Comm.Rank() == 0 && !UniqueMetaMetaBlocks.empty())
+            {
+                WriteMetaMetadata(UniqueMetaMetaBlocks);
+                for (auto &mm : UniqueMetaMetaBlocks)
+                {
+                    free((void *)mm.MetaMetaInfo);
+                    free((void *)mm.MetaMetaID);
+                }
+            }
+            // No trailing Barrier — the next collective is the Allgather
+            // inside DaosArrayWriteMetadata, which absorbs cross-rank skew.
+        }
+
+        // Rank 0 always emits an attribute record to md.0 (even when empty —
+        // WriteAttributes pads AttrSizeVector to writerCount zeros).
         if (m_Comm.Rank() == 0)
         {
-            tmp.resize(m_Comm.Size());
-        }
-        m_Comm.GatherArrays(&m_StartDataPos, 1, tmp.data(), 0);
-        if (m_Comm.Rank() == 0)
-        {
-            m_WriterDataPos = std::move(tmp);
+            m_LatestMetaDataPos = m_MetaDataPos;
+            m_LatestMetaDataSize = WriteAttributes(AttributeBlocks);
+            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
         }
     }
-
-    // Rank 0 always emits an attribute record to md.0 (even when empty —
-    // WriteAttributes pads AttrSizeVector to writerCount zeros).  This
-    // keeps the reader's per-step bookkeeping consistent every step.
-    // Then emits the corresponding md.idx step record.
-    if (m_Comm.Rank() == 0)
+    else
     {
-        m_LatestMetaDataPos = m_MetaDataPos;
-        m_LatestMetaDataSize = WriteAttributes(AttributeBlocks);
-        WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+        // ---- per-rank mode (Phase 2) ----
+        // No ES_Gate, no ES_SelAgg.  Each rank's NewMetaMetaBlocks and
+        // AttributeEncodeBuffer are serialized into its own metadata
+        // blob inside WriteMetadata below.  Rank 0 still emits a step
+        // record to md.idx (degenerate: MetaDataPos/Size = 0) so the
+        // reader's step-count machinery still works.  mmd.0 / md.0
+        // stay empty in this mode.
+        if (m_Comm.Rank() == 0)
+        {
+            WriteMetadataFileIndex(0, 0);
+        }
     }
 
     CALI_MARK_BEGIN("DaosWriter::metadata-stabilization");
@@ -793,6 +862,36 @@ void DaosWriter::SetMetadataLayout()
     }
 }
 
+/// Pick the per-rank-metadata mode from DAOS_PER_RANK_METADATA.  When
+/// unset or 0, the Phase-1 default (aggregated mmd / attrs via ES_Gate
+/// + ES_SelAgg) runs.  When 1, each rank serializes its own
+/// NewMetaMetaBlocks + AttributeEncodeBuffer into its metadata blob.
+void DaosWriter::SetPerRankMetadata()
+{
+    const char *env = std::getenv("DAOS_PER_RANK_METADATA");
+    if (!env)
+    {
+        m_PerRankMetadata = false;
+        return;
+    }
+    std::string v(env);
+    std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+    if (v == "0" || v == "false" || v == "off")
+    {
+        m_PerRankMetadata = false;
+    }
+    else if (v == "1" || v == "true" || v == "on")
+    {
+        m_PerRankMetadata = true;
+    }
+    else
+    {
+        helper::Throw<std::invalid_argument>("Engine", "DaosWriter", "SetPerRankMetadata",
+                                             "DAOS_PER_RANK_METADATA='" + v +
+                                                 "' is not recognized; expected 0/1");
+    }
+}
+
 // Set m_PoolName and m_ContName from the environment variables DAOS_POOL and DAOS_CONT
 void DaosWriter::SetPoolAndContName()
 {
@@ -832,6 +931,7 @@ void DaosWriter::InitDAOS()
     }
 
     SetMetadataLayout();
+    SetPerRankMetadata();
     SetPoolAndContName();
 
     CALI_MARK_BEGIN("DaosWriter::daos_pool_connect");
@@ -1115,8 +1215,21 @@ void DaosWriter::MakeHeader(std::vector<char> &buffer, size_t &position, const s
     const uint8_t columnMajor = (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
-    // byte 41-63: unused
-    position += 23;
+    // byte 41: per-rank-metadata mode flag (Phase 2 gating).  0 =
+    // aggregated (Phase 1), 1 = per-rank attributes/MetaMetaBlocks
+    // packed in each rank's blob.  Reader uses this byte to dispatch.
+    if (position != m_PerRankMetadataFlagPosition)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosWriter", "MakeHeader",
+            "ADIOS Coding ERROR in DaosWriter::MakeHeader. PerRankMetadata "
+            "flag position mismatch");
+    }
+    const uint8_t perRankFlag = (m_PerRankMetadata ? 1 : 0);
+    helper::CopyToBuffer(buffer, position, &perRankFlag);
+
+    // byte 42-63: unused
+    position += 22;
     // absolutePosition = position;
 }
 
@@ -1137,15 +1250,14 @@ void DaosWriter::InitBPBuffer()
                                              "(each Open allocates a new per-rank DAOS array)");
     }
 
-    /* New file: prepare metadata streams and a slot per writer for
-     * the per-step data position (legacy WriterMap is not emitted —
-     * DaosReader locates per-rank arrays via data_oids.txt). */
+    /* New file: prepare metadata streams.  Per-step data positions are
+     * now carried in each rank's metadata blob trailer, not gathered to
+     * rank 0; DaosReader locates per-rank arrays via data_oids.txt. */
     if (m_Comm.Rank() == 0)
     {
         m_FileMetadataIndexManager.SeekToFileBegin();
         m_FileMetadataManager.SeekToFileBegin();
         m_FileMetaMetadataManager.SeekToFileBegin();
-        m_WriterDataPos.resize(m_Comm.Size());
     }
 }
 
@@ -1162,25 +1274,11 @@ void DaosWriter::FlushData(const bool isFinal)
     DataBuf = nullptr;
 
     m_ThisTimestepDataSize += databufsize;
-
-    if (!isFinal)
-    {
-        size_t tmp[2];
-        // aggregate start pos and data size to rank 0
-        tmp[0] = m_StartDataPos;
-        tmp[1] = databufsize;
-
-        std::vector<size_t> RecvBuffer;
-        if (m_Comm.Rank() == 0)
-        {
-            RecvBuffer.resize(m_Comm.Size() * 2);
-        }
-        m_Comm.GatherArrays(tmp, 2, RecvBuffer.data(), 0);
-        if (m_Comm.Rank() == 0)
-        {
-            FlushPosSizeInfo.push_back(RecvBuffer);
-        }
-    }
+    // Phase-1: no per-flush (pos, size) gather.  BP5's flush-list
+    // machinery is structurally dead in DAOS — each rank writes its own
+    // per-rank array, so all flush segments within a step are physically
+    // contiguous and the reader only needs the step-start offset (carried
+    // in the per-rank metadata trailer).
 }
 
 void DaosWriter::Flush(const int transportIndex) {}
@@ -1546,8 +1644,19 @@ void DaosWriter::CreateDaosArrayObject()
     /** Open a DAOS array object */
     daos_size_t cell_size = 1;
     daos_size_t chunk_size = 1048576;
+    // Server-allocated OIDs avoid PID-derived collisions when multiple
+    // runs reuse the same container (DER_EXIST -1004).  Allocate two
+    // contiguous OIDs: base+0 for the metadata array, base+1 for the
+    // mdsize KV.
+    uint64_t base_oid_lo = 0;
+    rc = daos_cont_alloc_oids(coh, 2, &base_oid_lo, NULL);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosArrayObject",
+                                          "daos_cont_alloc_oids failed rc=" + std::to_string(rc));
+    }
     oid.hi = 0;
-    oid.lo = getpid();
+    oid.lo = base_oid_lo;
     rc = daos_array_generate_oid(coh, &oid, true, 0, 0, 0);
     if (rc)
     {
@@ -1565,7 +1674,7 @@ void DaosWriter::CreateDaosArrayObject()
 
     /** Create a DAOS KV object to store metadata sizes */
     mdsize_oid.hi = 0;
-    mdsize_oid.lo = getpid() + 1;
+    mdsize_oid.lo = base_oid_lo + 1;
     // cid=0 (OC_UNKNOWN) so DAOS picks an object class consistent with the
     // container's rd_fac.  Aurora's pool requires rd_fac>=3 and rejects
     // OC_SX (single, no replica) with DER_INVAL.
@@ -1592,6 +1701,17 @@ void DaosWriter::CreateDaosKVObject()
 {
     /** Open a DAOS KV object */
     int rc;
+    // Server-allocated OID — avoids DER_EXIST collisions when the same
+    // container is reused across runs.
+    uint64_t kv_oid_lo = 0;
+    rc = daos_cont_alloc_oids(coh, 1, &kv_oid_lo, NULL);
+    if (rc)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "CreateDaosKVObject",
+                                          "daos_cont_alloc_oids failed rc=" + std::to_string(rc));
+    }
+    oid.hi = 0;
+    oid.lo = kv_oid_lo;
     // cid=0 (OC_UNKNOWN) so DAOS picks an object class consistent with the
     // container's rd_fac (Aurora pool requires rd_fac>=3 and rejects OC_SX).
     rc = daos_obj_generate_oid(coh, &oid, DAOS_OT_KV_HASHED, 0, 0, 0);

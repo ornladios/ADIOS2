@@ -144,12 +144,27 @@ private:
     void SetMetadataLayout();
     void SetPoolAndContName();
 
+    /// Phase-2 gating: when true, ES_Gate Allreduce and ES_SelAgg
+    /// BP5AggregateInformation are skipped, and each rank serializes
+    /// its own NewMetaMetaBlocks + AttributeEncodeBuffer into its
+    /// per-rank metadata blob.  Selected by DAOS_PER_RANK_METADATA env
+    /// var (default 0 = aggregated, today's Phase-1 behavior).
+    bool m_PerRankMetadata = false;
+    void SetPerRankMetadata();
+
     size_t m_step_offset = 0;
 
     // Declare WriteMetadata function
     void WriteMetadata(format::BP5Serializer::TimestepInfo &);
     void DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &);
     void DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &);
+    /// Compose this rank's per-step metadata blob.  In aggregated mode
+    /// (Phase 1 default): [MetaEncodeBuffer][step_start u64], 8-byte
+    /// trailer.  In per-rank mode (Phase 2): [MetaEncode][MetaMetaBlocks
+    /// serialized][AttributeEncodeBuffer][footer], where footer is
+    /// (mmb_size, attr_size, step_start) = 24 bytes.  Returns a single
+    /// contiguous buffer; size determined by the caller from the result.
+    std::vector<char> BuildMetadataBlob(format::BP5Serializer::TimestepInfo &TSInfo);
     void CreateDaosArrayObject();
     void CreateDaosKVObject();
     void OpenDaosObjAndShare();
@@ -247,28 +262,20 @@ private:
     // updated during WriteMetaData
     uint64_t m_MetaDataPos = 0;
 
-    /** On every process, at the end of writing, this holds the offset
-     *  where they started writing (needed for global metadata)
+    /** Per-rank cursor into the data array at the start of this step.
+     *  Snapshotted in BeginStep so that, regardless of intermediate
+     *  PerformDataWrite calls, each rank knows where its step's data
+     *  begins.  Written as an 8-byte trailer on the per-rank metadata
+     *  blob; the reader uses it as the base offset for ReadData.
      */
-    uint64_t m_StartDataPos = 0;
-    /** End-of-step data offset (= cursor into m_DataArray after this step's
-     *  WriteData).  Mirrors what BP5 calls m_DataPos.
-     */
-    uint64_t m_DataPos = 0;
+    uint64_t m_StepStartDataPos = 0;
 
     /*
      *  Total data written this timestep
      */
     uint64_t m_ThisTimestepDataSize = 0;
 
-    /** rank 0 collects m_StartDataPos in this vector for writing it
-     *  to the index file
-     */
-    std::vector<uint64_t> m_WriterDataPos;
-
     bool m_MarshalAttributesNecessary = true;
-
-    std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
     void MakeHeader(std::vector<char> &buffer, size_t &position, const std::string fileType,
                     const bool isActive);
@@ -276,6 +283,11 @@ private:
     // Latest metadata position/size for the metadata index file.
     uint64_t m_LatestMetaDataPos = 0;
     uint64_t m_LatestMetaDataSize = 0;
+    /// Tracks whether WriteMetadataFileIndex has been called yet.
+    /// In aggregated mode MetaDataPos==0 doubles as the first-call
+    /// sentinel; in per-rank mode every call has MetaDataPos==0 so
+    /// we need an explicit flag.
+    bool m_FirstIndexCall = true;
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
 
