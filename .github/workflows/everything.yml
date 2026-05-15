@@ -544,12 +544,12 @@ jobs:
     name: CodeQL
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc9
+      image: ghcr.io/ornladios/adios2/ci-spack-ubuntu22.04-gcc12:20260313
       env:
-        GH_YML_JOBNAME: ubuntu22.04-gcc9-serial-codeql
+        GH_YML_JOBNAME: ubuntu22.04-gcc12-serial-codeql
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ubuntu22.04
-        GH_YML_MATRIX_COMPILER: gcc9
+        GH_YML_MATRIX_COMPILER: gcc12
         GH_YML_MATRIX_PARALLEL: serial
     permissions:
       actions: write  # for cache save and upload-artifact
