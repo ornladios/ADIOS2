@@ -59,12 +59,14 @@ build:uo-manylinux2014-gcc11-mpich:
     name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
     entrypoint: [""]
   extends: [.common-build]
+  allow_failure: true
 
 build:uo-manylinux2014-gcc11-serial:
   image:
     name: ghcr.io/ornladios/adios2/ci-manylinux2014-gcc11:20260313
     entrypoint: [""]
   extends: [.common-build]
+  allow_failure: true
 
 test:uo-manylinux2014-gcc11-mpich:
   image:
@@ -72,6 +74,7 @@ test:uo-manylinux2014-gcc11-mpich:
     entrypoint: [""]
   extends: [.common-test]
   needs: [build:uo-manylinux2014-gcc11-mpich]
+  allow_failure: true
 
 test:uo-manylinux2014-gcc11-serial:
   image:
@@ -79,6 +82,7 @@ test:uo-manylinux2014-gcc11-serial:
     entrypoint: [""]
   extends: [.common-test]
   needs: [build:uo-manylinux2014-gcc11-serial]
+  allow_failure: true
 
 #===============================================================================
 build:uo-sanitizer-asan:

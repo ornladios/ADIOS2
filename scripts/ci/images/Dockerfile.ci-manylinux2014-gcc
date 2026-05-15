@@ -54,7 +54,9 @@ RUN sed -i \
 
 RUN ln -s /opt/python/cp312-cp312/bin/python3 /usr/local/bin/python3 && \
     ln -s /opt/python/cp312-cp312/bin/python3 /usr/local/bin/python && \
-    /opt/python/cp312-cp312/bin/pip install request
+    ln -sf /opt/python/cp312-cp312/bin/python3 /usr/bin/python3 && \
+    ln -sf /opt/python/cp312-cp312/bin/python3 /usr/bin/python && \
+    /opt/python/cp312-cp312/bin/pip install requests
 
 # Install the latest CMake release binary
 WORKDIR /opt/cmake
