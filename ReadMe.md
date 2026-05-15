@@ -1,6 +1,5 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/adios2/badge/?version=latest)](https://adios2.readthedocs.io/en/latest/?badge=latest)
-[![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
 [![GitHub release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
 [![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ornladios/ADIOS2/badge)](https://scorecard.dev/viewer/?uri=github.com/ornladios/ADIOS2)
