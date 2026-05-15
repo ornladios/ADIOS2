@@ -36,8 +36,8 @@ Python_FIND_FRAMEWORK:STRING=FIRST
 
 CMAKE_C_COMPILER_LAUNCHER=ccache
 CMAKE_CXX_COMPILER_LAUNCHER=ccache
-CMAKE_C_FLAGS:STRING=-Wall -Wno-uninitialized -Wno-maybe-uninitialized
-CMAKE_CXX_FLAGS:STRING=-Wall -Wno-uninitialized -Wno-maybe-uninitialized
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
 
 OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-mpich/.spack-env/view/lib/libgomp.so.1
