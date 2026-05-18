@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+type: software
+title: "ADIOS 2: The Adaptable Input Output System"
+repository-code: "https://github.com/ornladios/ADIOS2"
+license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "ADIOS 2: The Adaptable Input Output System. A framework for high-performance data management"
+  journal: SoftwareX
+  volume: 12
+  year: 2020
+  pages: "100561"
+  doi: 10.1016/j.softx.2020.100561
+  issn: 2352-7110
+  authors:
+    - family-names: Godoy
+      given-names: William F.
+    - family-names: Podhorszki
+      given-names: Norbert
+    - family-names: Wang
+      given-names: Ruonan
+    - family-names: Atkins
+      given-names: Chuck
+    - family-names: Eisenhauer
+      given-names: Greg
+    - family-names: Gu
+      given-names: Junmin
+    - family-names: Davis
+      given-names: Philip
+    - family-names: Choi
+      given-names: Jong
+    - family-names: Germaschewski
+      given-names: Kai
+    - family-names: Huck
+      given-names: Kevin
+    - family-names: Huebl
+      given-names: Axel
+    - family-names: Kim
+      given-names: Mark
+    - family-names: Kress
+      given-names: James
+    - family-names: Kurc
+      given-names: Tahsin
+    - family-names: Liu
+      given-names: Qing
+    - family-names: Logan
+      given-names: Jeremy
+    - family-names: Mehta
+      given-names: Kshitij
+    - family-names: Ostrouchov
+      given-names: George
+    - family-names: Parashar
+      given-names: Manish
+    - family-names: Poeschel
+      given-names: Franz
+    - family-names: Pugmire
+      given-names: David
+    - family-names: Suchyta
+      given-names: Eric
+    - family-names: Takahashi
+      given-names: Keichi
+    - family-names: Thompson
+      given-names: Nick
+    - family-names: Tsutsumi
+      given-names: Seiji
+    - family-names: Wan
+      given-names: Lipeng
+    - family-names: Wolf
+      given-names: Matthew
+    - family-names: Wu
+      given-names: Kesheng
+    - family-names: Klasky
+      given-names: Scott
