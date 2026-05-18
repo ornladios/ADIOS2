@@ -61,7 +61,8 @@ The 48-byte sealed session key is ``crypto_box_SEALBYTES (32) + 32``.
 **Writer** only needs the **public key**.
 **Reader** needs the **secret key** (public key can be derived automatically).
 
-Key pairs can be generated with the ``adios2_seal_keygen`` utility.
+Key pairs can be generated with the ``adios2_seal_keygen`` utility (Built with
+the cmake flag: ``ADIOS2_USE_SealKeygen=ON``).
 
 Public key lookup order (first match wins):
 
