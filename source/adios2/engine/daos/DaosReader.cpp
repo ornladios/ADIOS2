@@ -11,7 +11,11 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <chrono>
+#include <cstdio>  // fprintf (DAOS_MD_DEBUG)
+#include <cstdlib> // getenv
+#include <cstring> // memcpy
 #include <errno.h>
+#include <exception> // std::exception (DAOS_MD_DEBUG)
 #include <fstream>
 #include <iomanip>
 #include <mutex>
@@ -163,12 +167,17 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     for (int j = 0; j < WriterCount; j++)
         total_mdsize += list_writer_mdsize[j];
 
-    // Reading total size of attribute includes vector of sizes of attributes and also the attribute
-    // buffers
+    // In per-rank mode the attributes ride in each rank's blob (no md.0
+    // aggregate writes), so skip the md.0 reads and the attribute-size
+    // layer in the buffer.
     size_t total_attr_size = 0;
-    size_t off_attr = m_MetadataIndexTable[Step][4];
-    m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
-    off_attr = off_attr + sizeof(size_t);
+    size_t off_attr = 0;
+    if (!m_PerRankMetadata)
+    {
+        off_attr = m_MetadataIndexTable[Step][2];
+        m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+        off_attr = off_attr + sizeof(size_t);
+    }
 
     // Allocate memory for m_Metadata
     buffer_size = sizeof(uint64_t) * (WriterCount + 1) + total_mdsize + total_attr_size;
@@ -184,11 +193,13 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         ptr[index] = list_writer_mdsize[WriterRank];
         index++;
     }
-    m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
-    off_attr = off_attr + sizeof(uint64_t) * WriterCount;
-
-    // Skip over the already read attribute sizes
-    index += WriterCount;
+    if (!m_PerRankMetadata)
+    {
+        m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+        off_attr = off_attr + sizeof(uint64_t) * WriterCount;
+        // Skip over the already read attribute sizes
+        index += WriterCount;
+    }
 
     char *meta_buff = (char *)&ptr[index];
     index = 0;
@@ -251,9 +262,13 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     }
     CALI_MARK_END("DaosReader::loop-get");
 
-    // Read in attributes
-    size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
-    m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+    if (!m_PerRankMetadata)
+    {
+        // Read in attributes (aggregated mode only — per-rank carries attrs
+        // inline in the per-rank blob).
+        size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
+        m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+    }
 }
 
 void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
@@ -291,12 +306,15 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         total_mdsize += list_writer_mdsize[WriterRank];
     }
 
-    // Reading total size of attribute includes vector of sizes of attributes and also the attribute
-    // buffers
+    // In per-rank mode attributes ride in each rank's blob — skip md.0.
     size_t total_attr_size = 0;
-    size_t off_attr = m_MetadataIndexTable[Step][4];
-    m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
-    off_attr = off_attr + sizeof(size_t);
+    size_t off_attr = 0;
+    if (!m_PerRankMetadata)
+    {
+        off_attr = m_MetadataIndexTable[Step][2];
+        m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+        off_attr = off_attr + sizeof(size_t);
+    }
 
     // Allocate memory for m_Metadata
     buffer_size = sizeof(uint64_t) * (WriterCount + 1) + total_mdsize + total_attr_size;
@@ -319,10 +337,12 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         index++;
     }
 
-    m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
-    off_attr = off_attr + sizeof(uint64_t) * WriterCount;
-
-    index += WriterCount;
+    if (!m_PerRankMetadata)
+    {
+        m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+        off_attr = off_attr + sizeof(uint64_t) * WriterCount;
+        index += WriterCount;
+    }
 
     char *meta_buff = (char *)&ptr[index];
     index = 0;
@@ -358,15 +378,54 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     }
     CALI_MARK_END("DaosReader::daos_array_read");
 
+    if (std::getenv("DAOS_MD_DEBUG") && Step == 0)
+    {
+        const unsigned char *mb = (const unsigned char *)meta_buff;
+        fprintf(stderr,
+                "[DAOS_MD_DEBUG] ArrayReadMD step=%zu layout=%d WriterCount=%zu "
+                "total_mdsize=%zu total_attr_size=%zu buffer_size=%zu m_step_offset=%zu\n",
+                Step, (int)metadataLayout, (size_t)WriterCount, total_mdsize, total_attr_size,
+                buffer_size, m_step_offset);
+        // Print a spread of blobs so the *shape* of any buffer corruption is
+        // visible right after the array read: which ranks carry a valid FFS
+        // id (first bytes 02 00 00 92 for EFFIS-XG) and which are garbage.
+        const size_t probes[] = {0,  1,   2,   3,   4,    5,    8,    16,  32,
+                                 64, 128, 256, 512, 1024, 2048, 3072, 4000};
+        for (size_t pi = 0; pi < sizeof(probes) / sizeof(probes[0]); ++pi)
+        {
+            size_t w = probes[pi];
+            if (w >= WriterCount)
+                continue;
+            size_t cum = 0;
+            for (size_t j = 0; j < w; ++j)
+                cum += list_writer_mdsize[j];
+            const unsigned char *bp = mb + cum;
+            fprintf(stderr,
+                    "[DAOS_MD_DEBUG]   blob[%zu] mdsize=%llu off=%zu first=%02x%02x%02x%02x\n", w,
+                    (unsigned long long)list_writer_mdsize[w], cum, bp[0], bp[1], bp[2], bp[3]);
+        }
+        size_t lastw = WriterCount - 1, lastcum = 0;
+        for (size_t j = 0; j < lastw; ++j)
+            lastcum += list_writer_mdsize[j];
+        const unsigned char *lp = mb + lastcum;
+        fprintf(stderr,
+                "[DAOS_MD_DEBUG]   blob[%zu](last) mdsize=%llu off=%zu first=%02x%02x%02x%02x\n",
+                lastw, (unsigned long long)list_writer_mdsize[lastw], lastcum, lp[0], lp[1], lp[2],
+                lp[3]);
+    }
+
     m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
     if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
         free(list_rg);
 
     index += total_mdsize;
 
-    // Read in attributes
-    size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
-    m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+    if (!m_PerRankMetadata)
+    {
+        // Read in attributes (aggregated mode only).
+        size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
+        m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+    }
     free(list_writer_mdsize);
 }
 
@@ -376,36 +435,157 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
     size_t pgstart = m_MetadataIndexTable[0][0];
     size_t Position = pgstart + sizeof(uint64_t); // skip total data size
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[0]].WriterCount;
-    // m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
-    size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+    auto &stepStarts = m_RankStartDataPos[Step];
+    stepStarts.resize(WriterCount);
+
+    const bool mdDebug = std::getenv("DAOS_MD_DEBUG") != nullptr;
+    if (mdDebug)
+        fprintf(stderr,
+                "[DAOS_MD_DEBUG] InstallMDForTimestep Step=%zu pgstart=%zu Position=%zu "
+                "WriterCount=%zu perRank=%d\n",
+                Step, pgstart, Position, (size_t)WriterCount, (int)m_PerRankMetadata);
+
+    if (!m_PerRankMetadata)
+    {
+        // ---- aggregated mode (Phase 1): blob = [MetaEncode][step_start u64] ----
+        // m_Metadata layout: [total_mdsize][mdsize×N][attr_size×N][meta][attr]
+        size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+        for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+        {
+            size_t ThisMDSizeFull = helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position,
+                                                                m_Minifooter.IsLittleEndian);
+            size_t ThisMDSize = ThisMDSizeFull - sizeof(uint64_t);
+            char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
+            uint64_t stepStart = 0;
+            std::memcpy(&stepStart, ThisMD + ThisMDSize, sizeof(uint64_t));
+            stepStarts[WriterRank] = stepStart;
+            if (mdDebug && Step == 0 && (WriterRank < 4 || WriterRank + 1 == WriterCount))
+                fprintf(stderr,
+                        "[DAOS_MD_DEBUG]   agg rank=%zu MDPosition=%zu ThisMDSizeFull=%zu "
+                        "ThisMDSize=%zu first=%02x%02x%02x%02x\n",
+                        WriterRank, MDPosition, ThisMDSizeFull, ThisMDSize,
+                        (unsigned char)ThisMD[0], (unsigned char)ThisMD[1],
+                        (unsigned char)ThisMD[2], (unsigned char)ThisMD[3]);
+            try
+            {
+                if (m_OpenMode == Mode::ReadRandomAccess)
+                {
+                    m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
+                }
+                else
+                {
+                    CALI_MARK_BEGIN("DaosReader::InstallMetaData");
+                    m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank);
+                    CALI_MARK_END("DaosReader::InstallMetaData");
+                }
+            }
+            catch (const std::exception &)
+            {
+                // Pinpoint exactly which rank's blob the deserializer rejects
+                // and dump its leading bytes -- distinguishes a garbage blob
+                // (bad first bytes) from a deserializer-state bug (valid id,
+                // still thrown).
+                if (mdDebug)
+                    fprintf(stderr,
+                            "[DAOS_MD_DEBUG]   *** InstallMetaData THREW at rank=%zu "
+                            "MDPosition=%zu ThisMDSizeFull=%zu ThisMDSize=%zu "
+                            "first8=%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                            WriterRank, MDPosition, ThisMDSizeFull, ThisMDSize,
+                            (unsigned char)ThisMD[0], (unsigned char)ThisMD[1],
+                            (unsigned char)ThisMD[2], (unsigned char)ThisMD[3],
+                            (unsigned char)ThisMD[4], (unsigned char)ThisMD[5],
+                            (unsigned char)ThisMD[6], (unsigned char)ThisMD[7]);
+                throw;
+            }
+            MDPosition += ThisMDSizeFull;
+        }
+
+        for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+        {
+            // attribute metadata for timestep
+            size_t ThisADSize = helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position,
+                                                            m_Minifooter.IsLittleEndian);
+            char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
+            if (ThisADSize > 0)
+                m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+            MDPosition += ThisADSize;
+        }
+        return;
+    }
+
+    // ---- per-rank mode (Phase 2): blob = [MetaEncode][MetaMeta][Attr][24B footer] ----
+    // m_Metadata layout (no attr-size layer): [total_mdsize][mdsize×N][blobs]
+    size_t MDPosition = Position + sizeof(uint64_t) * WriterCount;
+    constexpr size_t footerSize = 3 * sizeof(uint64_t);
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
-        // variable metadata for timestep
-        size_t ThisMDSize =
+        const size_t ThisBlobSize =
             helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-        char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
+        char *blob = m_Metadata.m_Buffer.data() + MDPosition;
+        // Read footer from the tail of the blob.
+        uint64_t mmbSize = 0, attrSize = 0, stepStart = 0;
+        std::memcpy(&mmbSize, blob + ThisBlobSize - footerSize, sizeof(uint64_t));
+        std::memcpy(&attrSize, blob + ThisBlobSize - 2 * sizeof(uint64_t), sizeof(uint64_t));
+        std::memcpy(&stepStart, blob + ThisBlobSize - sizeof(uint64_t), sizeof(uint64_t));
+        stepStarts[WriterRank] = stepStart;
+        const size_t metaSize = ThisBlobSize - mmbSize - attrSize - footerSize;
+
+        if (mdDebug && Step == 0 && (WriterRank < 4 || WriterRank + 1 == WriterCount))
+            fprintf(stderr,
+                    "[DAOS_MD_DEBUG]   prr rank=%zu MDPosition=%zu ThisBlobSize=%zu metaSize=%zu "
+                    "mmbSize=%llu attrSize=%llu first=%02x%02x%02x%02x\n",
+                    WriterRank, MDPosition, ThisBlobSize, metaSize, (unsigned long long)mmbSize,
+                    (unsigned long long)attrSize, (unsigned char)blob[0], (unsigned char)blob[1],
+                    (unsigned char)blob[2], (unsigned char)blob[3]);
+
+        // Install MetaMetaBlocks for this rank (count + (idLen,infoLen,id,info)+).
+        if (mmbSize > 0)
+        {
+            char *mmbStart = blob + metaSize;
+            size_t mp = 0;
+            uint64_t mmbCount = 0;
+            std::memcpy(&mmbCount, mmbStart + mp, sizeof(uint64_t));
+            mp += sizeof(uint64_t);
+            for (uint64_t k = 0; k < mmbCount; ++k)
+            {
+                format::BP5Base::MetaMetaInfoBlock MMI;
+                std::memcpy(&MMI.MetaMetaIDLen, mmbStart + mp, sizeof(uint64_t));
+                mp += sizeof(uint64_t);
+                std::memcpy(&MMI.MetaMetaInfoLen, mmbStart + mp, sizeof(uint64_t));
+                mp += sizeof(uint64_t);
+                MMI.MetaMetaID = mmbStart + mp;
+                mp += MMI.MetaMetaIDLen;
+                MMI.MetaMetaInfo = mmbStart + mp;
+                mp += MMI.MetaMetaInfoLen;
+                // Each rank carries its own copy of the MMBs; with N ranks
+                // defining the same variables that is N duplicates of each
+                // format ID.  Install each unique ID exactly once.
+                std::string idKey(MMI.MetaMetaID, MMI.MetaMetaIDLen);
+                if (m_InstalledMetaMetaIDs.insert(std::move(idKey)).second)
+                    m_BP5Deserializer->InstallMetaMetaData(MMI);
+            }
+        }
+
+        // Install per-rank attribute block (if any).
+        if (attrSize > 0)
+        {
+            char *attrStart = blob + metaSize + mmbSize;
+            m_BP5Deserializer->InstallAttributeData(attrStart, attrSize);
+        }
+
+        // Install variable metadata.
         if (m_OpenMode == Mode::ReadRandomAccess)
         {
-            m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
+            m_BP5Deserializer->InstallMetaData(blob, metaSize, WriterRank, Step);
         }
         else
         {
             CALI_MARK_BEGIN("DaosReader::InstallMetaData");
-            m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank);
+            m_BP5Deserializer->InstallMetaData(blob, metaSize, WriterRank);
             CALI_MARK_END("DaosReader::InstallMetaData");
         }
-        MDPosition += ThisMDSize;
-    }
 
-    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
-    {
-        // attribute metadata for timestep
-        size_t ThisADSize =
-            helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-        char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
-        if (ThisADSize > 0)
-            m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
-        MDPosition += ThisADSize;
+        MDPosition += ThisBlobSize;
     }
 }
 
@@ -537,14 +717,10 @@ std::pair<double, double> DaosReader::ReadData(adios2::transportman::TransportMa
     /*
      * Warning: this function is called by multiple threads
      */
-    size_t FlushCount = m_MetadataIndexTable[Timestep][2];
-    size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
-
-    // Read directly from the writer rank's per-rank DAOS array.  We still
-    // walk the flush table because a single step may include data from
-    // multiple flushes; for each flush, ThisDataPos is the byte offset
-    // within the writer rank's array (since the writer set m_StartDataPos
-    // = its array cursor before each flush's data was committed).
+    // Phase-1: each rank's data is contiguous in its own per-rank DAOS
+    // array, so the read offset is simply step_start + StartOffset.  The
+    // step_start was extracted from the rank's metadata-blob trailer in
+    // InstallMetadataForTimestep.
     if (WriterRank >= m_DataArrayHandles.size())
     {
         helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
@@ -552,33 +728,17 @@ std::pair<double, double> DaosReader::ReadData(adios2::transportman::TransportMa
                                               " has no entry in OID index (size=" +
                                               std::to_string(m_DataArrayHandles.size()) + ")");
     }
+    auto it = m_RankStartDataPos.find(Timestep);
+    if (it == m_RankStartDataPos.end() || WriterRank >= it->second.size())
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosReader", "ReadData",
+            "missing step-start for Timestep=" + std::to_string(Timestep) +
+                " WriterRank=" + std::to_string(WriterRank));
+    }
     daos_handle_t aoh = m_DataArrayHandles[WriterRank];
     TP startRead = NOW();
-    size_t InfoStartPos = DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t SumDataSize = 0;
-    size_t arrayOffset = 0;
-    bool found = false;
-    for (size_t flush = 0; flush < FlushCount && !found; ++flush)
-    {
-        size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                         m_Minifooter.IsLittleEndian);
-        size_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                          m_Minifooter.IsLittleEndian);
-        if (StartOffset < SumDataSize + ThisDataSize)
-        {
-            arrayOffset = ThisDataPos + (StartOffset - SumDataSize);
-            found = true;
-            break;
-        }
-        SumDataSize += ThisDataSize;
-    }
-    if (!found)
-    {
-        // last (post-last-flush) record
-        size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                         m_Minifooter.IsLittleEndian);
-        arrayOffset = ThisDataPos + (StartOffset - SumDataSize);
-    }
+    size_t arrayOffset = it->second[WriterRank] + StartOffset;
 
     daos_range_t rgr;
     rgr.rg_idx = arrayOffset;
@@ -1550,6 +1710,15 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
         const uint8_t val =
             helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
         m_WriterIsRowMajor = val == 'n';
+
+        // Phase-2 mode flag (byte 41).  0 = aggregated (Phase 1), 1 =
+        // per-rank metadata layout.  Used by ReadMetadata /
+        // InstallMetadataForTimestep to dispatch.
+        position = m_PerRankMetadataFlagPosition;
+        const uint8_t perRankFlag =
+            helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        m_PerRankMetadata = (perRankFlag == 1);
+
         // move position to first row
         position = m_IndexHeaderSize;
     }
@@ -1609,8 +1778,9 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
             const uint64_t MetadataSize =
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-            const uint64_t FlushCount =
-                helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+            // Phase-1: no FlushCount, no per-writer block.  Each rank's
+            // step-start data offset lives in its own metadata-blob
+            // trailer in DAOS, not in md.idx.
 
             if (!n)
             {
@@ -1625,8 +1795,6 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 // pos in metadata in memory
                 ptrs.push_back(MetadataPos - MetadataPosTotalSkip);
                 ptrs.push_back(MetadataSize);
-                ptrs.push_back(FlushCount);
-                ptrs.push_back(position);
                 // absolute pos in file before read
                 ptrs.push_back(MetadataPos);
                 m_MetadataIndexTable[m_StepsCount] = ptrs;
@@ -1645,8 +1813,6 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 minfo_size = 0;
             }
 
-            // skip over the writer -> data file offset records
-            position += sizeof(uint64_t) * m_LastWriterCount * ((2 * FlushCount) + 1);
             ++m_AbsStepsInFile;
             ++n;
             break;

@@ -21,6 +21,9 @@
 #include <daos.h>
 #include <daos_obj.h>
 #include <map>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #if defined(ADIOS2_HAVE_Caliper)
@@ -310,6 +313,26 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
+
+    /// Per-rank step-start array offsets, extracted from each rank's
+    /// metadata-blob trailer.  Indexed by [Step][WriterRank].  Populated
+    /// in InstallMetadataForTimestep; consumed in ReadData as the base
+    /// for arrayOffset = step_start + StartOffset.
+    std::unordered_map<size_t, std::vector<uint64_t>> m_RankStartDataPos;
+
+    /// Phase-2 gating, read from md.idx header byte 41 by
+    /// ParseMetadataIndex.  When true, the writer used the per-rank
+    /// metadata layout (MetaMetaBlocks + Attr packed in each rank's
+    /// blob, no md.0/mmd.0 aggregate writes).
+    bool m_PerRankMetadata = false;
+
+    /// Per-rank-metadata mode only: format IDs already handed to
+    /// InstallMetaMetaData.  Every writer rank packs its own copy of the
+    /// MetaMetaBlocks into its blob, so N ranks defining the same
+    /// variables carry N duplicates of each format ID.  Keyed on the raw
+    /// format-ID bytes; install each unique ID exactly once for the
+    /// lifetime of the reader.
+    std::unordered_set<std::string> m_InstalledMetaMetaIDs;
     std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
                                        const size_t maxOpenFiles, const size_t WriterRank,
                                        const size_t Timestep, const size_t StartOffset,

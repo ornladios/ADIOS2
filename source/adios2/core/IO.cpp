@@ -619,6 +619,13 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
             {
                 engineTypeLC = lf_GuessEngineFromTAR(it->second);
             }
+            else if (helper::IsDAOSDataset(name))
+            {
+                // Must precede the generic directory branch: a DAOS
+                // dataset is also a directory and contains an mmd.0,
+                // so BPVersion would otherwise mis-detect it as BP5.
+                engineTypeLC = "daos";
+            }
             else if (adios2sys::SystemTools::FileIsDirectory(name))
             {
                 char v = helper::BPVersion(name, comm, m_TransportsParameters);
@@ -666,6 +673,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         if (helper::EndsWith(name, ".ats", false))
         {
             engineTypeLC = "timeseries";
+        }
+        else if (helper::IsDAOSDataset(name))
+        {
+            engineTypeLC = "daos";
         }
         else
         {
