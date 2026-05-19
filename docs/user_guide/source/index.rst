@@ -8,6 +8,9 @@ ADIOS 2: The Adaptable Input/Output System version 2
 
 Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org/>`_, U.S. Department of Energy
 
+.. include:: introduction/nutshell.rst
+.. include:: introduction/adaptable_io.rst
+
 .. toctree::
    :caption: Introduction
 
