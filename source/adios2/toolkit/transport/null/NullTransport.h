@@ -33,6 +33,9 @@ public:
     void Open(const std::string &name, const Mode openMode, const bool async = false,
               const bool directio = false) override;
 
+    void OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                   const bool async = false, const bool directio = false) override;
+
     void SetBuffer(char *buffer, size_t size) override;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) override;

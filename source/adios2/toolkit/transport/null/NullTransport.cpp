@@ -44,6 +44,33 @@ void NullTransport::Open(const std::string &name, const Mode openMode, const boo
     ProfilerStop("open");
 }
 
+void NullTransport::OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                              const bool async, const bool directio)
+{
+    if (Impl->IsOpen)
+    {
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Open",
+                                          "transport is already open");
+    }
+
+    ProfilerStart("open");
+    int token = 1;
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in NullTransport::OpenChain");
+    }
+    Impl->IsOpen = true;
+    Impl->CurPos = 0;
+    Impl->Capacity = 0;
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FilePOSIX::OpenChain");
+    }
+    ProfilerStop("open");
+}
+
 void NullTransport::SetBuffer(char *buffer, size_t size) { return; }
 
 void NullTransport::Write(const char *buffer, size_t size, size_t start)
