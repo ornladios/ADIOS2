@@ -112,6 +112,7 @@ public:
     ~CommReqImplMPI() override;
 
     Comm::Status Wait(const std::string &hint) override;
+    bool TestComplete(const std::string &hint) override;
 
     /** Encapsulated MPI datatype of the requested operation.  */
     MPI_Datatype m_MPIDatatype = MPI_DATATYPE_NULL;
@@ -656,6 +657,56 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
     }
 
     return status;
+}
+
+bool CommReqImplMPI::TestComplete(const std::string &hint)
+{
+    if (m_MPIReqs.empty())
+    {
+        return true;
+    }
+
+    int flag = 0;
+    int mpiReturn = MPI_SUCCESS;
+    std::vector<MPI_Status> mpiStatuses(m_MPIReqs.size());
+
+    if (m_MPIReqs.size() > 1)
+    {
+        mpiReturn = MPI_Testall(static_cast<int>(m_MPIReqs.size()), m_MPIReqs.data(), &flag,
+                                mpiStatuses.data());
+
+        // Only check for errors in statuses if the operation actually completed
+        if (flag != 0 && mpiReturn == MPI_ERR_IN_STATUS)
+        {
+            for (auto &mpiStatus : mpiStatuses)
+            {
+                if (mpiStatus.MPI_ERROR != MPI_SUCCESS)
+                {
+                    mpiReturn = mpiStatus.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        mpiReturn = MPI_Test(m_MPIReqs.data(), &flag, mpiStatuses.data());
+    }
+
+    // non-zero means the operations are complete
+    if (flag != 0)
+    {
+        // Throw or handle any errors we collected
+        CheckMPIReturn(mpiReturn, hint);
+
+        // Since the requests are done, clear the internal container so the object
+        // registers as complete/empty for future calls.
+        m_MPIReqs.clear();
+        return true;
+    }
+
+    // Request(s) not complete, the caller can try again later
+    return false;
 }
 
 int CommWinImplMPI::Free(const std::string &hint) { return MPI_Win_free(&m_Win); }
