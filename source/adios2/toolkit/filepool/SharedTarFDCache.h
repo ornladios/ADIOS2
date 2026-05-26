@@ -16,8 +16,8 @@
 #define ADIOS2_SHAREDTARFDCACHE_H_
 
 #include "adios2/toolkit/transport/Transport.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -25,6 +25,12 @@
 
 namespace adios2
 {
+
+/// Opens a file transport by name with the supplied parameters.
+/// Used by FilePool and SharedTarFDCache to decouple the pool from
+/// the concrete transport-factory machinery.
+using TransportOpener =
+    std::function<std::shared_ptr<Transport>(const std::string &name, const Params &params)>;
 
 class SharedTarFDCache
 {
@@ -39,9 +45,8 @@ public:
 
     /// Return a shared Transport for the tar file at @p tarPath.
     /// If one already exists the same Transport is returned (refcount++).
-    /// Otherwise it is opened via @p factory and cached.
-    std::shared_ptr<Transport> Acquire(const std::string &tarPath,
-                                       transportman::TransportMan *factory,
+    /// Otherwise it is opened via @p opener and cached.
+    std::shared_ptr<Transport> Acquire(const std::string &tarPath, TransportOpener const &opener,
                                        const Params &transportParams);
 
     /// Decrement refcount for @p tarPath.  When it hits 0 the entry

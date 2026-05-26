@@ -17,6 +17,7 @@
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdHttpRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
@@ -1536,9 +1537,11 @@ void BP5Reader::InitTransports()
     }
 
     // Metadata files always use default local transport
-    m_MetadataFiles =
-        std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                   m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+    auto opener = [this](const std::string &name, const Params &params) {
+        return transport::OpenFile(m_Comm, name, Mode::Read, params, false);
+    };
+    m_MetadataFiles = std::make_shared<FilePool>(opener, m_IO.m_TransportsParameters[0],
+                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 
     // Auto-detect S3 hybrid storage via s3.json sidecar.
     // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
@@ -1658,7 +1661,10 @@ void BP5Reader::InitTransports()
             dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
         }
 
-        m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, dataTransportParams,
+        auto dataOpener = [this](const std::string &name, const Params &params) {
+            return transport::OpenFile(m_Comm, name, Mode::Read, params, false);
+        };
+        m_DataFiles = std::make_shared<FilePool>(dataOpener, dataTransportParams,
                                                  m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
     }
     else
