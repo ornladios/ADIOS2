@@ -12,12 +12,14 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosSystem.h" // CreateDirectory
 #include "adios2/helper/adiosType.h"
+
 
 /// transports
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #ifdef ADIOS2_HAVE_DAOS
-#include "adios2/toolkit/transport/file/FileDaos.h"
+#include "adios2/toolkit/transport/file/FileDaos.h" // used by OpenFile and MkDirsBarrier
 #endif
 #ifdef ADIOS2_HAVE_SST
 #include "adios2/toolkit/transport/file/FileRemote.h"
@@ -264,6 +266,61 @@ std::shared_ptr<Transport> OpenFileChained(helper::Comm const &comm, std::string
                                            helper::Comm const &chainComm)
 {
     return OpenFileImpl(comm, name, mode, parameters, profile, /*useComm=*/true, chainComm);
+}
+
+void MkDirsBarrier(helper::Comm const &comm, const std::vector<std::string> &fileNames,
+                   const std::vector<Params> &parametersVector, const bool nodeLocal)
+{
+    auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
+        for (size_t i = 0; i < fileNames.size(); ++i)
+        {
+            const auto lastPathSeparator(fileNames[i].find_last_of(PathSeparator));
+            if (lastPathSeparator == std::string::npos)
+            {
+                continue;
+            }
+            const Params &parameters = parametersVector[i];
+            const std::string type = parameters.at("transport");
+            if (type == "File" || type == "file")
+            {
+                const std::string path(fileNames[i].substr(0, lastPathSeparator));
+
+                std::string library;
+                helper::SetParameterValue("Library", parameters, library);
+                helper::SetParameterValue("library", parameters, library);
+                if (library == "Daos" || library == "daos")
+                {
+#ifdef ADIOS2_HAVE_DAOS
+                    auto transport = std::make_shared<transport::FileDaos>(comm);
+                    transport->SetParameters({{"SingleProcess", "true"}});
+                    transport->MkDir(path);
+#endif
+                }
+                else
+                {
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
+                    helper::CreateDirectory(path);
+                }
+            }
+        }
+    };
+
+    if (nodeLocal)
+    {
+        lf_CreateDirectories(fileNames);
+    }
+    else
+    {
+        int rank = comm.Rank();
+        if (rank == 0)
+        {
+            lf_CreateDirectories(fileNames);
+        }
+
+        comm.Barrier("Barrier in transport::MkDirsBarrier");
+    }
 }
 
 } // end namespace transport

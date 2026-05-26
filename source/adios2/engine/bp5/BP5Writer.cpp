@@ -16,6 +16,7 @@
 #include "adios2/helper/adiosSystem.h"    // CleanupBPDirectory
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
@@ -38,7 +39,7 @@ using namespace adios2::format;
 
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_TransportFactory(io, m_Comm), m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
+  m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
@@ -1783,8 +1784,8 @@ void BP5Writer::InitMetadataTransports()
         m_MetadataIndexFileName = GetBPMetadataIndexFileName(m_Name);
     }
 
-    m_TransportFactory.MkDirsBarrier({m_MetadataFileName}, m_IO.m_TransportsParameters,
-                                     m_Parameters.NodeLocal || m_WriteToBB);
+    transport::MkDirsBarrier(m_Comm, {m_MetadataFileName}, m_IO.m_TransportsParameters,
+                             m_Parameters.NodeLocal || m_WriteToBB);
 
     // Write s3.json sidecar so readers can auto-detect hybrid S3 storage
     if (m_Comm.Rank() == 0 && !m_Parameters.DataFileTransport.empty())
@@ -1845,16 +1846,14 @@ void BP5Writer::InitMetadataTransports()
         {
             m_IO.m_TransportsParameters[i]["DirectIO"] = "false";
         }
-        m_MetaMetadataFile = m_TransportFactory.OpenFileTransport(
-            m_MetaMetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
-            m_Comm);
+        m_MetaMetadataFile = transport::OpenFile(m_Comm, m_MetaMetadataFileName, m_OpenMode,
+                                                 m_IO.m_TransportsParameters[0], true);
 
-        m_MetadataFile = m_TransportFactory.OpenFileTransport(
-            m_MetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false, m_Comm);
+        m_MetadataFile = transport::OpenFile(m_Comm, m_MetadataFileName, m_OpenMode,
+                                             m_IO.m_TransportsParameters[0], true);
 
-        m_MetadataIndexFile = m_TransportFactory.OpenFileTransport(
-            m_MetadataIndexFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
-            m_Comm);
+        m_MetadataIndexFile = transport::OpenFile(m_Comm, m_MetadataIndexFileName, m_OpenMode,
+                                                  m_IO.m_TransportsParameters[0], true);
 
         if (m_DrainBB)
         {

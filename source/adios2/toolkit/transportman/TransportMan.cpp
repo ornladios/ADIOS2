@@ -14,10 +14,6 @@
 #include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2sys/SystemTools.hxx>
 
-#ifdef ADIOS2_HAVE_DAOS
-#include "adios2/toolkit/transport/file/FileDaos.h" // for the MkDir branch in MkDirsBarrier
-#endif
-
 #ifdef _WIN32
 #pragma warning(disable : 4503) // length of std::function inside std::async
 #endif
@@ -32,56 +28,7 @@ TransportMan::TransportMan(core::IO &io, helper::Comm &comm) : m_IO(io), m_Comm(
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const std::vector<Params> &parametersVector, const bool nodeLocal)
 {
-    auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
-        for (size_t i = 0; i < fileNames.size(); ++i)
-        {
-            const auto lastPathSeparator(fileNames[i].find_last_of(PathSeparator));
-            if (lastPathSeparator == std::string::npos)
-            {
-                continue;
-            }
-            const Params &parameters = parametersVector[i];
-            const std::string type = parameters.at("transport");
-            if (type == "File" || type == "file")
-            {
-                const std::string path(fileNames[i].substr(0, lastPathSeparator));
-
-                std::string library;
-                helper::SetParameterValue("Library", parameters, library);
-                helper::SetParameterValue("library", parameters, library);
-                if (library == "Daos" || library == "daos")
-                {
-#ifdef ADIOS2_HAVE_DAOS
-                    auto transport = std::make_shared<transport::FileDaos>(m_Comm);
-                    transport->SetParameters({{"SingleProcess", "true"}});
-                    transport->MkDir(path);
-#endif
-                }
-                else
-                {
-#ifdef CreateDirectory
-#undef CreateDirectory
-#endif
-                    helper::CreateDirectory(path);
-                }
-            }
-        }
-    };
-
-    if (nodeLocal)
-    {
-        lf_CreateDirectories(fileNames);
-    }
-    else
-    {
-        int rank = m_Comm.Rank();
-        if (rank == 0)
-        {
-            lf_CreateDirectories(fileNames);
-        }
-
-        m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
-    }
+    transport::MkDirsBarrier(m_Comm, fileNames, parametersVector, nodeLocal);
 }
 
 void TransportMan::OpenFiles(const std::vector<std::string> &fileNames, const Mode openMode,

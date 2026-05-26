@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/transport/Transport.h"
@@ -37,6 +38,15 @@ std::shared_ptr<Transport> OpenFile(helper::Comm const &comm, std::string const 
 std::shared_ptr<Transport> OpenFileChained(helper::Comm const &comm, std::string const &name,
                                            Mode mode, Params const &parameters, bool profile,
                                            helper::Comm const &chainComm);
+
+/**
+ * Create the parent directory of each file in @p fileNames whose
+ * matching transport (in @p parametersVector) is of type "File". When
+ * @p nodeLocal is false, only rank 0 of @p comm does the work and
+ * everyone barriers.
+ */
+void MkDirsBarrier(helper::Comm const &comm, const std::vector<std::string> &fileNames,
+                   const std::vector<Params> &parametersVector, bool nodeLocal);
 
 } // end namespace transport
 } // end namespace adios2

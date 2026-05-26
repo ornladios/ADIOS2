@@ -82,8 +82,6 @@ private:
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
 
-    transportman::TransportMan m_TransportFactory;
-
     std::shared_ptr<Transport> m_MetadataIndexFile;
     std::shared_ptr<Transport> m_MetaMetadataFile;
     std::shared_ptr<Transport> m_MetadataFile;
