@@ -123,6 +123,7 @@ add_library(adios2_core
   toolkit/remote/Remote.cpp
 
   toolkit/transport/Transport.cpp
+  toolkit/transport/OpenFile.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
   toolkit/transport/null/NullTransport.cpp
