@@ -141,7 +141,10 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec>
                       << " write the rest of  " << totalsize - wrote
                       << " bytes at pos " << pos << std::endl;*/
 
-            info->tm->WriteFileAt(vec.data(), vec.size(), pos);
+            for (auto &t : *info->DataSubstreams)
+            {
+                t->WriteV(vec.data(), static_cast<int>(vec.size()), pos);
+            }
 
             break; /* Exit loop after this final write */
         }
@@ -161,15 +164,21 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec>
             n = max_size;
         }
 
+        const char *buf = (const char *)DataVec[block].iov_base + temp_offset;
         if (firstWrite)
         {
-            info->tm->WriteFileAt((const char *)DataVec[block].iov_base + temp_offset, n,
-                                  info->startPos);
+            for (auto &t : *info->DataSubstreams)
+            {
+                t->Write(buf, n, info->startPos);
+            }
             firstWrite = false;
         }
         else
         {
-            info->tm->WriteFiles((const char *)DataVec[block].iov_base + temp_offset, n);
+            for (auto &t : *info->DataSubstreams)
+            {
+                t->Write(buf, n);
+            }
         }
 
         /* Have we processed the entire block or staying with it? */
@@ -209,7 +218,10 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
             info->tokenChain->RecvToken();
         }
     }
-    info->tm->FinalizeSegment();
+    for (auto &t : *info->DataSubstreams)
+    {
+        t->FinalizeSegment();
+    }
     delete info->Data;
     return 1;
 };
@@ -274,7 +286,7 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seria
     }
     m_AsyncWriteInfo->tstart = m_EngineStart;
     AggTransportData *aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
-    m_AsyncWriteInfo->tm = &(aggData->m_FileDataManager);
+    m_AsyncWriteInfo->DataSubstreams = &aggData->m_DataSubstreams;
     m_AsyncWriteInfo->Data = Data;
     m_AsyncWriteInfo->startPos = m_StartDataPos;
     m_AsyncWriteInfo->totalSize = Data->Size();

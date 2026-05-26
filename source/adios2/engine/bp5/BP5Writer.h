@@ -21,7 +21,7 @@
 #include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/shm/Spinlock.h"
 #include "adios2/toolkit/shm/TokenChain.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
+#include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
 {
@@ -56,19 +56,15 @@ public:
 private:
     struct AggTransportData
     {
-        AggTransportData(core::IO &IO, helper::Comm &comm) : m_FileDataManager(IO, comm) {}
+        /** Open data-file transports for this aggregator's substreams. One
+         *  entry per name in m_SubStreamNames. */
+        std::vector<std::shared_ptr<Transport>> m_DataSubstreams;
 
-        /** Manage BP data files Transports from IO AddTransport */
-        transportman::TransportMan m_FileDataManager;
-
-        /**
-         * Name of subfiles to directly write to (for all transports)
-         * This is either original target or burst buffer if used
-         */
+        /** Name of subfiles to directly write to. Either original target or
+         *  burst buffer if used. */
         std::vector<std::string> m_SubStreamNames;
 
-        /* Name of subfiles on target if burst buffer is used (for all transports)
-         */
+        /** Name of subfiles on target if burst buffer is used. */
         std::vector<std::string> m_DrainSubStreamNames;
     };
 
@@ -363,7 +359,7 @@ private:
         int nproc_chain;
         TimePoint tstart;
         adios2::shm::TokenChain<uint64_t> *tokenChain;
-        transportman::TransportMan *tm;
+        std::vector<std::shared_ptr<Transport>> *DataSubstreams;
         adios2::format::BufferV *Data;
         uint64_t startPos;
         uint64_t totalSize;

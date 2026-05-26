@@ -1003,7 +1003,10 @@ void BP5Writer::WriteData_WithRerouting(format::BufferV *Data)
     std::vector<core::iovec> DataVec = Data->DataVec();
 
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    aggData.m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
+    for (auto &t : aggData.m_DataSubstreams)
+    {
+        t->WriteV(DataVec.data(), static_cast<int>(DataVec.size()), m_StartDataPos);
+    }
 
     m_DataPos += Data->Size();
 
