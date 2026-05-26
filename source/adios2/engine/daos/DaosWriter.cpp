@@ -15,9 +15,11 @@
 #include "adios2/toolkit/format/bp5/BP5Helper.h"
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/chunk/DaosChunkV.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <adios2-perfstubs-interface.h>
+#include <adios2sys/SystemTools.hxx>
 #include <daos_array.h>
 
 #include <chrono>
@@ -39,9 +41,7 @@ namespace engine
 using namespace adios2::format;
 
 DaosWriter::DaosWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("DaosWriter", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_FileMetadataManager(io, m_Comm), m_FileMetadataIndexManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_Profiler(m_Comm)
+: Engine("DaosWriter", io, name, mode, std::move(comm)), m_BP5Serializer(), m_Profiler(m_Comm)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("DaosWriter::Open");
@@ -139,10 +139,10 @@ void DaosWriter::WriteMetaMetadata(
     profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
     for (auto &b : MetaMetaBlocks)
     {
-        m_FileMetaMetadataManager.WriteFiles((char *)&b.MetaMetaIDLen, sizeof(size_t));
-        m_FileMetaMetadataManager.WriteFiles((char *)&b.MetaMetaInfoLen, sizeof(size_t));
-        m_FileMetaMetadataManager.WriteFiles((char *)b.MetaMetaID, b.MetaMetaIDLen);
-        m_FileMetaMetadataManager.WriteFiles((char *)b.MetaMetaInfo, b.MetaMetaInfoLen);
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaIDLen, sizeof(size_t));
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaInfoLen, sizeof(size_t));
+        m_MetaMetadataFile->Write((char *)b.MetaMetaID, b.MetaMetaIDLen);
+        m_MetaMetadataFile->Write((char *)b.MetaMetaInfo, b.MetaMetaInfoLen);
     }
 }
 
@@ -168,17 +168,17 @@ uint64_t DaosWriter::WriteAttributes(const std::vector<core::iovec> &AttributeBl
         MDataTotalSize += sizeof(uint64_t);
     }
 
-    m_FileMetadataManager.WriteFiles((char *)&MDataTotalSize, sizeof(uint64_t));
+    m_MetadataFile->Write((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
-    m_FileMetadataManager.WriteFiles((char *)AttrSizeVector.data(),
-                                     sizeof(uint64_t) * AttrSizeVector.size());
+    m_MetadataFile->Write((char *)AttrSizeVector.data(),
+                          sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
 
     for (auto &b : AttributeBlocks)
     {
         if (!b.iov_base)
             continue;
-        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
+        m_MetadataFile->Write((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
     }
 
@@ -249,7 +249,7 @@ void DaosWriter::WriteData(format::BufferV *Data)
 void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize)
 {
     profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
-    m_FileMetadataManager.FlushFiles();
+    m_MetadataFile->Flush();
 
     const uint64_t writerCount = static_cast<uint64_t>(m_Comm.Size());
 
@@ -310,7 +310,7 @@ void DaosWriter::WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataS
     helper::CopyToBuffer(buf, pos, &MetaDataPos, 1);
     helper::CopyToBuffer(buf, pos, &MetaDataSize, 1);
 
-    m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
+    m_MetadataIndexFile->Write((char *)buf.data(), buf.size());
 }
 
 void DaosWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
@@ -713,6 +713,15 @@ void DaosWriter::EndStep()
 // PRIVATE
 void DaosWriter::Init()
 {
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "DaosWriter", "Init",
+            "DAOS engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
+    }
+
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
@@ -811,19 +820,17 @@ void DaosWriter::InitTransports()
         m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(transportsNames);
         m_OIDFileName = GetOIDFileName(transportsNames[0]);
     }
-    m_FileMetadataManager.MkDirsBarrier(m_MetadataFileNames, m_IO.m_TransportsParameters,
-                                        m_Parameters.NodeLocal);
-
-    bool useProfiler = true;
+    transport::MkDirsBarrier(m_Comm, m_MetadataFileNames, m_IO.m_TransportsParameters,
+                             m_Parameters.NodeLocal);
 
     if (m_Comm.Rank() == 0)
     {
-        m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
-                                            m_IO.m_TransportsParameters, useProfiler);
-        m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters, useProfiler);
-        m_FileMetadataIndexManager.OpenFiles(m_MetadataIndexFileNames, m_OpenMode,
-                                             m_IO.m_TransportsParameters, useProfiler);
+        m_MetaMetadataFile = transport::OpenFile(m_Comm, m_MetaMetadataFileNames[0], m_OpenMode,
+                                                 m_IO.m_TransportsParameters[0], true);
+        m_MetadataFile = transport::OpenFile(m_Comm, m_MetadataFileNames[0], m_OpenMode,
+                                             m_IO.m_TransportsParameters[0], true);
+        m_MetadataIndexFile = transport::OpenFile(m_Comm, m_MetadataIndexFileNames[0], m_OpenMode,
+                                                  m_IO.m_TransportsParameters[0], true);
     }
 }
 
@@ -1236,9 +1243,9 @@ void DaosWriter::MakeHeader(std::vector<char> &buffer, size_t &position, const s
 void DaosWriter::UpdateActiveFlag(const bool active)
 {
     const char activeChar = (active ? '\1' : '\0');
-    m_FileMetadataIndexManager.WriteFileAt(&activeChar, 1, m_ActiveFlagPosition);
-    m_FileMetadataIndexManager.FlushFiles();
-    m_FileMetadataIndexManager.SeekToFileEnd();
+    m_MetadataIndexFile->Write(&activeChar, 1, m_ActiveFlagPosition);
+    m_MetadataIndexFile->Flush();
+    m_MetadataIndexFile->SeekToEnd();
 }
 
 void DaosWriter::InitBPBuffer()
@@ -1255,9 +1262,9 @@ void DaosWriter::InitBPBuffer()
      * rank 0; DaosReader locates per-rank arrays via data_oids.txt. */
     if (m_Comm.Rank() == 0)
     {
-        m_FileMetadataIndexManager.SeekToFileBegin();
-        m_FileMetadataManager.SeekToFileBegin();
-        m_FileMetaMetadataManager.SeekToFileBegin();
+        m_MetadataIndexFile->SeekToBegin();
+        m_MetadataFile->SeekToBegin();
+        m_MetaMetadataFile->SeekToBegin();
     }
 }
 
@@ -1294,7 +1301,8 @@ void DaosWriter::DestructorClose(bool Verbose) noexcept
         std::cerr << "This may result in corrupt output." << std::endl;
     }
     // close metadata index file
-    UpdateActiveFlag(false);
+    if (m_Comm.Rank() == 0)
+        UpdateActiveFlag(false);
     m_IsOpen = false;
 }
 
@@ -1327,12 +1335,12 @@ void DaosWriter::DoClose(const int transportIndex)
     if (m_Comm.Rank() == 0)
     {
         // close metadata files
-        m_FileMetadataManager.CloseFiles();
-        m_FileMetaMetadataManager.CloseFiles();
+        m_MetadataFile->Close();
+        m_MetaMetadataFile->Close();
 
         // close metadata index file
         UpdateActiveFlag(false);
-        m_FileMetadataIndexManager.CloseFiles();
+        m_MetadataIndexFile->Close();
     }
 
     // Release DAOS handles in reverse of init order.  Without these the
@@ -1381,9 +1389,16 @@ void DaosWriter::DoClose(const int transportIndex)
 
 void DaosWriter::FlushProfiler()
 {
-    auto transportTypes = m_FileMetadataManager.GetTransportsTypes();
-    auto transportNames = m_FileMetadataManager.GetTransportsNames();
-    auto transportProfilers = m_FileMetadataManager.GetTransportsProfilers();
+    std::vector<std::string> transportTypes;
+    std::vector<std::string> transportNames;
+    std::vector<adios2::profiling::IOChrono *> transportProfilers;
+
+    if (m_Comm.Rank() == 0 && m_MetadataFile)
+    {
+        transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
+        transportNames.push_back(adios2sys::SystemTools::GetFilenameName(m_MetadataFile->m_Name));
+        transportProfilers.push_back(&m_MetadataFile->m_Profiler);
+    }
 
     // find first File type output, where we can write the profile
     int fileTransportIdx = -1;

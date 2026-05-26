@@ -75,8 +75,7 @@ public:
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
-    /* transport manager for metadata file */
-    transportman::TransportMan m_MDFileManager;
+    std::shared_ptr<Transport> m_MetadataFile;
     /* How many bytes of metadata have we already read in? */
     size_t m_MDFileAlreadyReadSize = 0;
     /* How many bytes of metadata have we already processed?
@@ -90,13 +89,8 @@ private:
     /* m_MDFileAbsolutePos <= m_MDFileProcessedSize <= m_MDFileAlreadyReadSize
      */
 
-    /* transport manager for managing data file(s) */
-    transportman::TransportMan m_DataFileManager;
-
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_MDIndexFileManager;
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetaMetadataManager;
+    std::shared_ptr<Transport> m_MetadataIndexFile;
+    std::shared_ptr<Transport> m_MetaMetadataFile;
     /* How many bytes of metadata index have we already read in? */
     size_t m_MDIndexFileAlreadyReadSize = 0;
 
@@ -105,8 +99,6 @@ private:
     /* How many bytes of meta-metadata have we already processed? */
     size_t m_MetaMetaDataFileAlreadyProcessedSize = 0;
 
-    /* transport manager for managing the active flag file */
-    transportman::TransportMan m_ActiveFlagFileManager;
     bool m_WriterIsActive = true;
 
     /* DAOS declarations */
@@ -208,8 +200,7 @@ private:
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
-    size_t OpenWithTimeout(transportman::TransportMan &tm,
-                           const std::vector<std::string> &fileNames,
+    size_t OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
                            const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 
@@ -333,10 +324,9 @@ private:
     /// format-ID bytes; install each unique ID exactly once for the
     /// lifetime of the reader.
     std::unordered_set<std::string> m_InstalledMetaMetaIDs;
-    std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
-                                       const size_t maxOpenFiles, const size_t WriterRank,
-                                       const size_t Timestep, const size_t StartOffset,
-                                       const size_t Length, char *Destination);
+    std::pair<double, double> ReadData(const size_t WriterRank, const size_t Timestep,
+                                       const size_t StartOffset, const size_t Length,
+                                       char *Destination);
 
     struct WriterMapStruct
     {
@@ -353,12 +343,7 @@ private:
 
     void DestructorClose(bool Verbose) noexcept;
 
-    /* Communicator connecting ranks on each Compute Node.
-       Only used to calculate the number of threads available for reading */
-    helper::Comm m_NodeComm;
-    helper::Comm singleComm;
     unsigned int m_Threads;
-    std::vector<transportman::TransportMan> fileManagers; // manager per thread
 
     void daos_handle_share(daos_handle_t *, int);
 };

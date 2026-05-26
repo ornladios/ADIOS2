@@ -8,6 +8,7 @@
 #include "DaosReader.tcc"
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
+#include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
 
 #include <chrono>
@@ -39,9 +40,7 @@ namespace engine
 {
 
 DaosReader::DaosReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("DaosReader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
-  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm)
+: Engine("DaosReader", io, name, mode, std::move(comm))
 {
     PERFSTUBS_SCOPED_TIMER("DaosReader::Open");
     Init();
@@ -175,7 +174,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     if (!m_PerRankMetadata)
     {
         off_attr = m_MetadataIndexTable[Step][2];
-        m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+        m_MetadataFile->Read((char *)&total_attr_size, sizeof(size_t), off_attr);
         off_attr = off_attr + sizeof(size_t);
     }
 
@@ -195,7 +194,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     }
     if (!m_PerRankMetadata)
     {
-        m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+        m_MetadataFile->Read((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
         off_attr = off_attr + sizeof(uint64_t) * WriterCount;
         // Skip over the already read attribute sizes
         index += WriterCount;
@@ -267,7 +266,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         // Read in attributes (aggregated mode only — per-rank carries attrs
         // inline in the per-rank blob).
         size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
-        m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+        m_MetadataFile->Read((char *)&meta_buff[index], att_readin_size, off_attr);
     }
 }
 
@@ -312,7 +311,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     if (!m_PerRankMetadata)
     {
         off_attr = m_MetadataIndexTable[Step][2];
-        m_MDFileManager.ReadFile((char *)&total_attr_size, sizeof(size_t), off_attr);
+        m_MetadataFile->Read((char *)&total_attr_size, sizeof(size_t), off_attr);
         off_attr = off_attr + sizeof(size_t);
     }
 
@@ -339,7 +338,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
 
     if (!m_PerRankMetadata)
     {
-        m_MDFileManager.ReadFile((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
+        m_MetadataFile->Read((char *)&ptr[index], sizeof(uint64_t) * WriterCount, off_attr);
         off_attr = off_attr + sizeof(uint64_t) * WriterCount;
         index += WriterCount;
     }
@@ -424,7 +423,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     {
         // Read in attributes (aggregated mode only).
         size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
-        m_MDFileManager.ReadFile((char *)&meta_buff[index], att_readin_size, off_attr);
+        m_MetadataFile->Read((char *)&meta_buff[index], att_readin_size, off_attr);
     }
     free(list_writer_mdsize);
 }
@@ -709,10 +708,9 @@ void DaosReader::EndStep()
     }
 }
 
-std::pair<double, double> DaosReader::ReadData(adios2::transportman::TransportMan &FileManager,
-                                               const size_t maxOpenFiles, const size_t WriterRank,
-                                               const size_t Timestep, const size_t StartOffset,
-                                               const size_t Length, char *Destination)
+std::pair<double, double> DaosReader::ReadData(const size_t WriterRank, const size_t Timestep,
+                                               const size_t StartOffset, const size_t Length,
+                                               char *Destination)
 {
     /*
      * Warning: this function is called by multiple threads
@@ -800,8 +798,7 @@ void DaosReader::PerformGets()
         return reqidx;
     };
 
-    auto lf_Reader = [&](const int FileManagerID,
-                         const size_t maxOpenFiles) -> std::tuple<double, double, double, size_t> {
+    auto lf_Reader = [&]() -> std::tuple<double, double, double, size_t> {
         double copyTotal = 0.0;
         double readTotal = 0.0;
         double subfileTotal = 0.0;
@@ -820,9 +817,8 @@ void DaosReader::PerformGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-            std::pair<double, double> t =
-                ReadData(fileManagers[FileManagerID], maxOpenFiles, Req.WriterRank, Req.Timestep,
-                         Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
+            std::pair<double, double> t = ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
+                                                   Req.ReadLength, Req.DestinationAddr);
 
             TP startCopy = NOW();
             m_BP5Deserializer->FinalizeGet(Req, false);
@@ -845,19 +841,16 @@ void DaosReader::PerformGets()
         // sortTime = DURATION(startSort, endSort);
         size_t nThreads = (m_Threads < nRequest ? m_Threads : nRequest);
 
-        size_t maxOpenFiles = helper::SetWithinLimit(
-            (size_t)m_Parameters.MaxOpenFilesAtOnce / nThreads, (size_t)1, MaxSizeT);
-
         std::vector<std::future<std::tuple<double, double, double, size_t>>> futures(nThreads - 1);
 
         // launch Threads-1 threads to process subsets of requests,
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            futures[tid] = std::async(std::launch::async, lf_Reader, tid + 1, maxOpenFiles);
+            futures[tid] = std::async(std::launch::async, lf_Reader);
         }
         // main thread runs last subset of reads
-        /*auto tMain = */ lf_Reader(0, maxOpenFiles);
+        /*auto tMain = */ lf_Reader();
         /*{
             double tSubfile = std::get<0>(tMain);
             double tRead = std::get<1>(tMain);
@@ -888,8 +881,6 @@ void DaosReader::PerformGets()
     }
     else
     {
-        size_t maxOpenFiles =
-            helper::SetWithinLimit((size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
         std::vector<char> buf(maxReadSize);
         for (auto &Req : ReadRequests)
         {
@@ -897,8 +888,8 @@ void DaosReader::PerformGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-            ReadData(m_DataFileManager, maxOpenFiles, Req.WriterRank, Req.Timestep, Req.StartOffset,
-                     Req.ReadLength, Req.DestinationAddr);
+            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
+                     Req.DestinationAddr);
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
@@ -926,6 +917,15 @@ void DaosReader::Init()
                                              "DAOSReader only supports OpenMode::Read or "
                                              "OpenMode::ReadRandomAccess from" +
                                                  m_Name);
+    }
+
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "DaosReader", "Init",
+            "DAOS engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
     }
 
     // if IO was involved in reading before this flag may be true now
@@ -1005,20 +1005,6 @@ void DaosReader::InitParameters()
         }
     }
 
-    // Create m_Threads-1  extra file managers to be used by threads
-    // The main thread uses the DataFileManager pushed here to vector[0]
-    fileManagers.push_back(m_DataFileManager);
-    for (unsigned int i = 0; i < m_Threads - 1; ++i)
-    {
-        fileManagers.push_back(
-            transportman::TransportMan(transportman::TransportMan(m_IO, singleComm)));
-    }
-
-    size_t limit = helper::RaiseLimitNoFile();
-    if (m_Parameters.MaxOpenFilesAtOnce > limit - 8)
-    {
-        m_Parameters.MaxOpenFilesAtOnce = limit - 8;
-    }
 }
 
 bool DaosReader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
@@ -1038,8 +1024,7 @@ bool DaosReader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pol
     return true;
 }
 
-size_t DaosReader::OpenWithTimeout(transportman::TransportMan &tm,
-                                   const std::vector<std::string> &fileNames,
+size_t DaosReader::OpenWithTimeout(std::shared_ptr<Transport> &file, const std::string &fileName,
                                    const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                                    std::string &lasterrmsg /*INOUT*/)
 {
@@ -1049,8 +1034,9 @@ size_t DaosReader::OpenWithTimeout(transportman::TransportMan &tm,
         try
         {
             errno = 0;
-            const bool profile = false; // m_BP4Deserializer.m_Profiler.m_IsActive;
-            tm.OpenFiles(fileNames, adios2::Mode::Read, m_IO.m_TransportsParameters, profile);
+            const bool profile = false;
+            file = transport::OpenFile(m_Comm, fileName, adios2::Mode::Read,
+                                       m_IO.m_TransportsParameters[0], profile);
             flag = 0; // found file
             break;
         }
@@ -1082,8 +1068,8 @@ void DaosReader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds
         /* Open the metadata index table */
         const std::string metadataIndexFile(GetBPMetadataIndexFileName(m_Name));
 
-        flag = OpenWithTimeout(m_MDIndexFileManager, {metadataIndexFile}, timeoutInstant,
-                               pollSeconds, lasterrmsg);
+        flag = OpenWithTimeout(m_MetadataIndexFile, metadataIndexFile, timeoutInstant, pollSeconds,
+                               lasterrmsg);
         if (flag == 0)
         {
             /* Open the metadata file */
@@ -1099,12 +1085,12 @@ void DaosReader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds
                 timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFileManager, {metadataFile}, timeoutInstant, pollSeconds,
+            flag = OpenWithTimeout(m_MetadataFile, metadataFile, timeoutInstant, pollSeconds,
                                    lasterrmsg);
             if (flag != 0)
             {
                 /* Close the metadata index table */
-                m_MDIndexFileManager.CloseFiles();
+                m_MetadataIndexFile->Close();
             }
             else
             {
@@ -1121,13 +1107,13 @@ void DaosReader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds
                     timeoutInstant += Seconds(5.0);
                 }
 
-                flag = OpenWithTimeout(m_FileMetaMetadataManager, {metametadataFile},
-                                       timeoutInstant, pollSeconds, lasterrmsg);
+                flag = OpenWithTimeout(m_MetaMetadataFile, metametadataFile, timeoutInstant,
+                                       pollSeconds, lasterrmsg);
                 if (flag != 0)
                 {
                     /* Close the metametadata index table */
-                    m_MDIndexFileManager.CloseFiles();
-                    m_MDFileManager.CloseFiles();
+                    m_MetadataIndexFile->Close();
+                    m_MetadataFile->Close();
                 }
             }
         }
@@ -1522,12 +1508,12 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
     if (m_Comm.Rank() == 0)
     {
         /* Read metadata index table into memory */
-        const size_t metadataIndexFileSize = m_MDIndexFileManager.GetFileSize(0);
+        const size_t metadataIndexFileSize = m_MetadataIndexFile->GetSize();
         newIdxSize = metadataIndexFileSize - m_MDIndexFileAlreadyReadSize;
         if (metadataIndexFileSize > m_MDIndexFileAlreadyReadSize)
         {
             m_MetadataIndex.m_Buffer.resize(newIdxSize);
-            m_MDIndexFileManager.ReadFile(m_MetadataIndex.m_Buffer.data(), newIdxSize,
+            m_MetadataIndexFile->Read(m_MetadataIndex.m_Buffer.data(), newIdxSize,
                                           m_MDIndexFileAlreadyReadSize);
         }
         else
@@ -1597,7 +1583,7 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
             //                                            "in call to DaosReader Open");
             //        size_t mempos = 0;
             //        for (auto p : m_FilteredMetadataInfo) {
-            //          m_MDFileManager.ReadFile(m_Metadata.m_Buffer.data() + mempos,
+            //          m_MetadataFile->Read(m_Metadata.m_Buffer.data() + mempos,
             //                                   p.second, p.first);
             //          mempos += p.second;
             //        }
@@ -1622,13 +1608,13 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
 
             /* Read new meta-meta-data into memory and append to existing one in
              * memory */
-            const size_t metametadataFileSize = m_FileMetaMetadataManager.GetFileSize(0);
+            const size_t metametadataFileSize = m_MetaMetadataFile->GetSize();
             if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
             {
                 const size_t newMMDSize = metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
                 m_MetaMetadata.Resize(metametadataFileSize, "(re)allocating meta-meta-data buffer, "
                                                             "in call to DaosReader Open");
-                m_FileMetaMetadataManager.ReadFile(m_MetaMetadata.m_Buffer.data() +
+                m_MetaMetadataFile->Read(m_MetaMetadata.m_Buffer.data() +
                                                        m_MetaMetaDataFileAlreadyReadSize,
                                                    newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
                 m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
@@ -1857,11 +1843,11 @@ bool DaosReader::CheckWriterActive()
     size_t flag = 1;
     if (m_Comm.Rank() == 0)
     {
-        auto fsize = m_MDIndexFileManager.GetFileSize(0);
+        auto fsize = m_MetadataIndexFile->GetSize();
         if (fsize >= m_IndexHeaderSize)
         {
             std::vector<char> header(m_IndexHeaderSize, '\0');
-            m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
+            m_MetadataIndexFile->Read(header.data(), m_IndexHeaderSize, 0);
             bool active = ReadActiveFlag(header);
             flag = (active ? 1 : 0);
         }
@@ -1972,13 +1958,11 @@ void DaosReader::DoClose(const int transportIndex)
     {
         EndStep();
     }
-    m_DataFileManager.CloseFiles();
-    m_MDFileManager.CloseFiles();
-    m_MDIndexFileManager.CloseFiles();
-    m_FileMetaMetadataManager.CloseFiles();
-    for (unsigned int i = 1; i < m_Threads; ++i)
+    if (m_Comm.Rank() == 0)
     {
-        fileManagers[i].CloseFiles();
+        m_MetadataFile->Close();
+        m_MetadataIndexFile->Close();
+        m_MetaMetadataFile->Close();
     }
     CloseDataArrays();
 

@@ -65,13 +65,9 @@ private:
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
 
-    /** Manages the optional collective metadata files */
-    transportman::TransportMan m_FileMetadataManager;
-
-    /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetadataIndexManager;
-
-    transportman::TransportMan m_FileMetaMetadataManager;
+    std::shared_ptr<Transport> m_MetadataIndexFile;
+    std::shared_ptr<Transport> m_MetaMetadataFile;
+    std::shared_ptr<Transport> m_MetadataFile;
 
     /* DAOS declarations */
 
