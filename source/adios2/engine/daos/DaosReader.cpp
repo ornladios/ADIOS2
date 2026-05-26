@@ -1004,7 +1004,6 @@ void DaosReader::InitParameters()
             m_Threads = helper::SetWithinLimit(8U / NodeSize, 1U, 8U);
         }
     }
-
 }
 
 bool DaosReader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
@@ -1514,7 +1513,7 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
         {
             m_MetadataIndex.m_Buffer.resize(newIdxSize);
             m_MetadataIndexFile->Read(m_MetadataIndex.m_Buffer.data(), newIdxSize,
-                                          m_MDIndexFileAlreadyReadSize);
+                                      m_MDIndexFileAlreadyReadSize);
         }
         else
         {
@@ -1615,8 +1614,8 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
                 m_MetaMetadata.Resize(metametadataFileSize, "(re)allocating meta-meta-data buffer, "
                                                             "in call to DaosReader Open");
                 m_MetaMetadataFile->Read(m_MetaMetadata.m_Buffer.data() +
-                                                       m_MetaMetaDataFileAlreadyReadSize,
-                                                   newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
+                                             m_MetaMetaDataFileAlreadyReadSize,
+                                         newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
                 m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
             }
         }

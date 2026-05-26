@@ -170,8 +170,7 @@ uint64_t DaosWriter::WriteAttributes(const std::vector<core::iovec> &AttributeBl
 
     m_MetadataFile->Write((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
-    m_MetadataFile->Write((char *)AttrSizeVector.data(),
-                          sizeof(uint64_t) * AttrSizeVector.size());
+    m_MetadataFile->Write((char *)AttrSizeVector.data(), sizeof(uint64_t) * AttrSizeVector.size());
     MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
 
     for (auto &b : AttributeBlocks)
