@@ -1148,6 +1148,15 @@ void BP5Reader::Init()
                                                  m_Name);
     }
 
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "Init",
+            "BP5 engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
+    }
+
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
     m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);

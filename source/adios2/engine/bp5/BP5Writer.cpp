@@ -1278,6 +1278,15 @@ void BP5Writer::EndStep()
 // PRIVATE
 void BP5Writer::Init()
 {
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Writer", "Init",
+            "BP5 engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
+    }
+
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
