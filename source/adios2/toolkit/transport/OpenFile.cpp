@@ -15,7 +15,6 @@
 #include "adios2/helper/adiosSystem.h" // CreateDirectory
 #include "adios2/helper/adiosType.h"
 
-
 /// transports
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #ifdef ADIOS2_HAVE_DAOS

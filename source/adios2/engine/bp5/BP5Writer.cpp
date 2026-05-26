@@ -38,8 +38,8 @@ namespace engine
 using namespace adios2::format;
 
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
+: Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(), m_Profiler(m_Comm),
+  m_AggregatorInitializedThisStep(false)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
@@ -1931,8 +1931,8 @@ void BP5Writer::InitTransports()
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
-        transport::MkDirsBarrier(m_Comm, aggData.m_DrainSubStreamNames,
-                                 m_DataTransportsParameters, m_Parameters.NodeLocal);
+        transport::MkDirsBarrier(m_Comm, aggData.m_DrainSubStreamNames, m_DataTransportsParameters,
+                                 m_Parameters.NodeLocal);
     }
 
     if (m_IAmDraining)

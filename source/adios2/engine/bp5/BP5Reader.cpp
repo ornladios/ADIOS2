@@ -40,8 +40,7 @@ namespace engine
 {
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -50,8 +49,7 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
                      const char *md, const size_t mdsize)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     m_ReadMetadataFromFile = false;
