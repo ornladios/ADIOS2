@@ -483,8 +483,13 @@ void BP5Writer::WriteData(format::BufferV *Data)
                                                      "is not supported in BP5");
         }
         AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-        aggData.m_DataSubstream->Flush();
-        aggData.m_DataSubstream->FinalizeSegment();
+        // Non-aggregator ranks in TwoLevelShm-style modes reach here without an
+        // open substream (only the aggregator rank holds the transport).
+        if (aggData.m_DataSubstream)
+        {
+            aggData.m_DataSubstream->Flush();
+            aggData.m_DataSubstream->FinalizeSegment();
+        }
         delete Data;
     }
 }
