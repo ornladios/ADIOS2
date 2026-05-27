@@ -483,11 +483,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
                                                      "is not supported in BP5");
         }
         AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-        for (auto &t : aggData.m_DataSubstreams)
-        {
-            t->Flush();
-            t->FinalizeSegment();
-        }
+        aggData.m_DataSubstream->Flush();
+        aggData.m_DataSubstream->FinalizeSegment();
         delete Data;
     }
 }
@@ -534,10 +531,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
     m_DataPos += Data->Size();
     std::vector<core::iovec> DataVec = Data->DataVec();
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    for (auto &t : aggData.m_DataSubstreams)
-    {
-        t->WriteV(DataVec.data(), static_cast<int>(DataVec.size()), m_StartDataPos);
-    }
+    aggData.m_DataSubstream->WriteV(DataVec.data(), static_cast<int>(DataVec.size()),
+                                    m_StartDataPos);
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
@@ -1917,8 +1912,8 @@ void BP5Writer::InitTransports()
         {
             const std::vector<std::string> drainTransportNames =
                 transportman::TransportMan::GetFilesBaseNames(m_Name, m_DataTransportsParameters);
-            aggData.m_DrainSubStreamNames =
-                GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
+            aggData.m_DrainSubStreamName =
+                GetBPSubStreamName(drainTransportNames[0], m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
             //            m_FileDrainer.SetVerbose(
             //				     m_Parameters.BurstBufferVerbose,
@@ -1931,7 +1926,7 @@ void BP5Writer::InitTransports()
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
-        transport::MkDirsBarrier(m_Comm, aggData.m_DrainSubStreamNames, m_DataTransportsParameters,
+        transport::MkDirsBarrier(m_Comm, {aggData.m_DrainSubStreamName}, m_DataTransportsParameters,
                                  m_Parameters.NodeLocal);
     }
 
@@ -1939,10 +1934,7 @@ void BP5Writer::InitTransports()
     {
         if (m_DrainBB)
         {
-            for (const auto &name : aggData.m_DrainSubStreamNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
+            m_FileDrainer.AddOperationOpen(aggData.m_DrainSubStreamName, m_OpenMode);
         }
     }
 
@@ -1978,7 +1970,7 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
     AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
 
     // /path/name.bp.dir/name.bp.rank
-    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+    aggData.m_SubStreamName = GetBPSubStreamName(m_Name, m_Aggregator->m_SubStreamIndex);
 
     helper::Comm openSyncComm;
 
@@ -2016,12 +2008,9 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                     std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm"
                               << std::endl;
                 }
-                for (const auto &name : aggData.m_SubStreamNames)
-                {
-                    aggData.m_DataSubstreams.push_back(transport::OpenFileChained(
-                        m_Comm, name, mode, m_IO.m_TransportsParameters[0], true,
-                        *DataWritingComm));
-                }
+                aggData.m_DataSubstream = transport::OpenFileChained(
+                    m_Comm, aggData.m_SubStreamName, mode, m_IO.m_TransportsParameters[0], true,
+                    *DataWritingComm);
             }
             else
             {
@@ -2030,11 +2019,8 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                     std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm"
                               << std::endl;
                 }
-                for (const auto &name : aggData.m_SubStreamNames)
-                {
-                    aggData.m_DataSubstreams.push_back(transport::OpenFile(
-                        m_Comm, name, mode, m_IO.m_TransportsParameters[0], true));
-                }
+                aggData.m_DataSubstream = transport::OpenFile(m_Comm, aggData.m_SubStreamName, mode,
+                                                              m_IO.m_TransportsParameters[0], true);
             }
         }
     }
@@ -2211,19 +2197,16 @@ void BP5Writer::InitBPBuffer()
             const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
             if (off < MaxSizeT)
             {
-                for (auto &t : aggData.m_DataSubstreams)
-                {
-                    t->Truncate(off);
-                    // Seek is needed since truncate does not seek.
-                    // Seek instead of SeekToEnd in case a transport
-                    // does not support actual truncate.
-                    t->Seek(off);
-                }
+                aggData.m_DataSubstream->Truncate(off);
+                // Seek is needed since truncate does not seek.
+                // Seek instead of SeekToEnd in case a transport
+                // does not support actual truncate.
+                aggData.m_DataSubstream->Seek(off);
                 m_DataPos = off;
             }
             else
             {
-                m_DataPos = aggData.m_DataSubstreams[0]->GetSize();
+                m_DataPos = aggData.m_DataSubstream->GetSize();
             }
         }
 
@@ -2287,10 +2270,7 @@ void BP5Writer::InitBPBuffer()
         // data existed but index was missing
         if (m_Aggregator->m_IsAggregator)
         {
-            for (auto &t : aggData.m_DataSubstreams)
-            {
-                t->Seek(0);
-            }
+            aggData.m_DataSubstream->Seek(0);
         }
     }
 
@@ -2446,9 +2426,9 @@ void BP5Writer::DoClose(const int transportIndex)
         (void)transportIndex;
         for (auto &aggPair : m_AggregatorSpecifics)
         {
-            for (auto &t : aggPair.second.m_DataSubstreams)
+            if (aggPair.second.m_DataSubstream)
             {
-                t->Close();
+                aggPair.second.m_DataSubstream->Close();
             }
         }
 
@@ -2496,7 +2476,7 @@ void BP5Writer::DoClose(const int transportIndex)
     // cleaned up while those resources are still available.
     for (auto &aggPair : m_AggregatorSpecifics)
     {
-        aggPair.second.m_DataSubstreams.clear();
+        aggPair.second.m_DataSubstream.reset();
     }
     m_MetadataFile.reset();
     m_MetaMetadataFile.reset();
@@ -2511,8 +2491,9 @@ void BP5Writer::FlushProfiler()
 
     for (auto &specs : m_AggregatorSpecifics)
     {
-        for (auto &t : specs.second.m_DataSubstreams)
+        if (specs.second.m_DataSubstream)
         {
+            auto &t = specs.second.m_DataSubstream;
             transportTypes.push_back(t->m_Type);
             transportNames.push_back(t->m_Name);
             transportProfilers.push_back(&t->m_Profiler);

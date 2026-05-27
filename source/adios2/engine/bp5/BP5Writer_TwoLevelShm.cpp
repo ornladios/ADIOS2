@@ -176,10 +176,8 @@ void BP5Writer::WriteMyOwnData(format::BufferV *Data)
     std::vector<core::iovec> DataVec = Data->DataVec();
     m_StartDataPos = m_DataPos;
     AggTransportData *aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
-    for (auto &t : aggData->m_DataSubstreams)
-    {
-        t->WriteV(DataVec.data(), static_cast<int>(DataVec.size()), m_StartDataPos);
-    }
+    aggData->m_DataSubstream->WriteV(DataVec.data(), static_cast<int>(DataVec.size()),
+                                     m_StartDataPos);
     m_DataPos += Data->Size();
 }
 
@@ -292,10 +290,7 @@ void BP5Writer::WriteOthersData(size_t TotalSize)
         aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
 
         // b->actual_size: how much we need to write
-        for (auto &t : aggData->m_DataSubstreams)
-        {
-            t->Write(b->buf, b->actual_size);
-        }
+        aggData->m_DataSubstream->Write(b->buf, b->actual_size);
 
         wrote += b->actual_size;
 
@@ -327,10 +322,7 @@ void BP5Writer::WriteOthersData_DrainOnError(const size_t TotalSize, std::except
         {
             try
             {
-                for (auto &t : aggData->m_DataSubstreams)
-                {
-                    t->Write(b->buf, b->actual_size);
-                }
+                aggData->m_DataSubstream->Write(b->buf, b->actual_size);
             }
             catch (...)
             {

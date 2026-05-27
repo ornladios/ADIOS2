@@ -56,16 +56,17 @@ public:
 private:
     struct AggTransportData
     {
-        /** Open data-file transports for this aggregator's substreams. One
-         *  entry per name in m_SubStreamNames. */
-        std::vector<std::shared_ptr<Transport>> m_DataSubstreams;
+        /** Open data-file transport for this aggregator's substream. Null
+         *  if not yet opened (no write done by this rank in this aggregator
+         *  context). */
+        std::shared_ptr<Transport> m_DataSubstream;
 
-        /** Name of subfiles to directly write to. Either original target or
-         *  burst buffer if used. */
-        std::vector<std::string> m_SubStreamNames;
+        /** Name of the subfile to directly write to. Either original target
+         *  or burst buffer if used. */
+        std::string m_SubStreamName;
 
-        /** Name of subfiles on target if burst buffer is used. */
-        std::vector<std::string> m_DrainSubStreamNames;
+        /** Name of the subfile on target if burst buffer is used. */
+        std::string m_DrainSubStreamName;
     };
 
     std::string GetCacheKey(aggregator::MPIAggregator *aggregator);
@@ -359,7 +360,7 @@ private:
         int nproc_chain;
         TimePoint tstart;
         adios2::shm::TokenChain<uint64_t> *tokenChain;
-        std::vector<std::shared_ptr<Transport>> *DataSubstreams;
+        std::shared_ptr<Transport> *DataSubstream;
         adios2::format::BufferV *Data;
         uint64_t startPos;
         uint64_t totalSize;
