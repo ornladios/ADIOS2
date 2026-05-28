@@ -10,7 +10,7 @@
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/toolkit/filepool/FilePool.h"
 #include "adios2/toolkit/remote/Remote.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2.h>
 #include <adios2/helper/adiosType.h>
 #include <algorithm>
@@ -63,14 +63,16 @@ TEST(FilePool, FileLimit)
     core::IO io(adios, "name", false, "C++");
     helper::Comm comm = adios2::helper::CommDummy();
 
-    adios2::transportman::TransportMan factory(io, comm);
+    auto opener = [&comm](const std::string &name, const adios2::Params &params) {
+        return adios2::transport::OpenFile(comm, name, adios2::Mode::Read, params, false);
+    };
     std::string prefix = "FileLimit";
 
     create_test_files(10, prefix);
 
     {
         // Check that reuse works for POSIX where ReentrantRead is true
-        FilePool pool(&factory, {{"library", "posix"}}, 10, nullptr);
+        FilePool pool(opener, {{"library", "posix"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(0, prefix));
         auto handle2 = pool.Acquire(filename(0, prefix));
@@ -81,7 +83,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // Mostly not the same file
-        FilePool pool(&factory, {{"library", "posix"}}, 10, nullptr);
+        FilePool pool(opener, {{"library", "posix"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(1, prefix));
         auto handle2 = pool.Acquire(filename(2, prefix));
@@ -92,7 +94,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // Files are considered destroyable when they go out of scope
-        FilePool pool(&factory, {{"library", "posix"}}, 3, nullptr);
+        FilePool pool(opener, {{"library", "posix"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -107,7 +109,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // We get an exception of we try to open more concurrent files than allowed
-        FilePool pool(&factory, {{"library", "posix"}}, 3, nullptr);
+        FilePool pool(opener, {{"library", "posix"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -119,7 +121,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // stdio does not allow reuse, check results
-        FilePool pool(&factory, {{"library", "stdio"}}, 10, nullptr);
+        FilePool pool(opener, {{"library", "stdio"}}, 10, nullptr);
         auto handle0 = pool.Acquire(filename(0, prefix));
         auto handle1 = pool.Acquire(filename(0, prefix));
         auto handle2 = pool.Acquire(filename(0, prefix));
@@ -130,7 +132,7 @@ TEST(FilePool, FileLimit)
     }
     {
         // stdio does not allow reuse, check results when some go out of scope
-        FilePool pool(&factory, {{"library", "stdio"}}, 3, nullptr);
+        FilePool pool(opener, {{"library", "stdio"}}, 3, nullptr);
         {
             auto handle0 = pool.Acquire(filename(0, prefix));
             auto handle1 = pool.Acquire(filename(1, prefix));
@@ -159,9 +161,11 @@ TEST_P(FilePoolTest, SimpleRead)
     core::IO io(adios, "name", false, "C++");
     helper::Comm comm = adios2::helper::CommDummy();
 
-    adios2::transportman::TransportMan factory(io, comm);
+    auto opener = [&comm](const std::string &name, const adios2::Params &params) {
+        return adios2::transport::OpenFile(comm, name, adios2::Mode::Read, params, false);
+    };
     std::string prefix = "SimpleRead";
-    FilePool pool(&factory, {{"library", param}}, 1024, nullptr);
+    FilePool pool(opener, {{"library", param}}, 1024, nullptr);
     const int file_count = 1;
 
     create_test_files(file_count, prefix);
@@ -191,9 +195,11 @@ TEST_P(FilePoolTest, ConcurrentRead)
     core::IO io(adios, "name", false, "C++");
     helper::Comm comm = adios2::helper::CommDummy();
 
-    adios2::transportman::TransportMan factory(io, comm);
+    auto opener = [&comm](const std::string &name, const adios2::Params &params) {
+        return adios2::transport::OpenFile(comm, name, adios2::Mode::Read, params, false);
+    };
     std::string prefix = "ConcurrentRead-" + param;
-    FilePool pool(&factory, {{"library", param}}, 1024, nullptr);
+    FilePool pool(opener, {{"library", param}}, 1024, nullptr);
     const int file_count = 5;
 
     create_test_files(file_count, prefix);
@@ -248,7 +254,9 @@ TEST_P(FilePoolTest, ConcurrentTarInfoRead)
     core::IO io(adios, "name", false, "C++");
     helper::Comm comm = adios2::helper::CommDummy();
 
-    adios2::transportman::TransportMan factory(io, comm);
+    auto opener = [&comm](const std::string &name, const adios2::Params &params) {
+        return adios2::transport::OpenFile(comm, name, adios2::Mode::Read, params, false);
+    };
     std::string prefix = "ConcurrentTarInfoRead-" + param;
     std::string SubFileNames[] = {"SubFile0", "SubFile1", "SubFile2"};
     size_t SubFileStarts[] = {20, 30, 40};
@@ -258,7 +266,7 @@ TEST_P(FilePoolTest, ConcurrentTarInfoRead)
         {SubFileNames[0], {SubFileStarts[0] * sizeof(size_t), SubFileLengths[0] * sizeof(size_t)}},
         {SubFileNames[1], {SubFileStarts[1] * sizeof(size_t), SubFileLengths[1] * sizeof(size_t)}},
         {SubFileNames[2], {SubFileStarts[2] * sizeof(size_t), SubFileLengths[2] * sizeof(size_t)}}};
-    FilePool pool(&factory, {{"library", param}}, 1024, &TarInfo);
+    FilePool pool(opener, {{"library", param}}, 1024, &TarInfo);
     const int file_count = 3;
 
     create_test_files(file_count, prefix);

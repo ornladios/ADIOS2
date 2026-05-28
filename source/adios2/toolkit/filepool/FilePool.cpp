@@ -143,7 +143,7 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, con
     if (isTarFile && adios2::SharedTarFDCache::IsEnabled())
     {
         // Use the process-wide shared FD cache for tar containers
-        file = adios2::SharedTarFDCache::getInstance().Acquire(finalFileName, m_Factory,
+        file = adios2::SharedTarFDCache::getInstance().Acquire(finalFileName, m_Opener,
                                                                m_TransportParams);
         if (m_SharedTarPath.empty())
         {
@@ -153,8 +153,7 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, con
     }
     else
     {
-        file = m_Factory->OpenFileTransport(finalFileName, adios2::Mode::Read, m_TransportParams,
-                                            false, false, adios2::helper::CommDummy());
+        file = m_Opener(finalFileName, m_TransportParams);
     }
 
     auto entry = std::make_shared<PoolEntry>(finalFileName, file);

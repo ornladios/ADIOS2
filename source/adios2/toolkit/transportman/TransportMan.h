@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*
+ * TransportMan is a legacy multiplexer over a map of Transports, kept
+ * alive only for engines that have not been migrated off it (currently
+ * BP3, BP4, and DAOS). New code should hold bare std::shared_ptr<Transport>
+ * members directly and use transport::OpenFile / transport::OpenFileChained
+ * (toolkit/transport/OpenFile.h) for construction.
+ */
+
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 

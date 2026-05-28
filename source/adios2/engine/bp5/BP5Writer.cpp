@@ -16,6 +16,7 @@
 #include "adios2/helper/adiosSystem.h"    // CleanupBPDirectory
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
@@ -37,8 +38,8 @@ namespace engine
 using namespace adios2::format;
 
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_TransportFactory(io, m_Comm), m_Profiler(m_Comm), m_AggregatorInitializedThisStep(false)
+: Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(), m_Profiler(m_Comm),
+  m_AggregatorInitializedThisStep(false)
 {
     m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
@@ -482,8 +483,13 @@ void BP5Writer::WriteData(format::BufferV *Data)
                                                      "is not supported in BP5");
         }
         AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-        aggData.m_FileDataManager.FlushFiles();
-        aggData.m_FileDataManager.FinalizeSegment();
+        // Non-aggregator ranks in TwoLevelShm-style modes reach here without an
+        // open substream (only the aggregator rank holds the transport).
+        if (aggData.m_DataSubstream)
+        {
+            aggData.m_DataSubstream->Flush();
+            aggData.m_DataSubstream->FinalizeSegment();
+        }
         delete Data;
     }
 }
@@ -530,7 +536,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
     m_DataPos += Data->Size();
     std::vector<core::iovec> DataVec = Data->DataVec();
     AggTransportData &aggData = m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator));
-    aggData.m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
+    aggData.m_DataSubstream->WriteV(DataVec.data(), static_cast<int>(DataVec.size()),
+                                    m_StartDataPos);
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
@@ -1277,6 +1284,15 @@ void BP5Writer::EndStep()
 // PRIVATE
 void BP5Writer::Init()
 {
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Writer", "Init",
+            "BP5 engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
+    }
+
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
@@ -1783,8 +1799,8 @@ void BP5Writer::InitMetadataTransports()
         m_MetadataIndexFileName = GetBPMetadataIndexFileName(m_Name);
     }
 
-    m_TransportFactory.MkDirsBarrier({m_MetadataFileName}, m_IO.m_TransportsParameters,
-                                     m_Parameters.NodeLocal || m_WriteToBB);
+    transport::MkDirsBarrier(m_Comm, {m_MetadataFileName}, m_IO.m_TransportsParameters,
+                             m_Parameters.NodeLocal || m_WriteToBB);
 
     // Write s3.json sidecar so readers can auto-detect hybrid S3 storage
     if (m_Comm.Rank() == 0 && !m_Parameters.DataFileTransport.empty())
@@ -1845,16 +1861,14 @@ void BP5Writer::InitMetadataTransports()
         {
             m_IO.m_TransportsParameters[i]["DirectIO"] = "false";
         }
-        m_MetaMetadataFile = m_TransportFactory.OpenFileTransport(
-            m_MetaMetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
-            m_Comm);
+        m_MetaMetadataFile = transport::OpenFile(m_Comm, m_MetaMetadataFileName, m_OpenMode,
+                                                 m_IO.m_TransportsParameters[0], true);
 
-        m_MetadataFile = m_TransportFactory.OpenFileTransport(
-            m_MetadataFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false, m_Comm);
+        m_MetadataFile = transport::OpenFile(m_Comm, m_MetadataFileName, m_OpenMode,
+                                             m_IO.m_TransportsParameters[0], true);
 
-        m_MetadataIndexFile = m_TransportFactory.OpenFileTransport(
-            m_MetadataIndexFileName, m_OpenMode, m_IO.m_TransportsParameters[0], true, false,
-            m_Comm);
+        m_MetadataIndexFile = transport::OpenFile(m_Comm, m_MetadataIndexFileName, m_OpenMode,
+                                                  m_IO.m_TransportsParameters[0], true);
 
         if (m_DrainBB)
         {
@@ -1903,8 +1917,8 @@ void BP5Writer::InitTransports()
         {
             const std::vector<std::string> drainTransportNames =
                 transportman::TransportMan::GetFilesBaseNames(m_Name, m_DataTransportsParameters);
-            aggData.m_DrainSubStreamNames =
-                GetBPSubStreamNames(drainTransportNames, m_Aggregator->m_SubStreamIndex);
+            aggData.m_DrainSubStreamName =
+                GetBPSubStreamName(drainTransportNames[0], m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
             //            m_FileDrainer.SetVerbose(
             //				     m_Parameters.BurstBufferVerbose,
@@ -1917,18 +1931,15 @@ void BP5Writer::InitTransports()
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
-        aggData.m_FileDataManager.MkDirsBarrier(aggData.m_DrainSubStreamNames,
-                                                m_DataTransportsParameters, m_Parameters.NodeLocal);
+        transport::MkDirsBarrier(m_Comm, {aggData.m_DrainSubStreamName}, m_DataTransportsParameters,
+                                 m_Parameters.NodeLocal);
     }
 
     if (m_IAmDraining)
     {
         if (m_DrainBB)
         {
-            for (const auto &name : aggData.m_DrainSubStreamNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
+            m_FileDrainer.AddOperationOpen(aggData.m_DrainSubStreamName, m_OpenMode);
         }
     }
 
@@ -1958,13 +1969,13 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
             std::cout << "Rank " << m_Comm.Rank() << " cache miss for aggregator key " << cacheKey
                       << std::endl;
         }
-        m_AggregatorSpecifics.emplace(std::make_pair(cacheKey, AggTransportData(m_IO, m_Comm)));
+        m_AggregatorSpecifics.emplace(cacheKey, AggTransportData{});
     }
 
     AggTransportData &aggData = m_AggregatorSpecifics.at(cacheKey);
 
     // /path/name.bp.dir/name.bp.rank
-    aggData.m_SubStreamNames = GetBPSubStreamNames({m_Name}, m_Aggregator->m_SubStreamIndex);
+    aggData.m_SubStreamName = GetBPSubStreamName(m_Name, m_Aggregator->m_SubStreamIndex);
 
     helper::Comm openSyncComm;
 
@@ -2002,9 +2013,9 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                     std::cout << "Rank " << m_Comm.Rank() << " opening data file with Comm"
                               << std::endl;
                 }
-                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                    m_IO.m_TransportsParameters, true,
-                                                    *DataWritingComm);
+                aggData.m_DataSubstream = transport::OpenFileChained(
+                    m_Comm, aggData.m_SubStreamName, mode, m_IO.m_TransportsParameters[0], true,
+                    *DataWritingComm);
             }
             else
             {
@@ -2013,8 +2024,8 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                     std::cout << "Rank " << m_Comm.Rank() << " opening data file no Comm"
                               << std::endl;
                 }
-                aggData.m_FileDataManager.OpenFiles(aggData.m_SubStreamNames, mode,
-                                                    m_IO.m_TransportsParameters, true);
+                aggData.m_DataSubstream = transport::OpenFile(m_Comm, aggData.m_SubStreamName, mode,
+                                                              m_IO.m_TransportsParameters[0], true);
             }
         }
     }
@@ -2191,16 +2202,16 @@ void BP5Writer::InitBPBuffer()
             const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
             if (off < MaxSizeT)
             {
-                aggData.m_FileDataManager.Truncate(off);
+                aggData.m_DataSubstream->Truncate(off);
                 // Seek is needed since truncate does not seek.
-                // SeekTo instead of SeetToFileEnd in case a transport
+                // Seek instead of SeekToEnd in case a transport
                 // does not support actual truncate.
-                aggData.m_FileDataManager.SeekTo(off);
+                aggData.m_DataSubstream->Seek(off);
                 m_DataPos = off;
             }
             else
             {
-                m_DataPos = aggData.m_FileDataManager.GetFileSize(0);
+                m_DataPos = aggData.m_DataSubstream->GetSize();
             }
         }
 
@@ -2264,7 +2275,7 @@ void BP5Writer::InitBPBuffer()
         // data existed but index was missing
         if (m_Aggregator->m_IsAggregator)
         {
-            aggData.m_FileDataManager.SeekTo(0);
+            aggData.m_DataSubstream->Seek(0);
         }
     }
 
@@ -2414,10 +2425,16 @@ void BP5Writer::DoClose(const int transportIndex)
             wait += Now() - wait_start;
         }
 
-        // However many AggTransportData we created, we need to close them all
-        for (auto it = m_AggregatorSpecifics.begin(); it != m_AggregatorSpecifics.end(); ++it)
+        // However many AggTransportData we created, we need to close them all.
+        // transportIndex is ignored: per-engine multi-transport is no longer
+        // supported (see Init's check), so we always close every substream.
+        (void)transportIndex;
+        for (auto &aggPair : m_AggregatorSpecifics)
         {
-            it->second.m_FileDataManager.CloseFiles(transportIndex);
+            if (aggPair.second.m_DataSubstream)
+            {
+                aggPair.second.m_DataSubstream->Close();
+            }
         }
 
         // Delete files from temporary storage if draining was on
@@ -2464,7 +2481,7 @@ void BP5Writer::DoClose(const int transportIndex)
     // cleaned up while those resources are still available.
     for (auto &aggPair : m_AggregatorSpecifics)
     {
-        aggPair.second.m_FileDataManager.m_Transports.clear();
+        aggPair.second.m_DataSubstream.reset();
     }
     m_MetadataFile.reset();
     m_MetaMetadataFile.reset();
@@ -2479,13 +2496,13 @@ void BP5Writer::FlushProfiler()
 
     for (auto &specs : m_AggregatorSpecifics)
     {
-        std::vector<std::string> types = specs.second.m_FileDataManager.GetTransportsTypes();
-        std::vector<std::string> names = specs.second.m_FileDataManager.GetTransportsNames();
-        std::vector<adios2::profiling::IOChrono *> profs =
-            specs.second.m_FileDataManager.GetTransportsProfilers();
-        transportTypes.insert(transportTypes.end(), types.begin(), types.end());
-        transportNames.insert(transportNames.end(), names.begin(), names.end());
-        transportProfilers.insert(transportProfilers.end(), profs.begin(), profs.end());
+        if (specs.second.m_DataSubstream)
+        {
+            auto &t = specs.second.m_DataSubstream;
+            transportTypes.push_back(t->m_Type);
+            transportNames.push_back(t->m_Name);
+            transportProfilers.push_back(&t->m_Profiler);
+        }
     }
 
     // find first File type output, where we can write the profile

@@ -12,7 +12,7 @@
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
@@ -1533,10 +1533,8 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
                                     const Params &params, const size_t offset, const size_t size,
                                     char *data)
 {
-    std::string library = params.at("library");
     helper::Comm comm;
-    transportman::TransportMan tm(m_IO, comm);
-    auto transport = tm.OpenFileTransport(remotePath, Mode::Read, params, false, false, comm);
+    auto transport = transport::OpenFile(comm, remotePath, Mode::Read, params, false);
     transport->Read(data, size, offset);
     transport->Close();
 }

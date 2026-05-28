@@ -17,6 +17,7 @@
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdHttpRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
@@ -39,8 +40,7 @@ namespace engine
 {
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_TransportFactory(io, m_Comm), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -49,8 +49,7 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
                      const char *md, const size_t mdsize)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_TransportFactory(io, m_Comm), m_Remote(),
-  m_JSONProfiler(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)), m_Remote(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     m_ReadMetadataFromFile = false;
@@ -1147,6 +1146,15 @@ void BP5Reader::Init()
                                                  m_Name);
     }
 
+    if (m_IO.m_TransportsParameters.size() > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "Init",
+            "BP5 engine accepts only one transport per IO; got " +
+                std::to_string(m_IO.m_TransportsParameters.size()) +
+                ". Multiple parallel transports per IO are no longer supported.");
+    }
+
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
     m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
@@ -1536,9 +1544,11 @@ void BP5Reader::InitTransports()
     }
 
     // Metadata files always use default local transport
-    m_MetadataFiles =
-        std::make_shared<FilePool>(&m_TransportFactory, m_IO.m_TransportsParameters[0],
-                                   m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
+    auto opener = [this](const std::string &name, const Params &params) {
+        return transport::OpenFile(m_Comm, name, Mode::Read, params, false);
+    };
+    m_MetadataFiles = std::make_shared<FilePool>(opener, m_IO.m_TransportsParameters[0],
+                                                 m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
 
     // Auto-detect S3 hybrid storage via s3.json sidecar.
     // Only rank 0 reads the file to avoid filesystem metadata storms at scale.
@@ -1658,7 +1668,10 @@ void BP5Reader::InitTransports()
             dataTransportParams["verbose"] = std::to_string(m_Parameters.verbose);
         }
 
-        m_DataFiles = std::make_shared<FilePool>(&m_TransportFactory, dataTransportParams,
+        auto dataOpener = [this](const std::string &name, const Params &params) {
+            return transport::OpenFile(m_Comm, name, Mode::Read, params, false);
+        };
+        m_DataFiles = std::make_shared<FilePool>(dataOpener, dataTransportParams,
                                                  m_Parameters.MaxOpenFilesAtOnce, &m_TarInfoMap);
     }
     else

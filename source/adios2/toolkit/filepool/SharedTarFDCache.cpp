@@ -5,7 +5,6 @@
  */
 
 #include "adios2/toolkit/filepool/SharedTarFDCache.h"
-#include "adios2/helper/adiosCommDummy.h"
 
 namespace adios2
 {
@@ -23,7 +22,7 @@ SharedTarFDCache &SharedTarFDCache::getInstance()
 }
 
 std::shared_ptr<Transport> SharedTarFDCache::Acquire(const std::string &tarPath,
-                                                     transportman::TransportMan *factory,
+                                                     TransportOpener const &opener,
                                                      const Params &transportParams)
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
@@ -34,8 +33,7 @@ std::shared_ptr<Transport> SharedTarFDCache::Acquire(const std::string &tarPath,
         return it->second.transport;
     }
     // Open a new transport for this tar file
-    auto transport = factory->OpenFileTransport(tarPath, Mode::Read, transportParams, false, false,
-                                                helper::CommDummy());
+    auto transport = opener(tarPath, transportParams);
     Entry entry;
     entry.transport = transport;
     entry.refcount = 1;

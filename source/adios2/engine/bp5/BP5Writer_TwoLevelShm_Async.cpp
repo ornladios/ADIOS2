@@ -41,7 +41,7 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_Aggregator(AsyncWriteInfo *info)
     {
         std::vector<core::iovec> DataVec = info->Data->DataVec();
         const uint64_t mysize = info->Data->Size();
-        info->tm->SeekTo(info->startPos);
+        (*info->DataSubstream)->Seek(info->startPos);
         AsyncWriteOwnData(info, DataVec, mysize, false);
         totalSize -= mysize;
     }
@@ -145,7 +145,7 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info)
         info->tokenChain->SendToken(nextWriterPos);
         AsyncWriteThread_TwoLevelShm_Aggregator(info);
         info->tokenChain->RecvToken();
-        info->tm->FinalizeSegment();
+        (*info->DataSubstream)->FinalizeSegment();
     }
     else
     {
@@ -257,7 +257,7 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     m_AsyncWriteInfo->tstart = m_EngineStart;
     m_AsyncWriteInfo->tokenChain = new shm::TokenChain<uint64_t>(&a->m_Comm);
     AggTransportData *aggData = &(m_AggregatorSpecifics.at(GetCacheKey(m_Aggregator)));
-    m_AsyncWriteInfo->tm = &(aggData->m_FileDataManager);
+    m_AsyncWriteInfo->DataSubstream = &aggData->m_DataSubstream;
     m_AsyncWriteInfo->Data = Data;
     m_AsyncWriteInfo->flagRush = &m_flagRush;
     m_AsyncWriteInfo->lock = &m_AsyncWriteLock;

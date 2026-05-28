@@ -21,7 +21,7 @@
 #include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/shm/Spinlock.h"
 #include "adios2/toolkit/shm/TokenChain.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
+#include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
 {
@@ -56,20 +56,17 @@ public:
 private:
     struct AggTransportData
     {
-        AggTransportData(core::IO &IO, helper::Comm &comm) : m_FileDataManager(IO, comm) {}
+        /** Open data-file transport for this aggregator's substream. Null
+         *  if not yet opened (no write done by this rank in this aggregator
+         *  context). */
+        std::shared_ptr<Transport> m_DataSubstream;
 
-        /** Manage BP data files Transports from IO AddTransport */
-        transportman::TransportMan m_FileDataManager;
+        /** Name of the subfile to directly write to. Either original target
+         *  or burst buffer if used. */
+        std::string m_SubStreamName;
 
-        /**
-         * Name of subfiles to directly write to (for all transports)
-         * This is either original target or burst buffer if used
-         */
-        std::vector<std::string> m_SubStreamNames;
-
-        /* Name of subfiles on target if burst buffer is used (for all transports)
-         */
-        std::vector<std::string> m_DrainSubStreamNames;
+        /** Name of the subfile on target if burst buffer is used. */
+        std::string m_DrainSubStreamName;
     };
 
     std::string GetCacheKey(aggregator::MPIAggregator *aggregator);
@@ -81,8 +78,6 @@ private:
 
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;
-
-    transportman::TransportMan m_TransportFactory;
 
     std::shared_ptr<Transport> m_MetadataIndexFile;
     std::shared_ptr<Transport> m_MetaMetadataFile;
@@ -365,7 +360,7 @@ private:
         int nproc_chain;
         TimePoint tstart;
         adios2::shm::TokenChain<uint64_t> *tokenChain;
-        transportman::TransportMan *tm;
+        std::shared_ptr<Transport> *DataSubstream;
         adios2::format::BufferV *Data;
         uint64_t startPos;
         uint64_t totalSize;

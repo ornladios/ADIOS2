@@ -20,7 +20,6 @@
 #include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
 #include "adios2/toolkit/kvcache/KVCacheCommon.h"
 #include "adios2/toolkit/remote/Remote.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
 
 #include <chrono>
 #include <map>
@@ -83,12 +82,10 @@ private:
     /* m_MDFileAbsolutePos <= m_MDFileProcessedSize <= m_MDFileAlreadyReadSize
      */
 
-    /* transport manager for managing data file(s) - may use S3 if DataFileTransport is set */
+    /* pool of open transports for data file(s) - may use S3 if DataFileTransport is set */
     std::shared_ptr<FilePool> m_DataFiles;
-    /* transport manager for managing metadata file(s) - always local */
+    /* pool of open transports for metadata file(s) - always local */
     std::shared_ptr<FilePool> m_MetadataFiles;
-
-    transportman::TransportMan m_TransportFactory;
 
     std::unique_ptr<PoolableFile> m_MDIndexFile;
     std::unique_ptr<PoolableFile> m_MDFile;

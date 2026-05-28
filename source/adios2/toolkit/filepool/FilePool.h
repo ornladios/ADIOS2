@@ -63,10 +63,8 @@
 #ifndef ADIOS2_FILEPOOL_H_
 #define ADIOS2_FILEPOOL_H_
 
-#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/toolkit/filepool/SharedTarFDCache.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
 #include <mutex>
 
 class PoolEntry
@@ -108,9 +106,9 @@ public:
 class FilePool
 {
 public:
-    FilePool(adios2::transportman::TransportMan *factory, adios2::Params transportParams,
-             size_t OpenFileLimit, adios2::helper::TarInfoMap *TarInfoMap)
-    : m_Factory(factory), m_TransportParams(transportParams), m_TarInfoMap(TarInfoMap),
+    FilePool(adios2::TransportOpener opener, adios2::Params transportParams, size_t OpenFileLimit,
+             adios2::helper::TarInfoMap *TarInfoMap)
+    : m_Opener(std::move(opener)), m_TransportParams(transportParams), m_TarInfoMap(TarInfoMap),
       m_OpenFileLimit(OpenFileLimit){};
     ~FilePool();
     // Acquire a Poolablefile object from the pool, creating it if necessary
@@ -128,7 +126,7 @@ public:
 private:
     // The pool's internal storage
     std::mutex PoolMutex;
-    adios2::transportman::TransportMan *m_Factory;
+    adios2::TransportOpener m_Opener;
     adios2::Params m_TransportParams;
     adios2::helper::TarInfoMap *m_TarInfoMap;
     std::unordered_multimap<std::string, std::shared_ptr<PoolEntry>> m_Pool;
