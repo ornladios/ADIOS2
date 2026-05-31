@@ -83,6 +83,14 @@ void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
 void Engine::PerformGets() { ThrowUp("PerformGets"); }
 void Engine::PerformDataWrite() { return; }
 
+// Feature probe: null => engine doesn't support the ctx-form pipeline.
+std::unique_ptr<GetContext> Engine::NewGetContext() { return nullptr; }
+void Engine::PerformGets(GetContext &) { ThrowUp("PerformGets(GetContext&)"); }
+void Engine::DoGetContextDeferred(GetContext &, VariableBase &, void *, const Selection &)
+{
+    ThrowUp("DoGetContextDeferred");
+}
+
 void Engine::Close(const int transportIndex)
 {
     if (m_IsOpen)
@@ -374,6 +382,8 @@ std::vector<VariableStruct::BPInfo> Engine::BlocksInfoStruct(const VariableStruc
                                                                                                    \
     template void Engine::Get<T>(Variable<T> &, T *, const Selection &, const Mode);               \
     template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Selection &, const Mode);  \
+                                                                                                   \
+    template void Engine::Get<T>(GetContext &, Variable<T> &, T *, const Selection &);             \
                                                                                                    \
     template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &, const Mode);              \
     template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, const Mode);        \

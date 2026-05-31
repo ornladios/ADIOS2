@@ -549,7 +549,7 @@ void BP5Reader::PerformGets()
         bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
 
         // If nothing is pending, don't open
-        if (m_BP5Deserializer->PendingGetRequests.size() == 0)
+        if (m_BP5Deserializer->DefaultGetContext().PendingGetRequests.size() == 0)
             return;
 
 #ifdef ADIOS2_HAVE_CURL
@@ -656,16 +656,49 @@ void BP5Reader::PerformGets()
     }
     else
     {
-        PerformLocalGets();
+        PerformLocalGets(m_BP5Deserializer->DefaultGetContext());
     }
 
     // clear pending requests inside deserializer
     m_BP5Deserializer->ClearGetState();
 }
 
+std::unique_ptr<core::GetContext> BP5Reader::NewGetContext()
+{
+    // Needs ReadRandomAccess (no step lifecycle) + reentrant Read (POSIX only).
+    if (m_OpenMode != Mode::ReadRandomAccess)
+    {
+        return nullptr;
+    }
+    if (!m_HasReentrantReadTransport)
+    {
+        return nullptr;
+    }
+    return std::make_unique<format::BP5Deserializer::BP5GetContext>();
+}
+
+void BP5Reader::DoGetContextDeferred(core::GetContext &abstract_ctx, VariableBase &variable,
+                                     void *data, const Selection &selection)
+{
+    auto &ctx = static_cast<format::BP5Deserializer::BP5GetContext &>(abstract_ctx);
+    m_BP5Deserializer->QueueGet(ctx, variable, data, selection);
+}
+
+void BP5Reader::PerformGets(core::GetContext &abstract_ctx)
+{
+    if (m_dataIsRemote)
+    {
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "PerformGets(GetContext&)",
+                                        "Context-bearing PerformGets is supported only for "
+                                        "local (non-remote) BP5 reads");
+    }
+    auto &ctx = static_cast<format::BP5Deserializer::BP5GetContext &>(abstract_ctx);
+    PerformLocalGets(ctx);
+}
+
 void BP5Reader::PerformRemoteGetsWithKVCache()
 {
-    auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    auto GetRequests = m_BP5Deserializer->DefaultGetContext().PendingGetRequests;
     std::vector<Remote::GetHandle> handles;
 
     struct RequestInfo
@@ -859,7 +892,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
 
 void BP5Reader::PerformRemoteGets()
 {
-    auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    auto GetRequests = m_BP5Deserializer->DefaultGetContext().PendingGetRequests;
 
     // Try batch get first — single HTTP round-trip for all variables
     {
@@ -942,7 +975,7 @@ void BP5Reader::PerformRemoteGets()
     }
 }
 
-void BP5Reader::PerformLocalGets()
+void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
 {
     auto lf_CompareReqSubfile =
         [&](const adios2::format::BP5Deserializer::ReadRequest &r1,
@@ -951,10 +984,8 @@ void BP5Reader::PerformLocalGets()
                 m_WriterMap[m_WriterMapIndex[r2.Timestep]].RankToSubfile[r2.WriterRank]);
     };
 
-    if (!m_InitialWriterActiveCheckDone)
-    {
+    std::call_once(m_InitialWriterActiveCheckFlag, [this]() {
         CheckWriterActive();
-        m_InitialWriterActiveCheckDone = true;
         if (!m_WriterIsActive)
         {
             Params transportParameters;
@@ -967,14 +998,17 @@ void BP5Reader::PerformLocalGets()
             if (m_MetaMetadataFile)
                 m_MetaMetadataFile->SetParameters(transportParameters);
         }
-    }
+    });
     // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
-    m_JSONProfiler.Start("DataRead");
+    {
+        std::lock_guard<std::mutex> lock(m_ProfilerMutex);
+        m_JSONProfiler.Start("DataRead");
+    }
     size_t maxReadSize;
 
     // TP startGenerate = NOW();
-    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(false, &maxReadSize);
+    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(ctx, false, &maxReadSize);
     size_t nRequest = ReadRequests.size();
     // TP endGenerate = NOW();
     // double generateTime = DURATION(startGenerate, endGenerate);
@@ -992,6 +1026,7 @@ void BP5Reader::PerformLocalGets()
         }
         if (reqidx <= nRequest)
         {
+            std::lock_guard<std::mutex> profLock(m_ProfilerMutex);
             m_JSONProfiler.AddBytes("dataread", ReadRequests[reqidx].ReadLength);
         }
         return reqidx;
@@ -1040,7 +1075,7 @@ void BP5Reader::PerformLocalGets()
                                        Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
 
             TP startCopy = NOW();
-            m_BP5Deserializer->FinalizeGet(Req, false);
+            m_BP5Deserializer->FinalizeGet(ctx, Req, false);
             TP endCopy = NOW();
             subfileTotal += timeSubfile;
             readTotal += timeRead;
@@ -1101,7 +1136,10 @@ void BP5Reader::PerformLocalGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-            m_JSONProfiler.AddBytes("dataread", Req.ReadLength);
+            {
+                std::lock_guard<std::mutex> profLock(m_ProfilerMutex);
+                m_JSONProfiler.AddBytes("dataread", Req.ReadLength);
+            }
             size_t SubfileNum = static_cast<size_t>(
                 m_WriterMap[m_WriterMapIndex[Req.Timestep]].RankToSubfile[Req.WriterRank]);
 
@@ -1121,12 +1159,15 @@ void BP5Reader::PerformLocalGets()
             }
             ReadData(DataFile.get(), Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
                      Req.DestinationAddr);
-            m_BP5Deserializer->FinalizeGet(Req, false);
+            m_BP5Deserializer->FinalizeGet(ctx, Req, false);
         }
     }
-    m_BP5Deserializer->FinalizeDerivedGets(ReadRequests);
-    m_BP5Deserializer->ClearGetState();
-    m_JSONProfiler.Stop("DataRead");
+    m_BP5Deserializer->FinalizeDerivedGets(ctx, ReadRequests);
+    ctx.Clear();
+    {
+        std::lock_guard<std::mutex> profLock(m_ProfilerMutex);
+        m_JSONProfiler.Stop("DataRead");
+    }
     /*TP end = NOW();
     double t1 = DURATION(start, end);
     double t2 = DURATION(startRead, end);
@@ -1370,6 +1411,10 @@ size_t BP5Reader::OpenWithTimeout(std::unique_ptr<PoolableFile> &file, const std
             // if dataIsRemote, our filename is real and not in a tar file
             bool skipTarInfoParameter = m_dataIsRemote;
             file = filePool->Acquire(fileName, skipTarInfoParameter);
+            if (file && file->file)
+            {
+                m_HasReentrantReadTransport = file->file->m_ReentrantRead;
+            }
             flag = 0; // found file
             break;
         }

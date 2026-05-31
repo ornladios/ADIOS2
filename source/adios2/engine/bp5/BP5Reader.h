@@ -23,6 +23,7 @@
 
 #include <chrono>
 #include <map>
+#include <mutex>
 #include <vector>
 
 namespace adios2
@@ -59,6 +60,12 @@ public:
 
     void PerformGets() final;
 
+    // Context-bearing thread-safe Get pipeline; local data path only.
+    std::unique_ptr<core::GetContext> NewGetContext() final;
+    void PerformGets(core::GetContext &ctx) final;
+    void DoGetContextDeferred(core::GetContext &ctx, VariableBase &variable, void *data,
+                              const Selection &selection) final;
+
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step, const size_t WriterID,
                               const size_t BlockID) const;
@@ -90,6 +97,9 @@ private:
     std::unique_ptr<PoolableFile> m_MDIndexFile;
     std::unique_ptr<PoolableFile> m_MDFile;
     std::unique_ptr<PoolableFile> m_MetaMetadataFile;
+
+    // Cached at first transport open; gates NewGetContext.
+    bool m_HasReentrantReadTransport = false;
 
     /* How many bytes of metadata index have we already read in? */
     size_t m_MDIndexFileAlreadyReadSize = 0;
@@ -134,7 +144,8 @@ private:
 
     Minifooter m_Minifooter;
 
-    bool m_InitialWriterActiveCheckDone = false;
+    std::once_flag m_InitialWriterActiveCheckFlag;
+    std::mutex m_ProfilerMutex;
     bool m_ReadMetadataFromFile = true;
 
     void Init();
@@ -276,7 +287,7 @@ private:
     // step -> writermap index (for all steps)
     std::vector<uint64_t> m_WriterMapIndex;
 
-    void PerformLocalGets();
+    void PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx);
 
     void PerformRemoteGets();
 

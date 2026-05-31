@@ -89,6 +89,18 @@ void Engine::PerformGets()
     m_Engine->PerformGets();
 }
 
+std::unique_ptr<core::GetContext> Engine::NewGetContext()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::NewGetContext");
+    return m_Engine->NewGetContext();
+}
+
+void Engine::PerformGets(core::GetContext &ctx)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets(GetContext&)");
+    m_Engine->PerformGets(ctx);
+}
+
 void Engine::LockWriterDefinitions()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::LockWriterDefinitions");
@@ -334,6 +346,7 @@ Engine::AllStepsBlocksInfo(const VariableNT &variable) const
     template void Engine::Get<T>(const std::string &, std::vector<T> &, const Mode);               \
                                                                                                    \
     template void Engine::Get<T>(Variable<T>, T *, const Selection &, const Mode);                 \
+    template void Engine::Get<T>(core::GetContext &, Variable<T>, T *, const Selection &);         \
     template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Selection &, const Mode);    \
                                                                                                    \
     template void Engine::Get<T>(Variable<T>, typename Variable<T>::Info & info, const Mode);      \

@@ -180,6 +180,14 @@ void Engine::Get(Variable<T> &variable, T *data, const Selection &selection, con
 }
 
 template <class T>
+void Engine::Get(GetContext &ctx, Variable<T> &variable, T *data, const Selection &selection)
+{
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
+                 "in call to Get(GetContext &, Variable, T*, Selection)");
+    DoGetContextDeferred(ctx, variable, data, selection);
+}
+
+template <class T>
 void Engine::Get(Variable<T> &variable, std::vector<T> &dataV, const Selection &selection,
                  const Mode launch)
 {

@@ -472,6 +472,11 @@ PerformGets
 
    Executes all pending ``Get`` calls in deferred mode.
 
+   A second overload, ``PerformGets(GetContext&)``, drains only the requests
+   queued on the supplied context, supporting concurrent ``Get`` pipelines on
+   a single engine. See `Thread-Safe Concurrent Reads with GetContext`_ in
+   the Selection chapter.
+
 
 Engine usage example
 --------------------

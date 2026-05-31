@@ -119,6 +119,12 @@ public:
         std::mutex subpool_mutex;
         std::chrono::steady_clock::time_point last_used;
         size_t in_use_count = 0;
+        // Decided at first Open (see SubPool::GetFree).
+        // Shareable: one engine for all concurrent users; in_use_count = refcount.
+        // Exclusive: legacy m_list+m_busy, one engine per concurrent user.
+        // Requires BP5 + reentrant transport; probed via NewGetContext().
+        bool m_shareable = false;
+        bool m_modeDetermined = false;
         std::vector<std::unique_ptr<AnonADIOSFile>> m_list;
         std::vector<bool> m_busy;
 

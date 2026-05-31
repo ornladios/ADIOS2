@@ -53,6 +53,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/GetContext.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h"
 
@@ -650,16 +651,18 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                     return;
                 }
 
+                // Inline Selection — no Variable mutation; safe under shared engine.
+                auto sel = vr.Start.size() ? adios2::Selection::BoundingBox(vr.Start, vr.Count)
+                                           : adios2::Selection::All();
+                sel.SetSteps(vr.StepStart, vr.StepCount);
+                if (vr.BlockID != (size_t)-1)
+                    sel.SetBlock(vr.BlockID);
+
 #define BATCHGET_SIZE(T)                                                                           \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(vr.VarName);                               \
-        if (vr.BlockID != (size_t)-1)                                                              \
-            var.SetBlockSelection(vr.BlockID);                                                     \
-        var.SetStepSelection({vr.StepStart, vr.StepCount});                                        \
-        if (vr.Start.size())                                                                       \
-            var.SetSelection({vr.Start, vr.Count});                                                \
-        dataSizes[v] = var.SelectionSize() * sizeof(T);                                            \
+        dataSizes[v] = var.SelectionSize(sel) * sizeof(T);                                         \
     }
                 if (false)
                 {
@@ -690,24 +693,41 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 writePtr += sizeof(uint64_t);
             }
 
-            // Read all variables into the response buffer
+            // ctx != null: queue-and-perform (shareable engine).
+            // ctx == null: legacy SetSelection+Sync (exclusive engine).
+            auto ctx = engine.NewGetContext();
             for (size_t v = 0; v < NVars; v++)
             {
                 auto &vr = varRequests[v];
                 adios2::DataType TypeOfVar = io.InquireVariableType(vr.VarName);
 
+                auto sel = vr.Start.size() ? adios2::Selection::BoundingBox(vr.Start, vr.Count)
+                                           : adios2::Selection::All();
+                sel.SetSteps(vr.StepStart, vr.StepCount);
+                if (vr.BlockID != (size_t)-1)
+                    sel.SetBlock(vr.BlockID);
+                if (vr.AccuracyError != 0.0 || vr.AccuracyNorm != 0.0)
+                    sel.SetAccuracy(vr.AccuracyError, vr.AccuracyNorm, vr.AccuracyRelative);
+
 #define BATCHGET_READ(T)                                                                           \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(vr.VarName);                               \
-        if (vr.BlockID != (size_t)-1)                                                              \
-            var.SetBlockSelection(vr.BlockID);                                                     \
-        var.SetStepSelection({vr.StepStart, vr.StepCount});                                        \
-        if (vr.Start.size())                                                                       \
-            var.SetSelection({vr.Start, vr.Count});                                                \
-        if (vr.AccuracyError != 0.0 || vr.AccuracyNorm != 0.0)                                     \
-            var.SetAccuracy({vr.AccuracyError, vr.AccuracyNorm, vr.AccuracyRelative});             \
-        engine.Get(var, (T *)writePtr, adios2::Mode::Sync);                                        \
+        if (ctx)                                                                                   \
+        {                                                                                          \
+            engine.Get(*ctx, var, (T *)writePtr, sel);                                             \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            if (vr.BlockID != (size_t)-1)                                                          \
+                var.SetBlockSelection(vr.BlockID);                                                 \
+            var.SetStepSelection({vr.StepStart, vr.StepCount});                                    \
+            if (vr.Start.size())                                                                   \
+                var.SetSelection({vr.Start, vr.Count});                                            \
+            if (vr.AccuracyError != 0.0 || vr.AccuracyNorm != 0.0)                                 \
+                var.SetAccuracy({vr.AccuracyError, vr.AccuracyNorm, vr.AccuracyRelative});         \
+            engine.Get(var, (T *)writePtr, adios2::Mode::Sync);                                    \
+        }                                                                                          \
     }
                 if (false)
                 {
@@ -715,6 +735,10 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(BATCHGET_READ)
 #undef BATCHGET_READ
                 writePtr += dataSizes[v];
+            }
+            if (ctx)
+            {
+                engine.PerformGets(*ctx);
             }
 
             // Track bytes served and operation count
@@ -863,24 +887,46 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                     RespondErr("get: unknown variable", EINVAL);
                     return;
                 }
+                auto sel = Start.size() ? adios2::Selection::BoundingBox(Start, Count)
+                                        : adios2::Selection::All();
+                sel.SetSteps(StepStart, StepCount);
+                if (BlockID != (size_t)-1)
+                    sel.SetBlock(BlockID);
+                if (AccuracyError != 0.0 || AccuracyNorm != 0.0)
+                    sel.SetAccuracy(AccuracyError, AccuracyNorm, AccuracyRelative);
+
+                // ctx != null: ctx-form; ctx == null: legacy SetSelection+Sync.
+                auto ctx = engine.NewGetContext();
+
 #define GET(T)                                                                                     \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
-        if (BlockID != (size_t)-1)                                                                 \
-            var.SetBlockSelection(BlockID);                                                        \
-        var.SetStepSelection({StepStart, StepCount});                                              \
-        if (Start.size())                                                                          \
-            var.SetSelection(varSel);                                                              \
-        if (AccuracyError != 0.0 || AccuracyNorm != 0.0)                                           \
-            var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});                      \
-        m_responseBufferSize = var.SelectionSize() * sizeof(T);                                    \
+        m_responseBufferSize = var.SelectionSize(sel) * sizeof(T);                                 \
         if (m_responseBufferSize > sizeof(m_respData))                                             \
             m_responseBuffer = (char *)malloc(m_responseBufferSize);                               \
         else                                                                                       \
             m_responseBuffer = &m_respData[0];                                                     \
-        engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                                \
+        if (ctx)                                                                                   \
+        {                                                                                          \
+            engine.Get(*ctx, var, (T *)m_responseBuffer, sel);                                     \
+            engine.PerformGets(*ctx);                                                              \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            if (BlockID != (size_t)-1)                                                             \
+                var.SetBlockSelection(BlockID);                                                    \
+            var.SetStepSelection({StepStart, StepCount});                                          \
+            if (Start.size())                                                                      \
+                var.SetSelection(varSel);                                                          \
+            if (AccuracyError != 0.0 || AccuracyNorm != 0.0)                                       \
+                var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});                  \
+            engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                            \
+        }                                                                                          \
     }
+                if (false)
+                {
+                }
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
                 // Track bytes served and operation count
