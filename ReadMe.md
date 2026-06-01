@@ -4,6 +4,9 @@
 [![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ornladios/ADIOS2/badge)](https://scorecard.dev/viewer/?uri=github.com/ornladios/ADIOS2)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11410/badge)](https://www.bestpractices.dev/projects/11410)
+[![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=adios2)](https://insights.linuxfoundation.org/project/adios2)
+[![LFX Contributors](https://insights.linuxfoundation.org/api/badge/contributors?project=adios2)](https://insights.linuxfoundation.org/project/adios2)
+[![LFX Active Contributors](https://insights.linuxfoundation.org/api/badge/active-contributors?project=adios2)](https://insights.linuxfoundation.org/project/adios2)
 
 # ADIOS2 : The Adaptable Input Output System version 2
 
