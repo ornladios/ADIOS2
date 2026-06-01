@@ -605,19 +605,23 @@ arm64_proc_start(dill_stream s, char *subr_name, int arg_count,
 void
 arm64_emit_save(dill_stream s)
 {
+    arm64_mach_info ami = (arm64_mach_info)s->p->mach_info;
     void *save_ip = s->p->cur_ip;
+    int ar_size = ami->act_rec_size;
+    /* Align to 16 bytes (ARM64 SP must be 16-byte aligned) */
+    ar_size = (ar_size + 15) & ~15;
+
     s->p->fp = (char*)s->p->code_base;
+
+    /* Patch the SUB SP instruction in the prologue.
+     * The SUB SP, SP, #imm is the 12th instruction (index 11) after
+     * the 10 STP saves + MOV FP,SP.
+     * SUB SP, SP, #imm = 0xD10003FF | (imm12 << 10)
+     */
+    unsigned int *prologue = (unsigned int*)s->p->fp;
+    prologue[11] = 0xD10003FF | ((ar_size & 0xFFF) << 10);
+
     s->p->cur_ip = save_ip;
-    if (s->dill_debug) {
-        int num_insns = ((char*)s->p->cur_ip - (char*)s->p->fp) / 4;
-        printf("arm64_emit_save: fp=%p, code_base=%p, cur_ip=%p, %d instructions\n",
-               s->p->fp, s->p->code_base, s->p->cur_ip, num_insns);
-        printf("  All instructions at fp:\n");
-        unsigned int *code = (unsigned int*)s->p->fp;
-        for (int i = 0; i < num_insns && i < 32; i++) {
-            printf("    %p: %08x\n", &code[i], code[i]);
-        }
-    }
 }
     
 /*
