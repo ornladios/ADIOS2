@@ -5,6 +5,9 @@
  */
 
 #include "AdiosFilePool.h"
+
+#include "adios2/core/GetContext.h"
+
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -267,29 +270,62 @@ AnonADIOSFile *ADIOSFilePool::SubPool::GetFree(std::string Filename, bool RowMaj
                                                const std::string &EngineParams)
 {
     std::lock_guard<std::mutex> guard(subpool_mutex);
-    for (size_t i = 0; i < m_busy.size(); i++)
+
+    if (m_modeDetermined && m_shareable)
     {
-        if (!m_busy[i])
-        {
-            m_busy[i] = true;
-            in_use_count++;
-            return m_list[i].get();
-        }
+        in_use_count++;
+        return m_list[0].get();
     }
-    // no free files — open new one (only blocks requests for this same file)
+
+    if (m_modeDetermined && !m_shareable)
+    {
+        for (size_t i = 0; i < m_busy.size(); i++)
+        {
+            if (!m_busy[i])
+            {
+                m_busy[i] = true;
+                in_use_count++;
+                return m_list[i].get();
+            }
+        }
+        auto t0 = std::chrono::steady_clock::now();
+        m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays, EngineParams));
+        auto t1 = std::chrono::steady_clock::now();
+        open_micros += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+        m_busy.push_back(true);
+        in_use_count++;
+        return m_list[m_list.size() - 1].get();
+    }
+
+    // First open: pick mode based on engine's NewGetContext support.
     auto t0 = std::chrono::steady_clock::now();
     m_list.push_back(std::make_unique<AnonADIOSFile>(Filename, RowMajorArrays, EngineParams));
     auto t1 = std::chrono::steady_clock::now();
     open_micros += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
-    m_busy.push_back(true);
+
+    auto probe = m_list[0]->m_engine.NewGetContext();
+    m_shareable = (probe != nullptr);
+    m_modeDetermined = true;
+
+    if (!m_shareable)
+    {
+        m_busy.push_back(true);
+    }
     in_use_count++;
-    return m_list[m_list.size() - 1].get();
+    return m_list[0].get();
 }
 
 void ADIOSFilePool::SubPool::Return(adios2::AnonADIOSFile *to_free)
 {
     std::lock_guard<std::mutex> guard(subpool_mutex);
     last_used = std::chrono::steady_clock::now();
+
+    if (m_shareable)
+    {
+        in_use_count--;
+        return;
+    }
+
     for (size_t i = 0; i < m_busy.size(); i++)
     {
         if (to_free == m_list[i].get())

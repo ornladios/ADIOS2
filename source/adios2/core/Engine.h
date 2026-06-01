@@ -23,6 +23,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/common/Selection.h"
+#include "adios2/core/GetContext.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableStruct.h"
@@ -387,6 +388,15 @@ public:
     void Get(Variable<T> &variable, std::vector<T> &dataV, const Selection &selection,
              const Mode launch = Mode::Deferred);
 
+    // Context-bearing thread-safe Get pipeline (BP5 only).
+    // NewGetContext returns nullptr if the engine doesn't support it.
+    virtual std::unique_ptr<GetContext> NewGetContext();
+
+    template <class T>
+    void Get(GetContext &ctx, Variable<T> &variable, T *data, const Selection &selection);
+
+    virtual void PerformGets(GetContext &ctx);
+
     /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
@@ -609,6 +619,8 @@ protected:
     virtual void DoGetDeferred(Variable<T> &, T *, const Selection &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    virtual void DoGetContextDeferred(GetContext &, VariableBase &, void *, const Selection &);
 
     virtual void DoGetStructSync(VariableStruct &, void *);
     virtual void DoGetStructDeferred(VariableStruct &, void *);

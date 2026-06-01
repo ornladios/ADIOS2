@@ -9,6 +9,7 @@
 
 #include "adios2/common/Selection.h"
 #include "adios2/core/Attribute.h"
+#include "adios2/core/GetContext.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 
@@ -64,38 +65,6 @@ public:
                                FFSTypeHandle FFSFormat);
 
     void SetupForStep(size_t Step, size_t WriterCount);
-    // return from QueueGet is true if a sync is needed to fill the data
-    bool QueueGet(core::VariableBase &variable, void *DestData, const core::Selection &selection,
-                  bool dataIsRemote = false);
-
-    /* generate read requests. return vector of requests AND the size of
-     * the largest allocation block necessary for reading.
-     * input flag: true allocates a temporary buffer for each read request
-     * unless the request can go directly to user memory.
-     * False will not allocate a temporary buffer
-     * (RR.DestinationAddress==nullptr) but may also assign the user memory
-     * pointer for direct read in
-     */
-    std::vector<ReadRequest> GenerateReadRequests(const bool doAllocTempBuffers,
-                                                  size_t *maxReadSize);
-    void FinalizeGet(const ReadRequest &, const bool freeAddr);
-    void FinalizeGets(std::vector<ReadRequest> &);
-    void FinalizeDerivedGets(std::vector<ReadRequest> &);
-    void ClearGetState();
-
-    MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
-    MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
-    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
-    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step, const size_t WriterID,
-                              const size_t BlockID);
-    bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
-    bool VariableMinMax(const VariableBase &var, const size_t Step, MinMaxStruct &MinMax);
-    char *VariableExprStr(const VariableBase &var);
-    void GetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const;
-
-    const bool m_WriterIsRowMajor;
-    const bool m_ReaderIsRowMajor;
-    core::Engine *m_Engine = NULL;
 
     enum RequestTypeEnum
     {
@@ -121,7 +90,68 @@ public:
         std::map<std::string, std::unique_ptr<MinVarInfo>> *DerivedInputMap;
         void *Data;
     };
-    std::vector<BP5ArrayRequest> PendingGetRequests;
+
+    // Per-caller queue. Concurrent contexts may be in flight on one engine.
+    class BP5GetContext : public core::GetContext
+    {
+    public:
+        std::vector<BP5ArrayRequest> PendingGetRequests;
+        void Clear() { PendingGetRequests.clear(); }
+    };
+
+    BP5GetContext &DefaultGetContext() { return m_DefaultGetContext; }
+
+    // QueueGet returns true if a sync is needed.
+    bool QueueGet(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
+                  const core::Selection &selection, bool dataIsRemote = false);
+
+    /* maxReadSize: largest allocation needed for reading.
+     * doAllocTempBuffers true: allocate a temp buffer per request unless it
+     * can read directly into user memory. false: leave DestinationAddress
+     * null but still wire up user memory for direct reads when possible.
+     */
+    std::vector<ReadRequest> GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTempBuffers,
+                                                  size_t *maxReadSize);
+    void FinalizeGet(BP5GetContext &ctx, const ReadRequest &, const bool freeAddr);
+    void FinalizeGets(BP5GetContext &ctx, std::vector<ReadRequest> &);
+    void FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRequest> &);
+    void ClearGetState(BP5GetContext &ctx) { ctx.Clear(); }
+
+    // Legacy non-context overloads forward via DefaultGetContext.
+    bool QueueGet(core::VariableBase &variable, void *DestData, const core::Selection &selection,
+                  bool dataIsRemote = false)
+    {
+        return QueueGet(m_DefaultGetContext, variable, DestData, selection, dataIsRemote);
+    }
+    std::vector<ReadRequest> GenerateReadRequests(const bool doAllocTempBuffers,
+                                                  size_t *maxReadSize)
+    {
+        return GenerateReadRequests(m_DefaultGetContext, doAllocTempBuffers, maxReadSize);
+    }
+    void FinalizeGet(const ReadRequest &r, const bool freeAddr)
+    {
+        FinalizeGet(m_DefaultGetContext, r, freeAddr);
+    }
+    void FinalizeGets(std::vector<ReadRequest> &r) { FinalizeGets(m_DefaultGetContext, r); }
+    void FinalizeDerivedGets(std::vector<ReadRequest> &r)
+    {
+        FinalizeDerivedGets(m_DefaultGetContext, r);
+    }
+    void ClearGetState() { m_DefaultGetContext.Clear(); }
+
+    MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
+    MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
+    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
+    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step, const size_t WriterID,
+                              const size_t BlockID);
+    bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
+    bool VariableMinMax(const VariableBase &var, const size_t Step, MinMaxStruct &MinMax);
+    char *VariableExprStr(const VariableBase &var);
+    void GetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const;
+
+    const bool m_WriterIsRowMajor;
+    const bool m_ReaderIsRowMajor;
+    core::Engine *m_Engine = NULL;
 
 private:
     size_t m_VarCount = 0;
@@ -244,10 +274,10 @@ private:
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
     bool GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank, bool hasBlock, size_t blockID);
-    bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
-                        size_t RelStep, const core::Selection &selection);
-    bool QueueGetSingleRemote(core::VariableBase &variable, void *DestData, size_t RelStep,
-                              size_t StepCount, const core::Selection &selection);
+    bool QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
+                        size_t AbsStep, size_t RelStep, const core::Selection &selection);
+    bool QueueGetSingleRemote(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
+                              size_t RelStep, size_t StepCount, const core::Selection &selection);
     void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
 
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
@@ -259,6 +289,9 @@ private:
     /* We assume operators are not thread-safe, call Decompress() one at a time
      */
     std::mutex mutexDecompress;
+
+    // Backs the legacy non-context Get/Perform API.
+    BP5GetContext m_DefaultGetContext;
 
 public:
     VariableBase *GetVariableBaseFromBP5VarRec(void *VarRec)

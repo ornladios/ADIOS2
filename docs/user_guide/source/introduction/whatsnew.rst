@@ -2,6 +2,30 @@
 What's new in Development
 ==============================
 
+Thread-Safe Get with GetContext
+-------------------------------
+
+A new ``GetContext`` API extends the Selection-based ``Get()`` to support
+concurrent read pipelines on a single engine. Each caller allocates its own
+``GetContext`` via ``Engine::NewGetContext()`` and uses it as the first
+argument to ``Get()`` and ``PerformGets()``; per-context queues mean two
+threads can drive independent ``Get`` batches against the same open engine
+without racing.
+
+.. code-block:: c++
+
+   auto ctx = engine.NewGetContext();
+   if (ctx) {
+       engine.Get(*ctx, var, data, adios2::Selection::BoundingBox(start, count));
+       engine.PerformGets(*ctx);
+   }
+
+``NewGetContext()`` returns ``nullptr`` when the engine does not support
+concurrent contexts; callers feature-probe with the null check. Currently
+only the **BP5** reader supports them, and only when opened in
+``Mode::ReadRandomAccess`` with a reentrant file transport (POSIX). See the
+Selection chapter for full details.
+
 SST Mercury Data Plane
 -----------------------
 

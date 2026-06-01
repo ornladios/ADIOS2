@@ -305,6 +305,17 @@ void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Selection &s
                   selection.GetCoreSelection(), launch);
 }
 
+template <class T>
+void Engine::Get(core::GetContext &ctx, Variable<T> variable, T *data, const Selection &selection)
+{
+    using IOType = typename TypeInfo<T>::IOType;
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get(GetContext &, ...)");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get(GetContext &, ...)");
+    m_Engine->Get(ctx, *variable.m_Variable, reinterpret_cast<IOType *>(data),
+                  selection.GetCoreSelection());
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX_CXX_ENGINE_TCC_ */

@@ -183,6 +183,46 @@ Selection-based ``Get()`` is currently supported by the **BP5** and **SST**
 (with BP5 marshalling) engines. Other engines will throw a runtime error if a
 ``Selection`` is passed to ``Get()``.
 
+Thread-Safe Concurrent Reads with GetContext
+--------------------------------------------
+
+The Selection-based ``Get()`` shown above shares per-engine queue state with
+every other ``Get()`` call on the same engine, so concurrent calls from
+multiple threads are not safe. A second overload takes an explicit
+``GetContext`` so each thread (or each independent reader) can queue and drain
+``Get()`` requests on its own:
+
+.. code-block:: c++
+
+   auto ctx = engine.NewGetContext();
+   if (!ctx) {
+       // Engine does not support concurrent contexts; fall back to the
+       // single-threaded Selection-based Get above.
+   }
+
+   auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20}).WithSteps(0, 1);
+   engine.Get(*ctx, var, data, sel);
+   engine.PerformGets(*ctx);
+
+Each ``GetContext`` owns its own queue of pending requests, so
+``PerformGets(ctxA)`` drains only ``ctxA`` and leaves any requests queued on
+``ctxB`` untouched. A context is reusable after ``PerformGets``; the queue is
+cleared on the success path. Calls in ctx-form are always deferred — there is
+no ``Mode::Sync`` variant.
+
+``NewGetContext()`` is a feature probe: it returns ``nullptr`` if the engine
+does not support concurrent contexts. Currently only the **BP5** reader
+supports them, and only when:
+
+- the engine was opened in ``Mode::ReadRandomAccess`` (no step lifecycle to
+  race on), and
+- the underlying file transport is reentrant for ``Read`` (the POSIX
+  transport is; ``fstream`` and others are not).
+
+The legacy ``Selection``-less ``Get()``/``PerformGets()`` API and the
+single-threaded Selection-based ``Get()`` are unchanged; the ctx-form is an
+additional API for callers that need concurrency.
+
 Compatibility
 -------------
 

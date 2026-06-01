@@ -26,6 +26,7 @@ class Selection; // for selection-based Get()
 namespace core
 {
 class Engine; // private implementation
+class GetContext;
 
 }
 /// \endcond
@@ -447,6 +448,15 @@ public:
 
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
+
+    // Context-bearing Get / PerformGets — thread-safe pipeline (BP5 reader only).
+    // Returns nullptr if the engine doesn't support concurrent contexts.
+    std::unique_ptr<core::GetContext> NewGetContext();
+
+    template <class T>
+    void Get(core::GetContext &ctx, Variable<T> variable, T *data, const Selection &selection);
+
+    void PerformGets(core::GetContext &ctx);
 
     /**
      * Ends current step, by default calls PerformsPut/Get internally

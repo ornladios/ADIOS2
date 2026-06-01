@@ -656,7 +656,7 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
     }
     else
     {
-        PendingGetRequests.clear();
+        m_DefaultGetContext.Clear();
 
         for (auto RecPair : VarByKey)
         {
@@ -1381,8 +1381,9 @@ bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable, B
     return true;
 }
 
-bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
-                                     size_t RelStep, const core::Selection &selection)
+bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable,
+                                     void *DestData, size_t AbsStep, size_t RelStep,
+                                     const core::Selection &selection)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
     if (variable.m_Type == adios2::DataType::Struct)
@@ -1489,7 +1490,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.StepCount = 1;
         Req.MemSpace = MemSpace;
         Req.Data = DestData;
-        PendingGetRequests.push_back(Req);
+        ctx.PendingGetRequests.push_back(Req);
     }
     else if ((effectiveSelType == adios2::SelectionType::WriteBlock) ||
              (variable.m_ShapeID == ShapeID::LocalArray))
@@ -1512,7 +1513,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
         Req.StepCount = 1;
-        PendingGetRequests.push_back(Req);
+        ctx.PendingGetRequests.push_back(Req);
     }
     else
     {
@@ -1522,8 +1523,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
     return true;
 }
 
-bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *DestData,
-                                           size_t RelStep, size_t StepCount,
+bool BP5Deserializer::QueueGetSingleRemote(BP5GetContext &ctx, core::VariableBase &variable,
+                                           void *DestData, size_t RelStep, size_t StepCount,
                                            const core::Selection &selection)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
@@ -1584,7 +1585,7 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
         Req.StepCount = StepCount;
         Req.MemSpace = MemSpace;
         Req.Data = DestData;
-        PendingGetRequests.push_back(Req);
+        ctx.PendingGetRequests.push_back(Req);
     }
     else if ((effectiveSelType == adios2::SelectionType::WriteBlock) ||
              (variable.m_ShapeID == ShapeID::LocalArray))
@@ -1607,7 +1608,7 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
         Req.Step = RelStep;
         Req.RelStep = RelStep;
         Req.StepCount = StepCount;
-        PendingGetRequests.push_back(Req);
+        ctx.PendingGetRequests.push_back(Req);
     }
     else
     {
@@ -1617,7 +1618,7 @@ bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *D
     return true;
 }
 
-bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData,
+bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
                                const core::Selection &selection, bool dataIsRemote)
 {
     const size_t stepsStart = selection.GetStepStart();
@@ -1625,7 +1626,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData,
 
     if (!m_RandomAccessMode)
     {
-        return QueueGetSingle(variable, DestData, CurTimestep, CurTimestep, selection);
+        return QueueGetSingle(ctx, variable, DestData, CurTimestep, CurTimestep, selection);
     }
     else
     {
@@ -1651,7 +1652,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData,
         if (dataIsRemote && VarRec->OrigShapeID != ShapeID::LocalValue &&
             VarRec->OrigShapeID != ShapeID::GlobalValue)
         {
-            ret = QueueGetSingleRemote(variable, DestData, stepsStart, stepsCount, selection);
+            ret = QueueGetSingleRemote(ctx, variable, DestData, stepsStart, stepsCount, selection);
         }
         else
         {
@@ -1664,7 +1665,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData,
                     if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                     {
                         // This writer wrote on this timestep
-                        ret = QueueGetSingle(variable, DestData, AbsStep, RelStep, selection);
+                        ret = QueueGetSingle(ctx, variable, DestData, AbsStep, RelStep, selection);
                         size_t increment = variable.TotalSize() * variable.m_ElementSize;
                         DestData = (void *)((char *)DestData + increment);
                         break;
@@ -1764,7 +1765,8 @@ bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets
 }
 
 std::vector<BP5Deserializer::ReadRequest>
-BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *maxReadSize)
+BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTempBuffers,
+                                      size_t *maxReadSize)
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
     *maxReadSize = 0;
@@ -1773,9 +1775,9 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 
     try
     {
-        for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
+        for (size_t ReqIndex = 0; ReqIndex < ctx.PendingGetRequests.size(); ReqIndex++)
         {
-            auto Req = &PendingGetRequests[ReqIndex];
+            auto Req = &ctx.PendingGetRequests[ReqIndex];
             auto VarRec = (struct BP5VarRec *)Req->VarRec;
             VariableBase *VB = static_cast<VariableBase *>(VarRec->Variable);
             std::vector<std::string> derivedVarInputNameList;
@@ -2307,18 +2309,18 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
     catch (...)
     {
         std::exception_ptr ex = std::current_exception();
-        // if something in GenerateReadRequests threw an exception, clear the PendingGetRequests so
-        // it doesn't happen again (I.E. if this happened in PerformGets(), then EndStep() should
+        // if something in GenerateReadRequests threw an exception, clear the ctx.PendingGetRequests
+        // so it doesn't happen again (I.E. if this happened in PerformGets(), then EndStep() should
         // then happen cleanly.)
-        PendingGetRequests.clear();
+        ctx.PendingGetRequests.clear();
         std::rethrow_exception(ex);
     }
     return Ret;
 }
 
-void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
+void BP5Deserializer::FinalizeGet(BP5GetContext &ctx, const ReadRequest &Read, const bool freeAddr)
 {
-    auto &Req = PendingGetRequests[Read.ReqIndex];
+    auto &Req = ctx.PendingGetRequests[Read.ReqIndex];
     auto VarRec = (struct BP5VarRec *)Req.VarRec;
 
     // if we could do this, nothing else to do
@@ -2411,9 +2413,9 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         {
             std::exception_ptr ex = std::current_exception();
             // if MakeOperator or Decompress throws an exception, we can't complete this request. To
-            // make it isn't tried again, we have to clear PendingGetRequests.  Also cleanup
+            // make it isn't tried again, we have to clear ctx.PendingGetRequests.  Also cleanup
             // Read.DestinationAddr.
-            PendingGetRequests.clear();
+            ctx.PendingGetRequests.clear();
             if (freeAddr)
             {
                 free((char *)Read.DestinationAddr);
@@ -2537,12 +2539,12 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     }
 }
 
-void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
+void BP5Deserializer::FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRequest> &Reads)
 {
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
+    for (size_t ReqIndex = 0; ReqIndex < ctx.PendingGetRequests.size(); ReqIndex++)
     {
-        auto &Req = PendingGetRequests[ReqIndex];
+        auto &Req = ctx.PendingGetRequests[ReqIndex];
         auto VarRec = (struct BP5VarRec *)Req.VarRec;
         if (!VarRec->Derived)
             continue;
@@ -2658,13 +2660,11 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
 #endif
 }
 
-void BP5Deserializer::ClearGetState() { PendingGetRequests.clear(); }
-
-void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> &Reads)
+void BP5Deserializer::FinalizeGets(BP5GetContext &ctx, std::vector<ReadRequest> &Reads)
 {
     for (const auto &Read : Reads)
     {
-        FinalizeGet(Read, true);
+        FinalizeGet(ctx, Read, true);
     }
 }
 
