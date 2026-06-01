@@ -1,5 +1,5 @@
 
-set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg)
+set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg local_block)
 
 if(NATIVE_CG)
   list(APPEND TESTS pkg_test multi_test)
@@ -39,6 +39,9 @@ if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
 ENDIF()
 
 set_tests_properties(vtest_loop_reg
+  PROPERTIES PASS_REGULAR_EXPRESSION "No errors!")
+
+set_tests_properties(vtest_local_block
   PROPERTIES PASS_REGULAR_EXPRESSION "No errors!")
 
 set_tests_properties(vtest_basic_call
