@@ -951,13 +951,13 @@ free_code_blocks(dill_stream s)
         (s->p->virtual.code_base != s->p->code_base)) {
         int vsize = (long)s->p->virtual.code_limit -
                     (long)s->p->virtual.code_base + END_OF_CODE_BUFFER;
-        if (munmap(s->p->code_base, vsize) == -1)
+        if (munmap(s->p->virtual.code_base, vsize) == -1)
             perror("unmap v");
     }
     if (s->p->native.code_base && (s->p->native.code_base != s->p->code_base)) {
         int nsize = (long)s->p->native.code_limit -
                     (long)s->p->native.code_base + END_OF_CODE_BUFFER;
-        if (munmap(s->p->code_base, nsize) == -1)
+        if (munmap(s->p->native.code_base, nsize) == -1)
             perror("unmap n");
     }
 #else
