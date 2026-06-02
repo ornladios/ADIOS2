@@ -77,7 +77,7 @@ Once installed, refer to [Linking ADIOS2](https://adios2.readthedocs.io/en/lates
 ## Resources
 
 * Documentation: [adios2.readthedocs.io](https://adios2.readthedocs.io)
-* Latest release: [v2.12.0-rc1](https://github.com/ornladios/ADIOS2/releases/tag/v2.12.0-rc1)
+* Latest release: [v2.12.1](https://github.com/ornladios/ADIOS2/releases/tag/v2.12.1)
 * All releases: [github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 * Citing: if you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.1016/j.softx.2020.100561)
 
