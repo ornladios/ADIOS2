@@ -47,6 +47,7 @@
 #include "XrdSsi/XrdSsiRequest.hh"
 #include "XrdSsi/XrdSsiResource.hh"
 
+#include "AccessLog.h"
 #include "XrdSsiSvService.hh"
 #include "XrdSsiSvStreamActive.hh"
 #include "XrdSsiSvStreamPassive.hh"
@@ -745,6 +746,26 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             poolEntry.file->m_BytesSent += totalDataSize;
             poolEntry.file->m_OperationCount += NVars;
 
+            if (AccessLog::Instance().Enabled())
+            {
+                for (size_t v = 0; v < NVars; v++)
+                {
+                    auto &vr = varRequests[v];
+                    AccessLog::Record rec;
+                    rec.file = Filename.c_str();
+                    rec.var = &vr.VarName;
+                    rec.step = vr.StepStart;
+                    rec.stepCount = vr.StepCount;
+                    rec.start = &vr.Start;
+                    rec.count = &vr.Count;
+                    rec.blockID = vr.BlockID;
+                    rec.accuracyError = vr.AccuracyError;
+                    rec.bytes = dataSizes[v];
+                    rec.batch = static_cast<uint32_t>(NVars);
+                    AccessLog::Instance().Log(rec);
+                }
+            }
+
             // Send response via detached thread (same pattern as single get)
             // poolEntry auto-returns to pool when it goes out of scope
             pthread_t tid;
@@ -932,6 +953,22 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 // Track bytes served and operation count
                 poolEntry.file->m_BytesSent += m_responseBufferSize;
                 poolEntry.file->m_OperationCount++;
+
+                if (AccessLog::Instance().Enabled())
+                {
+                    AccessLog::Record rec;
+                    rec.file = Filename.c_str();
+                    rec.var = &VarName;
+                    rec.step = StepStart;
+                    rec.stepCount = StepCount;
+                    rec.start = &Start;
+                    rec.count = &Count;
+                    rec.blockID = BlockID;
+                    rec.accuracyError = AccuracyError;
+                    rec.bytes = m_responseBufferSize;
+                    rec.batch = 1;
+                    AccessLog::Instance().Log(rec);
+                }
             } // poolEntry returned to pool here
             pthread_t tid;
             XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");
