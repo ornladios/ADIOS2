@@ -163,6 +163,12 @@ resource-aware cache management:
   variable reads into a single network round-trip, reducing latency
   for workloads that read many variables per step.
 
+- **Per-request access log**: An optional server-side log records each remote
+  read (variable, step, selection, byte count) as JSON lines, for analyzing
+  access patterns. It is off by default; set ``ADIOS2_XROOTD_ACCESSLOG`` to a
+  file path to enable it, with size-based rotation and retention configurable
+  via environment variables. See the XRootD plugin ``README.md`` for details.
+
 Cross-Endian Interoperability
 -----------------------------
 

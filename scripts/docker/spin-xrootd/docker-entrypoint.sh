@@ -46,6 +46,7 @@ fi
 echo ""
 echo "Starting XRootD HTTP server on port 8080..."
 echo "Data directory: /data"
+echo "Access log: ${ADIOS2_XROOTD_ACCESSLOG:-disabled}"
 echo ""
 
 # Start XRootD with HTTP configuration in foreground
