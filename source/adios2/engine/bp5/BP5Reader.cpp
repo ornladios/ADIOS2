@@ -2042,6 +2042,10 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
         if (m_Parameters.IgnoreFlattenSteps)
             m_FlattenSteps = false;
 
+        // byte 42-45: per-file id (0 = none)
+        position = m_FileUUIDPosition;
+        m_FileUUID = helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
+
         // move position to first row
         position = m_IndexHeaderSize;
     }

@@ -448,9 +448,11 @@ bool introspectAsBPDir(const std::string &name) noexcept
         return false;
     }
 
-    char major = buffer[32];
-    char minor = buffer[33];
-    char patch = buffer[34];
+    // Version bytes are ASCII-offset ('0' + value); convert back so a component
+    // > 9 (e.g. minor 12) prints as a number, not a stray char.
+    uint8_t major = static_cast<uint8_t>(buffer[32] - '0');
+    uint8_t minor = static_cast<uint8_t>(buffer[33] - '0');
+    uint8_t patch = static_cast<uint8_t>(buffer[34] - '0');
     bool isBigEndian = static_cast<bool>(buffer[36]);
     uint8_t BPVersion = static_cast<uint8_t>(buffer[37]);
     uint8_t flatten = static_cast<uint8_t>(buffer[41]);
@@ -458,7 +460,7 @@ bool introspectAsBPDir(const std::string &name) noexcept
     if (BPVersion == 4)
     {
         isActive = static_cast<bool>(buffer[38]);
-        printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+        printf("ADIOS-BP Version %d %s - ADIOS v%d.%d.%d %s\n", BPVersion,
                (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
                (isActive ? "- active" : ""));
     }
@@ -466,13 +468,21 @@ bool introspectAsBPDir(const std::string &name) noexcept
     {
         uint8_t minversion = static_cast<uint8_t>(buffer[38]);
         isActive = static_cast<bool>(buffer[39]);
-        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s%s\n", BPVersion, minversion,
+        // per-file id at bytes 42-45; 0 = none
+        size_t uuidPos = 42;
+        uint32_t fileUUID = helper::ReadValue<uint32_t>(buffer, uuidPos, !isBigEndian);
+        char idStr[32] = "";
+        if (fileUUID != 0)
+        {
+            snprintf(idStr, sizeof(idStr), " - id 0x%08x", static_cast<unsigned int>(fileUUID));
+        }
+        printf("ADIOS-BP Version %d.%d %s - ADIOS v%d.%d.%d %s%s%s\n", BPVersion, minversion,
                (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
-               (isActive ? "- active" : ""), (flatten ? "- flatten_steps " : ""));
+               (isActive ? "- active" : ""), (flatten ? "- flatten_steps " : ""), idStr);
     }
     else
     {
-        printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+        printf("ADIOS-BP Version %d %s - ADIOS v%d.%d.%d %s\n", BPVersion,
                (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
                (isActive ? "- active" : ""));
     }

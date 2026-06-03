@@ -74,6 +74,9 @@ public:
     std::string VariableExprStr(const VariableBase &Var);
     void SetFlattenMode(bool flatten) { m_FlattenSteps = flatten; };
 
+    /** Per-file id from the index header; 0 if the file carries none. */
+    uint32_t FileUUID() const { return m_FileUUID; }
+
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
     /* How many bytes of metadata have we already read in? */
@@ -263,6 +266,8 @@ private:
     bool m_ReaderIsRowMajor = true;
     bool m_WriterIsRowMajor = true;
     bool m_FlattenSteps = false; // set to true of writer requested all steps be flattened into 1
+
+    uint32_t m_FileUUID = 0; // per-file id from the index header; 0 means none
 
     format::BufferSTL m_MetadataIndex;
     format::BufferSTL m_MetaMetadata;

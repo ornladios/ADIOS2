@@ -533,6 +533,12 @@ public:
     size_t Steps() const;
 
     /**
+     * Per-file id, for engines that carry one (currently BP5).
+     * @return the file id, or 0 if the engine/file has none
+     */
+    uint32_t FileUUID() const;
+
+    /**
      * @brief Promise that no more definitions or changes to defined variables
      * will occur. Useful information if called before the first EndStep() of an
      * output Engine, as it will know that the definitions are complete and

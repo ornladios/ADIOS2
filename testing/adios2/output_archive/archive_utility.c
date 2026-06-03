@@ -159,6 +159,20 @@ int main(int argc, char **argv)
             fprintf(stderr, "Write failed\n");
             exit(1);
         }
+        /* Zero the random per-file id (bytes 42-45) so -test_unique stays stable. */
+        ret = lseek(fd, 42, SEEK_SET);
+        if (ret == -1)
+        {
+            fprintf(stderr, "Lseek failed\n");
+            exit(1);
+        }
+        memset(buf, 0, sizeof(buf));
+        ret = write(fd, buf, 4);
+        if (ret == -1)
+        {
+            fprintf(stderr, "Write failed\n");
+            exit(1);
+        }
         close(fd);
     }
     return 0;
