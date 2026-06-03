@@ -539,6 +539,9 @@ public:
 
     virtual std::string VariableExprStr(const VariableBase &) { return ""; }
 
+    /** Per-file id, for engines that carry one (currently BP5); 0 means none. */
+    virtual uint32_t FileUUID() const { return 0; }
+
     /** Notify the engine when a new attribute is defined. Called from IO.tcc
      */
     virtual void NotifyEngineAttribute(std::string name, DataType type) noexcept;

@@ -26,6 +26,7 @@
 #include <iomanip> // setw
 #include <iostream>
 #include <memory> // make_shared
+#include <random>
 #include <sstream>
 
 namespace adios2
@@ -2154,6 +2155,22 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
     helper::CopyToBuffer(buffer, position, &m_Parameters.FlattenSteps);
+
+    // byte 42-45: random per-file id (written once here, preserved across append)
+    if (position != m_FileUUIDPosition)
+    {
+        helper::Throw<std::runtime_error>("Engine", "BP5Writer", "MakeHeader",
+                                          "ADIOS Coding ERROR in BP5Writer::MakeHeader. File UUID "
+                                          "position mismatch");
+    }
+    std::random_device rd;
+    uint32_t fileUUID = static_cast<uint32_t>(rd());
+    while (fileUUID == 0) // 0 is the "none" sentinel
+    {
+        fileUUID = static_cast<uint32_t>(rd());
+    }
+    helper::CopyToBuffer(buffer, position, &fileUUID);
+
     // remainder  unused
     position = m_IndexHeaderSize;
     // absolutePosition = position;

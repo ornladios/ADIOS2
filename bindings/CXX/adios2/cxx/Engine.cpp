@@ -143,6 +143,12 @@ size_t Engine::Steps() const
     return m_Engine->Steps();
 }
 
+uint32_t Engine::FileUUID() const
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::FileUUID");
+    return m_Engine->FileUUID();
+}
+
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 void Engine::Put(VariableNT &variable, const void *data, const Mode launch)

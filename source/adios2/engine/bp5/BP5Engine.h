@@ -62,7 +62,8 @@ public:
         uint8_t activeFlag;
         char columnMajor;     // y or n
         uint8_t flattenSteps; // writer requests all steps flattened to one on read
-        char unused2[22];     // init to zero
+        char fileUUID[4];     // random per-file id; 0 = none (legacy/neutralized output)
+        char unused2[18];     // init to zero
     };
     static constexpr size_t m_IndexHeaderSize = sizeof(BP5IndexTableHeader);
     static constexpr size_t m_EndianFlagPosition = offsetof(BP5IndexTableHeader, isLittleEndian);
@@ -74,6 +75,10 @@ public:
     static constexpr size_t m_FlattenStepsPosition = offsetof(BP5IndexTableHeader, flattenSteps);
     static constexpr size_t m_VersionTagPosition = offsetof(BP5IndexTableHeader, VersionTag);
     static constexpr size_t m_VersionTagLength = sizeof(BP5IndexTableHeader().VersionTag);
+    static constexpr size_t m_FileUUIDPosition = offsetof(BP5IndexTableHeader, fileUUID);
+    static constexpr size_t m_FileUUIDLength = sizeof(BP5IndexTableHeader().fileUUID);
+    static_assert(m_FileUUIDLength == sizeof(uint32_t),
+                  "fileUUID is read and written as a uint32_t");
     static constexpr size_t m_HeaderTailPadding = sizeof(BP5IndexTableHeader().unused2);
 
     static constexpr uint8_t m_BP5MinorVersion = 2;
