@@ -6,6 +6,7 @@
 
 #include "XrootdHttpRemote.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosSystem.h" // IsLittleEndian
 
 #include <chrono>
 #include <cstdlib>
@@ -343,13 +344,18 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     if (it != params.end())
         m_RequestTimeout = std::stol(it->second);
 
+    // File id for the server's identity check.
+    it = params.find("FileUUID");
+    if (it != params.end())
+        m_FileUUID = static_cast<uint32_t>(std::stoul(it->second));
+
     // Collect non-HTTP engine params (TarInfo, SelectSteps, IgnoreFlattenSteps)
     // and encode them as a TAB-separated string for transmission
     Params engineParams;
     for (const auto &p : params)
     {
         if (p.first != "UseHttps" && p.first != "CAPath" && p.first != "VerifySSL" &&
-            p.first != "ConnectTimeout" && p.first != "RequestTimeout")
+            p.first != "ConnectTimeout" && p.first != "RequestTimeout" && p.first != "FileUUID")
         {
             engineParams[p.first] = p.second;
         }
@@ -442,6 +448,12 @@ std::string XrootdHttpRemote::BuildFileConfigSegment()
     std::ostringstream s;
     // Always emit RMOrder so the server doesn't have to guess the default.
     s << "r" << (m_RowMajorOrdering ? "1" : "0");
+    // File id for the identity check (omit when 0). Must precede the greedy `p`.
+    if (m_FileUUID != 0)
+        s << "u" << m_FileUUID;
+    // Client byte order (omit when little-endian). Must precede the greedy `p`.
+    if (!helper::IsLittleEndian())
+        s << "e1";
     if (!m_EngineParams.empty())
         s << "p" << Base64urlEncode(m_EngineParams);
     std::string out = s.str();

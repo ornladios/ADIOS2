@@ -78,6 +78,23 @@ void *SvAdiosGet(void *svP)
     sessP->doAdiosGet();
     return 0;
 }
+
+// Highest request wire-format version we accept (clients emit none yet, absent ==
+// 0). Policing it gives a future newer client a clear error, not a parse failure.
+constexpr uint32_t kMaxWireVersion = 0;
+
+// Record a rejected request in the access log (the normal entry is logged only
+// after a successful read, which a rejection never reaches).
+void LogReject(const std::string &file, const char *reason, uint32_t batch)
+{
+    if (!AccessLog::Instance().Enabled())
+        return;
+    AccessLog::Record rec;
+    rec.file = file.c_str();
+    rec.reject = reason;
+    rec.batch = batch;
+    AccessLog::Instance().Log(rec);
+}
 }
 
 /******************************************************************************/
@@ -499,6 +516,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         std::string Filename;
         std::string EngineParams;
         bool ArrayOrder = true;
+        uint32_t RequestUUID = 0;     // file id from client metadata; 0 = no check
+        uint32_t WireVersion = 0;     // request format version; absent/0 = original
+        bool ClientBigEndian = false; // client native byte order; absent = little
         size_t NVars = 0;
 
         struct VarRequest
@@ -619,6 +639,26 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                     std::size_t pos = param.find("=") + 1;
                     EngineParams = UrlDecode(param.substr(pos));
                 }
+                else if (HasPrefix(param, "FileUUID="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> RequestUUID;
+                }
+                else if (HasPrefix(param, "WireVersion="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    sstream >> WireVersion;
+                }
+                else if (HasPrefix(param, "ClientBigEndian="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    int be = 0;
+                    sstream >> be;
+                    ClientBigEndian = (be != 0);
+                }
             }
         }
 
@@ -626,7 +666,23 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 
         if (Filename.empty() || NVars == 0)
         {
+            LogReject(Filename, "badparams", static_cast<uint32_t>(NVars));
             RespondErr("batchget: invalid parameters", EINVAL);
+            return;
+        }
+        if (WireVersion > kMaxWireVersion)
+        {
+            LogReject(Filename, "version", static_cast<uint32_t>(NVars));
+            std::string msg = "batchget: unsupported request protocol version " +
+                              std::to_string(WireVersion) + "; this server supports up to " +
+                              std::to_string(kMaxWireVersion);
+            RespondErr(msg.c_str(), EINVAL);
+            return;
+        }
+        if (ClientBigEndian != !adios2::helper::IsLittleEndian())
+        {
+            LogReject(Filename, "byteorder", static_cast<uint32_t>(NVars));
+            RespondErr("batchget: cross-endian remote reads not supported", EINVAL);
             return;
         }
 
@@ -635,6 +691,15 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
             auto engine = poolEntry.file->m_engine;
             auto io = poolEntry.file->m_io;
+
+            // Reject if the client's file id doesn't match the file we opened
+            // (stale cached metadata); 0 = client has no id, no check.
+            if (RequestUUID != 0 && engine.FileUUID() != RequestUUID)
+            {
+                LogReject(Filename, "identity", static_cast<uint32_t>(NVars));
+                RespondErr("batchget: file identity mismatch; remote metadata is stale", EINVAL);
+                return;
+            }
 
             // Compute sizes for each variable and total response size
             // Response format: [uint64_t NVars][uint64_t size_0]...[size_N-1][data_0]...[data_N-1]
@@ -648,6 +713,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 adios2::DataType TypeOfVar = io.InquireVariableType(vr.VarName);
                 if (TypeOfVar == adios2::DataType::None)
                 {
+                    LogReject(Filename, "novar", static_cast<uint32_t>(NVars));
                     RespondErr("batchget: unknown variable", EINVAL);
                     return;
                 }
@@ -678,6 +744,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             m_responseBuffer = (char *)malloc(m_responseBufferSize);
             if (!m_responseBuffer)
             {
+                LogReject(Filename, "alloc", static_cast<uint32_t>(NVars));
                 RespondErr("batchget: allocation failed", ENOMEM);
                 return;
             }
@@ -773,6 +840,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         catch (const std::exception &exc)
         {
+            LogReject(Filename, "exception", static_cast<uint32_t>(NVars));
             std::string msg = std::string("batchget: exception during processing: ") + exc.what();
             RespondErr(msg.c_str(), EINVAL);
         }
@@ -787,6 +855,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         size_t BlockID = (size_t)-1, DimCount = 0, StepStart = 0;
         size_t StepCount = 1;
         bool ArrayOrder = true;
+        uint32_t RequestUUID = 0;     // file id from client metadata; 0 = no check
+        uint32_t WireVersion = 0;     // request format version; absent/0 = original
+        bool ClientBigEndian = false; // client native byte order; absent = little
         // Accuracy parameters
         double AccuracyError = 0.0;
         double AccuracyNorm = 0.0;
@@ -885,6 +956,41 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 std::size_t pos = param.find("=") + 1;
                 EngineParams = UrlDecode(param.substr(pos));
             }
+            else if (HasPrefix(param, "FileUUID="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> RequestUUID;
+            }
+            else if (HasPrefix(param, "WireVersion="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> WireVersion;
+            }
+            else if (HasPrefix(param, "ClientBigEndian="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                int be = 0;
+                sstream >> be;
+                ClientBigEndian = (be != 0);
+            }
+        }
+        if (WireVersion > kMaxWireVersion)
+        {
+            LogReject(Filename, "version", 1);
+            std::string msg = "get: unsupported request protocol version " +
+                              std::to_string(WireVersion) + "; this server supports up to " +
+                              std::to_string(kMaxWireVersion);
+            RespondErr(msg.c_str(), EINVAL);
+            return;
+        }
+        if (ClientBigEndian != !adios2::helper::IsLittleEndian())
+        {
+            LogReject(Filename, "byteorder", 1);
+            RespondErr("get: cross-endian remote reads not supported", EINVAL);
+            return;
         }
         //  Get a "anonymous" engine with this file open with this array order.
         //  (any other differentiating characteristics of an ADIOS Open should be included in these
@@ -901,10 +1007,19 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder, EngineParams);
                 auto engine = poolEntry.file->m_engine;
                 auto io = poolEntry.file->m_io;
+
+                // Metadata-identity check (0 = client has no id, enforces nothing).
+                if (RequestUUID != 0 && engine.FileUUID() != RequestUUID)
+                {
+                    LogReject(Filename, "identity", 1);
+                    RespondErr("get: file identity mismatch; remote metadata is stale", EINVAL);
+                    return;
+                }
                 adios2::Box<adios2::Dims> varSel(Start, Count);
                 adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
                 if (TypeOfVar == adios2::DataType::None)
                 {
+                    LogReject(Filename, "novar", 1);
                     RespondErr("get: unknown variable", EINVAL);
                     return;
                 }
@@ -975,6 +1090,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         catch (const std::exception &exc)
         {
+            LogReject(Filename, "exception", 1);
             std::string errMsg = std::string("Exception in Get: ") + exc.what();
             RespondErr(errMsg.c_str(), EINVAL);
         }

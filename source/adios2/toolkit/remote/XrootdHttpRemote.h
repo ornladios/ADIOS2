@@ -147,6 +147,9 @@ private:
     std::string m_BaseUrl;
     std::string m_Filename;
     std::string m_EngineParams;
+    /** File id from the reader's metadata, sent for the server's staleness check;
+     *  0 = none (legacy file). */
+    uint32_t m_FileUUID = 0;
     /** Per-engine `<file-config>` path segment, computed once at Open()
      *  from RMOrder + EngineParams.  Reused on every request. */
     std::string m_FileConfigSegment;

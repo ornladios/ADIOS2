@@ -153,7 +153,13 @@ void AccessLog::Log(const Record &r)
         os << ",\"block\":" << r.blockID;
     if (r.accuracyError != 0.0)
         os << ",\"acc\":" << r.accuracyError;
-    os << ",\"bytes\":" << r.bytes << ",\"batch\":" << r.batch << "}";
+    os << ",\"bytes\":" << r.bytes << ",\"batch\":" << r.batch;
+    if (r.reject)
+    {
+        os << ",\"reject\":";
+        AppendJsonString(os, r.reject);
+    }
+    os << "}";
 
     std::string line = os.str();
     {
