@@ -574,6 +574,9 @@ void BP5Reader::PerformGets()
                 params["SelectSteps"] = m_Parameters.SelectSteps;
             if (m_Parameters.IgnoreFlattenSteps)
                 params["IgnoreFlattenSteps"] = "true";
+            // Send our file id so the server can detect stale cached metadata (0 = none).
+            if (m_FileUUID != 0)
+                params["FileUUID"] = std::to_string(m_FileUUID);
             m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
                            RowMajorOrdering, params);
         }

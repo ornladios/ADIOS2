@@ -73,8 +73,9 @@ std::string UrlEncode(const std::string &s)
 //   c Count            o Start            a AccuracyError
 //   N AccuracyNorm     R AccuracyRelative
 //
-// File-config codes:
-//   r RMOrder (single digit)               p EngineParams (rest of segment)
+// File-config codes (in this order):
+//   v WireVersion (digits)   r RMOrder (single digit)   u FileUUID (digits)
+//   e ClientBigEndian (digits)   p EngineParams (rest of segment)
 //
 // The decoder builds a legacy "verb Filename=...&key=val&..." string for
 // the inner SSI parser, which is unchanged.
@@ -192,14 +193,24 @@ bool DecodePerRequestParamString(const std::string &paramstring, std::ostringstr
     return true;
 }
 
-// Decode the file-config segment.  Strict order: optional `r<digit>`,
-// then optional `p<rest>`.  `_` placeholder is empty.
+// Decode the file-config segment: optional v, r, u, e in that order, then p.
+// `_` placeholder is empty.
 bool DecodeFileConfigSegment(const std::string &fileConfig, std::ostringstream &out)
 {
     if (fileConfig == "_")
         return true;
     size_t i = 0;
     const size_t n = fileConfig.size();
+    if (i < n && fileConfig[i] == 'v')
+    {
+        ++i;
+        const size_t start = i;
+        while (i < n && fileConfig[i] >= '0' && fileConfig[i] <= '9')
+            ++i;
+        if (i == start)
+            return false; // 'v' with no digits
+        out << "&WireVersion=" << fileConfig.substr(start, i - start);
+    }
     if (i < n && fileConfig[i] == 'r')
     {
         ++i;
@@ -209,6 +220,26 @@ bool DecodeFileConfigSegment(const std::string &fileConfig, std::ostringstream &
         if (d != '0' && d != '1')
             return false;
         out << "&RMOrder=" << d;
+    }
+    if (i < n && fileConfig[i] == 'u')
+    {
+        ++i;
+        const size_t start = i;
+        while (i < n && fileConfig[i] >= '0' && fileConfig[i] <= '9')
+            ++i;
+        if (i == start)
+            return false; // 'u' with no digits
+        out << "&FileUUID=" << fileConfig.substr(start, i - start);
+    }
+    if (i < n && fileConfig[i] == 'e')
+    {
+        ++i;
+        const size_t start = i;
+        while (i < n && fileConfig[i] >= '0' && fileConfig[i] <= '9')
+            ++i;
+        if (i == start)
+            return false; // 'e' with no digits
+        out << "&ClientBigEndian=" << fileConfig.substr(start, i - start);
     }
     if (i < n && fileConfig[i] == 'p')
     {

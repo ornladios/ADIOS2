@@ -48,7 +48,8 @@ public:
         uint64_t blockID = static_cast<uint64_t>(-1); // -1 => no block selection
         double accuracyError = 0.0;
         uint64_t bytes = 0;
-        uint32_t batch = 1; // number of variables in the batch this belonged to
+        uint32_t batch = 1;           // number of variables in the batch this belonged to
+        const char *reject = nullptr; // non-null => request was rejected; the reason string
     };
 
     /* Record one request. No-op when disabled; may drop if the queue is full. */
