@@ -40,6 +40,7 @@ struct AsyncGet
     std::string errorMsg;
     void *destBuffer = nullptr;
     size_t destSize = 0;
+    size_t expectedSize = 0; // expected response bytes; 0 = unchecked
     std::vector<char> responseData;
     CURL *easyHandle = nullptr;
     ::curl_slist *headers = nullptr;
@@ -107,7 +108,7 @@ public:
               const Mode mode, bool RowMajorOrdering, const Params &params = Params()) override;
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest) override;
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize) override;
 
     bool WaitForGet(GetHandle handle) override;
     GetHandle Read(size_t Start, size_t Size, void *Dest) override;

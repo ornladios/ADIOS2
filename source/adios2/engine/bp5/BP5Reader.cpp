@@ -818,7 +818,8 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 size_t stepStart = box.Start[0];
                 size_t stepCount = box.Count[0];
                 auto handle = m_Remote->Get(Req.VarName, stepStart, stepCount, Req.BlockID, count,
-                                            start, VB->m_AccuracyRequested, ReqInfo.Data);
+                                            start, VB->m_AccuracyRequested, ReqInfo.Data,
+                                            ReqInfo.ReqSize * ReqInfo.TypeSize);
                 handles.push_back(handle);
                 remoteRequestsInfo.push_back(ReqInfo);
             }
@@ -904,8 +905,9 @@ void BP5Reader::PerformRemoteGets()
         for (auto &Req : GetRequests)
         {
             VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+            size_t destSize = helper::GetTotalSize(Req.Count) * Req.StepCount * VB->m_ElementSize;
             batchReqs.push_back({Req.VarName, Req.RelStep, Req.StepCount, Req.BlockID, Req.Count,
-                                 Req.Start, VB->m_AccuracyRequested, Req.Data});
+                                 Req.Start, VB->m_AccuracyRequested, Req.Data, destSize});
         }
         if (m_Remote->BatchGet(batchReqs))
         {
@@ -918,8 +920,9 @@ void BP5Reader::PerformRemoteGets()
     for (auto &Req : GetRequests)
     {
         VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+        size_t destSize = helper::GetTotalSize(Req.Count) * Req.StepCount * VB->m_ElementSize;
         auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.StepCount, Req.BlockID, Req.Count,
-                                    Req.Start, VB->m_AccuracyRequested, Req.Data);
+                                    Req.Start, VB->m_AccuracyRequested, Req.Data, destSize);
         handles.push_back(handle);
     }
 

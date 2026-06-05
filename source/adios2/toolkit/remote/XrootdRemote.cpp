@@ -339,7 +339,7 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
 
 Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                     size_t BlockID, Dims &Count, Dims &Start, Accuracy &accuracy,
-                                    void *dest)
+                                    void *dest, size_t /*destSize*/)
 {
 // FIXME: StepCount is not implemented here yet
 #ifdef ADIOS2_HAVE_XROOTD

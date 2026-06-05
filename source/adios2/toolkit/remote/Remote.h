@@ -48,8 +48,11 @@ public:
 
     typedef void *GetHandle;
 
+    // destSize = expected byte size of dest (0 = unknown/unchecked); lets the
+    // backend reject a response that would overrun the buffer.
     virtual GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
-                          Dims &Count, Dims &Start, Accuracy &accuracy, void *dest);
+                          Dims &Count, Dims &Start, Accuracy &accuracy, void *dest,
+                          size_t destSize);
 
     virtual bool WaitForGet(GetHandle handle);
 
@@ -63,6 +66,7 @@ public:
         Dims Start;
         Accuracy accuracy;
         void *dest;
+        size_t destSize = 0; // expected byte size of dest; 0 = unchecked
     };
 
     // Batch multiple Get requests into a single round-trip.

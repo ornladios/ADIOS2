@@ -64,7 +64,7 @@ public:
                             const std::string filename, std::vector<char> &contents);
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest);
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize);
 
     bool WaitForGet(GetHandle handle);
 

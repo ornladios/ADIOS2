@@ -104,7 +104,7 @@ public:
               const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest);
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize);
 
     GetHandle Read(size_t Start, size_t Size, void *Dest);
     bool WaitForGet(GetHandle handle);

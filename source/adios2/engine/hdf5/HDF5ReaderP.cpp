@@ -170,7 +170,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
             // read from remote
             auto handle = m_Remote->Get(variable.m_Name.c_str(), variable.m_StepsStart,
                                         variable.m_StepsCount, variable.m_BlockID, variable.m_Count,
-                                        variable.m_Start, variable.m_AccuracyRequested, values);
+                                        variable.m_Start, variable.m_AccuracyRequested, values, 0);
             remoteHandles.push_back(handle);
         }
         else
