@@ -88,7 +88,8 @@ public:
 #ifdef ADIOS2_HAVE_SST
     std::mutex m_ResponsesMutex;
     std::map<int, EVPathRemoteCommon::ReadResponseMsg>
-        m_Responses; // read/get responses to be processed
+        m_Responses;                       // read/get responses to be processed
+    std::map<int, size_t> m_ExpectedSizes; // per-request expected dest bytes (0 = unchecked)
 #endif
 
 private:
