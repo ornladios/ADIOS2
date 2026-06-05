@@ -133,15 +133,15 @@ void CurlMultiPool::ProcessCompletedTransfers()
 
                     if (httpCode == 200 || httpCode == 201)
                     {
-                        // Reject a response that would overrun dest (stale metadata,
-                        // wrong-size reply); 0 = caller gave no expected size.
+                        // Reject a response that would overrun dest; 0 = caller
+                        // gave no expected size.
                         if (asyncOp->expectedSize != 0 &&
                             asyncOp->responseData.size() > asyncOp->expectedSize)
                         {
-                            asyncOp->errorMsg =
-                                "response size " + std::to_string(asyncOp->responseData.size()) +
-                                " exceeds expected " + std::to_string(asyncOp->expectedSize) +
-                                " bytes; remote metadata may be stale";
+                            asyncOp->errorMsg = "response size " +
+                                                std::to_string(asyncOp->responseData.size()) +
+                                                " exceeds expected " +
+                                                std::to_string(asyncOp->expectedSize) + " bytes";
                         }
                         else
                         {
