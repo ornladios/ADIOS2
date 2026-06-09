@@ -33,6 +33,8 @@
 /* specific prior written permission of the institution or contributor.       */
 /******************************************************************************/
 
+#include <algorithm> // std::reverse
+#include <complex>
 #include <fcntl.h>
 #include <iostream>
 #include <stdio.h>
@@ -94,6 +96,43 @@ void LogReject(const std::string &file, const char *reason, uint32_t batch)
     rec.reject = reason;
     rec.batch = batch;
     AccessLog::Instance().Log(rec);
+}
+
+// Swap each scalar component's bytes in place, converting a buffer to the
+// opposite endianness for delivery to a cross-endian client. Complex types
+// swap their real and imaginary parts independently (each is one unit).
+template <typename T>
+struct SwapUnit
+{
+    using type = T;
+};
+template <typename T>
+struct SwapUnit<std::complex<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+void SwapElements(char *buf, size_t byteCount)
+{
+    using U = typename SwapUnit<T>::type;
+    for (size_t off = 0; off + sizeof(U) <= byteCount; off += sizeof(U))
+        std::reverse(buf + off, buf + off + sizeof(U));
+}
+
+// Runtime-typed dispatch for the batch path (element type known only as DataType).
+void SwapByType(char *buf, size_t byteCount, adios2::DataType t)
+{
+#define SWAP_CASE(T)                                                                               \
+    else if (t == adios2::helper::GetDataType<T>())                                                \
+    {                                                                                              \
+        SwapElements<T>(buf, byteCount);                                                           \
+    }
+    if (false)
+    {
+    }
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(SWAP_CASE)
+#undef SWAP_CASE
 }
 }
 
@@ -679,12 +718,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             RespondErr(msg.c_str(), EINVAL);
             return;
         }
-        if (ClientBigEndian != !adios2::helper::IsLittleEndian())
-        {
-            LogReject(Filename, "byteorder", static_cast<uint32_t>(NVars));
-            RespondErr("batchget: cross-endian remote reads not supported", EINVAL);
-            return;
-        }
+        // Deliver data in the client's byte order; swap at the packing boundary below.
+        const bool swapByteOrder = (ClientBigEndian != !adios2::helper::IsLittleEndian());
 
         try
         {
@@ -807,6 +842,19 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             if (ctx)
             {
                 engine.PerformGets(*ctx);
+            }
+
+            // Convert the response to the client's byte order (framing + each
+            // variable's data) when it differs from ours.
+            if (swapByteOrder)
+            {
+                char *dp = m_responseBuffer + headerSize;
+                for (size_t v = 0; v < NVars; v++)
+                {
+                    SwapByType(dp, dataSizes[v], io.InquireVariableType(varRequests[v].VarName));
+                    dp += dataSizes[v];
+                }
+                SwapElements<uint64_t>(m_responseBuffer, headerSize);
             }
 
             // Track bytes served and operation count
@@ -986,12 +1034,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             RespondErr(msg.c_str(), EINVAL);
             return;
         }
-        if (ClientBigEndian != !adios2::helper::IsLittleEndian())
-        {
-            LogReject(Filename, "byteorder", 1);
-            RespondErr("get: cross-endian remote reads not supported", EINVAL);
-            return;
-        }
+        // Deliver data in the client's byte order; swap at the packing boundary below.
+        const bool swapByteOrder = (ClientBigEndian != !adios2::helper::IsLittleEndian());
         //  Get a "anonymous" engine with this file open with this array order.
         //  (any other differentiating characteristics of an ADIOS Open should be included in these
         //  parameters.) We'll use this engine for the Get(), then return it to the pool. Memory to
@@ -1059,6 +1103,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});                  \
             engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                            \
         }                                                                                          \
+        if (swapByteOrder)                                                                         \
+            SwapElements<T>(m_responseBuffer, m_responseBufferSize);                               \
     }
                 if (false)
                 {
