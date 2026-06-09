@@ -31,10 +31,10 @@ static const char *const engines[] = {"BP3",
 #ifdef ADIOS2_HAVE_MPI
                                       "SSC",
 #endif
-#ifdef ADIOS2_HAVE_DataMan
+#ifdef ADIOS2_HAVE_DATAMAN
                                       "DataMan",
 #endif
-#ifdef ADIOS2_HAVE_DataSpaces
+#ifdef ADIOS2_HAVE_DATASPACES
                                       "DataSpaces",
 #endif
                                       "Inline",
@@ -47,8 +47,6 @@ static const char *const engines[] = {"BP3",
 #ifdef ADIOS2_HAVE_CATALYST
                                       "ParaViewADIOSInSituEngine",
 #endif
-                                      "Null",
-                                      "Skeleton",
                                       nullptr};
 
 void adios2_available_engines(size_t *nentries, const char *const **list)
