@@ -104,6 +104,7 @@ public:
     char *responseBuffer;
     int responseBufferLen;
     char *dest;
+    size_t expectedSize = 0; // expected response bytes; 0 = unchecked
     std::promise<bool> *promise;
 
 private:
@@ -251,8 +252,19 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // fill in destination buffer
+    // fill in destination buffer; reject a response that would overrun dest
+    // (stale metadata, wrong-size reply). 0 = caller gave no expected size.
     //
+    if (expectedSize != 0 &&
+        static_cast<size_t>(totbytes) + static_cast<size_t>(dlen) > expectedSize)
+    {
+        fprintf(XrdSsiCl::outFile, "Response exceeds expected %zu bytes for %s\n", expectedSize,
+                rName);
+        promise->set_value(false);
+        Finished();
+        delete this;
+        return;
+    }
     totbytes += dlen;
     memcpy(dest, buff, dlen);
 
@@ -339,7 +351,7 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
 
 Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                     size_t BlockID, Dims &Count, Dims &Start, Accuracy &accuracy,
-                                    void *dest)
+                                    void *dest, size_t destSize)
 {
 // FIXME: StepCount is not implemented here yet
 #ifdef ADIOS2_HAVE_XROOTD
@@ -385,6 +397,7 @@ Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t Ste
     reqP = new myRequest(clUI, rName, GetReqID(), reqDataStr, reqLen);
     reqP->SetResource(rSpec);
     reqP->dest = (char *)dest;
+    reqP->expectedSize = destSize;
     reqP->promise = new std::promise<bool>();
     // We simply hand off the request to the service to deal with it. When a
     // response is ready or an error occured our callback is invoked.

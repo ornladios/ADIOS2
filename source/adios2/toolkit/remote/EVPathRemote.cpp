@@ -291,7 +291,7 @@ void EVPathRemote::Close()
 
 EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                           size_t BlockID, Dims &Count, Dims &Start,
-                                          Accuracy &accuracy, void *dest)
+                                          Accuracy &accuracy, void *dest, size_t destSize)
 {
     EVPathRemoteCommon::_GetRequestMsg GetMsg;
     if (!m_Active)
@@ -300,6 +300,10 @@ EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size
 
     memset(&GetMsg, 0, sizeof(GetMsg));
     GetMsg.GetResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    {
+        const std::lock_guard<std::mutex> lock(m_ResponsesMutex);
+        m_ExpectedSizes[GetMsg.GetResponseCondition] = destSize;
+    }
     GetMsg.FileHandle = m_ID;
     GetMsg.VarName = VarName;
     GetMsg.Step = Step;
@@ -332,6 +336,18 @@ void EVPathRemote::ProcessReadResponse(GetHandle handle)
     }
 
     EVPathRemoteCommon::ReadResponseMsg read_response_msg = it->second;
+
+    size_t expectedSize = 0;
+    {
+        const std::lock_guard<std::mutex> lock(m_ResponsesMutex);
+        auto eit = m_ExpectedSizes.find((int)(intptr_t)handle);
+        if (eit != m_ExpectedSizes.end())
+        {
+            expectedSize = eit->second;
+            m_ExpectedSizes.erase(eit);
+        }
+    }
+
     switch (read_response_msg->OperatorType)
     {
 
@@ -350,6 +366,12 @@ void EVPathRemote::ProcessReadResponse(GetHandle handle)
     }
 
     case adios2::core::Operator::OperatorType::COMPRESS_NULL:
+        // Reject a response that would overrun dest. Compressed cases bound
+        // their output in the operator, not here.
+        if (expectedSize != 0 && read_response_msg->Size > expectedSize)
+            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "ProcessReadResponse",
+                                              "remote response larger than the expected buffer "
+                                              "size");
         memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
         break;
     default:

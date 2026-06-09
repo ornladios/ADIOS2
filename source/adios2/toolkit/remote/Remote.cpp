@@ -43,7 +43,8 @@ void Remote::OpenReadSimpleFile(const std::string hostname, const int32_t port,
 };
 
 Remote::GetHandle Remote::Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
-                              Dims &Count, Dims &Start, Accuracy &accuracy, void *dest)
+                              Dims &Count, Dims &Start, Accuracy &accuracy, void *dest,
+                              size_t /*destSize*/)
 {
     ThrowUp("RemoteGet");
     return (Remote::GetHandle)(intptr_t)0;

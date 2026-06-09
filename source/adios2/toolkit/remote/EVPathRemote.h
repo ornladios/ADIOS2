@@ -64,7 +64,7 @@ public:
                             const std::string filename, std::vector<char> &contents);
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest);
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize);
 
     bool WaitForGet(GetHandle handle);
 
@@ -88,7 +88,8 @@ public:
 #ifdef ADIOS2_HAVE_SST
     std::mutex m_ResponsesMutex;
     std::map<int, EVPathRemoteCommon::ReadResponseMsg>
-        m_Responses; // read/get responses to be processed
+        m_Responses;                       // read/get responses to be processed
+    std::map<int, size_t> m_ExpectedSizes; // per-request expected dest bytes (0 = unchecked)
 #endif
 
 private:

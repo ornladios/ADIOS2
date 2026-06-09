@@ -133,13 +133,26 @@ void CurlMultiPool::ProcessCompletedTransfers()
 
                     if (httpCode == 200 || httpCode == 201)
                     {
-                        if (asyncOp->destBuffer && !asyncOp->responseData.empty())
+                        // Reject a response that would overrun dest; 0 = caller
+                        // gave no expected size.
+                        if (asyncOp->expectedSize != 0 &&
+                            asyncOp->responseData.size() > asyncOp->expectedSize)
                         {
-                            memcpy(asyncOp->destBuffer, asyncOp->responseData.data(),
-                                   asyncOp->responseData.size());
-                            asyncOp->destSize = asyncOp->responseData.size();
+                            asyncOp->errorMsg = "response size " +
+                                                std::to_string(asyncOp->responseData.size()) +
+                                                " exceeds expected " +
+                                                std::to_string(asyncOp->expectedSize) + " bytes";
                         }
-                        success = true;
+                        else
+                        {
+                            if (asyncOp->destBuffer && !asyncOp->responseData.empty())
+                            {
+                                memcpy(asyncOp->destBuffer, asyncOp->responseData.data(),
+                                       asyncOp->responseData.size());
+                                asyncOp->destSize = asyncOp->responseData.size();
+                            }
+                            success = true;
+                        }
                     }
                     else
                     {
@@ -685,9 +698,17 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
         for (size_t i = 0; i < nVars; i++)
         {
-            if (requests[sb.startIdx + i].dest && sizes[i] > 0)
+            auto &req = requests[sb.startIdx + i];
+            // Reject a chunk that would overrun dest (stale metadata, wrong-size
+            // reply); destSize 0 = caller gave no expected size.
+            if (req.destSize != 0 && sizes[i] > req.destSize)
             {
-                memcpy(requests[sb.startIdx + i].dest, ptr, sizes[i]);
+                allOk = false;
+                break;
+            }
+            if (req.dest && sizes[i] > 0)
+            {
+                memcpy(req.dest, ptr, sizes[i]);
             }
             ptr += sizes[i];
         }
@@ -705,7 +726,7 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
 Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                         size_t BlockID, Dims &Count, Dims &Start,
-                                        Accuracy &accuracy, void *dest)
+                                        Accuracy &accuracy, void *dest, size_t destSize)
 {
     if (!m_OpenSuccess)
     {
@@ -719,6 +740,7 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
 
     AsyncGet *asyncOp = new AsyncGet();
     asyncOp->destBuffer = dest;
+    asyncOp->expectedSize = destSize;
 
     std::string url =
         m_BaseUrl + "/" + m_FileConfigSegment + "/" +
