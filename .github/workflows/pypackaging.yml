@@ -123,9 +123,9 @@ jobs:
       - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
         env:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
-          # free-threaded and prerelease are both opt-in groups in cibuildwheel;
-          # cp314t requires both since 3.14 is still prerelease
-          CIBW_ENABLE: cpython-freethreading cpython-prerelease
+          # 3.14 is still prerelease; free-threaded builds are selected
+          # explicitly by CIBW_BUILD below.
+          CIBW_ENABLE: cpython-prerelease
           # free-threaded (no-GIL) wheels (enabled via pyproject.toml override)
           CIBW_BUILD: >-
             cp313t-manylinux_x86_64
