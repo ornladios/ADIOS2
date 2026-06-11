@@ -14,6 +14,10 @@ python/ @ornladios/infrastructure
 scripts/ @ornladios/infrastructure
 thirdparty/ @ornladios/infrastructure
 
+# Needed for dependabot
+docs/environment.yml @ornladios/infrastructure
+pyproject.toml @ornladios/infrastructure
+
 plugins/ @caitlinross
 source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
 
