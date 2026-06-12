@@ -729,7 +729,13 @@ elseif(ADIOS2_USE_Campaign)
     message(STATUS "Sqlite3 and ZLIB found. Turn on Campaign Management")
     set(ADIOS2_HAVE_Campaign TRUE)
   endif()
-endif()  
+endif()
+
+# FindSQLite3 provided SQLite::SQLite3 prior to CMake 4.3, which renamed it
+# to SQLite3::SQLite3: https://cmake.org/cmake/help/latest/module/FindSQLite3.html
+if(SQLite3_FOUND AND NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+  add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
 
 # KVCache
 if(ADIOS2_USE_KVCACHE STREQUAL AUTO)
