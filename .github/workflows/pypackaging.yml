@@ -76,7 +76,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
         env:
-          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           CIBW_BUILD: >-
             cp39-manylinux_x86_64
             cp310-manylinux_x86_64
@@ -100,7 +100,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
         env:
-          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
           CIBW_BUILD: cp312-manylinux_x86_64
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
@@ -122,7 +122,7 @@ jobs:
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
         env:
-          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel
+          CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           # cp314t free-threaded (no-GIL) wheel, enabled via pyproject.toml override.
           # cibuildwheel v4 dropped cp313t support; cp314t builds by default.
           CIBW_BUILD: cp314t-manylinux_x86_64
