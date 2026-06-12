@@ -37,6 +37,7 @@ if [ ! -f xroot-http/certs/server.crt ]; then
         -keyout xroot-http/certs/server.key \
         -out xroot-http/certs/server.crt \
         -subj "/CN=localhost" \
+        -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
         -batch; then
         echo "Certificate generated successfully"
         # Key permissions will be adjusted by start script if needed for user switching

@@ -552,17 +552,23 @@ void BP5Reader::PerformGets()
         if (m_BP5Deserializer->DefaultGetContext().PendingGetRequests.size() == 0)
             return;
 
-#ifdef ADIOS2_HAVE_CURL
+#if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
         if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
             (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
-             m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS))
+             m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS ||
+             m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl))
         {
-            // Determine if using HTTPS or plain HTTP
-            const bool useHttps = (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
+            // XrdCl reaches the origin/federation over HTTPS; the libcurl path
+            // additionally supports plain HTTP.
+            const bool useXrdCl = (m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl);
+            const bool useHttps =
+                useXrdCl || (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
             auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
             m_Remote = std::make_unique<XrootdHttpRemote>(ADIOS::GetHostOptions());
             Params params;
             params["UseHttps"] = useHttps ? "true" : "false";
+            if (useXrdCl)
+                params["Backend"] = "XrdCl";
             // For testing, disable SSL verification (only relevant for HTTPS)
             if (useHttps) // && getenv("XRootDHttpsNoVerify"))
             {
@@ -1216,7 +1222,7 @@ void BP5Reader::Init()
     if (!m_Parameters.RemoteDataPath.empty())
         m_dataIsRemote = true;
     if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
-        getenv("DoXRootDHttp"))
+        getenv("DoXRootDHttp") || getenv("DoXRootDXrdCl"))
         m_dataIsRemote = true;
 
     if (m_dataIsRemote)
@@ -1226,7 +1232,7 @@ void BP5Reader::Init()
             m_RemoteName = m_Parameters.RemoteDataPath;
         }
         else if (getenv("DoRemote") || getenv("DoXRootD") || getenv("DoXRootDHttps") ||
-                 getenv("DoXRootDHttp"))
+                 getenv("DoXRootDHttp") || getenv("DoXRootDXrdCl"))
         {
             m_RemoteName = m_Name;
         }
@@ -1258,7 +1264,16 @@ void BP5Reader::Init()
         }
         else
         {
-            if (getenv("DoXRootDHttps"))
+            if (getenv("DoXRootDXrdCl"))
+            {
+                // XrdCl client against the same HTTPS server (reuses XRootDHttpsHost).
+                char *env = getenv("XRootDHttpsHost");
+                if (env)
+                    m_RemoteHost = std::string(env);
+                m_RemoteProtocol = HostAccessProtocol::XRootD;
+                m_XrootdTransferProtocol = XRootDTransferProtocol::XrdCl;
+            }
+            else if (getenv("DoXRootDHttps"))
             {
                 char *env = getenv("XRootDHttpsHost");
                 if (env)

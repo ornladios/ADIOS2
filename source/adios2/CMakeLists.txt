@@ -267,15 +267,23 @@ if(ADIOS2_HAVE_OpenSSL)
 endif()
 
 if(ADIOS2_HAVE_XRootD)
-  target_sources(adios2_core PRIVATE toolkit/remote/XrootdRemote.cpp)
+  # Native XRootD (XrdSsi) remote, plus the XrdCl HTTP-lane backend (uses libXrdCl,
+  # the CLIENT component, to reach a Pelican federation or an HTTPS origin)
+  target_sources(adios2_core PRIVATE toolkit/remote/XrootdRemote.cpp toolkit/remote/XrdClBackend.cpp)
   target_include_directories(adios2_core PRIVATE ${XROOTD_INCLUDE_DIRS})
   target_link_libraries(adios2_core PRIVATE ${XROOTD_CLIENT_LIBRARIES} ${XROOTD_UTILS_LIBRARIES} ${XROOTD_SSI_LIBRARIES})
 endif()
 
 if(ADIOS2_HAVE_CURL)
-  # HTTP/HTTPS-based remote access to XRootD SSI services (alternative to native XRootD protocol)
-  target_sources(adios2_core PRIVATE toolkit/remote/XrootdHttpRemote.cpp)
+  # libcurl HTTP-lane backend
+  target_sources(adios2_core PRIVATE toolkit/remote/LibcurlBackend.cpp)
   target_link_libraries(adios2_core PRIVATE CURL::libcurl)
+endif()
+
+if(ADIOS2_HAVE_CURL OR ADIOS2_HAVE_XRootD)
+  # HTTP-lane remote: path-encoded request grammar + response framing, served by
+  # a libcurl or XrdCl backend (alternative to the native XRootD protocol)
+  target_sources(adios2_core PRIVATE toolkit/remote/XrootdHttpRemote.cpp)
 endif()
 
 if(ADIOS2_HAVE_SST)

@@ -26,250 +26,14 @@
 #endif
 
 #ifdef ADIOS2_HAVE_CURL
-#include <curl/curl.h>
+#include "LibcurlBackend.h"
+#endif
+#ifdef ADIOS2_HAVE_XROOTD
+#include "XrdClBackend.h"
 #endif
 
 namespace adios2
 {
-
-#ifdef ADIOS2_HAVE_CURL
-
-namespace
-{
-
-size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-    size_t totalSize = size * nmemb;
-    std::vector<char> *buffer = static_cast<std::vector<char> *>(userp);
-    char *data = static_cast<char *>(contents);
-    buffer->insert(buffer->end(), data, data + totalSize);
-    return totalSize;
-}
-
-} // anonymous namespace
-
-// ======================================================================
-// CurlMultiPool implementation
-// ======================================================================
-
-CurlMultiPool &CurlMultiPool::getInstance()
-{
-    static CurlMultiPool instance;
-    return instance;
-}
-
-CurlMultiPool::CurlMultiPool()
-{
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-
-    m_MultiHandle = curl_multi_init();
-    if (!m_MultiHandle)
-    {
-        helper::Log("Remote", "CurlMultiPool", "CurlMultiPool",
-                    "Failed to initialize CURL multi handle", helper::LogMode::FATALERROR);
-        return;
-    }
-
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAXCONNECTS, 50L);
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS, 50L);
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
-
-    m_Running = true;
-    m_WorkerThread = std::thread(&CurlMultiPool::WorkerLoop, this);
-}
-
-CurlMultiPool::~CurlMultiPool()
-{
-    {
-        std::lock_guard<std::mutex> lock(m_QueueMutex);
-        m_Running = false;
-    }
-    m_QueueCV.notify_all();
-
-    if (m_WorkerThread.joinable())
-    {
-        m_WorkerThread.join();
-    }
-
-    if (m_MultiHandle)
-    {
-        curl_multi_cleanup(m_MultiHandle);
-        m_MultiHandle = nullptr;
-    }
-}
-
-void CurlMultiPool::Submit(CURL *easyHandle, AsyncGet *asyncOp)
-{
-    {
-        std::lock_guard<std::mutex> lock(m_QueueMutex);
-        m_PendingQueue.push_back({easyHandle, asyncOp});
-    }
-    m_QueueCV.notify_one();
-}
-
-void CurlMultiPool::ProcessCompletedTransfers()
-{
-    CURLMsg *msg;
-    int msgsLeft;
-
-    while ((msg = curl_multi_info_read(m_MultiHandle, &msgsLeft)))
-    {
-        if (msg->msg == CURLMSG_DONE)
-        {
-            CURL *easy = msg->easy_handle;
-            CURLcode result = msg->data.result;
-
-            AsyncGet *asyncOp = nullptr;
-            curl_easy_getinfo(easy, CURLINFO_PRIVATE, &asyncOp);
-
-            if (asyncOp)
-            {
-                bool success = false;
-
-                if (result == CURLE_OK)
-                {
-                    long httpCode = 0;
-                    curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &httpCode);
-
-                    if (httpCode == 200 || httpCode == 201)
-                    {
-                        // Reject a response that would overrun dest; 0 = caller
-                        // gave no expected size.
-                        if (asyncOp->expectedSize != 0 &&
-                            asyncOp->responseData.size() > asyncOp->expectedSize)
-                        {
-                            asyncOp->errorMsg = "response size " +
-                                                std::to_string(asyncOp->responseData.size()) +
-                                                " exceeds expected " +
-                                                std::to_string(asyncOp->expectedSize) + " bytes";
-                        }
-                        else
-                        {
-                            if (asyncOp->destBuffer && !asyncOp->responseData.empty())
-                            {
-                                memcpy(asyncOp->destBuffer, asyncOp->responseData.data(),
-                                       asyncOp->responseData.size());
-                                asyncOp->destSize = asyncOp->responseData.size();
-                            }
-                            success = true;
-                        }
-                    }
-                    else
-                    {
-                        std::ostringstream ss;
-                        ss << "HTTP error " << httpCode;
-                        if (!asyncOp->responseData.empty())
-                        {
-                            ss << ": "
-                               << std::string(asyncOp->responseData.begin(),
-                                              asyncOp->responseData.end());
-                        }
-                        asyncOp->errorMsg = ss.str();
-                    }
-                }
-                else
-                {
-                    asyncOp->errorMsg = curl_easy_strerror(result);
-                }
-
-                // Clean up headers and easy handle BEFORE signaling completion.
-                // Once set_value() is called, the waiting thread in WaitForGet()
-                // may immediately delete asyncOp, causing use-after-free.
-                if (asyncOp->headers)
-                {
-                    curl_slist_free_all(asyncOp->headers);
-                    asyncOp->headers = nullptr;
-                }
-
-                curl_multi_remove_handle(m_MultiHandle, easy);
-                curl_easy_cleanup(easy);
-                easy = nullptr;
-
-                asyncOp->promise.set_value(success);
-            }
-
-            if (easy)
-            {
-                curl_multi_remove_handle(m_MultiHandle, easy);
-                curl_easy_cleanup(easy);
-            }
-        }
-    }
-}
-
-void CurlMultiPool::WorkerLoop()
-{
-    while (true)
-    {
-        // Drain pending queue into curl multi handle
-        {
-            std::unique_lock<std::mutex> lock(m_QueueMutex);
-
-            while (!m_PendingQueue.empty())
-            {
-                PendingSubmit req = m_PendingQueue.front();
-                m_PendingQueue.pop_front();
-
-                CURLMcode rc = curl_multi_add_handle(m_MultiHandle, req.easyHandle);
-                if (rc != CURLM_OK)
-                {
-                    req.asyncOp->errorMsg =
-                        std::string("curl_multi_add_handle failed: ") + curl_multi_strerror(rc);
-                    req.asyncOp->promise.set_value(false);
-                    if (req.asyncOp->headers)
-                    {
-                        curl_slist_free_all(req.asyncOp->headers);
-                        req.asyncOp->headers = nullptr;
-                    }
-                    curl_easy_cleanup(req.easyHandle);
-                }
-            }
-        }
-
-        // Drive transfers and process completions
-        int runningHandles = 0;
-        curl_multi_perform(m_MultiHandle, &runningHandles);
-        ProcessCompletedTransfers();
-
-        // Check if we should block waiting for new work
-        if (runningHandles == 0)
-        {
-            std::unique_lock<std::mutex> lock(m_QueueMutex);
-            if (!m_Running && m_PendingQueue.empty())
-            {
-                break;
-            }
-            if (m_PendingQueue.empty())
-            {
-                m_QueueCV.wait(lock);
-            }
-            continue;
-        }
-
-        // Skip waiting if new requests are queued -- submit them immediately
-        {
-            std::lock_guard<std::mutex> lock(m_QueueMutex);
-            if (!m_PendingQueue.empty())
-            {
-                continue;
-            }
-        }
-
-        // Wait for socket activity (up to 10ms)
-        int numfds;
-        CURLMcode mc = curl_multi_wait(m_MultiHandle, nullptr, 0, 10, &numfds);
-        if (mc != CURLM_OK)
-        {
-            helper::Log("Remote", "CurlMultiPool", "WorkerLoop",
-                        "curl_multi_wait failed: " + std::string(curl_multi_strerror(mc)),
-                        helper::LogMode::WARNING);
-        }
-    }
-
-    ProcessCompletedTransfers();
-}
-
-#endif // ADIOS2_HAVE_CURL
 
 // ======================================================================
 // XrootdHttpRemote implementation
@@ -368,7 +132,8 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     for (const auto &p : params)
     {
         if (p.first != "UseHttps" && p.first != "CAPath" && p.first != "VerifySSL" &&
-            p.first != "ConnectTimeout" && p.first != "RequestTimeout" && p.first != "FileUUID")
+            p.first != "ConnectTimeout" && p.first != "RequestTimeout" && p.first != "FileUUID" &&
+            p.first != "Backend")
         {
             engineParams[p.first] = p.second;
         }
@@ -387,51 +152,48 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     // the file-config path segment and reused on every request.
     m_FileConfigSegment = BuildFileConfigSegment();
 
+    // Select the HTTP transport.  "Backend=XrdCl" routes through XrdCl::File
+    // (Pelican/xrdcl-curl); the default is libcurl.
+    std::string backend = "Libcurl";
+    it = params.find("Backend");
+    if (it != params.end())
+        backend = it->second;
+
+    if (backend == "XrdCl")
+    {
+#ifdef ADIOS2_HAVE_XROOTD
+        m_Backend.reset(new XrdClBackend());
+#else
+        helper::Throw<std::runtime_error>(
+            "Remote", "XrootdHttpRemote", "Open",
+            "XrdCl backend requested but ADIOS2 was not built with XRootD");
+        return;
+#endif
+    }
+    else
+    {
+#ifdef ADIOS2_HAVE_CURL
+        m_Backend.reset(new LibcurlBackend());
+#else
+        helper::Throw<std::runtime_error>(
+            "Remote", "XrootdHttpRemote", "Open",
+            "libcurl backend requested but ADIOS2 was not built with CURL");
+        return;
+#endif
+    }
+
+    RemoteHttpBackend::Config cfg;
+    cfg.useHttps = m_UseHttps;
+    cfg.connectTimeout = m_ConnectTimeout;
+    cfg.requestTimeout = m_RequestTimeout;
+    cfg.caCertPath = m_CACertPath;
+    cfg.verifySSL = m_VerifySSL;
+    m_Backend->SetConfig(cfg);
+
     m_OpenSuccess = true;
 }
 
 void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
-
-CURL *XrootdHttpRemote::CreateEasyHandle(AsyncGet *asyncOp, const std::string &url)
-{
-#ifdef ADIOS2_HAVE_CURL
-    CURL *easy = curl_easy_init();
-    if (!easy)
-        return nullptr;
-
-    curl_easy_setopt(easy, CURLOPT_PRIVATE, asyncOp);
-    asyncOp->easyHandle = easy;
-
-    curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
-    curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(easy, CURLOPT_WRITEDATA, &asyncOp->responseData);
-    curl_easy_setopt(easy, CURLOPT_CONNECTTIMEOUT, m_ConnectTimeout);
-    curl_easy_setopt(easy, CURLOPT_TIMEOUT, m_RequestTimeout);
-
-    if (m_UseHttps)
-    {
-        if (!m_VerifySSL)
-        {
-            curl_easy_setopt(easy, CURLOPT_SSL_VERIFYPEER, 0L);
-            curl_easy_setopt(easy, CURLOPT_SSL_VERIFYHOST, 0L);
-        }
-        else
-        {
-            curl_easy_setopt(easy, CURLOPT_SSL_VERIFYPEER, 1L);
-            curl_easy_setopt(easy, CURLOPT_SSL_VERIFYHOST, 2L);
-            if (!m_CACertPath.empty())
-                curl_easy_setopt(easy, CURLOPT_CAINFO, m_CACertPath.c_str());
-        }
-    }
-
-    curl_easy_setopt(easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
-
-    return easy;
-#else
-    return nullptr;
-#endif
-}
 
 // ---------------------------------------------------------------------
 // Path-encoded URL builders (Pelican/XCache-friendly form).
@@ -538,6 +300,23 @@ std::string XrootdHttpRemote::BuildBatchGetSegment(const std::vector<BatchGetReq
     return s.str();
 }
 
+// Expected size of a framed batch response:
+//   [uint64 NVars][uint64 size_0 … size_{N-1}][data_0 … data_{N-1}]
+// Returns 0 (unchecked) if any sub-request lacks a known destSize, since then
+// the total can't be predicted (the libcurl backend streams to EOF; the XrdCl
+// backend needs this size to issue its read).
+static size_t ExpectedBatchResponseSize(const std::vector<Remote::BatchGetRequest> &reqs)
+{
+    size_t total = sizeof(uint64_t) * (1 + reqs.size());
+    for (const auto &r : reqs)
+    {
+        if (r.destSize == 0)
+            return 0;
+        total += r.destSize;
+    }
+    return total;
+}
+
 bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 {
     if (!m_OpenSuccess || requests.empty())
@@ -552,14 +331,11 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         return false;
     }
 
-#ifdef ADIOS2_HAVE_CURL
     // Split requests into sub-batches for server-side parallelism.
-    // Each sub-batch becomes a separate HTTP POST handled by its own
+    // Each sub-batch becomes a separate HTTP request handled by its own
     // server thread, giving us parallelism without individual-Get overhead.
     const size_t subBatchSize = 10;
     size_t nBatches = (requests.size() + subBatchSize - 1) / subBatchSize;
-
-    CurlMultiPool &pool = CurlMultiPool::getInstance();
 
     // Track each sub-batch: its offset into requests[], count, and async state
     struct SubBatch
@@ -582,20 +358,8 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
             m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
 
         AsyncGet *asyncOp = new AsyncGet();
-        CURL *easy = CreateEasyHandle(asyncOp, url);
-        if (!easy)
-        {
-            delete asyncOp;
-            // Wait for already-submitted sub-batches before returning
-            for (auto &sb : subBatches)
-            {
-                sb.asyncOp->promise.get_future().get();
-                delete sb.asyncOp;
-            }
-            return false;
-        }
-
-        pool.Submit(easy, asyncOp);
+        asyncOp->expectedSize = ExpectedBatchResponseSize(subRequests);
+        m_Backend->SubmitGet(url, asyncOp);
         subBatches.push_back({startIdx, count, asyncOp});
     }
 
@@ -629,13 +393,8 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
                     m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
 
                 AsyncGet *retryOp = new AsyncGet();
-                CURL *easy = CreateEasyHandle(retryOp, url);
-                if (!easy)
-                {
-                    delete retryOp;
-                    continue;
-                }
-                pool.Submit(easy, retryOp);
+                retryOp->expectedSize = ExpectedBatchResponseSize(subRequests);
+                m_Backend->SubmitGet(url, retryOp);
                 success = retryOp->promise.get_future().get();
                 if (success)
                 {
@@ -717,11 +476,6 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
     }
 
     return allOk;
-#else
-    helper::Log("Remote", "XrootdHttpRemote", "BatchGet", "ADIOS2 was not built with CURL support",
-                helper::LogMode::WARNING);
-    return false;
-#endif
 }
 
 Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t StepCount,
@@ -733,11 +487,6 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
         return nullptr;
     }
 
-#ifdef ADIOS2_HAVE_CURL
-    // Get pool reference first to ensure curl_global_init() runs
-    // before any curl_easy_init() calls in CreateEasyHandle()
-    CurlMultiPool &pool = CurlMultiPool::getInstance();
-
     AsyncGet *asyncOp = new AsyncGet();
     asyncOp->destBuffer = dest;
     asyncOp->expectedSize = destSize;
@@ -745,20 +494,8 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
     std::string url =
         m_BaseUrl + "/" + m_FileConfigSegment + "/" +
         BuildSingleGetSegment(VarName, Step, StepCount, BlockID, Count, Start, accuracy);
-    CURL *easy = CreateEasyHandle(asyncOp, url);
-    if (!easy)
-    {
-        delete asyncOp;
-        return nullptr;
-    }
-
-    pool.Submit(easy, asyncOp);
+    m_Backend->SubmitGet(url, asyncOp);
     return static_cast<GetHandle>(asyncOp);
-#else
-    helper::Log("Remote", "XrootdHttpRemote", "Get", "ADIOS2 was not built with CURL support",
-                helper::LogMode::WARNING);
-    return nullptr;
-#endif
 }
 
 bool XrootdHttpRemote::WaitForGet(GetHandle handle)

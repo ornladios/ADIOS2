@@ -400,7 +400,8 @@ enum class XRootDTransferProtocol
 {
     XRootD,
     HTTP,
-    HTTPS
+    HTTPS,
+    XrdCl
 };
 
 struct HostConfig
