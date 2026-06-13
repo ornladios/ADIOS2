@@ -296,7 +296,7 @@ if(ADIOS2_HAVE_Campaign)
     engine/campaign/CampaignReader.tcc
     engine/campaign/CampaignData.cpp
     engine/campaign/CampaignManager.cpp)
-  target_link_libraries(adios2_core PRIVATE SQLite::SQLite3 ZLIB::ZLIB)
+  target_link_libraries(adios2_core PRIVATE SQLite3::SQLite3 ZLIB::ZLIB)
 
   if(ADIOS2_HAVE_Sodium)
     target_link_libraries(adios2_core PRIVATE sodium)
