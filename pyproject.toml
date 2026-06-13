@@ -33,6 +33,7 @@ classifiers = [
 ]
 dependencies = [
   "numpy>=1.22",
+  "pynacl; sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]
@@ -91,6 +92,8 @@ ADIOS2_USE_MPI = "OFF"
 ADIOS2_USE_OpenSSL = "ON"
 ADIOS2_USE_PIP = "ON"
 ADIOS2_USE_Python = "ON"
+ADIOS2_USE_SealKeygen = "ON"
+ADIOS2_USE_Sodium = "ON"
 ADIOS2_USE_SZ = "OFF"
 ADIOS2_USE_ZeroMQ = "OFF"
 ADIOS2_USE_ZFP = "OFF"
@@ -101,6 +104,7 @@ EVPATH_TRANSPORT_MODULES = "OFF"
 if.platform-system = "win32"
 cmake.define.ADIOS2_USE_OpenSSL = "OFF"
 cmake.define.ADIOS2_USE_CURL = "OFF"
+cmake.define.ADIOS2_USE_Sodium = "OFF"
 inherit.cmake.define = "append"
 
 [tool.ruff]
