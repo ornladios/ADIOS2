@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+set(ENV{CC}  cl)
+set(ENV{CXX} cl)
+set(ENV{CFLAGS} /WX)
+set(ENV{CXXFLAGS} /WX)
+
+# Tests need to find hdf5.dll
+set(ENV{PATH} "$ENV{PATH};C:/hdf5/HDF5-1.14.2.1-win64/bin")
+
+set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
+ADIOS2_USE_BZip2:BOOL=OFF
+ADIOS2_USE_Fortran:BOOL=OFF
+ADIOS2_USE_MPI:BOOL=OFF
+ADIOS2_USE_HDF5:STRING=ON
+ADIOS2_USE_Python:BOOL=ON
+ADIOS2_USE_HDF5_VOL:STRING=OFF
+
+Python_ROOT_DIR:PATH=$ENV{CMAKE_PREFIX_PATH}
+Python_FIND_STRATEGY:STRING=LOCATION
+Python_FIND_FRAMEWORK:STRING=FIRST
+")
+
+set(CTEST_CMAKE_GENERATOR "Visual Studio 18 2026")
+set(CTEST_CMAKE_GENERATOR_PLATFORM "x64")
+list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
+# https://github.com/ornladios/ADIOS2/issues/4276
+# https://github.com/ornladios/ADIOS2/issues/4279
+set(CTEST_TEST_ARGS EXCLUDE "Api.Python.FileReader|Api.Python.BPWriteTypesHighLevelAPI_HDF5")
+
+include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

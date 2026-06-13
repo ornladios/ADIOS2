@@ -1,0 +1,33 @@
+#mpich SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# vim: ft=dockerfile
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    ccache \
+    cmake \
+    curl \
+    git \
+    gfortran \
+    libblosc-dev \
+    libbz2-dev \
+    libcurl4-gnutls-dev \
+    libzmq3-dev \
+    ninja-build \
+    python3-dev \
+    python3-numpy && \
+    apt autoremove --purge -y && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100 && \
+    update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-11 100
+
+
+ENTRYPOINT ["/bin/bash", "--login"]
