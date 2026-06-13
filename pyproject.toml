@@ -33,6 +33,7 @@ classifiers = [
 ]
 dependencies = [
   "numpy>=1.22",
+  "pynacl; sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]
@@ -62,11 +63,12 @@ select = "cp312-*"
 config-settings."wheel.py-api" = "cp312"
 config-settings."cmake.define.ADIOS2_USE_PythonStableABI" = "ON"
 
-# For free-threaded Python 3.13t enable the free-threaded (no-GIL) extension.
+# For free-threaded Python 3.14t enable the free-threaded (no-GIL) extension.
 # Note: Py_LIMITED_API (abi3) is incompatible with free-threaded builds, so a
 # separate wheel must be built for each future free-threaded Python version.
+# cibuildwheel v4 dropped support for the experimental cp313t builds.
 [[tool.cibuildwheel.overrides]]
-select = "cp313t-*"
+select = "cp314t-*"
 config-settings."cmake.define.ADIOS2_USE_PythonFreeThreaded" = "ON"
 
 [tool.scikit-build]
@@ -90,6 +92,8 @@ ADIOS2_USE_MPI = "OFF"
 ADIOS2_USE_OpenSSL = "ON"
 ADIOS2_USE_PIP = "ON"
 ADIOS2_USE_Python = "ON"
+ADIOS2_USE_SealKeygen = "ON"
+ADIOS2_USE_Sodium = "ON"
 ADIOS2_USE_SZ = "OFF"
 ADIOS2_USE_ZeroMQ = "OFF"
 ADIOS2_USE_ZFP = "OFF"
@@ -100,6 +104,7 @@ EVPATH_TRANSPORT_MODULES = "OFF"
 if.platform-system = "win32"
 cmake.define.ADIOS2_USE_OpenSSL = "OFF"
 cmake.define.ADIOS2_USE_CURL = "OFF"
+cmake.define.ADIOS2_USE_Sodium = "OFF"
 inherit.cmake.define = "append"
 
 [tool.ruff]

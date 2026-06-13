@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM --platform=linux/amd64 fedora:latest@sha256:781b7642e8bf256e9cf75d2aa58d86f5cc695fd2df113517614e181a5eee9138
+FROM --platform=linux/amd64 fedora:latest
 
 # Install development tools
 RUN dnf update -y && \
@@ -60,6 +60,14 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -subj "/CN=localhost" \
     -batch && \
     chmod 644 /tmp/server.key /tmp/server.crt
+
+# Enable the ADIOS per-request access log (telemetry for offline access-pattern
+# analysis). Override at deploy time with -e ADIOS2_XROOTD_ACCESSLOG=<path>, or
+# set it empty to disable. Size-based rotation/retention default to ~2 GB; see
+# source/utils/xrootd-plugin/README.md. NOTE: /var/log/xrootd is in the
+# container's ephemeral layer, so mount a persistent volume there (or point the
+# path at one) to retain the log across container restarts.
+ENV ADIOS2_XROOTD_ACCESSLOG=/var/log/xrootd/access.jsonl
 
 # Expose HTTP port (Spin Ingress will terminate TLS and forward to this port)
 EXPOSE 8080

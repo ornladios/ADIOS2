@@ -26,7 +26,7 @@ jobs:
       BRANCH: ${{ github.event.inputs.target_branch }}
       PR: ${{ github.event.inputs.pr }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
         with:
           fetch-depth: 0
           token: ${{ secrets.BACKPORT_TOKEN }}
@@ -44,7 +44,7 @@ jobs:
 
           git checkout --track "origin/${BRANCH}"
           git checkout -b "backport-to-${BRANCH}-${PR}"
-          git cherry-pick --mainline 1 -x "${commit_hash}"
+          gh pr view --json commits --jq '.commits[].oid' "${PR}" | xargs -n1 git cherry-pick --mainline 1 -x 
           git push -f https://github.com/ornladios-robot/ADIOS2.git "backport-to-${BRANCH}-${PR}"
           gh api repos/ornladios/ADIOS2/pulls \
             --method POST \
