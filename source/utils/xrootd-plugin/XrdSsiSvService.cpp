@@ -34,6 +34,8 @@
 /******************************************************************************/
 
 #include <algorithm> // std::reverse
+#include <cerrno>
+#include <climits> // INT_MAX
 #include <complex>
 #include <fcntl.h>
 #include <iostream>
@@ -1202,7 +1204,18 @@ void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
     // We copy the response into a buffer that must live even after we return to
     // the caller because the data in that buffer will be sent back to the client.
     //
-    rLen = m_responseBufferSize;
+    // XrdSsiResponder::SetResponse takes an int length, so a single response is
+    // capped at ~2 GiB.  Reject an over-large response with a clear error rather
+    // than silently truncating it into a corrupt reply.  (Lifting this needs the
+    // streaming/chunked response path, not yet supported.)
+    if (m_responseBufferSize > static_cast<size_t>(INT_MAX))
+    {
+        RespondErr("response exceeds the 2 GiB single-response limit; request a "
+                   "smaller selection or fewer variables per batch",
+                   EFBIG);
+        return;
+    }
+    rLen = static_cast<int>(m_responseBufferSize);
     // We use the inherited method XrdSsiResponder::SetResponse to post the response
     // Note we always send the null byte to make it easy on the client :-)
     //

@@ -253,6 +253,48 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
          WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
    endmacro()
 
+   # Opt-in XrdCl-client variant: reader fetches via the xrdcl-curl plugin.
+   # Needs the prebuilt plugin: -DXRDCL_CURL_PLUGIN=<path/to/libXrdClCurl.dylib>.
+   set(XRDCL_CURL_PLUGIN "" CACHE FILEPATH "xrdcl-curl plugin for the XrdCl remote test")
+   if (XRDCL_CURL_PLUGIN)
+      set(XRDCL_PLUGIN_CONFDIR ${XROOTD_HTTPS_DIR}/xrdcl-plugins)
+      file(MAKE_DIRECTORY ${XRDCL_PLUGIN_CONFDIR})
+      file(WRITE ${XRDCL_PLUGIN_CONFDIR}/curl-plugin.conf
+         "url = http://*;https://*\nlib = ${XRDCL_CURL_PLUGIN}\nenable = true\n")
+      # Own working dir so .bp filenames don't alias the libcurl GetXRHttps tests.
+      set(XRDCL_WORK_DIR ${XROOTD_HTTPS_DIR}/xrdcl)
+      file(MAKE_DIRECTORY ${XRDCL_WORK_DIR})
+      macro(add_get_xrhttps_xrdcl_tests_helper testname)
+         add_test(NAME "Remote.BP${testname}.GetXRHttpsXrdCl" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+         set_tests_properties(Remote.BP${testname}.GetXRHttpsXrdCl PROPERTIES
+            FIXTURES_REQUIRED XRHttpsServer
+            ENVIRONMENT "DoXRootDXrdCl=1;XRootDHttpsHost=localhost:${XROOTD_HTTP_PORT};XRD_PLUGINCONFDIR=${XRDCL_PLUGIN_CONFDIR};X509_CERT_FILE=${XROOTD_HTTPS_DIR}/xroot-http/certs/server.crt"
+            WORKING_DIRECTORY ${XRDCL_WORK_DIR})
+      endmacro()
+   else()
+      macro(add_get_xrhttps_xrdcl_tests_helper testname)
+      endmacro()
+   endif()
+
+   # LEGACY WIRE-FORMAT REGRESSION TEST.  Released clients up through v2.12.x
+   # encode requests as a query string (?get&Varname=...); the current client
+   # speaks the path-encoded form.  This test hand-builds the legacy form and
+   # checks the server still answers it correctly.  Remove the test (and
+   # TestBPXRootDHttpLegacyWire.cpp) when legacy query-string support is
+   # retired from the server.
+   add_executable(Test.Engine.BP.XRootDHttpLegacyWire.Serial TestBPXRootDHttpLegacyWire.cpp)
+   target_link_libraries(Test.Engine.BP.XRootDHttpLegacyWire.Serial
+      adios2::cxx adios2_core adios2::thirdparty::gtest CURL::libcurl)
+   # Own working dir so .bp filenames don't alias other tests' server-side engines.
+   set(XROOTD_LEGACY_DIR ${XROOTD_HTTPS_DIR}/legacy-wire)
+   file(MAKE_DIRECTORY ${XROOTD_LEGACY_DIR})
+   add_test(NAME "Remote.BPXRootDHttpLegacyWire.GetXRHttps"
+      COMMAND Test.Engine.BP.XRootDHttpLegacyWire.Serial)
+   set_tests_properties(Remote.BPXRootDHttpLegacyWire.GetXRHttps PROPERTIES
+      FIXTURES_REQUIRED XRHttpsServer
+      ENVIRONMENT "XRootDHttpsHost=localhost:${XROOTD_HTTP_PORT}"
+      WORKING_DIRECTORY ${XROOTD_LEGACY_DIR})
+
    add_test(NAME generateXRootDHttpConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDHttpConfig.sh $<TARGET_FILE:adios2_xrootd> $<TARGET_FILE:adios2_xrootd_http> ${XROOTD_XRD_PORT} ${XROOTD_HTTP_PORT})
    set_tests_properties(generateXRootDHttpConfig PROPERTIES WORKING_DIRECTORY ${XROOTD_HTTPS_DIR})
 
@@ -266,6 +308,8 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    ##### add HTTPS remote tests below this line
    add_get_xrhttps_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_tests_helper(WriteMemorySelectionRead)
+   add_get_xrhttps_xrdcl_tests_helper(WriteReadADIOS2Transport)
+   add_get_xrhttps_xrdcl_tests_helper(WriteMemorySelectionRead)
 endif()
 
 if(ADIOS2_HAVE_MPI)

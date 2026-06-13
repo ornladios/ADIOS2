@@ -744,10 +744,25 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
         return SendError(req, 400, "GET request missing xrd-http-fullresource");
     }
 
-    std::string ssiCommand;
-    if (it->second.find('?') == std::string::npos)
+    // Decide the wire form by the query's first token, not by the mere presence
+    // of a query: the legacy form puts a bare verb (get/batchget) there, while
+    // an XrdCl/Pelican client appends opaque params (e.g. xrdclcurl.timeout=…,
+    // authz=…) to an otherwise path-encoded request.
+    bool legacyQuery = false;
     {
-        // No query string → new path-encoded form.
+        size_t qpos = it->second.find('?');
+        if (qpos != std::string::npos)
+        {
+            std::string query = it->second.substr(qpos + 1);
+            std::string verb = query.substr(0, query.find_first_of("&="));
+            legacyQuery = (verb == "get" || verb == "batchget");
+        }
+    }
+
+    std::string ssiCommand;
+    if (!legacyQuery)
+    {
+        // Path-encoded form (DecodePathEncodedRequest ignores any trailing query).
         std::string err;
         std::string pathResource;
         if (!DecodePathEncodedRequest(it->second, m_pathPrefix, ssiCommand, pathResource, err))

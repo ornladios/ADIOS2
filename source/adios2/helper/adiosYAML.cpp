@@ -354,6 +354,10 @@ XRootDTransferProtocol GetXRootDTransferProtocol(std::string valueStr)
     {
         return XRootDTransferProtocol::HTTP;
     }
+    else if (valueStr == "xrdcl")
+    {
+        return XRootDTransferProtocol::XrdCl;
+    }
     return XRootDTransferProtocol::XRootD;
 }
 

@@ -16,6 +16,14 @@ This document covers operator-facing configuration. Other operational knobs
 (file-pool FD/metadata limits, the admin HTTP interface) are described in the
 release notes and will be folded in here over time.
 
+## Limits
+
+A single response (one variable get, or one batch frame) is capped at 2 GiB, a
+bound imposed by the XRootD SSI response API. A request whose result would
+exceed it is rejected with an error telling the client to request a smaller
+selection or fewer variables per batch. Lifting the cap requires a streaming
+response path, which is not yet supported.
+
 ## Access log
 
 An optional per-request access log records every remote read as one JSON object

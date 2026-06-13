@@ -8,91 +8,24 @@
 #define ADIOS2_XROOTDHTTPREMOTE_H
 
 #include "Remote.h"
+#include "RemoteHttpBackend.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
-#include <atomic>
-#include <condition_variable>
-#include <deque>
-#include <future>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-
-// Forward declarations for CURL handles
-typedef void CURL;
-typedef void CURLM;
-struct curl_slist;
 
 namespace adios2
 {
 
-class XrootdHttpRemote;
-
 /**
- * @brief Async operation state for a single HTTP GET/POST request.
- */
-struct AsyncGet
-{
-    std::promise<bool> promise;
-    std::string errorMsg;
-    void *destBuffer = nullptr;
-    size_t destSize = 0;
-    size_t expectedSize = 0; // expected response bytes; 0 = unchecked
-    std::vector<char> responseData;
-    CURL *easyHandle = nullptr;
-    ::curl_slist *headers = nullptr;
-};
-
-/**
- * @brief A fully-configured easy handle waiting to be added to the multi handle.
- */
-struct PendingSubmit
-{
-    CURL *easyHandle;
-    AsyncGet *asyncOp;
-};
-
-/**
- * @brief Shared CURL multi pool singleton.
+ * @brief HTTP/HTTPS-based remote access to ADIOS data via an XRootD HTTP-SSI
+ * bridge or a Pelican federation.
  *
- * All XrootdHttpRemote instances submit fully-configured easy handles to
- * this pool. A single worker thread drives all transfers via one curl_multi
- * handle, bounding the total number of concurrent TCP connections.
- */
-class CurlMultiPool
-{
-public:
-    static CurlMultiPool &getInstance();
-
-    /** Submit a fully-configured easy handle for async execution. Thread-safe. */
-    void Submit(CURL *easyHandle, AsyncGet *asyncOp);
-
-    // Non-copyable, non-movable
-    CurlMultiPool(const CurlMultiPool &) = delete;
-    CurlMultiPool &operator=(const CurlMultiPool &) = delete;
-
-private:
-    CurlMultiPool();
-    ~CurlMultiPool();
-
-    void WorkerLoop();
-    void ProcessCompletedTransfers();
-
-    CURLM *m_MultiHandle = nullptr;
-    std::thread m_WorkerThread;
-    std::atomic<bool> m_Running{false};
-    std::mutex m_QueueMutex;
-    std::condition_variable m_QueueCV;
-    std::deque<PendingSubmit> m_PendingQueue;
-};
-
-/**
- * @brief HTTP/HTTPS-based remote access to ADIOS data via XRootD HTTP-SSI bridge
- *
- * All instances share a single CurlMultiPool for efficient connection pooling.
+ * This class owns URL building (the path-encoded, cache-friendly request
+ * grammar) and response framing/parsing.  The HTTP round trip itself is
+ * delegated to a RemoteHttpBackend (libcurl by default).
  */
 class XrootdHttpRemote : public Remote
 {
@@ -143,7 +76,9 @@ private:
     std::string BuildBatchGetSegment(const std::vector<BatchGetRequest> &requests);
 
     static std::string Base64urlEncode(const std::string &str);
-    CURL *CreateEasyHandle(AsyncGet *asyncOp, const std::string &url);
+
+    /** HTTP transport (libcurl by default). */
+    std::unique_ptr<RemoteHttpBackend> m_Backend;
 
     std::string m_BaseUrl;
     std::string m_Filename;
