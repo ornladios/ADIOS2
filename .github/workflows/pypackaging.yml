@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
+      - uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
         env:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           CIBW_BUILD: >-
@@ -98,7 +98,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
+      - uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
         env:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           # abi3 wheel valid for all CPython >= 3.12 (enabled via pyproject.toml override)
@@ -120,7 +120,7 @@ jobs:
           fetch-depth: 0
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
-      - uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
+      - uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
         env:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           # cp314t free-threaded (no-GIL) wheel, enabled via pyproject.toml override.
