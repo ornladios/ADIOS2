@@ -35,14 +35,14 @@ ZmqPubSub::~ZmqPubSub()
 void ZmqPubSub::OpenPublisher(const std::string &address)
 {
     m_ZmqContext = zmq_ctx_new();
-    if (not m_ZmqContext)
+    if (!m_ZmqContext)
     {
         helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenPublisher",
                                           "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
-    if (not m_ZmqSocket)
+    if (!m_ZmqSocket)
     {
         helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenPublisher",
                                           "creating zmq socket failed");
@@ -59,14 +59,14 @@ void ZmqPubSub::OpenPublisher(const std::string &address)
 void ZmqPubSub::OpenSubscriber(const std::string &address, const size_t bufferSize)
 {
     m_ZmqContext = zmq_ctx_new();
-    if (not m_ZmqContext)
+    if (!m_ZmqContext)
     {
         helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenSubscriber",
                                           "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_SUB);
-    if (not m_ZmqSocket)
+    if (!m_ZmqSocket)
     {
         helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenSubscriber",
                                           "creating zmq socket failed");
@@ -86,7 +86,7 @@ void ZmqPubSub::OpenSubscriber(const std::string &address, const size_t bufferSi
 
 void ZmqPubSub::Send(std::shared_ptr<std::vector<char>> buffer)
 {
-    if (buffer != nullptr and buffer->size() > 0)
+    if (buffer != nullptr && buffer->size() > 0)
     {
         zmq_send(m_ZmqSocket, buffer->data(), buffer->size(), ZMQ_DONTWAIT);
     }
