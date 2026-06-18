@@ -813,6 +813,8 @@ size_t CampaignData::FindReplicaOnHost(const size_t datasetIdx,
     {
         auto repIdx = it.first;
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
         for (auto &localAlias : localHostAliases)
             if (hosts[rep.hostIdx].hostname == localAlias)
             {
@@ -838,6 +840,8 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
         if (lf_KnownHost(hosts[rep.hostIdx].hostname) && !directory[rep.dirIdx].archive)
         {
             auto repIdx = it.first;
@@ -848,6 +852,8 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
 
         if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
             directory[rep.dirIdx].archiveSystemName == "fs")
@@ -860,6 +866,8 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
         if (lf_KnownHost(hosts[rep.hostIdx].hostname) && directory[rep.dirIdx].archive &&
             hosts[rep.hostIdx].defaultProtocol == "s3")
         {
@@ -871,6 +879,8 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
         if (directory[rep.dirIdx].archive && hosts[rep.hostIdx].defaultProtocol == "https")
         {
             auto repIdx = it.first;
@@ -881,6 +891,8 @@ std::vector<size_t> CampaignData::FindRemoteReplicas(const size_t datasetIdx,
     for (auto &it : datasets[datasetIdx].replicas)
     {
         auto &rep = it.second;
+        if (rep.deleted)
+            continue;
         if (!lf_KnownHost(hosts[rep.hostIdx].hostname) && !directory[rep.dirIdx].archive)
         {
             auto repIdx = it.first;

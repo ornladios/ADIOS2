@@ -739,9 +739,10 @@ void CampaignReader::InitTransports()
             CampaignDataset &ds = itDS.second;
             if (ds.tsid && (ds.format == FileFormat::HDF5 || ds.format == FileFormat::ADIOS))
                 continue;
-            std::cout << "    " << ds.name << "\n";
+            std::cout << "    " << ds.name << (ds.deleted ? " -- deleted" : "") << "\n";
             std::cout << "      uuid: " << ds.uuid << "\n";
             std::cout << "      fmt : " << ds.format.ToString() << "\n";
+
             for (auto &itRep : ds.replicas)
             {
                 CampaignReplica &rep = itRep.second;
@@ -756,7 +757,7 @@ void CampaignReader::InitTransports()
                 }
                 std::cout << "      " << m_CampaignData.hosts[rep.hostIdx].hostname << ":"
                           << m_CampaignData.directory[rep.dirIdx].path << "/" << tarpath << rep.name
-                          << "\n";
+                          << (rep.deleted ? " -- deleted" : "") << "\n";
                 if (rep.hasKey)
                 {
                     std::cout << "          key: " << rep.keyIdx << "\n";
@@ -817,6 +818,8 @@ void CampaignReader::InitTransports()
             continue;
 
         auto &ds = m_CampaignData.datasets[ts.datasets.begin()->second];
+        if (ds.deleted)
+            continue;
         if (ds.format == FileFormat::IMAGE || ds.format == FileFormat::TEXT)
             continue;
 
@@ -838,13 +841,22 @@ void CampaignReader::InitTransports()
             size_t tsorder = itDS.first;
             size_t dsIdx = itDS.second;
             CampaignDataset &ds = m_CampaignData.datasets[dsIdx];
-            if (!Matches(ds.name))
+            if (ds.deleted || !Matches(ds.name))
                 continue;
             std::string localPath;
             size_t repIdx = m_CampaignData.FindReplicaOnHost(dsIdx, m_LocalhostAliases);
             if (!repIdx)
             {
                 auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, ADIOS::GetHostOptions());
+                if (reps.empty())
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "      " << tsorder << ". " << ds.name
+                                  << " No replicas. Skipping \n";
+                    }
+                    continue;
+                }
                 size_t repIdx = reps.front();
                 std::string localPath = SaveRemoteMD(dsIdx, repIdx, io, true);
                 if (!localPath.empty())
@@ -894,6 +906,8 @@ void CampaignReader::InitTransports()
     {
         size_t dsIdx = it.first;
         CampaignDataset &ds = it.second;
+        if (ds.deleted)
+            continue;
         if (ds.tsid && (ds.format == FileFormat::HDF5 || ds.format == FileFormat::ADIOS))
             continue;
         if (ds.format == FileFormat::IMAGE)
@@ -908,6 +922,14 @@ void CampaignReader::InitTransports()
         if (!repIdx)
         {
             auto reps = m_CampaignData.FindRemoteReplicas(dsIdx, ADIOS::GetHostOptions());
+            if (reps.empty())
+            {
+                if (m_Options.verbose > 0)
+                {
+                    std::cout << "      " << ds.name << " No replicas. Skipping \n";
+                }
+                continue;
+            }
             size_t repIdx = reps.front();
             localPath = SaveRemoteMD(dsIdx, repIdx, io, false);
             if (!localPath.empty())
@@ -998,6 +1020,8 @@ void CampaignReader::InitTransports()
     {
         size_t dsIdx = it.first;
         CampaignDataset &ds = it.second;
+        if (ds.deleted)
+            continue;
         if (ds.format != FileFormat::IMAGE)
             continue;
         if (!Matches(ds.name))
