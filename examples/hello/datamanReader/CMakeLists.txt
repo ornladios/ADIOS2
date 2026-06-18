@@ -24,8 +24,6 @@ if(NOT TARGET adios2_core)
     list(APPEND _components MPI)
   endif()
 
-  find_package(ZeroMQ 4.1 QUIET)
-
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
