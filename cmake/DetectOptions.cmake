@@ -615,7 +615,7 @@ endif()
 
 #SysV IPC
 set(ADIOS2_HAVE_SysVShMem OFF)
-if(ADIOS2_USE_SysVShMem STREQUAL AUTO OR ADIOS2_USE_SysVShMem)
+if(ADIOS2_USE_SysVShMem)
   if(UNIX)
     include(CheckSymbolExists)
     CHECK_SYMBOL_EXISTS(shmget "sys/ipc.h;sys/shm.h" HAVE_shmget)
