@@ -169,6 +169,18 @@ TEST_F(ADIOS2_CXX_API_IO, EngineDefault)
     engine.Close();
 }
 
+// Auto-selection (no SetEngine) on a missing path must throw on every rank, not
+// just rank 0, which otherwise hung the others (issue #5098).
+TEST_F(ADIOS2_CXX_API_IO, EngineSelectionMissingFileThrows)
+{
+    EXPECT_THROW(m_Io.Open("ADIOSEngineSelectionMissingFile.bp", adios2::Mode::Read),
+                 std::exception);
+#if ADIOS2_USE_MPI
+    // Returns only if every rank threw rather than hanging in Open.
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+}
+
 template <class T>
 struct MyData
 {
