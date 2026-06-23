@@ -73,8 +73,11 @@ int ExceptionToError(const std::string &function);
 
 bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept;
-char BPVersion(const std::string &name, helper::Comm &comm,
-               const std::vector<Params> &transportsParameters) noexcept;
+/** Rank-local IsHDF5File: no internal broadcast; call from a single rank. */
+bool IsHDF5FileLocal(const std::string &name, core::IO &io, helper::Comm &comm,
+                     const std::vector<Params> &transportsParameters) noexcept;
+/** Rank-local BP version sniff (no broadcast): '5' if an mmd.0 is present, else '4'. */
+char BPVersionLocal(const std::string &name) noexcept;
 
 /** Return the number of available hardware threads on the node.
  * It might return 0 if the detection does not work

@@ -12,7 +12,9 @@
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <stdexcept>
 #include <utility> // std::pair
+#include <vector>
 
 #include "adios2/common/ADIOSMacros.h"
 
@@ -592,14 +594,27 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         std::transform(engineTypeLC.begin(), engineTypeLC.end(), engineTypeLC.begin(), ::tolower);
     }
 
-    /* Second step in handling virtual engines */
-    /* BPFile for read needs to use BP5, BP4, or BP3 depending on the file's
-     * version
-     */
-    if ((engineTypeLC == "file" || engineTypeLC == "bpfile" || engineTypeLC == "bp" ||
-         isDefaultEngine))
+    // Engine selection probes the filesystem on rank 0 only and broadcasts the
+    // chosen engine type, so a missing target fails on every rank instead of a
+    // lone rank-0 throw that hangs the others.
+    const bool isVirtualFile = (engineTypeLC == "file" || engineTypeLC == "bpfile" ||
+                                engineTypeLC == "bp" || engineTypeLC == "filestream");
+
+    if (isDefaultEngine || isVirtualFile)
     {
-        if (helper::EndsWith(name, ".h5", false))
+        if (engineTypeLC == "filestream")
+        {
+            // FileStream streams BP4/BP5 file output only (not DAOS, timeseries,
+            // etc.). A not-yet-created stream is normal, so BPVersionLocal returns
+            // '4' for a missing path and the engine waits rather than erroring.
+            char version = '4';
+            if (comm.Rank() == 0)
+            {
+                version = helper::BPVersionLocal(name);
+            }
+            engineTypeLC = std::string("bp") + comm.BroadcastValue(version);
+        }
+        else if (helper::EndsWith(name, ".h5", false))
         {
             engineTypeLC = "hdf5";
         }
@@ -613,42 +628,59 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         }
         else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
-            // Check if TarInfo parameter indicates a TAR file
             auto it = m_Parameters.find("TarInfo");
             if (it != m_Parameters.end())
             {
+                // TarInfo is a parameter (same on every rank), so guess directly.
                 engineTypeLC = lf_GuessEngineFromTAR(it->second);
-            }
-            else if (adios2sys::SystemTools::FileIsDirectory(name))
-            {
-                char v = helper::BPVersion(name, comm, m_TransportsParameters);
-                engineTypeLC = "bp";
-                engineTypeLC.push_back(v);
-            }
-            else if (adios2sys::SystemTools::FileIsDirectory(name + ".tier0"))
-            {
-                engineTypeLC = "mhs";
             }
             else
             {
-                if (helper::EndsWith(name, ".bp", false))
+                // Rank 0 picks the engine from the on-disk dataset; an empty
+                // result means nothing exists at the location.
+                std::vector<char> selected;
+                if (comm.Rank() == 0)
                 {
-                    engineTypeLC = "bp3";
+                    std::string sel;
+                    if (adios2sys::SystemTools::PathExists(name) ||
+                        adios2sys::SystemTools::PathExists(name + ".tier0"))
+                    {
+                        if (adios2sys::SystemTools::FileIsDirectory(name))
+                        {
+                            sel = std::string("bp") + helper::BPVersionLocal(name);
+                        }
+                        else if (adios2sys::SystemTools::FileIsDirectory(name + ".tier0"))
+                        {
+                            sel = "mhs";
+                        }
+                        else if (helper::EndsWith(name, ".bp", false))
+                        {
+                            sel = "bp3";
+                        }
+                        else
+                        {
+                            sel = helper::IsHDF5FileLocal(name, *this, comm, m_TransportsParameters)
+                                      ? "hdf5"
+                                      : "bp3";
+                        }
+                    }
+                    selected.assign(sel.begin(), sel.end());
                 }
-                else
+                comm.BroadcastVector(selected);
+                if (selected.empty())
                 {
-                    /* We need to figure out the type of file
-                     * from the file itself
-                     */
-                    if (helper::IsHDF5File(name, *this, comm, m_TransportsParameters))
+                    // Built identically on every rank from 'name', so all ranks
+                    // throw together without broadcasting the message.
+                    std::string err = "Cannot determine the engine for reading \"" + name +
+                                      "\": nothing exists at that location.";
+                    if (mode_to_use == Mode::Read)
                     {
-                        engineTypeLC = "hdf5";
+                        err += "  If it is a stream that has not been created yet, select "
+                               "the engine explicitly with IO::SetEngine().";
                     }
-                    else
-                    {
-                        engineTypeLC = "bp3";
-                    }
+                    helper::Throw<std::runtime_error>("Core", "IO", "Open", err);
                 }
+                engineTypeLC.assign(selected.begin(), selected.end());
             }
         }
         else
@@ -656,25 +688,6 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
             // File default for writing: BP5
             engineTypeLC = "bp5";
         }
-    }
-
-    /* Note: Mismatch between BP4/BP5 writer and FileStream reader is not
-       handled if writer has not created the directory yet, when FileStream
-       falls back to default (BP4) */
-    if (engineTypeLC == "filestream")
-    {
-        if (helper::EndsWith(name, ".ats", false))
-        {
-            engineTypeLC = "timeseries";
-        }
-        else
-        {
-            char v = helper::BPVersion(name, comm, m_TransportsParameters);
-            engineTypeLC = "bp";
-            engineTypeLC.push_back(v);
-        }
-        // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
-        //          << std::endl;
     }
 
     // For the inline engine, there must be exactly 1 reader, and exactly 1
