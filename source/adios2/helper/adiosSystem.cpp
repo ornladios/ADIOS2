@@ -124,62 +124,55 @@ int ExceptionToError(const std::string &function)
     }
 }
 
+bool IsHDF5FileLocal(const std::string &name, core::IO &io, helper::Comm &comm,
+                     const std::vector<Params> &transportsParameters) noexcept
+{
+    bool isHDF5 = false;
+    try
+    {
+        transportman::TransportMan tm(io, comm);
+        if (transportsParameters.empty())
+        {
+            std::vector<Params> defaultTransportParameters(1);
+            defaultTransportParameters[0]["transport"] = "File";
+            tm.OpenFiles({name}, adios2::Mode::Read, defaultTransportParameters, false);
+        }
+        else
+        {
+            tm.OpenFiles({name}, adios2::Mode::Read, transportsParameters, false);
+        }
+        const unsigned char HDF5Header[8] = {137, 72, 68, 70, 13, 10, 26, 10};
+        if (tm.GetFileSize(0) >= 8)
+        {
+            char header[8];
+            tm.ReadFile(header, 8, 0);
+            tm.CloseFiles();
+            isHDF5 = !std::memcmp(header, HDF5Header, 8);
+        }
+    }
+    catch (std::ios_base::failure &)
+    {
+        isHDF5 = false;
+    }
+    return isHDF5;
+}
+
 bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept
 {
-    bool isHDF5 = false;
+    size_t flag = 0;
     if (!comm.Rank())
     {
-        try
-        {
-            transportman::TransportMan tm(io, comm);
-            if (transportsParameters.empty())
-            {
-                std::vector<Params> defaultTransportParameters(1);
-                defaultTransportParameters[0]["transport"] = "File";
-                tm.OpenFiles({name}, adios2::Mode::Read, defaultTransportParameters, false);
-            }
-            else
-            {
-                tm.OpenFiles({name}, adios2::Mode::Read, transportsParameters, false);
-            }
-            const unsigned char HDF5Header[8] = {137, 72, 68, 70, 13, 10, 26, 10};
-            if (tm.GetFileSize(0) >= 8)
-            {
-                char header[8];
-                tm.ReadFile(header, 8, 0);
-                tm.CloseFiles();
-                isHDF5 = !std::memcmp(header, HDF5Header, 8);
-            }
-        }
-        catch (std::ios_base::failure &)
-        {
-            isHDF5 = false;
-        }
+        flag = IsHDF5FileLocal(name, io, comm, transportsParameters) ? 1 : 0;
     }
-    size_t flag = (isHDF5 ? 1 : 0);
     flag = comm.BroadcastValue(flag);
     return (flag == 1);
 }
 
-char BPVersion(const std::string &name, helper::Comm &comm,
-               const std::vector<Params> &transportsParameters) noexcept
+char BPVersionLocal(const std::string &name) noexcept
 {
-    char version = '4'; // default result
-    if (!comm.Rank())
-    {
-        std::string mmdFileName = name + PathSeparator + "mmd.0";
-        if (adios2sys::SystemTools::PathExists(mmdFileName))
-        {
-            version = '5';
-        }
-        else
-        {
-            version = '4';
-        }
-    }
-    version = comm.BroadcastValue(version);
-    return version;
+    const std::string mmdFileName = name + PathSeparator + "mmd.0";
+    return adios2sys::SystemTools::PathExists(mmdFileName) ? '5' : '4';
 }
 
 bool IsDAOSDataset(const std::string &name) noexcept

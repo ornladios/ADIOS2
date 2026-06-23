@@ -26,6 +26,16 @@ only the **BP5** reader supports them, and only when opened in
 ``Mode::ReadRandomAccess`` with a reentrant file transport (POSIX). See the
 Selection chapter for full details.
 
+Collective reader engine selection
+----------------------------------
+
+When a reader does not set an engine explicitly, the engine type is
+auto-detected from the filesystem. That probing now happens on rank 0 and is
+broadcast, instead of every rank issuing its own ``stat()`` calls. If nothing
+exists at the given location, ``IO::Open`` now fails collectively with a clear
+error (and a hint to call ``SetEngine`` for a stream that has not been created
+yet) rather than selecting BP3 and hanging the non-root MPI ranks.
+
 SST Mercury Data Plane
 -----------------------
 
