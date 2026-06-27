@@ -277,7 +277,8 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         }
 
         const bool isValue = ((blocksInfo.front().Shape.size() == 1 &&
-                               blocksInfo.front().Shape.front() == LocalValueDim) ||
+                               blocksInfo.front().Shape.front() ==
+                                   static_cast<size_t>(LocalValueDim)) ||
                               m_ShapeID == ShapeID::GlobalValue)
                                  ? true
                                  : false;

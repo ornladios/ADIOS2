@@ -527,7 +527,7 @@ void VariableBase::InitShapeType()
 
     if (!m_Shape.empty())
     {
-        if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
+        if (std::count(m_Shape.begin(), m_Shape.end(), static_cast<size_t>(JoinedDim)) == 1)
         {
             if (!m_Start.empty() && static_cast<size_t>(std::count(m_Start.begin(), m_Start.end(),
                                                                    0)) != m_Start.size())
@@ -543,7 +543,7 @@ void VariableBase::InitShapeType()
         }
         else if (m_Start.empty() && m_Count.empty())
         {
-            if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
+            if (m_Shape.size() == 1 && m_Shape.front() == static_cast<size_t>(LocalValueDim))
             {
                 m_ShapeID = ShapeID::LocalValue;
                 m_Start.resize(1, 0); // start[0] == 0
@@ -638,9 +638,12 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
     if (m_ShapeID != ShapeID::LocalValue)
     {
-        if ((!m_Shape.empty() && std::count(m_Shape.begin(), m_Shape.end(), LocalValueDim) > 0) ||
-            (!m_Start.empty() && std::count(m_Start.begin(), m_Start.end(), LocalValueDim) > 0) ||
-            (!m_Count.empty() && std::count(m_Count.begin(), m_Count.end(), LocalValueDim) > 0))
+        if ((!m_Shape.empty() &&
+             std::count(m_Shape.begin(), m_Shape.end(), static_cast<size_t>(LocalValueDim)) > 0) ||
+            (!m_Start.empty() &&
+             std::count(m_Start.begin(), m_Start.end(), static_cast<size_t>(LocalValueDim)) > 0) ||
+            (!m_Count.empty() &&
+             std::count(m_Count.begin(), m_Count.end(), static_cast<size_t>(LocalValueDim)) > 0))
         {
             helper::Throw<std::invalid_argument>("Core", "VariableBase", "CheckDimensionsCommon",
                                                  "LocalValueDim parameter is only "
@@ -649,9 +652,12 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
         }
     }
 
-    if ((!m_Shape.empty() && std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1) ||
-        (!m_Start.empty() && std::count(m_Start.begin(), m_Start.end(), JoinedDim) > 0) ||
-        (!m_Count.empty() && std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
+    if ((!m_Shape.empty() &&
+         std::count(m_Shape.begin(), m_Shape.end(), static_cast<size_t>(JoinedDim)) > 1) ||
+        (!m_Start.empty() &&
+         std::count(m_Start.begin(), m_Start.end(), static_cast<size_t>(JoinedDim)) > 0) ||
+        (!m_Count.empty() &&
+         std::count(m_Count.begin(), m_Count.end(), static_cast<size_t>(JoinedDim)) > 0))
     {
         helper::Throw<std::invalid_argument>("Core", "VariableBase", "CheckDimensionsCommon",
                                              "JoinedDim is only allowed once in "
