@@ -139,8 +139,8 @@ void DaosWriter::WriteMetaMetadata(
     profiling::ProfilerGuard g(m_Profiler, "MD_Posix");
     for (auto &b : MetaMetaBlocks)
     {
-        m_MetaMetadataFile->Write((char *)&b.MetaMetaIDLen, sizeof(size_t));
-        m_MetaMetadataFile->Write((char *)&b.MetaMetaInfoLen, sizeof(size_t));
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaIDLen, sizeof(uint64_t));
+        m_MetaMetadataFile->Write((char *)&b.MetaMetaInfoLen, sizeof(uint64_t));
         m_MetaMetadataFile->Write((char *)b.MetaMetaID, b.MetaMetaIDLen);
         m_MetaMetadataFile->Write((char *)b.MetaMetaInfo, b.MetaMetaInfoLen);
     }

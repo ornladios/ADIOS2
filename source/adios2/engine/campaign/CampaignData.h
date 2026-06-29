@@ -52,8 +52,8 @@ struct CampaignFile
     // size_t datasetIdx; // index of grandparent CampaignDataset in the map
     //  std::vector<size_t> replicaIdxs; // CampaignReplicas using this file in CampaignDataset
     bool compressed;
-    size_t lengthOriginal;
-    size_t lengthCompressed;
+    uint64_t lengthOriginal;
+    uint64_t lengthCompressed;
     int64_t modtime;
     std::string checksum; // SHA1 checksum of file
 };
@@ -101,7 +101,7 @@ struct CampaignReplica
     bool deleted;
     bool hasKey;
     size_t keyIdx;
-    size_t size;               // replica size on remote location
+    uint64_t size;             // replica size on remote location (may exceed 4 GB on 32-bit)
     std::vector<size_t> files; // file indices in CampaignDataset, ordered by fileid
     // image replicas have resolution information (ds.format == FileFormat::IMAGE)
     size_t x;

@@ -263,7 +263,7 @@ constexpr bool end_step = true;
 constexpr bool LocalValue = true;
 constexpr bool GlobalValue = false;
 
-constexpr size_t UnknownStep = MaxU64;
+constexpr size_t UnknownStep = std::numeric_limits<size_t>::max();
 constexpr double UnknownTime = std::numeric_limits<double>::infinity();
 
 // Dims, Params, vParams are defined in ADIOSBaseTypes.h
