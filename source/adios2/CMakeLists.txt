@@ -360,7 +360,7 @@ if(ADIOS2_HAVE_ZeroMQ)
     toolkit/zmq/zmqreqrep/ZmqReqRep.cpp
     toolkit/zmq/zmqpubsub/ZmqPubSub.cpp
   )
-  target_link_libraries(adios2_core PRIVATE ZeroMQ::ZMQ)
+  target_link_libraries(adios2_core PRIVATE libzmq)
 endif()
 
 if(ADIOS2_HAVE_DataMan)
