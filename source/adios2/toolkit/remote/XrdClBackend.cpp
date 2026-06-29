@@ -23,18 +23,20 @@ namespace
 // through a (void) cast; deliberately-ignored statuses are routed here.
 void IgnoreStatus(const XrdCl::XRootDStatus &) {}
 
-// Fetch one URL synchronously: Open(url) then a single Read(0, expectedSize)
-// of the whole response into the destination buffer (single Get) or into
-// responseData (batch, which the caller then frames/parses).  Runs on its own
-// thread; the result is delivered through op->promise.
-void DoGet(const std::string &url, AsyncGet *op)
+// Fetch one URL synchronously into op: Open(url) then a single Read(0,
+// expectedSize) of the whole response into the destination buffer (single Get)
+// or into responseData (batch, which the caller then frames/parses).  Returns
+// true on success; on failure sets op->errorMsg and returns false.  Does not
+// touch op->promise -- RunGet sets it exactly once, so the many exit paths here
+// cannot forget to.
+bool Fetch(const std::string &url, AsyncGet *op)
 {
     XrdCl::File file;
 
     // The xrdcl-curl plugin fetches the whole response in one GET (full_download
-    // mode; the origin returns a complete body per GET).  Properties only reach
-    // the plugin once its object exists, so a no-op Open (Compress/None) loads
-    // it, then SetProperty enables full_download, then the real Open runs.
+    // mode; the origin returns a complete body per GET).  This no-op Open
+    // (Compress/None) is the plugin's documented hook to instantiate itself so
+    // the following SetProperty reaches the plugin object; then the real Open runs.
     IgnoreStatus(file.Open(url, XrdCl::OpenFlags::Compress, XrdCl::Access::None, nullptr, 0));
     (void)file.SetProperty("XrdClCurlFullDownload", "true");
 
@@ -42,8 +44,7 @@ void DoGet(const std::string &url, AsyncGet *op)
     if (!status.IsOK())
     {
         op->errorMsg = "XrdCl Open failed: " + status.ToString();
-        op->promise.set_value(false);
-        return;
+        return false;
     }
 
     // The read needs the exact byte count up front: single Get carries it as
@@ -52,8 +53,7 @@ void DoGet(const std::string &url, AsyncGet *op)
     {
         op->errorMsg = "XrdCl backend requires a known response size";
         IgnoreStatus(file.Close());
-        op->promise.set_value(false);
-        return;
+        return false;
     }
     // XrdCl::File::Read takes a uint32_t count (and the server caps a single
     // response at INT_MAX), so reject anything the cast below would truncate.
@@ -62,8 +62,7 @@ void DoGet(const std::string &url, AsyncGet *op)
         op->errorMsg = "XrdCl backend response size " + std::to_string(op->expectedSize) +
                        " exceeds the 2 GiB single-request limit";
         IgnoreStatus(file.Close());
-        op->promise.set_value(false);
-        return;
+        return false;
     }
     const auto size = static_cast<uint32_t>(op->expectedSize);
 
@@ -85,8 +84,7 @@ void DoGet(const std::string &url, AsyncGet *op)
     if (!status.IsOK())
     {
         op->errorMsg = "XrdCl Read failed: " + status.ToString();
-        op->promise.set_value(false);
-        return;
+        return false;
     }
 
     if (op->destBuffer)
@@ -97,8 +95,12 @@ void DoGet(const std::string &url, AsyncGet *op)
     {
         op->responseData.resize(bytesRead);
     }
-    op->promise.set_value(true);
+    return true;
 }
+
+// Run one fetch on its own thread and deliver the result through op->promise.
+// The single set_value lives here so Fetch's exit paths each just return.
+void RunGet(const std::string &url, AsyncGet *op) { op->promise.set_value(Fetch(url, op)); }
 
 } // anonymous namespace
 
@@ -111,7 +113,7 @@ void XrdClBackend::SetConfig(const Config &config) { m_Config = config; }
 
 void XrdClBackend::SubmitGet(const std::string &url, AsyncGet *op)
 {
-    std::thread(DoGet, url, op).detach();
+    std::thread(RunGet, url, op).detach();
 }
 
 } // end namespace adios2
