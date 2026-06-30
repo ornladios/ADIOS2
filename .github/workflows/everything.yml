@@ -58,7 +58,7 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           fetch-depth: 0
       - name: Check for appropriately named topic branch
@@ -87,10 +87,10 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           path: gha
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -186,15 +186,15 @@ jobs:
             arch: aarch64
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           path: gha
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -215,7 +215,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s | tee $GITHUB_STEP_SUMMARY
       - name: Save cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -255,15 +255,15 @@ jobs:
         parallel: [mpich]
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           path: gha
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -283,7 +283,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -330,17 +330,17 @@ jobs:
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           path: gha
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Setup
         run: gha/scripts/ci/gh-actions/macos-setup.sh
       - name: Restore cache
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         id: restore-cache
         with:
           path: .ccache
@@ -358,7 +358,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -407,10 +407,10 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           path: gha
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -444,7 +444,7 @@ jobs:
         baseos: [ubuntu-bionic]
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ci-source
@@ -521,7 +521,7 @@ jobs:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
         if: ${{ matrix.repo != '' }}
         with:
           repository: ${{ matrix.repo }}
@@ -580,14 +580,14 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
       with:
         path: gha
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
-    - uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
       id: restore-cache
       with:
         path: .ccache
@@ -634,7 +634,7 @@ jobs:
         path: sarif-results
         retention-days: 1
     - run: ccache -s | tee "${GITHUB_STEP_SUMMARY}"
-    - uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
+    - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4
       if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
       id: save-cache
       with:
