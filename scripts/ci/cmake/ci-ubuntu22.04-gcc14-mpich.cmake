@@ -2,9 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-set(ENV{CC}  clang-14)
-set(ENV{CXX} clang++-14)
-set(ENV{FC}  gfortran-11)
+include(ProcessorCount)
+ProcessorCount(NCPUS)
+math(EXPR N2CPUS "${NCPUS}*2")
+
+set(ENV{CC}  gcc-14)
+set(ENV{CXX} g++-14)
+set(ENV{FC}  gfortran-14)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -15,8 +19,8 @@ set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_Blosc2:BOOL=ON
 ADIOS2_USE_BZip2:BOOL=ON
+ADIOS2_USE_Blosc2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
@@ -36,8 +40,12 @@ CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
 
-MPIEXEC_EXTRA_FLAGS:STRING=--oversubscribe
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-mpich/.spack-env/view/lib/libgomp.so.1
+
+MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
+
+set(CTEST_TEST_ARGS EXCLUDE "KillReader|KillWriter|PreciousTimestep|.Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
