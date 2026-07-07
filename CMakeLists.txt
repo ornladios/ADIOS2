@@ -182,14 +182,15 @@ adios_option(CUDA       "Enable support for Cuda" OFF)
 adios_option(Kokkos     "Enable support for Kokkos" OFF)
 adios_option(MPI        "Enable support for MPI" AUTO)
 adios_option(DAOS       "Enable support for DAOS" AUTO)
-adios_option(DataMan    "Enable support for DataMan" AUTO)
-adios_option(DataSpaces "Enable support for DATASPACES" AUTO)
-adios_option(MHS        "Enable support for MHS" AUTO)
+adios_option(DataMan    "Enable support for DataMan" OFF)
+adios_option(DataSpaces "Enable support for DATASPACES" OFF)
+adios_option(MHS        "Enable support for MHS" OFF)
+adios_option(SSC        "Enable support for SSC" OFF)
 adios_option(SST        "Enable support for SST" AUTO)
-adios_option(ZeroMQ     "Enable support for ZeroMQ" AUTO)
+adios_option(ZeroMQ     "Enable support for ZeroMQ" OFF)
 adios_option(HDF5       "Enable support for the HDF5 engine" AUTO)
 adios_option(HDF5_VOL   "Enable support for HDF5 ADIOS2 VOL" AUTO)
-adios_option(IME        "Enable support for DDN IME transport" AUTO)
+adios_option(IME        "Enable support for DDN IME transport" OFF)
 adios_option(Python     "Enable support for Python bindings" AUTO)
 adios_option(PythonFreeThreaded "Enable support for free-threaded (no-GIL) Python bindings" OFF)
 adios_option(Fortran    "Enable support for Fortran bindings" AUTO)
@@ -280,7 +281,7 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
+    DataMan DataSpaces HDF5 HDF5_VOL MHS SSC SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PRODM PNG SZ SZ3 ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
     ZeroMQ Profiling Derived_Variable AWSSDK OpenSSL XRootD CURL GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE

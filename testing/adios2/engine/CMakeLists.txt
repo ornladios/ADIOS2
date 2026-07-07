@@ -31,7 +31,9 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  add_subdirectory(ssc)
+  if(ADIOS2_HAVE_SSC)
+    add_subdirectory(ssc)
+  endif()
   add_subdirectory(common)
 endif()
 

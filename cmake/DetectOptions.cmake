@@ -363,6 +363,15 @@ elseif(ADIOS2_USE_MHS)
     set(ADIOS2_HAVE_MHS TRUE)
 endif()
 
+# SSC (requires MPI)
+if(MPI_FOUND)
+    if(ADIOS2_USE_SSC STREQUAL AUTO)
+        set(ADIOS2_HAVE_SSC TRUE)
+    elseif(ADIOS2_USE_SSC)
+        set(ADIOS2_HAVE_SSC TRUE)
+    endif()
+endif()
+
 # DataSpaces
 if(MPI_FOUND)
     if(ADIOS2_USE_DataSpaces STREQUAL AUTO)
