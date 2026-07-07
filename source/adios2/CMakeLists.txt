@@ -329,16 +329,20 @@ if(ADIOS2_HAVE_MPI)
     core/IOMPI.cpp
     helper/adiosCommMPI.h helper/adiosCommMPI.cpp
     helper/adiosMpiHandshake.h helper/adiosMpiHandshake.cpp
-    engine/ssc/SscHelper.cpp
-    engine/ssc/SscWriter.cpp
-    engine/ssc/SscWriterBase.cpp
-    engine/ssc/SscWriterGeneric.cpp
-    engine/ssc/SscWriterNaive.cpp
-    engine/ssc/SscReader.cpp
-    engine/ssc/SscReaderBase.cpp
-    engine/ssc/SscReaderGeneric.cpp
-    engine/ssc/SscReaderNaive.cpp
   )
+  if(ADIOS2_HAVE_SSC)
+    target_sources(adios2_core_mpi PRIVATE
+      engine/ssc/SscHelper.cpp
+      engine/ssc/SscWriter.cpp
+      engine/ssc/SscWriterBase.cpp
+      engine/ssc/SscWriterGeneric.cpp
+      engine/ssc/SscWriterNaive.cpp
+      engine/ssc/SscReader.cpp
+      engine/ssc/SscReaderBase.cpp
+      engine/ssc/SscReaderGeneric.cpp
+      engine/ssc/SscReaderNaive.cpp
+    )
+  endif()
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
   set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
   target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_CXX PRIVATE adios2::thirdparty::perfstubs-interface)

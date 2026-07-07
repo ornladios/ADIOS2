@@ -17,7 +17,7 @@ It transports self-describing variables and attributes across files, networks, a
 - **MPI-native**: scales from laptop to petabyte workloads on the largest HPC systems; serial use also supported
 - **Streaming and step-based**: asynchronous, grouped variable transport with an explicit steps abstraction for in-situ and in-transit workflows
 - **Multiple language bindings**: C++17, Python, C99, Fortran 90, and Matlab
-- **Compression operators**: ZFP, SZ, MGARD, Blosc2, PNG, and others
+- **Compression operators**: ZFP, SZ3, MGARD, Blosc2, PNG, and others
 - **Encryption operators**: symmetric (AES-256-GCM) and asymmetric encryption available for data at rest
 - **In-situ/in-transit engines**: SST and DataMan engines for code coupling over RDMA, MPI, and TCP without touching files
 - **DAOS engine**: writes and reads datasets through the DAOS data plane (native object API) directly, with no dfuse or POSIX interception required
@@ -73,6 +73,73 @@ Once installed, refer to [Linking ADIOS2](https://adios2.readthedocs.io/en/lates
 | Nix unstable        | [![nixpkgs unstable package](https://repology.org/badge/version-for-repo/nix_unstable/adios2.svg)](https://repology.org/project/adios2/versions)           |
 | vcpkg               | [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/adios2.svg)](https://repology.org/project/adios2/versions)                             |
 | Dockerhub           | ![Docker Image Version](https://img.shields.io/docker/v/ornladios/adios2)                                                                                  |
+
+## Notes for packagers other than HPC sysadmins
+
+ADIOS2 has a wide spectrum of optional features, from a small,
+dependency-free core to specialized backends that pull in heavy or
+uncommon third-party libraries. It is also a research project, so
+those backends come and go, and the sites that rely on them usually
+build from source for each environment (or via Spack) rather than from
+a package manager.  Therefore we recommend a lean build, not trying to
+satisfy all possible optional dependencies.
+
+### Recommended tiers
+
+**Core (no or trivial dependencies):**
+- BP3 / BP4 / BP5 file engines (`.bp` format), no external dependencies
+- SST streaming engine (TCP by default)
+- C and C++ bindings
+
+**Common options (widely packaged):**
+- `MPI`, recommended but not required
+- `Python`, `Fortran` bindings
+- `HDF5` (interop and the HDF5 VOL)
+- Compression: `ZFP`, `SZ3`, `BZip2`, `Blosc2`, `PNG`
+- `Campaign` (requires SQLite3 and ZLIB, both lightweight and commonly available)
+- `CURL` (HTTPS remote data access)
+
+**Specialized (of interest only to specific workflows):**
+- Additional compression / refactoring: `MGARD`, `SZ` (for existing data only), `LibPressio`, `BigWhoop`, `ProDM`
+- GPU: `CUDA`, `Kokkos`
+- Encryption: `Sodium` (libsodium; backs both the EncryptionOperator and encrypted Campaign metadata)
+- Remote / storage backends: `XRootD`, `OpenSSL` (TLS for HTTPS remote access), `AWSSDK` (S3), `DAOS`
+- In-situ visualization: `Catalyst` (ParaView)
+
+**Legacy engines and transports (unmaintained, off by default):**
+- `DataMan`, `SSC`, `MHS`, `DataSpaces`, `IME`
+
+These older staging and coupling engines, and the DDN `IME` transport, are no longer actively
+maintained and are candidates for future removal. They are **disabled by default** and must be enabled explicitly (for
+example `-DADIOS2_USE_MHS=ON`) if needed. `ZeroMQ` is required only by the `DataMan` engine and
+is likewise off by default, so a default build pulls in no ZeroMQ dependency.
+
+### HPC network transports (RDMA)
+
+The SST engine reaches full performance through RDMA data planes that
+depend on fabric libraries: **libfabric** (InfiniBand/verbs and
+HPE-Cray Slingshot/CXI; detected automatically when SST is enabled),
+**UCX** (`ADIOS2_USE_UCX`), and **Mercury**
+(`ADIOS2_USE_Mercury`). These matter on systems with an RDMA
+interconnect, where an HPC-targeted package should install one or more
+of libfabric, UCX and Mercury before building so SST picks them up. On
+machines without an RDMA network they provide no benefit may cause
+trouble (SST will fallback to TCP and or MPI dataplanes if RDMA is not
+directly available.) General-purpose packages can safely leave them
+out.
+
+### A default build
+
+A default configuration is already lean: the legacy engines above are off, and every other
+optional feature is enabled only when its dependency is already present. Enabling the common
+options is a matter of turning them on explicitly, for example:
+
+```bash
+cmake -DADIOS2_USE_HDF5=ON -DADIOS2_USE_Python=ON -DADIOS2_USE_MPI=ON ..
+```
+
+Questions about whether a given feature is worth packaging are welcome on
+[GitHub Discussions](https://github.com/ornladios/ADIOS2/discussions).
 
 ## Resources
 
