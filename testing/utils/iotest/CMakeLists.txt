@@ -141,7 +141,7 @@ if(ADIOS2_RUN_MPI_MPMD_TESTS)
     #------------------------------------------
     #  Pipe2 SSC version
     #------------------------------------------
-    if(NOT MSVC)
+    if(ADIOS2_HAVE_SSC AND NOT MSVC)
       add_test(NAME Utils.IOTest.Pipe2.SSC
         COMMAND ${MPIEXEC_COMMAND}
           ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
