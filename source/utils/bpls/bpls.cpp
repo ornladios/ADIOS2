@@ -4005,9 +4005,19 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
             {
                 if (minBlocks)
                 {
-                    Dims s(minBlocks->BlocksInfo[j].Start, minBlocks->BlocksInfo[j].Start + ndim);
                     Dims c(minBlocks->BlocksInfo[j].Count, minBlocks->BlocksInfo[j].Count + ndim);
-                    readVarBlock(fp, io, variable, stepRelative, j, c, s);
+                    if (variable->m_ShapeID == ShapeID::GlobalArray)
+                    {
+                        Dims s(minBlocks->BlocksInfo[j].Start,
+                               minBlocks->BlocksInfo[j].Start + ndim);
+
+                        readVarBlock(fp, io, variable, stepRelative, j, c, s);
+                    }
+                    else
+                    {
+                        // blockStart is empty vector for LocalArrays
+                        readVarBlock(fp, io, variable, stepRelative, j, c, Dims());
+                    }
                 }
                 else
                 {
