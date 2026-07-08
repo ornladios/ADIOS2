@@ -767,6 +767,10 @@ void DaosWriter::RegisterProfilerTimers()
     m_Profiler.AddTimerWatch("BP5_BufferAppend");
     m_Profiler.AddTimerWatch("BP5_GetMinMax");
     m_Profiler.AddTimerWatch("FreshChunkAllocs");
+    m_Profiler.AddTimerWatch("DAOS_ZeroCopyPuts");
+    m_Profiler.AddTimerWatch("DAOS_ZeroCopyMiB");
+    m_Profiler.AddTimerWatch("DAOS_CopyPuts");
+    m_Profiler.AddTimerWatch("DAOS_CopyMiB");
 }
 
 void DaosWriter::SyncExternalCountersToProfiler()
@@ -788,12 +792,21 @@ void DaosWriter::SyncExternalCountersToProfiler()
              m_BP5Serializer.m_GetMinMaxSecs > 0 ? 1 : 0);
     setTimer("FreshChunkAllocs", 0.0,
              m_DataBuf ? static_cast<uint64_t>(m_DataBuf->FreshAllocCount()) : 0);
+    setTimer("DAOS_ZeroCopyPuts", 0.0, m_ZeroCopyPuts);
+    setTimer("DAOS_ZeroCopyMiB", 0.0, m_ZeroCopyBytes >> 20);
+    setTimer("DAOS_CopyPuts", 0.0, m_CopyPuts);
+    setTimer("DAOS_CopyMiB", 0.0, m_CopyBytes >> 20);
 }
 
 void DaosWriter::InitParameters()
 {
     ParseParams(m_IO, m_Parameters);
     m_BP5Serializer.m_StatsLevel = m_Parameters.StatsLevel;
+
+    if (const char *ww = std::getenv("DAOS_WARMTH_WINDOW"))
+    {
+        m_WarmthWindow = static_cast<size_t>(std::strtoul(ww, nullptr, 10));
+    }
 }
 
 void DaosWriter::InitTransports()
@@ -1329,6 +1342,7 @@ void DaosWriter::DoClose(const int transportIndex)
     }
 
     SyncExternalCountersToProfiler();
+
     CloseDataArray();
 
     if (m_Comm.Rank() == 0)
@@ -1439,6 +1453,35 @@ size_t DaosWriter::DebugGetDataBufferSize() const
     return m_BP5Serializer.DebugGetDataBufferSize();
 }
 
+// True if addr was seen within the last m_WarmthWindow steps; records it.
+bool DaosWriter::AddrIsWarm(const void *addr)
+{
+    AddrWindow &w = m_AddrWindow;
+    if (w.slots.size() != m_WarmthWindow)
+    {
+        w.slots.assign(m_WarmthWindow, {});
+        w.cur = -1;
+        w.lastStep = -1;
+    }
+    if (w.lastStep != m_WriterStep)
+    {
+        w.cur = (w.cur + 1) % static_cast<int>(m_WarmthWindow);
+        w.slots[w.cur].clear();
+        w.lastStep = m_WriterStep;
+    }
+    bool warm = false;
+    for (const auto &slot : w.slots)
+    {
+        if (slot.count(addr))
+        {
+            warm = true;
+            break;
+        }
+    }
+    w.slots[w.cur].insert(addr);
+    return warm;
+}
+
 void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync)
 {
     profiling::ProfilerGuard pc(m_Profiler, "PutCommon");
@@ -1482,15 +1525,38 @@ void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync
         ObjSize = helper::GetDataTypeSize(variable.m_Type);
     }
 
+    size_t n = helper::GetTotalSize(variable.m_Count) * ObjSize;
     if (!sync)
     {
         /* If arrays is small, force copying to internal buffer to aggregate
          * small writes */
-        size_t n = helper::GetTotalSize(variable.m_Count) * ObjSize;
         if (n < m_Parameters.MinDeferredSize)
         {
             sync = true;
         }
+    }
+
+    // Warmth guard: skip zero-copy for a never-reused buffer (cold loses).
+    if (!sync && m_WarmthWindow > 0 && variable.m_Operations.empty() &&
+        variable.m_MemoryCount.empty() && variable.m_Type != DataType::String)
+    {
+        if (!AddrIsWarm(values))
+        {
+            sync = true;
+        }
+    }
+
+    // Tally the zero-copy (External) vs copy outcome.
+    if (!sync && variable.m_Operations.empty() && variable.m_MemoryCount.empty() &&
+        variable.m_Type != DataType::String)
+    {
+        ++m_ZeroCopyPuts;
+        m_ZeroCopyBytes += n;
+    }
+    else
+    {
+        ++m_CopyPuts;
+        m_CopyBytes += n;
     }
 
     if (!variable.m_MemoryCount.empty())
