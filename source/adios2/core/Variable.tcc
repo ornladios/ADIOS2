@@ -19,6 +19,80 @@ namespace core
 {
 
 template <class T>
+Dims Variable<T>::DoStart() const
+{
+    auto lf_Step = [&]() -> size_t {
+        auto itStep = std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
+        if (itStep == m_AvailableStepBlockIndexOffsets.end())
+        {
+            auto it = m_AvailableStepBlockIndexOffsets.rbegin();
+            helper::Throw<std::invalid_argument>(
+                "Core", "Variable", "DoStart",
+                "current relative step start for variable " + m_Name +
+                    " is outside the scope of available steps " + std::to_string(it->first - 1) +
+                    " in call to Start");
+        }
+        return itStep->first - 1;
+    };
+
+    // A block selection reports the selected block's start, queried from the
+    // engine (mirrors DoCount()). For a local-array block this is empty.
+    if (m_Engine != nullptr && m_SelectionType == SelectionType::WriteBlock)
+    {
+        auto MVI = m_Engine->MinBlocksInfo(*this, m_StepsStart);
+        if (MVI)
+        {
+            if (m_BlockID >= MVI->BlocksInfo.size())
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Core", "Variable", "DoStart",
+                    "blockID " + std::to_string(m_BlockID) +
+                        " from SetBlockSelection is out of bounds for available "
+                        "blocks size " +
+                        std::to_string(MVI->BlocksInfo.size()) + " for variable " + m_Name +
+                        " for step " + std::to_string(m_StepsStart) +
+                        ", in call to Variable<T>::Start()");
+            }
+
+            const size_t *StartPtr = (MVI->BlocksInfo)[m_BlockID].Start;
+            // Local values and local-array blocks have no global start offset
+            if (MVI->WasLocalValue || StartPtr == nullptr)
+            {
+                delete MVI;
+                return {};
+            }
+            Dims D;
+            D.resize(MVI->Dims);
+            for (int i = 0; i < MVI->Dims; i++)
+            {
+                D[i] = StartPtr[i];
+            }
+            delete MVI;
+            return D;
+        }
+
+        const size_t step = !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
+
+        const std::vector<typename Variable<T>::BPInfo> blocksInfo =
+            m_Engine->BlocksInfo<T>(*this, step);
+
+        if (m_BlockID >= blocksInfo.size())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "Variable", "DoStart",
+                "blockID " + std::to_string(m_BlockID) +
+                    " from SetBlockSelection is out of bounds for available "
+                    "blocks size " +
+                    std::to_string(blocksInfo.size()) + " for variable " + m_Name + " for step " +
+                    std::to_string(step) + ", in call to Variable<T>::Start()");
+        }
+
+        return blocksInfo[m_BlockID].Start;
+    }
+    return m_Start;
+}
+
+template <class T>
 Dims Variable<T>::DoCount() const
 {
     auto lf_Step = [&]() -> size_t {

@@ -280,11 +280,14 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             io.DefineAttribute<std::complex<double>>(cr64_Single, attributeTestData.CR64.front());
         }
 
-        io.SetEngine(engineName);
+        // Append via the default engine, which must conform to the existing
+        // file's version rather than defaulting to the latest format.
+        io.SetEngine("BPFile");
         io.AddTransport("file");
         io.SetParameter("AggregationRatio", "1");
 
         adios2::Engine bpAppender = io.Open(fname, adios2::Mode::Append);
+        EXPECT_EQ(bpAppender.Type(), engineName == "BP4" ? "BP4Writer" : "BP5Writer");
 
         for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {

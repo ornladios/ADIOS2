@@ -61,6 +61,12 @@ namespace core
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    Dims Variable<T>::Start() const                                                                \
+    {                                                                                              \
+        return DoStart();                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     Dims Variable<T>::Count() const                                                                \
     {                                                                                              \
         return DoCount();                                                                          \
