@@ -153,13 +153,20 @@ public:
     adios2::Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
-     * Inspects current start point
+     * Returns the start offset of the variable's current selection: the box set
+     * by SetSelection, or the selected block's global offset after
+     * SetBlockSelection (queried from the engine; empty for a local-array block,
+     * which has no global offset). For the variable's overall shape use Shape();
+     * to enumerate every block use BlocksInfo().
      * @return start vector
      */
     adios2::Dims Start() const;
 
     /**
-     * Inspects current count from start
+     * Returns the count of the variable's current selection: the box set by
+     * SetSelection, or the selected block's count after SetBlockSelection
+     * (queried from the engine). For the variable's overall shape use Shape();
+     * to enumerate every block use BlocksInfo().
      * @return count vector
      */
     adios2::Dims Count() const;

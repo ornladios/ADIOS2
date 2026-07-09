@@ -171,6 +171,15 @@ bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
 
 char BPVersionLocal(const std::string &name) noexcept
 {
+    if (!adios2sys::SystemTools::PathExists(name))
+    {
+        // The dataset directory does not exist (yet). We cannot know which
+        // version a future writer will produce, so report unknown ('0')
+        // rather than guessing BP4. Callers decide how to handle a
+        // not-yet-created stream. Only an existing directory that lacks the
+        // mmd.0 metadata index is genuinely BP4.
+        return '0';
+    }
     const std::string mmdFileName = name + PathSeparator + "mmd.0";
     return adios2sys::SystemTools::PathExists(mmdFileName) ? '5' : '4';
 }

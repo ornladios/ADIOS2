@@ -150,7 +150,7 @@ namespace adios2
     Dims Variable<T>::Start() const                                                                \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Start");                      \
-        return m_Variable->m_Start;                                                                \
+        return m_Variable->Start();                                                                \
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \

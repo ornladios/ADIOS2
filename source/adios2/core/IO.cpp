@@ -605,14 +605,31 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         if (engineTypeLC == "filestream")
         {
             // FileStream streams BP4/BP5 file output only (not DAOS, timeseries,
-            // etc.). A not-yet-created stream is normal, so BPVersionLocal returns
-            // '4' for a missing path and the engine waits rather than erroring.
-            char version = '4';
-            if (comm.Rank() == 0)
+            // etc.). The choice is mode-dependent: when writing a new file we
+            // produce the latest streamable format (BP5) and do not query the
+            // filesystem for a version (there is nothing to conform to). When
+            // reading, or appending to, an existing stream we conform to the
+            // file's version. A not-yet-created stream is normal (a reader may
+            // open before the writer creates the file): BPVersionLocal reports
+            // '0' (unknown), and we default to BP5, the format FileStream
+            // writers produce, so the reader matches rather than guessing BP4.
+            if (mode_to_use == Mode::Write)
             {
-                version = helper::BPVersionLocal(name);
+                engineTypeLC = "bp5";
             }
-            engineTypeLC = std::string("bp") + comm.BroadcastValue(version);
+            else
+            {
+                char version = '5';
+                if (comm.Rank() == 0)
+                {
+                    char detected = helper::BPVersionLocal(name);
+                    if (detected != '0')
+                    {
+                        version = detected;
+                    }
+                }
+                engineTypeLC = std::string("bp") + comm.BroadcastValue(version);
+            }
         }
         else if (helper::EndsWith(name, ".h5", false))
         {
@@ -626,8 +643,11 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         {
             engineTypeLC = "timeseries";
         }
-        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
+        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess) ||
+                 (mode_to_use == Mode::Append))
         {
+            // Read and Append both conform to the on-disk file's version; only a
+            // fresh Write (the final else) chooses the latest format outright.
             auto it = m_Parameters.find("TarInfo");
             if (it != m_Parameters.end())
             {
@@ -676,18 +696,30 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
                 comm.BroadcastVector(selected);
                 if (selected.empty())
                 {
-                    // Built identically on every rank from 'name', so all ranks
-                    // throw together without broadcasting the message.
-                    std::string err = "Cannot determine the engine for reading \"" + name +
-                                      "\": nothing exists at that location.";
-                    if (mode_to_use == Mode::Read)
+                    // Nothing on disk. Appending to a not-yet-created file creates
+                    // it in the latest format; reading is an error.
+                    if (mode_to_use == Mode::Append)
                     {
-                        err += "  If it is a stream that has not been created yet, select "
-                               "the engine explicitly with IO::SetEngine().";
+                        engineTypeLC = "bp5";
                     }
-                    helper::Throw<std::runtime_error>("Core", "IO", "Open", err);
+                    else
+                    {
+                        // Built identically on every rank from 'name', so all ranks
+                        // throw together without broadcasting the message.
+                        std::string err = "Cannot determine the engine for reading \"" + name +
+                                          "\": nothing exists at that location.";
+                        if (mode_to_use == Mode::Read)
+                        {
+                            err += "  If it is a stream that has not been created yet, select "
+                                   "the engine explicitly with IO::SetEngine().";
+                        }
+                        helper::Throw<std::runtime_error>("Core", "IO", "Open", err);
+                    }
                 }
-                engineTypeLC.assign(selected.begin(), selected.end());
+                else
+                {
+                    engineTypeLC.assign(selected.begin(), selected.end());
+                }
             }
         }
         else
