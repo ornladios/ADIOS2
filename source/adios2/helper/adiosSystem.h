@@ -76,7 +76,9 @@ bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
 /** Rank-local IsHDF5File: no internal broadcast; call from a single rank. */
 bool IsHDF5FileLocal(const std::string &name, core::IO &io, helper::Comm &comm,
                      const std::vector<Params> &transportsParameters) noexcept;
-/** Rank-local BP version sniff (no broadcast): '5' if an mmd.0 is present, else '4'. */
+/** Rank-local BP version sniff (no broadcast): '5' if an mmd.0 is present in an
+ *  existing directory, '4' for an existing directory without one, and '0'
+ *  (unknown) when the dataset directory does not exist yet. */
 char BPVersionLocal(const std::string &name) noexcept;
 
 /** Return the number of available hardware threads on the node.

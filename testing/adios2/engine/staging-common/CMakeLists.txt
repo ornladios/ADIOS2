@@ -361,7 +361,8 @@ if(NOT MSVC)    # not on windows
 endif()
 
 #
-#   Setup streaming tests for FileStream virtual engine (BP4+StreamReader=true)
+#   Setup streaming tests for the FileStream virtual engine (writes BP5, reader
+#   conforms to the file's version).
 #
 if(NOT MSVC)    # not on windows
     # FileStream streaming tests start with all the simple tests, but with a timeout added on open
@@ -392,10 +393,8 @@ if(NOT MSVC)    # not on windows
         add_common_test(${test} FileStream)
     endforeach()
 
-    MutateTestSet( FileStream_BBSTREAM_TESTS "BB" writer "BurstBufferPath=bb,BurstBufferVerbose=2" "${FILESTREAM_TESTS}")
-    foreach(test ${FileStream_BBSTREAM_TESTS})
-        add_common_test(${test} FileStream)
-    endforeach()
+    # No burst-buffer variants: FileStream now writes BP5, and BP5 does not
+    # support the burst-buffer drain path (it was only ever exercised with BP4).
 
 endif()
 

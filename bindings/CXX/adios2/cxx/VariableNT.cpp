@@ -154,7 +154,21 @@ Dims VariableNT::Shape(const size_t step) const
 Dims VariableNT::Start() const
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Start");
-    return m_Variable->m_Start;
+    auto type = m_Variable->m_Type;
+#define declare_type(T)                                                                            \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        return reinterpret_cast<core::Variable<T> *>(m_Variable)->Start();                         \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else if (type == DataType::Struct)
+    {
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)->m_Start;
+    }
+    helper::Throw<std::runtime_error>("bindings::CXX", "VariableNT", "Start",
+                                      "invalid data type " + ToString(type));
+    return Dims();
 }
 
 Dims VariableNT::Count() const

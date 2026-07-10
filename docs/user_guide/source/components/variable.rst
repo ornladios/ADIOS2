@@ -236,3 +236,29 @@ Limitations of the ADIOS global array concept
    Technically, the content of the individual blocks is kept in the BP format (but not in HDF5 format) and in staging.
    If you really, really want to retrieve all the blocks, you need to handle this array as a Local Array and read the
    blocks one by one.
+
+Inspecting a Variable's Selection
+---------------------------------
+
+A ``Variable``'s current geometry can be read back through its accessors:
+
+- ``Start()`` and ``Count()`` return the start offset and count of the
+  variable's **current selection**. After ``SetSelection`` they echo the
+  bounding box that was set; after ``SetBlockSelection`` they report the
+  selected block's geometry, queried from the engine (``Start()`` is empty for a
+  Local Array block, which has no global offset).
+- ``Shape()`` returns the variable's global shape, queried from the engine,
+  independent of any selection.
+- ``BlocksInfo()`` and ``AllStepsBlocksInfo()`` enumerate the geometry of
+  **every** block written at a step, for when you need more than the single
+  currently selected block.
+
+.. code-block:: c++
+
+   var.SetBlockSelection(3);
+   adios2::Dims start = var.Start();   // block 3's offset in the global array
+   adios2::Dims count = var.Count();   // block 3's size
+
+``Start()`` and ``Count()`` describe the application's current selection, not
+engine-installed metadata; use ``Shape()`` for the overall shape and
+``BlocksInfo()`` to enumerate all blocks.

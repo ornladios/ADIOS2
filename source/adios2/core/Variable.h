@@ -104,6 +104,8 @@ public:
 
     T *GetData() const noexcept;
 
+    Dims Start() const;
+
     Dims Count() const;
 
     size_t SelectionSize() const;
@@ -124,6 +126,8 @@ public:
     std::vector<std::vector<typename Variable<T>::BPInfo>> AllStepsBlocksInfo() const;
 
 private:
+    Dims DoStart() const;
+
     Dims DoCount() const;
 
     size_t DoSelectionSize() const;
