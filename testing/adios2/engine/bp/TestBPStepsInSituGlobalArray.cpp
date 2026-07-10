@@ -170,6 +170,11 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     }
     adios2::Engine writer = iow.Open(fname, adios2::Mode::Write);
     EXPECT_TRUE(writer);
+    // A FileStream writer must resolve to the latest streamable format (BP5).
+    if (engineName == "FileStream")
+    {
+        EXPECT_EQ(writer.Type(), "BP5Writer");
+    }
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
 
@@ -326,6 +331,11 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     }
     adios2::Engine writer = iow.Open(fname, adios2::Mode::Write);
     EXPECT_TRUE(writer);
+    // A FileStream writer must resolve to the latest streamable format (BP5).
+    if (engineName == "FileStream")
+    {
+        EXPECT_EQ(writer.Type(), "BP5Writer");
+    }
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
 
@@ -514,6 +524,11 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     }
     adios2::Engine writer = iow.Open(fname, adios2::Mode::Write);
     EXPECT_TRUE(writer);
+    // A FileStream writer must resolve to the latest streamable format (BP5).
+    if (engineName == "FileStream")
+    {
+        EXPECT_EQ(writer.Type(), "BP5Writer");
+    }
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
     auto var_step = iow.DefineVariable<int>("step");
