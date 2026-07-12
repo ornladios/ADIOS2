@@ -16,7 +16,10 @@ The following I/O uses cases are supported by virtual engine names:
 
    This allows a Consumer to concurrently read the data while the Producer is writing new output steps into it. The Consumer will
    wait for the appearance of the file itself in Open() (for up to one hour) and wait for the appearance of new steps in the file
-   (in BeginStep() up to the specificed timeout in that function). 
+   (in BeginStep() up to the specificed timeout in that function).
+
+   When writing, ``FileStream`` produces the ``BP5`` format. When reading, it uses the format of the existing dataset (``BP4`` or
+   ``BP5``); a stream that does not exist yet is assumed to be ``BP5``.
 
 3. ``InSituAnalysis``: Streaming data to another application. 
 
