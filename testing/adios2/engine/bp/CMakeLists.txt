@@ -137,6 +137,9 @@ if(UNIX)
   target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)
 endif()
 
+# Interleaved reads from two files open at once (also run remotely below)
+bp5_gtest_add_tests_helper(RemoteMultiFileRead MPI_NONE)
+
 # Transport tests (parameterized for stdio and fstream)
 bp_gtest_add_tests_helper(WriteReadADIOS2Transport MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
@@ -211,6 +214,7 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_get_remote_tests_helper(WriteReadADIOS2Transport)
    add_get_remote_tests_helper(WriteMemorySelectionRead)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
+   add_get_remote_tests_helper(RemoteMultiFileRead)
 endif()
 
 if (ADIOS2_HAVE_XRootD)
