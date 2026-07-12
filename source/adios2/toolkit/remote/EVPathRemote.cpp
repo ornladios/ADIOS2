@@ -28,8 +28,9 @@ EVPathRemote::EVPathRemote(const adios2::HostOptions &hostOptions) : Remote(host
 #ifdef ADIOS2_HAVE_SST
 EVPathRemote::~EVPathRemote()
 {
+    // dereference, not close: the connection is shared via CMget_conn()
     if (m_conn)
-        CMConnection_close(m_conn);
+        CMConnection_dereference(m_conn);
     m_conn = NULL;
 }
 
@@ -134,12 +135,12 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
         CM_IP_PORT = attr_atom_from_string("IP_PORT");
         add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
         add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        m_conn = CMget_conn(ev_state.cm, contact_list);
         if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
         {
             // if we didn't find a server, but we're in testing, wait briefly and once more
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+            m_conn = CMget_conn(ev_state.cm, contact_list);
         }
         free_attr_list(contact_list);
         if (!m_conn)
@@ -199,7 +200,7 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
         CM_IP_PORT = attr_atom_from_string("IP_PORT");
         add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
         add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        m_conn = CMget_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
         if (!m_conn)
         {
@@ -245,7 +246,7 @@ void EVPathRemote::OpenReadSimpleFile(const std::string hostname, const int32_t 
         CM_IP_PORT = attr_atom_from_string("IP_PORT");
         add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
         add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
-        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+        m_conn = CMget_conn(ev_state.cm, contact_list);
         free_attr_list(contact_list);
         if (!m_conn)
         {
@@ -413,27 +414,27 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
     return (Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition;
 }
 
-std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>>
-    CManagerSingleton::m_EVPathRemotes;
-
 std::pair<std::shared_ptr<EVPathRemote>, int>
 CManagerSingleton::MakeEVPathConnection(const std::string &hostName)
 {
-    auto it = m_EVPathRemotes.find(hostName);
-    if (it != m_EVPathRemotes.end())
+    // Each caller gets its own EVPathRemote (it carries the per-file server
+    // handle).  Per-host costs stay shared: the tunnel port is cached here
+    // and Open() reuses the CM connection via CMget_conn().
+    static std::mutex portMapMutex;
+    static std::map<std::string, int> hostPorts;
+    auto remote = std::make_shared<EVPathRemote>(core::ADIOS::StaticGetHostOptions());
     {
-        if (it->second.first && *(it->second.first))
-        {
-            return it->second;
-        }
+        const std::lock_guard<std::mutex> lock(portMapMutex);
+        auto it = hostPorts.find(hostName);
+        if (it != hostPorts.end())
+            return std::pair<std::shared_ptr<EVPathRemote>, int>(remote, it->second);
     }
-    auto m_Remote = std::make_shared<EVPathRemote>(core::ADIOS::StaticGetHostOptions());
     try
     {
-        int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(hostName);
-        std::pair<std::shared_ptr<EVPathRemote>, int> pair(m_Remote, localPort);
-        m_EVPathRemotes.emplace(hostName, pair);
-        return pair;
+        int localPort = remote->LaunchRemoteServerViaConnectionManager(hostName);
+        const std::lock_guard<std::mutex> lock(portMapMutex);
+        hostPorts[hostName] = localPort;
+        return std::pair<std::shared_ptr<EVPathRemote>, int>(remote, localPort);
     }
     catch (const std::invalid_argument &e)
     {
