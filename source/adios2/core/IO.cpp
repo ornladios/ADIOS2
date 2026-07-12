@@ -604,15 +604,9 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
     {
         if (engineTypeLC == "filestream")
         {
-            // FileStream streams BP4/BP5 file output only (not DAOS, timeseries,
-            // etc.). The choice is mode-dependent: when writing a new file we
-            // produce the latest streamable format (BP5) and do not query the
-            // filesystem for a version (there is nothing to conform to). When
-            // reading, or appending to, an existing stream we conform to the
-            // file's version. A not-yet-created stream is normal (a reader may
-            // open before the writer creates the file): BPVersionLocal reports
-            // '0' (unknown), and we default to BP5, the format FileStream
-            // writers produce, so the reader matches rather than guessing BP4.
+            // FileStream writes BP5. When reading, nothing-on-disk resolves to
+            // BP5 (and waits); an existing dataset is read at its own version,
+            // so old BP4 files still open.
             if (mode_to_use == Mode::Write)
             {
                 engineTypeLC = "bp5";
@@ -620,13 +614,9 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
             else
             {
                 char version = '5';
-                if (comm.Rank() == 0)
+                if (comm.Rank() == 0 && adios2sys::SystemTools::PathExists(name))
                 {
-                    char detected = helper::BPVersionLocal(name);
-                    if (detected != '0')
-                    {
-                        version = detected;
-                    }
+                    version = helper::BPVersionLocal(name);
                 }
                 engineTypeLC = std::string("bp") + comm.BroadcastValue(version);
             }
