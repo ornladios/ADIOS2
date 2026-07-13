@@ -2238,7 +2238,8 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     RR.WriterRank = WriterRank;
                                     RR.StartOffset = writer_meta_base->DataBlockLocation[Block] +
                                                      StartOffsetInBlock;
-                                    if (writer_meta_base->DataBlockLocation[Block] == static_cast<uint64_t>(-1))
+                                    if (writer_meta_base->DataBlockLocation[Block] ==
+                                        static_cast<uint64_t>(-1))
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
