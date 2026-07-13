@@ -206,6 +206,11 @@ struct MinVarInfo
     bool IsValue = false;
     bool IsReverseDims = false;
     std::vector<struct MinBlockInfo> BlocksInfo;
+    // Optional owned storage for Shape/Start/Count when the producing engine must
+    // materialize size_t arrays (e.g. BP5 on 32-bit converting fixed-width uint64_t
+    // metadata). std::vector move preserves the heap buffer, so .data() pointers held
+    // by Shape / BlocksInfo[].Start/Count stay valid across reallocation; freed here.
+    std::vector<std::vector<size_t>> OwnedDims;
     MinVarInfo(const int D, const size_t *S)
     : Dims(D), Shape(S), IsValue(false), IsReverseDims(false), BlocksInfo({})
     {
