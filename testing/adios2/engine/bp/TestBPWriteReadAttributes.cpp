@@ -1214,6 +1214,161 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
     }
 }
 
+// ADIOS2 write, read for steps whose content is ONLY attributes (no variables,
+// no Put), including a per-step (advancing) constant attribute and modifiable
+// (non-constant) attributes whose value changes each step.
+TEST_F(BPWriteReadAttributes, WriteReadStreamAttributesOnly)
+{
+    const std::string separator = "/";
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+    // This test writes no variables, so it needs no data decomposition; only the
+    // rank (for file naming / cleanup) matters under MPI.
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesOnlySteps_MPI.bp";
+#else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesOnlySteps.bp";
+#endif
+
+    // BP3/BP4 only materialize a step when variable data is written, so a step
+    // whose content is only attributes collapses away. Recording attribute-only
+    // steps (and per-step modifiable attributes) is a BP5 capability.
+    if (engineName == "BP3" || engineName == "BP4")
+    {
+        GTEST_SKIP() << engineName << " does not record steps that contain only attributes";
+    }
+
+// Write test data using BP
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+
+    // writer
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
+
+        // A constant global attribute, defined once before stepping.
+        io.DefineAttribute<std::string>("fileType", "attributes-only");
+
+        // Modifiable global attributes (single value and array), initial values.
+        io.DefineAttribute<int32_t>("i32Step", -1, "", separator, true);
+        const double dInit[3] = {-1.1, -1.2, -1.3};
+        io.DefineAttribute<double>("dArray", dInit, 3, "", separator, true);
+
+        adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            const int32_t step32 = static_cast<int32_t>(step);
+            const double stepD = static_cast<double>(step);
+            const double d[3] = {stepD + 0.1, stepD + 0.2, stepD + 0.3};
+
+            bpWriter.BeginStep();
+
+            // No variables and no Put in this step: attributes only.
+
+            // A new, constant attribute unique to this step (advancing attribute).
+            io.DefineAttribute<double>("r64_PerStep_" + std::to_string(step), stepD * 10.0);
+
+            // Redefine the modifiable attributes with this step's values.
+            io.DefineAttribute<int32_t>("i32Step", step32, "", separator, true);
+            io.DefineAttribute<double>("dArray", d, 3, "", separator, true);
+
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+
+    // reader
+    {
+        adios2::IO io = adios.DeclareIO("ReaderIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+            io.SetParameter("StreamReader", "ON");
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
+        adios2::Engine bpReader = io.Open(fName, adios2::Mode::Read);
+
+        size_t stepsRead = 0;
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
+            const int32_t step = static_cast<int32_t>(bpReader.CurrentStep());
+            const double stepD = static_cast<double>(step);
+            const double d[3] = {stepD + 0.1, stepD + 0.2, stepD + 0.3};
+
+            // The constant attribute is available at every step.
+            auto fileType = io.InquireAttribute<std::string>("fileType");
+            EXPECT_TRUE(fileType);
+            if (fileType)
+            {
+                EXPECT_EQ(fileType.Data().front(), "attributes-only");
+            }
+
+            // The advancing attribute for the current step is available.
+            auto perStep = io.InquireAttribute<double>("r64_PerStep_" + std::to_string(step));
+            EXPECT_TRUE(perStep);
+            if (perStep)
+            {
+                EXPECT_EQ(perStep.Data().front(), stepD * 10.0);
+            }
+
+            // The modifiable attributes reflect the current step's values.
+            auto i32Step = io.InquireAttribute<int32_t>("i32Step");
+            EXPECT_TRUE(i32Step);
+            if (i32Step)
+            {
+                EXPECT_EQ(i32Step.Data().front(), step);
+            }
+
+            auto dArray = io.InquireAttribute<double>("dArray");
+            EXPECT_TRUE(dArray);
+            if (dArray)
+            {
+                auto adata = dArray.Data();
+                ASSERT_EQ(adata.size(), 3u);
+                for (int i = 0; i < 3; ++i)
+                {
+                    EXPECT_EQ(adata[i], d[i]);
+                }
+            }
+
+            bpReader.EndStep();
+            ++stepsRead;
+        }
+
+        // Attribute-only steps still produce real steps on read-back.
+        EXPECT_EQ(stepsRead, NSteps);
+    }
+
+    // Cleanup generated files
+#if ADIOS2_USE_MPI
+    if (mpiRank == 0)
+#endif
+    {
+        CleanupTestFiles(fName);
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
