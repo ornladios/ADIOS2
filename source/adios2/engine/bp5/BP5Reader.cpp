@@ -10,8 +10,8 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <stdexcept>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <tuple>
 
@@ -479,9 +479,8 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
         const uint64_t maxOffset = static_cast<uint64_t>(std::numeric_limits<size_t>::max());
         if (offset > maxOffset || base > maxOffset - offset)
         {
-            helper::Throw<std::overflow_error>(
-                "Engine", "BP5Reader", "ReadData",
-                "file offset exceeds size_t on this platform");
+            helper::Throw<std::overflow_error>("Engine", "BP5Reader", "ReadData",
+                                               "file offset exceeds size_t on this platform");
         }
         DataFile->Read(Destination, Length, static_cast<size_t>(base + offset));
     };
@@ -490,9 +489,9 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
     for (size_t flush = 0; flush < FlushCount; flush++)
     {
         uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                         m_Minifooter.IsLittleEndian);
+                                                           m_Minifooter.IsLittleEndian);
         uint64_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                          m_Minifooter.IsLittleEndian);
+                                                            m_Minifooter.IsLittleEndian);
 
         if (StartOffset < SumDataSize + ThisDataSize)
         {
@@ -507,7 +506,7 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
     }
 
     uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                     m_Minifooter.IsLittleEndian);
+                                                       m_Minifooter.IsLittleEndian);
     uint64_t Offset = StartOffset - SumDataSize;
     lf_ReadAt(ThisDataPos, Offset);
 

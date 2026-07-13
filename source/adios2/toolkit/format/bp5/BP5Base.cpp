@@ -53,7 +53,7 @@ int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const
         {"Count", "integer[DBCount]", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, Count)},   \
         {"Offset", "integer[DBCount]", sizeof(size_t),                                             \
          FMOffset(BP5Base::MetaArrayRec *, Offsets)},                                              \
-        {"DataBlockLocation", "integer[BlockCount]", sizeof(uint64_t),                               \
+        {"DataBlockLocation", "integer[BlockCount]", sizeof(uint64_t),                             \
          FMOffset(BP5Base::MetaArrayRec *, DataBlockLocation)},
 
 static FMField MetaArrayRecList[] = {BASE_FIELD_ENTRIES{NULL, NULL, 0, 0}};
