@@ -108,9 +108,8 @@ class CManagerSingleton
 public:
     static CManagerSingleton &Instance(EVPathRemoteCommon::Remote_evpath_state &ev_state);
 
-    /* Map of hostname : connection/port */
-    static std::map<std::string, std::pair<std::shared_ptr<EVPathRemote>, int>> m_EVPathRemotes;
-    /* Helper function to manage connections, one per host */
+    /* Returns a new EVPathRemote (never shared: it carries the per-file
+     * server handle) plus the local port of the tunnel to hostName. */
     static std::pair<std::shared_ptr<EVPathRemote>, int>
     MakeEVPathConnection(const std::string &hostName);
 
@@ -125,11 +124,7 @@ private:
         CMfork_comm_thread(internalEvState.cm);
     }
 
-    ~CManagerSingleton()
-    {
-        m_EVPathRemotes.clear();
-        CManager_close(m_cm);
-    }
+    ~CManagerSingleton() { CManager_close(m_cm); }
 };
 #endif
 

@@ -137,6 +137,9 @@ if(UNIX)
   target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)
 endif()
 
+# Interleaved reads from two files open at once (also run remotely below)
+bp5_gtest_add_tests_helper(RemoteMultiFileRead MPI_NONE)
+
 # Transport tests (parameterized for stdio and fstream)
 bp_gtest_add_tests_helper(WriteReadADIOS2Transport MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
@@ -211,6 +214,7 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_get_remote_tests_helper(WriteReadADIOS2Transport)
    add_get_remote_tests_helper(WriteMemorySelectionRead)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
+   add_get_remote_tests_helper(RemoteMultiFileRead)
 endif()
 
 if (ADIOS2_HAVE_XRootD)
@@ -415,6 +419,13 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP4
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
+# BP5 read-while-write (reader follows a still-active writer via the activeFlag)
+gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
 #gtest_add_tests_helper(JoinedArray MPI_ALLOW BP Engine.BP. .BP4
 #  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 #)
@@ -432,7 +443,7 @@ gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
 
-# FileStream is BP4 + StreamReader=true
+# FileStream writer produces BP5; the reader conforms to the file's version
 gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
