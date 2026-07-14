@@ -22,8 +22,9 @@
 #include <adios2sys/SystemTools.hxx>
 #include <daos_array.h>
 
+#include <algorithm> // std::min
 #include <chrono>
-#include <cstdlib> // getenv
+#include <cstdlib> // getenv, strtoull
 #include <cstring> // memcpy
 #include <ctime>
 #include <fstream>
@@ -39,6 +40,44 @@ namespace engine
 {
 
 using namespace adios2::format;
+
+namespace
+{
+// Diagnostic Open-phase timing, gated on DAOS_TIME_OPEN so normal runs are
+// untouched.  A scoped timer appends (name, seconds) to a TU-local ordered
+// list; DaosWriter::Init prints and clears it on rank 0.  Init runs once per
+// engine open, single-threaded, so the shared list needs no locking.
+bool OpenTimingEnabled()
+{
+    static const bool on = std::getenv("DAOS_TIME_OPEN") != nullptr;
+    return on;
+}
+std::vector<std::pair<std::string, double>> &OpenPhaseLog()
+{
+    static std::vector<std::pair<std::string, double>> log;
+    return log;
+}
+struct OpenPhaseTimer
+{
+    const char *m_Name;
+    std::chrono::steady_clock::time_point m_Start;
+    explicit OpenPhaseTimer(const char *name)
+    : m_Name(name), m_Start(std::chrono::steady_clock::now())
+    {
+    }
+    ~OpenPhaseTimer()
+    {
+        if (!OpenTimingEnabled())
+            return;
+        std::chrono::duration<double> d = std::chrono::steady_clock::now() - m_Start;
+        OpenPhaseLog().emplace_back(m_Name, d.count());
+    }
+};
+} // namespace
+#define DAOS_OPEN_PHASE_CONCAT_(a, b) a##b
+#define DAOS_OPEN_PHASE_CONCAT(a, b) DAOS_OPEN_PHASE_CONCAT_(a, b)
+#define DAOS_OPEN_PHASE(name)                                                                      \
+    OpenPhaseTimer DAOS_OPEN_PHASE_CONCAT(_daos_open_phase_, __LINE__)(name)
 
 DaosWriter::DaosWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("DaosWriter", io, name, mode, std::move(comm)), m_BP5Serializer(), m_Profiler(m_Comm)
@@ -200,11 +239,14 @@ void DaosWriter::WriteData(format::BufferV *Data)
     if (!tail.empty())
     {
         profiling::ProfilerGuard g(m_Profiler, "WD_Tail");
-        // One synchronous daos_array_write covering the unflushed tail
-        // with one iov per VecEntry in the SGL.  Same shape as
-        // DaosChunkV's async submits, just synchronous and last.
-        daos_size_t total = 0;
+        // Synchronous daos_array_write(s) covering the unflushed tail, one
+        // iov per VecEntry in the SGL.  Same shape as DaosChunkV's async
+        // submits, just synchronous and last.  Chunked into bounded
+        // sub-writes to keep each Mercury bulk transfer small (mirrors
+        // DaosChunkV::SubmitRange); DAOS_WRITE_CHUNK_BYTES=0 (default)
+        // restores the single-write behavior for A/B testing.
         std::vector<d_iov_t> sgiovs;
+        daos_size_t total = 0;
         sgiovs.reserve(tail.size());
         for (const auto &e : tail)
         {
@@ -219,22 +261,56 @@ void DaosWriter::WriteData(format::BufferV *Data)
         }
         if (total > 0)
         {
-            daos_range_t rg;
-            rg.rg_idx = m_DataArrayCursor + daosBuf->SubmittedHigh();
-            rg.rg_len = total;
-            daos_array_iod_t iod;
-            iod.arr_nr = 1;
-            iod.arr_rgs = &rg;
-            d_sg_list_t sgl;
-            sgl.sg_nr = static_cast<uint32_t>(sgiovs.size());
-            sgl.sg_nr_out = 0;
-            sgl.sg_iovs = sgiovs.data();
-            int rc = daos_array_write(m_DataArrayOH, DAOS_TX_NONE, &iod, &sgl, NULL);
-            if (rc)
+            static const size_t writeChunk = []() -> size_t {
+                if (const char *e = std::getenv("DAOS_WRITE_CHUNK_BYTES"))
+                    return static_cast<size_t>(std::strtoull(e, nullptr, 10));
+                return size_t{16} * 1024 * 1024; // 16 MiB default (see DaosChunkV)
+            }();
+            const size_t step = (writeChunk == 0) ? static_cast<size_t>(total) : writeChunk;
+
+            const daos_size_t startOff = m_DataArrayCursor + daosBuf->SubmittedHigh();
+            daos_size_t rel = 0;
+            size_t i = 0;
+            size_t inIovOff = 0;
+            while (i < sgiovs.size())
             {
-                helper::Throw<std::runtime_error>("Engine", "DaosWriter", "WriteData",
-                                                  "tail daos_array_write failed rc=" +
-                                                      std::to_string(rc));
+                std::vector<d_iov_t> batch;
+                daos_size_t batchBytes = 0;
+                while (i < sgiovs.size() && batchBytes < step)
+                {
+                    const size_t avail = sgiovs[i].iov_len - inIovOff;
+                    const size_t take = std::min(avail, step - static_cast<size_t>(batchBytes));
+                    d_iov_t v;
+                    v.iov_buf = static_cast<char *>(sgiovs[i].iov_buf) + inIovOff;
+                    v.iov_buf_len = take;
+                    v.iov_len = take;
+                    batch.push_back(v);
+                    batchBytes += take;
+                    inIovOff += take;
+                    if (inIovOff == sgiovs[i].iov_len)
+                    {
+                        ++i;
+                        inIovOff = 0;
+                    }
+                }
+                daos_range_t rg;
+                rg.rg_idx = startOff + rel;
+                rg.rg_len = batchBytes;
+                daos_array_iod_t iod;
+                iod.arr_nr = 1;
+                iod.arr_rgs = &rg;
+                d_sg_list_t sgl;
+                sgl.sg_nr = static_cast<uint32_t>(batch.size());
+                sgl.sg_nr_out = 0;
+                sgl.sg_iovs = batch.data();
+                int rc = daos_array_write(m_DataArrayOH, DAOS_TX_NONE, &iod, &sgl, NULL);
+                if (rc)
+                {
+                    helper::Throw<std::runtime_error>("Engine", "DaosWriter", "WriteData",
+                                                      "tail daos_array_write failed rc=" +
+                                                          std::to_string(rc));
+                }
+                rel += batchBytes;
             }
         }
     }
@@ -723,16 +799,48 @@ void DaosWriter::Init()
 
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
-    InitParameters();
-    InitTransports();
+    {
+        DAOS_OPEN_PHASE("InitParameters");
+        InitParameters();
+    }
+    {
+        DAOS_OPEN_PHASE("InitTransports(dfuse md.0/mmd.0/md.idx)");
+        InitTransports();
+    }
     CALI_MARK_BEGIN("DaosWriter::InitDAOS");
-    InitDAOS();
+    {
+        DAOS_OPEN_PHASE("InitDAOS(total)");
+        InitDAOS();
+    }
     CALI_MARK_END("DaosWriter::InitDAOS");
 
     RegisterProfilerTimers();
-    OpenDataArray();
+    {
+        DAOS_OPEN_PHASE("OpenDataArray(data array_create)");
+        OpenDataArray();
+    }
 
-    InitBPBuffer();
+    {
+        DAOS_OPEN_PHASE("InitBPBuffer");
+        InitBPBuffer();
+    }
+
+    if (OpenTimingEnabled() && m_Comm.Rank() == 0)
+    {
+        double sum = 0.0;
+        for (const auto &p : OpenPhaseLog())
+            sum += p.second;
+        std::cout << "DAOS_OPEN_BREAKDOWN (rank 0, seconds):\n";
+        for (const auto &p : OpenPhaseLog())
+        {
+            std::cout << "  " << std::left << std::setw(40) << p.first << std::right << std::setw(9)
+                      << std::fixed << std::setprecision(4) << p.second << "  (" << std::setw(5)
+                      << std::setprecision(1) << (sum > 0 ? 100.0 * p.second / sum : 0.0) << "%)\n";
+        }
+        std::cout << "  " << std::left << std::setw(40) << "TOTAL(measured)" << std::right
+                  << std::setw(9) << std::fixed << std::setprecision(4) << sum << std::endl;
+    }
+    OpenPhaseLog().clear();
 }
 
 void DaosWriter::RegisterProfilerTimers()
@@ -934,7 +1042,10 @@ void DaosWriter::InitDAOS()
     // Rank 0 - Connect to DAOS pool, and open container
     int rc;
     CALI_MARK_BEGIN("DaosWriter::daos_init");
-    rc = daos_init();
+    {
+        DAOS_OPEN_PHASE("  daos_init");
+        rc = daos_init();
+    }
     if (rc)
     {
         helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
@@ -954,61 +1065,80 @@ void DaosWriter::InitDAOS()
     SetPoolAndContName();
 
     CALI_MARK_BEGIN("DaosWriter::daos_pool_connect");
-    if (m_Comm.Rank() == 0)
     {
-        /** connect to the just created DAOS pool */
-        rc = daos_pool_connect(m_pool_label, DSS_PSETID, DAOS_PC_RW /* read write access */,
-                               &poh /* returned pool handle */, NULL /* returned pool info */,
-                               NULL /* event */);
-        if (rc)
+        DAOS_OPEN_PHASE("  daos_pool_connect(rank0)");
+        if (m_Comm.Rank() == 0)
         {
-            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
-                                              "daos_pool_connect failed rc=" + std::to_string(rc));
+            /** connect to the just created DAOS pool */
+            rc = daos_pool_connect(m_pool_label, DSS_PSETID, DAOS_PC_RW /* read write access */,
+                                   &poh /* returned pool handle */, NULL /* returned pool info */,
+                                   NULL /* event */);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                                  "daos_pool_connect failed rc=" +
+                                                      std::to_string(rc));
+            }
         }
     }
     CALI_MARK_END("DaosWriter::daos_pool_connect");
 
     /** share pool handle with peer tasks */
     CALI_MARK_BEGIN("DaosWriter::daos_handle_share_pool");
-    daos_handle_share(&poh, DaosWriter::HANDLE_POOL);
+    {
+        DAOS_OPEN_PHASE("  pool_handle_share(l2g+bcast+g2l+barrier)");
+        daos_handle_share(&poh, DaosWriter::HANDLE_POOL);
+    }
     CALI_MARK_END("DaosWriter::daos_handle_share_pool");
 
     CALI_MARK_BEGIN("DaosWriter::daos_cont_open");
-    if (m_Comm.Rank() == 0)
     {
-        /** open container */
-        rc = daos_cont_open(poh, m_cont_label, DAOS_COO_RW, &coh, NULL, NULL);
-        if (rc)
+        DAOS_OPEN_PHASE("  daos_cont_open(rank0)");
+        if (m_Comm.Rank() == 0)
         {
-            helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
-                                              "daos_cont_open failed rc=" + std::to_string(rc));
+            /** open container */
+            rc = daos_cont_open(poh, m_cont_label, DAOS_COO_RW, &coh, NULL, NULL);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>("Engine", "DaosWriter", "InitDAOS",
+                                                  "daos_cont_open failed rc=" + std::to_string(rc));
+            }
         }
     }
     CALI_MARK_END("DaosWriter::daos_cont_open");
 
     /** share container handle with peer tasks */
     CALI_MARK_BEGIN("DaosWriter::daos_handle_share_cont");
-    daos_handle_share(&coh, HANDLE_CO);
+    {
+        DAOS_OPEN_PHASE("  cont_handle_share(l2g+bcast+g2l+barrier)");
+        daos_handle_share(&coh, HANDLE_CO);
+    }
     CALI_MARK_END("DaosWriter::daos_handle_share_cont");
 
-    if (m_Comm.Rank() == 0)
     {
-        switch (metadataLayout)
+        DAOS_OPEN_PHASE("  create+open md object + share");
+        if (m_Comm.Rank() == 0)
         {
-        case MetadataLayout::ARRAY:
-        case MetadataLayout::ARRAY_1MB_ALIGNED:
-            CreateDaosArrayObject();
-            break;
-        case MetadataLayout::KV:
-            CreateDaosKVObject();
-            break;
+            switch (metadataLayout)
+            {
+            case MetadataLayout::ARRAY:
+            case MetadataLayout::ARRAY_1MB_ALIGNED:
+                CreateDaosArrayObject();
+                break;
+            case MetadataLayout::KV:
+                CreateDaosKVObject();
+                break;
+            }
         }
+
+        OpenDaosObjAndShare();
     }
 
-    OpenDaosObjAndShare();
-
-    if (m_Comm.Rank() == 0)
-        WriteObjectIDsToFile();
+    {
+        DAOS_OPEN_PHASE("  WriteObjectIDsToFile(dfuse)");
+        if (m_Comm.Rank() == 0)
+            WriteObjectIDsToFile();
+    }
 }
 
 void DaosWriter::WriteObjectIDsToFile()
@@ -1343,6 +1473,15 @@ void DaosWriter::DoClose(const int transportIndex)
 
     SyncExternalCountersToProfiler();
 
+    // Collaborative teardown.  poh/coh are shared across ranks via
+    // daos_{pool,cont}_global2local (rank 0 owns the real connection/open; the
+    // others hold local copies).  Barrier so no rank releases the shared
+    // handles (daos_cont_close / rank-0 daos_pool_disconnect below) while
+    // another rank is still finishing writes/drains -> DER_NO_HDL(-1002).
+    // The writer's collective EndStep already keeps ranks largely in step, so
+    // this is defensive, matching DaosReader::DoClose.
+    m_Comm.Barrier();
+
     CloseDataArray();
 
     if (m_Comm.Rank() == 0)
@@ -1380,6 +1519,10 @@ void DaosWriter::DoClose(const int transportIndex)
         daos_cont_close(coh, NULL);
         coh = {};
     }
+    // Ensure every rank has released its container handle before rank 0 drops
+    // the shared pool connection (rank-0 disconnect invalidates the pool for
+    // all global2local holders).
+    m_Comm.Barrier();
     if (m_Comm.Rank() == 0 && poh.cookie != 0)
     {
         daos_pool_disconnect(poh, NULL);
@@ -1833,8 +1976,26 @@ void DaosWriter::OpenDataArray()
         }
 
         daos_size_t cell_size = 1;
-        daos_size_t chunk_size =
-            m_Parameters.BufferChunkSize ? m_Parameters.BufferChunkSize : (1ULL << 20);
+        // The DAOS array chunk_size sets the server-side record->dkey
+        // granularity: how this 1-D per-rank array distributes across
+        // targets (the analogue of IOR-DFS --dfs.chunk_size, which uses
+        // 1 MiB).  It is deliberately NOT tied to BufferChunkSize (the much
+        // larger client buffer-allocation granularity): a large array chunk
+        // maps each rank's per-step blob onto only a couple of
+        // dkeys/targets, capping aggregate write bandwidth well below the
+        // fabric/pool ceiling.  Data-phase bandwidth improves monotonically
+        // as this shrinks toward a 1 MiB sweet spot (matching IOR-DFS);
+        // below ~1 MiB it regresses as per-record overhead dominates.
+        // DAOS_ARRAY_CHUNK_BYTES overrides it independently of the
+        // client-side transfer chunking (DAOS_WRITE_CHUNK_BYTES); the
+        // value is stored on the OID (add_attr) so the reader picks it up.
+        daos_size_t chunk_size = 1ULL << 20; // 1 MiB
+        if (const char *e = std::getenv("DAOS_ARRAY_CHUNK_BYTES"))
+        {
+            unsigned long long v = std::strtoull(e, nullptr, 10);
+            if (v > 0)
+                chunk_size = static_cast<daos_size_t>(v);
+        }
         rc = daos_array_create(coh, m_DataArrayOid, DAOS_TX_NONE, cell_size, chunk_size,
                                &m_DataArrayOH, NULL);
         if (rc)

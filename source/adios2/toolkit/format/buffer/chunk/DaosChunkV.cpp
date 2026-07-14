@@ -9,6 +9,7 @@
 #include "adios2/helper/adiosLog.h"
 
 #include <algorithm>
+#include <cstdlib> // getenv, strtoull
 
 namespace adios2
 {
@@ -116,13 +117,12 @@ void DaosChunkV::SubmitRange(size_t firstIdx, size_t lastIdx)
     if (firstIdx > lastIdx || lastIdx >= DataV.size())
         return;
 
-    std::unique_ptr<PendingSubmit> p;
+    // Assemble the contiguous iov set for this range.
+    std::vector<d_iov_t> allIovs;
     daos_size_t total = 0;
     {
         profiling::ProfilerGuard g(m_Profiler, "subSetup");
-        p = std::make_unique<PendingSubmit>();
-        p->iovs.reserve(lastIdx - firstIdx + 1);
-
+        allIovs.reserve(lastIdx - firstIdx + 1);
         for (size_t i = firstIdx; i <= lastIdx; ++i)
         {
             const VecEntry &v = DataV[i];
@@ -133,47 +133,101 @@ void DaosChunkV::SubmitRange(size_t firstIdx, size_t lastIdx)
             iov.iov_buf = const_cast<void *>(base);
             iov.iov_buf_len = v.Size;
             iov.iov_len = v.Size;
-            p->iovs.push_back(iov);
+            allIovs.push_back(iov);
             total += v.Size;
         }
-
-        if (total == 0)
-            return;
-
-        p->range.rg_idx = m_BaseArrayOffset + m_SubmittedHigh;
-        p->range.rg_len = total;
-        p->iod.arr_nr = 1;
-        p->iod.arr_rgs = &p->range;
-        p->sgl.sg_nr = static_cast<uint32_t>(p->iovs.size());
-        p->sgl.sg_nr_out = 0;
-        p->sgl.sg_iovs = p->iovs.data();
     }
+    if (total == 0)
+        return;
 
-    int rc;
+    // Chunk large writes to bound Mercury bulk registration.  A single
+    // daos_array_write of the full pending range (up to BufferChunkSize,
+    // 128 MiB) creates one large bulk transfer; issued concurrently across
+    // ranks against a loaded/degraded pool this stresses Mercury's NA
+    // memory descriptors -- the write-side mirror of the read DER_NOMEM
+    // crash (see DaosReader::ReadData).  Splitting into bounded sub-writes,
+    // each its own async event, keeps every bulk transfer small (the same
+    // strategy IOR-DFS uses via --dfs.chunk_size) and lets earlier events
+    // reap/free before later ones register.  DAOS_WRITE_CHUNK_BYTES=0
+    // restores the single-write mode-B behavior for A/B testing.
+    //
+    // Default 16 MiB: a same-pool A/B sweep (job 8659453, 32r x 256 MiB x 4)
+    // showed the unchunked path at 5.31 GiB/s with 128 DER_HG mercury errors,
+    // vs 10.7-10.8 GiB/s and ZERO errors at 4-16 MiB (2x, and the retries the
+    // errors forced are gone).  1 MiB was past the sweet spot -- ~8K in-flight
+    // events/step reintroduced pressure and it did not complete.  16 MiB sits
+    // at the top of the plateau and matches the read path's default.
+    static const size_t writeChunk = []() -> size_t {
+        if (const char *e = std::getenv("DAOS_WRITE_CHUNK_BYTES"))
+            return static_cast<size_t>(std::strtoull(e, nullptr, 10));
+        return size_t{16} * 1024 * 1024; // 16 MiB default
+    }();
+    const size_t step = (writeChunk == 0) ? static_cast<size_t>(total) : writeChunk;
+
+    const daos_size_t startOff = m_BaseArrayOffset + m_SubmittedHigh;
+    daos_size_t rel = 0; // bytes of this range already assigned to a sub-write
+    size_t i = 0;        // index into allIovs
+    size_t inIovOff = 0; // bytes of allIovs[i] already consumed
+    while (i < allIovs.size())
     {
-        profiling::ProfilerGuard g(m_Profiler, "subEventInit");
-        rc = daos_event_init(&p->event, m_EventQueue, /*parent=*/nullptr);
-    }
-    if (rc)
-    {
-        helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
-                                          "daos_event_init failed rc=" + std::to_string(rc));
-    }
+        std::unique_ptr<PendingSubmit> p;
+        {
+            profiling::ProfilerGuard g(m_Profiler, "subSetup");
+            p = std::make_unique<PendingSubmit>();
+            daos_size_t batchBytes = 0;
+            while (i < allIovs.size() && batchBytes < step)
+            {
+                const size_t avail = allIovs[i].iov_len - inIovOff;
+                const size_t take = std::min(avail, step - static_cast<size_t>(batchBytes));
+                d_iov_t v;
+                v.iov_buf = static_cast<char *>(allIovs[i].iov_buf) + inIovOff;
+                v.iov_buf_len = take;
+                v.iov_len = take;
+                p->iovs.push_back(v);
+                batchBytes += take;
+                inIovOff += take;
+                if (inIovOff == allIovs[i].iov_len)
+                {
+                    ++i;
+                    inIovOff = 0;
+                }
+            }
+            p->range.rg_idx = startOff + rel;
+            p->range.rg_len = batchBytes;
+            p->iod.arr_nr = 1;
+            p->iod.arr_rgs = &p->range;
+            p->sgl.sg_nr = static_cast<uint32_t>(p->iovs.size());
+            p->sgl.sg_nr_out = 0;
+            p->sgl.sg_iovs = p->iovs.data();
+            rel += batchBytes;
+        }
 
-    {
-        profiling::ProfilerGuard g(m_Profiler, "subWriteCall");
-        rc = daos_array_write(m_ArrayHandle, DAOS_TX_NONE, &p->iod, &p->sgl, &p->event);
-    }
-    if (rc)
-    {
-        // The event was initialized but the call failed before queuing;
-        // tear down the event so we don't leak.
-        daos_event_fini(&p->event);
-        helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
-                                          "daos_array_write failed rc=" + std::to_string(rc));
-    }
+        int rc;
+        {
+            profiling::ProfilerGuard g(m_Profiler, "subEventInit");
+            rc = daos_event_init(&p->event, m_EventQueue, /*parent=*/nullptr);
+        }
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
+                                              "daos_event_init failed rc=" + std::to_string(rc));
+        }
 
-    m_Pending.push_back(std::move(p));
+        {
+            profiling::ProfilerGuard g(m_Profiler, "subWriteCall");
+            rc = daos_array_write(m_ArrayHandle, DAOS_TX_NONE, &p->iod, &p->sgl, &p->event);
+        }
+        if (rc)
+        {
+            // The event was initialized but the call failed before queuing;
+            // tear down the event so we don't leak.
+            daos_event_fini(&p->event);
+            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
+                                              "daos_array_write failed rc=" + std::to_string(rc));
+        }
+
+        m_Pending.push_back(std::move(p));
+    }
     m_SubmittedHigh += total;
 }
 
