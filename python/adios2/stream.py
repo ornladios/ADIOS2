@@ -418,10 +418,11 @@ class Stream:  # noqa: PLR0902
                         The returned numpy array will be filled with data
                         only after calling read_complete().
                         Prefer deferring when reading several variables or
-                        step ranges: each synchronous read is a separate
-                        request (a full network round trip on remote or
-                        campaign data), while deferred reads complete
-                        together in a single read_complete() call.
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -556,10 +557,11 @@ class Stream:  # noqa: PLR0902
                       The returned numpy array will be filled with data
                       only after calling read_complete().
                       Prefer deferring when reading several variables or
-                      step ranges: each synchronous read is a separate
-                      request (a full network round trip on remote or
-                      campaign data), while deferred reads complete
-                      together in a single read_complete() call.
+                      step ranges: the queued reads complete together in
+                      a single read_complete() call, served by multiple
+                      threads from local files and without paying one
+                      network round trip per read on remote or campaign
+                      data.
         """
         variable = self._set_variable_settings(variable, start, count, block_id, step_selection)
         # make sure the buffer is a mutable array
@@ -643,10 +645,11 @@ class Stream:  # noqa: PLR0902
                       The returned numpy array will be filled with data
                       only after calling read_complete().
                       Prefer deferring when reading several variables or
-                      step ranges: each synchronous read is a separate
-                      request (a full network round trip on remote or
-                      campaign data), while deferred reads complete
-                      together in a single read_complete() call.
+                      step ranges: the queued reads complete together in
+                      a single read_complete() call, served by multiple
+                      threads from local files and without paying one
+                      network round trip per read on remote or campaign
+                      data.
         """
         variable = self._io.inquire_variable(name)
         if not variable:
@@ -698,10 +701,11 @@ class Stream:  # noqa: PLR0902
                         The returned numpy array will be filled with data
                         only after calling read_complete().
                         Prefer deferring when reading several variables or
-                        step ranges: each synchronous read is a separate
-                        request (a full network round trip on remote or
-                        campaign data), while deferred reads complete
-                        together in a single read_complete() call.
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -752,10 +756,11 @@ class Stream:  # noqa: PLR0902
                         The returned numpy array will be filled with data
                         only after calling read_complete().
                         Prefer deferring when reading several variables or
-                        step ranges: each synchronous read is a separate
-                        request (a full network round trip on remote or
-                        campaign data), while deferred reads complete
-                        together in a single read_complete() call.
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -772,9 +777,10 @@ class Stream:  # noqa: PLR0902
         The returned numpy arrays of each read(..., defer_read=True) will be
         filled with data after this call.
 
-        This is the efficient way to read several variables, especially from
-        remote or campaign data where every synchronous read() is a full
-        network round trip::
+        This is the efficient way to read several variables. Local file
+        engines serve the queued reads with multiple threads, and on
+        remote or campaign data the batch avoids one network round trip
+        per read()::
 
             temp = s.read("temperature", defer_read=True)
             pres = s.read("pressure", defer_read=True)

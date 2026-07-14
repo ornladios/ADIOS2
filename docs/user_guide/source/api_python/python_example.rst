@@ -198,12 +198,12 @@ Python Read Random Access example
 Python Deferred (batched) Read example
 --------------------------------------
 
-Each synchronous ``read()`` call is a separate request, and when the data is
-remote (campaign files, remote servers) a full network round trip. When
-reading more than one variable, defer every read and complete them all with one
-``read_complete()`` call: the engine pipelines or batches the requests, so N
-variables cost roughly one round trip instead of N. The returned arrays
-contain data only after ``read_complete()`` returns.
+When reading more than one variable, defer every read and complete them all
+with one ``read_complete()`` call. Local file engines serve the queued reads
+with multiple threads (often several times faster from fast storage), and
+when the data is remote (campaign files, remote servers) the batch costs
+roughly one network round trip instead of one per ``read()``. The returned
+arrays contain data only after ``read_complete()`` returns.
 
 .. code-block:: python
 
