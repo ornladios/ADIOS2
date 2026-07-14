@@ -10,7 +10,14 @@ from adios2 import bindings, Adios, Stream, IO
 
 
 class FileReader(Stream):  # noqa: PLR0902
-    """High level implementation of the FileReader class for read Random access mode"""
+    """High level implementation of the FileReader class for read Random access mode.
+
+    Opens in ReadRandomAccess mode: metadata for all steps is loaded at open
+    (expensive for files with very large metadata; use Stream(path, "r") to
+    process step by step instead) and read() may select any steps directly.
+    When reading several variables, defer each read (defer_read=True) and
+    complete them together with read_complete(); see Stream.read_complete().
+    """
 
     def __repr__(self):
         return f"<adios.file named {self._io_name}>"
