@@ -171,6 +171,10 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
     void *compressedData = bufferOut + bufferOutOffset;
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType, dataIn,
                       compressedData, sizeOut, config, true);
+    // Release MGARD-X's persistent compressor cache so the GPU device buffers it
+    // retains (compression workspace + staging buffers, sized to the largest block)
+    // are returned rather than held for the lifetime of the process.
+    mgard_x::release_cache(config);
     bufferOutOffset += sizeOut;
     return bufferOutOffset;
 }
@@ -221,6 +225,11 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn, ch
             helper::Throw<std::runtime_error>("Operator", "CompressMGARD", "DecompressV1",
                                               m_VersionInfo);
         }
+        // Release MGARD-X's persistent cache so the GPU device buffers holding the
+        // decompressed data + workspace are returned. The decompressed data has
+        // already been copied to dataOut (host) before mgard_x::decompress returns,
+        // so freeing the device cache here cannot race the copy.
+        mgard_x::release_cache(mgard_x::Config());
         return sizeOut;
     }
 
