@@ -1224,11 +1224,8 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamAttributesOnly)
     // Number of steps
     const size_t NSteps = 3;
 
-    // This test writes no variables, so it needs no data decomposition; only the
-    // rank (for file naming / cleanup) matters under MPI.
+    // This test writes no variables, so it needs no data decomposition.
 #if ADIOS2_USE_MPI
-    int mpiRank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     const std::string fName =
         "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesOnlySteps_MPI.bp";
 #else
@@ -1360,13 +1357,12 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamAttributesOnly)
         EXPECT_EQ(stepsRead, NSteps);
     }
 
-    // Cleanup generated files
+    // Cleanup generated files (barrier before rank 0 deletes, avoids a race)
 #if ADIOS2_USE_MPI
-    if (mpiRank == 0)
+    CleanupTestFilesMPI(fName, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fName);
 #endif
-    {
-        CleanupTestFiles(fName);
-    }
 }
 
 //******************************************************************************
