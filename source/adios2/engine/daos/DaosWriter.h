@@ -28,6 +28,10 @@
 #include <daos.h>
 #include <daos_obj.h>
 
+#include <cstdint>
+#include <unordered_set>
+#include <vector>
+
 #define MAX_AGGREGATE_METADATA_SIZE (5'368'709'120ULL)
 #define chunk_size_1mb 1'048'576
 
@@ -270,6 +274,26 @@ private:
      *  Total data written this timestep
      */
     uint64_t m_ThisTimestepDataSize = 0;
+
+    // Zero-copy vs copy Put split, emitted as DAOS_* timers in profiling.json.
+    uint64_t m_ZeroCopyPuts = 0;
+    uint64_t m_ZeroCopyBytes = 0;
+    uint64_t m_CopyPuts = 0;
+    uint64_t m_CopyBytes = 0;
+
+    // Warmth guard: a large buffer zero-copied cold (never-reused, so its MR
+    // is unregistered) loses to a copy, so only zero-copy buffers that have
+    // recurred. Tracked global-by-address to match the VA-keyed MR cache;
+    // window depth covers multi-buffering. Env DAOS_WARMTH_WINDOW; 0 = off.
+    size_t m_WarmthWindow = 8;
+    struct AddrWindow
+    {
+        int64_t lastStep = -1;
+        int cur = -1;
+        std::vector<std::unordered_set<const void *>> slots;
+    };
+    AddrWindow m_AddrWindow;
+    bool AddrIsWarm(const void *addr);
 
     bool m_MarshalAttributesNecessary = true;
 

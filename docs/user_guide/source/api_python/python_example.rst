@@ -194,3 +194,33 @@ Python Read Random Access example
     temperature array size is 200 of shape (200,)
     temperature unit is K of type <class 'str'>
 
+
+Python Deferred (batched) Read example
+--------------------------------------
+
+When reading more than one variable, defer every read and complete them all
+with one ``read_complete()`` call. Local file engines serve the queued reads
+with multiple threads (often several times faster from fast storage), and
+when the data is remote (campaign files, remote servers) the batch costs
+roughly one network round trip instead of one per ``read()``. The returned
+arrays contain data only after ``read_complete()`` returns.
+
+.. code-block:: python
+
+    import numpy as np
+    from adios2 import FileReader
+
+    with FileReader("cfd.bp") as s:
+        # queue all reads; nothing is transferred yet
+        temperature = s.read("temperature", defer_read=True)
+        pressure = s.read("pressure", defer_read=True)
+        physical_time = s.read("physical_time", step_selection=[0, 5], defer_read=True)
+
+        # one call performs every queued read
+        s.read_complete()
+
+        # arrays are now filled
+        print(f"temperature array size is {temperature.size}")
+        print(f"pressure array size is {pressure.size}")
+        print(f"physical_time is {physical_time}")
+

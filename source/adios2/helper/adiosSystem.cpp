@@ -7,6 +7,7 @@
 #include "adiosSystem.h"
 #include <chrono> //system_clock, now
 #include <ctime>
+#include <fstream>
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
 #include <thread>
@@ -171,8 +172,18 @@ bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
 
 char BPVersionLocal(const std::string &name) noexcept
 {
-    const std::string mmdFileName = name + PathSeparator + "mmd.0";
-    return adios2sys::SystemTools::PathExists(mmdFileName) ? '5' : '4';
+    // Read the BP version byte at a fixed offset in md.idx (same for BP4/BP5);
+    // an absent or short index reads as the current format, BP5. Content-based,
+    // so it does not race a concurrent writer's file creation.
+    constexpr std::streamoff versionOffset = 37; // BP4Base/BP5Engine m_BPVersionPosition
+    char version = '5';
+    std::ifstream idx(name + PathSeparator + "md.idx", std::ios::binary);
+    char v = 0;
+    if (idx && idx.seekg(versionOffset).read(&v, 1) && v >= 3 && v <= 5)
+    {
+        version = static_cast<char>('0' + v);
+    }
+    return version;
 }
 
 bool IsDAOSDataset(const std::string &name) noexcept

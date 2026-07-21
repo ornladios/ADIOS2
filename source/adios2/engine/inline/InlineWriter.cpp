@@ -94,6 +94,15 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         return StepStatus::NotReady;
     }
     m_InsideStep = true;
+
+    // Free buffers from the previous step now that the reader has had a
+    // chance to consume them and before their BlocksInfo is cleared.
+    for (auto *buf : m_InternalBuffers)
+    {
+        free(buf);
+    }
+    m_InternalBuffers.clear();
+
     if (m_CurrentStep == static_cast<size_t>(-1))
     {
         m_CurrentStep = 0; // 0 is the first step
@@ -183,11 +192,8 @@ void InlineWriter::EndStep()
         std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step " << m_CurrentStep
                   << std::endl;
     }
-    for (auto *buf : m_InternalBuffers)
-    {
-        free(buf);
-    }
-    m_InternalBuffers.clear();
+    // Buffers are kept alive until the next BeginStep() so the reader can
+    // still consume the step after the writer has left it.
     m_InsideStep = false;
 }
 

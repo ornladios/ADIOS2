@@ -71,7 +71,8 @@ template <class T>
 int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
 template <class T>
-int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable, int blockid);
+int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable, size_t step,
+                 size_t blockid, Dims Count, Dims Start);
 
 template <class T>
 size_t relative_to_absolute_step(core::Engine *fp, core::Variable<T> *variable,

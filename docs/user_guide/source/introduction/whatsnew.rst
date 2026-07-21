@@ -2,6 +2,18 @@
 What's new in Development
 ==============================
 
+Leaner default build for packagers
+----------------------------------
+
+Several rarely used, unmaintained engines are now off by default:
+``DataMan``, ``MHS``, ``SSC``, and ``DataSpaces``, along with the DDN ``IME``
+transport. ``SSC`` gains a dedicated ``ADIOS2_USE_SSC`` option (previously it
+was always built alongside MPI); the others switch from ``AUTO`` to ``OFF``.
+``ZeroMQ``, required only by the ``DataMan`` engine, is likewise off by default,
+so a default build no longer probes for or links it. Any of these can still be
+enabled explicitly (for example ``-DADIOS2_USE_MHS=ON``). See the new "Notes for
+Packagers" section of the README for the recommended feature tiers.
+
 Thread-Safe Get with GetContext
 -------------------------------
 

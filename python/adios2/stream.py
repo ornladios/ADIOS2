@@ -63,13 +63,45 @@ def string_to_mode(mode: str) -> [bindings.Mode, bool]:
 
 
 class Stream:  # noqa: PLR0902
-    """High level implementation of the Stream class from the core API"""
+    """High level implementation of the Stream class from the core API.
+
+    The open mode determines the access semantics:
+
+        "r"   Step-by-step reading. Iterate with steps() (or
+              begin_step()/end_step()); read() applies to the current
+              step only, and step_selection is not available. Only the
+              current step's metadata is held in memory.
+        "rra" Random access reading, not streaming at all: no step
+              loop, metadata for all steps is loaded at open (expensive
+              for very large metadata), and read() may address any
+              steps with step_selection. Prefer the FileReader
+              subclass, which is exactly this mode under a clearer
+              name.
+        "w"   Write a new dataset step by step.
+        "a"   Append steps to an existing dataset.
+    """
 
     # Default timeout for stream.begin_step()
     DEFAULT_TIMEOUT_SEC = -1.0
 
     @singledispatchmethod
     def __init__(self, path, mode, comm=None):  # noqa: PLR0912
+        """
+        Open a stream on a file or dataset.
+
+        Parameters
+            path
+                dataset path (e.g. a .bp directory or .aca campaign file)
+
+            mode
+                "r" (step-by-step read), "rra" (random access read),
+                "w" (write), or "a" (append). See the Stream class
+                documentation for the read-mode semantics.
+
+            comm
+                optional mpi4py communicator (requires an MPI-enabled
+                ADIOS2 build)
+        """
         if comm and not bindings.is_built_with_mpi:
             raise RuntimeError("Cannot use MPI since ADIOS2 was built without MPI support")
 
@@ -385,6 +417,12 @@ class Stream:  # noqa: PLR0902
                 True: defer reading all requests until read_complete().
                         The returned numpy array will be filled with data
                         only after calling read_complete().
+                        Prefer deferring when reading several variables or
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -448,7 +486,10 @@ class Stream:  # noqa: PLR0902
                 value.
 
             step_selection
-                (list): On the form of [start, count].
+                (list): On the form of [start, count]. Requires "rra"
+                (ReadRandomAccess) mode. In "r" mode there is no step
+                addressing: reads apply to the current step of the
+                steps() loop.
         Returns
             variable
                 the variable with the selection set
@@ -505,13 +546,22 @@ class Stream:  # noqa: PLR0902
                 value.
 
             step_selection
-                (list): On the form of [start, count].
+                (list): On the form of [start, count]. Requires "rra"
+                (ReadRandomAccess) mode. In "r" mode there is no step
+                addressing: reads apply to the current step of the
+                steps() loop.
 
             defer_read
                 False: read now and blocking wait for completion (Sync mode)
                 True: defer reading all requests until read_complete().
                       The returned numpy array will be filled with data
                       only after calling read_complete().
+                      Prefer deferring when reading several variables or
+                      step ranges: the queued reads complete together in
+                      a single read_complete() call, served by multiple
+                      threads from local files and without paying one
+                      network round trip per read on remote or campaign
+                      data.
         """
         variable = self._set_variable_settings(variable, start, count, block_id, step_selection)
         # make sure the buffer is a mutable array
@@ -584,13 +634,22 @@ class Stream:  # noqa: PLR0902
                 value.
 
             step_selection
-                (list): On the form of [start, count].
+                (list): On the form of [start, count]. Requires "rra"
+                (ReadRandomAccess) mode. In "r" mode there is no step
+                addressing: reads apply to the current step of the
+                steps() loop.
 
             defer_read
                 False: read now and blocking wait for completion (Sync mode)
                 True: defer reading all requests until read_complete().
                       The returned numpy array will be filled with data
                       only after calling read_complete().
+                      Prefer deferring when reading several variables or
+                      step ranges: the queued reads complete together in
+                      a single read_complete() call, served by multiple
+                      threads from local files and without paying one
+                      network round trip per read on remote or campaign
+                      data.
         """
         variable = self._io.inquire_variable(name)
         if not variable:
@@ -631,13 +690,22 @@ class Stream:  # noqa: PLR0902
                 value.
 
             step_selection
-                (list): On the form of [start, count].
+                (list): On the form of [start, count]. Requires "rra"
+                (ReadRandomAccess) mode. In "r" mode there is no step
+                addressing: reads apply to the current step of the
+                steps() loop.
 
             defer_read
                 False: read now and blocking wait for completion (Sync mode)
                 True: defer reading all requests until read_complete().
                         The returned numpy array will be filled with data
                         only after calling read_complete().
+                        Prefer deferring when reading several variables or
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -677,13 +745,22 @@ class Stream:  # noqa: PLR0902
                 value.
 
             step_selection
-                (list): On the form of [start, count].
+                (list): On the form of [start, count]. Requires "rra"
+                (ReadRandomAccess) mode. In "r" mode there is no step
+                addressing: reads apply to the current step of the
+                steps() loop.
 
             defer_read
                 False: read now and blocking wait for completion (Sync mode)
                 True: defer reading all requests until read_complete().
                         The returned numpy array will be filled with data
                         only after calling read_complete().
+                        Prefer deferring when reading several variables or
+                        step ranges: the queued reads complete together in
+                        a single read_complete() call, served by multiple
+                        threads from local files and without paying one
+                        network round trip per read on remote or campaign
+                        data.
         Returns
             array
                 resulting array from selection
@@ -699,6 +776,15 @@ class Stream:  # noqa: PLR0902
         Complete reading all deferred read requests.
         The returned numpy arrays of each read(..., defer_read=True) will be
         filled with data after this call.
+
+        This is the efficient way to read several variables. Local file
+        engines serve the queued reads with multiple threads, and on
+        remote or campaign data the batch avoids one network round trip
+        per read()::
+
+            temp = s.read("temperature", defer_read=True)
+            pres = s.read("pressure", defer_read=True)
+            s.read_complete()  # temp and pres now contain data
         """
         self._engine.perform_gets()
 

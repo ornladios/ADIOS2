@@ -5,9 +5,12 @@
  */
 
 #include "IO.h"
+#include "adios2/helper/adiosCommMPI.h"
+
+#ifdef ADIOS2_HAVE_SSC
 #include "adios2/engine/ssc/SscReader.h"
 #include "adios2/engine/ssc/SscWriter.h"
-#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 #ifdef ADIOS2_HAVE_DATASPACES // external dependencies
 #include "adios2/engine/dataspaces/DataSpacesReader.h"
@@ -45,8 +48,10 @@ std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name, const Mod
 
 void RegisterMPIEngines()
 {
+#ifdef ADIOS2_HAVE_SSC
     IO::RegisterEngine("ssc", IO::EngineFactoryEntry{MakeEngineMPI<engine::SscReader>,
                                                      MakeEngineMPI<engine::SscWriter>});
+#endif
 #ifdef ADIOS2_HAVE_DATASPACES
     IO::RegisterEngine("dataspaces",
                        IO::EngineFactoryEntry{MakeEngineMPI<engine::DataSpacesReader>,

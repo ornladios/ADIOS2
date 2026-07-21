@@ -11,6 +11,7 @@
 #include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
 
+#include <algorithm> // std::min
 #include <chrono>
 #include <cstdio>  // fprintf (DAOS_MD_DEBUG)
 #include <cstdlib> // getenv
@@ -738,28 +739,46 @@ std::pair<double, double> DaosReader::ReadData(const size_t WriterRank, const si
     TP startRead = NOW();
     size_t arrayOffset = it->second[WriterRank] + StartOffset;
 
-    daos_range_t rgr;
-    rgr.rg_idx = arrayOffset;
-    rgr.rg_len = Length;
-    daos_array_iod_t iodr;
-    iodr.arr_nr = 1;
-    iodr.arr_rgs = &rgr;
-    d_iov_t iovr;
-    iovr.iov_buf = Destination;
-    iovr.iov_buf_len = Length;
-    iovr.iov_len = Length;
-    d_sg_list_t sglr;
-    sglr.sg_nr = 1;
-    sglr.sg_nr_out = 0;
-    sglr.sg_iovs = &iovr;
-    int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
-    if (rc)
+    // Chunk large reads to bound Mercury bulk registration.  A single
+    // daos_array_read of the full per-rank blob (hundreds of MiB), issued
+    // concurrently by many reader threads (this function runs multi-threaded),
+    // exhausts Mercury's NA memory descriptors -> DER_NOMEM in hg_bulk_create.
+    // Reading in bounded pieces keeps each bulk transfer small.  IOR-DFS avoids
+    // the problem the same way (--dfs.chunk_size).  DAOS_READ_CHUNK_BYTES=0
+    // restores the single-read behavior (for A/B).
+    static const size_t readChunk = []() -> size_t {
+        if (const char *e = std::getenv("DAOS_READ_CHUNK_BYTES"))
+            return static_cast<size_t>(std::strtoull(e, nullptr, 10));
+        return size_t{16} * 1024 * 1024; // 16 MiB default
+    }();
+    const size_t step = (readChunk == 0) ? Length : readChunk;
+
+    for (size_t done = 0; done < Length; done += step)
     {
-        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                          "daos_array_read failed rc=" + std::to_string(rc) +
-                                              " WriterRank=" + std::to_string(WriterRank) +
-                                              " offset=" + std::to_string(arrayOffset) +
-                                              " len=" + std::to_string(Length));
+        const size_t thisLen = std::min(step, Length - done);
+        daos_range_t rgr;
+        rgr.rg_idx = arrayOffset + done;
+        rgr.rg_len = thisLen;
+        daos_array_iod_t iodr;
+        iodr.arr_nr = 1;
+        iodr.arr_rgs = &rgr;
+        d_iov_t iovr;
+        iovr.iov_buf = Destination + done;
+        iovr.iov_buf_len = thisLen;
+        iovr.iov_len = thisLen;
+        d_sg_list_t sglr;
+        sglr.sg_nr = 1;
+        sglr.sg_nr_out = 0;
+        sglr.sg_iovs = &iovr;
+        int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
+        if (rc)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
+                                              "daos_array_read failed rc=" + std::to_string(rc) +
+                                                  " WriterRank=" + std::to_string(WriterRank) +
+                                                  " offset=" + std::to_string(arrayOffset + done) +
+                                                  " len=" + std::to_string(thisLen));
+        }
     }
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);
@@ -1957,6 +1976,17 @@ void DaosReader::DoClose(const int transportIndex)
     {
         EndStep();
     }
+
+    // Collaborative teardown.  The pool/container handles are shared across
+    // ranks via daos_{pool,cont}_global2local: rank 0 owns the real pool
+    // connection and container open; the other ranks hold lightweight local
+    // copies.  All data/metadata reads use those handles.  If any rank reaches
+    // Close first and tears them down (daos_cont_close / rank-0
+    // daos_pool_disconnect below), a straggler still reading the last step
+    // loses the shared handle mid-read -> DER_NO_HDL(-1002).  Barrier here so
+    // no handle is released until every rank has finished all its reads.
+    m_Comm.Barrier();
+
     if (m_Comm.Rank() == 0)
     {
         m_MetadataFile->Close();
@@ -1985,6 +2015,10 @@ void DaosReader::DoClose(const int transportIndex)
         daos_cont_close(coh, NULL);
         coh = {};
     }
+    // Ensure every rank has released its container handle before rank 0 drops
+    // the shared pool connection (rank-0 disconnect invalidates the pool for
+    // all global2local holders).
+    m_Comm.Barrier();
     if (m_Comm.Rank() == 0 && poh.cookie != 0)
     {
         daos_pool_disconnect(poh, NULL);
