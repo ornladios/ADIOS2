@@ -163,8 +163,10 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_local = io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
-        auto var_localStr = io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+        auto var_local =
+            io.DefineVariable<int32_t>("local", {static_cast<size_t>(adios2::LocalValueDim)});
+        auto var_localStr = io.DefineVariable<std::string>(
+            "localStr", {static_cast<size_t>(adios2::LocalValueDim)});
 
         auto var_iString = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
@@ -760,8 +762,10 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_local = io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
-        auto var_localStr = io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+        auto var_local =
+            io.DefineVariable<int32_t>("local", {static_cast<size_t>(adios2::LocalValueDim)});
+        auto var_localStr = io.DefineVariable<std::string>(
+            "localStr", {static_cast<size_t>(adios2::LocalValueDim)});
 
         auto var_iString = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);

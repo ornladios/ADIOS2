@@ -65,8 +65,8 @@ TEST_F(BPJoinedArray, MultiBlock)
         }
 
         adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
-        auto var =
-            outIO.DefineVariable<double>("table", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
+        auto var = outIO.DefineVariable<double>(
+            "table", {static_cast<size_t>(adios2::JoinedDim), Ncols}, {}, {1, Ncols});
 
         if (!rank)
         {

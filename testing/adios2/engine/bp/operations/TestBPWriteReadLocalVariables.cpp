@@ -65,8 +65,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {static_cast<size_t>(adios2::LocalValueDim)});
+            io.DefineVariable<std::string>("ranksLocalValueString",
+                                           {static_cast<size_t>(adios2::LocalValueDim)});
 
             io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
@@ -422,8 +424,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {static_cast<size_t>(adios2::LocalValueDim)});
+            io.DefineVariable<std::string>("ranksLocalValueString",
+                                           {static_cast<size_t>(adios2::LocalValueDim)});
 
             io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
@@ -785,8 +789,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {static_cast<size_t>(adios2::LocalValueDim)});
+            io.DefineVariable<std::string>("ranksLocalValueString",
+                                           {static_cast<size_t>(adios2::LocalValueDim)});
 
             io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
@@ -1149,8 +1155,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {static_cast<size_t>(adios2::LocalValueDim)});
+            io.DefineVariable<std::string>("ranksLocalValueString",
+                                           {static_cast<size_t>(adios2::LocalValueDim)});
 
             io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
@@ -1395,8 +1403,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {static_cast<size_t>(adios2::LocalValueDim)});
+            io.DefineVariable<std::string>("ranksLocalValueString",
+                                           {static_cast<size_t>(adios2::LocalValueDim)});
 
             io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
