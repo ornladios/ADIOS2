@@ -178,6 +178,7 @@ adios_option(LIBPRESSIO "Enable support for LIBPRESSIO transforms" AUTO)
 adios_option(MGARD      "Enable support for MGARD transforms" AUTO)
 adios_option(PRODM      "Enable support for ProDM transforms" AUTO)
 adios_option(PNG        "Enable support for PNG transforms" AUTO)
+adios_option(CAESAR      "Enable support for CAESAR compression" OFF)
 adios_option(CUDA       "Enable support for Cuda" OFF)
 adios_option(Kokkos     "Enable support for Kokkos" OFF)
 adios_option(MPI        "Enable support for MPI" AUTO)
@@ -284,7 +285,7 @@ set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SSC SST Fortran MPI Python PIP BigWhoop Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PRODM PNG SZ SZ3 ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
     ZeroMQ Profiling Derived_Variable AWSSDK OpenSSL XRootD CURL GPU_Support CUDA Kokkos
-    Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE
+    Kokkos_CUDA Kokkos_HIP Kokkos_SYCL Campaign KVCACHE CAESAR
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
