@@ -313,7 +313,7 @@ uint64_t BP5Writer::WriteMetadata(const std::vector<char> &ContigMetaData,
     uint64_t MetaDataSize = 0;
     std::vector<uint64_t> AttrSizeVector;
 
-    MDataTotalSize += SizeVector.size() * sizeof(size_t);
+    MDataTotalSize += SizeVector.size() * sizeof(uint64_t);
     for (size_t a = 0; a < SizeVector.size(); a++)
     {
         if (a < AttributeBlocks.size())
@@ -2362,12 +2362,12 @@ void BP5Writer::FlushData(const bool isFinal)
 
     if (!isFinal)
     {
-        size_t tmp[2];
+        uint64_t tmp[2];
         // aggregate start pos and data size to rank 0
         tmp[0] = m_StartDataPos;
         tmp[1] = databufsize;
 
-        std::vector<size_t> RecvBuffer;
+        std::vector<uint64_t> RecvBuffer;
         if (m_Comm.Rank() == 0)
         {
             RecvBuffer.resize(m_Comm.Size() * 2);
