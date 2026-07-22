@@ -355,9 +355,48 @@ static int base64_decode(unsigned char *input, unsigned char *output)
     return len;
 }
 
+// Before FMlocalize_structs: clear field_size for array fields whose ELEMENT size is
+// platform-dependent (arrays of a subformat, or of strings/pointers), so localize
+// recomputes the element stride for the reader's platform. Integer/char/float array
+// elements are fixed-width (the writer's field_size is correct on every platform) and
+// are left intact. Without this, cross-bitness reads of attribute subformat/string
+// arrays use the writer's element stride and read garbage.
+static void LocalizeArrayElementSizes(FMStructDescList list)
+{
+    static const char *const fixedBases[] = {"integer",  "unsigned integer", "unsigned", "float",
+                                             "double",   "char",             "complex4", "complex8",
+                                             "complex",  "enumeration",      "boolean"};
+    for (int s = 0; list[s].format_name != NULL; s++)
+    {
+        FMFieldList fl = list[s].field_list;
+        for (int i = 0; fl[i].field_name != NULL; i++)
+        {
+            const char *bracket = strchr(fl[i].field_type, '[');
+            if (!bracket)
+                continue; // not an array
+            std::string base(fl[i].field_type, (size_t)(bracket - fl[i].field_type));
+            bool fixedElement = false;
+            for (const char *fb : fixedBases)
+                if (base == fb)
+                {
+                    fixedElement = true;
+                    break;
+                }
+            if (!fixedElement) // subformat- or string/pointer-element array
+                fl[i].field_size = -1;
+        }
+    }
+}
+
 BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
 {
-    FMStructDescList FormatList = format_list_of_FMFormat(Format);
+    // Localize a copy of the writer's format so the field offsets match the
+    // reader's native (localized) decode layout. On same-bitness this is an
+    // identity transform; cross-bitness it remaps pointer sizes/offsets so the
+    // computed MetaFieldOffsets line up with the converted metadata buffer.
+    FMStructDescList FormatList = FMcopy_struct_list(format_list_of_FMFormat(Format));
+    LocalizeArrayElementSizes(FormatList);
+    FMlocalize_structs(FormatList);
     FMFieldList FieldList = FormatList[0].field_list;
     while (strncmp(FieldList->field_name, "BitField", 8) == 0)
         FieldList++;
@@ -495,8 +534,16 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             }
             if (MinMax)
             {
-
-                VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
+                // Byte offset of the MinMax pointer within the (Operator)MM metadata
+                // struct. The base fields are NOT all pointer-sized (Dims/BlockCount/
+                // DBCount are uint64_t), so compute the real C offset rather than
+                // MetaRecFields*sizeof(void*) which only held when size_t==void*.
+                if (V1_fields)
+                    VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
+                else
+                    VarRec->MinMaxOffset =
+                        Operator ? offsetof(MetaArrayRecOperatorMM, MinMax)
+                                 : offsetof(MetaArrayRecMM, MinMax);
                 MetaRecFields++;
             }
             if (V1_fields)
@@ -542,17 +589,18 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     ret->ControlCount = ControlCount;
     ret->Next = ControlBlocks;
     ControlBlocks = ret;
+    FMfree_struct_list(FormatList);
     return ret;
 }
 
-void BP5Deserializer::ReverseDimensions(size_t *Dimensions, size_t count, size_t times)
+void BP5Deserializer::ReverseDimensions(uint64_t *Dimensions, size_t count, size_t times)
 {
     size_t Offset = 0;
     for (size_t j = 0; j < times; j++)
     {
         for (size_t i = 0; i < count / 2; i++)
         {
-            size_t tmp = Dimensions[Offset + i];
+            uint64_t tmp = Dimensions[Offset + i];
             Dimensions[Offset + i] = Dimensions[Offset + count - i - 1];
             Dimensions[Offset + count - i - 1] = tmp;
         }
@@ -584,10 +632,12 @@ void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName, 
 };
 
 void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableName,
-                                     const DataType type, int DimCount, size_t *Shape,
-                                     size_t *Start, size_t *Count, core::StructDefinition *Def,
+                                     const DataType type, int DimCount, uint64_t *Shape,
+                                     uint64_t *Start, uint64_t *Count, core::StructDefinition *Def,
                                      core::StructDefinition *ReaderDef)
 {
+    // Shape/Start/Count are fixed-width uint64_t metadata; narrowed to size_t for the
+    // in-memory Dims vectors (values > size_t are truncated on 32-bit platforms).
     std::vector<size_t> VecShape;
     std::vector<size_t> VecStart;
     std::vector<size_t> VecCount;
@@ -721,7 +771,11 @@ FFSTypeHandle BP5Deserializer::BufferMetaMetaPrep(void *MetadataBlock)
         FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
         FMFormat Format = FMformat_from_ID(FMC, (char *)MetadataBlock);
         FMStructDescList List = FMcopy_struct_list(format_list_of_FMFormat(Format));
-        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
+        // Localize so cross-bitness data is converted to the reader's native layout
+        // (pointer sizes/offsets). Metadata integers are fixed-width uint64_t, so only
+        // pointer/offset differences remain for FFS to convert.
+        LocalizeArrayElementSizes(List);
+        FMlocalize_structs(List);
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
@@ -828,7 +882,7 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
             {
                 for (size_t i = 0; i < meta_base->Dims; i++)
                 {
-                    if (meta_base->Shape[i] == JoinedDim)
+                    if (meta_base->Shape[i] == static_cast<size_t>(JoinedDim))
                     {
                         VarRec->JoinedDimen = i;
                     }
@@ -842,12 +896,12 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
     if (JoinedDimenTotal)
     {
         JoinedDimArray[JDAIdx][WriterRank] =
-            (size_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
-                              JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+            (uint64_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
+                                JoinedDimenTotal * writerCohortSize * sizeof(uint64_t));
     }
 
     // shortcut name. should be const
-    size_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
+    uint64_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
 
     for (int i = 0; i < Control->ControlCount; i++)
     {
@@ -986,8 +1040,8 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                     {
                         // Local single values show up as global arrays on the
                         // reader
-                        size_t zero = 0;
-                        size_t writerSize = writerCohortSize;
+                        uint64_t zero = 0;
+                        uint64_t writerSize = writerCohortSize;
                         VarRec->Variable =
                             ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type, 1, &writerSize,
                                           &zero, &writerSize, VarRec->Def, VarRec->ReaderDef);
@@ -1078,7 +1132,11 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen
         FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
         FMFormat Format = FMformat_from_ID(FMC, (char *)AttributeBlock);
         FMStructDescList List = FMcopy_struct_list(format_list_of_FMFormat(Format));
-        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
+        // Localize so cross-bitness data is converted to the reader's native layout
+        // (pointer sizes/offsets). Metadata integers are fixed-width uint64_t, so only
+        // pointer/offset differences remain for FFS to convert.
+        LocalizeArrayElementSizes(List);
+        FMlocalize_structs(List);
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
@@ -1089,11 +1147,13 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen
     }
     else
     {
+        // Cross-bitness path (conversion established): decode into a raw buffer.
+        // FFSdecode_to_buffer's dest is the raw destination (used directly as the
+        // decode base), NOT an FFSBuffer wrapper -- matching the metadata path.
         auto DecodedLength =
             FFS_est_decode_length(ReaderFFSContext, (char *)AttributeBlock, BlockLen);
         BaseData = malloc(DecodedLength);
-        FFSBuffer decode_buf = create_fixed_FFSBuffer((char *)BaseData, DecodedLength);
-        FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock, decode_buf);
+        FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock, BaseData);
     }
     if (DumpMetadata == -1)
     {
@@ -1735,7 +1795,8 @@ static size_t LinearIndex(const size_t dimensionsSize, const size_t *count, cons
     return offset;
 }
 
-static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
+template <typename T>
+static size_t CalcBlockLength(const size_t dimensionsSize, const T *count)
 {
     size_t len = count[0];
     for (size_t d = 1; d < dimensionsSize; ++d)
@@ -1753,7 +1814,7 @@ static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
  * contiguous, but it should never return true when it is not
  * contiguous.
  */
-bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count)
+bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offsets, uint64_t *count)
 {
     /*
      * All 1 dimensional requests in ADIOS involve the transfer of
@@ -1856,7 +1917,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                             RR.Timestep = Req->Step;
                             RR.WriterRank = WriterRank;
                             RR.StartOffset = writer_meta_base->DataBlockLocation[NeededBlock];
-                            if (RR.StartOffset == (size_t)-1)
+                            if (RR.StartOffset == static_cast<uint64_t>(-1))
                                 throw std::runtime_error("No data exists for this variable");
                             if (Req->MemSpace != MemorySpace::Host)
                                 RR.DirectToAppMemory = false;
@@ -1934,10 +1995,18 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                             std::array<size_t, helper::MAX_DIMS> intersectioncount;
 
                             size_t StartDim = Block * VarRec->DimCount;
+                            // size_t copies of this block's fixed-width uint64_t dims for the
+                            // size_t-based math helpers (truncates > size_t on 32-bit).
+                            std::vector<size_t> blkOffsets, blkCount;
+                            if (writer_meta_base->Offsets)
+                                blkOffsets.assign(writer_meta_base->Offsets + StartDim,
+                                                  writer_meta_base->Offsets + StartDim +
+                                                      VarRec->DimCount);
+                            blkCount.assign(writer_meta_base->Count + StartDim,
+                                            writer_meta_base->Count + StartDim + VarRec->DimCount);
                             if (IntersectionStartCount(
                                     VarRec->DimCount, Req->Start.data(), Req->Count.data(),
-                                    &writer_meta_base->Offsets[StartDim],
-                                    &writer_meta_base->Count[StartDim], &intersectionstart[0],
+                                    blkOffsets.data(), blkCount.data(), &intersectionstart[0],
                                     &intersectioncount[0]))
                             {
                                 if (VarRec->Derived)
@@ -2037,7 +2106,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                                  1);
 
                                             if (writer_meta_base_input->DataBlockLocation[Block] ==
-                                                (size_t)-1)
+                                                static_cast<uint64_t>(-1))
                                                 helper::Throw<std::runtime_error>(
                                                     "Toolkit", "BP5Deserializer",
                                                     "GenerateReadRequests",
@@ -2149,7 +2218,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                                  1);
 
                                             if (writer_meta_base_input->DataBlockLocation[Block] ==
-                                                (size_t)-1)
+                                                static_cast<uint64_t>(-1))
                                                 helper::Throw<std::runtime_error>(
                                                     "Toolkit", "BP5Deserializer",
                                                     "GenerateReadRequests",
@@ -2195,7 +2264,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     RR.StartOffset = writer_meta_base->DataBlockLocation[Block];
                                     RR.ReadLength = writer_meta_base->DataBlockSize[Block];
                                     RR.DestinationAddr = nullptr;
-                                    if (RR.StartOffset == (size_t)-1)
+                                    if (RR.StartOffset == static_cast<uint64_t>(-1))
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     if (doAllocTempBuffers)
@@ -2219,8 +2288,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     }
                                     size_t StartOffsetInBlock =
                                         VB->m_ElementSize *
-                                        LinearIndex(VarRec->DimCount,
-                                                    &writer_meta_base->Count[StartDim],
+                                        LinearIndex(VarRec->DimCount, blkCount.data(),
                                                     &intersectionstart[0], m_ReaderIsRowMajor);
                                     for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                                     {
@@ -2229,8 +2297,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     }
                                     size_t EndOffsetInBlock =
                                         VB->m_ElementSize *
-                                        (LinearIndex(VarRec->DimCount,
-                                                     &writer_meta_base->Count[StartDim],
+                                        (LinearIndex(VarRec->DimCount, blkCount.data(),
                                                      &intersectionend[0], m_ReaderIsRowMajor) +
                                          1);
                                     ReadRequest RR;
@@ -2238,7 +2305,8 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     RR.WriterRank = WriterRank;
                                     RR.StartOffset = writer_meta_base->DataBlockLocation[Block] +
                                                      StartOffsetInBlock;
-                                    if (writer_meta_base->DataBlockLocation[Block] == (size_t)-1)
+                                    if (writer_meta_base->DataBlockLocation[Block] ==
+                                        static_cast<uint64_t>(-1))
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
@@ -2340,11 +2408,27 @@ void BP5Deserializer::FinalizeGet(BP5GetContext &ctx, const ReadRequest &Read, c
     MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
         ((struct BP5VarRec *)Req.VarRec), Read.Timestep, Read.WriterRank);
 
-    size_t *GlobalDimensions = writer_meta_base->Shape;
-    auto DimCount = writer_meta_base->Dims;
+    size_t DimCount = writer_meta_base->Dims;
+    // Metadata dims are fixed-width uint64_t; copy to size_t for the math helpers
+    // (values > size_t are truncated on 32-bit, per documented limitation).
+    std::vector<size_t> GlobalDimensionsStore, RankOffsetStore, RankSizeStore;
+    size_t *GlobalDimensions = nullptr;
+    if (writer_meta_base->Shape)
+    {
+        GlobalDimensionsStore.assign(writer_meta_base->Shape, writer_meta_base->Shape + DimCount);
+        GlobalDimensions = GlobalDimensionsStore.data();
+    }
     std::vector<size_t> ZeroSel(DimCount);
-    size_t *RankOffset = &writer_meta_base->Offsets[DimCount * Read.BlockID];
-    size_t *RankSize = &writer_meta_base->Count[DimCount * Read.BlockID];
+    size_t *RankOffset = nullptr;
+    if (writer_meta_base->Offsets)
+    {
+        RankOffsetStore.assign(writer_meta_base->Offsets + DimCount * Read.BlockID,
+                               writer_meta_base->Offsets + DimCount * (Read.BlockID + 1));
+        RankOffset = RankOffsetStore.data();
+    }
+    RankSizeStore.assign(writer_meta_base->Count + DimCount * Read.BlockID,
+                         writer_meta_base->Count + DimCount * (Read.BlockID + 1));
+    size_t *RankSize = RankSizeStore.data();
     std::vector<size_t> ZeroRankOffset(DimCount);
     std::vector<size_t> ZeroGlobalDimensions(DimCount);
     const size_t *SelOffset = NULL;
@@ -2824,6 +2908,20 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t Wr
     return writer_meta_base;
 }
 
+// Materialize a size_t copy of n fixed-width uint64_t metadata dims, owned by the
+// MinVarInfo so the pointer stays valid for the MVI's lifetime (and is freed with it).
+// std::vector move preserves the buffer, so earlier .data() pointers survive growth.
+// Returns nullptr when src is nullptr (e.g. local arrays have no Shape/Offsets).
+static const size_t *MVIOwnDims(MinVarInfo *MV, const uint64_t *src, size_t n)
+{
+    if (!src)
+        return nullptr;
+    if (sizeof(size_t) == sizeof(uint64_t))
+        return reinterpret_cast<const size_t *>(src); // 64-bit: alias, no copy
+    MV->OwnedDims.emplace_back(src, src + n);          // 32-bit: convert uint64_t -> size_t
+    return MV->OwnedDims.back().data();
+}
+
 MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelStep)
 {
     auto PossiblyAddValueBlocks = [this](MinVarInfo *MV, BP5VarRec *VarRec, size_t &Id,
@@ -2858,7 +2956,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
 
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (const size_t *)nullptr);
+    MV->Shape = MVIOwnDims(MV, VarRec->GlobalDims, VarRec->DimCount);
 
     size_t AbsStep = RelStep;
     size_t StepLoopStart, StepLoopEnd;
@@ -2920,7 +3019,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 //  and should be immaterial otherise
                 if (writer_meta_base->Shape != NULL)
                 {
-                    MV->Shape = writer_meta_base->Shape;
+                    MV->Shape = MVIOwnDims(MV, writer_meta_base->Shape, (size_t)MV->Dims);
                 }
                 size_t WriterBlockCount =
                     writer_meta_base->Dims ? writer_meta_base->DBCount / writer_meta_base->Dims : 1;
@@ -2930,7 +3029,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     }
     if (VarRec->OrigShapeID == ShapeID::JoinedArray)
     {
-        MV->Shape = VarRec->LastJoinedShape;
+        MV->Shape = MVIOwnDims(MV, VarRec->LastJoinedShape, (size_t)MV->Dims);
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -2953,12 +3052,12 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
             }
             for (size_t i = 0; i < WriterBlockCount; i++)
             {
-                size_t *Offsets = NULL;
-                size_t *Count = NULL;
-                if (writer_meta_base->Offsets)
-                    Offsets = writer_meta_base->Offsets + (i * MV->Dims);
-                if (writer_meta_base->Count)
-                    Count = writer_meta_base->Count + (i * MV->Dims);
+                const size_t *Offsets =
+                    MVIOwnDims(MV, writer_meta_base->Offsets ? writer_meta_base->Offsets + (i * MV->Dims) : nullptr,
+                               (size_t)MV->Dims);
+                const size_t *Count =
+                    MVIOwnDims(MV, writer_meta_base->Count ? writer_meta_base->Count + (i * MV->Dims) : nullptr,
+                               (size_t)MV->Dims);
                 MinBlockInfo Blk;
                 Blk.WriterID = (int)WriterRank;
                 Blk.BlockID = Id++;
@@ -2987,7 +3086,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     // this is only called for global and local arrays, so limited
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (const size_t *)nullptr);
+    MV->Shape = MVIOwnDims(MV, VarRec->GlobalDims, VarRec->DimCount);
 
     size_t AbsStep = RelStep;
     size_t StepLoopStart, StepLoopEnd;
@@ -3025,7 +3125,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         {
             if (MV->Shape == NULL)
             {
-                MV->Shape = writer_meta_base->Shape;
+                MV->Shape = MVIOwnDims(MV, writer_meta_base->Shape, (size_t)MV->Dims);
             }
             Id += 1; // one block
         }
@@ -3049,12 +3149,12 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         {
             MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
         }
-        size_t *Offsets = NULL;
-        size_t *Count = NULL;
-        if (writer_meta_base->Offsets)
-            Offsets = writer_meta_base->Offsets + (BlockID * MV->Dims);
-        if (writer_meta_base->Count)
-            Count = writer_meta_base->Count + (BlockID * MV->Dims);
+        const size_t *Offsets = MVIOwnDims(
+            MV, writer_meta_base->Offsets ? writer_meta_base->Offsets + (BlockID * MV->Dims) : nullptr,
+            (size_t)MV->Dims);
+        const size_t *Count = MVIOwnDims(
+            MV, writer_meta_base->Count ? writer_meta_base->Count + (BlockID * MV->Dims) : nullptr,
+            (size_t)MV->Dims);
         MinBlockInfo Blk;
         Blk.WriterID = (int)WriterRank;
         Blk.BlockID = Id;

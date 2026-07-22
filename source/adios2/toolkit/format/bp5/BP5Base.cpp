@@ -21,45 +21,48 @@ namespace adios2
 namespace format
 {
 
+// The bitfield element width is fixed at 64 bits (uint64_t) so the bit-packing is
+// identical on 32- and 64-bit platforms and matches existing 64-bit files.
 void BP5Base::BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit) const
 {
-    size_t Element = Bit / (sizeof(size_t) * 8);
-    int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
+    size_t Element = Bit / (sizeof(uint64_t) * 8);
+    int ElementBit = Bit % (sizeof(uint64_t) * 8);
+    if (static_cast<uint64_t>(Element) >= MBase->BitFieldCount)
     {
-        MBase->BitField = (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
+        MBase->BitField = (uint64_t *)realloc(MBase->BitField, sizeof(uint64_t) * (Element + 1));
         memset(MBase->BitField + MBase->BitFieldCount, 0,
-               (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
+               (Element - MBase->BitFieldCount + 1) * sizeof(uint64_t));
         MBase->BitFieldCount = Element + 1;
     }
-    MBase->BitField[Element] |= ((size_t)1 << ElementBit);
+    MBase->BitField[Element] |= ((uint64_t)1 << ElementBit);
 }
 
 int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const
 {
-    size_t Element = Bit / (sizeof(size_t) * 8);
-    int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
+    size_t Element = Bit / (sizeof(uint64_t) * 8);
+    int ElementBit = Bit % (sizeof(uint64_t) * 8);
+    if (static_cast<uint64_t>(Element) >= MBase->BitFieldCount)
     {
         return 0;
     }
-    return ((MBase->BitField[Element] & ((size_t)1 << ElementBit)) == ((size_t)1 << ElementBit));
+    return ((MBase->BitField[Element] & ((uint64_t)1 << ElementBit)) == ((uint64_t)1 << ElementBit));
 }
 #define BASE_FIELD_ENTRIES                                                                         \
-    {"Dims", "integer", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, Dims)},                  \
-        {"BlockCount", "integer", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, BlockCount)},  \
-        {"DBCount", "integer", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, DBCount)},        \
-        {"Shape", "integer[Dims]", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, Shape)},      \
-        {"Count", "integer[DBCount]", sizeof(size_t), FMOffset(BP5Base::MetaArrayRec *, Count)},   \
-        {"Offset", "integer[DBCount]", sizeof(size_t),                                             \
+    {"Dims", "integer", sizeof(uint64_t), FMOffset(BP5Base::MetaArrayRec *, Dims)},                \
+        {"BlockCount", "integer", sizeof(uint64_t),                                                \
+         FMOffset(BP5Base::MetaArrayRec *, BlockCount)},                                           \
+        {"DBCount", "integer", sizeof(uint64_t), FMOffset(BP5Base::MetaArrayRec *, DBCount)},      \
+        {"Shape", "integer[Dims]", sizeof(uint64_t), FMOffset(BP5Base::MetaArrayRec *, Shape)},    \
+        {"Count", "integer[DBCount]", sizeof(uint64_t), FMOffset(BP5Base::MetaArrayRec *, Count)}, \
+        {"Offset", "integer[DBCount]", sizeof(uint64_t),                                           \
          FMOffset(BP5Base::MetaArrayRec *, Offsets)},                                              \
-        {"DataBlockLocation", "integer[BlockCount]", sizeof(size_t),                               \
+        {"DataBlockLocation", "integer[BlockCount]", sizeof(uint64_t),                             \
          FMOffset(BP5Base::MetaArrayRec *, DataBlockLocation)},
 
 static FMField MetaArrayRecList[] = {BASE_FIELD_ENTRIES{NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorList[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {NULL, NULL, 0, 0}};
 
@@ -69,7 +72,7 @@ static FMField MetaArrayRecMM1List[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorMM1List[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[2][BlockCount]", 1, FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
@@ -79,7 +82,7 @@ static FMField MetaArrayRecMM2List[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorMM2List[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[4][BlockCount]", 1, FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
@@ -89,7 +92,7 @@ static FMField MetaArrayRecMM4List[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorMM4List[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[8][BlockCount]", 1, FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
@@ -99,7 +102,7 @@ static FMField MetaArrayRecMM8List[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorMM8List[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[16][BlockCount]", 1, FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
@@ -109,7 +112,7 @@ static FMField MetaArrayRecMM16List[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaArrayRecOperatorMM16List[] = {
-    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(size_t),
+    BASE_FIELD_ENTRIES{"DataBlockSize", "integer[BlockCount]", sizeof(uint64_t),
                        FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[32][BlockCount]", 1, FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
