@@ -126,6 +126,12 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(std_compat)
   endif()
 
+  set(ADIOS2_HAVE_CAESAR @ADIOS2_HAVE_CAESAR@)
+  if(ADIOS2_HAVE_CAESAR)
+    find_dependency(CAESAR CONFIG)
+  endif()
+  
+
   set(ADIOS2_HAVE_MGARD @ADIOS2_HAVE_MGARD@)
   if(ADIOS2_HAVE_MGARD)
     find_dependency(MGARD)

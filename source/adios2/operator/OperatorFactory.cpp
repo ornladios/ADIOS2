@@ -60,6 +60,10 @@
 #include "adios2/operator/compress/CompressZFP.h"
 #endif
 
+#ifdef ADIOS2_HAVE_CAESAR
+#include "adios2/operator/compress/CompressCAESAR.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -97,6 +101,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "mdr";
     case Operator::REFACTOR_PRODM:
         return "prodm";
+    case Operator::COMPRESS_CAESAR:
+        return "caesar";
     case Operator::PLUGIN_INTERFACE:
         return "plugin";
     default:
@@ -114,6 +120,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_BIGWHOOP
         ret = std::make_shared<compress::CompressBigWhoop>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "caesar")
+    {
+#ifdef ADIOS2_HAVE_CAESAR
+        ret = std::make_shared<compress::CompressCAESAR>(parameters);
 #endif
     }
     else if (typeLowerCase == "blosc")
