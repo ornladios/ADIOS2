@@ -58,7 +58,7 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           fetch-depth: 0
       - name: Check for appropriately named topic branch
@@ -87,10 +87,10 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           path: gha
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -186,10 +186,10 @@ jobs:
             arch: aarch64
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           path: gha
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -255,10 +255,10 @@ jobs:
         parallel: [mpich]
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           path: gha
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -330,10 +330,10 @@ jobs:
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           path: gha
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -407,10 +407,10 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           path: gha
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -444,7 +444,7 @@ jobs:
         baseos: [ubuntu-bionic]
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ci-source
@@ -521,7 +521,7 @@ jobs:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         if: ${{ matrix.repo != '' }}
         with:
           repository: ${{ matrix.repo }}
@@ -580,10 +580,10 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       with:
         path: gha
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
@@ -596,7 +596,7 @@ jobs:
           ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v3
+      uses: github/codeql-action/init@e0647621c2984b5ed2f768cb892365bf2a616ad1 # v3
       with:
         languages: ${{ matrix.language }}
         source-root: source
@@ -609,7 +609,7 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v3
+      uses: github/codeql-action/analyze@e0647621c2984b5ed2f768cb892365bf2a616ad1 # v3
       with:
         category: "/language:${{matrix.language}}"
         output: sarif-results
@@ -624,7 +624,7 @@ jobs:
         input: sarif-results/cpp.sarif
         output: sarif-results/cpp.sarif
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v3
+      uses: github/codeql-action/upload-sarif@e0647621c2984b5ed2f768cb892365bf2a616ad1 # v3
       with:
         sarif_file: sarif-results/cpp.sarif
     - name: Upload loc as a Build Artifact
