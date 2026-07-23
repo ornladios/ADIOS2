@@ -324,9 +324,15 @@ private:
     /// format-ID bytes; install each unique ID exactly once for the
     /// lifetime of the reader.
     std::unordered_set<std::string> m_InstalledMetaMetaIDs;
+    /// SubRanges, when non-empty, lists the contiguous runs actually wanted
+    /// within [StartOffset, StartOffset+Length) as (relative offset, length)
+    /// pairs; fetching just those avoids reading the gaps of a strided
+    /// selection.  Empty means read the whole range.
     std::pair<double, double> ReadData(const size_t WriterRank, const size_t Timestep,
                                        const size_t StartOffset, const size_t Length,
-                                       char *Destination);
+                                       char *Destination,
+                                       const std::vector<std::pair<size_t, size_t>> &SubRanges =
+                                           std::vector<std::pair<size_t, size_t>>());
 
     struct WriterMapStruct
     {
