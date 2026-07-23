@@ -9,7 +9,9 @@
 #include <errno.h>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <tuple>
 
@@ -461,7 +463,7 @@ std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params
 }
 
 double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
-                           const size_t StartOffset, const size_t Length, char *Destination)
+                           const uint64_t StartOffset, const size_t Length, char *Destination)
 {
     /*
      * Warning: this function is called by multiple threads
@@ -473,20 +475,29 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
        as if all the flushes were in a single contiguous block in file.
     */
     TP startRead = NOW();
+    auto lf_ReadAt = [&](const uint64_t base, const uint64_t offset) {
+        const uint64_t maxOffset = static_cast<uint64_t>(std::numeric_limits<size_t>::max());
+        if (offset > maxOffset || base > maxOffset - offset)
+        {
+            helper::Throw<std::overflow_error>("Engine", "BP5Reader", "ReadData",
+                                               "file offset exceeds size_t on this platform");
+        }
+        DataFile->Read(Destination, Length, static_cast<size_t>(base + offset));
+    };
     size_t InfoStartPos = DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t SumDataSize = 0; // count in contiguous space
+    uint64_t SumDataSize = 0; // count in contiguous space
     for (size_t flush = 0; flush < FlushCount; flush++)
     {
-        size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                         m_Minifooter.IsLittleEndian);
-        size_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                          m_Minifooter.IsLittleEndian);
+        uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                           m_Minifooter.IsLittleEndian);
+        uint64_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                            m_Minifooter.IsLittleEndian);
 
         if (StartOffset < SumDataSize + ThisDataSize)
         {
             // discount offsets of skipped flushes
-            size_t Offset = StartOffset - SumDataSize;
-            DataFile->Read(Destination, Length, ThisDataPos + Offset);
+            uint64_t Offset = StartOffset - SumDataSize;
+            lf_ReadAt(ThisDataPos, Offset);
             TP endRead = NOW();
             double timeRead = DURATION(startRead, endRead);
             return timeRead;
@@ -494,10 +505,10 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
         SumDataSize += ThisDataSize;
     }
 
-    size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                     m_Minifooter.IsLittleEndian);
-    size_t Offset = StartOffset - SumDataSize;
-    DataFile->Read(Destination, Length, ThisDataPos + Offset);
+    uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                       m_Minifooter.IsLittleEndian);
+    uint64_t Offset = StartOffset - SumDataSize;
+    lf_ReadAt(ThisDataPos, Offset);
 
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);

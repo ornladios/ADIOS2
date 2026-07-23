@@ -131,7 +131,9 @@ async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
 gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
 
-if(UNIX)
+# LargeBlocks exercises ~4GB blocks, which cannot exist in a 32-bit address space
+# (and its RequiredDiskSpace constexpr overflows a 32-bit size_t), so build it 64-bit only.
+if(UNIX AND CMAKE_SIZEOF_VOID_P GREATER_EQUAL 8)
   gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
   set_tests_properties(Engine.BP.LargeBlocks.MultiBlock.BP5.Serial PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" RUN_SERIAL TRUE)
   target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)

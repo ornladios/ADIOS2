@@ -51,14 +51,15 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
 TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
 {
     // Define ADIOS local value (a value changing across processes)
-    auto localvalue = io.DefineVariable<int>("localvalue", {adios2::LocalValueDim});
+    auto localvalue =
+        io.DefineVariable<int>("localvalue", {static_cast<size_t>(adios2::LocalValueDim)});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(localvalue), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localvalue.Shape().size(), 1);
-    EXPECT_EQ(localvalue.Shape()[0], adios2::LocalValueDim);
+    EXPECT_EQ(localvalue.Shape()[0], static_cast<size_t>(adios2::LocalValueDim));
     EXPECT_EQ(localvalue.Start().size(), 1);
     EXPECT_EQ(localvalue.Count().size(), 1);
     EXPECT_EQ(localvalue.Name(), "localvalue");
@@ -193,7 +194,8 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
 {
     // Define ADIOS global array
     std::size_t n = 50;
-    EXPECT_THROW(io.DefineVariable<int>("globalarray", {100, adios2::LocalValueDim, 30},
+    EXPECT_THROW(io.DefineVariable<int>("globalarray",
+                                        {100, static_cast<size_t>(adios2::LocalValueDim), 30},
                                         {50, n / 2, 0}, {10, n / 2, 30}),
                  std::invalid_argument);
 }
@@ -314,15 +316,15 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayFirstDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto joinedarray =
-        io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, n, 30}, {}, {10, n, 30});
+    auto joinedarray = io.DefineVariable<int>(
+        "joinedarray", {static_cast<size_t>(adios2::JoinedDim), n, 30}, {}, {10, n, 30});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(joinedarray), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(joinedarray.Shape().size(), 3);
-    EXPECT_EQ(joinedarray.Shape()[0], adios2::JoinedDim);
+    EXPECT_EQ(joinedarray.Shape()[0], static_cast<size_t>(adios2::JoinedDim));
     EXPECT_EQ(joinedarray.Shape()[1], n);
     EXPECT_EQ(joinedarray.Shape()[2], 30);
     EXPECT_EQ(joinedarray.Start().size(), 0);
@@ -338,8 +340,8 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto joinedarray =
-        io.DefineVariable<int>("joinedarray", {n, adios2::JoinedDim, 30}, {0, 0, 0}, {n, 10, 30});
+    auto joinedarray = io.DefineVariable<int>(
+        "joinedarray", {n, static_cast<size_t>(adios2::JoinedDim), 30}, {0, 0, 0}, {n, 10, 30});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(joinedarray), adios2::Variable<int>>();
@@ -347,7 +349,7 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(joinedarray.Shape().size(), 3);
     EXPECT_EQ(joinedarray.Shape()[0], n);
-    EXPECT_EQ(joinedarray.Shape()[1], adios2::JoinedDim);
+    EXPECT_EQ(joinedarray.Shape()[1], static_cast<size_t>(adios2::JoinedDim));
     EXPECT_EQ(joinedarray.Shape()[2], 30);
     EXPECT_EQ(joinedarray.Start().size(), 3);
     EXPECT_EQ(joinedarray.Start()[0], 0);
@@ -366,7 +368,9 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)
     // Define ADIOS joined array
     std::size_t n = 50;
 
-    EXPECT_THROW(io.DefineVariable<int>("joinedarray", {n, adios2::JoinedDim, adios2::JoinedDim},
+    EXPECT_THROW(io.DefineVariable<int>("joinedarray",
+                                        {n, static_cast<size_t>(adios2::JoinedDim),
+                                         static_cast<size_t>(adios2::JoinedDim)},
                                         {}, {n, 50, 30}),
                  std::invalid_argument);
 }
@@ -377,9 +381,9 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayInvalidStart)
     std::size_t n = 10;
     std::size_t WrongValue = 1;
     // Start must be empty or full zero array
-    EXPECT_THROW(
-        io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, 50}, {0, WrongValue}, {n, 50}),
-        std::invalid_argument);
+    EXPECT_THROW(io.DefineVariable<int>("joinedarray", {static_cast<size_t>(adios2::JoinedDim), 50},
+                                        {0, WrongValue}, {n, 50}),
+                 std::invalid_argument);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineString)

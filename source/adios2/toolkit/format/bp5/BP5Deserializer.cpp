@@ -828,7 +828,7 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
             {
                 for (size_t i = 0; i < meta_base->Dims; i++)
                 {
-                    if (meta_base->Shape[i] == JoinedDim)
+                    if (meta_base->Shape[i] == static_cast<size_t>(JoinedDim))
                     {
                         VarRec->JoinedDimen = i;
                     }
@@ -1856,7 +1856,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                             RR.Timestep = Req->Step;
                             RR.WriterRank = WriterRank;
                             RR.StartOffset = writer_meta_base->DataBlockLocation[NeededBlock];
-                            if (RR.StartOffset == (size_t)-1)
+                            if (RR.StartOffset == static_cast<uint64_t>(-1))
                                 throw std::runtime_error("No data exists for this variable");
                             if (Req->MemSpace != MemorySpace::Host)
                                 RR.DirectToAppMemory = false;
@@ -2037,7 +2037,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                                  1);
 
                                             if (writer_meta_base_input->DataBlockLocation[Block] ==
-                                                (size_t)-1)
+                                                static_cast<uint64_t>(-1))
                                                 helper::Throw<std::runtime_error>(
                                                     "Toolkit", "BP5Deserializer",
                                                     "GenerateReadRequests",
@@ -2149,7 +2149,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                                  1);
 
                                             if (writer_meta_base_input->DataBlockLocation[Block] ==
-                                                (size_t)-1)
+                                                static_cast<uint64_t>(-1))
                                                 helper::Throw<std::runtime_error>(
                                                     "Toolkit", "BP5Deserializer",
                                                     "GenerateReadRequests",
@@ -2195,7 +2195,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     RR.StartOffset = writer_meta_base->DataBlockLocation[Block];
                                     RR.ReadLength = writer_meta_base->DataBlockSize[Block];
                                     RR.DestinationAddr = nullptr;
-                                    if (RR.StartOffset == (size_t)-1)
+                                    if (RR.StartOffset == static_cast<uint64_t>(-1))
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     if (doAllocTempBuffers)
@@ -2238,7 +2238,8 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     RR.WriterRank = WriterRank;
                                     RR.StartOffset = writer_meta_base->DataBlockLocation[Block] +
                                                      StartOffsetInBlock;
-                                    if (writer_meta_base->DataBlockLocation[Block] == (size_t)-1)
+                                    if (writer_meta_base->DataBlockLocation[Block] ==
+                                        static_cast<uint64_t>(-1))
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;

@@ -287,7 +287,7 @@ private:
 
     bool m_MarshalAttributesNecessary = true;
 
-    std::vector<std::vector<size_t>> FlushPosSizeInfo;
+    std::vector<std::vector<uint64_t>> FlushPosSizeInfo;
 
     void MakeHeader(std::vector<char> &buffer, size_t &position, const std::string fileType,
                     const bool isActive);
