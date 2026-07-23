@@ -51,6 +51,22 @@ public:
         size_t ReqIndex;
         size_t OffsetInBlock;
         size_t BlockID;
+        /*
+         * For a non-contiguous (multidimensional) selection, ReadLength is the
+         * BOUNDING span between the intersection's first and last elements in
+         * the block's linear order -- for a selection cutting across the fast
+         * dimension that span is nearly the whole block, so reading it whole
+         * over-reads by the ratio of the span to the wanted bytes.  SubRanges
+         * lists the contiguous runs actually wanted, as (offset relative to
+         * StartOffset, length) pairs in ascending offset order.  Each run lands
+         * at its own relative offset within the destination, i.e. exactly where
+         * reading the whole span would have put it, so FinalizeGet's extraction
+         * is unaffected and the gaps are simply never fetched.
+         * EMPTY means "no better than the span" -- read ReadLength as before.
+         * Engines may ignore this entirely; only engines whose transport can
+         * scatter/gather a single request benefit from honoring it.
+         */
+        std::vector<std::pair<size_t, size_t>> SubRanges;
     };
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,

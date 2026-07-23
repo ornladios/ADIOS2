@@ -20,6 +20,8 @@
 #include <exception> // std::exception (DAOS_MD_DEBUG)
 #include <fstream>
 #include <iomanip>
+#include <limits> // numeric_limits (DAOS_SUBRANGE_BATCH=0)
+#include <memory> // unique_ptr (uninitialized read scratch)
 #include <mutex>
 #include <sstream>
 #include <stdbool.h>
@@ -709,9 +711,10 @@ void DaosReader::EndStep()
     }
 }
 
-std::pair<double, double> DaosReader::ReadData(const size_t WriterRank, const size_t Timestep,
-                                               const size_t StartOffset, const size_t Length,
-                                               char *Destination)
+std::pair<double, double>
+DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_t StartOffset,
+                     const size_t Length, char *Destination,
+                     const std::vector<std::pair<size_t, size_t>> &SubRanges)
 {
     /*
      * Warning: this function is called by multiple threads
@@ -752,6 +755,104 @@ std::pair<double, double> DaosReader::ReadData(const size_t WriterRank, const si
         return size_t{16} * 1024 * 1024; // 16 MiB default
     }();
     const size_t step = (readChunk == 0) ? Length : readChunk;
+
+    /*
+     * Strided selection: fetch only the runs the deserializer identified rather
+     * than the bounding span.  A selection cutting across the fast dimension
+     * spans nearly the whole writer block, so reading the span moves roughly
+     * (span / wanted) times too much data -- for a column stripe of a
+     * row-decomposed write that is the block count, i.e. tens of times.
+     *
+     * Many ranges ride in ONE daos_array_read, so the transport builds one bulk
+     * handle per batch instead of one per run.  Batches are bounded by both
+     * range count and bytes because registered bytes in flight (threads x batch
+     * bytes) is what exhausts the NIC's registration pool -- and that pool is
+     * shared node-wide, not per process, so it is reached sooner the more ranks
+     * share a node.
+     *
+     * There is deliberately NO switch back to whole-span reads for a strided
+     * selection.  That is the configuration that exhausts the registration pool
+     * and aborts the reader, and an abort there takes the DAOS servers down with
+     * it, so it must not be reachable at runtime.  When SubRanges is empty the
+     * span IS the wanted data (a contiguous selection) and the loop below is the
+     * correct path -- that is the only way to get there.
+     */
+    // 0 means "no count limit" here, matching DAOS_READ_CHUNK_BYTES above.  It
+    // must not leave the batch empty: an empty batch yields arr_nr=0 with a NULL
+    // arr_rgs AND never advances i, i.e. an infinite loop of malformed reads.
+    static const size_t maxBatchRanges = []() -> size_t {
+        if (const char *e = std::getenv("DAOS_SUBRANGE_BATCH"))
+        {
+            const size_t v = static_cast<size_t>(std::strtoull(e, nullptr, 10));
+            return v == 0 ? std::numeric_limits<size_t>::max() : v;
+        }
+        return 64;
+    }();
+
+    if (!SubRanges.empty())
+    {
+        if (!Destination)
+        {
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
+                                              "NULL destination for a strided read of " +
+                                                  std::to_string(SubRanges.size()) +
+                                                  " runs, WriterRank=" +
+                                                  std::to_string(WriterRank));
+        }
+        size_t i = 0;
+        while (i < SubRanges.size())
+        {
+            std::vector<daos_range_t> rgs;
+            std::vector<d_iov_t> iovs;
+            size_t batchBytes = 0;
+            while (i < SubRanges.size() && rgs.size() < maxBatchRanges &&
+                   (batchBytes == 0 || batchBytes + SubRanges[i].second <= step))
+            {
+                daos_range_t rg;
+                rg.rg_idx = arrayOffset + SubRanges[i].first;
+                rg.rg_len = SubRanges[i].second;
+                rgs.push_back(rg);
+                d_iov_t iov;
+                iov.iov_buf = Destination + SubRanges[i].first;
+                iov.iov_buf_len = SubRanges[i].second;
+                iov.iov_len = SubRanges[i].second;
+                iovs.push_back(iov);
+                batchBytes += SubRanges[i].second;
+                ++i;
+            }
+            if (rgs.empty())
+            {
+                // Unreachable: the first pass of the inner loop always admits a
+                // range (batchBytes==0) and maxBatchRanges is never 0.  Checked
+                // anyway because the failure mode is a NULL arr_rgs handed to
+                // DAOS plus a non-advancing outer loop.
+                helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
+                                                  "empty subrange batch at run " +
+                                                      std::to_string(i) + " of " +
+                                                      std::to_string(SubRanges.size()));
+            }
+            daos_array_iod_t iodr;
+            iodr.arr_nr = static_cast<daos_size_t>(rgs.size());
+            iodr.arr_rgs = rgs.data();
+            d_sg_list_t sglr;
+            sglr.sg_nr = static_cast<uint32_t>(iovs.size());
+            sglr.sg_nr_out = 0;
+            sglr.sg_iovs = iovs.data();
+            int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
+            if (rc)
+            {
+                helper::Throw<std::runtime_error>(
+                    "Engine", "DaosReader", "ReadData",
+                    "daos_array_read (subranges) failed rc=" + std::to_string(rc) +
+                        " WriterRank=" + std::to_string(WriterRank) +
+                        " nranges=" + std::to_string(rgs.size()) +
+                        " bytes=" + std::to_string(batchBytes));
+            }
+        }
+        TP endSub = NOW();
+        double timeSub = DURATION(startRead, endSub);
+        return std::make_pair(0.0, timeSub);
+    }
 
     for (size_t done = 0; done < Length; done += step)
     {
@@ -822,7 +923,12 @@ void DaosReader::PerformGets()
         double readTotal = 0.0;
         double subfileTotal = 0.0;
         size_t nReads = 0;
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized on purpose: vector<char>(n) value-initializes, i.e.
+        // memsets maxReadSize per thread per step to deliver a fraction of it.
+        // Nothing reads a byte the fetch did not write -- NdCopy only visits the
+        // intersection box -- so the fill is dead work.  new char[] also yields a
+        // non-null pointer at size 0, unlike vector::data().
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
 
         while (true)
         {
@@ -834,10 +940,11 @@ void DaosReader::PerformGets()
             auto &Req = ReadRequests[reqidx];
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
-            std::pair<double, double> t = ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
-                                                   Req.ReadLength, Req.DestinationAddr);
+            std::pair<double, double> t =
+                ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
+                         Req.DestinationAddr, Req.SubRanges);
 
             TP startCopy = NOW();
             m_BP5Deserializer->FinalizeGet(Req, false);
@@ -849,6 +956,19 @@ void DaosReader::PerformGets()
         }
         return std::make_tuple(subfileTotal, readTotal, copyTotal, nReads);
     };
+
+    // Threads engage only when a reader's box spans several writer blocks, so a
+    // configured thread count is not the count that runs.  Report both: a sweep
+    // over Threads is measuring nothing when nRequest is 1.
+    if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0)
+    {
+        const size_t effective =
+            (m_Threads > 1 && nRequest > 1) ? std::min<size_t>(m_Threads, nRequest) : 1;
+        fprintf(stderr,
+                "[DAOS_THREAD_DEBUG] PerformGets: nRequest=%zu Threads=%u -> effective=%zu "
+                "maxReadSize=%zu\n",
+                nRequest, m_Threads, effective, maxReadSize);
+    }
 
     // TP startRead = NOW();
     // double sortTime = 0.0;
@@ -900,15 +1020,16 @@ void DaosReader::PerformGets()
     }
     else
     {
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized: see the threaded path above.
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
         for (auto &Req : ReadRequests)
         {
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
             ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
-                     Req.DestinationAddr);
+                     Req.DestinationAddr, Req.SubRanges);
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
@@ -1009,18 +1130,50 @@ void DaosReader::InitParameters()
     }
 
     m_Threads = m_Parameters.Threads;
+    // Only meaningful on the auto path below; 0 means "not computed".
+    unsigned int NodeSize = 0, NodeThreadSize = 0;
     if (m_Threads == 0)
     {
         helper::Comm m_NodeComm = m_Comm.GroupByShm("creating per-node comm at BP5 Open(read)");
-        unsigned int NodeSize = static_cast<unsigned int>(m_NodeComm.Size());
-        unsigned int NodeThreadSize = helper::NumHardwareThreadsPerNode();
-        if (NodeThreadSize > 0)
+        NodeSize = static_cast<unsigned int>(m_NodeComm.Size());
+        NodeThreadSize = helper::NumHardwareThreadsPerNode();
+        /*
+         * Reader concurrency is a per-NODE resource, so threads substitute for
+         * ranks rather than adding to them: bandwidth peaks near this many
+         * concurrent readers per node however they are split between the two.
+         * Measured on Aurora: best at 1 thread with 32 ranks/node and at 4 with
+         * 8 ranks/node -- both ~32 readers/node -- while more threads degrade
+         * sharply and enough more abort the reader on registration exhaustion.
+         * Dividing the node's hardware threads instead (the old rule) gives 6
+         * at 32 ranks/node, an order of magnitude off the measured optimum.
+         */
+        constexpr unsigned int TargetReadersPerNode = 32;
+        unsigned int budget = TargetReadersPerNode / NodeSize;
+        // never promise more threads than the node has hardware for
+        if (NodeThreadSize > 0 && NodeThreadSize / NodeSize < budget)
         {
-            m_Threads = helper::SetWithinLimit(NodeThreadSize / NodeSize, 1U, 16U);
+            budget = NodeThreadSize / NodeSize;
+        }
+        m_Threads = helper::SetWithinLimit(budget, 1U, 16U);
+    }
+
+    // The budget above divides a node's hardware threads among the ranks
+    // sharing it, so a wrong NodeSize over-threads by the ranks-per-node
+    // factor -- invisible per rank, and a cliff once the node oversubscribes.
+    // Logged rather than asserted because the right value is site-dependent.
+    if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0)
+    {
+        if (NodeThreadSize > 0 || NodeSize > 0)
+        {
+            fprintf(stderr,
+                    "[DAOS_THREAD_DEBUG] auto: NodeSize=%u NodeThreadSize=%u -> Threads=%u "
+                    "(readers/node = %u, target 32; hw threads %u)\n",
+                    NodeSize, NodeThreadSize, m_Threads, NodeSize * m_Threads, NodeThreadSize);
         }
         else
         {
-            m_Threads = helper::SetWithinLimit(8U / NodeSize, 1U, 8U);
+            fprintf(stderr, "[DAOS_THREAD_DEBUG] explicit: Threads=%u (auto path not taken)\n",
+                    m_Threads);
         }
     }
 }
