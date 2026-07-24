@@ -183,6 +183,49 @@ public:
     VariableDerived &
     DefineDerivedVariable(const std::string &name, const std::string &expression,
                           const DerivedVarType varType = DerivedVarType::StatsOnly);
+
+    /**
+     * @brief Define a reader-side derived variable: an expression the reader
+     * supplies over variables present in a file it opens, without those
+     * variables having been marked derived at write time. The reader's own
+     * process computes the result on Get.
+     *
+     * Unlike DefineDerivedVariable (a writer-side concept), this has no
+     * DerivedVarType: the reader always computes, never stores. The expression
+     * is parsed here (syntax errors throw now) but resolved lazily against the
+     * file's variables the first time an opened engine can satisfy it, so it may
+     * be defined before Open. Kept separate from the writer-side derived
+     * registry so a write engine sharing this IO never sees it.
+     * @param name unique identifier, shares the IO namespace with all variables
+     * @param expression derived expression over file variable names
+     * @exception std::invalid_argument if the name is already in use or the
+     * expression fails to parse
+     */
+    void DefineReaderDerivedVariable(const std::string &name, const std::string &expression);
+
+    /** @brief Whether any reader-side derived variable is defined on this IO.
+     * Cheap guard for the engine's per-step resolution pass. */
+    bool HasReaderDerivedVariables() const noexcept { return !m_ReaderDerivedVariables.empty(); }
+
+    /**
+     * @brief Names of reader-side derived variables not yet resolved. Used by the
+     * engine to drive lazy resolution once the file's variables are installed.
+     */
+    std::vector<std::string> GetUnresolvedReaderDerivedVariables() const;
+
+    /**
+     * @brief Resolve a reader-side derived variable against the currently
+     * installed file variables: bind input types and dims, run the derived
+     * pipeline, and build its VariableDerived. Idempotent. Returns the resolved
+     * object, or nullptr if it is unknown or an input is not yet installed (in
+     * which case it stays pending and can be resolved on a later step).
+     */
+    VariableDerived *ResolveReaderDerivedVariable(const std::string &name);
+
+    /** @brief Drop the resolved state of every reader-side derived variable,
+     * keeping the definitions. Called on engine close so a later Open on this IO
+     * re-resolves against the new file. */
+    void ResetReaderDerivedResolutions() noexcept;
 #endif
     VariableStruct &DefineStructVariable(const std::string &name, StructDefinition &def,
                                          const Dims &shape = Dims(), const Dims &start = Dims(),
@@ -552,6 +595,18 @@ private:
     VarMap m_Variables;
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VarMap m_VariablesDerived;
+
+    /** A reader-side derived variable, before and after lazy resolution.
+     *  Parsed at define time; Variable stays null until an opened engine
+     *  resolves the expression against the file's variables. Segregated from
+     *  m_VariablesDerived so a write engine sharing this IO never picks it up. */
+    struct ReaderDerivedVariable
+    {
+        std::string Expression;
+        adios2::derived::ExprNode ExprTree;
+        std::unique_ptr<VariableDerived> Variable; // null until resolved
+    };
+    std::unordered_map<std::string, ReaderDerivedVariable> m_ReaderDerivedVariables;
 #endif
 
     AttrMap m_Attributes;

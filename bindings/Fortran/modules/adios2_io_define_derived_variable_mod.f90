@@ -8,6 +8,7 @@ module adios2_io_define_derived_variable_mod
    implicit none
 
    external adios2_define_derived_variable_f2c
+   external adios2_define_reader_derived_variable_f2c
 
 contains
 
@@ -28,6 +29,20 @@ contains
          variable%name = name
          variable%type = adios2_derived_var_type
       end if
+
+   end subroutine
+
+   ! Reader-side derived variable: the reader computes the expression over
+   ! variables in an opened file. No derived-var type and no returned handle
+   ! (resolved lazily; find it afterwards with adios2_inquire_variable).
+   subroutine adios2_define_reader_derived_variable(io, name, expression, ierr)
+      type(adios2_io), intent(in) :: io
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: expression
+      integer, intent(out) :: ierr
+
+      call adios2_define_reader_derived_variable_f2c(io%f2c, &
+         TRIM(ADJUSTL(name))//char(0), TRIM(ADJUSTL(expression))//char(0), ierr)
 
    end subroutine
 

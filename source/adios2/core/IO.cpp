@@ -1054,6 +1054,146 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
     }
     return variable;
 }
+
+void IO::DefineReaderDerivedVariable(const std::string &name, const std::string &expression)
+{
+    PERFSTUBS_SCOPED_TIMER("IO::DefineReaderDerivedVariable");
+
+    // Name shares the IO namespace with every variable. Reject the collisions we
+    // can see now; a clash with a file variable not yet installed is caught at
+    // resolve time, when creating the placeholder throws on the duplicate name.
+    if (m_ReaderDerivedVariables.find(name) != m_ReaderDerivedVariables.end() ||
+        m_VariablesDerived.find(name) != m_VariablesDerived.end() ||
+        m_Variables.find(name) != m_Variables.end())
+    {
+        helper::Throw<std::invalid_argument>("Core", "IO", "DefineReaderDerivedVariable",
+                                             "variable " + name + " already defined in IO " +
+                                                 m_Name);
+    }
+
+    // Parse now so syntax errors surface at define time. Input variables are not
+    // resolved here: on a read IO the file's variables need not exist until Open.
+    derived::ExprNode exprTree = detail::ParseToExprNode(expression);
+
+    ReaderDerivedVariable rec;
+    rec.Expression = expression;
+    rec.ExprTree = std::move(exprTree);
+    m_ReaderDerivedVariables.emplace(name, std::move(rec));
+}
+
+std::vector<std::string> IO::GetUnresolvedReaderDerivedVariables() const
+{
+    std::vector<std::string> names;
+    for (const auto &pair : m_ReaderDerivedVariables)
+    {
+        if (!pair.second.Variable)
+        {
+            names.push_back(pair.first);
+        }
+    }
+    return names;
+}
+
+VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
+{
+    PERFSTUBS_SCOPED_TIMER("IO::ResolveReaderDerivedVariable");
+
+    auto it = m_ReaderDerivedVariables.find(name);
+    if (it == m_ReaderDerivedVariables.end())
+    {
+        return nullptr;
+    }
+    ReaderDerivedVariable &rec = it->second;
+    if (rec.Variable)
+    {
+        return rec.Variable.get(); // already resolved
+    }
+
+    // The name shares the IO namespace. A clash with a file variable could not be
+    // seen at define time (before Open); reject it clearly here rather than let
+    // the placeholder creation fail deep in the engine. rec.Variable is null, so
+    // the placeholder does not yet exist and any match is a foreign variable.
+    if (m_Variables.find(name) != m_Variables.end())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Core", "IO", "ResolveReaderDerivedVariable",
+            "reader derived variable " + name +
+                " collides with a variable of the same name in the opened file");
+    }
+
+    // Bind inputs against the file's variables. If any input is not yet
+    // installed (e.g. a step that has not written it), stay pending and let a
+    // later step resolve. Check before ResolveTreeTypes, which annotates the
+    // tree in place and needs every input type.
+    std::vector<std::string> var_list = derived::VariableNameList(rec.ExprTree);
+    if (var_list.empty())
+    {
+        // A reader-side derived variable must read something from the file; an
+        // expression over no variables (e.g. all constants) has nothing to
+        // resolve against and no block structure to inherit.
+        helper::Throw<std::invalid_argument>("Core", "IO", "ResolveReaderDerivedVariable",
+                                             "reader derived variable " + name +
+                                                 " must reference at least one file variable");
+    }
+    std::map<std::string, DataType> name_to_type;
+    std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
+    for (const auto &var_name : var_list)
+    {
+        auto itVariable = m_Variables.find(var_name);
+        if (itVariable == m_Variables.end())
+        {
+            return nullptr; // input not present yet
+        }
+        name_to_type.insert({var_name, InquireVariableType(var_name)});
+        name_to_dims.insert({var_name,
+                             {itVariable->second->m_Start, itVariable->second->m_Count,
+                              itVariable->second->m_Shape}});
+    }
+
+    // Require input congruence. The reader-side read path takes the derived
+    // variable's block structure from its first input, so every input must share
+    // the same global shape (differing per-rank start/count is fine). This is the
+    // reader-side contract; shape-changing or broadcasting expressions are not
+    // supported on read.
+    const Dims &refShape = std::get<2>(name_to_dims.at(var_list.front()));
+    for (const auto &var_name : var_list)
+    {
+        if (std::get<2>(name_to_dims.at(var_name)) != refShape)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "ResolveReaderDerivedVariable",
+                "reader derived variable " + name + " requires congruent inputs, but " + var_name +
+                    " and " + var_list.front() + " have different shapes");
+        }
+    }
+
+    // Work on a copy so the stored tree stays pristine: ResolveTreeTypes mutates
+    // it in place, and a re-Open on the same IO must be able to resolve again.
+    derived::ExprNode exprTree = rec.ExprTree;
+    derived::ResolveTreeTypes(exprTree, name_to_type);
+    derived::ExprCodeStream codeStream = derived::GenerateCode(exprTree);
+    codeStream.ExprString = rec.Expression;
+    derived::SemanticsPass(codeStream, name_to_type);
+    derived::PlanBuffers(codeStream);
+    DataType expressionType = codeStream.OutputType;
+    auto outDims = derived::GetDims(codeStream, name_to_dims);
+
+    // varType is inert on the read side (the reader always computes, never
+    // stores); StatsOnly is the neutral value.
+    rec.Variable = std::unique_ptr<VariableDerived>(
+        new VariableDerived(name, std::move(exprTree), std::move(codeStream), rec.Expression,
+                            expressionType, std::get<2>(outDims), std::get<0>(outDims),
+                            std::get<1>(outDims), false, DerivedVarType::StatsOnly, name_to_type));
+    return rec.Variable.get();
+}
+
+void IO::ResetReaderDerivedResolutions() noexcept
+{
+    for (auto &pair : m_ReaderDerivedVariables)
+    {
+        pair.second.Variable.reset();
+    }
+}
 #endif
 
 StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)

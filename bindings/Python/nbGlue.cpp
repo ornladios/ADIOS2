@@ -237,6 +237,9 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              nb::arg("name"), nb::arg("expression"),
              nb::arg("vartype") = adios2::DerivedVarType::StatsOnly)
 
+        .def("DefineReaderDerivedVariable", &adios2::py11::IO::DefineReaderDerivedVariable,
+             nb::arg("name"), nb::arg("expression"))
+
         .def("InquireVariable", &adios2::py11::IO::InquireVariable)
 
         .def("InquireAttribute",
