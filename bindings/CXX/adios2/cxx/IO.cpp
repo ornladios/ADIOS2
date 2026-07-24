@@ -191,6 +191,13 @@ VariableDerived IO::DefineDerivedVariable(const std::string &name, const std::st
 
     return VariableDerived(&m_IO->DefineDerivedVariable(name, expression, varType));
 }
+
+void IO::DefineReaderDerivedVariable(const std::string &name, const std::string &expression)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::DefineReaderDerivedVariable");
+    m_IO->DefineReaderDerivedVariable(name, expression);
+}
 #endif
 StructDefinition IO::DefineStruct(const std::string &name, const size_t size)
 {

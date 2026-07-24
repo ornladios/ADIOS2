@@ -181,6 +181,24 @@ adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const cha
     }
     return variable;
 }
+
+adios2_error adios2_define_reader_derived_variable(adios2_io *io, const char *name,
+                                                   const char *expression)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_define_reader_derived_variable");
+        adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
+        ioCpp.DefineReaderDerivedVariable(name, expression);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_define_reader_derived_variable"));
+    }
+}
 #endif
 
 adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
