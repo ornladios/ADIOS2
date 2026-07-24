@@ -166,6 +166,13 @@ private:
         size_t *LastJoinedOffset = NULL;
         size_t *LastJoinedShape = NULL;
         bool Derived = false;
+        // Reader-side derived variable: no file metadata of its own. Its block
+        // structure is taken from ReaderDerivedStructInput (a congruent input
+        // variable's VarRec), and DerivedVariable points at the reader-owned
+        // VariableDerived (which the writer path instead finds in the IO's
+        // derived-variable registry).
+        bool ReaderDerived = false;
+        BP5VarRec *ReaderDerivedStructInput = nullptr;
         char *ExprStr = NULL;
         ShapeID OrigShapeID;
         core::StructDefinition *Def = nullptr;
@@ -233,6 +240,17 @@ private:
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived variables: placeholder Variable* -> its synthetic
+    // VarRec. Deliberately kept OUT of VarByKey so the per-step teardown
+    // (SetupForStep) never sweeps these IO-owned, reader-defined variables, and
+    // the placeholder is not RegisterCreatedVariable'd so it is not engine-owned.
+    // Populated lazily as the file's input variables appear; used to route Get
+    // when VarByKey has no entry for the placeholder.
+    std::unordered_map<const void *, BP5VarRec *> m_ReaderDerivedByVar;
+    void InstallReaderDerivedVariables(size_t Step);
+#endif
+
     std::vector<void *> *m_MetadataBaseAddrs =
         nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
     std::vector<void *> *m_FreeableMBA = nullptr;
@@ -267,7 +285,8 @@ private:
     void *VarSetup(core::Engine *engine, const char *variableName, const DataType type, void *data);
     void *ArrayVarSetup(core::Engine *engine, const char *variableName, const DataType type,
                         int DimCount, size_t *Shape, size_t *Start, size_t *Count,
-                        core::StructDefinition *Def, core::StructDefinition *ReaderDef);
+                        core::StructDefinition *Def, core::StructDefinition *ReaderDef,
+                        bool registerCreated = true);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex, const size_t *LocalOffsets,
                                size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
