@@ -16,6 +16,7 @@
 #include "adios2/core/IO.h" // for CreateVar
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosString.h" // TarInfoMap
 
 #include <stdexcept> // for Intel Compiler
 
@@ -125,6 +126,10 @@ public:
     static const std::string PARAMETER_HAS_IDLE_WRITER_RANK;
 
     void ParseParameters(core::IO &io);
+
+    /* Init common MPI object if we are parallel. Call this before parsing parameters*/
+    void InitMPI(helper::Comm const &comm);
+    /* Init (open/create) file, call this after parsing parameters */
     void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
     void Append(const std::string &name, helper::Comm const &comm);
 
@@ -232,6 +237,9 @@ public:
     std::string m_RemoteHost;
     std::string m_UUID;
     bool m_dataIsRemote = false;
+    bool m_FileIsInTAR = false;
+    size_t m_TarOffset, m_TarSize; // location of HDF5 file in a TAR file
+    std::string m_TarInfoString;   // remember the tarinfo string to pass on to remote
 
 private:
     void ReadInStringAttr(core::IO &io, const std::string &attrName, hid_t attrId, hid_t h5Type,

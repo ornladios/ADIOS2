@@ -478,7 +478,7 @@ if(ADIOS2_HAVE_HDF5)
     core/IOHDF5.cpp
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
-    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc toolkit/interop/hdf5/HDF5TarOffsetVFD.cpp
   )
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)

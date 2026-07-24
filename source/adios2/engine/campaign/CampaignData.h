@@ -187,7 +187,7 @@ public:
      */
     std::vector<size_t> FindRemoteReplicas(const size_t datasetIdx, const HostOptions &hostOptions);
 
-    std::string GetTarIdx(const size_t dsIdx, const size_t repIdx);
+    std::string GetTarIdx(const size_t dsIdx, const size_t repIdx, const FileFormat format);
 
 private:
     void DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex, const std::string &path,
