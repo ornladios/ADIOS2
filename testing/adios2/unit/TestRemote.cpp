@@ -37,13 +37,13 @@ TEST(Remote, OpenRead)
     ofile << FILE_STRING;
     ofile.close();
 
-    adios2::HostOptions hostOptions;
+    const RemoteSetup rs = GetRemoteSetup("localhost");
     int localPort = 26200;
     std::vector<char> contents;
     {
         std::unique_ptr<Remote> remote = nullptr;
 
-        remote = std::make_unique<EVPathRemote>(hostOptions);
+        remote = std::make_unique<EVPathRemote>(rs);
         remote->OpenReadSimpleFile("localhost", localPort, FNAME, contents);
         std::cout << "Contents size was " << contents.size() << std::endl;
         ASSERT_EQ(contents.size(), strlen(FILE_STRING));
@@ -55,7 +55,7 @@ TEST(Remote, OpenRead)
 
     {
         std::unique_ptr<Remote> remote = nullptr;
-        remote = std::make_unique<EVPathRemote>(hostOptions);
+        remote = std::make_unique<EVPathRemote>(rs);
         remote->OpenSimpleFile("localhost", localPort, FNAME);
         std::cout << "Contents size is " << remote->m_Size << std::endl;
         contents.resize(remote->m_Size); // should be unnecessary

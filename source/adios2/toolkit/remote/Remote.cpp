@@ -11,6 +11,11 @@
 #include "adios2/helper/adiosNetwork.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
+
+#include "adios2/toolkit/remote/EVPathRemote.h"
+#include "adios2/toolkit/remote/XrootdHttpRemote.h"
+#include "adios2/toolkit/remote/XrootdRemote.h"
+
 #ifdef _MSC_VER
 #define strdup(x) _strdup(x)
 #define strtok_r(str, delim, saveptr) strtok_s(str, delim, saveptr)
@@ -65,10 +70,8 @@ Remote::GetHandle Remote::Read(size_t Start, size_t Size, void *Dest)
 void Remote::Close() { ThrowUp("RemoteClose"); };
 
 Remote::~Remote() {}
-Remote::Remote(const adios2::HostOptions &hostOptions)
-: m_HostOptions(std::make_shared<adios2::HostOptions>(hostOptions))
-{
-}
+Remote::Remote() {}
+Remote::Remote(const RemoteSetup &remoteSetup) : m_RemoteSetup(remoteSetup) {}
 
 int Remote::LaunchRemoteServerViaConnectionManager(const std::string remoteHost)
 {
@@ -80,19 +83,20 @@ int Remote::LaunchRemoteServerViaConnectionManager(const std::string remoteHost)
         return 26200;
     }
 
+    const adios2::HostOptions &hostOptions = core::ADIOS::GetHostOptions();
     helper::NetworkSocket socket;
     socket.Connect("localhost", 30000);
 
     struct adios2::HostConfig *hostconf = nullptr;
 
-    auto it = m_HostOptions->find(remoteHost);
-    if (it != m_HostOptions->end())
+    auto it = hostOptions.find(remoteHost);
+    if (it != hostOptions.end())
     {
         for (auto &ho : it->second)
         {
             if (ho.protocol == HostAccessProtocol::SSH)
             {
-                hostconf = &ho;
+                hostconf = const_cast<HostConfig *>(&ho);
             }
         }
     }
@@ -240,6 +244,189 @@ adios2::Params EncodedStringToParams(const std::string &pstr)
             p.emplace(pair[0], pair[1]);
     }
     return p;
+}
+
+RemoteSetup GetRemoteSetup(const std::string &remoteHost)
+{
+    const adios2::HostOptions &hostOptions = core::ADIOS::GetHostOptions();
+    RemoteSetup rs;
+    if (!remoteHost.empty())
+    {
+        rs.hostName = remoteHost;
+        auto it = hostOptions.find(rs.hostName);
+        if (it != hostOptions.end())
+        {
+            for (auto &hc : it->second)
+            {
+                if (hc.protocol == HostAccessProtocol::SSH)
+                {
+                    rs.protocol = hc.protocol;
+                    rs.hostConfig = const_cast<HostConfig *>(&hc);
+                    break;
+                }
+                if (hc.protocol == HostAccessProtocol::XRootD)
+                {
+                    rs.protocol = hc.protocol;
+                    rs.hostConfig = const_cast<HostConfig *>(&hc);
+                    rs.xrootdTransferProtocol = hc.transfer_protocol;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (getenv("DoXRootDXrdCl"))
+        {
+            // XrdCl client against the same HTTPS server (reuses XRootDHttpsHost).
+            char *env = getenv("XRootDHttpsHost");
+            if (env)
+                rs.hostName = std::string(env);
+            rs.protocol = HostAccessProtocol::XRootD;
+            rs.xrootdTransferProtocol = XRootDTransferProtocol::XrdCl;
+        }
+        else if (getenv("DoXRootDHttps"))
+        {
+            char *env = getenv("XRootDHttpsHost");
+            if (env)
+                rs.hostName = std::string(env);
+            rs.protocol = HostAccessProtocol::XRootD;
+            rs.xrootdTransferProtocol = XRootDTransferProtocol::HTTPS;
+        }
+        else if (getenv("DoXRootDHttp"))
+        {
+            char *env = getenv("XRootDHttpHost");
+            if (env)
+                rs.hostName = getenv("XRootDHttpHost");
+            rs.protocol = HostAccessProtocol::XRootD;
+            rs.xrootdTransferProtocol = XRootDTransferProtocol::HTTP;
+        }
+        else if (getenv("DoXRootD"))
+        {
+            char *env = getenv("XRootDHost");
+            if (env)
+                rs.hostName = getenv("XRootDHost");
+            rs.protocol = HostAccessProtocol::XRootD;
+            rs.xrootdTransferProtocol = XRootDTransferProtocol::XRootD;
+        }
+        if (rs.hostName.empty())
+        {
+            rs.hostName = "localhost";
+        }
+    }
+    return rs;
+}
+
+std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
+                                          const std::string &RemoteFileName,
+                                          const adios2::Mode openMode, const bool rowMajorOrdering,
+                                          const Params remoteParams)
+{
+#if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
+    auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
+        std::string XRootDHost = "localhost";
+        int XRootDPort = defaultPort;
+        if (remoteSetup.hostConfig)
+        {
+            XRootDHost = remoteSetup.hostConfig->hostname;
+            if (remoteSetup.hostConfig->port > 0)
+            {
+                XRootDPort = remoteSetup.hostConfig->port;
+            }
+        }
+        else if (remoteSetup.hostName != "localhost")
+        {
+            auto colon_pos = remoteSetup.hostName.find(':');
+            if (colon_pos == std::string::npos)
+            {
+                XRootDHost = remoteSetup.hostName;
+            }
+            else
+            {
+                XRootDHost = remoteSetup.hostName.substr(0, colon_pos);
+                try
+                {
+                    XRootDPort = std::stoi(remoteSetup.hostName.substr(colon_pos + 1));
+                }
+                catch (...)
+                {
+                }
+            }
+        }
+        return std::make_tuple(XRootDHost, XRootDPort);
+    };
+#endif
+
+    std::shared_ptr<adios2::Remote> remote;
+
+    Params params;
+    std::string tarinfo = helper::GetParameter("TarInfo", remoteParams, false, "");
+    if (!tarinfo.empty())
+        params["TarInfo"] = tarinfo;
+    std::string selectsteps = helper::GetParameter("SelectSteps", remoteParams, false, "");
+    if (!selectsteps.empty())
+        params["SelectSteps"] = selectsteps;
+    std::string ignoreflattensteps =
+        helper::GetParameter("IgnoreFlattenSteps", remoteParams, false, "");
+    if (!ignoreflattensteps.empty())
+        params["IgnoreFlattenSteps"] = ignoreflattensteps;
+    // Send our file id so the server can detect stale cached metadata (0 = none).
+    std::string fileuuid = helper::GetParameter("FileUUID", remoteParams, false, "");
+    if (!fileuuid.empty())
+        params["FileUUID"] = fileuuid;
+
+#if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
+    if (remoteSetup.protocol == HostAccessProtocol::XRootD &&
+        (remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
+         remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::HTTPS ||
+         remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::XrdCl))
+    {
+        // XrdCl reaches the origin/federation over HTTPS; the libcurl path
+        // additionally supports plain HTTP.
+        const bool useXrdCl = (remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::XrdCl);
+        const bool useHttps =
+            useXrdCl || (remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
+        auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
+        remote = std::make_unique<XrootdHttpRemote>(remoteSetup);
+        params["UseHttps"] = useHttps ? "true" : "false";
+        if (useXrdCl)
+            params["Backend"] = "XrdCl";
+        // For testing, disable SSL verification (only relevant for HTTPS)
+        if (useHttps) // && getenv("XRootDHttpsNoVerify"))
+        {
+            params["VerifySSL"] = "false";
+        }
+        remote->Open(std::get<0>(tup), std::get<1>(tup), RemoteFileName, openMode, rowMajorOrdering,
+                     params);
+        return remote;
+    }
+#endif
+#ifdef ADIOS2_HAVE_XROOTD
+    if (remoteSetup.protocol == HostAccessProtocol::XRootD &&
+        remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::XRootD)
+    {
+        auto tup = lf_getXRootDHostPort(1094);
+        remote = std::make_unique<XrootdRemote>(remoteSetup);
+        remote->Open(std::get<0>(tup), std::get<1>(tup), RemoteFileName, openMode, rowMajorOrdering,
+                     params);
+        return remote;
+    }
+#endif
+#ifdef ADIOS2_HAVE_SST
+    if (remoteSetup.protocol == HostAccessProtocol::SSH)
+    {
+        auto pair = CManagerSingleton::MakeEVPathConnection(remoteSetup);
+        remote = pair.first;
+        int localPort = pair.second;
+        if (remote && localPort > -1)
+        {
+            remote->Open("localhost", localPort, RemoteFileName, openMode, rowMajorOrdering,
+                         params);
+        }
+        return remote;
+    }
+#endif
+    return remote;
 }
 
 } // end namespace adios2

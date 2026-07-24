@@ -66,11 +66,14 @@ void HDF5WriterP::Init()
         m_H5File.Append(m_Name, m_Comm);
         m_H5File.ReadAttrToIO(m_IO);
         m_H5File.ReadAllVariables(m_IO);
+        m_H5File.ParseParameters(m_IO);
     }
     else
+    {
+        m_H5File.InitMPI(m_Comm);
+        m_H5File.ParseParameters(m_IO);
         m_H5File.Init(m_Name, m_Comm, true);
-
-    m_H5File.ParseParameters(m_IO); // has to follow m_H5File Init/Append/
+    }
     /*
     // enforce .h5 ending
     std::string suffix = ".h5";

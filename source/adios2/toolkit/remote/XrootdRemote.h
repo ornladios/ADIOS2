@@ -95,7 +95,7 @@ public:
     bool m_RowMajorOrdering;
     bool m_OpenSuccess = false;
 
-    XrootdRemote(const adios2::HostOptions &hostOptions);
+    XrootdRemote(const RemoteSetup &remoteSetup);
     ~XrootdRemote();
 
     explicit operator bool() const { return m_OpenSuccess; }

@@ -480,7 +480,8 @@ static int sqlcb_tarinfo(void *p, int argc, char **argv, char **azColName)
     return 0;
 };
 
-std::string CampaignData::GetTarIdx(const size_t dsIdx, const size_t repIdx)
+std::string CampaignData::GetTarIdx(const size_t dsIdx, const size_t repIdx,
+                                    const FileFormat format)
 {
     std::stringstream ss;
     CampaignReplica &rep = datasets[dsIdx].replicas[repIdx];
@@ -503,7 +504,10 @@ std::string CampaignData::GetTarIdx(const size_t dsIdx, const size_t repIdx)
         sqlite3_free(zErrMsg);
     }
 
-    return ss.str();
+    if (format == FileFormat::HDF5)
+        return ".h5" + ss.str();
+    else
+        return ss.str();
 }
 
 void CampaignData::Close()
