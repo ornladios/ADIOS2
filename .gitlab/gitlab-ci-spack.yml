@@ -45,6 +45,25 @@ default:
   script:
     - bash scripts/ci/gitlab-ci/run.sh memcheck
 
+.common-test-coverage:
+  extends:
+    - .common
+  stage: test
+  script:
+    - bash scripts/ci/gitlab-ci/run.sh test &> coverage-test.log
+    - bash scripts/ci/gitlab-ci/run.sh coverage &> coverage-ctest.log || true
+    - lcov --capture --directory "$CI_BIN_DIR" --output-file coverage.info &> coverage-lcov.log
+    - genhtml coverage.info --output-directory coverage-report &> coverage-lcov.log
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - coverage.info
+      - coverage-report/
+      - coverage-test.log
+      - coverage-ctest.log
+      - coverage-lcov.log
+
 #===============================================================================
 build:uo-sanitizer-asan:
   image:
@@ -89,6 +108,17 @@ test:uo-sanitizer-ubsan:
     name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-ubsan]
+
+build:uo-coverage:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-coverage-20260313
+  extends: [.common-build]
+
+test:uo-coverage:
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-coverage-20260313
+  extends: [.common-test-coverage]
+  needs: [build:uo-coverage]
 
 deploy:sync-ornl:
   environment: ornl
