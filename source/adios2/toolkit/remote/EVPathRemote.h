@@ -35,7 +35,7 @@ public:
      * @param type from derived class
      * @param comm passed to m_Comm
      */
-    EVPathRemote(const adios2::HostOptions &hostOptions);
+    EVPathRemote(const RemoteSetup &remoteSetup);
     ~EVPathRemote();
 
     explicit operator bool() const { return m_Active; }
@@ -111,7 +111,7 @@ public:
     /* Returns a new EVPathRemote (never shared: it carries the per-file
      * server handle) plus the local port of the tunnel to hostName. */
     static std::pair<std::shared_ptr<EVPathRemote>, int>
-    MakeEVPathConnection(const std::string &hostName);
+    MakeEVPathConnection(const RemoteSetup &remoteSetup);
 
 private:
     CManager m_cm = NULL;

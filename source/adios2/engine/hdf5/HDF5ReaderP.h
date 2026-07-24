@@ -100,7 +100,7 @@ private:
     void DestructorClose(bool Verbose) noexcept final;
 
     // Remote data access variables and functions
-    std::unique_ptr<Remote> m_Remote;
+    std::shared_ptr<Remote> m_Remote;
     bool CheckRemote();
 };
 

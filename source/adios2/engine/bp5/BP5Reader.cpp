@@ -506,41 +506,6 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
 
 void BP5Reader::PerformGets()
 {
-#if defined ADIOS2_HAVE_CURL || defined ADIOS2_HAVE_XROOTD
-    auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
-        std::string XRootDHost = "localhost";
-        int XRootDPort = defaultPort;
-        if (m_HostConfig)
-        {
-            XRootDHost = m_HostConfig->hostname;
-            if (m_HostConfig->port > 0)
-            {
-                XRootDPort = m_HostConfig->port;
-            }
-        }
-        else if (m_RemoteHost != "localhost")
-        {
-            auto colon_pos = m_RemoteHost.find(':');
-            if (colon_pos == std::string::npos)
-            {
-                XRootDHost = m_RemoteHost;
-            }
-            else
-            {
-                XRootDHost = m_RemoteHost.substr(0, colon_pos);
-                try
-                {
-                    XRootDPort = std::stoi(m_RemoteHost.substr(colon_pos + 1));
-                }
-                catch (...)
-                {
-                }
-            }
-        }
-        return std::make_tuple(XRootDHost, XRootDPort);
-    };
-#endif
-
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
     // remote file (or die trying)
@@ -552,74 +517,19 @@ void BP5Reader::PerformGets()
         if (m_BP5Deserializer->DefaultGetContext().PendingGetRequests.size() == 0)
             return;
 
-#if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
-        if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
-            (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
-             m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS ||
-             m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl))
-        {
-            // XrdCl reaches the origin/federation over HTTPS; the libcurl path
-            // additionally supports plain HTTP.
-            const bool useXrdCl = (m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl);
-            const bool useHttps =
-                useXrdCl || (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
-            auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
-            m_Remote = std::make_unique<XrootdHttpRemote>(ADIOS::GetHostOptions());
-            Params params;
-            params["UseHttps"] = useHttps ? "true" : "false";
-            if (useXrdCl)
-                params["Backend"] = "XrdCl";
-            // For testing, disable SSL verification (only relevant for HTTPS)
-            if (useHttps) // && getenv("XRootDHttpsNoVerify"))
-            {
-                params["VerifySSL"] = "false";
-            }
-            if (!m_Parameters.TarInfo.empty())
-                params["TarInfo"] = m_Parameters.TarInfo;
-            if (!m_Parameters.SelectSteps.empty())
-                params["SelectSteps"] = m_Parameters.SelectSteps;
-            if (m_Parameters.IgnoreFlattenSteps)
-                params["IgnoreFlattenSteps"] = "true";
-            // Send our file id so the server can detect stale cached metadata (0 = none).
-            if (m_FileUUID != 0)
-                params["FileUUID"] = std::to_string(m_FileUUID);
-            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
-                           RowMajorOrdering, params);
-        }
-        else
-#endif
-#ifdef ADIOS2_HAVE_XROOTD
-            if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
-                m_XrootdTransferProtocol == XRootDTransferProtocol::XRootD)
-        {
-            auto tup = lf_getXRootDHostPort(1094);
-            m_Remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
-            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
-                           RowMajorOrdering);
-        }
-        else
-#endif
-#ifdef ADIOS2_HAVE_SST
-            if (m_RemoteProtocol == HostAccessProtocol::SSH)
-        {
-            auto pair = CManagerSingleton::MakeEVPathConnection(m_RemoteHost);
-            m_Remote = pair.first;
-            int localPort = pair.second;
-            if (m_Remote && localPort > -1)
-            {
-                Params p;
-                if (!m_Parameters.TarInfo.empty())
-                    p.emplace("TarInfo", m_Parameters.TarInfo);
-                if (!m_Parameters.SelectSteps.empty())
-                    p.emplace("SelectSteps", m_Parameters.SelectSteps);
-                if (m_Parameters.IgnoreFlattenSteps)
-                    p.emplace("IgnoreFlattenSteps", "true");
+        Params params;
+        if (!m_Parameters.TarInfo.empty())
+            params["TarInfo"] = m_Parameters.TarInfo;
+        if (!m_Parameters.SelectSteps.empty())
+            params["SelectSteps"] = m_Parameters.SelectSteps;
+        if (m_Parameters.IgnoreFlattenSteps)
+            params["IgnoreFlattenSteps"] = "true";
+        // Send our file id so the server can detect stale cached metadata (0 = none).
+        if (m_FileUUID != 0)
+            params["FileUUID"] = std::to_string(m_FileUUID);
 
-                m_Remote->Open("localhost", localPort, m_RemoteName, m_OpenMode, RowMajorOrdering,
-                               p);
-            }
-        }
-#endif
+        m_Remote = GetRemote(m_RemoteSetup, m_RemoteName, m_OpenMode, RowMajorOrdering, params);
+
 #ifdef ADIOS2_HAVE_KVCACHE
         if (getenv("useKVCache"))
         {
@@ -1236,93 +1146,27 @@ void BP5Reader::Init()
         {
             m_RemoteName = m_Name;
         }
-
-        m_RemoteProtocol = HostAccessProtocol::Invalid;
-        if (!m_Parameters.RemoteHost.empty())
-        {
-            m_RemoteHost = m_Parameters.RemoteHost;
-            auto it = ADIOS::GetHostOptions().find(m_Parameters.RemoteHost);
-            if (it != ADIOS::GetHostOptions().end())
-            {
-                for (auto &hc : it->second)
-                {
-                    if (hc.protocol == HostAccessProtocol::SSH)
-                    {
-                        m_RemoteProtocol = hc.protocol;
-                        m_HostConfig = const_cast<HostConfig *>(&hc);
-                        break;
-                    }
-                    if (hc.protocol == HostAccessProtocol::XRootD)
-                    {
-                        m_RemoteProtocol = hc.protocol;
-                        m_HostConfig = const_cast<HostConfig *>(&hc);
-                        m_XrootdTransferProtocol = hc.transfer_protocol;
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (getenv("DoXRootDXrdCl"))
-            {
-                // XrdCl client against the same HTTPS server (reuses XRootDHttpsHost).
-                char *env = getenv("XRootDHttpsHost");
-                if (env)
-                    m_RemoteHost = std::string(env);
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::XrdCl;
-            }
-            else if (getenv("DoXRootDHttps"))
-            {
-                char *env = getenv("XRootDHttpsHost");
-                if (env)
-                    m_RemoteHost = std::string(env);
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTPS;
-            }
-            else if (getenv("DoXRootDHttp"))
-            {
-                char *env = getenv("XRootDHttpHost");
-                if (env)
-                    m_RemoteHost = getenv("XRootDHttpHost");
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTP;
-            }
-            else if (getenv("DoXRootD"))
-            {
-                char *env = getenv("XRootDHost");
-                if (env)
-                    m_RemoteHost = getenv("XRootDHost");
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::XRootD;
-            }
-            if (m_RemoteHost.empty())
-            {
-                m_RemoteHost = "localhost";
-            }
-        }
-
-        if (m_RemoteHost.empty())
+        m_RemoteSetup = GetRemoteSetup(m_Parameters.RemoteHost);
+        if (m_RemoteSetup.hostName.empty())
         {
             helper::Throw<std::invalid_argument>(
                 "Engine", "BP5Reader", "OpenFiles",
                 "No remote hostname was found for dataset " + m_RemoteName +
                     ". Make sure you define proper access to the server to serve this path.");
         }
-        if (m_RemoteProtocol == HostAccessProtocol::Invalid)
+        if (m_RemoteSetup.protocol == HostAccessProtocol::Invalid)
         {
-            if (m_RemoteHost == "localhost")
+            if (m_RemoteSetup.hostName == "localhost")
             {
                 // special case for debugging on localhost
-                m_RemoteProtocol = HostAccessProtocol::SSH;
+                m_RemoteSetup.protocol = HostAccessProtocol::SSH;
             }
             else
             {
                 helper::Throw<std::invalid_argument>(
                     "Engine", "BP5Reader", "OpenFiles",
-                    "No acceptable protocol (xrootd or ssh) was found for " + m_RemoteHost +
-                        " to read " + m_RemoteName +
+                    "No acceptable protocol (xrootd or ssh) was found for " +
+                        m_RemoteSetup.hostName + " to read " + m_RemoteName +
                         ". Make sure you define proper access to the server to serve this path.");
             }
         }

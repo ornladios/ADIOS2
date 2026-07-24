@@ -316,7 +316,7 @@ extern XrdSsiProvider *XrdSsiProviderClient;
 #endif
 namespace adios2
 {
-XrootdRemote::XrootdRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
+XrootdRemote::XrootdRemote(const RemoteSetup &remoteSetup) : Remote(remoteSetup) {}
 XrootdRemote::~XrootdRemote() {}
 void XrootdRemote::Open(const std::string hostname, const int32_t port, const std::string filename,
                         const Mode mode, bool RowMajorOrdering, const Params &params)

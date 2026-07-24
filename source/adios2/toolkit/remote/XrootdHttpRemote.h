@@ -32,7 +32,7 @@ class XrootdHttpRemote : public Remote
 public:
     profiling::IOChrono m_Profiler;
 
-    XrootdHttpRemote(const adios2::HostOptions &hostOptions);
+    XrootdHttpRemote(const RemoteSetup &remoteSetup);
     ~XrootdHttpRemote();
 
     explicit operator bool() const override { return m_OpenSuccess; }

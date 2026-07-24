@@ -39,7 +39,7 @@ namespace adios2
 // XrootdHttpRemote implementation
 // ======================================================================
 
-XrootdHttpRemote::XrootdHttpRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
+XrootdHttpRemote::XrootdHttpRemote(const RemoteSetup &remoteSetup) : Remote(remoteSetup) {}
 
 XrootdHttpRemote::~XrootdHttpRemote() { Close(); }
 

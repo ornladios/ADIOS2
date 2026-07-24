@@ -20,11 +20,21 @@
 
 namespace adios2
 {
+
+struct RemoteSetup
+{
+    std::string hostName;
+    adios2::HostAccessProtocol protocol = HostAccessProtocol::Invalid;
+    adios2::XRootDTransferProtocol xrootdTransferProtocol = XRootDTransferProtocol::XRootD;
+    adios2::HostConfig *hostConfig = nullptr;
+};
+
 class Remote
 {
 
 public:
-    Remote(const adios2::HostOptions &hostOptions);
+    Remote();
+    Remote(const RemoteSetup &remoteSetup);
     virtual ~Remote();
 
     // Talk to local connection manager and ask for an existing or new SSH connection
@@ -81,11 +91,26 @@ public:
     size_t m_Size;
 
 private:
-    const std::shared_ptr<adios2::HostOptions> m_HostOptions;
+    const RemoteSetup m_RemoteSetup;
 };
 
 std::string ParamsToEncodedString(const adios2::Params &params);
 adios2::Params EncodedStringToParams(const std::string &pstr);
+
+/* Make a RemoteSetup object before creating Remote().
+   If remoteHost is given, host config will be searched for connection information.
+      If not found in config, returned rs.protocol will be HostAccessProtocol::Invalid.
+   If remoteHost is "" then environment variables are searched for connection information.
+      If not found in environment, returned rs.protocol will be HostAccessProtocol::Invalid
+      and rs.hostName will be "localhost".
+*/
+RemoteSetup GetRemoteSetup(const std::string &remoteHost);
+
+/* Create/Get a Remote object connected to the target described in RemoteSetup */
+std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
+                                          const std::string &RemoteFileName,
+                                          const adios2::Mode openMode, const bool rowMajorOrdering,
+                                          const Params remoteParams);
 
 } // end namespace adios2
 
