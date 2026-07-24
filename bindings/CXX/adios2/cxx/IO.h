@@ -159,6 +159,18 @@ public:
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VariableDerived DefineDerivedVariable(const std::string &name, const std::string &expression,
                                           const DerivedVarType varType = DerivedVarType::StatsOnly);
+
+    /**
+     * Define a reader-side derived variable: an expression the reader computes
+     * over variables in a file it opens, without those variables having been
+     * marked derived at write time. Has no DerivedVarType (the reader always
+     * computes). May be called before Open; it is resolved lazily against the
+     * file's variables, and InquireVariable finds it once an engine has resolved
+     * it. Use on a reading IO.
+     * @param name unique identifier, shares the IO namespace with all variables
+     * @param expression derived expression over file variable names
+     */
+    void DefineReaderDerivedVariable(const std::string &name, const std::string &expression);
 #endif
     VariableNT DefineVariable(const DataType type, const std::string &name,
                               const Dims &shape = Dims(), const Dims &start = Dims(),

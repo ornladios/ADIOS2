@@ -136,6 +136,21 @@ adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const a
 adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const char *name,
                                                         const char *expression,
                                                         const adios2_derived_var_type type);
+
+/**
+ * @brief Define a reader-side derived variable within io: an expression the
+ * reader computes over variables in an opened file, without those variables
+ * having been marked derived at write time. It has no derived-variable type
+ * (the reader always computes, never stores) and no returned handle; it is
+ * resolved lazily against the file's variables, then found via adios2_inquire_
+ * variable. Use on a reading io.
+ * @param io handler that owns the variable
+ * @param name unique variable identifier
+ * @param expression derived expression over file variable names
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_define_reader_derived_variable(adios2_io *io, const char *name,
+                                                   const char *expression);
 #endif
 
 /**

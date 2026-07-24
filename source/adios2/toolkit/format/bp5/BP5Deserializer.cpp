@@ -272,13 +272,25 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p, D
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
 {
     auto ret = VarByKey.find(Key);
-    if (ret == VarByKey.end())
+    if (ret != VarByKey.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
-            "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+        return ret->second;
     }
-    return ret->second;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // A reader-derived placeholder is not in VarByKey. Its structural queries
+    // (shape, blocks, steps) mirror its congruent input, so answer from that
+    // input's VarRec, which carries the per-step bookkeeping. Get instead uses
+    // m_ReaderDerivedByVar directly to reach the derived VarRec.
+    auto rd = m_ReaderDerivedByVar.find(Key);
+    if (rd != m_ReaderDerivedByVar.end())
+    {
+        return rd->second->ReaderDerivedStructInput;
+    }
+#endif
+    helper::Throw<std::runtime_error>(
+        "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
+        "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+    return nullptr;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
@@ -586,7 +598,7 @@ void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName, 
 void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableName,
                                      const DataType type, int DimCount, size_t *Shape,
                                      size_t *Start, size_t *Count, core::StructDefinition *Def,
-                                     core::StructDefinition *ReaderDef)
+                                     core::StructDefinition *ReaderDef, bool registerCreated)
 {
     std::vector<size_t> VecShape;
     std::vector<size_t> VecStart;
@@ -619,7 +631,8 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
     {
         core::VariableStruct *variable =
             &(engine->m_IO.DefineStructVariable(variableName, *Def, VecShape, VecStart, VecCount));
-        engine->RegisterCreatedVariable(variable);
+        if (registerCreated)
+            engine->RegisterCreatedVariable(variable);
         variable->m_ReadStructDefinition = ReaderDef;
         return (void *)variable;
     }
@@ -627,7 +640,8 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
     else if (Type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         core::Variable<T> *variable = &(engine->m_IO.DefineVariable<T>(variableName));             \
-        engine->RegisterCreatedVariable(variable);                                                 \
+        if (registerCreated)                                                                       \
+            engine->RegisterCreatedVariable(variable);                                             \
         variable->m_Shape = VecShape;                                                              \
         variable->m_Start = VecStart;                                                              \
         variable->m_Count = VecCount;                                                              \
@@ -642,6 +656,69 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
 #undef declare_type
     return (void *)NULL;
 };
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+void BP5Deserializer::InstallReaderDerivedVariables(size_t Step)
+{
+    core::IO &io = m_Engine->m_IO;
+    if (!io.HasReaderDerivedVariables())
+    {
+        return; // common case: nothing to do, no allocation
+    }
+    for (const auto &name : io.GetUnresolvedReaderDerivedVariables())
+    {
+        core::VariableDerived *derived = io.ResolveReaderDerivedVariable(name);
+        if (!derived)
+        {
+            // An input variable is not yet installed; leave it pending and let a
+            // later writer rank or step resolve it.
+            continue;
+        }
+        // Build a persistent placeholder the user can InquireVariable and Get.
+        // registerCreated=false keeps it off the engine's created-variable list
+        // (so per-step teardown does not remove it), and it is deliberately not
+        // added to VarByKey (which SetupForStep sweeps). Get routing goes through
+        // m_ReaderDerivedByVar instead.
+        void *variable =
+            ArrayVarSetup(m_Engine, name.c_str(), derived->m_Type, (int)derived->m_Shape.size(),
+                          derived->m_Shape.data(), derived->m_Start.data(), derived->m_Count.data(),
+                          nullptr, nullptr, false /* registerCreated */);
+        static_cast<core::VariableBase *>(variable)->m_Engine = m_Engine;
+
+        // Synthesize a VarRec so Get can reuse the writer-derived read machinery.
+        // It carries no file metadata; its block structure comes from a congruent
+        // input variable (ReaderDerivedStructInput), and it is kept out of
+        // VarByName/VarByKey so no teardown touches it. Freed in the destructor.
+        BP5VarRec *vr = new BP5VarRec();
+        vr->VarName = strdup(name.c_str());
+        vr->Variable = variable;
+        vr->DerivedVariable = (void *)derived;
+        vr->Derived = true;
+        vr->ReaderDerived = true;
+        vr->Type = derived->m_Type;
+        vr->ElementSize = (int)helper::GetDataTypeSize(derived->m_Type);
+        vr->DimCount = derived->m_Shape.size();
+        vr->OrigShapeID = ShapeID::GlobalArray;
+        // Congruence is required, so any input's block layout works; use the first.
+        vr->ReaderDerivedStructInput = LookupVarByName(derived->VariableNameList()[0].c_str());
+        m_ReaderDerivedByVar[variable] = vr;
+    }
+
+    // A reader-derived placeholder is not in the VarByKey loop that grows the
+    // available-step count per step, so mirror its structure input's count here
+    // (the input was updated earlier in this same InstallMetadataBuffer pass).
+    for (auto &pair : m_ReaderDerivedByVar)
+    {
+        BP5VarRec *vr = pair.second;
+        auto *placeholder = static_cast<core::VariableBase *>(vr->Variable);
+        auto *inputVar = static_cast<core::VariableBase *>(vr->ReaderDerivedStructInput->Variable);
+        if (inputVar)
+        {
+            placeholder->m_AvailableStepsCount = inputVar->m_AvailableStepsCount;
+        }
+    }
+}
+#endif
 
 void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
 {
@@ -1054,6 +1131,12 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
             }
         }
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // The file's variables for this rank are now installed; try to resolve any
+    // reader-side derived variables whose inputs have become available. Cheap and
+    // idempotent: the unresolved set is empty once none remain (the common case).
+    InstallReaderDerivedVariables(Step);
+#endif
 }
 
 void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step)
@@ -1385,7 +1468,23 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
                                      void *DestData, size_t AbsStep, size_t RelStep,
                                      const core::Selection &selection)
 {
-    BP5VarRec *VarRec = VarByKey[&variable];
+    // Use find, not operator[]: a reader-derived placeholder is not in VarByKey,
+    // and inserting a NULL entry would crash the teardown loop that dereferences
+    // it. Fall back to the reader-derived routing map on a miss.
+    BP5VarRec *VarRec = nullptr;
+    {
+        auto vk = VarByKey.find(&variable);
+        if (vk != VarByKey.end())
+            VarRec = vk->second;
+    }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (!VarRec)
+    {
+        auto it = m_ReaderDerivedByVar.find(&variable);
+        if (it != m_ReaderDerivedByVar.end())
+            VarRec = it->second;
+    }
+#endif
     if (variable.m_Type == adios2::DataType::Struct)
     {
         StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
@@ -1496,7 +1595,7 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
              (variable.m_ShapeID == ShapeID::LocalArray))
     {
         BP5ArrayRequest Req;
-        Req.VarRec = VarByKey[&variable];
+        Req.VarRec = VarRec;
         Req.VarName = (char *)variable.m_Name.c_str();
         Req.RequestType = Local;
         Req.BlockID = hasBlock ? blockID : 0;
@@ -1630,7 +1729,11 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
     }
     else
     {
-        BP5VarRec *VarRec = VarByKey[&variable];
+        // LookupVarByKey (not operator[]) so a reader-derived placeholder resolves
+        // to its structure-input VarRec for step iteration, and an unknown key
+        // throws instead of inserting a NULL. QueueGetSingle re-resolves the
+        // placeholder to its synthetic derived VarRec.
+        BP5VarRec *VarRec = LookupVarByKey((void *)&variable);
         bool ret = false;
         if (variable.m_Type == adios2::DataType::Struct)
         {
@@ -1802,9 +1905,13 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
             if (VarRec->Derived)
             {
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-                auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
-                auto derivedVar =
-                    static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+                // Reader-side derived variables keep their VariableDerived on the
+                // synthetic VarRec; writer-defined ones live in the IO registry.
+                VariableDerived *derivedVar =
+                    VarRec->ReaderDerived
+                        ? static_cast<VariableDerived *>(VarRec->DerivedVariable)
+                        : static_cast<VariableDerived *>(
+                              m_Engine->m_IO.GetDerivedVariables().at(VarRec->VarName).get());
                 derivedVarInputNameList = derivedVar->VariableNameList();
                 nameToVarInfo = new std::map<std::string, std::unique_ptr<MinVarInfo>>();
                 Req->DerivedInputMap = nameToVarInfo;
@@ -2548,8 +2655,11 @@ void BP5Deserializer::FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRe
         auto VarRec = (struct BP5VarRec *)Req.VarRec;
         if (!VarRec->Derived)
             continue;
-        auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
-        auto derivedVar = static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+        VariableDerived *derivedVar =
+            VarRec->ReaderDerived
+                ? static_cast<VariableDerived *>(VarRec->DerivedVariable)
+                : static_cast<VariableDerived *>(
+                      m_Engine->m_IO.GetDerivedVariables().at(VarRec->VarName).get());
 
         auto nameToVarInfo = Req.DerivedInputMap;
         bool needsHalo = adios2::derived::HasHalo(derivedVar->m_CodeStream);
@@ -2763,6 +2873,21 @@ BP5Deserializer::~BP5Deserializer()
             delete VarRec.second->Def;
         delete VarRec.second;
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived placeholders are IO-owned (not in VarByName), so free
+    // their synthetic VarRecs here and remove the placeholders from the IO. The
+    // expression definitions persist on the IO; reset their resolution so a later
+    // Open on the same IO re-resolves against the new file.
+    for (auto &pair : m_ReaderDerivedByVar)
+    {
+        BP5VarRec *vr = pair.second;
+        m_Engine->m_IO.RemoveVariable(vr->VarName);
+        free(vr->VarName);
+        delete vr;
+    }
+    m_ReaderDerivedByVar.clear();
+    m_Engine->m_IO.ResetReaderDerivedResolutions();
+#endif
     if (m_FreeableMBA)
     {
         delete m_FreeableMBA;
@@ -2785,6 +2910,14 @@ BP5Deserializer::~BP5Deserializer()
 
 void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (VarRec->ReaderDerived)
+    {
+        // A reader-side derived variable has no file metadata of its own; its
+        // block structure is that of its (congruent) input variables.
+        return GetMetadataBase(VarRec->ReaderDerivedStructInput, Step, WriterRank);
+    }
+#endif
     MetaArrayRec *writer_meta_base = NULL;
     if (m_RandomAccessMode)
     {
@@ -3270,6 +3403,22 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                                      MinMaxStruct &MinMax)
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived variables carry no precomputed statistics: nothing was
+    // computed at write time, and the LookupVarByKey redirect would otherwise
+    // return an input variable's min/max. Report an explicitly invalid range
+    // (Init sets min = TYPE_MAX, max = TYPE_MIN, which no real data can produce;
+    // zeroed would be ambiguous with all-zero data). Return true so
+    // Variable::DoMinMax does not fall back to scanning the input's block stats.
+    {
+        auto rd = m_ReaderDerivedByVar.find(&Var);
+        if (rd != m_ReaderDerivedByVar.end())
+        {
+            MinMax.Init(rd->second->Type);
+            return true;
+        }
+    }
+#endif
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     if (!TypeHasMinMax(VarRec->Type))
     {
@@ -3284,7 +3433,10 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     {
         if (VarRec->MinMaxOffset == SIZE_MAX)
         {
-            std::memset(&MinMax, 0, sizeof(struct MinMaxStruct));
+            // No min/max was stored for this variable. Report an explicitly
+            // invalid range (min > max) rather than zeroed, which would be
+            // ambiguous with genuinely all-zero data.
+            MinMax.Init(VarRec->Type);
             return true;
         }
     }
