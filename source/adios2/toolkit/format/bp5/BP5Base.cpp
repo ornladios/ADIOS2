@@ -45,7 +45,8 @@ int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const
     {
         return 0;
     }
-    return ((MBase->BitField[Element] & ((uint64_t)1 << ElementBit)) == ((uint64_t)1 << ElementBit));
+    return ((MBase->BitField[Element] & ((uint64_t)1 << ElementBit)) ==
+            ((uint64_t)1 << ElementBit));
 }
 #define BASE_FIELD_ENTRIES                                                                         \
     {"Dims", "integer", sizeof(uint64_t), FMOffset(BP5Base::MetaArrayRec *, Dims)},                \

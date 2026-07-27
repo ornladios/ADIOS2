@@ -363,9 +363,9 @@ static int base64_decode(unsigned char *input, unsigned char *output)
 // arrays use the writer's element stride and read garbage.
 static void LocalizeArrayElementSizes(FMStructDescList list)
 {
-    static const char *const fixedBases[] = {"integer",  "unsigned integer", "unsigned", "float",
-                                             "double",   "char",             "complex4", "complex8",
-                                             "complex",  "enumeration",      "boolean"};
+    static const char *const fixedBases[] = {
+        "integer",  "unsigned integer", "unsigned", "float",       "double", "char",
+        "complex4", "complex8",         "complex",  "enumeration", "boolean"};
     for (int s = 0; list[s].format_name != NULL; s++)
     {
         FMFieldList fl = list[s].field_list;
@@ -541,9 +541,8 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 if (V1_fields)
                     VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
                 else
-                    VarRec->MinMaxOffset =
-                        Operator ? offsetof(MetaArrayRecOperatorMM, MinMax)
-                                 : offsetof(MetaArrayRecMM, MinMax);
+                    VarRec->MinMaxOffset = Operator ? offsetof(MetaArrayRecOperatorMM, MinMax)
+                                                    : offsetof(MetaArrayRecMM, MinMax);
                 MetaRecFields++;
             }
             if (V1_fields)
@@ -2004,10 +2003,10 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                                       VarRec->DimCount);
                             blkCount.assign(writer_meta_base->Count + StartDim,
                                             writer_meta_base->Count + StartDim + VarRec->DimCount);
-                            if (IntersectionStartCount(
-                                    VarRec->DimCount, Req->Start.data(), Req->Count.data(),
-                                    blkOffsets.data(), blkCount.data(), &intersectionstart[0],
-                                    &intersectioncount[0]))
+                            if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
+                                                       Req->Count.data(), blkOffsets.data(),
+                                                       blkCount.data(), &intersectionstart[0],
+                                                       &intersectioncount[0]))
                             {
                                 if (VarRec->Derived)
                                 {
@@ -2918,7 +2917,7 @@ static const size_t *MVIOwnDims(MinVarInfo *MV, const uint64_t *src, size_t n)
         return nullptr;
     if (sizeof(size_t) == sizeof(uint64_t))
         return reinterpret_cast<const size_t *>(src); // 64-bit: alias, no copy
-    MV->OwnedDims.emplace_back(src, src + n);          // 32-bit: convert uint64_t -> size_t
+    MV->OwnedDims.emplace_back(src, src + n);         // 32-bit: convert uint64_t -> size_t
     return MV->OwnedDims.back().data();
 }
 
@@ -3052,12 +3051,15 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
             }
             for (size_t i = 0; i < WriterBlockCount; i++)
             {
-                const size_t *Offsets =
-                    MVIOwnDims(MV, writer_meta_base->Offsets ? writer_meta_base->Offsets + (i * MV->Dims) : nullptr,
-                               (size_t)MV->Dims);
-                const size_t *Count =
-                    MVIOwnDims(MV, writer_meta_base->Count ? writer_meta_base->Count + (i * MV->Dims) : nullptr,
-                               (size_t)MV->Dims);
+                const size_t *Offsets = MVIOwnDims(MV,
+                                                   writer_meta_base->Offsets
+                                                       ? writer_meta_base->Offsets + (i * MV->Dims)
+                                                       : nullptr,
+                                                   (size_t)MV->Dims);
+                const size_t *Count = MVIOwnDims(
+                    MV,
+                    writer_meta_base->Count ? writer_meta_base->Count + (i * MV->Dims) : nullptr,
+                    (size_t)MV->Dims);
                 MinBlockInfo Blk;
                 Blk.WriterID = (int)WriterRank;
                 Blk.BlockID = Id++;
@@ -3150,7 +3152,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
             MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
         }
         const size_t *Offsets = MVIOwnDims(
-            MV, writer_meta_base->Offsets ? writer_meta_base->Offsets + (BlockID * MV->Dims) : nullptr,
+            MV,
+            writer_meta_base->Offsets ? writer_meta_base->Offsets + (BlockID * MV->Dims) : nullptr,
             (size_t)MV->Dims);
         const size_t *Count = MVIOwnDims(
             MV, writer_meta_base->Count ? writer_meta_base->Count + (BlockID * MV->Dims) : nullptr,

@@ -1048,7 +1048,7 @@ static const size_t *MVIOwnDims(MinVarInfo *MV, const uint64_t *src, size_t n)
         return nullptr;
     if (sizeof(size_t) == sizeof(uint64_t))
         return reinterpret_cast<const size_t *>(src); // 64-bit: alias, no copy
-    MV->OwnedDims.emplace_back(src, src + n);          // 32-bit: convert uint64_t -> size_t
+    MV->OwnedDims.emplace_back(src, src + n);         // 32-bit: convert uint64_t -> size_t
     return MV->OwnedDims.back().data();
 }
 
