@@ -185,7 +185,7 @@ static int sqlcb_dataset(void *p, int argc, char **argv, char **azColName)
     size_t keyid = helper::StringToSizeT(std::string(argv[15]), hint_text_to_int);
     cdr.hasKey = (keyid); // keyid == 0 means there is no key used
     cdr.keyIdx = size_t(keyid - 1);
-    cdr.size = helper::StringToSizeT(std::string(argv[16]), hint_text_to_int);
+    cdr.size = helper::StringTo<uint64_t>(std::string(argv[16]), hint_text_to_int);
 
     // file
     if (argv[17])
@@ -213,8 +213,8 @@ static int sqlcb_file(void *p, int argc, char **argv, char **azColName)
     cf.name = std::string(argv[1]);
     int comp = helper::StringTo<int>(std::string(argv[2]), hint_text_to_int);
     cf.compressed = (bool)comp;
-    cf.lengthOriginal = helper::StringToSizeT(std::string(argv[3]), hint_text_to_int);
-    cf.lengthCompressed = helper::StringToSizeT(std::string(argv[4]), hint_text_to_int);
+    cf.lengthOriginal = helper::StringTo<uint64_t>(std::string(argv[3]), hint_text_to_int);
+    cf.lengthCompressed = helper::StringTo<uint64_t>(std::string(argv[4]), hint_text_to_int);
     cf.modtime =
         helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert modtime to int");
     cf.checksum = argv[6];
@@ -703,7 +703,8 @@ void CampaignData::DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex,
         // Verify file size matches expected size to detect truncated cache files
         // (e.g. from a process killed mid-write)
         struct stat st;
-        if (stat(path.c_str(), &st) == 0 && static_cast<size_t>(st.st_size) == file.lengthOriginal)
+        if (stat(path.c_str(), &st) == 0 &&
+            static_cast<uint64_t>(st.st_size) == file.lengthOriginal)
         {
             return;
         }
@@ -751,7 +752,7 @@ void CampaignData::DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex,
 #ifdef ADIOS2_HAVE_SODIUM
     if (!keyHex.empty())
     {
-        size_t decryptedSize = (file.compressed ? file.lengthCompressed : file.lengthOriginal);
+        uint64_t decryptedSize = (file.compressed ? file.lengthCompressed : file.lengthOriginal);
         q = malloc(decryptedSize);
         free_q = true;
         DecryptData(static_cast<const unsigned char *>(blob), blobsize, decryptedSize, file, keyHex,

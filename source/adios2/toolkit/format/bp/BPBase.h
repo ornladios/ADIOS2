@@ -165,10 +165,12 @@ public:
 
         /**
          * sub-block size for min/max calculation of large arrays in number of
-         * elements (not bytes). The default big number per Put() default will
-         * result in the original single min/max value-pair per block
+         * elements (not bytes). The default is effectively unlimited so no block
+         * is sub-divided (one min/max value-pair per block). SIZE_MAX expresses
+         * that on every platform; a fixed 2^50 truncated to 0 in a 32-bit size_t,
+         * causing a divide-by-zero.
          */
-        size_t StatsBlockSize = 1125899906842624ULL;
+        size_t StatsBlockSize = SIZE_MAX;
 
         /** buffer memory growth factor */
         float GrowthFactor = DefaultBufferGrowthFactor;

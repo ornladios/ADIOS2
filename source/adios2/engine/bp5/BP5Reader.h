@@ -277,7 +277,7 @@ private:
     void InstallMetadataForTimestep(size_t Step);
     void ParallelInstallMetadataForTimestep(size_t Step);
     double ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
-                    const size_t StartOffset, const size_t Length, char *Destination);
+                    const uint64_t StartOffset, const size_t Length, char *Destination);
 
     struct WriterMapStruct
     {
