@@ -990,7 +990,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
 
             if (DeferAddToVec)
             {
-                DeferredExterns.push_back({Rec->MetaOffset, MetaEntry->BlockCount - 1, Data,
+                DeferredExterns.push_back({Rec->MetaOffset,
+                                           static_cast<size_t>(MetaEntry->BlockCount - 1), Data,
                                            ElemCount * ElemSize, ElemSize});
             }
             if (Offsets)
@@ -1345,7 +1346,7 @@ void BP5Serializer::CollectFinalShapeValues()
 
             // Shape is fixed-width uint64_t; source Dims is size_t -> element-wise copy
             const auto &VBShape = VB->Shape();
-            for (size_t d = 0; d < Rec->DimCount; d++)
+            for (size_t d = 0; d < static_cast<size_t>(Rec->DimCount); d++)
                 MetaEntry->Shape[d] = static_cast<uint64_t>(VBShape[d]);
         }
     }
