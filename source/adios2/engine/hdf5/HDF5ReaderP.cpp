@@ -35,12 +35,6 @@ namespace engine
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode, helper::Comm comm)
 : Engine("HDF5Reader", io, name, openMode, std::move(comm))
 {
-    if (!helper::IsHDF5File(name, io, m_Comm, {}))
-    {
-        helper::Throw<std::invalid_argument>("Engine", "HDF5ReaderP", "HDF5ReaderP",
-                                             "Invalid HDF5 file found");
-    }
-
     Init();
     m_IsOpen = true;
 }
@@ -71,9 +65,19 @@ void HDF5ReaderP::Init()
                                              ", in call to Open");
     }
 
-    m_H5File.Init(m_Name, m_Comm, false);
+    m_H5File.InitMPI(m_Comm);
     m_H5File.ParseParameters(m_IO);
 
+    if (!m_H5File.m_FileIsInTAR)
+    {
+        if (!helper::IsHDF5File(m_Name, m_IO, m_Comm, {}))
+        {
+            helper::Throw<std::invalid_argument>("Engine", "HDF5ReaderP", "HDF5ReaderP",
+                                                 "Invalid HDF5 file found");
+        }
+    }
+
+    m_H5File.Init(m_Name, m_Comm, false);
     /*
      */
     m_H5File.ReadAttrToIO(m_IO);
@@ -414,6 +418,7 @@ bool HDF5ReaderP::CheckRemote()
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
     // remote file (or die trying)
+
     if (m_H5File.m_dataIsRemote && !m_Remote)
     {
         bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
@@ -426,22 +431,42 @@ bool HDF5ReaderP::CheckRemote()
         {
             RemoteName = m_Name;
         }
-        (void)RowMajorOrdering; // Use in case no remotes available
-#ifdef ADIOS2_HAVE_XROOTD
-        if (getenv("DoXRootD"))
+        // (void)RowMajorOrdering; // Use in case no remotes available
+
+        RemoteSetup rs = GetRemoteSetup(m_H5File.m_RemoteHost);
+        if (rs.hostName.empty())
         {
-            m_Remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
-            m_Remote->Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
+            helper::Throw<std::invalid_argument>(
+                "Engine", "HDF5Reader", "OpenFiles",
+                "No remote hostname was found for dataset " + RemoteName +
+                    ". Make sure you define proper access to the server to serve this path.");
         }
-        else
-#endif
-#ifdef ADIOS2_HAVE_SST
+        if (rs.protocol == HostAccessProtocol::Invalid)
         {
-            m_Remote = std::make_unique<EVPathRemote>(ADIOS::GetHostOptions());
-            int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(m_H5File.m_RemoteHost);
-            m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
+            if (rs.hostName == "localhost")
+            {
+                // special case for debugging on localhost
+                rs.protocol = HostAccessProtocol::SSH;
+            }
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "HDF5Reader", "OpenFiles",
+                    "No acceptable protocol (xrootd or ssh) was found for " + rs.hostName +
+                        " to read " + RemoteName +
+                        ". Make sure you define proper access to the server to serve this path.");
+            }
         }
-#endif
+
+        Params params;
+        if (m_H5File.m_FileIsInTAR)
+            params["TarInfo"] = m_H5File.m_TarInfoString;
+        // Send our file id so the server can detect stale cached metadata (0 = none).
+        if (!m_H5File.m_UUID.empty())
+            params["FileUUID"] = m_H5File.m_UUID;
+
+        m_Remote = GetRemote(rs, RemoteName, m_OpenMode, RowMajorOrdering, params);
+
 #ifdef ADIOS2_HAVE_KVCACHE__NOT_YET_SUPPORTED
         if (getenv("useKVCache"))
         {

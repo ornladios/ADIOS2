@@ -379,7 +379,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         {
             std::string tarpath = itTarName->second;
             remotePath = m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath;
-            taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+            taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx, ds.format);
             if (taropt.empty())
             {
                 std::cout << "ERROR: Remote file " << remotePath
@@ -420,7 +420,8 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             // Retrieve key
             if (!m_ConnectionManager)
             {
-                m_ConnectionManager = std::make_unique<Remote>(core::ADIOS::StaticGetHostOptions());
+                const RemoteSetup rs; // defaults OK, just want connection to local service
+                m_ConnectionManager = std::make_unique<Remote>(rs);
             }
             m_CampaignData.keys[rep.keyIdx].keyHex =
                 m_ConnectionManager->GetKeyFromConnectionManager(
@@ -965,7 +966,7 @@ void CampaignReader::InitTransports()
                 {
                     std::string tarpath = itTarName->second;
                     localPath = m_CampaignData.directory[rep.dirIdx].path + PathSeparator + tarpath;
-                    taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+                    taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx, ds.format);
                     if (taropt.empty())
                     {
                         std::cout << "ERROR: Local file " << localPath
@@ -1093,7 +1094,7 @@ void CampaignReader::InitTransports()
                         std::string tarpath = itTarName->second;
                         localPath =
                             m_CampaignData.directory[rep.dirIdx].path + PathSeparator + tarpath;
-                        taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx);
+                        taropt = m_CampaignData.GetTarIdx(dsIdx, repIdx, FileFormat::IMAGE);
                         if (taropt.empty())
                         {
                             std::cout << "ERROR: Local image " << localPath
@@ -1529,14 +1530,16 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
 #ifdef ADIOS2_HAVE_XROOTD
     if (getenv("DoXRootD"))
     {
-        remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
+        const RemoteSetup rs = GetRemoteSetup("localhost");
+        remote = std::make_unique<XrootdRemote>(rs);
         remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
     }
     else
 #endif
 #ifdef ADIOS2_HAVE_SST
     {
-        remote = std::make_unique<EVPathRemote>(ADIOS::GetHostOptions());
+        const RemoteSetup rs = GetRemoteSetup(remoteHost);
+        remote = std::make_unique<EVPathRemote>(rs);
         int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
         remote->OpenSimpleFile("localhost", localPort, remotePath);
     }

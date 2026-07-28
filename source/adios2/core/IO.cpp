@@ -547,7 +547,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         else if (tarinfo.find(".h5") != std::string::npos ||
                  tarinfo.find(".hdf5") != std::string::npos ||
                  tarinfo.find(".nc") != std::string::npos)
-            engineType = "h5";
+            engineType = "hdf5";
         else
             helper::Throw<std::runtime_error>(
                 "Core", "IO", "Open",
