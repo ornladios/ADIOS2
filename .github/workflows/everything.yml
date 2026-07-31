@@ -128,62 +128,41 @@ jobs:
       CCACHE_COMPRESS: true
       CCACHE_COMPRESSLEVEL: 6
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}${{ matrix.deps == 'external' && '-external' || '' }}
+      image: ghcr.io/ornladios/adios2/ci-spack-${{ matrix.os }}-${{ matrix.compiler }}:20260313
       options: --shm-size=1g
 
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu22.04]
-        compiler: [gcc9, gcc10, clang11, clang14]
+        compiler: [gcc10, gcc12, gcc14, clang14]
         parallel: [mpich]
         include:
           - os: ubuntu22.04
-            compiler: gcc9
+            compiler: gcc12
             parallel: ompi
           - os: ubuntu22.04
-            compiler: gcc9
+            compiler: gcc12
             parallel: serial
+          - os: ubuntu22.04
+            compiler: gcc12
+            parallel: serial
+            shared: static
           - os: ubuntu22.04
             compiler: clang11
             parallel: ompi
           - os: ubuntu22.04
-            compiler: clang11
+            compiler: clang14
             parallel: serial
           - os: ubuntu22.04
-            compiler: gcc9
-            parallel: serial
-            shared: static
-          - os: ubuntu22.04
-            compiler: gcc9
-            shared: static
+            compiler: gcc14
             parallel: mpich
-            constrains: build_only
-          - os: ubuntu22.04
-            compiler: clang11
             shared: static
-            parallel: mpich
             constrains: build_only
           - os: ubuntu22.04
             compiler: rocm
             parallel: serial
             constrains: build_only
-          - os: ubuntu22.04
-            compiler: gcc11
-            parallel: mpich
-          - os: ubuntu22.04
-            compiler: gcc12
-            parallel: mpich
-            deps: internal
-          - os: ubuntu22.04
-            compiler: gcc12
-            parallel: mpich
-            deps: external
-          - os: ubuntu22.04
-            compiler: gcc11
-            parallel: serial
-            runner: ubuntu-22.04-arm
-            arch: aarch64
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
@@ -234,7 +213,7 @@ jobs:
       contents: read
       actions: write  # for cache save
     container:
-      image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
+      image: ghcr.io/ornladios/adios2/ci-el8-${{ matrix.compiler }}:20260313
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
@@ -251,7 +230,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [el8]
-        compiler: [icc, oneapi]
+        compiler: [oneapi]
         parallel: [mpich]
 
     steps:
@@ -326,6 +305,9 @@ jobs:
             compiler: xcode15_4
           - parallel: serial
             arch: arm64
+        exclude:
+          - image: macos-14
+            shared: static
 
     name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
@@ -562,12 +544,12 @@ jobs:
     name: CodeQL
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-ubuntu22.04-gcc9
+      image: ghcr.io/ornladios/adios2/ci-spack-ubuntu22.04-gcc12:20260313
       env:
-        GH_YML_JOBNAME: ubuntu22.04-gcc9-serial-codeql
+        GH_YML_JOBNAME: ubuntu22.04-gcc12-serial-codeql
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ubuntu22.04
-        GH_YML_MATRIX_COMPILER: gcc9
+        GH_YML_MATRIX_COMPILER: gcc12
         GH_YML_MATRIX_PARALLEL: serial
     permissions:
       actions: write  # for cache save and upload-artifact
