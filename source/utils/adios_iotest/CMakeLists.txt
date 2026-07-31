@@ -7,10 +7,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/iotest-config
-  DESTINATION ${PROJECT_BINARY_DIR}
-)
-
 add_executable(adios_iotest settings.cpp decomp.cpp processConfig.cpp ioGroup.cpp stream.cpp adiosStream.cpp adios_iotest.cpp)
 target_link_libraries(adios_iotest adios2::cxx_mpi MPI::MPI_CXX adios2_core_mpi)
 if(WIN32)
