@@ -904,8 +904,10 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
         size_t DecodedLength =
             FFS_est_decode_length(Stream->ReaderFFSContext, WriterInfo->RawBuffer, DataSize);
         BaseData = malloc(DecodedLength);
-        FFSBuffer decode_buf = create_fixed_FFSBuffer(BaseData, DecodedLength);
-        FFSdecode_to_buffer(Stream->ReaderFFSContext, WriterInfo->RawBuffer, decode_buf);
+        /* FFSdecode_to_buffer's dest is the raw decode buffer, not an FFSBuffer wrapper
+         * (matches the metadata decode below). Passing the wrapper leaves BaseData
+         * uninitialized -- only reached on the heterogeneous (conversion) decode path. */
+        FFSdecode_to_buffer(Stream->ReaderFFSContext, WriterInfo->RawBuffer, BaseData);
     }
     if (DumpData == -1)
     {
@@ -1644,9 +1646,9 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
                 Stream->ReaderFFSContext, MetaData->AttributeData[WriterRank].block,
                 MetaData->AttributeData[WriterRank].DataSize);
             BaseData = malloc(DecodedLength);
-            FFSBuffer decode_buf = create_fixed_FFSBuffer(BaseData, DecodedLength);
+            /* decode into the raw buffer, not the FFSBuffer wrapper (see metadata path) */
             FFSdecode_to_buffer(Stream->ReaderFFSContext, MetaData->AttributeData[WriterRank].block,
-                                decode_buf);
+                                BaseData);
         }
         if (DumpMetadata == -1)
         {
