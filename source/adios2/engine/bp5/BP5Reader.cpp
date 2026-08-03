@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <memory> // unique_ptr (uninitialized read scratch)
 #include <mutex>
 #include <stdexcept>
 #include <thread>
@@ -971,7 +972,10 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
         double readTotal = 0.0;
         double subfileTotal = 0.0;
         size_t nReads = 0;
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized on purpose: vector<char>(n) value-initializes, so each
+        // thread memset maxReadSize once per step even though every byte handed
+        // to NdCopy is overwritten by the read that precedes it.
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
 
         std::unique_ptr<PoolableFile> DataFile = nullptr;
         size_t LastSubfileNum = -1;
@@ -986,7 +990,7 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
             auto &Req = ReadRequests[reqidx];
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
             size_t SubfileNum = static_cast<size_t>(
                 m_WriterMap[m_WriterMapIndex[Req.Timestep]].RankToSubfile[Req.WriterRank]);
@@ -1060,14 +1064,15 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
     }
     else
     {
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized: see the threaded path above.
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
         std::unique_ptr<PoolableFile> DataFile = nullptr;
         size_t LastSubfileNum = -1;
         for (auto &Req : ReadRequests)
         {
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
             {
                 std::lock_guard<std::mutex> profLock(m_ProfilerMutex);
