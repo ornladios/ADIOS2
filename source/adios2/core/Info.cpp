@@ -65,6 +65,9 @@ static const char *const operators[] = {
 #ifdef ADIOS2_HAVE_BLOSC2
     "Blosc",
 #endif
+#ifdef ADIOS2_HAVE_CAESAR
+    "CAESAR",
+#endif
 #ifdef ADIOS2_HAVE_MGARD
     "MGARD",
     "MGARDPlus",

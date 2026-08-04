@@ -495,6 +495,18 @@ constexpr char backend_serial[] = "serial";
 }
 #endif
 
+// CAESAR PARAMETERS
+#ifdef ADIOS2_HAVE_CAESAR
+namespace caesar
+{
+namespace key
+{
+constexpr char tolerance[] = "accuracy";
+constexpr char mode[] = "model";
+}
+}
+#endif
+
 // MGARD PARAMETERS
 #ifdef ADIOS2_HAVE_MGARD
 
