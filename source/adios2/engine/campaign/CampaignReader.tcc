@@ -262,7 +262,8 @@ CampaignReader::BlocksInfoCommon(const core::Variable<std::string> &variable,
             blockInfo.MinMaxs = blockCharacteristics.Statistics.MinMaxs;
             blockInfo.SubBlockInfo = blockCharacteristics.Statistics.SubBlockInfo;
         }
-        if (blockInfo.Shape.size() == 1 && blockInfo.Shape.front() == LocalValueDim)
+        if (blockInfo.Shape.size() == 1 &&
+            blockInfo.Shape.front() == static_cast<size_t>(LocalValueDim))
         {
             blockInfo.Shape = Dims{blocksIndexOffsets.size()};
             blockInfo.Count = Dims{1};

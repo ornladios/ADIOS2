@@ -7,6 +7,8 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP5_BP5BASE_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP5_BP5BASE_H_
 
+#include <stdint.h>
+
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
@@ -31,19 +33,19 @@ public:
     struct MetaMetaInfoBlock
     {
         char *MetaMetaInfo;
-        size_t MetaMetaInfoLen;
+        uint64_t MetaMetaInfoLen;
         char *MetaMetaID;
-        size_t MetaMetaIDLen;
+        uint64_t MetaMetaIDLen;
     };
 
 #define BASE_FIELDS                                                                                \
-    size_t Dims;               /* How many dimensions does this array have */                      \
-    size_t BlockCount;         /* How many blocks are written   */                                 \
-    size_t DBCount;            /* Dimens * BlockCount   */                                         \
-    size_t *Shape;             /* Global dimensionality  [Dims] NULL for local */                  \
-    size_t *Count;             /* Per-block Counts    [DBCount] */                                 \
-    size_t *Offsets;           /* Per-block Offsets   [DBCount] NULL for local */                  \
-    size_t *DataBlockLocation; /* Per-block Offset in PG [BlockCount] */
+    size_t Dims;                 /* How many dimensions does this array have */                    \
+    size_t BlockCount;           /* How many blocks are written   */                               \
+    size_t DBCount;              /* Dimens * BlockCount   */                                       \
+    size_t *Shape;               /* Global dimensionality  [Dims] NULL for local */                \
+    size_t *Count;               /* Per-block Counts    [DBCount] */                               \
+    size_t *Offsets;             /* Per-block Offsets   [DBCount] NULL for local */                \
+    uint64_t *DataBlockLocation; /* Per-block Offset in PG [BlockCount] */
 
     typedef struct _MetaArrayRec
     {

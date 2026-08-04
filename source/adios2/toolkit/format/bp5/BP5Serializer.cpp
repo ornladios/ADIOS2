@@ -692,7 +692,7 @@ void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
     for (auto &Def : DeferredExterns)
     {
         MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Def.MetaOffset);
-        size_t DataOffset =
+        uint64_t DataOffset =
             m_PriorDataBufferSizeTotal +
             CurDataBuffer->AddToVec(Def.DataSize, Def.Data, Def.AlignReq, forceCopyDeferred);
         MetaEntry->DataBlockLocation[Def.BlockID] = DataOffset;
@@ -812,7 +812,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         MemorySpace spanMemSpace = MemSpace;
         MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);
-        size_t DataOffset = 0;
+        uint64_t DataOffset = 0;
         size_t CompressedSize = 0;
         /* handle metadata */
         MetaEntry->Dims = DimCount;
@@ -868,7 +868,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         }
         else if (!WriteData)
         {
-            DataOffset = (size_t)-1;
+            DataOffset = static_cast<uint64_t>(-1);
             DeferAddToVec = false;
         }
         else if (Span == nullptr)
@@ -902,7 +902,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             MetaEntry->DBCount = DimCount;
             MetaEntry->Count = CopyDims(DimCount, Count);
             MetaEntry->BlockCount = 1;
-            MetaEntry->DataBlockLocation = (size_t *)malloc(sizeof(size_t));
+            MetaEntry->DataBlockLocation = (uint64_t *)malloc(sizeof(uint64_t));
             MetaEntry->DataBlockLocation[0] = DataOffset;
             if (Rec->OperatorType)
             {
@@ -946,8 +946,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             MetaEntry->DBCount += DimCount;
             MetaEntry->BlockCount++;
             MetaEntry->Count = AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
-            MetaEntry->DataBlockLocation = (size_t *)realloc(
-                MetaEntry->DataBlockLocation, MetaEntry->BlockCount * sizeof(size_t));
+            MetaEntry->DataBlockLocation = (uint64_t *)realloc(
+                MetaEntry->DataBlockLocation, MetaEntry->BlockCount * sizeof(uint64_t));
             MetaEntry->DataBlockLocation[MetaEntry->BlockCount - 1] = DataOffset;
             if (Rec->OperatorType)
             {

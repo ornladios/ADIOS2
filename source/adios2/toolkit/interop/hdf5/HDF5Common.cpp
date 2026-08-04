@@ -6,6 +6,7 @@
 
 #include "HDF5Common.h"
 #include "HDF5Common.tcc"
+#include "HDF5TarOffsetVFD.h"
 
 #include <complex>
 #include <ios>
@@ -167,20 +168,40 @@ void HDF5Common::ParseParameters(core::IO &io)
     // process the rest of supported parameters
     for (auto &it : io.m_Parameters)
     {
-        if (it.first == "RemoteDataPath")
+        const std::string key = helper::LowerCase(it.first);
+        const std::string value = helper::LowerCase(it.second);
+        if (key == "remotedatapath")
         {
             m_RemoteDataPath = it.second;
             m_dataIsRemote = true;
             continue;
         }
-        if (it.first == "RemoteHost")
+        if (key == "remotehost")
         {
             m_RemoteHost = it.second;
             continue;
         }
-        if (it.first == "UUID")
+        if (key == "uuid")
         {
             m_UUID = it.second;
+            continue;
+        }
+        if (key == "tarinfo")
+        {
+            m_TarInfoString = it.second;
+            helper::TarInfoMap timap = helper::StringToTarInfo(m_TarInfoString);
+            if (timap.size() > 1)
+            {
+                helper::Throw<std::invalid_argument>("Engine", "HDF5ReaderP", "HDF5ReaderP",
+                                                     "Invalid TarInfoMap for an HDF5 file: " +
+                                                         m_TarInfoString);
+            }
+            auto ti = timap.begin();
+            m_FileIsInTAR = true;
+            m_TarOffset = std::get<0>(ti->second);
+            m_TarSize = std::get<1>(ti->second);
+            /* std::cout << "--- HDF5Reader TarInfo: offset = " << m_TarOffset
+                      << " size = " << m_TarSize << " string = " << m_TarInfoString << std::endl;*/
             continue;
         }
     }
@@ -238,11 +259,9 @@ void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
                                               "Likely no such file." + name);
 }
 
-void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool toWrite)
+void HDF5Common::InitMPI(helper::Comm const &comm)
 {
-    m_WriteMode = toWrite;
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
-
     if (MPI_API const *mpi = GetHDF5Common_MPI_API())
     {
         if (mpi && mpi->init(comm, m_PropertyListId, &m_CommRank, &m_CommSize))
@@ -250,7 +269,11 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
             m_MPI = mpi;
         }
     }
+}
 
+void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool toWrite)
+{
+    m_WriteMode = toWrite;
     // std::string ts0 = "/AdiosStep0";
     std::string ts0;
     StaticGetAdiosStepString(ts0, 0);
@@ -291,6 +314,14 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
     else
     {
         // read a file collectively
+        if (m_FileIsInTAR && !m_dataIsRemote)
+        {
+            // from a local TAR file
+            // We cannot use the MPI driver and the TAR driver at the same time
+            // so we have to use per-process readers
+            H5Pclose(m_PropertyListId);
+            m_PropertyListId = H5Pset_fapl_taroffset(m_TarOffset, m_TarSize);
+        }
         m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, m_PropertyListId);
         if (m_FileId >= 0)
         {

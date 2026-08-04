@@ -44,7 +44,7 @@ public:
     {
         size_t Timestep;
         size_t WriterRank;
-        size_t StartOffset;
+        uint64_t StartOffset;
         size_t ReadLength;
         char *DestinationAddr;
         bool DirectToAppMemory;

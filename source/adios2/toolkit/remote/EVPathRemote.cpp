@@ -23,7 +23,7 @@
 namespace adios2
 {
 
-EVPathRemote::EVPathRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
+EVPathRemote::EVPathRemote(const RemoteSetup &remoteSetup) : Remote(remoteSetup) {}
 
 #ifdef ADIOS2_HAVE_SST
 EVPathRemote::~EVPathRemote()
@@ -415,25 +415,25 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
 }
 
 std::pair<std::shared_ptr<EVPathRemote>, int>
-CManagerSingleton::MakeEVPathConnection(const std::string &hostName)
+CManagerSingleton::MakeEVPathConnection(const RemoteSetup &remoteSetup)
 {
     // Each caller gets its own EVPathRemote (it carries the per-file server
     // handle).  Per-host costs stay shared: the tunnel port is cached here
     // and Open() reuses the CM connection via CMget_conn().
     static std::mutex portMapMutex;
     static std::map<std::string, int> hostPorts;
-    auto remote = std::make_shared<EVPathRemote>(core::ADIOS::StaticGetHostOptions());
+    auto remote = std::make_shared<EVPathRemote>(remoteSetup);
     {
         const std::lock_guard<std::mutex> lock(portMapMutex);
-        auto it = hostPorts.find(hostName);
+        auto it = hostPorts.find(remoteSetup.hostName);
         if (it != hostPorts.end())
             return std::pair<std::shared_ptr<EVPathRemote>, int>(remote, it->second);
     }
     try
     {
-        int localPort = remote->LaunchRemoteServerViaConnectionManager(hostName);
+        int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteSetup.hostName);
         const std::lock_guard<std::mutex> lock(portMapMutex);
-        hostPorts[hostName] = localPort;
+        hostPorts[remoteSetup.hostName] = localPort;
         return std::pair<std::shared_ptr<EVPathRemote>, int>(remote, localPort);
     }
     catch (const std::invalid_argument &e)

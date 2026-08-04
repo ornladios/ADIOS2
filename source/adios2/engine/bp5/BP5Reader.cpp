@@ -9,7 +9,10 @@
 #include <errno.h>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <memory> // unique_ptr (uninitialized read scratch)
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <tuple>
 
@@ -461,7 +464,7 @@ std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params
 }
 
 double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
-                           const size_t StartOffset, const size_t Length, char *Destination)
+                           const uint64_t StartOffset, const size_t Length, char *Destination)
 {
     /*
      * Warning: this function is called by multiple threads
@@ -473,20 +476,29 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
        as if all the flushes were in a single contiguous block in file.
     */
     TP startRead = NOW();
+    auto lf_ReadAt = [&](const uint64_t base, const uint64_t offset) {
+        const uint64_t maxOffset = static_cast<uint64_t>(std::numeric_limits<size_t>::max());
+        if (offset > maxOffset || base > maxOffset - offset)
+        {
+            helper::Throw<std::overflow_error>("Engine", "BP5Reader", "ReadData",
+                                               "file offset exceeds size_t on this platform");
+        }
+        DataFile->Read(Destination, Length, static_cast<size_t>(base + offset));
+    };
     size_t InfoStartPos = DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t SumDataSize = 0; // count in contiguous space
+    uint64_t SumDataSize = 0; // count in contiguous space
     for (size_t flush = 0; flush < FlushCount; flush++)
     {
-        size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                         m_Minifooter.IsLittleEndian);
-        size_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                          m_Minifooter.IsLittleEndian);
+        uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                           m_Minifooter.IsLittleEndian);
+        uint64_t ThisDataSize = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                            m_Minifooter.IsLittleEndian);
 
         if (StartOffset < SumDataSize + ThisDataSize)
         {
             // discount offsets of skipped flushes
-            size_t Offset = StartOffset - SumDataSize;
-            DataFile->Read(Destination, Length, ThisDataPos + Offset);
+            uint64_t Offset = StartOffset - SumDataSize;
+            lf_ReadAt(ThisDataPos, Offset);
             TP endRead = NOW();
             double timeRead = DURATION(startRead, endRead);
             return timeRead;
@@ -494,10 +506,10 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
         SumDataSize += ThisDataSize;
     }
 
-    size_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
-                                                     m_Minifooter.IsLittleEndian);
-    size_t Offset = StartOffset - SumDataSize;
-    DataFile->Read(Destination, Length, ThisDataPos + Offset);
+    uint64_t ThisDataPos = helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
+                                                       m_Minifooter.IsLittleEndian);
+    uint64_t Offset = StartOffset - SumDataSize;
+    lf_ReadAt(ThisDataPos, Offset);
 
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);
@@ -506,41 +518,6 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
 
 void BP5Reader::PerformGets()
 {
-#if defined ADIOS2_HAVE_CURL || defined ADIOS2_HAVE_XROOTD
-    auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
-        std::string XRootDHost = "localhost";
-        int XRootDPort = defaultPort;
-        if (m_HostConfig)
-        {
-            XRootDHost = m_HostConfig->hostname;
-            if (m_HostConfig->port > 0)
-            {
-                XRootDPort = m_HostConfig->port;
-            }
-        }
-        else if (m_RemoteHost != "localhost")
-        {
-            auto colon_pos = m_RemoteHost.find(':');
-            if (colon_pos == std::string::npos)
-            {
-                XRootDHost = m_RemoteHost;
-            }
-            else
-            {
-                XRootDHost = m_RemoteHost.substr(0, colon_pos);
-                try
-                {
-                    XRootDPort = std::stoi(m_RemoteHost.substr(colon_pos + 1));
-                }
-                catch (...)
-                {
-                }
-            }
-        }
-        return std::make_tuple(XRootDHost, XRootDPort);
-    };
-#endif
-
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
     // remote file (or die trying)
@@ -552,74 +529,19 @@ void BP5Reader::PerformGets()
         if (m_BP5Deserializer->DefaultGetContext().PendingGetRequests.size() == 0)
             return;
 
-#if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
-        if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
-            (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
-             m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS ||
-             m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl))
-        {
-            // XrdCl reaches the origin/federation over HTTPS; the libcurl path
-            // additionally supports plain HTTP.
-            const bool useXrdCl = (m_XrootdTransferProtocol == XRootDTransferProtocol::XrdCl);
-            const bool useHttps =
-                useXrdCl || (m_XrootdTransferProtocol == XRootDTransferProtocol::HTTPS);
-            auto tup = lf_getXRootDHostPort(useHttps ? 443 : 80);
-            m_Remote = std::make_unique<XrootdHttpRemote>(ADIOS::GetHostOptions());
-            Params params;
-            params["UseHttps"] = useHttps ? "true" : "false";
-            if (useXrdCl)
-                params["Backend"] = "XrdCl";
-            // For testing, disable SSL verification (only relevant for HTTPS)
-            if (useHttps) // && getenv("XRootDHttpsNoVerify"))
-            {
-                params["VerifySSL"] = "false";
-            }
-            if (!m_Parameters.TarInfo.empty())
-                params["TarInfo"] = m_Parameters.TarInfo;
-            if (!m_Parameters.SelectSteps.empty())
-                params["SelectSteps"] = m_Parameters.SelectSteps;
-            if (m_Parameters.IgnoreFlattenSteps)
-                params["IgnoreFlattenSteps"] = "true";
-            // Send our file id so the server can detect stale cached metadata (0 = none).
-            if (m_FileUUID != 0)
-                params["FileUUID"] = std::to_string(m_FileUUID);
-            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
-                           RowMajorOrdering, params);
-        }
-        else
-#endif
-#ifdef ADIOS2_HAVE_XROOTD
-            if (m_RemoteProtocol == HostAccessProtocol::XRootD &&
-                m_XrootdTransferProtocol == XRootDTransferProtocol::XRootD)
-        {
-            auto tup = lf_getXRootDHostPort(1094);
-            m_Remote = std::make_unique<XrootdRemote>(ADIOS::GetHostOptions());
-            m_Remote->Open(std::get<0>(tup), std::get<1>(tup), m_RemoteName, m_OpenMode,
-                           RowMajorOrdering);
-        }
-        else
-#endif
-#ifdef ADIOS2_HAVE_SST
-            if (m_RemoteProtocol == HostAccessProtocol::SSH)
-        {
-            auto pair = CManagerSingleton::MakeEVPathConnection(m_RemoteHost);
-            m_Remote = pair.first;
-            int localPort = pair.second;
-            if (m_Remote && localPort > -1)
-            {
-                Params p;
-                if (!m_Parameters.TarInfo.empty())
-                    p.emplace("TarInfo", m_Parameters.TarInfo);
-                if (!m_Parameters.SelectSteps.empty())
-                    p.emplace("SelectSteps", m_Parameters.SelectSteps);
-                if (m_Parameters.IgnoreFlattenSteps)
-                    p.emplace("IgnoreFlattenSteps", "true");
+        Params params;
+        if (!m_Parameters.TarInfo.empty())
+            params["TarInfo"] = m_Parameters.TarInfo;
+        if (!m_Parameters.SelectSteps.empty())
+            params["SelectSteps"] = m_Parameters.SelectSteps;
+        if (m_Parameters.IgnoreFlattenSteps)
+            params["IgnoreFlattenSteps"] = "true";
+        // Send our file id so the server can detect stale cached metadata (0 = none).
+        if (m_FileUUID != 0)
+            params["FileUUID"] = std::to_string(m_FileUUID);
 
-                m_Remote->Open("localhost", localPort, m_RemoteName, m_OpenMode, RowMajorOrdering,
-                               p);
-            }
-        }
-#endif
+        m_Remote = GetRemote(m_RemoteSetup, m_RemoteName, m_OpenMode, RowMajorOrdering, params);
+
 #ifdef ADIOS2_HAVE_KVCACHE
         if (getenv("useKVCache"))
         {
@@ -1050,7 +972,10 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
         double readTotal = 0.0;
         double subfileTotal = 0.0;
         size_t nReads = 0;
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized on purpose: vector<char>(n) value-initializes, so each
+        // thread memset maxReadSize once per step even though every byte handed
+        // to NdCopy is overwritten by the read that precedes it.
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
 
         std::unique_ptr<PoolableFile> DataFile = nullptr;
         size_t LastSubfileNum = -1;
@@ -1065,7 +990,7 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
             auto &Req = ReadRequests[reqidx];
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
             size_t SubfileNum = static_cast<size_t>(
                 m_WriterMap[m_WriterMapIndex[Req.Timestep]].RankToSubfile[Req.WriterRank]);
@@ -1139,14 +1064,15 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
     }
     else
     {
-        std::vector<char> buf(maxReadSize);
+        // Uninitialized: see the threaded path above.
+        std::unique_ptr<char[]> buf(new char[maxReadSize]);
         std::unique_ptr<PoolableFile> DataFile = nullptr;
         size_t LastSubfileNum = -1;
         for (auto &Req : ReadRequests)
         {
             if (!Req.DestinationAddr)
             {
-                Req.DestinationAddr = buf.data();
+                Req.DestinationAddr = buf.get();
             }
             {
                 std::lock_guard<std::mutex> profLock(m_ProfilerMutex);
@@ -1236,93 +1162,27 @@ void BP5Reader::Init()
         {
             m_RemoteName = m_Name;
         }
-
-        m_RemoteProtocol = HostAccessProtocol::Invalid;
-        if (!m_Parameters.RemoteHost.empty())
-        {
-            m_RemoteHost = m_Parameters.RemoteHost;
-            auto it = ADIOS::GetHostOptions().find(m_Parameters.RemoteHost);
-            if (it != ADIOS::GetHostOptions().end())
-            {
-                for (auto &hc : it->second)
-                {
-                    if (hc.protocol == HostAccessProtocol::SSH)
-                    {
-                        m_RemoteProtocol = hc.protocol;
-                        m_HostConfig = const_cast<HostConfig *>(&hc);
-                        break;
-                    }
-                    if (hc.protocol == HostAccessProtocol::XRootD)
-                    {
-                        m_RemoteProtocol = hc.protocol;
-                        m_HostConfig = const_cast<HostConfig *>(&hc);
-                        m_XrootdTransferProtocol = hc.transfer_protocol;
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (getenv("DoXRootDXrdCl"))
-            {
-                // XrdCl client against the same HTTPS server (reuses XRootDHttpsHost).
-                char *env = getenv("XRootDHttpsHost");
-                if (env)
-                    m_RemoteHost = std::string(env);
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::XrdCl;
-            }
-            else if (getenv("DoXRootDHttps"))
-            {
-                char *env = getenv("XRootDHttpsHost");
-                if (env)
-                    m_RemoteHost = std::string(env);
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTPS;
-            }
-            else if (getenv("DoXRootDHttp"))
-            {
-                char *env = getenv("XRootDHttpHost");
-                if (env)
-                    m_RemoteHost = getenv("XRootDHttpHost");
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::HTTP;
-            }
-            else if (getenv("DoXRootD"))
-            {
-                char *env = getenv("XRootDHost");
-                if (env)
-                    m_RemoteHost = getenv("XRootDHost");
-                m_RemoteProtocol = HostAccessProtocol::XRootD;
-                m_XrootdTransferProtocol = XRootDTransferProtocol::XRootD;
-            }
-            if (m_RemoteHost.empty())
-            {
-                m_RemoteHost = "localhost";
-            }
-        }
-
-        if (m_RemoteHost.empty())
+        m_RemoteSetup = GetRemoteSetup(m_Parameters.RemoteHost);
+        if (m_RemoteSetup.hostName.empty())
         {
             helper::Throw<std::invalid_argument>(
                 "Engine", "BP5Reader", "OpenFiles",
                 "No remote hostname was found for dataset " + m_RemoteName +
                     ". Make sure you define proper access to the server to serve this path.");
         }
-        if (m_RemoteProtocol == HostAccessProtocol::Invalid)
+        if (m_RemoteSetup.protocol == HostAccessProtocol::Invalid)
         {
-            if (m_RemoteHost == "localhost")
+            if (m_RemoteSetup.hostName == "localhost")
             {
                 // special case for debugging on localhost
-                m_RemoteProtocol = HostAccessProtocol::SSH;
+                m_RemoteSetup.protocol = HostAccessProtocol::SSH;
             }
             else
             {
                 helper::Throw<std::invalid_argument>(
                     "Engine", "BP5Reader", "OpenFiles",
-                    "No acceptable protocol (xrootd or ssh) was found for " + m_RemoteHost +
-                        " to read " + m_RemoteName +
+                    "No acceptable protocol (xrootd or ssh) was found for " +
+                        m_RemoteSetup.hostName + " to read " + m_RemoteName +
                         ". Make sure you define proper access to the server to serve this path.");
             }
         }

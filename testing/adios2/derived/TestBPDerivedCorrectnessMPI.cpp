@@ -53,7 +53,7 @@ TEST_P(DerivedCorrectnessMPIP, JoinedArrayTest)
         simArray[i] = distribution(generator);
 
     adios2::IO bpOut = adios.DeclareIO("BPJoinedWrite");
-    auto U = bpOut.DefineVariable<double>("var", {adios2::JoinedDim}, {}, {N});
+    auto U = bpOut.DefineVariable<double>("var", {static_cast<size_t>(adios2::JoinedDim)}, {}, {N});
     bpOut.DefineDerivedVariable("derived", "x= var \n sqrt(sum(pow(x), x, 2))", mode);
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 

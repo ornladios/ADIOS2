@@ -71,7 +71,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     auto rows_var = outIO.DefineVariable<int>("totalrows");
 
-    auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
+    auto var = outIO.DefineVariable<double>(
+        "table", {static_cast<size_t>(adios2::JoinedDim), Ncols}, {}, {1, Ncols});
 
     if (!mpiRank)
     {
