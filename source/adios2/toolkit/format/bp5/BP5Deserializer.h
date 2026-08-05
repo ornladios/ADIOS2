@@ -248,7 +248,7 @@ private:
     // Populated lazily as the file's input variables appear; used to route Get
     // when VarByKey has no entry for the placeholder.
     std::unordered_map<const void *, BP5VarRec *> m_ReaderDerivedByVar;
-    void InstallReaderDerivedVariables(size_t Step);
+    void InstallReaderDerivedVariables();
 #endif
 
     std::vector<void *> *m_MetadataBaseAddrs =

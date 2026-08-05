@@ -992,6 +992,14 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
         }
     }
 
+    if (m_ReaderDerivedVariables.find(name) != m_ReaderDerivedVariables.end())
+    {
+        helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                             "derived variable " + name +
+                                                 " collides with a reader-derived variable in IO " +
+                                                 m_Name);
+    }
+
     // Parse expression string into ExprNode tree
     derived::ExprNode exprTree = detail::ParseToExprNode(exp_string);
     std::vector<std::string> var_list = derived::VariableNameList(exprTree);
@@ -1143,6 +1151,13 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
         if (itVariable == m_Variables.end())
         {
             return nullptr; // input not present yet
+        }
+        if (itVariable->second->m_ShapeID == ShapeID::LocalArray)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "ResolveReaderDerivedVariable",
+                "reader derived variable " + name + " input " + var_name +
+                    " is a local array; reader-side derived variables require global arrays");
         }
         name_to_type.insert({var_name, InquireVariableType(var_name)});
         name_to_dims.insert({var_name,
