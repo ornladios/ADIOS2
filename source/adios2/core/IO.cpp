@@ -1144,6 +1144,13 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
         {
             return nullptr; // input not present yet
         }
+        if (itVariable->second->m_ShapeID == ShapeID::LocalArray)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "ResolveReaderDerivedVariable",
+                "reader derived variable " + name + " input " + var_name +
+                    " is a local array; reader-side derived variables require global arrays");
+        }
         name_to_type.insert({var_name, InquireVariableType(var_name)});
         name_to_dims.insert({var_name,
                              {itVariable->second->m_Start, itVariable->second->m_Count,

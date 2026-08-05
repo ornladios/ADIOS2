@@ -10,3 +10,4 @@
 gtest_add_tests_helper(DerivedCorrectness MPI_NONE BP Derived. "")
 gtest_add_tests_helper(DerivedCorrectnessMPI MPI_ALLOW BP Derived. "")
 gtest_add_tests_helper(ReaderDerived MPI_NONE BP Derived. "")
+gtest_add_tests_helper(ReaderDerivedMPI MPI_ONLY BP Derived. "")

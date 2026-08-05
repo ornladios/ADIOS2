@@ -295,8 +295,10 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
 {
-    auto ret = VarByName[Name];
-    return ret;
+    // find, not operator[]: a miss must not insert a null entry (the destructor
+    // and other iterators dereference VarByName values).
+    auto it = VarByName.find(Name);
+    return (it != VarByName.end()) ? it->second : nullptr;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
@@ -658,7 +660,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
 };
 
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-void BP5Deserializer::InstallReaderDerivedVariables(size_t Step)
+void BP5Deserializer::InstallReaderDerivedVariables()
 {
     core::IO &io = m_Engine->m_IO;
     if (!io.HasReaderDerivedVariables())
@@ -673,6 +675,18 @@ void BP5Deserializer::InstallReaderDerivedVariables(size_t Step)
             // An input variable is not yet installed; leave it pending and let a
             // later writer rank or step resolve it.
             continue;
+        }
+        // The read path takes block structure from the first (congruent) input's
+        // VarRec, so it must exist now that the derived var has resolved against
+        // the file. Look it up before building anything; a miss is a logic error,
+        // not a null to propagate into GetMetadataBase.
+        BP5VarRec *structInput = LookupVarByName(derived->VariableNameList()[0].c_str());
+        if (!structInput)
+        {
+            helper::Throw<std::logic_error>(
+                "Toolkit", "format::BP5Deserializer", "InstallReaderDerivedVariables",
+                "reader derived variable " + name + " resolved but its input " +
+                    derived->VariableNameList()[0] + " has no BP5 record");
         }
         // Build a persistent placeholder the user can InquireVariable and Get.
         // registerCreated=false keeps it off the engine's created-variable list
@@ -699,8 +713,7 @@ void BP5Deserializer::InstallReaderDerivedVariables(size_t Step)
         vr->ElementSize = (int)helper::GetDataTypeSize(derived->m_Type);
         vr->DimCount = derived->m_Shape.size();
         vr->OrigShapeID = ShapeID::GlobalArray;
-        // Congruence is required, so any input's block layout works; use the first.
-        vr->ReaderDerivedStructInput = LookupVarByName(derived->VariableNameList()[0].c_str());
+        vr->ReaderDerivedStructInput = structInput;
         m_ReaderDerivedByVar[variable] = vr;
     }
 
@@ -1135,7 +1148,7 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
     // The file's variables for this rank are now installed; try to resolve any
     // reader-side derived variables whose inputs have become available. Cheap and
     // idempotent: the unresolved set is empty once none remain (the common case).
-    InstallReaderDerivedVariables(Step);
+    InstallReaderDerivedVariables();
 #endif
 }
 
@@ -3508,6 +3521,12 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
 
 char *BP5Deserializer::VariableExprStr(const VariableBase &Var)
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    auto rd = m_ReaderDerivedByVar.find(&Var);
+    if (rd != m_ReaderDerivedByVar.end())
+        return const_cast<char *>(static_cast<core::VariableDerived *>(rd->second->DerivedVariable)
+                                      ->m_ExprString.c_str());
+#endif
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     return VarRec->ExprStr;
 }

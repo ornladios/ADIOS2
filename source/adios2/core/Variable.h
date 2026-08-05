@@ -117,6 +117,11 @@ public:
      */
     size_t SelectionSize(const Selection &selection) const;
 
+    /**
+     * Min/max from statistics stored in the file. If the file has no statistics
+     * for this variable, the range is unset (min > max); test for that to
+     * distinguish it from real data.
+     */
     std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
 
     T Min(const size_t step = adios2::DefaultSizeT) const;

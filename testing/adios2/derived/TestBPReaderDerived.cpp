@@ -293,6 +293,34 @@ TEST(ReaderDerived, NameCollidesWithFileVariable)
     r.Close();
 }
 
+TEST(ReaderDerived, LocalArrayInputThrows)
+{
+    const size_t N = 8;
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("w");
+        io.SetEngine("BP5");
+        auto vx = io.DefineVariable<double>("vx", {}, {}, {N}); // local arrays
+        auto vy = io.DefineVariable<double>("vy", {}, {}, {N});
+        auto vz = io.DefineVariable<double>("vz", {}, {}, {N});
+        std::vector<double> d(N, 1.0);
+        auto w = io.Open("ReaderDerivedLocalArray.bp", adios2::Mode::Write);
+        w.BeginStep();
+        w.Put(vx, d.data());
+        w.Put(vy, d.data());
+        w.Put(vz, d.data());
+        w.EndStep();
+        w.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("r");
+    io.SetEngine("BP5");
+    io.DefineReaderDerivedVariable("speed", expr);
+    auto r = io.Open("ReaderDerivedLocalArray.bp", adios2::Mode::Read);
+    EXPECT_THROW(r.BeginStep(), std::exception);
+    r.Close();
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
