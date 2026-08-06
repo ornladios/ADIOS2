@@ -278,7 +278,24 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     size_t total_mdsize = 0;
     size_t buffer_size = 0;
     size_t sizeof_list_writer_mdsize;
+
+    // Zero writers would reach daos_array_read below as arr_nr=0 with a NULL
+    // arr_rgs, and malloc(0) is free to return NULL, so reject it up front
+    // rather than let it become an allocation check we cannot make.
+    if (WriterCount == 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
+                                          "step " + std::to_string(Step) +
+                                              " reports zero writers");
+    }
+
     uint64_t *list_writer_mdsize = (uint64_t *)malloc(sizeof(uint64_t) * WriterCount);
+    if (list_writer_mdsize == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
+                                          "out of memory for the mdsize list of " +
+                                              std::to_string(WriterCount) + " writers");
+    }
     daos_range_t *list_rg = NULL;
 
     // Get list of Metadata sizes for all writers
@@ -286,7 +303,17 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
 
     if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
+        // This buffer becomes iod.arr_rgs while arr_nr is set from WriterCount
+        // independently, so a silent NULL here is a malformed IOD (nr>0 with no
+        // ranges) handed to DAOS under exactly the memory pressure that caused it.
         list_rg = (daos_range_t *)malloc(WriterCount * sizeof(daos_range_t));
+        if (list_rg == NULL)
+        {
+            free(list_writer_mdsize);
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
+                                              "out of memory for the range list of " +
+                                                  std::to_string(WriterCount) + " writers");
+        }
     }
 
     sprintf(key, "step%zu", Step);
@@ -1374,7 +1401,15 @@ void DaosReader::array_oh_share(daos_handle_t *oh)
     m_Comm.Bcast((uint64_t *)&ghdl.iov_buf_len, 1, 0);
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "array_oh_share",
+                                          "out of memory for a " +
+                                              std::to_string(ghdl.iov_buf_len) +
+                                              " byte global array handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     if (m_Comm.Rank() == 0)
@@ -2229,7 +2264,15 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     CALI_MARK_END("DaosReader::local2global+broadcast_sizeofhandle");
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "daos_handle_share",
+                                          "out of memory for a " +
+                                              std::to_string(ghdl.iov_buf_len) +
+                                              " byte global handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     CALI_MARK_BEGIN("DaosReader::local2global+broadcast_handle");

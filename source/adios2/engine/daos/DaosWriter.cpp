@@ -444,6 +444,13 @@ void DaosWriter::MarshalAttributes()
             else
             {
                 const char **tmp = (const char **)malloc(sizeof(char *) * element_count);
+                if (tmp == NULL)
+                {
+                    helper::Throw<std::runtime_error>("Engine", "DaosWriter", "MarshalAttributes",
+                                                      "out of memory for a " +
+                                                          std::to_string(element_count) +
+                                                          " element string attribute");
+                }
                 for (int i = 0; i < element_count; i++)
                 {
                     auto str = &attribute.m_DataArray[i];
@@ -1211,7 +1218,15 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     m_Comm.Bcast((uint64_t *)&ghdl.iov_buf_len, 1, 0);
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "array_oh_share",
+                                          "out of memory for a " +
+                                              std::to_string(ghdl.iov_buf_len) +
+                                              " byte global array handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     if (m_Comm.Rank() == 0)
@@ -1812,7 +1827,15 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
     CALI_MARK_END("DaosWriter::local2global+broadcast_sizeofhandle");
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "daos_handle_share",
+                                          "out of memory for a " +
+                                              std::to_string(ghdl.iov_buf_len) +
+                                              " byte global handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     CALI_MARK_BEGIN("DaosWriter::local2global+broadcast_handle");
