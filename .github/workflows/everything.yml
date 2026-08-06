@@ -490,6 +490,59 @@ jobs:
                 ornladios/adios2:${target_tag}
 
 #######################################
+# Apptainer container jobs
+#######################################
+
+  apptainer:
+    needs: [format, git_checks]
+    if: needs.git_checks.outputs.num_code_changes > 0
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # for upload-artifact
+      packages: write  # for pushing to GHCR
+    strategy:
+      fail-fast: false
+      matrix:
+        baseos: [ubuntu-bionic]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: ci-source
+      - uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
+        with:
+          apptainer-version: 1.3.6
+      - name: Build image
+        run: |
+            apptainer build --fakeroot \
+                --build-arg baseos=${{ matrix.baseos }} \
+                adios2-ci.sif \
+                ci-source/scripts/ci/images/spack/Apptainer.def
+            ls -lah adios2-ci.sif
+      - name: Smoke test
+        run: apptainer exec adios2-ci.sif bpls --help
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          retention-days: 1
+          name: ci-apptainer ${{ matrix.baseos }} ${{ github.sha }}
+          path: adios2-ci.sif
+      - name: Push image to GHCR
+        if: github.event_name == 'push'
+        run: |
+            target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}-apptainer"
+            apptainer remote login \
+                --username="${{ github.actor }}" \
+                --password="${{ secrets.GITHUB_TOKEN }}" \
+                oras://ghcr.io
+            apptainer push \
+                adios2-ci.sif \
+                "oras://ghcr.io/ornladios/adios2:${target_tag}"
+
+#######################################
 # Contract testing jobs
 #######################################
 
@@ -646,7 +699,7 @@ jobs:
 #######################################
 
   build_and_test:
-    needs: [el8, ubuntu, macos, windows, docker, contract]
+    needs: [el8, ubuntu, macos, windows, docker, apptainer, contract]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required jobs complete"
