@@ -92,7 +92,7 @@ unsigned long Directory::GetNumberOfFiles() const
   return static_cast<unsigned long>(this->Internal->Files.size());
 }
 
-const char* Directory::GetFile(unsigned long dindex) const
+char const* Directory::GetFile(unsigned long dindex) const
 {
   return this->Internal->Files[dindex].Name.c_str();
 }
@@ -135,7 +135,7 @@ bool Directory::FileIsSymlink(std::size_t i) const
 #endif
 }
 
-const char* Directory::GetPath() const
+char const* Directory::GetPath() const
 {
   return this->Internal->Path.c_str();
 }
@@ -184,7 +184,7 @@ Status Directory::Load(std::string const& name, std::string* errorMessage)
   delete[] buf;
 
   if (srchHandle == INVALID_HANDLE_VALUE) {
-    Status status = Status::POSIX_errno();
+    Status status = Status::Windows_GetLastError();
     if (errorMessage) {
       *errorMessage = status.GetString();
     }
@@ -198,7 +198,7 @@ Status Directory::Load(std::string const& name, std::string* errorMessage)
   } while (FindNextFileW(srchHandle, &data));
   this->Internal->Path = name;
   if (!FindClose(srchHandle)) {
-    Status status = Status::POSIX_errno();
+    Status status = Status::Windows_GetLastError();
     if (errorMessage) {
       *errorMessage = status.GetString();
     }
@@ -207,7 +207,7 @@ Status Directory::Load(std::string const& name, std::string* errorMessage)
   return Status::Success();
 }
 
-unsigned long Directory::GetNumberOfFilesInDirectory(const std::string& name,
+unsigned long Directory::GetNumberOfFilesInDirectory(std::string const& name,
                                                      std::string* errorMessage)
 {
   HANDLE srchHandle;
@@ -314,7 +314,7 @@ Status Directory::Load(std::string const& name, std::string* errorMessage)
   return Status::Success();
 }
 
-unsigned long Directory::GetNumberOfFilesInDirectory(const std::string& name,
+unsigned long Directory::GetNumberOfFilesInDirectory(std::string const& name,
                                                      std::string* errorMessage)
 {
   errno = 0;
