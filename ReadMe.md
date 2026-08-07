@@ -74,6 +74,11 @@ Once installed, refer to [Linking ADIOS2](https://adios2.readthedocs.io/en/lates
 | vcpkg               | [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/adios2.svg)](https://repology.org/project/adios2/versions)                             |
 | Dockerhub           | ![Docker Image Version](https://img.shields.io/docker/v/ornladios/adios2)                                                                                  |
 
+An Apptainer/Singularity SIF image is also published to GHCR on every `master` push:
+```bash
+apptainer pull adios2.sif oras://ghcr.io/ornladios/adios2-apptainer-sif-master-x64:latest
+```
+
 ## Notes for packagers other than HPC sysadmins
 
 ADIOS2 has a wide spectrum of optional features, from a small,
