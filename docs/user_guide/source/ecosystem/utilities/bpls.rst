@@ -174,7 +174,19 @@ Here is the description of the most used options
 
 .. note::
 
-  HDF5 files can also be dumped with bpls if ADIOS was built with HDF5 support. Note that the HDF5 files do not contain min/max information for the arrays and therefore bpls always prints 0 for them:
+  The min/max column requires statistics stored in the file. A BP file written with statistics disabled has no min/max to report, and bpls prints ``N/A / N/A`` for those variables:
+
+
+  .. code-block:: bash
+
+    $ bpls -l nostats.bp
+      double   T     3*{15, 16} = N/A / N/A
+      double   dT    3*{15, 16} = N/A / N/A
+
+
+.. note::
+
+  HDF5 files can also be dumped with bpls if ADIOS was built with HDF5 support. HDF5 files do not carry array min/max information, so bpls prints 0 for them:
 
 
   .. code-block:: bash
