@@ -43,9 +43,6 @@ jobs:
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for upload-artifact
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
@@ -65,9 +62,6 @@ jobs:
   build_wheels_legacy:
     name: Wheels cp39–cp311
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for upload-artifact
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
@@ -89,9 +83,6 @@ jobs:
   build_wheels_stable:
     name: Wheels cp312-abi3
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for upload-artifact
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
@@ -111,9 +102,6 @@ jobs:
   build_wheels_freethreaded:
     name: Wheels cp314t
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for upload-artifact
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:

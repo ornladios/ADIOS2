@@ -114,9 +114,6 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.runner || 'ubuntu-22.04' }}
-    permissions:
-      contents: read
-      actions: write  # for cache save
     env:
       GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}${{ matrix.shared == 'static' && '-static' || '' }}${{ matrix.deps == 'external' && '-external' || '' }}-${{ matrix.parallel }}
       GH_YML_BASE_OS: Linux
@@ -230,9 +227,6 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for cache save
     container:
       image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
       options: --shm-size=1g
@@ -297,9 +291,6 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
-    permissions:
-      contents: read
-      actions: write  # for cache save
     env:
       # Only way to source a file in a non interactive/non login shell.
       BASH_ENV: "/Users/runner/.bash_profile"
@@ -435,9 +426,6 @@ jobs:
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write  # for upload-artifact
     strategy:
       fail-fast: false
       matrix:
@@ -570,7 +558,6 @@ jobs:
         GH_YML_MATRIX_COMPILER: gcc9
         GH_YML_MATRIX_PARALLEL: serial
     permissions:
-      actions: write  # for cache save and upload-artifact
       contents: read
       security-events: write
 
