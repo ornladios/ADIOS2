@@ -13,7 +13,7 @@ RUN zypper refresh && \
       bzip2 \
       gzip \
       bzip3-devel \
-      clang17 \
+      clang18 \
       cmake \
       curl \
       file \
@@ -25,7 +25,7 @@ RUN zypper refresh && \
       libffi-devel \
       libpng16-devel \
       libunwind-devel \
-      llvm17 \
+      llvm18 \
       ninja \
       patch \
       python3-devel \

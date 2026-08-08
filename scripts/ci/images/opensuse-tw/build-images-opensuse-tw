@@ -18,16 +18,16 @@ declare -u ENABLE_PUSH=
 function docker_build() {
   local docker_file=$1
   local docker_tag=$2
-  local args=(--progress=plain --rm)
+  local full_tag="${DOCKER_REPOSITORY}:${docker_tag}-$(date +"%Y%m%d")"
+
+  podman build --rm \
+    --file "${docker_file}" \
+    --tag "${full_tag}" \
+    .
 
   if [[ -n "${ENABLE_PUSH}" ]]; then
-    args+=("--push")
+    podman push "${full_tag}"
   fi
-
-  sudo docker build "${args[@]}"  \
-    --file "${docker_file}" \
-    --tag "${DOCKER_REPOSITORY}:${docker_tag}-$(date +"%Y%m%d")" \
-    .
 }
 
 function usage() {
@@ -51,3 +51,4 @@ docker_build opensuse-tw-asan.dockerfile ci-opensuse-tw-asan
 docker_build opensuse-tw-msan.dockerfile ci-opensuse-tw-msan
 docker_build opensuse-tw-tsan.dockerfile ci-opensuse-tw-tsan
 docker_build opensuse-tw-ubsan.dockerfile ci-opensuse-tw-ubsan
+docker_build opensuse-tw-coverage.dockerfile ci-opensuse-tw-coverage

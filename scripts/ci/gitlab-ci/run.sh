@@ -13,7 +13,7 @@ enable_submission=ON
 while getopts "hs" opt; do
   case $opt in
     h)
-      echo "Usage: $0 [-s] [update|configure|build|test|memcheck|submit]"
+      echo "Usage: $0 [-s] [update|configure|build|test|memcheck|coverage|submit]"
       echo "OPTIONS:"
       echo "    -s skip submit to cdash"
       ;;
