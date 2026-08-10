@@ -46,6 +46,9 @@
 #include "gtest/gtest-message.h"
 #include "gtest/internal/gtest-port.h"
 
+GTEST_DISABLE_MSC_WARNINGS_PUSH_(4251                                   \
+/* class A needs to have dll-interface to be used by clients of class B */)
+
 namespace testing {
 
 // A class for indicating whether an assertion was successful.  When
@@ -127,7 +130,14 @@ namespace testing {
 //   Expected: Foo() is even
 //     Actual: it's 5
 //
-class GTEST_API_ AssertionResult {
+
+// Returned AssertionResult objects may not be ignored.
+// Note: Disabled for SWIG as it doesn't parse attributes correctly.
+#if !defined(SWIG)
+class [[nodiscard]] AssertionResult;
+#endif  // !SWIG
+
+class GTEST_API_ [[nodiscard]] AssertionResult {
  public:
   // Copy constructor.
   // Used in EXPECT_TRUE/FALSE(assertion_result).
@@ -148,14 +158,18 @@ class GTEST_API_ AssertionResult {
   // The second parameter prevents this overload from being considered if
   // the argument is implicitly convertible to AssertionResult. In that case
   // we want AssertionResult's copy constructor to be used.
-  template <typename T>
-  explicit AssertionResult(
-      const T& success,
-      typename std::enable_if<
-          !std::is_convertible<T, AssertionResult>::value>::type*
-      /*enabler*/
-      = nullptr)
-      : success_(success) {}
+  template <typename T,
+            std::enable_if_t<!std::is_convertible_v<T, AssertionResult> &&
+                                 !std::is_trivially_constructible_v<bool, T>,
+                             int> = 0>
+  explicit AssertionResult(T&& success) : success_(std::forward<T>(success)) {}
+
+  // Similar to the mutable overload, but for cases where mutability is
+  // unnecessary or problematic (e.g., bitfields).
+  template <typename T,
+            std::enable_if_t<!std::is_convertible_v<const T&, AssertionResult>,
+                             int> = 0>
+  explicit AssertionResult(const T& success) : success_(success) {}
 
 #if defined(_MSC_VER) && (_MSC_VER < 1910 || _MSC_VER >= 1920)
   GTEST_DISABLE_MSC_WARNINGS_POP_()
@@ -178,7 +192,7 @@ class GTEST_API_ AssertionResult {
   // assertion's expectation). When nothing has been streamed into the
   // object, returns an empty string.
   const char* message() const {
-    return message_.get() != nullptr ? message_->c_str() : "";
+    return message_ != nullptr ? message_->c_str() : "";
   }
   // Deprecated; please use message() instead.
   const char* failure_message() const { return message(); }
@@ -201,7 +215,7 @@ class GTEST_API_ AssertionResult {
  private:
   // Appends the contents of message to message_.
   void AppendMessage(const Message& a_message) {
-    if (message_.get() == nullptr) message_.reset(new ::std::string);
+    if (message_ == nullptr) message_ = ::std::make_unique<::std::string>();
     message_->append(a_message.GetString().c_str());
   }
 
@@ -217,6 +231,24 @@ class GTEST_API_ AssertionResult {
   std::unique_ptr< ::std::string> message_;
 };
 
+namespace internal {
+
+// A pair containing the result that an assertion is evaluating, and the
+// expected result (true, false).
+//
+// Contains a conversion operator that indicates whether the two match.
+struct AssertionResultExpectation {
+  testing::AssertionResult assertion_result;
+  bool expected_result;
+
+  explicit operator bool() const {
+    bool converted(assertion_result);
+    return converted == expected_result;
+  }
+};
+
+}  // namespace internal
+
 // Makes a successful assertion result.
 GTEST_API_ AssertionResult AssertionSuccess();
 
@@ -228,5 +260,7 @@ GTEST_API_ AssertionResult AssertionFailure();
 GTEST_API_ AssertionResult AssertionFailure(const Message& msg);
 
 }  // namespace testing
+
+GTEST_DISABLE_MSC_WARNINGS_POP_()  // 4251
 
 #endif  // GOOGLETEST_INCLUDE_GTEST_GTEST_ASSERTION_RESULT_H_
