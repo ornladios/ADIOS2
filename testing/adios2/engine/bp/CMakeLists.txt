@@ -301,6 +301,21 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
       ENVIRONMENT "XRootDHttpsHost=localhost:${XROOTD_HTTP_PORT}"
       WORKING_DIRECTORY ${XROOTD_LEGACY_DIR})
 
+   # HEAD support on data-request URLs: headers with the exact GET
+   # Content-Length, no body.
+   add_executable(Test.Engine.BP.XRootDHttpHead.Serial TestBPXRootDHttpHead.cpp)
+   target_link_libraries(Test.Engine.BP.XRootDHttpHead.Serial
+      adios2::cxx adios2_core adios2::thirdparty::gtest CURL::libcurl)
+   # Own working dir so .bp filenames don't alias other tests' server-side engines.
+   set(XROOTD_HEAD_DIR ${XROOTD_HTTPS_DIR}/head-req)
+   file(MAKE_DIRECTORY ${XROOTD_HEAD_DIR})
+   add_test(NAME "Remote.BPXRootDHttpHead.GetXRHttps"
+      COMMAND Test.Engine.BP.XRootDHttpHead.Serial)
+   set_tests_properties(Remote.BPXRootDHttpHead.GetXRHttps PROPERTIES
+      FIXTURES_REQUIRED XRHttpsServer
+      ENVIRONMENT "XRootDHttpsHost=localhost:${XROOTD_HTTP_PORT}"
+      WORKING_DIRECTORY ${XROOTD_HEAD_DIR})
+
    # Client-side serverpath (URL prefix) plumbing: a prefix matching the
    # server's default /adios works end to end, a non-matching one must fail.
    add_executable(Test.Engine.BP.XRootDServerPath.Serial TestBPXRootDServerPath.cpp)

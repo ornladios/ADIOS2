@@ -45,6 +45,16 @@ myserver:
 This matters for Pelican-style deployments, where the path prefix is a
 federation namespace rather than a fixed string.
 
+## HEAD requests
+
+A data-request URL answers HEAD with the same headers a GET would produce,
+including the exact `Content-Length` of the response body, and no body, so an
+HTTP cache can size a response without fetching it. The size is computed from
+file metadata; no data is read, so HEAD is cheap for the server (a pooled
+engine open plus selection arithmetic). HEAD requests are not counted in the
+served-bytes statistics or the access log. The admin endpoints do not answer
+HEAD.
+
 ## Limits
 
 A single response (one variable get, or one batch frame) is capped at 2 GiB, a

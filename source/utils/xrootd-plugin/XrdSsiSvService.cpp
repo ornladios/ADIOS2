@@ -560,6 +560,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         uint32_t RequestUUID = 0;     // file id from client metadata; 0 = no check
         uint32_t WireVersion = 0;     // request format version; absent/0 = original
         bool ClientBigEndian = false; // client native byte order; absent = little
+        bool SizeOnly = false;        // HEAD: respond with the byte count, read nothing
         size_t NVars = 0;
 
         struct VarRequest
@@ -700,6 +701,14 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                     sstream >> be;
                     ClientBigEndian = (be != 0);
                 }
+                else if (HasPrefix(param, "SizeOnly="))
+                {
+                    std::size_t pos = param.find("=") + 1;
+                    std::stringstream sstream(param.substr(pos));
+                    int so = 0;
+                    sstream >> so;
+                    SizeOnly = (so != 0);
+                }
             }
         }
 
@@ -774,6 +783,19 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(BATCHGET_SIZE)
 #undef BATCHGET_SIZE
                 totalDataSize += dataSizes[v];
+            }
+
+            if (SizeOnly)
+            {
+                // HEAD support: report the framed byte count a batchget would
+                // return, as ASCII; nothing is read.
+                int n = snprintf(m_respData, sizeof(m_respData), "%llu",
+                                 (unsigned long long)(headerSize + totalDataSize));
+                m_responseBuffer = m_respData;
+                m_responseBufferSize = (size_t)n;
+                pthread_t tid;
+                XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "batchget");
+                return; // poolEntry auto-returns to pool
             }
 
             // Allocate response buffer
@@ -908,6 +930,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         uint32_t RequestUUID = 0;     // file id from client metadata; 0 = no check
         uint32_t WireVersion = 0;     // request format version; absent/0 = original
         bool ClientBigEndian = false; // client native byte order; absent = little
+        bool SizeOnly = false;        // HEAD: respond with the byte count, read nothing
         // Accuracy parameters
         double AccuracyError = 0.0;
         double AccuracyNorm = 0.0;
@@ -1026,6 +1049,14 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 sstream >> be;
                 ClientBigEndian = (be != 0);
             }
+            else if (HasPrefix(param, "SizeOnly="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                int so = 0;
+                sstream >> so;
+                SizeOnly = (so != 0);
+            }
         }
         if (WireVersion > kMaxWireVersion)
         {
@@ -1085,34 +1116,49 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
         m_responseBufferSize = var.SelectionSize(sel) * sizeof(T);                                 \
-        if (m_responseBufferSize > sizeof(m_respData))                                             \
-            m_responseBuffer = (char *)malloc(m_responseBufferSize);                               \
-        else                                                                                       \
-            m_responseBuffer = &m_respData[0];                                                     \
-        if (ctx)                                                                                   \
+        if (!SizeOnly)                                                                             \
         {                                                                                          \
-            engine.Get(*ctx, var, (T *)m_responseBuffer, sel);                                     \
-            engine.PerformGets(*ctx);                                                              \
+            if (m_responseBufferSize > sizeof(m_respData))                                         \
+                m_responseBuffer = (char *)malloc(m_responseBufferSize);                           \
+            else                                                                                   \
+                m_responseBuffer = &m_respData[0];                                                 \
+            if (ctx)                                                                               \
+            {                                                                                      \
+                engine.Get(*ctx, var, (T *)m_responseBuffer, sel);                                 \
+                engine.PerformGets(*ctx);                                                          \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                if (BlockID != (size_t)-1)                                                         \
+                    var.SetBlockSelection(BlockID);                                                \
+                var.SetStepSelection({StepStart, StepCount});                                      \
+                if (Start.size())                                                                  \
+                    var.SetSelection(varSel);                                                      \
+                if (AccuracyError != 0.0 || AccuracyNorm != 0.0)                                   \
+                    var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});              \
+                engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                        \
+            }                                                                                      \
+            if (swapByteOrder)                                                                     \
+                SwapElements<T>(m_responseBuffer, m_responseBufferSize);                           \
         }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            if (BlockID != (size_t)-1)                                                             \
-                var.SetBlockSelection(BlockID);                                                    \
-            var.SetStepSelection({StepStart, StepCount});                                          \
-            if (Start.size())                                                                      \
-                var.SetSelection(varSel);                                                          \
-            if (AccuracyError != 0.0 || AccuracyNorm != 0.0)                                       \
-                var.SetAccuracy({AccuracyError, AccuracyNorm, AccuracyRelative});                  \
-            engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                            \
-        }                                                                                          \
-        if (swapByteOrder)                                                                         \
-            SwapElements<T>(m_responseBuffer, m_responseBufferSize);                               \
     }
                 if (false)
                 {
                 }
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
+                if (SizeOnly)
+                {
+                    // HEAD support: report the byte count a get would return,
+                    // as ASCII; nothing was read, so no accounting either.
+                    int n = snprintf(m_respData, sizeof(m_respData), "%llu",
+                                     (unsigned long long)m_responseBufferSize);
+                    m_responseBuffer = m_respData;
+                    m_responseBufferSize = (size_t)n;
+                    pthread_t tid;
+                    XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");
+                    return; // poolEntry auto-returns to pool
+                }
                 // Track bytes served and operation count
                 poolEntry.file->m_BytesSent += m_responseBufferSize;
                 poolEntry.file->m_OperationCount++;
