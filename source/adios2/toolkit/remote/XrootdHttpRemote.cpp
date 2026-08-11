@@ -126,6 +126,19 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     if (it != params.end())
         m_FileUUID = static_cast<uint32_t>(std::stoul(it->second));
 
+    // URL path prefix that routes requests to the ADIOS handler on the
+    // server; must match the prefix the server's HTTP handler was configured
+    // with (default "/adios" on both ends).  "/" or "" means no prefix.
+    it = params.find("ServerPath");
+    if (it != params.end())
+    {
+        m_ServerPath = it->second;
+        if (!m_ServerPath.empty() && m_ServerPath[0] != '/')
+            m_ServerPath = "/" + m_ServerPath;
+        while (!m_ServerPath.empty() && m_ServerPath.back() == '/')
+            m_ServerPath.pop_back();
+    }
+
     // Collect non-HTTP engine params (TarInfo, SelectSteps, IgnoreFlattenSteps)
     // and encode them as a TAB-separated string for transmission
     Params engineParams;
@@ -133,7 +146,7 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     {
         if (p.first != "UseHttps" && p.first != "CAPath" && p.first != "VerifySSL" &&
             p.first != "ConnectTimeout" && p.first != "RequestTimeout" && p.first != "FileUUID" &&
-            p.first != "Backend")
+            p.first != "Backend" && p.first != "ServerPath")
         {
             engineParams[p.first] = p.second;
         }
@@ -144,7 +157,7 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     }
 
     std::ostringstream urlStream;
-    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << "/adios"
+    urlStream << (m_UseHttps ? "https" : "http") << "://" << hostname << ":" << port << m_ServerPath
               << m_Filename;
     m_BaseUrl = urlStream.str();
 
@@ -198,7 +211,10 @@ void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 // ---------------------------------------------------------------------
 // Path-encoded URL builders (Pelican/XCache-friendly form).
 //
-// Full URL: <scheme>://<host>:<port>/adios<filename>/<file-config>/<request>
+// Full URL: <scheme>://<host>:<port><serverpath><filename>/<file-config>/<request>
+//
+// <serverpath> is the prefix that routes the request to the ADIOS handler
+// on the server ("/adios" unless hosts.yaml `serverpath` overrides it).
 //
 // The filename keeps its literal slashes (it is not URL-encoded), so
 // it occupies multiple path segments.  The server identifies the last

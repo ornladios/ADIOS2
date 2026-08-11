@@ -82,6 +82,10 @@ private:
 
     std::string m_BaseUrl;
     std::string m_Filename;
+    /** URL path prefix that routes requests to the ADIOS handler on the
+     *  server (hosts.yaml `serverpath`); must match the prefix the server's
+     *  HTTP handler was configured with. */
+    std::string m_ServerPath = "/adios";
     std::string m_EngineParams;
     /** File id from the reader's metadata, sent for the server's staleness check;
      *  0 = none (legacy file). */
