@@ -19,7 +19,6 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 #include <daos_array.h>
 
 #include <algorithm> // std::min
@@ -27,6 +26,7 @@
 #include <cstdlib> // getenv, strtoull
 #include <cstring> // memcpy
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip> // setw
 #include <iostream>
@@ -1552,7 +1552,7 @@ void DaosWriter::FlushProfiler()
     if (m_Comm.Rank() == 0 && m_MetadataFile)
     {
         transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
-        transportNames.push_back(adios2sys::SystemTools::GetFilenameName(m_MetadataFile->m_Name));
+        transportNames.push_back(std::filesystem::path(m_MetadataFile->m_Name).filename().string());
         transportProfilers.push_back(&m_MetadataFile->m_Profiler);
     }
 
