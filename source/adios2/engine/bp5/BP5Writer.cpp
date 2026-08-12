@@ -19,9 +19,9 @@
 #include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip> // setw
 #include <iostream>
@@ -2535,7 +2535,7 @@ void BP5Writer::FlushProfiler()
     if (m_RankMPI == 0)
     {
         transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
-        transportNames.push_back(adios2sys::SystemTools::GetFilenameName(m_MetadataFile->m_Name));
+        transportNames.push_back(std::filesystem::path(m_MetadataFile->m_Name).filename().string());
         transportProfilers.push_back(&m_MetadataFile->m_Profiler);
     }
 

@@ -6,7 +6,9 @@
 
 #include "adiosSystem.h"
 #include <chrono> //system_clock, now
+#include <cstdlib> // getenv, setenv/unsetenv or _dupenv_s/_putenv_s
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
@@ -16,9 +18,6 @@
 #include <sys/resource.h> // getrlimits, setrlimits
 #include <sys/time.h>
 #endif
-
-#include <adios2sys/Directory.hxx>
-#include <adios2sys/SystemTools.hxx>
 
 #include <unordered_set>
 
@@ -44,7 +43,9 @@ namespace helper
 
 bool CreateDirectory(const std::string &fullPath) noexcept
 {
-    return static_cast<bool>(adios2sys::SystemTools::MakeDirectory(fullPath));
+    std::error_code ec;
+    std::filesystem::create_directories(fullPath, ec);
+    return !ec;
 }
 
 bool IsLittleEndian() noexcept
@@ -191,7 +192,9 @@ bool IsDAOSDataset(const std::string &name) noexcept
     // The DAOS engine writes a data_oids.txt index alongside its
     // metadata files; BP3/BP4/BP5 never produce this file, so it is the
     // unambiguous marker for a DAOS-engine dataset directory.
-    return adios2sys::SystemTools::PathExists(name + PathSeparator + "data_oids.txt");
+    std::error_code ec;
+    return std::filesystem::exists(
+        std::filesystem::symlink_status(name + PathSeparator + "data_oids.txt", ec));
 }
 
 unsigned int NumHardwareThreadsPerNode() { return std::thread::hardware_concurrency(); }
@@ -246,39 +249,97 @@ void CleanupBPDirectory(const std::string &directory, const std::vector<std::str
         std::unordered_set<std::string> keepSet;
         for (const auto &fullPath : filesToKeep)
         {
-            std::string basename = adios2sys::SystemTools::GetFilenameName(fullPath);
+            std::string basename = std::filesystem::path(fullPath).filename().string();
             keepSet.insert(basename);
         }
 
         // Scan directory and delete files not in whitelist
-        adios2sys::Directory dir;
-        if (dir.Load(directory).IsSuccess())
+        std::error_code ec;
+        for (const auto &entry : std::filesystem::directory_iterator(directory, ec))
         {
-            for (unsigned long i = 0; i < dir.GetNumberOfFiles(); ++i)
+            const std::string fileName = entry.path().filename().string();
+            // Delete if not in whitelist
+            if (keepSet.find(fileName) == keepSet.end())
             {
-                const std::string &fileName = dir.GetFileName(i);
-                // Skip . and ..
-                if (fileName == "." || fileName == "..")
+                std::error_code removeEc;
+                if (entry.is_directory(removeEc))
                 {
-                    continue;
+                    std::filesystem::remove_all(entry.path(), removeEc);
                 }
-                // Delete if not in whitelist
-                if (keepSet.find(fileName) == keepSet.end())
+                else
                 {
-                    std::string filePath = dir.GetFilePath(i);
-                    if (dir.FileIsDirectory(i))
-                    {
-                        adios2sys::SystemTools::RemoveADirectory(filePath);
-                    }
-                    else
-                    {
-                        adios2sys::SystemTools::RemoveFile(filePath);
-                    }
+                    std::filesystem::remove(entry.path(), removeEc);
                 }
             }
         }
     }
     comm.Barrier("CleanupBPDirectory");
+}
+
+bool GetEnv(const std::string &key, std::string &result) noexcept
+{
+#ifdef _WIN32
+    char *buffer = nullptr;
+    size_t size = 0;
+    if (_dupenv_s(&buffer, &size, key.c_str()) != 0 || buffer == nullptr)
+    {
+        return false;
+    }
+    result = buffer;
+    free(buffer);
+    return true;
+#else
+    const char *value = std::getenv(key.c_str());
+    if (!value)
+    {
+        return false;
+    }
+    result = value;
+    return true;
+#endif
+}
+
+bool PutEnv(const std::string &env) noexcept
+{
+    const auto pos = env.find('=');
+#ifdef _WIN32
+    if (pos == std::string::npos)
+    {
+        return _putenv_s(env.c_str(), "") == 0;
+    }
+    return _putenv_s(env.substr(0, pos).c_str(), env.substr(pos + 1).c_str()) == 0;
+#else
+    if (pos == std::string::npos)
+    {
+        return unsetenv(env.c_str()) == 0;
+    }
+    return setenv(env.substr(0, pos).c_str(), env.substr(pos + 1).c_str(), 1) == 0;
+#endif
+}
+
+std::vector<std::string> SplitString(const std::string &input, char separator, bool isPath)
+{
+    std::string path = input;
+    std::vector<std::string> paths;
+    if (path.empty())
+    {
+        return paths;
+    }
+    if (isPath && path.front() == '/')
+    {
+        path.erase(path.begin());
+        paths.emplace_back("/");
+    }
+    std::string::size_type pos1 = 0;
+    std::string::size_type pos2 = path.find(separator, pos1);
+    while (pos2 != std::string::npos)
+    {
+        paths.push_back(path.substr(pos1, pos2 - pos1));
+        pos1 = pos2 + 1;
+        pos2 = path.find(separator, pos1 + 1);
+    }
+    paths.push_back(path.substr(pos1, pos2 - pos1));
+    return paths;
 }
 
 } // end namespace helper

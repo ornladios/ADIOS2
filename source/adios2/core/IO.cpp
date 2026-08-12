@@ -39,7 +39,7 @@
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 #include "adios2/helper/adiosString.h"
-#include <adios2sys/SystemTools.hxx> // FileIsDirectory()
+#include <filesystem> // PathExists(), FileIsDirectory()
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
 #include "adios2/engine/dataman/DataManReader.h"
@@ -186,6 +186,13 @@ struct ThrowError
     }
     std::string Err;
 };
+
+// True if a path exists, even a broken symlink (does not dereference).
+bool PathExists(const std::string &path)
+{
+    std::error_code ec;
+    return std::filesystem::exists(std::filesystem::symlink_status(path, ec));
+}
 
 } // end anonymous namespace
 
@@ -614,7 +621,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
             else
             {
                 char version = '5';
-                if (comm.Rank() == 0 && adios2sys::SystemTools::PathExists(name))
+                if (comm.Rank() == 0 && PathExists(name))
                 {
                     version = helper::BPVersionLocal(name);
                 }
@@ -652,8 +659,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
                 if (comm.Rank() == 0)
                 {
                     std::string sel;
-                    if (adios2sys::SystemTools::PathExists(name) ||
-                        adios2sys::SystemTools::PathExists(name + ".tier0"))
+                    if (PathExists(name) || PathExists(name + ".tier0"))
                     {
                         // DAOS must precede the directory branch: a DAOS dataset is
                         // also a directory containing an mmd.0 and would mis-detect
@@ -662,11 +668,11 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
                         {
                             sel = "daos";
                         }
-                        else if (adios2sys::SystemTools::FileIsDirectory(name))
+                        else if (std::filesystem::is_directory(name))
                         {
                             sel = std::string("bp") + helper::BPVersionLocal(name);
                         }
-                        else if (adios2sys::SystemTools::FileIsDirectory(name + ".tier0"))
+                        else if (std::filesystem::is_directory(name + ".tier0"))
                         {
                             sel = "mhs";
                         }

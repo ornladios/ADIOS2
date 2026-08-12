@@ -6,9 +6,9 @@
 
 #include "FileHTTPS.h"
 #include "adios2/helper/adiosString.h"
-#include <adios2sys/SystemTools.hxx>
 
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 
@@ -177,9 +177,10 @@ void FileHTTPS::CheckCache(const size_t fileSize)
             if (lastPathSeparator != std::string::npos)
             {
                 const std::string dirpath(m_CacheFilePath.substr(0, lastPathSeparator));
-                adios2sys::SystemTools::MakeDirectory(dirpath);
-                // Cannot call this on Windows because it confuses it with CreateDirectoryA()
-                // helper::CreateDirectory(dirpath);
+                std::error_code ec;
+                std::filesystem::create_directories(dirpath, ec);
+                // Cannot call helper::CreateDirectory() on Windows because it confuses it
+                // with CreateDirectoryA()
             }
             m_CacheFileWrite = new FileFStream(m_Comm);
             m_CacheFileWrite->Open(m_CacheFilePath, Mode::Write);
