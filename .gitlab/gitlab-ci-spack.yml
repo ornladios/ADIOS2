@@ -48,45 +48,45 @@ default:
 #===============================================================================
 build:uo-sanitizer-asan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-msan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-tsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-ubsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20260812
   extends: [.common-build]
 
 test:uo-sanitizer-asan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-asan]
 
 test:uo-sanitizer-msan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-msan]
 
 test:uo-sanitizer-tsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-tsan]
 
 test:uo-sanitizer-ubsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-ubsan]
 
