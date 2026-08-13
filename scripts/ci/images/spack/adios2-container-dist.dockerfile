@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 FROM  ghcr.io/ornladios/adios2/adios2-deps
 
 RUN echo ${ADIOS2_SPEC}

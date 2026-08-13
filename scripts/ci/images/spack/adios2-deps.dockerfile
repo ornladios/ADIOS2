@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 FROM ubuntu:22.04
 
 ARG SPACK_VERSION=v1.0.2
