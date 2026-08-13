@@ -8,6 +8,7 @@
 
 set -xeuo pipefail
 
+CONTAINER_DRIVER=${CONTAINER_DRIVER:-podman}
 declare -r DOCKER_REPOSITORY=ghcr.io/ornladios/adios2
 declare -u ENABLE_PUSH=
 
@@ -18,16 +19,17 @@ declare -u ENABLE_PUSH=
 function docker_build() {
   local docker_file=$1
   local docker_tag=$2
-  local args=(--progress=plain --rm)
+  local args=(--rm)
 
-  if [[ -n "${ENABLE_PUSH}" ]]; then
-    args+=("--push")
-  fi
 
-  sudo docker build "${args[@]}"  \
+  "${CONTAINER_DRIVER}" build "${args[@]}"  \
     --file "${docker_file}" \
     --tag "${DOCKER_REPOSITORY}:${docker_tag}-$(date +"%Y%m%d")" \
     .
+
+  if [[ -n "${ENABLE_PUSH}" ]]; then
+    "${CONTAINER_DRIVER}" push "${DOCKER_REPOSITORY}:${docker_tag}-$(date +"%Y%m%d")"
+  fi
 }
 
 function usage() {

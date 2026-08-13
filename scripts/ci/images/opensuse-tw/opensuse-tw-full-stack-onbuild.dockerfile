@@ -16,7 +16,7 @@ ENV CXX=clang++
 
 # Build and install libc++
 ONBUILD WORKDIR /root/llvm
-ONBUILD RUN git clone --branch llvmorg-17.0.6 --depth 1 \
+ONBUILD RUN git clone --branch llvmorg-22.1.8 --depth 1 \
         https://github.com/llvm/llvm-project.git source
 ONBUILD RUN cmake -GNinja -B build -S source/runtimes \
             -DCMAKE_BUILD_TYPE=Release \
@@ -46,7 +46,7 @@ ONBUILD RUN git clone --branch v1.2.11 --depth 1 \
 # Build and install bzip2
 ONBUILD WORKDIR /root/bzip2
 ONBUILD RUN git clone --branch bzip2-1.0.8 --depth 1 \
-        https://sourceware.org/git/bzip2.git source && \
+        https://github.com/libarchive/bzip2.git source && \
     cd source && \
     sed -e "s_^CC=.*\$_CC=/usr/bin/clang_" \
         -e "s_^CFLAGS=.*\$_CFLAGS=-fpic -fPIC -Wall -Winline -O2 ${CFLAGS} \$(BIGFILES)_" \
