@@ -113,7 +113,7 @@ stages:
       PrgEnv-gnu
       gcc-native/12
       craype-accel-amd-gfx90a
-      rocm/5.7.1
+      rocm/6.4.2
       cmake
       git
       ninja
@@ -125,7 +125,7 @@ setup:frontier-kokkos-hip:
     KOKKOS_VER: 4.4.01
     KOKKOS_OPTS: >-
       -DCMAKE_INSTALL_PREFIX:PATH=$Kokkos_DIR
-      -DCMAKE_CXX_COMPILER:FILEPATH=/opt/rocm-5.7.1/hip/bin/hipcc
+      -DCMAKE_CXX_COMPILER:FILEPATH=/opt/rocm-6.4.2/bin/hipcc
       -DKokkos_ARCH_VEGA90A:BOOL=ON
       -DKokkos_ENABLE_HIP:BOOL=ON
       -DKokkos_ENABLE_HIP_RELOCATABLE_DEVICE_CODE:BOOL=OFF
