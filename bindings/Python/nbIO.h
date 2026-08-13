@@ -64,6 +64,8 @@ public:
     VariableDerived DefineDerivedVariable(const std::string &name, const std::string &expression,
                                           const DerivedVarType varType = DerivedVarType::StatsOnly);
 
+    void DefineReaderDerivedVariable(const std::string &name, const std::string &expression);
+
     Variable InquireVariable(const std::string &name);
 
     Attribute DefineAttribute(const std::string &name, const nb::ndarray<nb::numpy> &array,

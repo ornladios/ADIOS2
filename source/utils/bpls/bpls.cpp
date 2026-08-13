@@ -1242,9 +1242,16 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
                     if (fp->VariableMinMax(*variable, DefaultSizeT, MinMax))
                     {
                         fprintf(outf, " = ");
-                        print_data(&MinMax.MinUnion, 0, adiosvartype, false);
-                        fprintf(outf, " / ");
-                        print_data(&MinMax.MaxUnion, 0, adiosvartype, false);
+                        if (MinMax.IsUnset(adiosvartype))
+                        {
+                            fprintf(outf, "N/A / N/A"); // no statistics in the file
+                        }
+                        else
+                        {
+                            print_data(&MinMax.MinUnion, 0, adiosvartype, false);
+                            fprintf(outf, " / ");
+                            print_data(&MinMax.MaxUnion, 0, adiosvartype, false);
+                        }
                     }
                     else
                     {
@@ -3639,7 +3646,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     /* Print per-block statistics if available */
                     if (longopt)
                     {
-                        if (true /* TODO: variable->has_minmax */)
+                        if (!blocks[j].MinMax.IsUnset(adiosvartype))
                         {
                             fprintf(outf, " = ");
                             print_data(&blocks[j].MinMax.MinUnion, 0, adiosvartype, false);
@@ -3797,7 +3804,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 /* Print per-block statistics if available */
                 if (longopt)
                 {
-                    if (true /* TODO: variable->has_minmax */)
+                    if (!helper::GreaterThan<T>(blocks[j].Min, blocks[j].Max))
                     {
                         fprintf(outf, " = ");
                         print_data(&blocks[j].Min, 0, adiosvartype, false);
@@ -3974,30 +3981,28 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
             /* Print per-block statistics if available */
             if (longopt)
             {
-                if (true /* TODO: variable->has_minmax */)
+                const bool unset =
+                    minBlocks ? minBlocks->BlocksInfo[j].MinMax.IsUnset(adiosvartype)
+                              : helper::GreaterThan<T>(coreBlocks[j].Min, coreBlocks[j].Max);
+                if (unset)
                 {
-                    if (!minBlocks)
-                    {
-                        fprintf(outf, " = ");
-                        print_data(&coreBlocks[j].Min, 0, adiosvartype, false);
+                    fprintf(outf, "N/A / N/A");
+                }
+                else if (!minBlocks)
+                {
+                    fprintf(outf, " = ");
+                    print_data(&coreBlocks[j].Min, 0, adiosvartype, false);
 
-                        fprintf(outf, " / ");
-                        print_data(&coreBlocks[j].Max, 0, adiosvartype, false);
-                    }
-                    else
-                    {
-                        fprintf(outf, " = ");
-                        print_data(&minBlocks->BlocksInfo[j].MinMax.MinUnion, 0, adiosvartype,
-                                   false);
-
-                        fprintf(outf, " / ");
-                        print_data(&minBlocks->BlocksInfo[j].MinMax.MaxUnion, 0, adiosvartype,
-                                   false);
-                    }
+                    fprintf(outf, " / ");
+                    print_data(&coreBlocks[j].Max, 0, adiosvartype, false);
                 }
                 else
                 {
-                    fprintf(outf, "N/A / N/A");
+                    fprintf(outf, " = ");
+                    print_data(&minBlocks->BlocksInfo[j].MinMax.MinUnion, 0, adiosvartype, false);
+
+                    fprintf(outf, " / ");
+                    print_data(&minBlocks->BlocksInfo[j].MinMax.MaxUnion, 0, adiosvartype, false);
                 }
             }
             fprintf(outf, "\n");

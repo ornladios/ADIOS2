@@ -324,6 +324,41 @@ void MinMaxStruct::Init(DataType Type)
     }
 }
 
+bool MinMaxStruct::IsUnset(DataType Type) const
+{
+    // Unset == the inverted range Init() leaves (min > max). Test the typed
+    // field, not memcmp: the union's long double padding isn't reliably set.
+    switch (Type)
+    {
+    case DataType::Int8:
+        return MinUnion.field_int8 > MaxUnion.field_int8;
+    case DataType::Int16:
+        return MinUnion.field_int16 > MaxUnion.field_int16;
+    case DataType::Int32:
+        return MinUnion.field_int32 > MaxUnion.field_int32;
+    case DataType::Int64:
+        return MinUnion.field_int64 > MaxUnion.field_int64;
+    case DataType::Char:
+    case DataType::UInt8:
+        return MinUnion.field_uint8 > MaxUnion.field_uint8;
+    case DataType::UInt16:
+        return MinUnion.field_uint16 > MaxUnion.field_uint16;
+    case DataType::UInt32:
+        return MinUnion.field_uint32 > MaxUnion.field_uint32;
+    case DataType::UInt64:
+        return MinUnion.field_uint64 > MaxUnion.field_uint64;
+    case DataType::Float:
+        return MinUnion.field_float > MaxUnion.field_float;
+    case DataType::Double:
+        return MinUnion.field_double > MaxUnion.field_double;
+    case DataType::LongDouble:
+        return MinUnion.field_ldouble > MaxUnion.field_ldouble;
+    default:
+        // Types without a min/max (complex, string, struct, none).
+        return false;
+    }
+}
+
 void MinMaxStruct::Dump(DataType Type)
 {
     switch (Type)

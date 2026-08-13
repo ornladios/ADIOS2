@@ -186,6 +186,9 @@ struct MinMaxStruct
     union PrimitiveStdtypeUnion MaxUnion;
     void Init(DataType Type);
     void Dump(DataType Type);
+    /** True if this holds the unset range Init() produces (min > max), meaning
+     *  the variable carried no statistics. Callers should render it as N/A. */
+    bool IsUnset(DataType Type) const;
 };
 struct MinBlockInfo
 {
