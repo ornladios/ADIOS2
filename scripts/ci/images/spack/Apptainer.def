@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+Bootstrap: docker
+From: docker.io/ornladios/adios2:spack-dependencies-{{ baseos }}
+
+%files
+    ci-source /opt/adios2/source
+
+%post
+    set -e
+    . /opt/spack/share/spack/setup-env.sh
+    spack dev-build \
+        -j$(grep -c '^processor' /proc/cpuinfo) \
+        -d /opt/adios2/source \
+        --skip-patch \
+        adios2@develop ~python
+    spack clean -a
+
+    spack env create --without-view adios2
+    spack -e adios2 add $(spack find --format "/{hash}")
+    spack -e adios2 install -v
+    adios2_prefix="$(spack -e adios2 location -i adios2)"
+    echo "export PATH=\"${adios2_prefix}/bin:\$PATH\"" > /opt/adios2/spack-env.sh
+    echo "export LD_LIBRARY_PATH=\"${adios2_prefix}/lib:${adios2_prefix}/lib64:\$LD_LIBRARY_PATH\"" >> /opt/adios2/spack-env.sh
+    rm -rf /root/.spack
+
+%environment
+    . /opt/adios2/spack-env.sh
+
+%runscript
+    exec bash --login "$@"
