@@ -142,18 +142,8 @@ void BP5Serializer::AddSimpleField(FMFieldList *FieldP, int *CountP, const char 
             // really a pointer
             PriorFieldSize = sizeof(void *);
         }
-        // Align the new field to its in-struct C alignment, which must be decoupled
-        // from the element size: an array/string field is a pointer in-struct (align
-        // sizeof(void*)); a scalar integer aligns to min(size, sizeof(void*)) -- e.g.
-        // a uint64_t aligns to 4 on x86-32, matching gcc and FFS type_alignment. Using
-        // ElementSize directly would over-align 8-byte fields to 8 on 32-bit and break
-        // the C-struct layout (BP5MetadataInfoStruct) and cross-bitness offsets.
-        int Align;
-        if (strchr(Type, '[') || (strncmp(Type, "string", 6) == 0))
-            Align = sizeof(void *);
-        else
-            Align = (ElementSize < (int)sizeof(void *)) ? ElementSize : (int)sizeof(void *);
-        Offset = ((PriorField->field_offset + PriorFieldSize + Align - 1) / Align) * Align;
+        Offset = ((PriorField->field_offset + PriorFieldSize + ElementSize - 1) / ElementSize) *
+                 ElementSize;
     }
     if (*FieldP)
         *FieldP = (FMFieldList)realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
@@ -990,7 +980,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
 
             if (DeferAddToVec)
             {
-                DeferredExterns.push_back({Rec->MetaOffset, MetaEntry->BlockCount - 1, Data,
+                DeferredExterns.push_back({Rec->MetaOffset,
+                                           static_cast<size_t>(MetaEntry->BlockCount - 1), Data,
                                            ElemCount * ElemSize, ElemSize});
             }
             if (Offsets)
@@ -1042,16 +1033,6 @@ const void *BP5Serializer::SearchDeferredBlocks(size_t MetaOffset, size_t BlockI
 // Materialize a size_t copy of n fixed-width uint64_t metadata dims, owned by the
 // MinVarInfo (freed with it). std::vector move preserves the buffer, so earlier
 // .data() pointers survive growth. Returns nullptr when src is nullptr.
-static const size_t *MVIOwnDims(MinVarInfo *MV, const uint64_t *src, size_t n)
-{
-    if (!src)
-        return nullptr;
-    if (sizeof(size_t) == sizeof(uint64_t))
-        return reinterpret_cast<const size_t *>(src); // 64-bit: alias, no copy
-    MV->OwnedDims.emplace_back(src, src + n);          // 32-bit: convert uint64_t -> size_t
-    return MV->OwnedDims.back().data();
-}
-
 MinVarInfo *BP5Serializer::MinBlocksInfo(const core::VariableBase &Var)
 {
     BP5WriterRec VarRec = LookupWriterRec((void *)&Var);
@@ -1101,11 +1082,11 @@ MinVarInfo *BP5Serializer::MinBlocksInfo(const core::VariableBase &Var)
             Blk.Start = NULL;
             if (MetaEntry->Offsets)
             {
-                Blk.Start = MVIOwnDims(MV, &(MetaEntry->Offsets[b * MetaEntry->Dims]),
-                                       (size_t)MetaEntry->Dims);
+                Blk.Start = BP5MVIOwnDims(MV, &(MetaEntry->Offsets[b * MetaEntry->Dims]),
+                                          (size_t)MetaEntry->Dims);
             }
-            Blk.Count =
-                MVIOwnDims(MV, &(MetaEntry->Count[b * MetaEntry->Dims]), (size_t)MetaEntry->Dims);
+            Blk.Count = BP5MVIOwnDims(MV, &(MetaEntry->Count[b * MetaEntry->Dims]),
+                                      (size_t)MetaEntry->Dims);
             if (MetaEntry->DataBlockLocation[b] < m_PriorDataBufferSizeTotal)
             {
                 Blk.BufferP = (void *)(intptr_t)(-1); // data is out of memory
@@ -1345,7 +1326,7 @@ void BP5Serializer::CollectFinalShapeValues()
 
             // Shape is fixed-width uint64_t; source Dims is size_t -> element-wise copy
             const auto &VBShape = VB->Shape();
-            for (size_t d = 0; d < Rec->DimCount; d++)
+            for (size_t d = 0; d < static_cast<size_t>(Rec->DimCount); d++)
                 MetaEntry->Shape[d] = static_cast<uint64_t>(VBShape[d]);
         }
     }

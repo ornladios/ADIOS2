@@ -255,6 +255,14 @@ private:
         nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
     std::vector<void *> *m_FreeableMBA = nullptr;
 
+    // Metadata buffers allocated by MetadataBufferPrep() when the incoming
+    // format needs conversion and so cannot be decoded in place.  The decoded
+    // metadata is referenced for as long as we serve reads from it, so these
+    // are owned here and released in the destructor.  MetadataBufferPrep() is
+    // run concurrently by the reader's install threads, hence the mutex.
+    mutable std::vector<void *> m_DecodedMetadataBuffers;
+    mutable std::mutex mutexDecodedMetadata;
+
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
     std::vector<std::vector<ControlInfo *>> m_ControlArray;

@@ -130,7 +130,11 @@ void CommonWrite()
         // fill in the variable with values from starting index to
         // starting index + count
         const adios2::Mode sync = adios2::Mode::Deferred;
-        std::time_t localtime = 0;
+        // NB: the "time" variable is int64_t (8 bytes). std::time_t is only 4
+        // bytes on 32-bit platforms, so Put-ing &localtime as an int64_t would
+        // read 4 bytes past it (garbage stack) and make the output
+        // non-deterministic. Use a fixed-width type that matches the variable.
+        int64_t localtime = 0;
         if (mpiRank == 0)
             engine.Put(scalar_r64, data_scalar_R64);
         engine.Put(var_i8, data_I8.data(), sync);

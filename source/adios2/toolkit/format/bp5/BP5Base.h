@@ -25,6 +25,35 @@ namespace adios2
 namespace format
 {
 
+// BP5 metadata dims are fixed-width uint64_t (platform-independent layout); the
+// in-memory index math is size_t. These convert at that single seam: on 64-bit
+// (size_t == uint64_t) they alias src with no copy; on 32-bit they materialize a
+// converted copy (truncating dims > size_t, the documented 32-bit limitation).
+// Returns nullptr for nullptr src (local arrays have no Shape/Offsets).
+
+// Caller-owned storage: scratch must outlive the returned pointer.
+inline size_t *BP5DimsToSizeT(uint64_t *src, size_t n, std::vector<size_t> &scratch)
+{
+    if (!src)
+        return nullptr;
+    if (sizeof(size_t) == sizeof(uint64_t))
+        return reinterpret_cast<size_t *>(src);
+    scratch.assign(src, src + n);
+    return scratch.data();
+}
+
+// MinVarInfo-owned storage: lives for the MVI's lifetime (freed with it). vector
+// move preserves the buffer, so earlier .data() pointers survive OwnedDims growth.
+inline const size_t *BP5MVIOwnDims(MinVarInfo *MV, uint64_t *src, size_t n)
+{
+    if (!src)
+        return nullptr;
+    if (sizeof(size_t) == sizeof(uint64_t))
+        return reinterpret_cast<size_t *>(src);
+    MV->OwnedDims.emplace_back(src, src + n);
+    return MV->OwnedDims.back().data();
+}
+
 class BP5Base
 {
 public:
