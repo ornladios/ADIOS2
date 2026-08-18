@@ -67,6 +67,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 
    faq/faq
    advice/advice
+   advice/backporting
 
 
 * :ref:`search`
