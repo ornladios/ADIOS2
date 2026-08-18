@@ -25,6 +25,35 @@ namespace adios2
 namespace format
 {
 
+// BP5 metadata dims are fixed-width uint64_t (platform-independent layout); the
+// in-memory index math is size_t. These convert at that single seam: on 64-bit
+// (size_t == uint64_t) they alias src with no copy; on 32-bit they materialize a
+// converted copy (truncating dims > size_t, the documented 32-bit limitation).
+// Returns nullptr for nullptr src (local arrays have no Shape/Offsets).
+
+// Caller-owned storage: scratch must outlive the returned pointer.
+inline size_t *BP5DimsToSizeT(uint64_t *src, size_t n, std::vector<size_t> &scratch)
+{
+    if (!src)
+        return nullptr;
+    if (sizeof(size_t) == sizeof(uint64_t))
+        return reinterpret_cast<size_t *>(src);
+    scratch.assign(src, src + n);
+    return scratch.data();
+}
+
+// MinVarInfo-owned storage: lives for the MVI's lifetime (freed with it). vector
+// move preserves the buffer, so earlier .data() pointers survive OwnedDims growth.
+inline const size_t *BP5MVIOwnDims(MinVarInfo *MV, uint64_t *src, size_t n)
+{
+    if (!src)
+        return nullptr;
+    if (sizeof(size_t) == sizeof(uint64_t))
+        return reinterpret_cast<size_t *>(src);
+    MV->OwnedDims.emplace_back(src, src + n);
+    return MV->OwnedDims.back().data();
+}
+
 class BP5Base
 {
 public:
@@ -38,13 +67,16 @@ public:
         uint64_t MetaMetaIDLen;
     };
 
+/* All metadata integers are fixed-width uint64_t so the on-disk/serialized layout
+ * is identical on 32- and 64-bit platforms (cross-bitness portability). Values
+ * larger than size_t are truncated when used as in-memory indices on 32-bit. */
 #define BASE_FIELDS                                                                                \
-    size_t Dims;                 /* How many dimensions does this array have */                    \
-    size_t BlockCount;           /* How many blocks are written   */                               \
-    size_t DBCount;              /* Dimens * BlockCount   */                                       \
-    size_t *Shape;               /* Global dimensionality  [Dims] NULL for local */                \
-    size_t *Count;               /* Per-block Counts    [DBCount] */                               \
-    size_t *Offsets;             /* Per-block Offsets   [DBCount] NULL for local */                \
+    uint64_t Dims;               /* How many dimensions does this array have */                    \
+    uint64_t BlockCount;         /* How many blocks are written   */                               \
+    uint64_t DBCount;            /* Dimens * BlockCount   */                                       \
+    uint64_t *Shape;             /* Global dimensionality  [Dims] NULL for local */                \
+    uint64_t *Count;             /* Per-block Counts    [DBCount] */                               \
+    uint64_t *Offsets;           /* Per-block Offsets   [DBCount] NULL for local */                \
     uint64_t *DataBlockLocation; /* Per-block Offset in PG [BlockCount] */
 
     typedef struct _MetaArrayRec
@@ -55,7 +87,7 @@ public:
     typedef struct _MetaArrayRecOperator
     {
         BASE_FIELDS
-        size_t *DataBlockSize; // Per-block Lengths [BlockCount]
+        uint64_t *DataBlockSize; // Per-block Lengths [BlockCount]
     } MetaArrayRecOperator;
 
     typedef struct _MetaArrayRecMM
@@ -67,38 +99,38 @@ public:
     typedef struct _MetaArrayRecOperatorMM
     {
         BASE_FIELDS
-        size_t *DataBlockSize; // Per-block Lengths [BlockCount]
-        char *MinMax;          // char[TYPESIZE][BlockCount]  varies by type
+        uint64_t *DataBlockSize; // Per-block Lengths [BlockCount]
+        char *MinMax;            // char[TYPESIZE][BlockCount]  varies by type
     } MetaArrayRecOperatorMM;
 
 #undef BASE_FIELDS
 
     struct BP5MetadataInfoStruct
     {
-        size_t BitFieldCount;
-        size_t *BitField;
-        size_t DataBlockSize;
+        uint64_t BitFieldCount;
+        uint64_t *BitField;
+        uint64_t DataBlockSize;
     };
 
     struct PrimitiveTypeAttr
     {
         const char *Name = NULL;
-        size_t TotalElementSize = 0;
+        uint64_t TotalElementSize = 0;
         char *Values;
     };
 
     struct StringArrayAttr
     {
         const char *Name = NULL;
-        size_t ElementCount = 0;
+        uint64_t ElementCount = 0;
         const char **Values = NULL;
     };
 
     struct BP5AttrStruct
     {
-        size_t PrimAttrCount = 0;
+        uint64_t PrimAttrCount = 0;
         struct PrimitiveTypeAttr *PrimAttrs = (struct PrimitiveTypeAttr *)malloc(1);
-        size_t StrAttrCount = 0;
+        uint64_t StrAttrCount = 0;
         struct StringArrayAttr *StrAttrs = (struct StringArrayAttr *)malloc(1);
     };
 
@@ -124,22 +156,22 @@ public:
 
     FMField prim_attr_field_list[4] = {
         {"name", "string", sizeof(char *), FMOffset(PrimitiveTypeAttr *, Name)},
-        {"TotalElementSize", "integer", sizeof(size_t),
+        {"TotalElementSize", "integer", sizeof(uint64_t),
          FMOffset(PrimitiveTypeAttr *, TotalElementSize)},
         {"Values", "char[TotalElementSize]", 1, FMOffset(PrimitiveTypeAttr *, Values)},
         {NULL, NULL, 0, 0}};
 
     FMField string_attr_field_list[4] = {
         {"name", "string", sizeof(char *), FMOffset(StringArrayAttr *, Name)},
-        {"ElementCount", "integer", sizeof(size_t), FMOffset(StringArrayAttr *, ElementCount)},
+        {"ElementCount", "integer", sizeof(uint64_t), FMOffset(StringArrayAttr *, ElementCount)},
         {"Values", "string[ElementCount]", sizeof(char *), FMOffset(StringArrayAttr *, Values)},
         {NULL, NULL, 0, 0}};
 
     FMField bp5_attr_field_list[5] = {
-        {"PrimAttrCount", "integer", sizeof(size_t), FMOffset(BP5AttrStruct *, PrimAttrCount)},
+        {"PrimAttrCount", "integer", sizeof(uint64_t), FMOffset(BP5AttrStruct *, PrimAttrCount)},
         {"PrimAttrs", "PrimAttr[PrimAttrCount]", sizeof(PrimitiveTypeAttr),
          FMOffset(BP5AttrStruct *, PrimAttrs)},
-        {"StrAttrCount", "integer", sizeof(size_t), FMOffset(BP5AttrStruct *, StrAttrCount)},
+        {"StrAttrCount", "integer", sizeof(uint64_t), FMOffset(BP5AttrStruct *, StrAttrCount)},
         {"StrAttrs", "StrAttr[StrAttrCount]", sizeof(StringArrayAttr),
          FMOffset(BP5AttrStruct *, StrAttrs)},
         {NULL, NULL, 0, 0}};
