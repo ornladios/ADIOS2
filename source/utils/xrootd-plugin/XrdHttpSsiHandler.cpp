@@ -19,6 +19,7 @@
 #include "XrdVersion.hh"
 
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
 #include <iostream>
@@ -668,6 +669,13 @@ bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
         return false;
     }
 
+    // HEAD is answered for ADIOS data requests only (headers-only response,
+    // so caches can size a response without fetching it).
+    if (strcmp(verb, "HEAD") == 0)
+    {
+        return strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0;
+    }
+
     // Accept POST and GET
     if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0)
     {
@@ -728,10 +736,12 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     //   - legacy query-string GET (old client form):
     //       /adios/<filename>?<verb>&<key>=<val>&...
     // POST is no longer supported (legacy POST builds are out of
-    // circulation).
-    if (req.verb != "GET")
+    // circulation).  HEAD runs the request as a size-only query: the SSI
+    // layer computes the exact response size from metadata (no data read)
+    // and the reply carries it as Content-Length with no body.
+    if (req.verb != "GET" && req.verb != "HEAD")
     {
-        return SendError(req, 405, "Only GET is supported");
+        return SendError(req, 405, "Only GET and HEAD are supported");
     }
 
     // Use xrd-http-fullresource (the raw URI, unprocessed by XrdOucEnv)
@@ -806,6 +816,21 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
         }
     }
 
+    if (req.verb == "HEAD")
+    {
+        // Size-only query.  Inserted right after the verb: the batchget
+        // parser treats parameters after the first Varname= as per-variable.
+        size_t sp = ssiCommand.find(' ');
+        if (sp == std::string::npos)
+        {
+            ssiCommand += " SizeOnly=1";
+        }
+        else
+        {
+            ssiCommand.insert(sp + 1, "SizeOnly=1&");
+        }
+    }
+
     // Create the SSI resource
     XrdSsiResource ssiResource(resource);
 
@@ -838,7 +863,19 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     }
 
     // Success - send the response
-    int result = SendResponse(req, respData, respLen);
+    int result;
+    if (req.verb == "HEAD")
+    {
+        // Size-only reply: ASCII byte count of the body a GET would return.
+        const long long size = atoll(std::string(respData, respLen).c_str());
+        std::string headers = "Content-Type: application/octet-stream";
+        result =
+            req.SendSimpleResp(200, nullptr, const_cast<char *>(headers.c_str()), nullptr, size);
+    }
+    else
+    {
+        result = SendResponse(req, respData, respLen);
+    }
 
     // Clean up - call Finished to release resources
     ssiReq->Finished();
@@ -847,9 +884,16 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
     return result;
 }
 
+// A HEAD response carries the headers (including the Content-Length a GET
+// would have) but no body; XrdHttp emits Content-Length from bodylen and
+// sends nothing when body is null.
 int XrdHttpSsiHandler::SendError(XrdHttpExtReq &req, int code, const char *message)
 {
     m_log.Emsg("SendError", message);
+    if (req.verb == "HEAD")
+    {
+        return req.SendSimpleResp(code, nullptr, nullptr, nullptr, strlen(message));
+    }
     return req.SendSimpleResp(code, nullptr, nullptr, const_cast<char *>(message), strlen(message));
 }
 

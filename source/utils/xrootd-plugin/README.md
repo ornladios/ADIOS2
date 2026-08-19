@@ -16,6 +16,45 @@ This document covers operator-facing configuration. Other operational knobs
 (file-pool FD/metadata limits, the admin HTTP interface) are described in the
 release notes and will be folded in here over time.
 
+## URL path prefix
+
+The HTTP handler answers only requests whose URL path starts with a configured
+prefix; everything else falls through to XRootD's regular HTTP file serving.
+The prefix defaults to `/adios` and is set server-side via the exthandler
+parameters in the XRootD config:
+
+```
+http.exthandler xrdhttpssi /path/to/libadios2_xrootd_http.so "ssilib=/path/to/libadios2_xrootd.so prefix=/my/namespace"
+```
+
+The client must build URLs with the same prefix. It defaults to `/adios` and is
+set per host in `hosts.yaml` with the `serverpath` key of an `xrootd` protocol
+entry (or the `XRootDServerPath` environment variable when using the
+`DoXRootDHttps`/`DoXRootDXrdCl` env-var access path):
+
+```yaml
+myserver:
+  remote:
+      protocol: xrootd
+      host: myserver.example.org
+      port: 8443
+      transfer_protocol: https
+      serverpath: /my/namespace
+```
+
+This matters for Pelican-style deployments, where the path prefix is a
+federation namespace rather than a fixed string.
+
+## HEAD requests
+
+A data-request URL answers HEAD with the same headers a GET would produce,
+including the exact `Content-Length` of the response body, and no body, so an
+HTTP cache can size a response without fetching it. The size is computed from
+file metadata; no data is read, so HEAD is cheap for the server (a pooled
+engine open plus selection arithmetic). HEAD requests are not counted in the
+served-bytes statistics or the access log. The admin endpoints do not answer
+HEAD.
+
 ## Limits
 
 A single response (one variable get, or one batch frame) is capped at 2 GiB, a

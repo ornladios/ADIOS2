@@ -391,6 +391,18 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
         params["UseHttps"] = useHttps ? "true" : "false";
         if (useXrdCl)
             params["Backend"] = "XrdCl";
+        // URL path prefix that routes requests to the ADIOS handler on the
+        // server: hosts.yaml `serverpath` (XRootDServerPath env in the
+        // env-var lane), default "/adios".  A Pelican deployment sets this
+        // to the namespace the federation exports.
+        if (remoteSetup.hostConfig && !remoteSetup.hostConfig->remoteServerPath.empty())
+        {
+            params["ServerPath"] = remoteSetup.hostConfig->remoteServerPath;
+        }
+        else if (const char *serverPath = getenv("XRootDServerPath"))
+        {
+            params["ServerPath"] = serverPath;
+        }
         // For testing, disable SSL verification (only relevant for HTTPS)
         if (useHttps) // && getenv("XRootDHttpsNoVerify"))
         {
