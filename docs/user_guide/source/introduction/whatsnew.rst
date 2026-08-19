@@ -61,6 +61,22 @@ environment-variable fallback. On Slingshot, the required OFI auth key is
 supplied automatically from ``SLINGSHOT_VNIS``. See the SST engine
 documentation for details.
 
+Reader-defined derived variables
+--------------------------------
+
+A read IO can now define a derived expression over a file's variables that were
+never marked derived at write time: ``IO::DefineReaderDerivedVariable(name,
+expression)``, then ``InquireVariable``/``Get`` after Open. The reader computes
+it from the file data. BP5 only; inputs must be same-shaped global arrays.
+C++, C, Fortran, Python.
+
+Missing min/max reported as N/A
+-------------------------------
+
+Variables stored without statistics (``StatsLevel=0``) now report an unset
+range (``Min() > Max()``) instead of a misleading ``0/0``; ``bpls`` prints
+``N/A``.
+
 
 ======================
 What's new in v2.12?

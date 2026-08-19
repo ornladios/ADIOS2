@@ -36,6 +36,7 @@ public:
         COMPRESS_SZ3 = 11,
         REFACTOR_MDR = 41,
         REFACTOR_PRODM = 42,
+        COMPRESS_CAESAR = 45,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
         PLUGIN_INTERFACE = 53,

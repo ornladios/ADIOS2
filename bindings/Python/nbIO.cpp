@@ -161,6 +161,19 @@ VariableDerived IO::DefineDerivedVariable(const std::string &name, const std::st
     return vd;
 }
 
+void IO::DefineReaderDerivedVariable(const std::string &name, const std::string &expression)
+{
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::DefineReaderDerivedVariable");
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    m_IO->DefineReaderDerivedVariable(name, expression);
+#else
+    throw std::invalid_argument("ERROR: Derived Variables are not supported in this adios2 build "
+                                ", in call to DefineReaderDerivedVariable\n");
+#endif
+}
+
 Variable IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable " + name + ", in call to IO::InquireVariable");

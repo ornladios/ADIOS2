@@ -48,86 +48,70 @@ default:
 #===============================================================================
 build:uo-sanitizer-asan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-msan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-tsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20260812
   extends: [.common-build]
 
 build:uo-sanitizer-ubsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20260812
   extends: [.common-build]
 
 test:uo-sanitizer-asan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-asan]
 
 test:uo-sanitizer-msan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-msan]
 
 test:uo-sanitizer-tsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-tsan]
 
 test:uo-sanitizer-ubsan:
   image:
-    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20260812
   extends: [.common-memcheck]
   needs: [build:uo-sanitizer-ubsan]
 
-deploy:sync-ornl:
-  environment: ornl
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: on_success
-    - when: never
-  image:
-    name: ornladios/adios2:sync-20241206-b
-    pull_policy: always
-  script: >
-    .gitlab/config/SpackCIBridge.py
-    ornladios/ADIOS2
-    git@code.ornl.gov:ecpcitest/adios2.git
-    https://code.ornl.gov/
-    ecpcitest/adios2
-    --prereq-check=format
-    --prereq-check=git_checks
-    --disable-status-post
-  dependencies: []
-  needs: []
-
-deploy:sync-spack:
-  environment: spackio
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: on_success
-    - when: never
-  image:
-    name: ornladios/adios2:sync-20241206-b
-    pull_policy: always
-  script: >
-    .gitlab/config/SpackCIBridge.py
-    ornladios/ADIOS2
-    git@ssh.gitlab.spack.io:adios2/adios2.git
-    https://gitlab.spack.io/
-    adios2/ADIOS2
-    --prereq-check=format
-    --prereq-check=git_checks
-    --status-context="Frank CI (sanitizers)"
-  dependencies: []
-  needs: []
+include:
+  - component: $CI_SERVER_FQDN/dav-sdk/gh-gl-sync/github-sync@~latest
+    inputs:
+      github_project: ornladios/ADIOS2
+      gitlab_repo: git@ssh.gitlab.spack.io:adios2/adios2.git
+      gitlab_host: https://gitlab.spack.io/
+      gitlab_project: adios2/ADIOS2
+      prereq_check: git_checks
+      status_context: "Frank CI (sanitizers)"
+      sync_draft_prs: true
+      environment: spackio
+    rules:
+      - if: $CI_SERVER_HOST == "gitlab.spack.io"
+  - component: $CI_SERVER_FQDN/dav-sdk/gh-gl-sync/github-sync@~latest
+    inputs:
+      github_project: ornladios/ADIOS2
+      gitlab_repo: git@code.ornl.gov:ecpcitest/adios2.git
+      gitlab_host: https://code.ornl.gov/
+      gitlab_project: ecpcitest/adios2
+      prereq_check: git_checks
+      status_context: "Frank CI (sanitizers)"
+      sync_draft_prs: true
+      environment: ornl
+    rules:
+      - if: $CI_SERVER_HOST == "gitlab.spack.io"

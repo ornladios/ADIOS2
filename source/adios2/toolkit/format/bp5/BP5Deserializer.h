@@ -163,9 +163,16 @@ private:
         char *VarName = NULL;
         size_t DimCount = 0;
         size_t JoinedDimen = SIZE_MAX;
-        size_t *LastJoinedOffset = NULL;
-        size_t *LastJoinedShape = NULL;
+        uint64_t *LastJoinedOffset = NULL;
+        uint64_t *LastJoinedShape = NULL;
         bool Derived = false;
+        // Reader-side derived variable: no file metadata of its own. Its block
+        // structure is taken from ReaderDerivedStructInput (a congruent input
+        // variable's VarRec), and DerivedVariable points at the reader-owned
+        // VariableDerived (which the writer path instead finds in the IO's
+        // derived-variable registry).
+        bool ReaderDerived = false;
+        BP5VarRec *ReaderDerivedStructInput = nullptr;
         char *ExprStr = NULL;
         ShapeID OrigShapeID;
         core::StructDefinition *Def = nullptr;
@@ -174,7 +181,7 @@ private:
         DataType Type;
         int ElementSize = 0;
         size_t MinMaxOffset = SIZE_MAX;
-        size_t *GlobalDims = NULL;
+        uint64_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
         size_t FirstTSSeen = SIZE_MAX;
         size_t LastStepAdded = SIZE_MAX;
@@ -233,9 +240,28 @@ private:
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived variables: placeholder Variable* -> its synthetic
+    // VarRec. Deliberately kept OUT of VarByKey so the per-step teardown
+    // (SetupForStep) never sweeps these IO-owned, reader-defined variables, and
+    // the placeholder is not RegisterCreatedVariable'd so it is not engine-owned.
+    // Populated lazily as the file's input variables appear; used to route Get
+    // when VarByKey has no entry for the placeholder.
+    std::unordered_map<const void *, BP5VarRec *> m_ReaderDerivedByVar;
+    void InstallReaderDerivedVariables();
+#endif
+
     std::vector<void *> *m_MetadataBaseAddrs =
         nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
     std::vector<void *> *m_FreeableMBA = nullptr;
+
+    // Metadata buffers allocated by MetadataBufferPrep() when the incoming
+    // format needs conversion and so cannot be decoded in place.  The decoded
+    // metadata is referenced for as long as we serve reads from it, so these
+    // are owned here and released in the destructor.  MetadataBufferPrep() is
+    // run concurrently by the reader's install threads, hence the mutex.
+    mutable std::vector<void *> m_DecodedMetadataBuffers;
+    mutable std::mutex mutexDecodedMetadata;
 
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
@@ -245,7 +271,7 @@ private:
     std::vector<std::vector<void *> *> MetadataBaseArray;
     // for random access mode, for each timestep, for each writerrank, base
     // address of the joined dim arrays, for streaming use 0 index
-    std::vector<std::vector<size_t *>> JoinedDimArray;
+    std::vector<std::vector<uint64_t *>> JoinedDimArray;
     size_t JDAIdx = 0;
 
     ControlInfo *ControlBlocks = nullptr;
@@ -257,7 +283,7 @@ private:
     BP5VarRec *LookupVarByKey(void *Key) const;
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
-    void ReverseDimensions(size_t *Dimensions, size_t count, size_t times);
+    void ReverseDimensions(uint64_t *Dimensions, size_t count, size_t times);
     const char *BreakdownVarName(const char *Name, DataType *type_p, int *element_size_p);
     void BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax);
     void BreakdownArrayName(const char *Name, char **base_name_p, DataType *type_p,
@@ -266,8 +292,9 @@ private:
                               int *element_size_p, bool &Operator, bool &MinMax);
     void *VarSetup(core::Engine *engine, const char *variableName, const DataType type, void *data);
     void *ArrayVarSetup(core::Engine *engine, const char *variableName, const DataType type,
-                        int DimCount, size_t *Shape, size_t *Start, size_t *Count,
-                        core::StructDefinition *Def, core::StructDefinition *ReaderDef);
+                        int DimCount, uint64_t *Shape, uint64_t *Start, uint64_t *Count,
+                        core::StructDefinition *Def, core::StructDefinition *ReaderDef,
+                        bool registerCreated = true);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex, const size_t *LocalOffsets,
                                size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
@@ -281,7 +308,7 @@ private:
     void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
 
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
-    bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count);
+    bool IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offsets, uint64_t *count);
     char *FillBlock(std::map<BP5VarRec *, MinVarInfo *> &map);
 
     size_t CurTimestep = 0;

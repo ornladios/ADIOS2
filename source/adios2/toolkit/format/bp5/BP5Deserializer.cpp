@@ -272,19 +272,33 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p, D
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
 {
     auto ret = VarByKey.find(Key);
-    if (ret == VarByKey.end())
+    if (ret != VarByKey.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
-            "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+        return ret->second;
     }
-    return ret->second;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // A reader-derived placeholder is not in VarByKey. Its structural queries
+    // (shape, blocks, steps) mirror its congruent input, so answer from that
+    // input's VarRec, which carries the per-step bookkeeping. Get instead uses
+    // m_ReaderDerivedByVar directly to reach the derived VarRec.
+    auto rd = m_ReaderDerivedByVar.find(Key);
+    if (rd != m_ReaderDerivedByVar.end())
+    {
+        return rd->second->ReaderDerivedStructInput;
+    }
+#endif
+    helper::Throw<std::runtime_error>(
+        "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
+        "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+    return nullptr;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
 {
-    auto ret = VarByName[Name];
-    return ret;
+    // find, not operator[]: a miss must not insert a null entry (the destructor
+    // and other iterators dereference VarByName values).
+    auto it = VarByName.find(Name);
+    return (it != VarByName.end()) ? it->second : nullptr;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
@@ -357,7 +371,11 @@ static int base64_decode(unsigned char *input, unsigned char *output)
 
 BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
 {
-    FMStructDescList FormatList = format_list_of_FMFormat(Format);
+    // Localize a copy of the writer's format to the reader's native layout so the
+    // computed field offsets match the decode target. FFS/DILL owns the alignment
+    // and pointer-size remapping; we do not touch element sizes here.
+    FMStructDescList FormatList = FMcopy_struct_list(format_list_of_FMFormat(Format));
+    FMlocalize_structs(FormatList);
     FMFieldList FieldList = FormatList[0].field_list;
     while (strncmp(FieldList->field_name, "BitField", 8) == 0)
         FieldList++;
@@ -495,8 +513,12 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             }
             if (MinMax)
             {
-
-                VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
+                // Byte offset of the MinMax pointer within the (Operator)MM metadata
+                // struct. Use the real C offset for both V1 and V2: the base fields
+                // are NOT all pointer-sized (Dims/BlockCount/DBCount are uint64_t), so
+                // MetaRecFields*sizeof(void*) only held when size_t == void* (64-bit).
+                VarRec->MinMaxOffset = Operator ? offsetof(MetaArrayRecOperatorMM, MinMax)
+                                                : offsetof(MetaArrayRecMM, MinMax);
                 MetaRecFields++;
             }
             if (V1_fields)
@@ -542,17 +564,18 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     ret->ControlCount = ControlCount;
     ret->Next = ControlBlocks;
     ControlBlocks = ret;
+    FMfree_struct_list(FormatList);
     return ret;
 }
 
-void BP5Deserializer::ReverseDimensions(size_t *Dimensions, size_t count, size_t times)
+void BP5Deserializer::ReverseDimensions(uint64_t *Dimensions, size_t count, size_t times)
 {
     size_t Offset = 0;
     for (size_t j = 0; j < times; j++)
     {
         for (size_t i = 0; i < count / 2; i++)
         {
-            size_t tmp = Dimensions[Offset + i];
+            uint64_t tmp = Dimensions[Offset + i];
             Dimensions[Offset + i] = Dimensions[Offset + count - i - 1];
             Dimensions[Offset + count - i - 1] = tmp;
         }
@@ -584,10 +607,12 @@ void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName, 
 };
 
 void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableName,
-                                     const DataType type, int DimCount, size_t *Shape,
-                                     size_t *Start, size_t *Count, core::StructDefinition *Def,
-                                     core::StructDefinition *ReaderDef)
+                                     const DataType type, int DimCount, uint64_t *Shape,
+                                     uint64_t *Start, uint64_t *Count, core::StructDefinition *Def,
+                                     core::StructDefinition *ReaderDef, bool registerCreated)
 {
+    // Shape/Start/Count are fixed-width uint64_t metadata; narrowed to size_t for the
+    // in-memory Dims vectors (values > size_t are truncated on 32-bit platforms).
     std::vector<size_t> VecShape;
     std::vector<size_t> VecStart;
     std::vector<size_t> VecCount;
@@ -619,7 +644,8 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
     {
         core::VariableStruct *variable =
             &(engine->m_IO.DefineStructVariable(variableName, *Def, VecShape, VecStart, VecCount));
-        engine->RegisterCreatedVariable(variable);
+        if (registerCreated)
+            engine->RegisterCreatedVariable(variable);
         variable->m_ReadStructDefinition = ReaderDef;
         return (void *)variable;
     }
@@ -627,7 +653,8 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
     else if (Type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         core::Variable<T> *variable = &(engine->m_IO.DefineVariable<T>(variableName));             \
-        engine->RegisterCreatedVariable(variable);                                                 \
+        if (registerCreated)                                                                       \
+            engine->RegisterCreatedVariable(variable);                                             \
         variable->m_Shape = VecShape;                                                              \
         variable->m_Start = VecStart;                                                              \
         variable->m_Count = VecCount;                                                              \
@@ -642,6 +669,83 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine, const char *variableN
 #undef declare_type
     return (void *)NULL;
 };
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+void BP5Deserializer::InstallReaderDerivedVariables()
+{
+    core::IO &io = m_Engine->m_IO;
+    if (!io.HasReaderDerivedVariables())
+    {
+        return; // common case: nothing to do, no allocation
+    }
+    for (const auto &name : io.GetUnresolvedReaderDerivedVariables())
+    {
+        core::VariableDerived *derived = io.ResolveReaderDerivedVariable(name);
+        if (!derived)
+        {
+            // An input variable is not yet installed; leave it pending and let a
+            // later writer rank or step resolve it.
+            continue;
+        }
+        // The read path takes block structure from the first (congruent) input's
+        // VarRec, so it must exist now that the derived var has resolved against
+        // the file. Look it up before building anything; a miss is a logic error,
+        // not a null to propagate into GetMetadataBase.
+        BP5VarRec *structInput = LookupVarByName(derived->VariableNameList()[0].c_str());
+        if (!structInput)
+        {
+            helper::Throw<std::logic_error>(
+                "Toolkit", "format::BP5Deserializer", "InstallReaderDerivedVariables",
+                "reader derived variable " + name + " resolved but its input " +
+                    derived->VariableNameList()[0] + " has no BP5 record");
+        }
+        // Build a persistent placeholder the user can InquireVariable and Get.
+        // registerCreated=false keeps it off the engine's created-variable list
+        // (so per-step teardown does not remove it), and it is deliberately not
+        // added to VarByKey (which SetupForStep sweeps). Get routing goes through
+        // m_ReaderDerivedByVar instead.
+        // ArrayVarSetup takes fixed-width uint64_t dims; the derived var's are size_t.
+        std::vector<uint64_t> phShape(derived->m_Shape.begin(), derived->m_Shape.end());
+        std::vector<uint64_t> phStart(derived->m_Start.begin(), derived->m_Start.end());
+        std::vector<uint64_t> phCount(derived->m_Count.begin(), derived->m_Count.end());
+        void *variable = ArrayVarSetup(
+            m_Engine, name.c_str(), derived->m_Type, (int)derived->m_Shape.size(), phShape.data(),
+            phStart.data(), phCount.data(), nullptr, nullptr, false /* registerCreated */);
+        static_cast<core::VariableBase *>(variable)->m_Engine = m_Engine;
+
+        // Synthesize a VarRec so Get can reuse the writer-derived read machinery.
+        // It carries no file metadata; its block structure comes from a congruent
+        // input variable (ReaderDerivedStructInput), and it is kept out of
+        // VarByName/VarByKey so no teardown touches it. Freed in the destructor.
+        BP5VarRec *vr = new BP5VarRec();
+        vr->VarName = strdup(name.c_str());
+        vr->Variable = variable;
+        vr->DerivedVariable = (void *)derived;
+        vr->Derived = true;
+        vr->ReaderDerived = true;
+        vr->Type = derived->m_Type;
+        vr->ElementSize = (int)helper::GetDataTypeSize(derived->m_Type);
+        vr->DimCount = derived->m_Shape.size();
+        vr->OrigShapeID = ShapeID::GlobalArray;
+        vr->ReaderDerivedStructInput = structInput;
+        m_ReaderDerivedByVar[variable] = vr;
+    }
+
+    // A reader-derived placeholder is not in the VarByKey loop that grows the
+    // available-step count per step, so mirror its structure input's count here
+    // (the input was updated earlier in this same InstallMetadataBuffer pass).
+    for (auto &pair : m_ReaderDerivedByVar)
+    {
+        BP5VarRec *vr = pair.second;
+        auto *placeholder = static_cast<core::VariableBase *>(vr->Variable);
+        auto *inputVar = static_cast<core::VariableBase *>(vr->ReaderDerivedStructInput->Variable);
+        if (inputVar)
+        {
+            placeholder->m_AvailableStepsCount = inputVar->m_AvailableStepsCount;
+        }
+    }
+}
+#endif
 
 void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
 {
@@ -721,7 +825,7 @@ FFSTypeHandle BP5Deserializer::BufferMetaMetaPrep(void *MetadataBlock)
         FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
         FMFormat Format = FMformat_from_ID(FMC, (char *)MetadataBlock);
         FMStructDescList List = FMcopy_struct_list(format_list_of_FMFormat(Format));
-        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
+        FMlocalize_structs(List);
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
@@ -744,6 +848,12 @@ void *BP5Deserializer::MetadataBufferPrep(void *MetadataBlock, const size_t Bloc
             FFS_est_decode_length(ReaderFFSContext, (char *)MetadataBlock, BlockLen);
         BaseData = malloc(DecodedLength);
         FFSdecode_to_buffer(ReaderFFSContext, (char *)MetadataBlock, BaseData);
+        // We hand out pointers into this buffer for the life of the
+        // deserializer, so it cannot be freed here.  Take ownership instead.
+        {
+            std::lock_guard<std::mutex> lockGuard(mutexDecodedMetadata);
+            m_DecodedMetadataBuffers.push_back(BaseData);
+        }
     }
     std::call_once(once, [&]() { DumpMetadata = (getenv("BP5DumpMetadata") != NULL); });
     if (DumpMetadata)
@@ -842,12 +952,12 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
     if (JoinedDimenTotal)
     {
         JoinedDimArray[JDAIdx][WriterRank] =
-            (size_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
-                              JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+            (uint64_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
+                                JoinedDimenTotal * writerCohortSize * sizeof(uint64_t));
     }
 
     // shortcut name. should be const
-    size_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
+    uint64_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
 
     for (int i = 0; i < Control->ControlCount; i++)
     {
@@ -986,8 +1096,8 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                     {
                         // Local single values show up as global arrays on the
                         // reader
-                        size_t zero = 0;
-                        size_t writerSize = writerCohortSize;
+                        uint64_t zero = 0;
+                        uint64_t writerSize = writerCohortSize;
                         VarRec->Variable =
                             ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type, 1, &writerSize,
                                           &zero, &writerSize, VarRec->Def, VarRec->ReaderDef);
@@ -1054,6 +1164,12 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
             }
         }
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // The file's variables for this rank are now installed; try to resolve any
+    // reader-side derived variables whose inputs have become available. Cheap and
+    // idempotent: the unresolved set is empty once none remain (the common case).
+    InstallReaderDerivedVariables();
+#endif
 }
 
 void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step)
@@ -1075,14 +1191,31 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen
     }
     if (!FFShas_conversion(FFSformat))
     {
-        FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
-        FMFormat Format = FMformat_from_ID(FMC, (char *)AttributeBlock);
-        FMStructDescList List = FMcopy_struct_list(format_list_of_FMFormat(Format));
-        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
-        establish_conversion(ReaderFFSContext, FFSformat, List);
-        FMfree_struct_list(List);
+        if (strcmp(name_of_FMformat(FMFormat_of_original(FFSformat)), "GenericAttributes") == 0)
+        {
+            // V2 (GenericAttributes): InstallAttributesV2 reads the decoded buffer directly
+            // as our local BP5AttrStruct. Convert into our own local field list rather than a
+            // localized copy of the writer's format, so the decoded layout matches the struct
+            // we cast to (this is what makes cross-bitness attribute reads land correctly).
+            establish_conversion(ReaderFFSContext, FFSformat, attr_struct_list);
+        }
+        else
+        {
+            // V1 (legacy "Attributes"): localize the writer's format for the decode target.
+            FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
+            FMFormat Format = FMformat_from_ID(FMC, (char *)AttributeBlock);
+            FMStructDescList List = FMcopy_struct_list(format_list_of_FMFormat(Format));
+            FMlocalize_structs(List);
+            establish_conversion(ReaderFFSContext, FFSformat, List);
+            FMfree_struct_list(List);
+        }
     }
 
+    // When the incoming format needs conversion (a file written on a platform
+    // whose layout differs from ours) FFS cannot decode in place and we own the
+    // decoded buffer.  InstallAttributes{V1,V2} copy every value into the IO's
+    // attributes, so the buffer can be released as soon as they return.
+    std::unique_ptr<void, void (*)(void *)> DecodedBuffer(nullptr, free);
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(ReaderFFSContext, (char *)AttributeBlock, &BaseData);
@@ -1092,8 +1225,8 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock, size_t BlockLen
         auto DecodedLength =
             FFS_est_decode_length(ReaderFFSContext, (char *)AttributeBlock, BlockLen);
         BaseData = malloc(DecodedLength);
-        FFSBuffer decode_buf = create_fixed_FFSBuffer((char *)BaseData, DecodedLength);
-        FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock, decode_buf);
+        DecodedBuffer.reset(BaseData);
+        FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock, BaseData);
     }
     if (DumpMetadata == -1)
     {
@@ -1170,8 +1303,10 @@ void BP5Deserializer::InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseDat
         else
         {
             DataType Type;
-            size_t ElemCount = *(size_t *)field_data;
-            field_data = (void *)((char *)field_data + sizeof(size_t));
+            // ElemCount field is fixed-width Int64 (see MarshalAttribute); read the
+            // full 8 bytes so field_data advances correctly on 32-bit (size_t is 4).
+            size_t ElemCount = static_cast<size_t>(*(uint64_t *)field_data);
+            field_data = (void *)((char *)field_data + sizeof(uint64_t));
             i++;
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip BP5_
             char *FieldType = strdup(FieldList[i].field_type);
@@ -1385,7 +1520,23 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
                                      void *DestData, size_t AbsStep, size_t RelStep,
                                      const core::Selection &selection)
 {
-    BP5VarRec *VarRec = VarByKey[&variable];
+    // Use find, not operator[]: a reader-derived placeholder is not in VarByKey,
+    // and inserting a NULL entry would crash the teardown loop that dereferences
+    // it. Fall back to the reader-derived routing map on a miss.
+    BP5VarRec *VarRec = nullptr;
+    {
+        auto vk = VarByKey.find(&variable);
+        if (vk != VarByKey.end())
+            VarRec = vk->second;
+    }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (!VarRec)
+    {
+        auto it = m_ReaderDerivedByVar.find(&variable);
+        if (it != m_ReaderDerivedByVar.end())
+            VarRec = it->second;
+    }
+#endif
     if (variable.m_Type == adios2::DataType::Struct)
     {
         StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
@@ -1496,7 +1647,7 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
              (variable.m_ShapeID == ShapeID::LocalArray))
     {
         BP5ArrayRequest Req;
-        Req.VarRec = VarByKey[&variable];
+        Req.VarRec = VarRec;
         Req.VarName = (char *)variable.m_Name.c_str();
         Req.RequestType = Local;
         Req.BlockID = hasBlock ? blockID : 0;
@@ -1630,7 +1781,11 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
     }
     else
     {
-        BP5VarRec *VarRec = VarByKey[&variable];
+        // LookupVarByKey (not operator[]) so a reader-derived placeholder resolves
+        // to its structure-input VarRec for step iteration, and an unknown key
+        // throws instead of inserting a NULL. QueueGetSingle re-resolves the
+        // placeholder to its synthetic derived VarRec.
+        BP5VarRec *VarRec = LookupVarByKey((void *)&variable);
         bool ret = false;
         if (variable.m_Type == adios2::DataType::Struct)
         {
@@ -1677,15 +1832,20 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
     }
 }
 
+// The request (start1/count1) is size_t (the reader's own selection); the block
+// (start2/count2) is fixed-width uint64_t metadata. Compare in uint64_t so a block
+// offset > size_t is not truncated before the overlap test. The intersection is
+// bounded by the request, so the size_t outputs cannot overflow.
 static bool IntersectionStartCount(const size_t dimensionsSize, const size_t *start1,
-                                   const size_t *count1, const size_t *start2, const size_t *count2,
-                                   size_t *outstart, size_t *outcount) noexcept
+                                   const size_t *count1, const uint64_t *start2,
+                                   const uint64_t *count2, size_t *outstart,
+                                   size_t *outcount) noexcept
 {
     for (size_t d = 0; d < dimensionsSize; ++d)
     {
         // Don't intercept
-        const size_t end1 = start1[d] + count1[d] - 1;
-        const size_t end2 = start2[d] + count2[d] - 1;
+        const uint64_t end1 = static_cast<uint64_t>(start1[d]) + count1[d] - 1;
+        const uint64_t end2 = start2[d] + count2[d] - 1;
 
         if ((count1[d] == 0) || (count2[d] == 0))
         {
@@ -1698,14 +1858,15 @@ static bool IntersectionStartCount(const size_t dimensionsSize, const size_t *st
     }
     for (size_t d = 0; d < dimensionsSize; d++)
     {
-        const size_t intersectionStart = (start1[d] < start2[d]) ? start2[d] : start1[d];
+        const uint64_t intersectionStart =
+            (static_cast<uint64_t>(start1[d]) < start2[d]) ? start2[d] : start1[d];
 
         // end, must be inclusive
-        const size_t end1 = start1[d] + count1[d] - 1;
-        const size_t end2 = start2[d] + count2[d] - 1;
-        const size_t intersectionEnd = (end1 > end2) ? end2 : end1;
-        outstart[d] = intersectionStart;
-        outcount[d] = intersectionEnd - intersectionStart + 1;
+        const uint64_t end1 = static_cast<uint64_t>(start1[d]) + count1[d] - 1;
+        const uint64_t end2 = start2[d] + count2[d] - 1;
+        const uint64_t intersectionEnd = (end1 > end2) ? end2 : end1;
+        outstart[d] = static_cast<size_t>(intersectionStart);
+        outcount[d] = static_cast<size_t>(intersectionEnd - intersectionStart + 1);
         if (outcount[d] == 0)
         {
             return false;
@@ -1714,10 +1875,13 @@ static bool IntersectionStartCount(const size_t dimensionsSize, const size_t *st
     return true;
 }
 
-static size_t LinearIndex(const size_t dimensionsSize, const size_t *count, const size_t *pos,
+// count is fixed-width uint64_t block metadata; pos is the size_t intersection. The
+// returned linear element index is a byte/element offset into a reader-local block, so
+// it fits size_t for any read feasible on this machine (accumulate in uint64_t first).
+static size_t LinearIndex(const size_t dimensionsSize, const uint64_t *count, const size_t *pos,
                           bool IsRowMajor) noexcept
 {
-    size_t offset = 0;
+    uint64_t offset = 0;
     if (IsRowMajor)
     {
         for (size_t d = 0; d < dimensionsSize; ++d)
@@ -1732,10 +1896,11 @@ static size_t LinearIndex(const size_t dimensionsSize, const size_t *count, cons
             offset = offset * count[d] + pos[d];
         }
     }
-    return offset;
+    return static_cast<size_t>(offset);
 }
 
-static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
+template <typename T>
+static size_t CalcBlockLength(const size_t dimensionsSize, const T *count)
 {
     size_t len = count[0];
     for (size_t d = 1; d < dimensionsSize; ++d)
@@ -1753,7 +1918,7 @@ static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
  * contiguous, but it should never return true when it is not
  * contiguous.
  */
-bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count)
+bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offsets, uint64_t *count)
 {
     /*
      * All 1 dimensional requests in ADIOS involve the transfer of
@@ -1802,9 +1967,13 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
             if (VarRec->Derived)
             {
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-                auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
-                auto derivedVar =
-                    static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+                // Reader-side derived variables keep their VariableDerived on the
+                // synthetic VarRec; writer-defined ones live in the IO registry.
+                VariableDerived *derivedVar =
+                    VarRec->ReaderDerived
+                        ? static_cast<VariableDerived *>(VarRec->DerivedVariable)
+                        : static_cast<VariableDerived *>(
+                              m_Engine->m_IO.GetDerivedVariables().at(VarRec->VarName).get());
                 derivedVarInputNameList = derivedVar->VariableNameList();
                 nameToVarInfo = new std::map<std::string, std::unique_ptr<MinVarInfo>>();
                 Req->DerivedInputMap = nameToVarInfo;
@@ -1934,11 +2103,14 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                             std::array<size_t, helper::MAX_DIMS> intersectioncount;
 
                             size_t StartDim = Block * VarRec->DimCount;
-                            if (IntersectionStartCount(
-                                    VarRec->DimCount, Req->Start.data(), Req->Count.data(),
-                                    &writer_meta_base->Offsets[StartDim],
-                                    &writer_meta_base->Count[StartDim], &intersectionstart[0],
-                                    &intersectioncount[0]))
+                            const uint64_t *blkOffsets = writer_meta_base->Offsets
+                                                             ? writer_meta_base->Offsets + StartDim
+                                                             : nullptr;
+                            const uint64_t *blkCount = writer_meta_base->Count + StartDim;
+                            if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
+                                                       Req->Count.data(), blkOffsets, blkCount,
+                                                       &intersectionstart[0],
+                                                       &intersectioncount[0]))
                             {
                                 if (VarRec->Derived)
                                 {
@@ -2218,10 +2390,9 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                             writer_meta_base->Offsets[StartDim + Dim];
                                     }
                                     size_t StartOffsetInBlock =
-                                        VB->m_ElementSize *
-                                        LinearIndex(VarRec->DimCount,
-                                                    &writer_meta_base->Count[StartDim],
-                                                    &intersectionstart[0], m_ReaderIsRowMajor);
+                                        VB->m_ElementSize * LinearIndex(VarRec->DimCount, blkCount,
+                                                                        &intersectionstart[0],
+                                                                        m_ReaderIsRowMajor);
                                     for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                                     {
                                         intersectionend[Dim] =
@@ -2229,8 +2400,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     }
                                     size_t EndOffsetInBlock =
                                         VB->m_ElementSize *
-                                        (LinearIndex(VarRec->DimCount,
-                                                     &writer_meta_base->Count[StartDim],
+                                        (LinearIndex(VarRec->DimCount, blkCount,
                                                      &intersectionend[0], m_ReaderIsRowMajor) +
                                          1);
                                     ReadRequest RR;
@@ -2341,11 +2511,15 @@ void BP5Deserializer::FinalizeGet(BP5GetContext &ctx, const ReadRequest &Read, c
     MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
         ((struct BP5VarRec *)Req.VarRec), Read.Timestep, Read.WriterRank);
 
-    size_t *GlobalDimensions = writer_meta_base->Shape;
-    auto DimCount = writer_meta_base->Dims;
+    size_t DimCount = writer_meta_base->Dims;
+    std::vector<size_t> GlobalDimScratch, RankOffsetScratch, RankSizeScratch; // 32-bit only
+    size_t *GlobalDimensions = BP5DimsToSizeT(writer_meta_base->Shape, DimCount, GlobalDimScratch);
     std::vector<size_t> ZeroSel(DimCount);
-    size_t *RankOffset = &writer_meta_base->Offsets[DimCount * Read.BlockID];
-    size_t *RankSize = &writer_meta_base->Count[DimCount * Read.BlockID];
+    size_t *RankOffset = BP5DimsToSizeT(
+        writer_meta_base->Offsets ? writer_meta_base->Offsets + DimCount * Read.BlockID : nullptr,
+        DimCount, RankOffsetScratch);
+    size_t *RankSize = BP5DimsToSizeT(writer_meta_base->Count + DimCount * Read.BlockID, DimCount,
+                                      RankSizeScratch);
     std::vector<size_t> ZeroRankOffset(DimCount);
     std::vector<size_t> ZeroGlobalDimensions(DimCount);
     const size_t *SelOffset = NULL;
@@ -2549,8 +2723,11 @@ void BP5Deserializer::FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRe
         auto VarRec = (struct BP5VarRec *)Req.VarRec;
         if (!VarRec->Derived)
             continue;
-        auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
-        auto derivedVar = static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+        VariableDerived *derivedVar =
+            VarRec->ReaderDerived
+                ? static_cast<VariableDerived *>(VarRec->DerivedVariable)
+                : static_cast<VariableDerived *>(
+                      m_Engine->m_IO.GetDerivedVariables().at(VarRec->VarName).get());
 
         auto nameToVarInfo = Req.DerivedInputMap;
         bool needsHalo = adios2::derived::HasHalo(derivedVar->m_CodeStream);
@@ -2764,6 +2941,21 @@ BP5Deserializer::~BP5Deserializer()
             delete VarRec.second->Def;
         delete VarRec.second;
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived placeholders are IO-owned (not in VarByName), so free
+    // their synthetic VarRecs here and remove the placeholders from the IO. The
+    // expression definitions persist on the IO; reset their resolution so a later
+    // Open on the same IO re-resolves against the new file.
+    for (auto &pair : m_ReaderDerivedByVar)
+    {
+        BP5VarRec *vr = pair.second;
+        m_Engine->m_IO.RemoveVariable(vr->VarName);
+        free(vr->VarName);
+        delete vr;
+    }
+    m_ReaderDerivedByVar.clear();
+    m_Engine->m_IO.ResetReaderDerivedResolutions();
+#endif
     if (m_FreeableMBA)
     {
         delete m_FreeableMBA;
@@ -2771,6 +2963,10 @@ BP5Deserializer::~BP5Deserializer()
     for (auto &step : MetadataBaseArray)
     {
         delete step;
+    }
+    for (auto &buffer : m_DecodedMetadataBuffers)
+    {
+        free(buffer);
     }
     for (auto &pvec : JoinedDimArray)
     {
@@ -2786,6 +2982,14 @@ BP5Deserializer::~BP5Deserializer()
 
 void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (VarRec->ReaderDerived)
+    {
+        // A reader-side derived variable has no file metadata of its own; its
+        // block structure is that of its (congruent) input variables.
+        return GetMetadataBase(VarRec->ReaderDerivedStructInput, Step, WriterRank);
+    }
+#endif
     MetaArrayRec *writer_meta_base = NULL;
     if (m_RandomAccessMode)
     {
@@ -2859,7 +3063,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
 
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (const size_t *)nullptr);
+    MV->Shape = BP5MVIOwnDims(MV, VarRec->GlobalDims, VarRec->DimCount);
 
     size_t AbsStep = RelStep;
     size_t StepLoopStart, StepLoopEnd;
@@ -2921,7 +3126,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 //  and should be immaterial otherise
                 if (writer_meta_base->Shape != NULL)
                 {
-                    MV->Shape = writer_meta_base->Shape;
+                    MV->Shape = BP5MVIOwnDims(MV, writer_meta_base->Shape, (size_t)MV->Dims);
                 }
                 size_t WriterBlockCount =
                     writer_meta_base->Dims ? writer_meta_base->DBCount / writer_meta_base->Dims : 1;
@@ -2931,7 +3136,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     }
     if (VarRec->OrigShapeID == ShapeID::JoinedArray)
     {
-        MV->Shape = VarRec->LastJoinedShape;
+        MV->Shape = BP5MVIOwnDims(MV, VarRec->LastJoinedShape, (size_t)MV->Dims);
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -2954,12 +3159,15 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
             }
             for (size_t i = 0; i < WriterBlockCount; i++)
             {
-                size_t *Offsets = NULL;
-                size_t *Count = NULL;
-                if (writer_meta_base->Offsets)
-                    Offsets = writer_meta_base->Offsets + (i * MV->Dims);
-                if (writer_meta_base->Count)
-                    Count = writer_meta_base->Count + (i * MV->Dims);
+                const size_t *Offsets = BP5MVIOwnDims(
+                    MV,
+                    writer_meta_base->Offsets ? writer_meta_base->Offsets + (i * MV->Dims)
+                                              : nullptr,
+                    (size_t)MV->Dims);
+                const size_t *Count = BP5MVIOwnDims(
+                    MV,
+                    writer_meta_base->Count ? writer_meta_base->Count + (i * MV->Dims) : nullptr,
+                    (size_t)MV->Dims);
                 MinBlockInfo Blk;
                 Blk.WriterID = (int)WriterRank;
                 Blk.BlockID = Id++;
@@ -2988,7 +3196,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     // this is only called for global and local arrays, so limited
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (const size_t *)nullptr);
+    MV->Shape = BP5MVIOwnDims(MV, VarRec->GlobalDims, VarRec->DimCount);
 
     size_t AbsStep = RelStep;
     size_t StepLoopStart, StepLoopEnd;
@@ -3026,7 +3235,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         {
             if (MV->Shape == NULL)
             {
-                MV->Shape = writer_meta_base->Shape;
+                MV->Shape = BP5MVIOwnDims(MV, writer_meta_base->Shape, (size_t)MV->Dims);
             }
             Id += 1; // one block
         }
@@ -3050,12 +3259,13 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         {
             MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
         }
-        size_t *Offsets = NULL;
-        size_t *Count = NULL;
-        if (writer_meta_base->Offsets)
-            Offsets = writer_meta_base->Offsets + (BlockID * MV->Dims);
-        if (writer_meta_base->Count)
-            Count = writer_meta_base->Count + (BlockID * MV->Dims);
+        const size_t *Offsets = BP5MVIOwnDims(
+            MV,
+            writer_meta_base->Offsets ? writer_meta_base->Offsets + (BlockID * MV->Dims) : nullptr,
+            (size_t)MV->Dims);
+        const size_t *Count = BP5MVIOwnDims(
+            MV, writer_meta_base->Count ? writer_meta_base->Count + (BlockID * MV->Dims) : nullptr,
+            (size_t)MV->Dims);
         MinBlockInfo Blk;
         Blk.WriterID = (int)WriterRank;
         Blk.BlockID = Id;
@@ -3271,6 +3481,22 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                                      MinMaxStruct &MinMax)
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-side derived variables carry no precomputed statistics: nothing was
+    // computed at write time, and the LookupVarByKey redirect would otherwise
+    // return an input variable's min/max. Report an explicitly invalid range
+    // (Init sets min = TYPE_MAX, max = TYPE_MIN, which no real data can produce;
+    // zeroed would be ambiguous with all-zero data). Return true so
+    // Variable::DoMinMax does not fall back to scanning the input's block stats.
+    {
+        auto rd = m_ReaderDerivedByVar.find(&Var);
+        if (rd != m_ReaderDerivedByVar.end())
+        {
+            MinMax.Init(rd->second->Type);
+            return true;
+        }
+    }
+#endif
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     if (!TypeHasMinMax(VarRec->Type))
     {
@@ -3285,7 +3511,10 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     {
         if (VarRec->MinMaxOffset == SIZE_MAX)
         {
-            std::memset(&MinMax, 0, sizeof(struct MinMaxStruct));
+            // No min/max was stored for this variable. Report an explicitly
+            // invalid range (min > max) rather than zeroed, which would be
+            // ambiguous with genuinely all-zero data.
+            MinMax.Init(VarRec->Type);
             return true;
         }
     }
@@ -3356,6 +3585,12 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
 
 char *BP5Deserializer::VariableExprStr(const VariableBase &Var)
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    auto rd = m_ReaderDerivedByVar.find(&Var);
+    if (rd != m_ReaderDerivedByVar.end())
+        return const_cast<char *>(static_cast<core::VariableDerived *>(rd->second->DerivedVariable)
+                                      ->m_ExprString.c_str());
+#endif
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     return VarRec->ExprStr;
 }
