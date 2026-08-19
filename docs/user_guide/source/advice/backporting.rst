@@ -22,6 +22,12 @@ The workflow is defined in ``.github/workflows/backport.yml``. It cherry-picks
 the merged PR's commits with ``-x`` and opens a new PR against the target
 branch for review; nothing is pushed directly.
 
+A manual fallback, ``.github/workflows/backport-manual.yml``, is also
+available via ``workflow_dispatch`` (PR number and target branch as inputs)
+for cases where the label-driven workflow cannot be used. Like the
+label-driven workflow, it only ever pushes to a new branch and opens a PR
+for review; it never pushes or merges directly into the target branch.
+
 When cutting a new release branch, create its ``backport release_X.Y`` label.
 See the release checklist in ``.github/ISSUE_TEMPLATE/new_release.md``.
 
