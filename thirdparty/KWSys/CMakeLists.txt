@@ -11,11 +11,11 @@ if(WIN32)
 else()
   set(KWSYS_BUILD_SHARED ${BUILD_SHARED_LIBS})
 endif()
-set(KWSYS_SPLIT_OBJECTS_FROM_INTERFACE ON)
+set(KWSYS_SPLIT_OBJECTS_FROM_INTERFACE OFF)
 set(KWSYS_INSTALL_EXPORT_NAME adios2Exports)
 set(KWSYS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 
 add_subdirectory(adios2sys)
-add_library(adios2sys_interface ALIAS adios2sys_private)
+add_library(adios2sys_interface ALIAS adios2sys)
 
 message_end_thirdparty()
