@@ -57,8 +57,8 @@
 
 #include "adios2/helper/adiosString.h" // EndsWith
 #include "adios2/helper/adiosSystem.h" //isHDF5File
-#include <adios2sys/CommandLineArguments.hxx>
-#include <adios2sys/SystemTools.hxx>
+#include <CLI/CLI.hpp>
+#include <filesystem>
 #include <pugixml.hpp>
 
 namespace adios2
@@ -215,20 +215,10 @@ void display_help()
 }
 
 bool option_help_was_called = false;
-int optioncb_help(const char *argument, const char *value, void *call_data)
+void optioncb_help()
 {
-    // adios2sys::CommandLineArguments *arg =
-    // static_cast<adios2sys::CommandLineArguments *>(call_data);
-    // printf("%s\n", arg->GetHelp());
     display_help();
     option_help_was_called = true;
-    return 1;
-}
-
-int optioncb_verbose(const char *argument, const char *value, void *call_data)
-{
-    verbose++;
-    return 1;
 }
 
 void print_bpls_version()
@@ -492,7 +482,8 @@ bool introspectAsBPDir(const std::string &name) noexcept
 
 void introspect_file(const char *filename) noexcept
 {
-    if (adios2sys::SystemTools::FileIsDirectory(filename))
+    std::error_code fileIsDirEc;
+    if (std::filesystem::is_directory(filename, fileIsDirEc))
     {
         if (!introspectAsBPDir(filename))
         {
@@ -521,80 +512,6 @@ void introspect_file(const char *filename) noexcept
     }
 }
 
-int process_unused_args(adios2sys::CommandLineArguments &arg)
-{
-    int nuargs;
-    char **uargs;
-    arg.GetUnusedArguments(&nuargs, &uargs);
-
-    std::vector<char *> retry_args;
-    retry_args.push_back(new char[4]());
-
-    // first arg is argv[0], so skip that
-    for (int i = 1; i < nuargs; i++)
-    {
-        if (uargs[i] != NULL && uargs[i][0] == '-')
-        {
-            if (uargs[i][1] == '-')
-            {
-                fprintf(stderr, "Unknown long option: %s\n", uargs[i]);
-                arg.DeleteRemainingArguments(nuargs, &uargs);
-                return 1;
-            }
-            else
-            {
-                // Maybe -abc is -a -b -c?
-                size_t len = strlen(uargs[i]);
-                for (size_t j = 1; j < len; ++j)
-                {
-                    char *opt = new char[3];
-                    opt[0] = '-';
-                    opt[1] = uargs[i][j];
-                    opt[2] = '\0';
-                    retry_args.push_back(opt);
-                }
-            }
-        }
-        else if (vfile == NULL)
-        {
-            vfile = mystrndup(uargs[i], 4096);
-            // fprintf(stderr, "Set file argument: %s\n", vfile);
-        }
-        else
-        {
-            varmask[nmasks] = mystrndup(uargs[i], 256);
-            // fprintf(stderr, "Set mask %d argument: %s\n", nmasks,
-            //        varmask[nmasks]);
-            nmasks++;
-        }
-    }
-    arg.DeleteRemainingArguments(nuargs, &uargs);
-
-    if (retry_args.size() > 1)
-    {
-        // Run a new parse on the -a single letter arguments
-        // fprintf(stderr, "Rerun parse on %zu options\n",
-        // retry_args.size());
-        arg.Initialize(static_cast<int>(retry_args.size()), retry_args.data());
-        arg.StoreUnusedArguments(false);
-        if (!arg.Parse())
-        {
-            fprintf(stderr, "Parsing arguments failed\n");
-            return 1;
-        }
-        for (size_t j = 0; j < retry_args.size(); ++j)
-        {
-            delete[] retry_args[j];
-        }
-    }
-    else
-    {
-        delete[] retry_args[0];
-    }
-
-    return 0;
-}
-
 /** Main */
 int bplsMain(int argc, char *argv[])
 {
@@ -602,99 +519,74 @@ int bplsMain(int argc, char *argv[])
 
     init_globals();
 
-    adios2sys::CommandLineArguments arg;
-    arg.Initialize(argc, argv);
-    typedef adios2sys::CommandLineArguments argT;
-    arg.StoreUnusedArguments(true);
-    arg.AddCallback("-v", argT::NO_ARGUMENT, optioncb_verbose, nullptr, "");
-    arg.AddCallback("--verbose", argT::NO_ARGUMENT, optioncb_verbose, nullptr,
-                    "Print information about what bpls is doing");
-    arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
-    arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
-    arg.AddBooleanArgument("--dump", &dump, "Dump matched variables/attributes");
-    arg.AddBooleanArgument("--list_operators", &list_operators,
-                           "List the operators used in the file");
-    arg.AddBooleanArgument("-d", &dump, "");
-    arg.AddBooleanArgument("--long", &longopt,
-                           "Print values of all scalars and attributes and min/max "
-                           "values of arrays");
-    arg.AddBooleanArgument("-l", &longopt, "");
-    arg.AddBooleanArgument("--regexp", &use_regexp,
-                           "| -e Treat masks as extended regular expressions");
-    arg.AddBooleanArgument("-e", &use_regexp, "");
-    arg.AddArgument("--output", argT::SPACE_ARGUMENT, &outpath,
-                    "| -o opt    Print to a file instead of stdout");
-    arg.AddArgument("-o", argT::SPACE_ARGUMENT, &outpath, "");
-    arg.AddArgument("--start", argT::SPACE_ARGUMENT, &start,
-                    "| -s opt    Offset indices in each dimension (default is "
-                    "0 for all dimensions).  opt<0 is handled as in python (-1 "
-                    "is last)");
-    arg.AddArgument("-s", argT::SPACE_ARGUMENT, &start, "");
-    arg.AddArgument("--count", argT::SPACE_ARGUMENT, &count,
-                    "| -c opt    Number of elements in each dimension. -1 "
-                    "denotes 'until end' of dimension. default is -1 for all "
-                    "dimensions");
-    arg.AddArgument("-c", argT::SPACE_ARGUMENT, &count, "");
-    arg.AddBooleanArgument("--noindex", &noindex, " | -y Print data without array indices");
-    arg.AddBooleanArgument("-y", &noindex, "");
-    arg.AddBooleanArgument("--timestep", &timestep, " | -t Print values of timestep elements");
-    arg.AddBooleanArgument("--ignore_flatten", &ignore_flatten, " Don't flatten steps to one");
-    arg.AddBooleanArgument("-t", &timestep, "");
-    arg.AddBooleanArgument("--attrs", &listattrs, " | -a List/match attributes too");
-    arg.AddBooleanArgument("-a", &listattrs, "");
-    arg.AddBooleanArgument("--attrsonly", &attrsonly,
-                           " | -A List/match attributes only (no variables)");
-    arg.AddBooleanArgument("-A", &attrsonly, "");
-    arg.AddBooleanArgument("--meshes", &listmeshes, " | -m List meshes");
-    arg.AddBooleanArgument("-m", &listmeshes, "");
-    arg.AddBooleanArgument("--string", &printByteAsChar,
-                           " | -S Print 8bit integer arrays as strings");
-    arg.AddBooleanArgument("-S", &printByteAsChar, "");
-    arg.AddArgument("--columns", argT::SPACE_ARGUMENT, &ncols,
-                    "| -n opt    Number of data elements per row to print");
-    arg.AddArgument("-n", argT::SPACE_ARGUMENT, &ncols, "");
-    arg.AddArgument("--format", argT::SPACE_ARGUMENT, &format,
-                    "| -f opt    Format string to use for one data item ");
-    arg.AddArgument("-f", argT::SPACE_ARGUMENT, &format, "");
-    arg.AddBooleanArgument("--hidden_attrs", &hidden_attrs,
-                           "  Show hidden ADIOS attributes in the file");
-    arg.AddBooleanArgument("--decompose", &show_decomp,
-                           "| -D Show decomposition of variables as layed out in file");
-    arg.AddBooleanArgument("-D", &show_decomp, "");
-    arg.AddBooleanArgument("--version", &show_version,
-                           "Print version information (add -verbose for additional"
-                           " information)");
-    arg.AddBooleanArgument("-V", &show_version, "");
-    arg.AddArgument("--error", argT::SPACE_ARGUMENT, &accuracy_def,
-                    "| -X string    Specify read accuracy (error,norm,rel|abs)");
-    arg.AddArgument("-X", argT::SPACE_ARGUMENT, &accuracy_def, "");
-    arg.AddArgument("--transport-parameters", argT::SPACE_ARGUMENT, &transport_params,
-                    "| -T string    Specify File transport parameters manually");
-    arg.AddArgument("-T", argT::SPACE_ARGUMENT, &transport_params, "");
-    arg.AddArgument("--engine", argT::SPACE_ARGUMENT, &engine_name,
-                    "| -E string    Specify ADIOS Engine manually");
-    arg.AddArgument("-E", argT::SPACE_ARGUMENT, &engine_name, "");
-    arg.AddArgument("--engine-params", argT::SPACE_ARGUMENT, &engine_params,
-                    "| -P string    Specify ADIOS Engine Parameters manually");
-    arg.AddArgument("-P", argT::SPACE_ARGUMENT, &engine_params, "");
-    arg.AddBooleanArgument("--show-derived", &show_derived_expr,
-                           "Show the expression string for derived variables");
+    CLI::App app{"bpls - list/dump content of a BP/HDF5 file"};
+    app.set_help_flag();
+    app.add_flag_callback("-h,--help", optioncb_help);
+    app.add_flag("-v,--verbose", verbose,
+                 "Print information about what bpls is doing. Use multiple -v to "
+                 "increase logging level.");
+    app.add_flag("-d,--dump", dump, "Dump matched variables/attributes");
+    app.add_flag("--list_operators", list_operators, "List the operators used in the file");
+    app.add_flag("-l,--long", longopt,
+                 "Print values of all scalars and attributes and min/max values of arrays");
+    app.add_flag("-e,--regexp", use_regexp, "Treat masks as extended regular expressions");
+    app.add_option("-o,--output", outpath, "Print to a file instead of stdout");
+    app.add_option("-s,--start", start,
+                   "Offset indices in each dimension (default is 0 for all "
+                   "dimensions). opt<0 is handled as in python (-1 is last)");
+    app.add_option("-c,--count", count,
+                   "Number of elements in each dimension. -1 denotes 'until end' "
+                   "of dimension. default is -1 for all dimensions");
+    app.add_flag("-y,--noindex", noindex, "Print data without array indices");
+    app.add_flag("-t,--timestep", timestep, "Print values of timestep elements");
+    app.add_flag("--ignore_flatten", ignore_flatten, "Don't flatten steps to one");
+    app.add_flag("-a,--attrs", listattrs, "List/match attributes too");
+    app.add_flag("-A,--attrsonly", attrsonly, "List/match attributes only (no variables)");
+    app.add_flag("-m,--meshes", listmeshes, "List meshes");
+    app.add_flag("-S,--string", printByteAsChar, "Print 8bit integer arrays as strings");
+    app.add_option("-n,--columns", ncols, "Number of data elements per row to print");
+    app.add_option("-f,--format", format, "Format string to use for one data item");
+    app.add_flag("--hidden_attrs", hidden_attrs, "Show hidden ADIOS attributes in the file");
+    app.add_flag("-D,--decompose", show_decomp,
+                 "Show decomposition of variables as layed out in file");
+    app.add_flag("-V,--version", show_version,
+                 "Print version information (add -verbose for additional information)");
+    app.add_option("-X,--error", accuracy_def, "Specify read accuracy (error,norm,rel|abs)");
+    app.add_option("-T,--transport-parameters", transport_params,
+                   "Specify File transport parameters manually");
+    app.add_option("-E,--engine", engine_name, "Specify ADIOS Engine manually");
+    app.add_option("-P,--engine-params", engine_params, "Specify ADIOS Engine Parameters manually");
+    app.add_flag("--show-derived", show_derived_expr,
+                 "Show the expression string for derived variables");
 
-    if (!arg.Parse())
+    std::string fileArg;
+    std::vector<std::string> maskArgs;
+    app.add_option("file", fileArg, "BP/HDF5 file to list/dump");
+    app.add_option("masks", maskArgs, "shell-style patterns to match variable/attribute names");
+
+    try
     {
-        fprintf(stderr, "Parsing arguments failed\n");
-        return 1;
+        app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError &e)
+    {
+        return app.exit(e);
     }
     if (option_help_was_called)
         return 0;
 
-    retval = process_unused_args(arg);
-    if (retval)
+    if (!fileArg.empty())
     {
-        return retval;
+        vfile = mystrndup(fileArg.c_str(), 4096);
     }
-    if (option_help_was_called)
-        return 0;
+    for (const auto &mask : maskArgs)
+    {
+        if (nmasks < MAX_MASKS)
+        {
+            varmask[nmasks] = mystrndup(mask.c_str(), 256);
+            nmasks++;
+        }
+    }
 
     if (show_version)
     {
@@ -1707,11 +1599,11 @@ int doList(std::string path)
     }
     else
     {
-        bool exists = adios2sys::SystemTools::FileExists(path);
+        bool exists = std::filesystem::exists(path);
         if (!exists && !userOptions.campaign.campaignstorepath.empty() && path[0] != PathSeparator)
         {
             std::string path2 = userOptions.campaign.campaignstorepath + PathSeparator + path;
-            exists = adios2sys::SystemTools::FileExists(path2);
+            exists = std::filesystem::exists(path2);
             if (exists)
             {
                 ; // path = path2.c_str();
@@ -1720,7 +1612,7 @@ int doList(std::string path)
             {
                 std::string path3 =
                     userOptions.campaign.campaignstorepath + PathSeparator + path + ".aca";
-                exists = adios2sys::SystemTools::FileExists(path3);
+                exists = std::filesystem::exists(path3);
                 if (exists)
                 {
                     path += ".aca"; // path = path3.c_str();

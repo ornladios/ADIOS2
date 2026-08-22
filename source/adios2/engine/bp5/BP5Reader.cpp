@@ -22,8 +22,8 @@
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
-#include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
+#include <filesystem>
 
 #include "adios2/toolkit/filepool/FilePool.h"
 
@@ -437,7 +437,7 @@ std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params
 {
     if (m_dataIsRemote)
         return path;
-    auto fileName = adios2sys::SystemTools::GetFilenameName(path);
+    auto fileName = std::filesystem::path(path).filename().string();
     std::string retval = path;
     if (m_Parameters.verbose > 1)
     {
@@ -452,7 +452,7 @@ std::string BP5Reader::UpdateWithTarInfo(const std::string &path, Params &params
         params["taroffset"] = offset;
         params["tarsize"] = size;
         params["filenameintar"] = fileName;
-        // Do not use this for URLs: retval = adios2sys::SystemTools::GetFilenamePath(path);
+        // Do not use this for URLs: retval = std::filesystem::path(path).parent_path().string();
         retval = path.substr(0, path.length() - fileName.length() - 1);
         if (m_Parameters.verbose > 1)
         {
@@ -2272,7 +2272,7 @@ void BP5Reader::FlushProfiler()
         if (tm)
         {
             transportTypes.push_back(tm->m_Type + "_" + tm->m_Library);
-            transportNames.push_back(adios2sys::SystemTools::GetFilenameName(tm->m_Name));
+            transportNames.push_back(std::filesystem::path(tm->m_Name).filename().string());
             transportProfilers.push_back(&tm->m_Profiler);
         }
     };
@@ -2297,7 +2297,7 @@ void BP5Reader::FlushProfiler()
     {
         std::string profileFileName;
         transport::FileFStream profilingJSONStream(m_Comm);
-        std::string bpBaseName = adios2sys::SystemTools::GetFilenameName(m_Name);
+        std::string bpBaseName = std::filesystem::path(m_Name).filename().string();
 
         auto PID = getpid();
         std::stringstream PIDstr;
