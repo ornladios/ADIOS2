@@ -50,15 +50,23 @@ git checkout -b release_@MAJOR@@MINOR@ origin/master
 # Use the following command with care
 git push origin release_@MAJOR@@MINOR@:release_@MAJOR@@MINOR@
 ```
+- [ ] Create the `backport release_@MAJOR@@MINOR@` label so PRs can be
+  backported to the new branch (see
+  [backporting docs](https://adios2.readthedocs.io/en/latest/advice/backporting.html)):
+```
+gh label create "backport release_@MAJOR@@MINOR@" --description "Backport to release_@MAJOR@@MINOR@" --color e99695
+```
 <!-- else -->
 - [ ] Remove older patch releases for @MAJOR@.@MINOR@.X in ReadTheDocs.
-- [ ] Create merge -sours commit in master:
+<!-- endif -->
+<!-- If this is the FINAL planned release for release_@MAJOR@@MINOR@ (not a patch release) -->
+- [ ] Merge release_@MAJOR@@MINOR@ back into master, since this release line is complete:
 ```
 git fetch origin
 git checkout master
 git reset --hard origin/master
-# We do not want the changes master from the release branch
-git -s ours release_@MAJOR@@MINOR@
+git merge release_@MAJOR@@MINOR@
+# Resolve any conflicts, then:
 # Be very careful here
 git push origin master
 ```
