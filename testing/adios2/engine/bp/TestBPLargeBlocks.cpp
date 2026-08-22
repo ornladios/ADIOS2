@@ -12,8 +12,8 @@
 #include <sys/statvfs.h>
 
 #include <adios2.h>
-#include <adios2sys/SystemTools.hxx>
 
+#include <filesystem>
 #include <gtest/gtest.h>
 
 // Detect sanitizers - test is too slow due to ~4GB allocation
@@ -140,7 +140,8 @@ TEST_F(LargeBlocks, MultiBlock)
         }
         reader.Close();
     }
-    adios2sys::SystemTools::RemoveADirectory(fname);
+    std::error_code ec;
+    std::filesystem::remove_all(fname, ec);
 }
 
 int main(int argc, char **argv)
