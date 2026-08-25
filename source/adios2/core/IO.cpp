@@ -1026,6 +1026,12 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
     codeStream.ExprString = exp_string;
     derived::SemanticsPass(codeStream, name_to_type);
     derived::PlanBuffers(codeStream);
+    {
+        // Opt-in JIT fusion of element-wise expressions (vector loop via dill)
+        static const bool doFuse = (getenv("DerivedFuse") != nullptr);
+        if (doFuse)
+            derived::TryFuse(codeStream);
+    }
     DataType expressionType = codeStream.OutputType;
 
     {
@@ -1190,6 +1196,12 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
     codeStream.ExprString = rec.Expression;
     derived::SemanticsPass(codeStream, name_to_type);
     derived::PlanBuffers(codeStream);
+    {
+        // Opt-in JIT fusion of element-wise expressions (vector loop via dill)
+        static const bool doFuse = (getenv("DerivedFuse") != nullptr);
+        if (doFuse)
+            derived::TryFuse(codeStream);
+    }
     DataType expressionType = codeStream.OutputType;
     auto outDims = derived::GetDims(codeStream, name_to_dims);
 

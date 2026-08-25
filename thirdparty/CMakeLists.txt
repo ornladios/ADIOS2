@@ -125,7 +125,10 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_DILL)
     add_subdirectory(dill)
   endif()
-  find_package(dill QUIET)
+  # Derived-expression JIT fusion uses the dill 4.x vector API (DILL_Q ops,
+  # dill_vector_lanes, dill_get_handle ownership); dill's version file
+  # accepts same-major >= 4.0 only.
+  find_package(dill 4.0 QUIET)
 
   add_subdirectory(ffs)
 endif()

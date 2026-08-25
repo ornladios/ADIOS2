@@ -153,7 +153,14 @@ if(ADIOS2_HAVE_Derived_Variable)
     toolkit/derived/ExprCodeStream.cpp
     toolkit/derived/Function.cpp)
   set_target_properties(adios2_core PROPERTIES
-    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/thirdparty/dill/dill>")
+  # dill::dill exists in both configurations: an ALIAS in the internal
+  # thirdparty build, an imported target from an external find_package.
+  # TryFuse needs the dill 4.x vector API (minimum in thirdparty/CMakeLists).
+  if(NOT TARGET dill::dill)
+    message(FATAL_ERROR "ADIOS2_USE_Derived_Variable requires dill >= 4.0")
+  endif()
+  target_link_libraries(adios2_core PRIVATE dill::dill)
   find_package(BISON "3.8.2")
   find_package(FLEX)
 
