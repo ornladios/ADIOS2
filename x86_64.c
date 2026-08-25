@@ -12,6 +12,15 @@
 #include "dill_internal.h"
 #include "x86_64.h"
 
+/* for the runtime FMA3 probe in x86_64_have_fma3() */
+#if defined(__x86_64__) || defined(_M_X64)
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__GNUC__)
+#include <cpuid.h>
+#endif
+#endif
+
 #define MOV32 0x89
 #define Mod(x) ((x) << 6)
 #define RegOp(x) ((7 & (x)) << 3)
@@ -66,6 +75,7 @@ static struct basic_type_info {
     {0, 8, IREG},                                 /* V */
     {-1, 8, IREG},                                /* B */
     {sizeof(void*), sizeof(void*), IREG},         /* EC */
+    {16, 16, FREG},                               /* Q */
 };
 
 int x86_64_type_align[] = {
@@ -83,6 +93,7 @@ int x86_64_type_align[] = {
     4,                 /* V */
     4,                 /* B */
     sizeof(char*),     /* EC */
+    16, /* DILL_Q */
 };
 
 int x86_64_type_size[] = {
@@ -100,6 +111,7 @@ int x86_64_type_size[] = {
     4,                 /* V */
     0,                 /* B */
     sizeof(char*),     /* EC */
+    16, /* DILL_Q */
 };
 
 static void
@@ -550,6 +562,9 @@ x86_64_pmov(dill_stream s, int typ, int dest, int src)
         switch (typ) {
         case DILL_D:
         case DILL_F:
+        case DILL_Q:
+            /* MOVAPD xmm,xmm -- register form, so no alignment constraint;
+             * copies all 128 bits, which is what DILL_Q needs. */
             //	The 0x29 form of this instruction is not supported by
             // valgrind
             //      the 0x28 version reverses the operands.
@@ -600,13 +615,21 @@ x86_64_sxmov(dill_stream s, int typ, int src, int dest)
 extern void
 x86_64_farith2(dill_stream s, int b1, int typ, int dest, int src)
 {
-    /* this is fneg */
+    /* b1 == 0x5c: fneg (0 - src);  b1 == 0x51: fsqrt */
     int rex = 0;
     int op = 0xf3;
     if (src > XMM7)
         rex |= REX_B;
     if (dest > XMM7)
         rex |= REX_R;
+    if (typ == DILL_D)
+        op = 0xf2;
+
+    if (b1 == 0x51) {
+        /* SQRTSS/SQRTSD xmm_dest, xmm_src */
+        BYTE_OUT1R3(s, op, rex, 0x0f, 0x51, ModRM(0x3, dest, src));
+        return;
+    }
 
     /* clear dest */
     {
@@ -616,8 +639,6 @@ x86_64_farith2(dill_stream s, int b1, int typ, int dest, int src)
         BYTE_OUT3R(s, rex1, 0x0f, 0x57,
                    ModRM(0x3, dest, dest));  // GSE really rex1?  Late fix.
     }
-    if (typ == DILL_D)
-        op = 0xf2;
     BYTE_OUT1R3(s, op, rex, 0x0f, 0x5c, ModRM(0x3, dest, src));
 }
 
@@ -643,6 +664,288 @@ x86_64_farith(dill_stream s, int b1, int typ, int dest, int src1, int src2)
     BYTE_OUT1R3(s, op, rex, 0x0f, b1, ModRM(0x3, dest, src2));
 }
 
+/* ---- DILL_Q: vector ops -------------------------------------------------
+ *
+ * Lane interpretation rides the operation, not the register: data2 == 0 picks
+ * the packed-single form (4 x float), data2 == 1 the packed-double form.
+ *
+ * These are all VEX-encoded rather than legacy SSE, which costs nothing:
+ * dill_has_vector_ops() requires AVX (see x86_64_vector_init below), so every
+ * CPU that will ever execute this code can decode VEX.  What it buys is the
+ * three-operand non-destructive form -- no copy of src1 into dest, no scratch
+ * register, and no operand-aliasing analysis at all.
+ *
+ * Mixing VEX.128 with the surrounding legacy-SSE scalar code is safe: VEX.128
+ * zeroes bits 255:128 of the destination, so it never leaves the dirty upper
+ * YMM state that causes AVX-SSE transition penalties, and no vzeroupper is
+ * needed anywhere.  That would NOT hold for VEX.256.
+ *
+ * The three-byte C4 form is used unconditionally.  The two-byte C5 form would
+ * save one byte, but only when every register is XMM0-XMM7, and dill's
+ * allocator hands out XMM8-XMM15, so it would almost never apply.
+ */
+
+#define VEX_PS 0     /* pp = no implied prefix: packed single */
+#define VEX_PD 1     /* pp = implied 0x66:     packed double */
+#define VEX_M_0F 1   /* mmmmm: 0F escape */
+#define VEX_M_0F38 2 /* mmmmm: 0F38 escape */
+
+/* "op xmm_dest, xmm_src1, xmm_src2", VEX.128, L = 0.
+   Two-operand forms pass src1 == 0, which inverts to the VEX.vvvv = 1111 that
+   the spec requires when vvvv is unused. */
+static void
+x86_64_vex_rrr(dill_stream s,
+               int m,
+               int w,
+               int pp,
+               int opcode,
+               int dest,
+               int src1,
+               int src2)
+{
+    int b1 = ((dest > XMM7) ? 0 : 0x80) /* ~R */
+             | 0x40                     /* ~X: no index register */
+             | ((src2 > XMM7) ? 0 : 0x20) /* ~B */
+             | (m & 0x1f);
+    int b2 = (w ? 0x80 : 0) | ((~src1 & 0xf) << 3) | (pp & 0x3);
+    BYTE_OUT5(s, 0xc4, b1, b2, opcode, ModRM(0x3, dest, src2));
+}
+
+/* "op xmm_dest, xmm_src", VEX.128, 0F escape, VEX.vvvv unused */
+static void
+x86_64_vex_rr(dill_stream s, int pp, int opcode, int dest, int src)
+{
+    x86_64_vex_rrr(s, VEX_M_0F, 0, pp, opcode, dest, 0, src);
+}
+
+/* "op xmm_dest, xmm_src1, xmm_src2, imm8", VEX.128, 0F escape */
+static void
+x86_64_vex_rrri(dill_stream s,
+                int pp,
+                int opcode,
+                int dest,
+                int src1,
+                int src2,
+                int imm)
+{
+    int b1 = ((dest > XMM7) ? 0 : 0x80) | 0x40 |
+             ((src2 > XMM7) ? 0 : 0x20) | VEX_M_0F;
+    int b2 = ((~src1 & 0xf) << 3) | (pp & 0x3);
+    BYTE_OUT6(s, 0xc4, b1, b2, opcode, ModRM(0x3, dest, src2), imm);
+}
+
+/* VPSLLD/VPSLLQ xmm_dest, xmm_src, imm8.  The shift-by-immediate group has an
+   unusual layout: the DESTINATION goes in VEX.vvvv, the source in r/m, and the
+   ModRM reg field holds a fixed /6 rather than a register. */
+static void
+x86_64_vex_shifti(dill_stream s, int opcode, int dest, int src, int imm)
+{
+    int b1 = 0x80 /* ~R: the reg field is the constant 6, so R is 0 */
+             | 0x40 | ((src > XMM7) ? 0 : 0x20) | VEX_M_0F;
+    int b2 = ((~dest & 0xf) << 3) | VEX_PD;
+    BYTE_OUT6(s, 0xc4, b1, b2, opcode, ModRM(0x3, 6, src), imm);
+}
+
+/* Three-operand vector arithmetic.
+   data1: 0=vadd, 1=vsub, 2=vmul, 3=vdiv, 4=vfma (accumulating: dest += s1*s2)
+   data2: 0 = packed float, 1 = packed double */
+extern void
+x86_64_vfarith(dill_stream s,
+               int data1,
+               int data2,
+               int dest,
+               int src1,
+               int src2)
+{
+    int opcode;
+
+    if (data1 == 4) {
+        /* VFMADD231P{S,D} xmm_dest, xmm_src1, xmm_src2:
+         *   dest = fused(src1 * src2 + dest), a single rounding, matching C
+         *   fma() and arm64's FMLA.  Note this group is 0F38 with an implied
+         *   0x66 for BOTH lane types -- the float/double choice is VEX.W, not
+         *   pp, unlike every other op here. */
+        x86_64_vex_rrr(s, VEX_M_0F38, (data2 == 1), VEX_PD, 0xb8, dest, src1,
+                       src2);
+        return;
+    }
+    switch (data1) {
+    case 0: /* VADDPS / VADDPD */
+        opcode = 0x58;
+        break;
+    case 1: /* VSUBPS / VSUBPD */
+        opcode = 0x5c;
+        break;
+    case 2: /* VMULPS / VMULPD */
+        opcode = 0x59;
+        break;
+    case 3: /* VDIVPS / VDIVPD */
+        opcode = 0x5e;
+        break;
+    default:
+        return;
+    }
+    /* dest, src1 and src2 may alias freely: nothing is read after it is
+       written, so no copy and no scratch register are needed. */
+    x86_64_vex_rrr(s, VEX_M_0F, 0, (data2 == 1) ? VEX_PD : VEX_PS, opcode,
+                   dest, src1, src2);
+}
+
+/* Two-operand vector ops.  data1: 0 = vneg, 1 = vsqrt; data2 as above. */
+extern void
+x86_64_vfarith2(dill_stream s, int data1, int data2, int dest, int src)
+{
+    int is_double = (data2 == 1);
+    int pp = is_double ? VEX_PD : VEX_PS;
+    int mask;
+
+    if (data1 == 1) {
+        /* VSQRTPS / VSQRTPD xmm_dest, xmm_src */
+        x86_64_vex_rr(s, pp, 0x51, dest, src);
+        return;
+    }
+    if (data1 != 0)
+        return;
+
+    /* vneg flips each lane's sign bit rather than computing 0 - x, so that
+     * signed zeroes come out the same as they do from NEON's FNEG (0 - -0.0
+     * would give +0.0).  The mask is built in a register -- all ones, shifted
+     * up into the sign position -- so no constant in memory is needed.
+     *
+     * The mask needs a register that is not src, since building it clobbers
+     * the register.  When dest != src, dest itself will do; otherwise fall
+     * back to XMM0, the same scratch x86_64_farith uses (XMM0 is in
+     * tmp_f.members but never in tmp_f.init_avail, so the register allocator
+     * never hands it to a vreg). */
+    mask = (dest == src) ? XMM0 : dest;
+    /* VPCMPEQD mask, mask, mask -- all ones */
+    x86_64_vex_rrr(s, VEX_M_0F, 0, VEX_PD, 0x76, mask, mask, mask);
+    /* VPSLLD mask, mask, 31 / VPSLLQ mask, mask, 63 -- sign bit per lane */
+    x86_64_vex_shifti(s, is_double ? 0x73 : 0x72, mask, mask,
+                      is_double ? 63 : 31);
+    /* VXORPS / VXORPD dest, src, mask.  Three-operand, so dest may equal
+       either source. */
+    x86_64_vex_rrr(s, VEX_M_0F, 0, pp, 0x57, dest, src, mask);
+}
+
+/* Broadcast lane 0 of a scalar FP register across all lanes of a vector.
+   data1 unused; data2: 0 = packed float, 1 = packed double. */
+extern void
+x86_64_vsplat(dill_stream s, int data1, int data2, int dest, int src)
+{
+    (void)data1;
+    if (data2 == 1) {
+        /* VUNPCKLPD dest, src, src -> {src[63:0], src[63:0]} */
+        x86_64_vex_rrr(s, VEX_M_0F, 0, VEX_PD, 0x14, dest, src, src);
+    } else {
+        /* VSHUFPS dest, src, src, 0 -> src[31:0] in all four lanes */
+        x86_64_vex_rrri(s, VEX_PS, 0xc6, dest, src, src, 0x00);
+    }
+}
+
+#define X86_64_CPU_AVX 0x1
+#define X86_64_CPU_FMA3 0x2
+
+/* What the CPU we are generating for can actually execute.  Cached: CPUID is
+ * not cheap and this is consulted on every jump-table init. */
+static int
+x86_64_cpu_vector_features(void)
+{
+#if defined(__x86_64__) || defined(_M_X64)
+    static int cached = -1;
+    unsigned int ecx = 0;
+    int have_ymm_state = 0;
+    int feat = 0;
+
+    if (cached != -1)
+        return cached;
+#if defined(_MSC_VER)
+    {
+        int regs[4];
+        __cpuid(regs, 1);
+        ecx = (unsigned int)regs[2];
+    }
+#elif defined(__GNUC__)
+    {
+        unsigned int eax, ebx, edx;
+        if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+            ecx = 0;
+    }
+#else
+    cached = 0;
+    return 0;
+#endif
+    /* Both AVX and FMA3 are VEX-encoded, so beyond the feature bits the OS
+       must have enabled XMM and YMM state (XCR0 bits 1 and 2) via XSAVE. */
+    if (ecx & (1u << 27)) { /* OSXSAVE: XGETBV is available */
+#if defined(_MSC_VER)
+        have_ymm_state = ((_xgetbv(0) & 0x6) == 0x6);
+#else
+        unsigned int lo, hi;
+        /* XGETBV(0), spelled in bytes so this file needs no -mxsave */
+        __asm__ volatile(".byte 0x0f, 0x01, 0xd0"
+                         : "=a"(lo), "=d"(hi)
+                         : "c"(0));
+        (void)hi;
+        have_ymm_state = ((lo & 0x6) == 0x6);
+#endif
+    }
+    if (have_ymm_state) {
+        if (ecx & (1u << 28))
+            feat |= X86_64_CPU_AVX;
+        if (ecx & (1u << 12))
+            feat |= X86_64_CPU_FMA3;
+    }
+    cached = feat;
+    return cached;
+#else
+    /* Cross-generating x86_64 code from another host: we cannot probe the CPU
+       that will run it, so claim only the baseline. */
+    return 0;
+#endif
+}
+
+/* Called from the generated dill_x86_64.c once the tables are filled.
+ *
+ * Two separate capability requirements, so two separate retractions:
+ *   - no AVX  -> the DILL_Q emitters above would emit undecodable VEX, so
+ *                every vector entry has to go.
+ *   - no FMA3 -> only vfma is unavailable.  We drop it rather than emitting an
+ *                unfused mul+add, which would disagree numerically with arm64.
+ * Either way dill_has_vector_ops() (which checks vaddf/vaddd/vfmaf/vsplatf)
+ * reports false and clients take their scalar path.  Leaving an entry at 0 is
+ * the same "arch does not implement this" convention the .ops files use.
+ *
+ * Note the SCALAR sqrt (dill_sqrtf/sqrtd) is legacy-SSE encoded and needs no
+ * AVX, so it deliberately survives both retractions. */
+extern void
+x86_64_vector_init(jmp_table t)
+{
+    int feat = x86_64_cpu_vector_features();
+
+    if (!(feat & X86_64_CPU_AVX)) {
+        t->jmp_a3[dill_jmp_vaddf] = 0;
+        t->jmp_a3[dill_jmp_vaddd] = 0;
+        t->jmp_a3[dill_jmp_vsubf] = 0;
+        t->jmp_a3[dill_jmp_vsubd] = 0;
+        t->jmp_a3[dill_jmp_vmulf] = 0;
+        t->jmp_a3[dill_jmp_vmuld] = 0;
+        t->jmp_a3[dill_jmp_vdivf] = 0;
+        t->jmp_a3[dill_jmp_vdivd] = 0;
+        t->jmp_a2[dill_jmp_vnegf] = 0;
+        t->jmp_a2[dill_jmp_vnegd] = 0;
+        t->jmp_a2[dill_jmp_vsqrtf] = 0;
+        t->jmp_a2[dill_jmp_vsqrtd] = 0;
+        t->jmp_a2[dill_jmp_vsplatf] = 0;
+        t->jmp_a2[dill_jmp_vsplatd] = 0;
+    }
+    /* vfma needs both: FMA3 for the instruction, AVX for the VEX encoding */
+    if ((feat & (X86_64_CPU_AVX | X86_64_CPU_FMA3)) !=
+        (X86_64_CPU_AVX | X86_64_CPU_FMA3)) {
+        t->jmp_a3[dill_jmp_vfmaf] = 0;
+        t->jmp_a3[dill_jmp_vfmad] = 0;
+    }
+}
 static void
 x86_64_seti(dill_stream s, int r, int val)
 {
@@ -807,6 +1110,28 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
         {
             x86_64_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset);
         }
+    }
+    s->p->used_frame++;
+}
+
+/* Save/restore ALL 128 bits of an xmm register around a call.
+ *
+ * x86_64_save_restore_op() with DILL_D moves only 8 bytes, which silently
+ * truncates any DILL_Q value the register allocator has left live in a
+ * register across a call.  Since the caller cannot know which xmm holds a
+ * vector and which holds a scalar double, the call path just saves everything
+ * at full width -- a 128-bit save of a register holding a double is harmless.
+ * Uses its own 16-byte-spaced area so the parameter/vararg save layout is
+ * untouched. */
+static void
+x86_64_save_restore_vec(dill_stream s, int save_restore, int reg)
+{
+    x86_64_mach_info smi = (x86_64_mach_info)s->p->mach_info;
+    int offset = smi->vec_save_base + reg * 16;
+    if (save_restore == 0) {
+        x86_64_pstorei(s, DILL_Q, 0, reg, _frame_reg, offset);
+    } else {
+        x86_64_ploadi(s, DILL_Q, 0, reg, _frame_reg, offset);
     }
     s->p->used_frame++;
 }
@@ -1025,6 +1350,11 @@ x86_64_proc_start(dill_stream s,
     smi->conversion_word = x86_64_local(s, DILL_D);
     smi->fcu_word = x86_64_local(s, DILL_I);
     smi->save_base = x86_64_localb(s, BEGIN_FLOAT_SAVE + 16 * 16);
+    /* Separate, 16-byte-spaced area for saving xmm registers around calls.
+     * It deliberately does NOT share save_base's float region: that region is
+     * also the incoming-parameter/vararg save area, whose layout is pinned to
+     * 8-byte spacing by args[i].offset below and by the SysV vararg ABI. */
+    smi->vec_save_base = x86_64_localb(s, 16 * 16);
     s->p->used_frame = 0;
 
     cur_arg_offset = 16;
@@ -1174,6 +1504,7 @@ static unsigned char ld_opcodes[] = {
     0x00, /* DILL_V */
     0x00, /* DILL_B */
     0x8b, /* DILL_EC */
+    0x00, /* DILL_Q (movupd, emitted via the float_op path) */
 };
 
 static void
@@ -1207,6 +1538,11 @@ x86_64_ploadi(dill_stream s,
         break;
     case DILL_D:
         float_op = 0xf2;
+        break;
+    case DILL_Q:
+        /* MOVUPD: the 0x66 prefix on the shared 0f 10 / 0f 11 float path
+         * makes it a full 128-bit unaligned move. */
+        float_op = 0x66;
         break;
     case DILL_C:
     case DILL_UC:
@@ -1392,6 +1728,9 @@ x86_64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
         break;
     case DILL_D:
         float_op = 0xf2;
+        break;
+    case DILL_Q:
+        float_op = 0x66; /* MOVUPD */
         break;
     case DILL_L:
     case DILL_UL:
@@ -1581,6 +1920,7 @@ static unsigned char st_opcodes[] = {
     0x00, /* DILL_V */
     0x00, /* DILL_B */
     0x89, /* DILL_EC */
+    0x00, /* DILL_Q (movupd, emitted via the float_op path) */
 };
 extern void
 x86_64_pstorei(dill_stream s,
@@ -1611,6 +1951,9 @@ x86_64_pstorei(dill_stream s,
         break;
     case DILL_D:
         float_op = 0xf2;
+        break;
+    case DILL_Q:
+        float_op = 0x66; /* MOVUPD */
         break;
     default:
         break;
@@ -1714,6 +2057,9 @@ x86_64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
         break;
     case DILL_D:
         float_op = 0xf2;
+        break;
+    case DILL_Q:
+        float_op = 0x66; /* MOVUPD */
         break;
     case DILL_S:
     case DILL_US:
@@ -2834,7 +3180,7 @@ x86_64_calli(dill_stream s, int type, void* xfer_address, const char* name)
     for (i = XMM0; i <= XMM15; i += 1) {
 #endif
         if (dill_mustsave(&s->p->tmp_f, i)) {
-            x86_64_save_restore_op(s, 0, DILL_D, i);
+            x86_64_save_restore_vec(s, 0, i);
         }
     }
 
@@ -2852,7 +3198,7 @@ x86_64_calli(dill_stream s, int type, void* xfer_address, const char* name)
     for (i = XMM0; i <= XMM15; i += 1) {
 #endif
         if (dill_mustsave(&s->p->tmp_f, i)) {
-            x86_64_save_restore_op(s, 1, DILL_D, i);
+            x86_64_save_restore_vec(s, 1, i);
         }
     }
     return ret_reg;

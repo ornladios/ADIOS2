@@ -152,6 +152,7 @@ int arm6_type_align[] = {
 	1, /* V */
         4, /* B */
 	sizeof(long), /* EC */
+    16, /* DILL_Q */
 };
 
 int arm6_type_size[] = {
@@ -169,6 +170,7 @@ int arm6_type_size[] = {
 	1, /* V */
         8, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 extern void arm6_dproc(dill_stream s, int op, int shift_code, int dest, int src1, int src2)

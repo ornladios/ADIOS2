@@ -5,9 +5,9 @@ char *compare_op_names[] = {"eqc", "equc", "eqs", "equs", "eqi", "equ", "eql", "
 
 #include "dill.h"
 
-char *arith3_name[] = {"addi", "addu", "addul", "addl", "subi", "subu", "subul", "subl", "muli", "mulu", "mulul", "mull", "divi", "divu", "divul", "divl", "modi", "modu", "modul", "modl", "xori", "xoru", "xorul", "xorl", "andi", "andu", "andul", "andl", "ori", "oru", "orul", "orl", "lshi", "lshu", "lshul", "lshl", "rshi", "rshu", "rshul", "rshl", "addp", "subp", "addf", "addd", "subf", "subd", "mulf", "muld", "divf", "divd"};
+char *arith3_name[] = {"addi", "addu", "addul", "addl", "subi", "subu", "subul", "subl", "muli", "mulu", "mulul", "mull", "divi", "divu", "divul", "divl", "modi", "modu", "modul", "modl", "xori", "xoru", "xorul", "xorl", "andi", "andu", "andul", "andl", "ori", "oru", "orul", "orl", "lshi", "lshu", "lshul", "lshl", "rshi", "rshu", "rshul", "rshl", "addp", "subp", "addf", "addd", "subf", "subd", "mulf", "muld", "divf", "divd", "vaddf", "vaddd", "vsubf", "vsubd", "vmulf", "vmuld", "vdivf", "vdivd", "vfmaf", "vfmad"};
 
-char *arith2_name[] = {"noti", "notu", "notul", "notl", "comi", "comu", "comul", "coml", "negi", "negu", "negul", "negl", "bswaps", "bswapus", "bswapi", "bswapu", "bswapul", "bswapl", "bswapf", "bswapd", "negf", "negd"};
+char *arith2_name[] = {"noti", "notu", "notul", "notl", "comi", "comu", "comul", "coml", "negi", "negu", "negul", "negl", "bswaps", "bswapus", "bswapi", "bswapu", "bswapul", "bswapl", "bswapf", "bswapd", "negf", "negd", "sqrtf", "sqrtd", "vnegf", "vnegd", "vsqrtf", "vsqrtd", "vsplatf", "vsplatd"};
 int dill_add_poly_map[] = {
 dill_jmp_addl, dill_jmp_addul, dill_jmp_addl, dill_jmp_addul, dill_jmp_addi, dill_jmp_addu, dill_jmp_addl, dill_jmp_addul, dill_jmp_addp, dill_jmp_addf, dill_jmp_addd, dill_jmp_addl, dill_jmp_addl, 0};
 int dill_and_poly_map[] = {
@@ -26,6 +26,16 @@ int dill_rsh_poly_map[] = {
 dill_jmp_rshl, dill_jmp_rshul, dill_jmp_rshl, dill_jmp_rshul, dill_jmp_rshi, dill_jmp_rshu, dill_jmp_rshl, dill_jmp_rshul, dill_jmp_rshl, dill_jmp_rshl, dill_jmp_rshl, dill_jmp_rshl, dill_jmp_rshl, 0};
 int dill_sub_poly_map[] = {
 dill_jmp_subl, dill_jmp_subul, dill_jmp_subl, dill_jmp_subul, dill_jmp_subi, dill_jmp_subu, dill_jmp_subl, dill_jmp_subul, dill_jmp_subp, dill_jmp_subf, dill_jmp_subd, dill_jmp_subl, dill_jmp_subl, 0};
+int dill_vadd_poly_map[] = {
+dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddf, dill_jmp_vaddd, dill_jmp_vaddf, dill_jmp_vaddf, 0};
+int dill_vdiv_poly_map[] = {
+dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivf, dill_jmp_vdivd, dill_jmp_vdivf, dill_jmp_vdivf, 0};
+int dill_vfma_poly_map[] = {
+dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmaf, dill_jmp_vfmad, dill_jmp_vfmaf, dill_jmp_vfmaf, 0};
+int dill_vmul_poly_map[] = {
+dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmulf, dill_jmp_vmuld, dill_jmp_vmulf, dill_jmp_vmulf, 0};
+int dill_vsub_poly_map[] = {
+dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubf, dill_jmp_vsubd, dill_jmp_vsubf, dill_jmp_vsubf, 0};
 int dill_xor_poly_map[] = {
 dill_jmp_xorl, dill_jmp_xorul, dill_jmp_xorl, dill_jmp_xorul, dill_jmp_xori, dill_jmp_xoru, dill_jmp_xorl, dill_jmp_xorul, dill_jmp_xorl, dill_jmp_xorl, dill_jmp_xorl, dill_jmp_xorl, dill_jmp_xorl, 0};
 char *dill_type_names[] = {
@@ -42,4 +52,6 @@ char *dill_type_names[] = {
     "d",    /* double */
     "v",    /* void */
     "b",    /* block structure */
+    "ec",   /* execution context */
+    "q",    /* 128-bit vector */
 };

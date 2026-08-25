@@ -36,6 +36,24 @@ sub upperc {
 &arith2_insn("neg", "f", "(arith_op2)arm64_farith2", "0", "0");
 &arith2_insn("neg", "d", "(arith_op2)arm64_farith2", "0", "1");
 &arith2_insn("bswap", "s us i u ul l f d", "(arith_op2)arm64_bswap", "T", "0");
+&arith2_insn("sqrt", "f", "(arith_op2)arm64_farith2", "1", "0");
+&arith2_insn("sqrt", "d", "(arith_op2)arm64_farith2", "1", "1");
+&arith_insn("vadd", "f", "arm64_vfarith", "0", "0");
+&arith_insn("vadd", "d", "arm64_vfarith", "0", "1");
+&arith_insn("vsub", "f", "arm64_vfarith", "1", "0");
+&arith_insn("vsub", "d", "arm64_vfarith", "1", "1");
+&arith_insn("vmul", "f", "arm64_vfarith", "2", "0");
+&arith_insn("vmul", "d", "arm64_vfarith", "2", "1");
+&arith_insn("vdiv", "f", "arm64_vfarith", "3", "0");
+&arith_insn("vdiv", "d", "arm64_vfarith", "3", "1");
+&arith_insn("vfma", "f", "arm64_vfarith", "4", "0");
+&arith_insn("vfma", "d", "arm64_vfarith", "4", "1");
+&arith2_insn("vneg", "f", "(arith_op2)arm64_vfarith2", "0", "0");
+&arith2_insn("vneg", "d", "(arith_op2)arm64_vfarith2", "0", "1");
+&arith2_insn("vsqrt", "f", "(arith_op2)arm64_vfarith2", "1", "0");
+&arith2_insn("vsqrt", "d", "(arith_op2)arm64_vfarith2", "1", "1");
+&arith2_insn("vsplat", "f", "(arith_op2)arm64_vsplat", "0", "0");
+&arith2_insn("vsplat", "d", "(arith_op2)arm64_vsplat", "0", "1");
 
 # Immediate arithmetic operations - data2 contains type info (T)
 &arithi_insn("add", "i u ul l p", "arm64_arith3i", "0", "T");

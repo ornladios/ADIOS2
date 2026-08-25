@@ -35,6 +35,7 @@ int arm64_type_size[] = {
     0, /* DILL_V */
     0, /* DILL_B */
     8, /* DILL_EC */
+    16, /* DILL_Q */
 };
 
 /* Type alignments for AArch64 */
@@ -53,6 +54,7 @@ int arm64_type_align[] = {
     0, /* DILL_V */
     0, /* DILL_B */
     8, /* DILL_EC */
+    16, /* DILL_Q */
 };
 
 /* Forward declaration */
@@ -932,6 +934,21 @@ arm64_ploadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE offs
 	}
 	break;
 
+    case DILL_Q:
+	/* LDR Qt (128-bit vector) */
+	if (offset >= 0 && (offset & 15) == 0 && offset < 65536) {
+	    /* LDR Qt (unsigned offset, scaled by 16): 0x3DC00000 */
+	    insn = 0x3DC00000 | (((offset >> 4) & 0xfff) << 10) | (src << 5) | dest;
+	} else if (offset >= -256 && offset < 256) {
+	    /* LDUR Qt (unscaled): 0x3CC00000 */
+	    insn = 0x3CC00000 | ((offset & 0x1ff) << 12) | (src << 5) | dest;
+	} else {
+	    arm64_set64(s, _x16, offset);
+	    arm64_pload(s, type, junk, dest, src, _x16);
+	    return;
+	}
+	break;
+
     default:
 	return;
     }
@@ -990,6 +1007,11 @@ arm64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
     case DILL_D:
 	/* LDR Dt, [Xn, Xm] (64-bit double): 0xFC606800 */
 	insn = 0xFC606800 | (src2 << 16) | (src1 << 5) | dest;
+	break;
+
+    case DILL_Q:
+	/* LDR Qt, [Xn, Xm] (128-bit vector): 0x3CE06800 */
+	insn = 0x3CE06800 | (src2 << 16) | (src1 << 5) | dest;
 	break;
 
     default:
@@ -1126,6 +1148,21 @@ arm64_pstorei(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE off
 	}
 	break;
 
+    case DILL_Q:
+	/* STR Qt: 128-bit vector store */
+	if (offset >= 0 && (offset & 15) == 0 && offset < 65536) {
+	    /* STR Qt (unsigned offset, scaled by 16): 0x3D800000 */
+	    insn = 0x3D800000 | (((offset >> 4) & 0xfff) << 10) | (src << 5) | dest;
+	} else if (offset >= -256 && offset < 256) {
+	    /* STUR Qt (unscaled): 0x3C800000 */
+	    insn = 0x3C800000 | ((offset & 0x1ff) << 12) | (src << 5) | dest;
+	} else {
+	    arm64_set64(s, _x16, offset);
+	    arm64_pstore(s, type, junk, dest, src, _x16);
+	    return;
+	}
+	break;
+
     default:
 	return;
     }
@@ -1174,6 +1211,11 @@ arm64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	insn = 0xFC206800 | (src2 << 16) | (src1 << 5) | dest;
 	break;
 
+    case DILL_Q:
+	/* STR Qt, [Xn, Xm]: 0x3CA06800 */
+	insn = 0x3CA06800 | (src2 << 16) | (src1 << 5) | dest;
+	break;
+
     default:
 	return;
     }
@@ -1195,6 +1237,11 @@ arm64_mov(dill_stream s, int type, int junk, int dest, int src)
     case DILL_D:
 	/* FMOV Dd, Dn = 0x1E604000 | (Dn << 5) | Dd */
 	insn = 0x1E604000 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+    case DILL_Q:
+	/* MOV Vd.16B, Vn.16B (ORR Vd.16B, Vn.16B, Vn.16B) = 0x4EA01C00 */
+	insn = 0x4EA01C00 | (src << 16) | (src << 5) | dest;
 	INSN_OUT(s, insn);
 	break;
     case DILL_C:
@@ -3169,7 +3216,7 @@ void arm64_arith2(dill_stream s, int data1, int data2, int dest, int src)
 
 void arm64_farith2(dill_stream s, int data1, int data2, int dest, int src)
 {
-    /* data1=0: neg; data2: 0=float, 1=double */
+    /* data1: 0=neg, 1=sqrt; data2: 0=float, 1=double */
     unsigned int insn;
     int is_double = (data2 == 1);
 
@@ -3184,5 +3231,75 @@ void arm64_farith2(dill_stream s, int data1, int data2, int dest, int src)
 	}
 	INSN_OUT(s, insn);
 	break;
+    case 1: /* fsqrt */
+	if (is_double) {
+	    /* FSQRT Dd, Dn = 0x1E61C000 */
+	    insn = 0x1E61C000 | (src << 5) | dest;
+	} else {
+	    /* FSQRT Sd, Sn = 0x1E21C000 */
+	    insn = 0x1E21C000 | (src << 5) | dest;
+	}
+	INSN_OUT(s, insn);
+	break;
     }
+}
+
+/* NEON three-same vector arithmetic on 128-bit registers.
+   data1: 0=vadd, 1=vsub, 2=vmul, 3=vdiv; data2 lane type: 0=.4S, 1=.2D */
+void arm64_vfarith(dill_stream s, int data1, int data2, int dest, int src1, int src2)
+{
+    unsigned int insn = 0;
+    int is_double = (data2 == 1);
+
+    switch (data1) {
+    case 0: /* FADD Vd.4S = 0x4E20D400, Vd.2D = 0x4E60D400 */
+	insn = (is_double ? 0x4E60D400 : 0x4E20D400);
+	break;
+    case 1: /* FSUB Vd.4S = 0x4EA0D400, Vd.2D = 0x4EE0D400 */
+	insn = (is_double ? 0x4EE0D400 : 0x4EA0D400);
+	break;
+    case 2: /* FMUL Vd.4S = 0x6E20DC00, Vd.2D = 0x6E60DC00 */
+	insn = (is_double ? 0x6E60DC00 : 0x6E20DC00);
+	break;
+    case 3: /* FDIV Vd.4S = 0x6E20FC00, Vd.2D = 0x6E60FC00 */
+	insn = (is_double ? 0x6E60FC00 : 0x6E20FC00);
+	break;
+    case 4: /* FMLA (accumulating: Vd += Vn*Vm) Vd.4S = 0x4E20CC00, Vd.2D = 0x4E60CC00 */
+	insn = (is_double ? 0x4E60CC00 : 0x4E20CC00);
+	break;
+    default:
+	return;
+    }
+    insn |= (src2 << 16) | (src1 << 5) | dest;
+    INSN_OUT(s, insn);
+}
+
+/* NEON two-reg-misc vector ops.  data1: 0=vneg, 1=vsqrt; data2: 0=.4S, 1=.2D */
+void arm64_vfarith2(dill_stream s, int data1, int data2, int dest, int src)
+{
+    unsigned int insn = 0;
+    int is_double = (data2 == 1);
+
+    switch (data1) {
+    case 0: /* FNEG Vd.4S = 0x6EA0F800, Vd.2D = 0x6EE0F800 */
+	insn = (is_double ? 0x6EE0F800 : 0x6EA0F800);
+	break;
+    case 1: /* FSQRT Vd.4S = 0x6EA1F800, Vd.2D = 0x6EE1F800 */
+	insn = (is_double ? 0x6EE1F800 : 0x6EA1F800);
+	break;
+    default:
+	return;
+    }
+    insn |= (src << 5) | dest;
+    INSN_OUT(s, insn);
+}
+
+/* Broadcast scalar FP register lane 0 to all lanes of a 128-bit vector.
+   data1 unused; data2: 0 = DUP Vd.4S, Vn.S[0], 1 = DUP Vd.2D, Vn.D[0] */
+void arm64_vsplat(dill_stream s, int data1, int data2, int dest, int src)
+{
+    /* DUP (element): .4S imm5=00100 = 0x4E040400, .2D imm5=01000 = 0x4E080400 */
+    unsigned int insn = (data2 == 1) ? 0x4E080400 : 0x4E040400;
+    insn |= (src << 5) | dest;
+    INSN_OUT(s, insn);
 }
