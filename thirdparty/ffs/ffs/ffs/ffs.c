@@ -962,11 +962,13 @@ free_FFSContext(FFSContext c)
 }
 
 static void
-reset_prior_conversions(FFSContext c)
+reset_prior_conversions(FFSContext c, const char *target_name)
 {
     int i;
     for (i=0; i < c->handle_list_size; i++) {
-	if (c->handle_list[i] != NULL) {
+	if (c->handle_list[i] != NULL &&
+	    c->handle_list[i]->body != NULL &&
+	    strcmp(c->handle_list[i]->body->format_name, target_name) == 0) {
 	    c->handle_list[i]->status = not_checked;
 	}
     }
@@ -981,8 +983,10 @@ FFSset_fixed_target(FFSContext c, FMStructDescList struct_list)
     index = fmf->format_index;
     handle = FFSTypeHandle_by_index(c, index);
     handle->is_fixed_target = 1;
-    /* any new target may invalidate prior conversion decisions */
-    reset_prior_conversions(c);
+    /* a new target may invalidate prior conversion decisions for
+       formats with the same name (name match is a precondition for
+       format compatibility) */
+    reset_prior_conversions(c, fmf->format_name);
     return handle;
 }
 
