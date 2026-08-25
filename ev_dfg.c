@@ -1595,14 +1595,14 @@ extern char *INT_EVmaster_get_contact_list(EVmaster master)
     char *tmp = NULL;
 
     /* use enet transport if available */
-#if defined(ENET_FOUND) || defined(ZPL_ENET_AVAILABLE)
+#if defined(EVPATH_HAS_ENET) || defined(EVPATH_HAS_ZPL_ENET)
     atom_t CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
     atom_t CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
     (void) CM_TRANSPORT;
     attr_list listen_list = create_attr_list();
-#if defined(ENET_FOUND)
+#if defined(EVPATH_HAS_ENET)
     add_string_attr(listen_list, CM_TRANSPORT, strdup("enet"));
-#elif defined(ZPL_ENET_AVAILABLE)
+#elif defined(EVPATH_HAS_ZPL_ENET)
     add_string_attr(listen_list, CM_TRANSPORT, strdup("zplenet"));
 #endif
     /* and kick up the connection timeout value.  We can wait 60 secs */

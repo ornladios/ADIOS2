@@ -9,23 +9,20 @@
 /* Define to desired port range Low:High */
 #define EVPATH_DEFAULT_PORT_RANGE "@EVPATH_DEFAULT_PORT_RANGE@"
 
-/* Define to 1 if you have the enet header and libraries */
-#cmakedefine ENET_FOUND
+/* Define to 1 if the enet transport is built */
+#cmakedefine EVPATH_HAS_ENET
 
-/* Define to 1 to if ZPL ENET transport was built */
-#cmakedefine ZPL_ENET_AVAILABLE
+/* Define to 1 if the ZPL ENET transport is built */
+#cmakedefine EVPATH_HAS_ZPL_ENET
 
-/* Define to 1 if you have the udt4 header and libraries */
-#cmakedefine UDT4_FOUND
+/* Define to 1 if the udt4 transport is built */
+#cmakedefine EVPATH_HAS_UDT4
 
-/* Define to 1 if you have the IB header and libraries */
-#cmakedefine IB_FOUND 
+/* Define to 1 if the IB transport is built */
+#cmakedefine EVPATH_HAS_IB
 
-/* Define to 1 if you have the LIBFABRIC header and libraries */
-#cmakedefine LIBFABRIC_FOUND 
-
-/* Define to 1 if you have the df_shm header and libraries */
-#cmakedefine DF_SHM_FOUND
+/* Define to 1 if the libfabric transport is built */
+#cmakedefine EVPATH_HAS_LIBFABRIC
 
 /* Place where evpath transport modules are installed */
 #cmakedefine EVPATH_MODULE_INSTALL_DIR "@EVPATH_MODULE_INSTALL_DIR@"
@@ -189,8 +186,8 @@
 /* Set to 1 to build without dynamic linking  */
 #cmakedefine NO_DYNAMIC_LINKING @NO_DYNAMIC_LINKING@
 
-/* Set to 1 if NNTI libraries and include file are found */
-#cmakedefine NNTI_FOUND
+/* Define to 1 if the NNTI transport is built */
+#cmakedefine EVPATH_HAS_NNTI
 
 /* Set to 1 if NVML libraries and include file are found */
 #cmakedefine NVML_FOUND
@@ -198,8 +195,6 @@
 /* Set to 1 if CM should default to CMSelfFormats */
 #define CM_SELF_FORMATS @CM_SELF_FORMATS@
 
-/* Set to 1 if Cmake found MPI for C */
-#cmakedefine MPI_C_FOUND
 
 /* Define if byteorder is bigendian */
 #cmakedefine WORDS_BIGENDIAN
