@@ -1,5 +1,5 @@
 
-set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg local_block)
+set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg local_block vec)
 
 if(NATIVE_CG)
   list(APPEND TESTS pkg_test multi_test)
@@ -30,6 +30,12 @@ foreach(TEST ${TESTS})
   target_link_libraries(v${TEST} dill ${DIS_LIBS})
   add_test(NAME vtest_${TEST} COMMAND v${TEST})
 endforeach()
+
+# vec.c checks against libm (sqrtf/fmaf); on Linux those live outside libc.
+find_library(VTEST_MATH_LIBRARY m)
+if(VTEST_MATH_LIBRARY)
+  target_link_libraries(vvec ${VTEST_MATH_LIBRARY})
+endif()
 
 # ARM64 backend has a bug with small return types (char, short) that
 # only manifests with optimization enabled. Keep -O0 for now.

@@ -1030,6 +1030,7 @@ dill_markused(dill_stream s, int type, int reg)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         SET_BIT(reg, s->p->var_f.used);
         SET_BIT(reg, s->p->tmp_f.used);
         break;
@@ -1073,6 +1074,7 @@ dill_alloc_specific(dill_stream s, dill_reg reg, int type, int class)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         if (class == DILL_VAR) {
             SET_BIT(reg, s->p->var_f.avail);
             RESET_BIT(reg, s->p->var_f.mustsave);
@@ -1097,6 +1099,7 @@ dill_dealloc_specific(dill_stream s, dill_reg reg, int type, int class)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         if (class == DILL_VAR) {
             RESET_BIT(reg, s->p->var_f.avail);
             SET_BIT(reg, s->p->var_f.mustsave);
@@ -1125,6 +1128,7 @@ dill_raw_unavailreg(dill_stream s, int type, dill_reg reg)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         RESET_BIT(reg, s->p->var_f.avail);
         RESET_BIT(reg, s->p->tmp_f.avail);
         break;
@@ -1141,6 +1145,7 @@ dill_raw_availreg(dill_stream s, int type, dill_reg reg)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         if (BIT_ON(reg, s->p->tmp_f.members)) {
             SET_BIT(reg, s->p->tmp_f.avail);
         } else if (BIT_ON(reg, s->p->var_f.members)) {
@@ -1159,6 +1164,52 @@ dill_raw_availreg(dill_stream s, int type, dill_reg reg)
         }
         break;
     }
+}
+
+/* The jump table that will actually emit DILL_Q code, or NULL if this stream
+ * has no vector support.  In virtual mode s->j is the always-filled virtual
+ * table, so the vector queries have to look through to the emit-time table. */
+static jmp_table
+vector_jump_table(dill_stream s)
+{
+#ifdef EMULATION_ONLY
+    return NULL; /* the emulator has no vector support */
+#else
+    jmp_table j = s->p->native.mach_jump ? s->p->native.mach_jump : s->j;
+    if (getenv("DILL_DO_EMULATION"))
+        return NULL; /* emulation forced; the emulator has no vector support */
+    if (j == NULL)
+        return NULL;
+    if ((j->jmp_a3[dill_jmp_vaddf] == 0) || (j->jmp_a3[dill_jmp_vaddd] == 0) ||
+        (j->jmp_a3[dill_jmp_vfmaf] == 0) || (j->jmp_a2[dill_jmp_vsplatf] == 0))
+        return NULL;
+    return j;
+#endif
+}
+
+extern int
+dill_has_vector_ops(dill_stream s)
+{
+    return vector_jump_table(s) != NULL;
+}
+
+extern int
+dill_vector_bytes(dill_stream s)
+{
+    jmp_table j = vector_jump_table(s);
+    /* The vector width is not a constant of the DILL_Q design; it is whatever
+     * the target's type_size table says, so a backend can widen (AVX, SVE)
+     * without any change here or in client loop structure. */
+    return (j != NULL) ? j->type_size[DILL_Q] : 0;
+}
+
+extern int
+dill_vector_lanes(dill_stream s, int element_type)
+{
+    jmp_table j = vector_jump_table(s);
+    if ((j == NULL) || ((element_type != DILL_F) && (element_type != DILL_D)))
+        return 0;
+    return j->type_size[DILL_Q] / j->type_size[element_type];
 }
 
 extern int
@@ -1192,6 +1243,7 @@ dill_raw_getreg(dill_stream s, dill_reg* reg_p, int type, int class)
     switch (type) {
     case DILL_D:
     case DILL_F:
+    case DILL_Q:
         if (class == DILL_VAR) {
             if ((reg = reg_alloc(&s->p->var_f)) == -1) {
                 reg = reg_alloc(&s->p->tmp_f);
@@ -1244,6 +1296,7 @@ dill_raw_putreg(dill_stream s, dill_reg reg, int type)
     switch (type) {
     case DILL_F:
     case DILL_D:
+    case DILL_Q:
         if (BIT_ON(reg, s->p->tmp_f.members)) {
             dill_alloc_specific(s, reg, type, DILL_TEMP);
         } else if (BIT_ON(reg, s->p->var_f.members)) {

@@ -107,6 +107,7 @@ int x86_type_align[] = {
         4, /* V */
         4, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 int x86_type_size[] = {
@@ -124,6 +125,7 @@ int x86_type_size[] = {
         4, /* V */
         0, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 static void x86_pmov(dill_stream s, int typ, int dest, int src);

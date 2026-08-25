@@ -33,10 +33,13 @@ EOF
 &arith3( "add sub mul div mod xor and or lsh rsh", "i u ul l");
 &arith3( "add sub", "p");
 &arith3( "add sub mul div", "f d");
+&arith3( "vadd vsub vmul vdiv", "f d");
+&arith3( "vfma", "f d");
     $arith2 = 0;
 &arith2( "not com neg", "i u ul l");
 &arith2( "bswap", "s us i u ul l f d");
 &arith2( "neg", "f d");
+&arith2( "sqrt vneg vsqrt vsplat", "f d");
     $branch = 0;
 &branch( "eq ge gt le lt ne", "c uc s us i u l ul p f d");
     $compare = 0;
@@ -45,13 +48,13 @@ EOF
 &convert( "c d f i l s u ul us uc", "c uc s us i u ul l");
 &convert( "c uc s us d f i l u ul", "f d");
 &convert( "p ul", "ul p");
-&loadstore("c d f i l p s u uc u ul us");
+&loadstore("c d f i l p s u uc u ul us q");
 &ret("c uc s us i u l ul p d f");
-&mov("c uc s us i u l ul p d f");
+&mov("c uc s us i u l ul p d f q");
 &set("c uc s us i u l ul p d f");
 &push("i u l ul p f d");
 &call("i u l ul p f d v");
-&save_restore("i u l ul p d f");
+&save_restore("i u l ul p d f q");
 
 print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
 print HOUT "#define dill_jmp_a3_size $arith3\n";
@@ -89,6 +92,9 @@ foreach $key (sort keys %poly_array) {
        $typ = $_;
        if ($poly_array{$key} =~ m/\W$typ\W/) {
 	   print COUT ("dill_jmp_$key$typ, ");
+       } elsif ($poly_array{$key} !~ m/\Wl\W/) {
+	   # fp-only op family (e.g. vector ops): filler entries only
+	   print COUT ("dill_jmp_${key}f, ");
        } else {
 	   if (substr ($typ, 0, 1) eq "u") {
 	       print COUT ("dill_jmp_${key}ul, ");
@@ -209,6 +215,8 @@ char *dill_type_names[] = {
     "d",    /* double */
     "v",    /* void */
     "b",    /* block structure */
+    "ec",   /* execution context */
+    "q",    /* 128-bit vector */
 };
 EOF
 
@@ -620,6 +628,12 @@ struct jmp_table_s {
     lea_op lea;
     int target_byte_order;
     int target_float_format;
+    /* Set by a backend that can hold a DILL_Q in a globally-assigned register
+     * across basic blocks AND calls without losing lanes.  That needs the
+     * backend's call path to save/restore the FULL vector width, not just 64
+     * bits.  Left 0 (the safe default) means DILL_Q vregs are never given a
+     * cross-block register and so spill at every block boundary. */
+    int vector_global_regs;
 };
 
 typedef struct { 
@@ -661,6 +675,11 @@ extern dill_stream dill_create_stream(void);
 extern dill_stream dill_dup_stream(dill_stream s);
 
 extern dill_exec_ctx dill_get_exec_context(dill_stream x);
+/*! Free the stream AND every code buffer it owns.  Generated code obtained
+ *  via dill_finalize() DIES HERE: its handle does not own the code (see
+ *  dill_finalize).  Only code detached with dill_get_handle() survives the
+ *  stream.  Do not free a stream while a dill_finalize()-produced function
+ *  pointer is still callable. */
 extern void dill_free_stream(dill_stream s);
 extern void dill_free_exec_context(dill_exec_ctx c);
 extern void dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value);
@@ -671,6 +690,16 @@ extern void dill_mark_label(dill_stream s, int label);
 extern int dill_is_label_mark(dill_stream s);
 extern int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
 extern int dill_getreg(dill_stream s, int typ);
+/*! query whether the (eventual native) target implements the DILL_Q vector ops */
+extern int dill_has_vector_ops(dill_stream s);
+/*! bytes in a DILL_Q vector on the (eventual native) target, or 0 if it has no
+ *  vector ops.  NOT a constant of the API: a backend may use 128, 256 or 512
+ *  bits, so clients must structure vector loops around this rather than
+ *  assuming a width. */
+extern int dill_vector_bytes(dill_stream s);
+/*! lanes of element_type (DILL_F or DILL_D) in one DILL_Q vector, or 0 if the
+ *  target has no vector ops.  This is the vector loop's stride. */
+extern int dill_vector_lanes(dill_stream s, int element_type);
 extern void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
 extern void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
 extern void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
@@ -685,8 +714,21 @@ extern dill_reg dill_param_reg(dill_stream s, int argno);
 extern dill_reg dill_vparam(dill_stream s, int argno);
 extern void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
 extern void dill_dump(dill_stream s);
+/*! Finish code generation and return a handle to the generated function.
+ *  LIFETIME: the handle does NOT own the code.  The code lives in the
+ *  stream's buffers, so the function pointer from dill_get_fp() is valid
+ *  only until dill_free_stream() -- or until the stream is reused by a
+ *  later dill_start_proc(), which overwrites the buffer.  To keep code
+ *  beyond the stream, call dill_get_handle() after dill_finalize() and
+ *  free the finalize handle; the get_handle handle owns the code and
+ *  frees it in dill_free_handle(). */
 extern dill_exec_handle dill_finalize(dill_stream s);
 extern void dill_begin_prefix_code(dill_stream s);
+/*! Detach the most recently generated code from the stream and return an
+ *  OWNING handle: the code survives dill_free_stream() and is released by
+ *  dill_free_handle().  Call after dill_finalize() (which does the actual
+ *  emission; its non-owning handle should then be freed).  After this the
+ *  stream no longer references the code. */
 extern dill_exec_handle dill_get_handle(dill_stream s);
 extern char *dill_finalize_package(dill_stream s, int *pkg_len);
 typedef struct _dill_extern_entry {
@@ -698,6 +740,9 @@ typedef struct _dill_extern_entry {
 
 extern dill_exec_handle dill_package_stitch(char *package, dill_extern_entry* externs);
 extern void *dill_package_entry(char* package);
+/*! Release a handle.  For dill_get_handle() handles this frees the
+ *  generated code; for dill_finalize() handles it frees only the handle
+ *  struct (the code belongs to the stream). */
 extern void dill_free_handle(dill_exec_handle h);
 extern void dill_ref_handle(dill_exec_handle h);
 extern void *dill_get_fp(dill_exec_handle h);
@@ -760,6 +805,7 @@ enum {
     DILL_V,    /* void */
     DILL_B,    /* block structure */
     DILL_EC,   /* execution context */
+    DILL_Q,    /* 128-bit vector; lane use (4xF/2xD) set by the operation */
     DILL_ERR   /* no type */
 };
 

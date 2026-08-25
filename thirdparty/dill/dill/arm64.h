@@ -100,6 +100,10 @@ extern void arm64_reti(dill_stream s, int data1, int data2, IMM_TYPE imm);
 extern void arm64_retf(dill_stream s, int data1, int data2, double imm);
 extern int arm64_getreg(dill_stream s, dill_reg *reg_p, int type, int class);
 extern int arm64_putreg(dill_stream s, dill_reg reg, int type);
+extern void arm64_vfarith(dill_stream s, int data1, int data2, int dest, int src1,
+                          int src2);
+extern void arm64_vfarith2(dill_stream s, int data1, int data2, int dest, int src);
+extern void arm64_vsplat(dill_stream s, int data1, int data2, int dest, int src);
 extern void arm64_ploadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void arm64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void arm64_pbsloadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE offset);
