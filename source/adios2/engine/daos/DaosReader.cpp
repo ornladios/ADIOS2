@@ -797,6 +797,13 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
      * shared node-wide, not per process, so it is reached sooner the more ranks
      * share a node.
      *
+     * The destination is ONE contiguous staging buffer (sg_nr=1) that the runs
+     * are copied out of, not one iovec per run: a multi-segment sgl registers
+     * every segment separately, so registrations tracked the run count and the
+     * batching above bought RPC count only.  DAOS packs the ranges into the sgl
+     * in order regardless of how it is divided, so the wire transfer is
+     * identical and the cost is a memcpy of the wanted bytes.
+     *
      * There is deliberately NO switch back to whole-span reads for a strided
      * selection.  That is the configuration that exhausts the registration pool
      * and aborts the reader, and an abort there takes the DAOS servers down with
@@ -804,6 +811,12 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
      * span IS the wanted data (a contiguous selection) and the loop below is the
      * correct path -- that is the only way to get there.
      */
+    // Staging decoupled the range count from the registration count -- a batch is
+    // one registration however many ranges it carries -- so the byte bound above
+    // is what should govern, and this is only a backstop on the size of the
+    // descriptor array.  It still has to stay under DAOS_ARRAY_LIST_IO_LIMIT
+    // (16384), which binds for ranges below DAOS_ARRAY_RG_LEN_THD (16 bytes).
+    //
     // 0 means "no count limit" here, matching DAOS_READ_CHUNK_BYTES above.  It
     // must not leave the batch empty: an empty batch yields arr_nr=0 with a NULL
     // arr_rgs AND never advances i, i.e. an infinite loop of malformed reads.
@@ -813,7 +826,15 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
             const size_t v = static_cast<size_t>(std::strtoull(e, nullptr, 10));
             return v == 0 ? std::numeric_limits<size_t>::max() : v;
         }
-        return 64;
+        return 1024;
+    }();
+
+    // A/B switch for the staging buffer above: 0 scatters the read straight into
+    // Destination (sg_nr = run count), which is what exhausted the registration
+    // pool.  Measurement only -- delete once the staging form is confirmed.
+    static const bool stageSubRanges = []() -> bool {
+        const char *e = std::getenv("DAOS_SUBRANGE_STAGE");
+        return !(e && std::strtoll(e, nullptr, 10) == 0);
     }();
 
     if (!SubRanges.empty())
@@ -826,12 +847,21 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
                                                   " runs, WriterRank=" +
                                                   std::to_string(WriterRank));
         }
+        // Grown, never shrunk, and reused across batches and calls: batchBytes is
+        // capped by the chunk bound above, so this settles at one chunk per thread.
+        // Uninitialized on purpose -- every byte is overwritten by the read.  new
+        // throws rather than returning NULL, so unlike the malloc sites this cannot
+        // silently hand DAOS an sgl pointing at nothing; the one way to get there is
+        // a zero-byte batch leaving it unallocated, rejected below.
+        static thread_local std::unique_ptr<char[]> stage;
+        static thread_local size_t stageCap = 0;
         size_t i = 0;
         while (i < SubRanges.size())
         {
             std::vector<daos_range_t> rgs;
             std::vector<d_iov_t> iovs;
             size_t batchBytes = 0;
+            const size_t firstRun = i;
             while (i < SubRanges.size() && rgs.size() < maxBatchRanges &&
                    (batchBytes == 0 || batchBytes + SubRanges[i].second <= step))
             {
@@ -839,32 +869,59 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
                 rg.rg_idx = arrayOffset + SubRanges[i].first;
                 rg.rg_len = SubRanges[i].second;
                 rgs.push_back(rg);
-                d_iov_t iov;
-                iov.iov_buf = Destination + SubRanges[i].first;
-                iov.iov_buf_len = SubRanges[i].second;
-                iov.iov_len = SubRanges[i].second;
-                iovs.push_back(iov);
                 batchBytes += SubRanges[i].second;
                 ++i;
             }
-            if (rgs.empty())
+            if (rgs.empty() || batchBytes == 0)
             {
                 // Unreachable: the first pass of the inner loop always admits a
-                // range (batchBytes==0) and maxBatchRanges is never 0.  Checked
-                // anyway because the failure mode is a NULL arr_rgs handed to
-                // DAOS plus a non-advancing outer loop.
+                // range (batchBytes==0) and maxBatchRanges is never 0, and a run
+                // list is only built when the runs carry bytes.  Checked anyway
+                // because both shapes are malformed descriptors -- no ranges is a
+                // NULL arr_rgs plus a non-advancing outer loop, and no bytes leaves
+                // the staging buffer unallocated, i.e. sg_nr=1 at a NULL address
+                // while arr_nr counts ranges.
                 helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                                  "empty subrange batch at run " +
-                                                      std::to_string(i) + " of " +
+                                                  "subrange batch of " +
+                                                      std::to_string(rgs.size()) + " runs and " +
+                                                      std::to_string(batchBytes) +
+                                                      " bytes at run " + std::to_string(i) +
+                                                      " of " +
                                                       std::to_string(SubRanges.size()));
+            }
+            d_iov_t stageIov;
+            if (stageSubRanges)
+            {
+                if (stageCap < batchBytes)
+                {
+                    stage.reset();
+                    stageCap = 0;
+                    stage.reset(new char[batchBytes]);
+                    stageCap = batchBytes;
+                }
+                stageIov.iov_buf = stage.get();
+                stageIov.iov_buf_len = batchBytes;
+                stageIov.iov_len = batchBytes;
+            }
+            else
+            {
+                iovs.reserve(rgs.size());
+                for (size_t k = firstRun; k < i; ++k)
+                {
+                    d_iov_t iov;
+                    iov.iov_buf = Destination + SubRanges[k].first;
+                    iov.iov_buf_len = SubRanges[k].second;
+                    iov.iov_len = SubRanges[k].second;
+                    iovs.push_back(iov);
+                }
             }
             daos_array_iod_t iodr;
             iodr.arr_nr = static_cast<daos_size_t>(rgs.size());
             iodr.arr_rgs = rgs.data();
             d_sg_list_t sglr;
-            sglr.sg_nr = static_cast<uint32_t>(iovs.size());
+            sglr.sg_nr = stageSubRanges ? 1u : static_cast<uint32_t>(iovs.size());
             sglr.sg_nr_out = 0;
-            sglr.sg_iovs = iovs.data();
+            sglr.sg_iovs = stageSubRanges ? &stageIov : iovs.data();
             int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
             if (rc)
             {
@@ -874,6 +931,19 @@ DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_
                         " WriterRank=" + std::to_string(WriterRank) +
                         " nranges=" + std::to_string(rgs.size()) +
                         " bytes=" + std::to_string(batchBytes));
+            }
+            if (stageSubRanges)
+            {
+                // Runs land packed in range order; scatter them to the offsets a
+                // whole-span read would have put them at, which is what the
+                // extraction step addresses against.
+                size_t packed = 0;
+                for (size_t k = firstRun; k < i; ++k)
+                {
+                    std::memcpy(Destination + SubRanges[k].first, stage.get() + packed,
+                                SubRanges[k].second);
+                    packed += SubRanges[k].second;
+                }
             }
         }
         TP endSub = NOW();
