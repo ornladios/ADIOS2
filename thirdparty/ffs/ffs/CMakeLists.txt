@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 # The directory label is used for CDash to treat FFS as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS FFS)
 
-project(FFS VERSION 3.2.1)
+project(FFS VERSION 3.3.0)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -239,7 +239,12 @@ target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/ffs>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-find_package(dill 3.3.0 QUIET)
+# dill's version file is same-major compatible, so one request cannot span
+# the 3.x and 4.x series; FFS DCG uses only APIs present in both.
+find_package(dill 4.0 QUIET)
+if(NOT dill_FOUND)
+  find_package(dill 3.3.0 QUIET)
+endif()
 
 option(FFS_USE_DILL "Enable Dill code generation" ${DILL_FOUND})
 

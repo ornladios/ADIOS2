@@ -1,4 +1,4 @@
-# line 287 "virtual.ops"
+# line 315 "virtual.ops"
 /* This file is generated from virtual.ops.  Do not edit directly. */
 
 #include "config.h"
@@ -379,6 +379,7 @@ int virtual_type_align[] = {
         4, /* V */
         4, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 int virtual_type_size[] = {
@@ -396,6 +397,7 @@ int virtual_type_size[] = {
         4, /* V */
         0, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 DECLARE_JUMP_TABLE(virtual);
@@ -410,206 +412,246 @@ DECLARE_JUMP_TABLE(virtual);
 extern void NO_SANITIZE_THREAD dill_virtual_init(dill_stream s)
 {
 	  FILL_JUMP_STRUCTURE(virtual);
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addi].data1 = dill_jmp_addi;
 	  virtual_jump_table->a3_data[dill_jmp_addi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addu].data1 = dill_jmp_addu;
 	  virtual_jump_table->a3_data[dill_jmp_addu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addul].data1 = dill_jmp_addul;
 	  virtual_jump_table->a3_data[dill_jmp_addul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addl].data1 = dill_jmp_addl;
 	  virtual_jump_table->a3_data[dill_jmp_addl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addp] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addp].data1 = dill_jmp_addp;
 	  virtual_jump_table->a3_data[dill_jmp_addp].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subi].data1 = dill_jmp_subi;
 	  virtual_jump_table->a3_data[dill_jmp_subi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subu].data1 = dill_jmp_subu;
 	  virtual_jump_table->a3_data[dill_jmp_subu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subul].data1 = dill_jmp_subul;
 	  virtual_jump_table->a3_data[dill_jmp_subul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subl].data1 = dill_jmp_subl;
 	  virtual_jump_table->a3_data[dill_jmp_subl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subp] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subp].data1 = dill_jmp_subp;
 	  virtual_jump_table->a3_data[dill_jmp_subp].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_mulu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_mulu].data1 = dill_jmp_mulu;
 	  virtual_jump_table->a3_data[dill_jmp_mulu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_mulul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_mulul].data1 = dill_jmp_mulul;
 	  virtual_jump_table->a3_data[dill_jmp_mulul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_muli] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_muli].data1 = dill_jmp_muli;
 	  virtual_jump_table->a3_data[dill_jmp_muli].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_mull] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_mull].data1 = dill_jmp_mull;
 	  virtual_jump_table->a3_data[dill_jmp_mull].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divu].data1 = dill_jmp_divu;
 	  virtual_jump_table->a3_data[dill_jmp_divu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divul].data1 = dill_jmp_divul;
 	  virtual_jump_table->a3_data[dill_jmp_divul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divi].data1 = dill_jmp_divi;
 	  virtual_jump_table->a3_data[dill_jmp_divi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divl].data1 = dill_jmp_divl;
 	  virtual_jump_table->a3_data[dill_jmp_divl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_modu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_modu].data1 = dill_jmp_modu;
 	  virtual_jump_table->a3_data[dill_jmp_modu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_modul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_modul].data1 = dill_jmp_modul;
 	  virtual_jump_table->a3_data[dill_jmp_modul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_modi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_modi].data1 = dill_jmp_modi;
 	  virtual_jump_table->a3_data[dill_jmp_modi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_modl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_modl].data1 = dill_jmp_modl;
 	  virtual_jump_table->a3_data[dill_jmp_modl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_andu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_andu].data1 = dill_jmp_andu;
 	  virtual_jump_table->a3_data[dill_jmp_andu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_andul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_andul].data1 = dill_jmp_andul;
 	  virtual_jump_table->a3_data[dill_jmp_andul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_andi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_andi].data1 = dill_jmp_andi;
 	  virtual_jump_table->a3_data[dill_jmp_andi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_andl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_andl].data1 = dill_jmp_andl;
 	  virtual_jump_table->a3_data[dill_jmp_andl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_oru] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_oru].data1 = dill_jmp_oru;
 	  virtual_jump_table->a3_data[dill_jmp_oru].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_orul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_orul].data1 = dill_jmp_orul;
 	  virtual_jump_table->a3_data[dill_jmp_orul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_ori] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_ori].data1 = dill_jmp_ori;
 	  virtual_jump_table->a3_data[dill_jmp_ori].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_orl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_orl].data1 = dill_jmp_orl;
 	  virtual_jump_table->a3_data[dill_jmp_orl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_xoru] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_xoru].data1 = dill_jmp_xoru;
 	  virtual_jump_table->a3_data[dill_jmp_xoru].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_xorul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_xorul].data1 = dill_jmp_xorul;
 	  virtual_jump_table->a3_data[dill_jmp_xorul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_xori] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_xori].data1 = dill_jmp_xori;
 	  virtual_jump_table->a3_data[dill_jmp_xori].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_xorl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_xorl].data1 = dill_jmp_xorl;
 	  virtual_jump_table->a3_data[dill_jmp_xorl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_lshu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_lshu].data1 = dill_jmp_lshu;
 	  virtual_jump_table->a3_data[dill_jmp_lshu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_lshul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_lshul].data1 = dill_jmp_lshul;
 	  virtual_jump_table->a3_data[dill_jmp_lshul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_lshi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_lshi].data1 = dill_jmp_lshi;
 	  virtual_jump_table->a3_data[dill_jmp_lshi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_lshl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_lshl].data1 = dill_jmp_lshl;
 	  virtual_jump_table->a3_data[dill_jmp_lshl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_rshu] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_rshu].data1 = dill_jmp_rshu;
 	  virtual_jump_table->a3_data[dill_jmp_rshu].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_rshul] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_rshul].data1 = dill_jmp_rshul;
 	  virtual_jump_table->a3_data[dill_jmp_rshul].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_rshi] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_rshi].data1 = dill_jmp_rshi;
 	  virtual_jump_table->a3_data[dill_jmp_rshi].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_rshl] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_rshl].data1 = dill_jmp_rshl;
 	  virtual_jump_table->a3_data[dill_jmp_rshl].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addf] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addf].data1 = dill_jmp_addf;
 	  virtual_jump_table->a3_data[dill_jmp_addf].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_addd] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_addd].data1 = dill_jmp_addd;
 	  virtual_jump_table->a3_data[dill_jmp_addd].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subf] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subf].data1 = dill_jmp_subf;
 	  virtual_jump_table->a3_data[dill_jmp_subf].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_subd] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_subd].data1 = dill_jmp_subd;
 	  virtual_jump_table->a3_data[dill_jmp_subd].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_mulf] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_mulf].data1 = dill_jmp_mulf;
 	  virtual_jump_table->a3_data[dill_jmp_mulf].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_muld] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_muld].data1 = dill_jmp_muld;
 	  virtual_jump_table->a3_data[dill_jmp_muld].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divf] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divf].data1 = dill_jmp_divf;
 	  virtual_jump_table->a3_data[dill_jmp_divf].data2 = 0;
-# line 156 "virtual.ops"
+# line 159 "virtual.ops"
 	  virtual_jump_table->jmp_a3[dill_jmp_divd] = dill_varith3;
 	  virtual_jump_table->a3_data[dill_jmp_divd].data1 = dill_jmp_divd;
 	  virtual_jump_table->a3_data[dill_jmp_divd].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vaddf] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vaddf].data1 = dill_jmp_vaddf;
+	  virtual_jump_table->a3_data[dill_jmp_vaddf].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vaddd] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vaddd].data1 = dill_jmp_vaddd;
+	  virtual_jump_table->a3_data[dill_jmp_vaddd].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vsubf] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vsubf].data1 = dill_jmp_vsubf;
+	  virtual_jump_table->a3_data[dill_jmp_vsubf].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vsubd] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vsubd].data1 = dill_jmp_vsubd;
+	  virtual_jump_table->a3_data[dill_jmp_vsubd].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vmulf] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vmulf].data1 = dill_jmp_vmulf;
+	  virtual_jump_table->a3_data[dill_jmp_vmulf].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vmuld] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vmuld].data1 = dill_jmp_vmuld;
+	  virtual_jump_table->a3_data[dill_jmp_vmuld].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vdivf] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vdivf].data1 = dill_jmp_vdivf;
+	  virtual_jump_table->a3_data[dill_jmp_vdivf].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vdivd] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vdivd].data1 = dill_jmp_vdivd;
+	  virtual_jump_table->a3_data[dill_jmp_vdivd].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vfmaf] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vfmaf].data1 = dill_jmp_vfmaf;
+	  virtual_jump_table->a3_data[dill_jmp_vfmaf].data2 = 0;
+# line 173 "virtual.ops"
+	  virtual_jump_table->jmp_a3[dill_jmp_vfmad] = dill_varith3;
+	  virtual_jump_table->a3_data[dill_jmp_vfmad].data1 = dill_jmp_vfmad;
+	  virtual_jump_table->a3_data[dill_jmp_vfmad].data2 = 0;
 	  virtual_jump_table->jmp_a3i[dill_jmp_addi] = dill_varith3i;
 	  virtual_jump_table->a3i_data[dill_jmp_addi].data1 = dill_jmp_addi;
 	  virtual_jump_table->a3i_data[dill_jmp_addi].data2 = 0;
@@ -802,6 +844,30 @@ extern void NO_SANITIZE_THREAD dill_virtual_init(dill_stream s)
 	  virtual_jump_table->jmp_a2[dill_jmp_bswapd] = dill_varith2;
 	  virtual_jump_table->a2_data[dill_jmp_bswapd].data1 = dill_jmp_bswapd;
 	  virtual_jump_table->a2_data[dill_jmp_bswapd].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_sqrtf] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_sqrtf].data1 = dill_jmp_sqrtf;
+	  virtual_jump_table->a2_data[dill_jmp_sqrtf].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_sqrtd] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_sqrtd].data1 = dill_jmp_sqrtd;
+	  virtual_jump_table->a2_data[dill_jmp_sqrtd].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vnegf] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vnegf].data1 = dill_jmp_vnegf;
+	  virtual_jump_table->a2_data[dill_jmp_vnegf].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vnegd] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vnegd].data1 = dill_jmp_vnegd;
+	  virtual_jump_table->a2_data[dill_jmp_vnegd].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vsqrtf] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vsqrtf].data1 = dill_jmp_vsqrtf;
+	  virtual_jump_table->a2_data[dill_jmp_vsqrtf].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vsqrtd] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vsqrtd].data1 = dill_jmp_vsqrtd;
+	  virtual_jump_table->a2_data[dill_jmp_vsqrtd].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vsplatf] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vsplatf].data1 = dill_jmp_vsplatf;
+	  virtual_jump_table->a2_data[dill_jmp_vsplatf].data2 = 0;
+	  virtual_jump_table->jmp_a2[dill_jmp_vsplatd] = dill_varith2;
+	  virtual_jump_table->a2_data[dill_jmp_vsplatd].data1 = dill_jmp_vsplatd;
+	  virtual_jump_table->a2_data[dill_jmp_vsplatd].data2 = 0;
 	  virtual_jump_table->jmp_b[dill_jmp_beqc] = virtual_branch;
 	  virtual_jump_table->b_data[dill_jmp_beqc].data1 = dill_jmp_beqc;
 	  virtual_jump_table->b_data[dill_jmp_beqc].data2 = DILL_C;
@@ -1252,7 +1318,7 @@ extern void NO_SANITIZE_THREAD dill_virtual_init(dill_stream s)
 	  virtual_jump_table->jmp_c[dill_jmp_cnef] = virtual_compare;
 	  virtual_jump_table->c_data[dill_jmp_cnef].data1 = dill_jmp_cnef;
 	  virtual_jump_table->c_data[dill_jmp_cnef].data2 = DILL_F;
-# line 74 "virtual.ops"
+# line 77 "virtual.ops"
 	  virtual_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;
 	  virtual_jump_table->end = (dill_mach_end)virtual_end;
 	  virtual_jump_table->package_end = (dill_mach_end)virtual_package_end;
@@ -1307,7 +1373,7 @@ extern void NO_SANITIZE_THREAD dill_virtual_init(dill_stream s)
 	    virtual_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ 
 #endif
 	  }
-# line 132 "virtual.ops"
+# line 135 "virtual.ops"
 	if (s->p->virtual.mach_info == NULL) {
 	    s->p->virtual.mach_info = malloc(sizeof(struct mach_info));
 	}

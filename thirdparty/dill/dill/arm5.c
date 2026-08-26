@@ -141,6 +141,7 @@ int arm5_type_align[] = {
 	1, /* V */
         4, /* B */
 	sizeof(long), /* EC */
+    16, /* DILL_Q */
 };
 
 int arm5_type_size[] = {
@@ -158,6 +159,7 @@ int arm5_type_size[] = {
 	1, /* V */
         8, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 extern void arm5_dproc(s, op, shift_code, dest, src1, src2)

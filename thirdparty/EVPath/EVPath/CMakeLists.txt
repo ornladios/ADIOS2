@@ -235,7 +235,12 @@ else()
   unset(CMAKE_REQUIRED_INCLUDES)
 endif()
 if (HAVE_COD_H)
-   find_package(dill 3.3.0 REQUIRED)
+   # dill's version file is same-major compatible, so one call cannot span
+   # the 3.x and 4.x series; EVPath itself uses only APIs present in both.
+   find_package(dill 4.0 QUIET)
+   if(NOT dill_FOUND)
+     find_package(dill 3.3.0 REQUIRED)
+   endif()
    target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
    _pkg_get_target_prefix(dill::dill dill_PREFIX)
    list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")

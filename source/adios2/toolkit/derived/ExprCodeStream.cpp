@@ -12,6 +12,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosLog.h"
+#include "dill.h"
 
 #include <algorithm>
 #include <cstring>
@@ -1086,6 +1087,287 @@ static void *AllocScalarConstant(const TypedConstant &c, DataType type)
     return buf;
 }
 
+// --- TryFuse: JIT a fused single-pass vector loop via dill -----------------
+//
+// Scope: element-wise (SelectionRule::Identity), type-homogeneous float or
+// double streams over +,-,*,/,negate,sqrt.  Everything else (pow, trig,
+// mixed types / PROMOTE, curl/cross) stays on the interpreter.  The
+// generated loop is a vector body over dill_vector_lanes() elements per
+// iteration with a scalar remainder, using a byte-offset induction variable.
+// No calls appear in the generated code, and no FMA contraction is done, so
+// results are bit-identical to the interpreter on every lane.
+
+static bool CanFuse(const ExprCodeStream &cs)
+{
+    if (cs.OutputType != DataType::Float && cs.OutputType != DataType::Double)
+        return false;
+    for (const auto &b : cs.Buffers)
+        if (b.Type != cs.OutputType)
+            return false;
+    for (const auto &instr : cs.Instructions)
+    {
+        if (instr.SelRule != SelectionRule::Identity)
+            return false;
+        if (instr.OutputType != cs.OutputType)
+            return false;
+        switch (instr.Op)
+        {
+        case detail::ExpressionOperator::OP_ADD:
+        case detail::ExpressionOperator::OP_SUBTRACT:
+        case detail::ExpressionOperator::OP_NEGATE:
+        case detail::ExpressionOperator::OP_MULT:
+        case detail::ExpressionOperator::OP_DIV:
+        case detail::ExpressionOperator::OP_SQRT:
+            break;
+        default:
+            return false;
+        }
+    }
+    return true;
+}
+
+void TryFuse(ExprCodeStream &cs)
+{
+    if (!CanFuse(cs))
+        return;
+
+    dill_stream s = dill_create_stream();
+    if (!dill_has_vector_ops(s))
+    {
+        // Scalar-only JIT measured slower than the compiled interpreter
+        // operators; without vector ops fusion isn't worth it.
+        dill_free_stream(s);
+        return;
+    }
+    const bool isFloat = (cs.OutputType == DataType::Float);
+    const int lanes = dill_vector_lanes(s, isFloat ? DILL_F : DILL_D);
+    const int vecBytes = dill_vector_bytes(s);
+    const size_t elemSize = isFloat ? sizeof(float) : sizeof(double);
+
+    // inputs[] slot for each input buffer, ordered by InputVarNames
+    std::map<size_t, size_t> inputIdx;
+    for (size_t b = 0; b < cs.Buffers.size(); b++)
+        if (cs.Buffers[b].IsInput)
+            for (size_t k = 0; k < cs.InputVarNames.size(); k++)
+                if (cs.InputVarNames[k] == cs.Buffers[b].VarName)
+                    inputIdx[b] = k;
+
+    dill_start_proc(s, (char *)"fused", DILL_V, (char *)"%p%p%ul");
+    dill_reg inputsArg = dill_vparam(s, 0);
+    dill_reg outputArg = dill_vparam(s, 1);
+    dill_reg nArg = dill_vparam(s, 2);
+
+    // Hoisted per-buffer state: base pointers for inputs, scalar registers
+    // for constants.  (Splats happen per-iteration from the scalar register:
+    // one instruction, and it keeps vector values from crossing the backedge,
+    // which arm64 would spill.)
+    std::vector<dill_reg> baseReg(cs.Buffers.size(), -1);
+    std::vector<dill_reg> constReg(cs.Buffers.size(), -1);
+    for (size_t b = 0; b < cs.Buffers.size(); b++)
+    {
+        if (cs.Buffers[b].IsInput)
+        {
+            baseReg[b] = dill_getreg(s, DILL_P);
+            dill_ldpi(s, baseReg[b], inputsArg, inputIdx[b] * sizeof(void *));
+        }
+        else if (cs.Buffers[b].IsConstant)
+        {
+            const auto &c = cs.Buffers[b].ConstVal;
+            double v = (c.Type == DataType::Int64) ? (double)c.IntVal : c.DoubleVal;
+            constReg[b] = dill_getreg(s, isFloat ? DILL_F : DILL_D);
+            if (isFloat)
+                dill_setf(s, constReg[b], v);
+            else
+                dill_setd(s, constReg[b], v);
+        }
+    }
+
+    // Byte-offset induction: off in [0, vecEnd) by vecBytes, then [.., end).
+    dill_reg off = dill_getreg(s, DILL_UL);
+    dill_reg vecEnd = dill_getreg(s, DILL_UL);
+    dill_reg end = dill_getreg(s, DILL_UL);
+    {
+        dill_reg mask = dill_getreg(s, DILL_UL);
+        dill_setul(s, mask, ~((size_t)lanes - 1));
+        dill_andul(s, vecEnd, nArg, mask);
+        dill_mululi(s, vecEnd, vecEnd, elemSize); // strength-reduced to shift
+        dill_mululi(s, end, nArg, elemSize);
+    }
+    dill_setul(s, off, 0);
+
+    // One pass over the instruction list per flavor.  Registers are keyed by
+    // buffer id; instruction outputs get fresh registers (matches buffer SSA).
+    enum
+    {
+        VEC,
+        SCALAR
+    };
+    for (int flavor = VEC; flavor <= SCALAR; flavor++)
+    {
+        int top = dill_alloc_label(s, (char *)"top");
+        int done = dill_alloc_label(s, (char *)"done");
+        dill_reg limit = (flavor == VEC) ? vecEnd : end;
+        dill_mark_label(s, top);
+        dill_bgeul(s, off, limit, done);
+
+        std::vector<dill_reg> reg(cs.Buffers.size(), -1);
+        int valType = (flavor == VEC) ? DILL_Q : (isFloat ? DILL_F : DILL_D);
+        for (size_t b = 0; b < cs.Buffers.size(); b++)
+        {
+            if (cs.Buffers[b].IsInput)
+            {
+                reg[b] = dill_getreg(s, valType);
+                if (flavor == VEC)
+                    dill_ldq(s, reg[b], baseReg[b], off);
+                else if (isFloat)
+                    dill_ldf(s, reg[b], baseReg[b], off);
+                else
+                    dill_ldd(s, reg[b], baseReg[b], off);
+            }
+            else if (cs.Buffers[b].IsConstant)
+            {
+                if (flavor == VEC)
+                {
+                    reg[b] = dill_getreg(s, DILL_Q);
+                    if (isFloat)
+                        dill_vsplatf(s, reg[b], constReg[b]);
+                    else
+                        dill_vsplatd(s, reg[b], constReg[b]);
+                }
+                else
+                    reg[b] = constReg[b];
+            }
+        }
+
+#define EMIT2(vop, sfop, sdop, out, a)                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        if (flavor == VEC)                                                                         \
+            vop(s, out, a);                                                                        \
+        else if (isFloat)                                                                          \
+            sfop(s, out, a);                                                                       \
+        else                                                                                       \
+            sdop(s, out, a);                                                                       \
+    } while (0)
+#define EMIT3(vop, sfop, sdop, out, a, b)                                                          \
+    do                                                                                             \
+    {                                                                                              \
+        if (flavor == VEC)                                                                         \
+            vop(s, out, a, b);                                                                     \
+        else if (isFloat)                                                                          \
+            sfop(s, out, a, b);                                                                    \
+        else                                                                                       \
+            sdop(s, out, a, b);                                                                    \
+    } while (0)
+#define EMITV(vfop, vdop, sfop, sdop, out, a, b)                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        if (flavor == VEC && isFloat)                                                              \
+            vfop(s, out, a, b);                                                                    \
+        else if (flavor == VEC)                                                                    \
+            vdop(s, out, a, b);                                                                    \
+        else if (isFloat)                                                                          \
+            sfop(s, out, a, b);                                                                    \
+        else                                                                                       \
+            sdop(s, out, a, b);                                                                    \
+    } while (0)
+#define EMITV2(vfop, vdop, sfop, sdop, out, a)                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        if (flavor == VEC && isFloat)                                                              \
+            vfop(s, out, a);                                                                       \
+        else if (flavor == VEC)                                                                    \
+            vdop(s, out, a);                                                                       \
+        else if (isFloat)                                                                          \
+            sfop(s, out, a);                                                                       \
+        else                                                                                       \
+            sdop(s, out, a);                                                                       \
+    } while (0)
+
+        for (const auto &instr : cs.Instructions)
+        {
+            dill_reg out = dill_getreg(s, valType);
+            reg[instr.OutputBuf] = out;
+            dill_reg in0 = (instr.InputBufs.size() > 0) ? reg[instr.InputBufs[0]] : -1;
+            dill_reg in1 = (instr.InputBufs.size() > 1) ? reg[instr.InputBufs[1]] : -1;
+            switch (instr.Op)
+            {
+            case detail::ExpressionOperator::OP_ADD:
+                EMITV(dill_vaddf, dill_vaddd, dill_addf, dill_addd, out, in0, in1);
+                for (size_t j = 2; j < instr.InputBufs.size(); j++)
+                    EMITV(dill_vaddf, dill_vaddd, dill_addf, dill_addd, out, out,
+                          reg[instr.InputBufs[j]]);
+                break;
+            case detail::ExpressionOperator::OP_MULT:
+                EMITV(dill_vmulf, dill_vmuld, dill_mulf, dill_muld, out, in0, in1);
+                for (size_t j = 2; j < instr.InputBufs.size(); j++)
+                    EMITV(dill_vmulf, dill_vmuld, dill_mulf, dill_muld, out, out,
+                          reg[instr.InputBufs[j]]);
+                break;
+            case detail::ExpressionOperator::OP_SUBTRACT:
+                EMITV(dill_vsubf, dill_vsubd, dill_subf, dill_subd, out, in0, in1);
+                // n-ary: left fold, ((a-b)-c)-... matching the interpreter
+                for (size_t j = 2; j < instr.InputBufs.size(); j++)
+                    EMITV(dill_vsubf, dill_vsubd, dill_subf, dill_subd, out, out,
+                          reg[instr.InputBufs[j]]);
+                break;
+            case detail::ExpressionOperator::OP_DIV:
+                EMITV(dill_vdivf, dill_vdivd, dill_divf, dill_divd, out, in0, in1);
+                for (size_t j = 2; j < instr.InputBufs.size(); j++)
+                    EMITV(dill_vdivf, dill_vdivd, dill_divf, dill_divd, out, out,
+                          reg[instr.InputBufs[j]]);
+                break;
+            case detail::ExpressionOperator::OP_NEGATE:
+                EMITV2(dill_vnegf, dill_vnegd, dill_negf, dill_negd, out, in0);
+                break;
+            case detail::ExpressionOperator::OP_SQRT:
+                EMITV2(dill_vsqrtf, dill_vsqrtd, dill_sqrtf, dill_sqrtd, out, in0);
+                break;
+            default: // unreachable: CanFuse filtered
+                dill_free_stream(s);
+                return;
+            }
+        }
+#undef EMIT2
+#undef EMIT3
+#undef EMITV
+#undef EMITV2
+
+        dill_reg result = reg[cs.OutputBufID];
+        if (flavor == VEC)
+        {
+            dill_stq(s, result, outputArg, off);
+            dill_adduli(s, off, off, vecBytes);
+        }
+        else
+        {
+            if (isFloat)
+                dill_stf(s, result, outputArg, off);
+            else
+                dill_std(s, result, outputArg, off);
+            dill_adduli(s, off, off, elemSize);
+        }
+        dill_jv(s, top);
+        dill_mark_label(s, done);
+    }
+    dill_retii(s, 0);
+
+    dill_exec_handle handle = dill_finalize(s);
+    if (!handle)
+    {
+        dill_free_stream(s);
+        return;
+    }
+    // dill_finalize's handle does not own the generated code (it dies with
+    // the stream); dill_get_handle detaches an owning handle that survives.
+    dill_exec_handle owner = dill_get_handle(s);
+    dill_free_handle(handle);
+    dill_free_stream(s);
+    cs.Fused = (FusedFunc)dill_get_fp(owner);
+    cs.FusedHandle = std::shared_ptr<void>((void *)owner,
+                                           [](void *h) { dill_free_handle((dill_exec_handle)h); });
+}
+
 std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
                                  std::map<std::string, std::vector<DerivedData>> &nameToData,
                                  const Dims &outputStart, const Dims &outputCount)
@@ -1093,6 +1375,42 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
     bool hasOutputSelection = !outputCount.empty();
     std::vector<DerivedData> outputData(numBlocks);
     std::vector<BufferSlot> pool;
+
+    // Fast path: TryFuse'd single-pass loop.  Only for plain element-wise
+    // streams (CanFuse guaranteed Identity selections), and not when the
+    // caller asked for a trimmed output selection.
+    // The fused loop reads every input as a full-length array, so a
+    // broadcast (IsScalar) input block must use the interpreter.
+    bool anyScalarInput = false;
+    for (auto &nd : nameToData)
+        for (auto &dd : nd.second)
+            anyScalarInput |= dd.IsScalar;
+    if (cs.Fused && !hasOutputSelection && !anyScalarInput)
+    {
+        std::vector<void *> inputPtrs(cs.InputVarNames.size());
+        size_t elemSize = (cs.OutputType == DataType::Float) ? sizeof(float) : sizeof(double);
+        for (size_t blk = 0; blk < numBlocks; blk++)
+        {
+            Dims outStart, outCount;
+            size_t N = 1;
+            for (size_t k = 0; k < cs.InputVarNames.size(); k++)
+            {
+                auto &dd = nameToData[cs.InputVarNames[k]][blk];
+                inputPtrs[k] = dd.Data;
+                if (outCount.empty() && !dd.Count.empty())
+                {
+                    outStart = dd.Start;
+                    outCount = dd.Count;
+                }
+            }
+            for (auto d : outCount)
+                N *= d;
+            void *outBuf = malloc(N * elemSize);
+            cs.Fused(inputPtrs.data(), outBuf, N);
+            outputData[blk] = {outBuf, outStart, outCount, cs.OutputType};
+        }
+        return outputData;
+    }
 
     // Allocate scalar constant buffers once (persist across blocks)
     std::vector<void *> constBufs(cs.Buffers.size(), nullptr);

@@ -16,6 +16,9 @@ sub upperc {
 &arith2_insn("com not", "i u ul l", "dill_varith2");
 &arith2_insn("neg", "i u ul l f d", "dill_varith2");
 &arith2_insn("bswap", "s us i u ul l f d", "dill_varith2");
+&vec_arith_insn("vadd vsub vmul vdiv", "f d", "dill_varith3");
+&vec_arith_insn("vfma", "f d", "dill_varith3");
+&vec_arith2_insn("sqrt vneg vsqrt vsplat", "f d", "dill_varith2");
 
 &arithi_insn("add sub", "i u ul l p", "dill_varith3i");
 &arithi_insn("mul div mod", "u ul i l", "dill_varith3i");
@@ -158,6 +161,31 @@ sub arith_insn {
 	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
 	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = 0;\n";
 	    $vm_a3_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $src1_cast{$_} src1->u.${_}.${_} $c_op $src2_cast{$_} src2->u.${_}.${_}; break;\n";
+	}
+    }
+}
+
+sub vec_arith_insn {
+    local ($ops, $type_list, $subr) = @_;
+    foreach(split(' ', $ops)) {
+	$op = $_;
+	foreach(split(' ', $type_list)) {
+	    $jmp_a3_assigns = $jmp_a3_assigns . "# line ".__LINE__." \"virtual.ops\"\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->jmp_a3[dill_jmp_${op}${_}] = $subr;\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = 0;\n";
+	}
+    }
+}
+
+sub vec_arith2_insn {
+    local ($ops, $type_list, $subr) = @_;
+    foreach(split(' ', $ops)) {
+	$op = $_;
+	foreach(split(' ', $type_list)) {
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->jmp_a2[dill_jmp_${op}${_}] = $subr;\n";
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data2 = 0;\n";
 	}
     }
 }
@@ -664,6 +692,7 @@ int virtual_type_align[] = {
         4, /* V */
         4, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 int virtual_type_size[] = {
@@ -681,6 +710,7 @@ int virtual_type_size[] = {
         4, /* V */
         0, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 EOF

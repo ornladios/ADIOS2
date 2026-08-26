@@ -76,6 +76,7 @@ int sparc_type_align[] = {
 	1, /* V */
         8, /* B */
 	sizeof(long), /* EC */
+    16, /* DILL_Q */
 };
 
 int sparc_type_size[] = {
@@ -93,6 +94,7 @@ int sparc_type_size[] = {
 	1, /* V */
         8, /* B */
 	sizeof(long), /* EC */
+    16, /* DILL_Q */
 };
 
 extern int

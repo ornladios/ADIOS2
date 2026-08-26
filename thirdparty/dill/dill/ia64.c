@@ -199,6 +199,7 @@ int ia64_type_align[] = {
         4, /* V */
         8, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 int ia64_type_size[] = {
@@ -215,6 +216,7 @@ int ia64_type_size[] = {
         8, /* D */
         8, /* B */
         sizeof(char*), /* EC */
+    16, /* DILL_Q */
 };
 
 static void ia64_spill_fill(dill_stream s, int spill);

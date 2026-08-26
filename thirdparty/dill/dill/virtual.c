@@ -264,6 +264,14 @@ virtual_print_insn(dill_stream c, void* info_ptr, void* i)
     return sizeof(*insn);
 }
 
+/* Accumulating arith3 ops (currently vfma: dest += src1*src2) read their
+ * dest operand, so liveness and the optimizers must treat dest as a use. */
+static int
+is_accum_insn(int insn_code)
+{
+    return (insn_code == dill_jmp_vfmaf) || (insn_code == dill_jmp_vfmad);
+}
+
 static int
 insn_same_except_dest(virtual_insn* i, virtual_insn* j)
 {
@@ -275,6 +283,8 @@ insn_same_except_dest(virtual_insn* i, virtual_insn* j)
     switch (i->class_code) {
     case iclass_arith3:
     case iclass_compare:
+        if ((i->class_code == iclass_arith3) && is_accum_insn(icode))
+            return 0; /* dest is an input: never equivalent-except-dest */
         return ((icode == jcode) && (i->opnds.a3.src1 == j->opnds.a3.src1) &&
                 (i->opnds.a3.src2 == j->opnds.a3.src2));
     case iclass_arith3i:
@@ -759,6 +769,8 @@ insn_uses(virtual_insn* insn, int* used)
     case iclass_compare:
         used[0] = insn->opnds.a3.src1;
         used[1] = insn->opnds.a3.src2;
+        if ((insn->class_code == iclass_arith3) && is_accum_insn(insn->insn_code))
+            used[2] = insn->opnds.a3.dest;
         break;
     case iclass_arith3i:
         used[0] = insn->opnds.a3i.src;
@@ -1109,6 +1121,8 @@ build_bb_body(dill_stream c, virtual_insn* insn, int i, virtual_insn* insns)
     case iclass_compare:
         bb_uses(c, bb, insn->opnds.a3.src1);
         bb_uses(c, bb, insn->opnds.a3.src2);
+        if ((insn->class_code == iclass_arith3) && is_accum_insn(insn->insn_code))
+            bb_uses(c, bb, insn->opnds.a3.dest);
         bb_defines(c, bb, insn->opnds.a3.dest);
         break;
     case iclass_arith3i:
@@ -1614,6 +1628,12 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
         int is_cross_block = 0;
         if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V)
             continue;
+        /* A DILL_Q only gets a cross-block register if the backend can keep
+         * one intact across a call (see jmp_table.vector_global_regs).  With
+         * it off, vectors spill at every block boundary -- correct, but it
+         * costs a reload per iteration for any loop-carried accumulator. */
+        if ((c->p->vregs[i].typ == DILL_Q) && !c->j->vector_global_regs)
+            continue;
         if (c->p->vregs[i].use_info.use_count == 0 &&
             c->p->vregs[i].use_info.def_count == 0)
             continue;
@@ -1649,8 +1669,13 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
         int probe[MIN_ONDEMAND_RESERVE];
         int got, k;
 
+        /* Exhaustion is per register CLASS: integer candidates draw from a
+         * different pool than float/vector ones.  So a candidate that cannot
+         * be satisfied must not abort the whole loop -- skip it and keep
+         * going, or a starved integer pool (easily caused by a few pointer
+         * parameters) silently denies every vector accumulator a register. */
         if (dill_raw_getreg(c, &preg, candidates[i].typ, DILL_VAR) == 0)
-            break; /* no more registers available */
+            continue; /* no registers left in THIS class */
 
         /* Verify enough registers remain for on-demand allocation */
         got = 0;
@@ -1665,9 +1690,11 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
             dill_raw_putreg(c, probe[k], candidates[i].typ);
 
         if (got < MIN_ONDEMAND_RESERVE) {
-            /* Pool is too depleted — return this register and stop */
+            /* This class is too depleted to keep the on-demand allocator fed;
+             * give the register back and try the next candidate, which may be
+             * in a class that still has room. */
             dill_raw_putreg(c, preg, candidates[i].typ);
-            break;
+            continue;
         }
 
         c->p->vregs[idx].preg = preg;
@@ -1730,6 +1757,11 @@ static int
 tmp_for_vreg(dill_stream c, int tmp_num, int vreg)
 {
     int typ = dill_type_of(c, vreg);
+    if (typ >= DILL_B) {
+        fprintf(stderr,
+                "dill: type %d unsupported by DILL_OLD_REGS allocator\n", typ);
+        abort();
+    }
     return c->p->v_tmps[typ][tmp_num];
 }
 
@@ -2780,7 +2812,7 @@ reset_reg_state(reg_state* state)
             int preg = c->p->vregs[i].preg;
             int typ = c->p->vregs[i].typ;
             ensure_preg_capacity(state, preg);
-            if (typ == DILL_F || typ == DILL_D) {
+            if (typ == DILL_F || typ == DILL_D || typ == DILL_Q) {
                 state->fpregs[preg].holds = i + 100;
             } else {
                 state->ipregs[preg].holds = i + 100;
@@ -3003,6 +3035,7 @@ select_reg(reg_state* state, int vreg, int loc, int src)
     switch (dill_type_of(c, vreg)) {
     case DILL_F:
     case DILL_D:
+    case DILL_Q:
         pregs = state->fpregs;
         break;
     default:
@@ -3054,6 +3087,7 @@ select_reg(reg_state* state, int vreg, int loc, int src)
                 switch (dill_type_of(c, vreg)) {
                 case DILL_F:
                 case DILL_D:
+                case DILL_Q:
                     pregs = state->fpregs;
                     break;
                 default:
@@ -3357,13 +3391,41 @@ new_emit_insns(dill_stream c,
                                           c->j->a2_data[insn_code].data2, pdest,
                                           pused[0]);
                 break;
-            case iclass_arith3i:
+            case iclass_arith3i: {
                 /* arith 3 immediate operand integer insns */
-                (c->j->jmp_a3i)[insn_code](c, c->j->a3i_data[insn_code].data1,
-                                           c->j->a3i_data[insn_code].data2,
-                                           pdest, pused[0],
-                                           ip->opnds.a3i.u.imm);
+                int code = insn_code;
+                IMM_TYPE imm = ip->opnds.a3i.u.imm;
+                /* Strength-reduce integer multiply by a power of two into a
+                 * left shift (exact in two's complement, signed or unsigned;
+                 * x1 becomes a mov).  mul is the one a3i op backends may
+                 * expand into long sequences (x86_64_muli is 8 insns), and
+                 * loop bodies multiply an index by an element size
+                 * constantly.  The shift count must fit the operand type:
+                 * mul by 2^k for k >= the type's width truncates to zero,
+                 * but hardware masks shift counts, so leave those as mul. */
+                if ((code >= dill_jmp_muli) && (code <= dill_jmp_mull) &&
+                    (imm > 0) && ((imm & (imm - 1)) == 0)) {
+                    static const int mul_op_type[4] = {DILL_I, DILL_U, DILL_UL,
+                                                       DILL_L};
+                    int typ = mul_op_type[code - dill_jmp_muli];
+                    int max_shift = c->j->type_size[typ] * 8 - 1;
+                    int k = 0;
+                    while ((((IMM_TYPE)1) << k) < imm)
+                        k++;
+                    if (k == 0) {
+                        c->j->mov(c, typ, 0, pdest, pused[0]);
+                        break;
+                    }
+                    if (k <= max_shift) {
+                        code = dill_jmp_lshi + (code - dill_jmp_muli);
+                        imm = k;
+                    }
+                }
+                (c->j->jmp_a3i)[code](c, c->j->a3i_data[code].data1,
+                                      c->j->a3i_data[code].data2, pdest,
+                                      pused[0], imm);
                 break;
+            }
             case iclass_ret:
                 (c->j->ret)(c, ip->insn_code, 0, pused[0]);
                 break;
@@ -3599,6 +3661,8 @@ const_prop_ip(dill_stream c,
         int src1_vreg = ip->opnds.a3.src1;
         int src2_vreg = ip->opnds.a3.src2;
         int insn_code = ip->insn_code;
+        if (is_accum_insn(insn_code))
+            break; /* no immediate form; dest is an input */
         if ((src1_vreg == set_vreg) && is_commutative(insn_code)) {
             src2_vreg = ip->opnds.a3.src1;
             src1_vreg = ip->opnds.a3.src2;
@@ -4107,6 +4171,8 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn* insns, int loc)
             case iclass_arith3: {
                 /* arith 3 operand integer insns */
                 int dest_vreg = ip->opnds.a3.dest;
+                if (is_accum_insn(ip->insn_code))
+                    break; /* dest is an input; renaming it changes the accumulator */
                 if (dest_vreg == mov_src) {
                     if (c->dill_debug) {
                         printf("   Replacing  ");

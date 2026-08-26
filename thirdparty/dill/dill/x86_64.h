@@ -226,6 +226,7 @@ typedef struct x86_64_mach_info {
     int conversion_word;
     int fcu_word;
     int save_base;
+    int vec_save_base; /* 16 x 16 bytes, full-width xmm save around calls */
     int cur_arg_offset;
     int int_arg_count;
     int float_arg_offset;
@@ -386,6 +387,19 @@ extern void
 x86_64_farith(dill_stream c, int op, int typ, int dest, int src1, int src2);
 extern void
 x86_64_farith2(dill_stream c, int op, int typ, int dest, int src);
+extern void
+x86_64_vfarith(dill_stream c,
+               int data1,
+               int data2,
+               int dest,
+               int src1,
+               int src2);
+extern void
+x86_64_vfarith2(dill_stream c, int data1, int data2, int dest, int src);
+extern void
+x86_64_vsplat(dill_stream c, int data1, int data2, int dest, int src);
+extern void
+x86_64_vector_init(jmp_table t);
 extern void
 x86_64_bswap(dill_stream c, int op, int typ, int dest, int src);
 extern void

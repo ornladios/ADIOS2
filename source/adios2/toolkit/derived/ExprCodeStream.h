@@ -57,6 +57,10 @@ struct BufferDescriptor
     DataType Type = DataType::None;
 };
 
+/** Signature of a TryFuse-generated single-pass loop: inputs[] ordered by
+    InputVarNames, one contiguous output, nelem elements. */
+using FusedFunc = void (*)(void **inputs, void *output, size_t nelem);
+
 struct ExprCodeStream
 {
     std::vector<ExprInstruction> Instructions;
@@ -66,6 +70,10 @@ struct ExprCodeStream
     DataType OutputType = DataType::None;
     std::vector<std::string> InputVarNames; // deduplicated
     std::string ExprString;                 // original expression for serialization
+    /** JIT-fused loop (TryFuse); null = use the interpreter. The handle
+        keepalive owns the generated code across struct copies. */
+    FusedFunc Fused = nullptr;
+    std::shared_ptr<void> FusedHandle;
 };
 
 // Pipeline passes — free functions
@@ -109,6 +117,12 @@ bool HasHalo(const ExprCodeStream &cs);
     Returns a map from input variable name to (start, count). */
 std::map<std::string, std::pair<Dims, Dims>>
 ComputeInputSelections(const ExprCodeStream &cs, const Dims &outputStart, const Dims &outputCount);
+
+/** JIT-compile an element-wise, type-homogeneous float/double code stream
+    into a fused vector loop (via dill).  No-op (stream unchanged, interpreter
+    used) when the expression has non-element-wise or non-vectorizable ops,
+    mixed types, or the CPU/target lacks vector support. */
+void TryFuse(ExprCodeStream &cs);
 
 /** Dump the compiled code stream for debugging. */
 std::string DumpCodeStream(const ExprCodeStream &cs);
