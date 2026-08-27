@@ -12,7 +12,9 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosLog.h"
+#ifdef ADIOS2_HAVE_DILL_FUSION
 #include "dill.h"
+#endif
 
 #include <algorithm>
 #include <cstring>
@@ -289,6 +291,14 @@ ComputeInputSelections(const ExprCodeStream &cs, const Dims &outputStart, const 
             if (cs.Buffers[bufID].IsConstant)
                 continue; // constants don't need selection
 
+            if (cs.Buffers[bufID].IsScalarInput)
+            {
+                // single-value input: needed, but selects no region (broadcasts)
+                bufSel[bufID] = {{}, {}};
+                bufSelSet[bufID] = true;
+                continue;
+            }
+
             Dims inStart, inCount;
             switch (instr.SelRule)
             {
@@ -508,6 +518,8 @@ static size_t GenerateCodeNode(const ExprNode &node, GenerateCodeContext &ctx)
         buf.IsInput = true;
         buf.VarName = node.VarName;
         buf.Type = node.Type;
+        // attribute inputs ("@name") are single values, injected per evaluation
+        buf.IsScalarInput = !node.AttrName.empty();
         ctx.cs.Buffers.push_back(buf);
         ctx.varBufMap[node.VarName] = bufID;
 
@@ -973,17 +985,19 @@ std::tuple<Dims, Dims, Dims>
 GetDims(const ExprCodeStream &cs,
         const std::map<std::string, std::tuple<Dims, Dims, Dims>> &nameToDims)
 {
+    // Dims tuples throughout are (Start, Count, Shape); get<1> below is Count.
     // Build a dims table indexed by buffer ID
     std::vector<std::tuple<Dims, Dims, Dims>> bufDims(cs.Buffers.size());
 
-    // Find reference dims from first input variable
+    // Find reference dims from the first non-scalar input variable
+    // (single-value inputs broadcast and contribute no shape: empty Count)
     std::tuple<Dims, Dims, Dims> refDims = {{}, {}, {}};
     for (const auto &buf : cs.Buffers)
     {
         if (buf.IsInput)
         {
             auto it = nameToDims.find(buf.VarName);
-            if (it != nameToDims.end())
+            if (it != nameToDims.end() && !std::get<1>(it->second).empty())
             {
                 refDims = it->second;
                 break;
@@ -998,8 +1012,10 @@ GetDims(const ExprCodeStream &cs,
         if (buf.IsInput)
         {
             auto it = nameToDims.find(buf.VarName);
-            if (it != nameToDims.end())
+            if (it != nameToDims.end() && !std::get<1>(it->second).empty())
                 bufDims[i] = it->second;
+            else
+                bufDims[i] = refDims; // single-value input broadcasts to reference dims
         }
         else if (buf.IsConstant)
         {
@@ -1087,6 +1103,15 @@ static void *AllocScalarConstant(const TypedConstant &c, DataType type)
     return buf;
 }
 
+void MarkScalarInputs(ExprCodeStream &cs, const std::vector<std::string> &scalarNames)
+{
+    for (auto &buf : cs.Buffers)
+        if (buf.IsInput)
+            for (const auto &n : scalarNames)
+                if (buf.VarName == n)
+                    buf.IsScalarInput = true;
+}
+
 // --- TryFuse: JIT a fused single-pass vector loop via dill -----------------
 //
 // Scope: element-wise (SelectionRule::Identity), type-homogeneous float or
@@ -1096,6 +1121,10 @@ static void *AllocScalarConstant(const TypedConstant &c, DataType type)
 // iteration with a scalar remainder, using a byte-offset induction variable.
 // No calls appear in the generated code, and no FMA contraction is done, so
 // results are bit-identical to the interpreter on every lane.
+//
+// Fusion needs the dill 4.x vector API at build time; without it, TryFuse is
+// a no-op and every expression runs on the interpreter.
+#ifdef ADIOS2_HAVE_DILL_FUSION
 
 static bool CanFuse(const ExprCodeStream &cs)
 {
@@ -1165,7 +1194,18 @@ void TryFuse(ExprCodeStream &cs)
     std::vector<dill_reg> constReg(cs.Buffers.size(), -1);
     for (size_t b = 0; b < cs.Buffers.size(); b++)
     {
-        if (cs.Buffers[b].IsInput)
+        if (cs.Buffers[b].IsInput && cs.Buffers[b].IsScalarInput)
+        {
+            // single-value variable: hoist one scalar load, splat per iteration
+            dill_reg p = dill_getreg(s, DILL_P);
+            dill_ldpi(s, p, inputsArg, inputIdx[b] * sizeof(void *));
+            constReg[b] = dill_getreg(s, isFloat ? DILL_F : DILL_D);
+            if (isFloat)
+                dill_ldfi(s, constReg[b], p, 0);
+            else
+                dill_lddi(s, constReg[b], p, 0);
+        }
+        else if (cs.Buffers[b].IsInput)
         {
             baseReg[b] = dill_getreg(s, DILL_P);
             dill_ldpi(s, baseReg[b], inputsArg, inputIdx[b] * sizeof(void *));
@@ -1214,7 +1254,20 @@ void TryFuse(ExprCodeStream &cs)
         int valType = (flavor == VEC) ? DILL_Q : (isFloat ? DILL_F : DILL_D);
         for (size_t b = 0; b < cs.Buffers.size(); b++)
         {
-            if (cs.Buffers[b].IsInput)
+            if (cs.Buffers[b].IsInput && cs.Buffers[b].IsScalarInput)
+            {
+                if (flavor == VEC)
+                {
+                    reg[b] = dill_getreg(s, DILL_Q);
+                    if (isFloat)
+                        dill_vsplatf(s, reg[b], constReg[b]);
+                    else
+                        dill_vsplatd(s, reg[b], constReg[b]);
+                }
+                else
+                    reg[b] = constReg[b];
+            }
+            else if (cs.Buffers[b].IsInput)
             {
                 reg[b] = dill_getreg(s, valType);
                 if (flavor == VEC)
@@ -1368,6 +1421,15 @@ void TryFuse(ExprCodeStream &cs)
                                            [](void *h) { dill_free_handle((dill_exec_handle)h); });
 }
 
+#else // !ADIOS2_HAVE_DILL_FUSION
+
+void TryFuse(ExprCodeStream &cs)
+{
+    (void)cs; // dill >= 4.0 unavailable at build time: interpreter only
+}
+
+#endif // ADIOS2_HAVE_DILL_FUSION
+
 std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
                                  std::map<std::string, std::vector<DerivedData>> &nameToData,
                                  const Dims &outputStart, const Dims &outputCount)
@@ -1379,13 +1441,19 @@ std::vector<DerivedData> Execute(const ExprCodeStream &cs, size_t numBlocks,
     // Fast path: TryFuse'd single-pass loop.  Only for plain element-wise
     // streams (CanFuse guaranteed Identity selections), and not when the
     // caller asked for a trimmed output selection.
-    // The fused loop reads every input as a full-length array, so a
-    // broadcast (IsScalar) input block must use the interpreter.
-    bool anyScalarInput = false;
-    for (auto &nd : nameToData)
-        for (auto &dd : nd.second)
-            anyScalarInput |= dd.IsScalar;
-    if (cs.Fused && !hasOutputSelection && !anyScalarInput)
+    // The fused loop reads unmarked inputs as full-length arrays; a runtime
+    // broadcast (IsScalar) block is only acceptable where the generated code
+    // was told to splat (IsScalarInput).  Any mismatch: interpreter.
+    bool scalarMismatch = false;
+    for (const auto &buf : cs.Buffers)
+        if (buf.IsInput)
+        {
+            auto it = nameToData.find(buf.VarName);
+            if (it != nameToData.end())
+                for (auto &dd : it->second)
+                    scalarMismatch |= (dd.IsScalar != buf.IsScalarInput);
+        }
+    if (cs.Fused && !hasOutputSelection && !scalarMismatch)
     {
         std::vector<void *> inputPtrs(cs.InputVarNames.size());
         size_t elemSize = (cs.OutputType == DataType::Float) ? sizeof(float) : sizeof(double);

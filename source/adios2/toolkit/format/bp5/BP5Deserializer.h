@@ -56,6 +56,12 @@ public:
     void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
                          size_t Step = SIZE_MAX);
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step = SIZE_MAX);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Retry resolution of pending reader-derived variables. Idempotent and
+    // cheap once none remain; also called after attribute install, since
+    // attribute bindings can only resolve once the file's attributes exist.
+    void InstallReaderDerivedVariables();
+#endif
     void InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
     void InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
     FFSTypeHandle BufferMetaMetaPrep(void *MetadataBlock);
@@ -248,7 +254,6 @@ private:
     // Populated lazily as the file's input variables appear; used to route Get
     // when VarByKey has no entry for the placeholder.
     std::unordered_map<const void *, BP5VarRec *> m_ReaderDerivedByVar;
-    void InstallReaderDerivedVariables();
 #endif
 
     std::vector<void *> *m_MetadataBaseAddrs =

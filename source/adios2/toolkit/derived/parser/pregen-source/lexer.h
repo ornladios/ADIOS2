@@ -217,6 +217,7 @@ extern char *yytext;
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
+#define BINDRHS 1
 
 #endif
 
@@ -470,9 +471,9 @@ extern int yylex (void);
 #undef yyTABLES_NAME
 #endif
 
-#line 148 "lexer.l"
+#line 158 "lexer.l"
 
 
-#line 476 "pregen-source/lexer.h"
+#line 477 "pregen-source/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

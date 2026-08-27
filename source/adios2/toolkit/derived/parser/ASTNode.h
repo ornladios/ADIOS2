@@ -40,6 +40,10 @@ public:
 
     void set_varname(const std::string);
     void set_indices(const std::vector<std::tuple<int, int, int>>);
+    /* rewrite this node into a numeric constant leaf (named constants) */
+    void to_number(const std::string &value_str);
+    /* rewrite this node into an attribute leaf (value folded at Define) */
+    void to_attribute(const std::string &attr_name);
 
 private:
     std::vector<ASTNode *> sub_exprs;

@@ -687,17 +687,29 @@ void BP5Deserializer::InstallReaderDerivedVariables()
             // later writer rank or step resolve it.
             continue;
         }
-        // The read path takes block structure from the first (congruent) input's
-        // VarRec, so it must exist now that the derived var has resolved against
-        // the file. Look it up before building anything; a miss is a logic error,
-        // not a null to propagate into GetMetadataBase.
-        BP5VarRec *structInput = LookupVarByName(derived->VariableNameList()[0].c_str());
+        // The read path takes block structure from the first congruent ARRAY
+        // input's VarRec (attribute and single-value inputs broadcast and carry
+        // no block structure). It must exist now that the derived var has
+        // resolved against the file; a miss is a logic error, not a null to
+        // propagate into GetMetadataBase.
+        BP5VarRec *structInput = nullptr;
+        for (const auto &inName : derived->VariableNameList())
+        {
+            if (inName[0] == '@')
+                continue;
+            BP5VarRec *cand = LookupVarByName(inName.c_str());
+            if (cand && cand->OrigShapeID != ShapeID::GlobalValue)
+            {
+                structInput = cand;
+                break;
+            }
+        }
         if (!structInput)
         {
-            helper::Throw<std::logic_error>(
-                "Toolkit", "format::BP5Deserializer", "InstallReaderDerivedVariables",
-                "reader derived variable " + name + " resolved but its input " +
-                    derived->VariableNameList()[0] + " has no BP5 record");
+            helper::Throw<std::logic_error>("Toolkit", "format::BP5Deserializer",
+                                            "InstallReaderDerivedVariables",
+                                            "reader derived variable " + name +
+                                                " resolved but no array input has a BP5 record");
         }
         // Build a persistent placeholder the user can InquireVariable and Get.
         // registerCreated=false keeps it off the engine's created-variable list
@@ -1984,6 +1996,8 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                     Dims(Req->Count.begin(), Req->Count.end()));
                 for (auto varName : derivedVarInputNameList)
                 {
+                    if (varName[0] == '@')
+                        continue; // attribute input: no file read, injected at Finalize
                     auto itVariable = var_map.find(varName);
                     if (itVariable == var_map.end())
                         helper::Throw<std::invalid_argument>(
@@ -2118,6 +2132,32 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     for (auto varBase : derivedVarInputVarList)
                                     {
                                         BP5VarRec *VarPrimaryRec = VarByName.at(varBase->m_Name);
+                                        if (VarPrimaryRec->OrigShapeID == ShapeID::GlobalValue)
+                                        {
+                                            // Single-value input: the value lives in
+                                            // metadata, no data read. Any writer rank
+                                            // that wrote it this step will do; it may
+                                            // not be the rank whose array block we are
+                                            // intersecting.
+                                            if ((*nameToVarInfo)[varBase->m_Name] == nullptr)
+                                            {
+                                                void *src = nullptr;
+                                                const size_t cohort = WriterCohortSize(Step);
+                                                for (size_t r = 0; r < cohort && !src; r++)
+                                                    src = GetMetadataBase(VarPrimaryRec, Step, r);
+                                                if (src)
+                                                {
+                                                    auto mvi = std::make_unique<MinVarInfo>(
+                                                        0, (const size_t *)nullptr);
+                                                    MinBlockInfo blk = {};
+                                                    blk.BufferP = src;
+                                                    mvi->BlocksInfo.push_back(blk);
+                                                    (*nameToVarInfo)[varBase->m_Name] =
+                                                        std::move(mvi);
+                                                }
+                                            }
+                                            continue;
+                                        }
                                         MetaArrayRecOperator *writer_meta_base_input =
                                             (MetaArrayRecOperator *)GetMetadataBase(
                                                 VarPrimaryRec, Step, WriterRank);
@@ -2743,6 +2783,22 @@ void BP5Deserializer::FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRe
         std::map<std::string, std::unique_ptr<MinVarInfo>> gatheredInputs;
         for (auto &[varName, sel] : inputSelections)
         {
+            if (varName[0] == '@')
+            {
+                // attribute input: the current value from the IO, no file read.
+                // malloc'd like the gathered buffers so the shared free below works.
+                size_t aSize = helper::GetDataTypeSize(derivedVar->m_NameToType[varName]);
+                char *valBuf = (char *)malloc(aSize);
+                m_Engine->m_IO.DerivedAttributeValue(varName.substr(1), valBuf);
+                auto gathered = std::make_unique<MinVarInfo>(0, (const size_t *)nullptr);
+                gathered->Step = 0;
+                gathered->WasLocalValue = false;
+                MinBlockInfo gatherBlock = {};
+                gatherBlock.BufferP = valBuf;
+                gathered->BlocksInfo.push_back(gatherBlock);
+                gatheredInputs[varName] = std::move(gathered);
+                continue;
+            }
             auto selStart = sel.first;
             auto selCount = sel.second;
 
@@ -2778,15 +2834,21 @@ void BP5Deserializer::FinalizeDerivedGets(BP5GetContext &ctx, std::vector<ReadRe
 
             // NdCopy from each block into the contiguous buffer
             auto &mvi = (*nameToVarInfo)[varName];
-            for (auto &blk : mvi->BlocksInfo)
+            if (mvi->Dims == 0)
             {
-                Dims blkStart(blk.Start, blk.Start + mvi->Dims);
-                Dims blkCount(blk.Count, blk.Count + mvi->Dims);
-                helper::NdCopy((const char *)blk.BufferP, blkStart, blkCount, true, true,
-                               contiguousBuf, selStart, selCount, true, true, (int)elemSize,
-                               CoreDims(), CoreDims(), CoreDims(), CoreDims(), false,
-                               MemorySpace::Host);
+                // single-value input: one element, no block geometry
+                memcpy(contiguousBuf, mvi->BlocksInfo[0].BufferP, elemSize);
             }
+            else
+                for (auto &blk : mvi->BlocksInfo)
+                {
+                    Dims blkStart(blk.Start, blk.Start + mvi->Dims);
+                    Dims blkCount(blk.Count, blk.Count + mvi->Dims);
+                    helper::NdCopy((const char *)blk.BufferP, blkStart, blkCount, true, true,
+                                   contiguousBuf, selStart, selCount, true, true, (int)elemSize,
+                                   CoreDims(), CoreDims(), CoreDims(), CoreDims(), false,
+                                   MemorySpace::Host);
+                }
 
             int dims = static_cast<int>(selStart.size());
             startStorage.push_back(std::vector<size_t>(selStart.begin(), selStart.end()));

@@ -7,6 +7,7 @@
 #ifndef ADIOS2_DERIVED_ExprNode_H_
 #define ADIOS2_DERIVED_ExprNode_H_
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -29,6 +30,7 @@ enum ExpressionOperator
     OP_ALIAS, /* Parser-use only */
     OP_PATH,  /* Parser-use only */
     OP_NUM,   /* Parser-use only */
+    OP_ATTR,  /* Parser-use only */
     OP_INDEX,
     OP_ADD,
     OP_SUBTRACT,
@@ -63,9 +65,10 @@ struct ExprNode
 {
     detail::ExpressionOperator Op = detail::ExpressionOperator::OP_NULL;
     std::vector<ExprNode> Children;
-    std::string VarName; // set for variable leaves
-    std::string Const;   // set for numeric constant leaves
-    DataType Type{};     // resolved by ResolveTreeTypes (default: DataType::None = 0)
+    std::string VarName;  // set for variable leaves
+    std::string Const;    // set for numeric constant leaves
+    std::string AttrName; // set for attribute leaves (folded to Const at Define)
+    DataType Type{};      // resolved by ResolveTreeTypes (default: DataType::None = 0)
 
     bool IsLeaf() const { return Children.empty(); }
     bool IsVar() const { return IsLeaf() && !VarName.empty(); }
@@ -75,6 +78,15 @@ struct ExprNode
 // Free functions operating on ExprNode trees
 std::vector<std::string> VariableNameList(const ExprNode &node);
 std::string ToStringExpr(const ExprNode &node);
+
+/** Fold attribute leaves into numeric constants.  The resolver maps an
+    attribute name to its numeric value; it should throw (with a helpful
+    message) for unknown, non-numeric, or non-single-element attributes.
+    Called by the IO layer at Define time, before VariableNameList. */
+// Names of attributes referenced anywhere in the tree ("x = @name" bindings or
+// inline "@name"). These appear in VariableNameList as "@name" pseudo-inputs;
+// the IO layer injects each attribute's current value at every evaluation.
+std::vector<std::string> AttributeNameList(const ExprNode &node);
 
 }
 

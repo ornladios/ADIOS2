@@ -30,7 +30,25 @@ ASTNode::ASTNode(std::string op, std::string a)
 ASTNode::ASTNode(std::string op, double a)
 {
     opname = op;
-    alias = std::to_string(a);
+    // full round-trip precision: std::to_string's fixed 6 decimals silently
+    // zeroes small literals like 1.0e-10
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%.17g", a);
+    alias = buf;
+}
+
+void ASTNode::to_attribute(const std::string &attr_name)
+{
+    opname = "ATTR";
+    varname = attr_name;
+    alias.clear();
+}
+
+void ASTNode::to_number(const std::string &value_str)
+{
+    opname = "NUM";
+    alias = value_str;
+    varname.clear();
 }
 
 ASTNode::ASTNode(std::string op, std::vector<std::tuple<int, int, int>> i)

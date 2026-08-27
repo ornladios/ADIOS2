@@ -41,6 +41,21 @@ void ASTDriver::resolve(ASTNode *node)
 {
     if (!node->get_alias().empty())
     {
+        // constant bindings rewrite the leaf into a numeric literal
+        auto cit = constants.find(node->get_alias());
+        if (cit != constants.end())
+        {
+            node->to_number(cit->second);
+            return;
+        }
+        // attribute bindings become attribute leaves, folded to constants
+        // once the IO layer supplies the value (ResolveAttributes)
+        auto ait = attributes.find(node->get_alias());
+        if (ait != attributes.end())
+        {
+            node->to_attribute(ait->second);
+            return;
+        }
         auto it = aliases.find(node->get_alias());
         if (it != aliases.end())
         {
@@ -84,6 +99,26 @@ void ASTDriver::add_lookup_entry(std::string alias, std::string var_name, indx_t
 void ASTDriver::add_lookup_entry(std::string alias, std::string var_name)
 {
     aliases.insert({alias, {var_name, {}}});
+}
+
+void ASTDriver::add_attribute_entry(std::string alias, std::string attr_name)
+{
+    attributes.insert({alias, attr_name});
+}
+
+void ASTDriver::add_constant_entry(std::string alias, double value)
+{
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%.17g", value);
+    constants.insert({alias, buf});
+}
+
+void ASTDriver::add_attribute_node(std::string attr_name)
+{
+    // inline "@name" in a formula: an attribute leaf, no binding involved
+    ASTNode *node = new ASTNode("ATTR", attr_name);
+    node->to_attribute(attr_name);
+    holding.push(node);
 }
 
 void ASTDriver::add_number(double num)

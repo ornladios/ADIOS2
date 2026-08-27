@@ -103,7 +103,7 @@
 #else
 # define YY_CONSTEXPR
 #endif
-# include "pregen-source/location.hh"
+# include "location.hh"
 #include <typeinfo>
 #ifndef YY_ASSERT
 # include <cassert>
@@ -426,10 +426,8 @@ namespace adios2 { namespace detail {
 
       // "identifier"
       // VARNAME
+      // ATTRNAME
       char dummy3[sizeof (std::string)];
-
-      // indices_list
-      char dummy4[sizeof (std::vector<std::tuple<int, int, int>>)];
     };
 
     /// The size of the largest semantic type.
@@ -484,20 +482,18 @@ namespace adios2 { namespace detail {
     TOK_YYUNDEF = 2,               // "invalid token"
     TOK_ASSIGN = 3,                // "="
     TOK_COMMA = 4,                 // ","
-    TOK_COLON = 5,                 // ":"
-    TOK_L_PAREN = 6,               // "("
-    TOK_R_PAREN = 7,               // ")"
-    TOK_L_BRACE = 8,               // "["
-    TOK_R_BRACE = 9,               // "]"
-    TOK_PLUS = 10,                 // "+"
-    TOK_MINUS = 11,                // "-"
-    TOK_STAR = 12,                 // "*"
-    TOK_SLASH = 13,                // "/"
-    TOK_CARET = 14,                // "^"
-    TOK_IDENTIFIER = 15,           // "identifier"
-    TOK_VARNAME = 16,              // VARNAME
-    TOK_NUM = 17,                  // NUM
-    TOK_UMINUS = 18                // UMINUS
+    TOK_L_PAREN = 5,               // "("
+    TOK_R_PAREN = 6,               // ")"
+    TOK_PLUS = 7,                  // "+"
+    TOK_MINUS = 8,                 // "-"
+    TOK_STAR = 9,                  // "*"
+    TOK_SLASH = 10,                // "/"
+    TOK_CARET = 11,                // "^"
+    TOK_IDENTIFIER = 12,           // "identifier"
+    TOK_VARNAME = 13,              // VARNAME
+    TOK_ATTRNAME = 14,             // ATTRNAME
+    TOK_NUM = 15,                  // NUM
+    TOK_UMINUS = 16                // UMINUS
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -514,33 +510,30 @@ namespace adios2 { namespace detail {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 19, ///< Number of tokens.
+        YYNTOKENS = 17, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
         S_ASSIGN = 3,                            // "="
         S_COMMA = 4,                             // ","
-        S_COLON = 5,                             // ":"
-        S_L_PAREN = 6,                           // "("
-        S_R_PAREN = 7,                           // ")"
-        S_L_BRACE = 8,                           // "["
-        S_R_BRACE = 9,                           // "]"
-        S_PLUS = 10,                             // "+"
-        S_MINUS = 11,                            // "-"
-        S_STAR = 12,                             // "*"
-        S_SLASH = 13,                            // "/"
-        S_CARET = 14,                            // "^"
-        S_IDENTIFIER = 15,                       // "identifier"
-        S_VARNAME = 16,                          // VARNAME
-        S_NUM = 17,                              // NUM
-        S_UMINUS = 18,                           // UMINUS
-        S_YYACCEPT = 19,                         // $accept
-        S_lines = 20,                            // lines
-        S_assignment = 21,                       // assignment
-        S_exp = 22,                              // exp
-        S_indices_list = 23,                     // indices_list
-        S_list = 24                              // list
+        S_L_PAREN = 5,                           // "("
+        S_R_PAREN = 6,                           // ")"
+        S_PLUS = 7,                              // "+"
+        S_MINUS = 8,                             // "-"
+        S_STAR = 9,                              // "*"
+        S_SLASH = 10,                            // "/"
+        S_CARET = 11,                            // "^"
+        S_IDENTIFIER = 12,                       // "identifier"
+        S_VARNAME = 13,                          // VARNAME
+        S_ATTRNAME = 14,                         // ATTRNAME
+        S_NUM = 15,                              // NUM
+        S_UMINUS = 16,                           // UMINUS
+        S_YYACCEPT = 17,                         // $accept
+        S_lines = 18,                            // lines
+        S_assignment = 19,                       // assignment
+        S_exp = 20,                              // exp
+        S_list = 21                              // list
       };
     };
 
@@ -587,11 +580,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.move< std::string > (std::move (that.value));
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.move< std::vector<std::tuple<int, int, int>> > (std::move (that.value));
         break;
 
       default:
@@ -659,20 +649,6 @@ namespace adios2 { namespace detail {
       {}
 #endif
 
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<std::tuple<int, int, int>>&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector<std::tuple<int, int, int>>& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
       /// Destroy the symbol.
       ~basic_symbol ()
       {
@@ -707,11 +683,8 @@ switch (yykind)
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.template destroy< std::string > ();
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.template destroy< std::vector<std::tuple<int, int, int>> > ();
         break;
 
       default:
@@ -837,7 +810,7 @@ switch (yykind)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
-        YY_ASSERT ((token::TOK_IDENTIFIER <= tok && tok <= token::TOK_VARNAME));
+        YY_ASSERT ((token::TOK_IDENTIFIER <= tok && tok <= token::TOK_ATTRNAME));
 #endif
       }
     };
@@ -966,21 +939,6 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_COLON (location_type l)
-      {
-        return symbol_type (token::TOK_COLON, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_COLON (const location_type& l)
-      {
-        return symbol_type (token::TOK_COLON, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
       make_L_PAREN (location_type l)
       {
         return symbol_type (token::TOK_L_PAREN, std::move (l));
@@ -1006,36 +964,6 @@ switch (yykind)
       make_R_PAREN (const location_type& l)
       {
         return symbol_type (token::TOK_R_PAREN, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_L_BRACE (location_type l)
-      {
-        return symbol_type (token::TOK_L_BRACE, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_L_BRACE (const location_type& l)
-      {
-        return symbol_type (token::TOK_L_BRACE, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_R_BRACE (location_type l)
-      {
-        return symbol_type (token::TOK_R_BRACE, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_R_BRACE (const location_type& l)
-      {
-        return symbol_type (token::TOK_R_BRACE, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1141,6 +1069,21 @@ switch (yykind)
       make_VARNAME (const std::string& v, const location_type& l)
       {
         return symbol_type (token::TOK_VARNAME, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_ATTRNAME (std::string v, location_type l)
+      {
+        return symbol_type (token::TOK_ATTRNAME, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_ATTRNAME (const std::string& v, const location_type& l)
+      {
+        return symbol_type (token::TOK_ATTRNAME, v, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1281,7 +1224,7 @@ switch (yykind)
 
 #if YYDEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-    static const unsigned char yyrline_[];
+    static const signed char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
@@ -1518,7 +1461,7 @@ switch (yykind)
     enum
     {
       yylast_ = 58,     ///< Last index in yytable_.
-      yynnts_ = 6,  ///< Number of nonterminal symbols.
+      yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 15 ///< Termination state number.
     };
 
@@ -1554,11 +1497,8 @@ switch (yykind)
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.copy< std::string > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.copy< std::vector<std::tuple<int, int, int>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1602,11 +1542,8 @@ switch (yykind)
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.move< std::string > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.move< std::vector<std::tuple<int, int, int>> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1676,7 +1613,7 @@ switch (yykind)
 
 #line 12 "parser.y"
 } } // adios2::detail
-#line 1680 "pregen-source/parser.h"
+#line 1617 "pregen-source/parser.h"
 
 
 

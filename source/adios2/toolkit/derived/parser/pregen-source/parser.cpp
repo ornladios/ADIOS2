@@ -38,7 +38,7 @@
 
 
 
-#include "pregen-source/parser.h"
+#include "parser.h"
 
 
 // Unqualified %code blocks.
@@ -221,11 +221,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.YY_MOVE_OR_COPY< std::vector<std::tuple<int, int, int>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -253,11 +250,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.move< std::string > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.move< std::vector<std::tuple<int, int, int>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -285,11 +279,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.copy< std::string > (that.value);
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.copy< std::vector<std::tuple<int, int, int>> > (that.value);
         break;
 
       default:
@@ -316,11 +307,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         value.move< std::string > (that.value);
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        value.move< std::vector<std::tuple<int, int, int>> > (that.value);
         break;
 
       default:
@@ -602,11 +590,8 @@ namespace adios2 { namespace detail {
 
       case symbol_kind::S_IDENTIFIER: // "identifier"
       case symbol_kind::S_VARNAME: // VARNAME
+      case symbol_kind::S_ATTRNAME: // ATTRNAME
         yylhs.value.emplace< std::string > ();
-        break;
-
-      case symbol_kind::S_indices_list: // indices_list
-        yylhs.value.emplace< std::vector<std::tuple<int, int, int>> > ();
         break;
 
       default:
@@ -630,139 +615,133 @@ namespace adios2 { namespace detail {
           switch (yyn)
             {
   case 2: // lines: assignment lines
-#line 77 "parser.y"
+#line 73 "parser.y"
                    {}
-#line 636 "pregen-source/parser.cpp"
+#line 621 "pregen-source/parser.cpp"
     break;
 
   case 3: // lines: exp
-#line 78 "parser.y"
+#line 74 "parser.y"
       {}
-#line 642 "pregen-source/parser.cpp"
+#line 627 "pregen-source/parser.cpp"
     break;
 
   case 4: // assignment: "identifier" "=" VARNAME
-#line 82 "parser.y"
+#line 78 "parser.y"
                             { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
-#line 648 "pregen-source/parser.cpp"
+#line 633 "pregen-source/parser.cpp"
     break;
 
   case 5: // assignment: "identifier" "=" "identifier"
-#line 83 "parser.y"
+#line 79 "parser.y"
                                { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
-#line 654 "pregen-source/parser.cpp"
+#line 639 "pregen-source/parser.cpp"
     break;
 
-  case 6: // assignment: "identifier" "=" VARNAME "[" indices_list "]"
-#line 84 "parser.y"
-                                                         { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 660 "pregen-source/parser.cpp"
+  case 6: // assignment: "identifier" "=" NUM
+#line 80 "parser.y"
+                        { drv.add_constant_entry(yystack_[2].value.as < std::string > (), yystack_[0].value.as < double > ()); }
+#line 645 "pregen-source/parser.cpp"
     break;
 
-  case 7: // assignment: "identifier" "=" "identifier" "[" indices_list "]"
-#line 85 "parser.y"
-                                                            { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 666 "pregen-source/parser.cpp"
+  case 7: // assignment: "identifier" "=" ATTRNAME
+#line 81 "parser.y"
+                             { drv.add_attribute_entry(yystack_[2].value.as < std::string > (), yystack_[0].value.as < std::string > ()); }
+#line 651 "pregen-source/parser.cpp"
     break;
 
   case 8: // exp: NUM
-#line 89 "parser.y"
+#line 85 "parser.y"
       { drv.add_number(yystack_[0].value.as < double > ()); }
-#line 672 "pregen-source/parser.cpp"
+#line 657 "pregen-source/parser.cpp"
     break;
 
   case 9: // exp: exp "+" exp
-#line 90 "parser.y"
+#line 86 "parser.y"
                 { drv.createNode("ADD", 2); }
-#line 678 "pregen-source/parser.cpp"
+#line 663 "pregen-source/parser.cpp"
     break;
 
   case 10: // exp: exp "-" exp
-#line 91 "parser.y"
+#line 87 "parser.y"
                 { drv.createNode("SUBTRACT", 2); }
-#line 684 "pregen-source/parser.cpp"
+#line 669 "pregen-source/parser.cpp"
     break;
 
   case 11: // exp: exp "*" exp
-#line 92 "parser.y"
+#line 88 "parser.y"
                 { drv.createNode("MULT", 2); }
-#line 690 "pregen-source/parser.cpp"
+#line 675 "pregen-source/parser.cpp"
     break;
 
   case 12: // exp: exp "/" exp
-#line 93 "parser.y"
+#line 89 "parser.y"
                 { drv.createNode("DIV", 2); }
-#line 696 "pregen-source/parser.cpp"
+#line 681 "pregen-source/parser.cpp"
     break;
 
   case 13: // exp: exp "^" exp
-#line 94 "parser.y"
+#line 90 "parser.y"
                 { drv.createNode("POW", 2); }
-#line 702 "pregen-source/parser.cpp"
+#line 687 "pregen-source/parser.cpp"
     break;
 
   case 14: // exp: "-" exp
-#line 95 "parser.y"
+#line 91 "parser.y"
                         { drv.createNode("NEGATE", 1); }
-#line 708 "pregen-source/parser.cpp"
+#line 693 "pregen-source/parser.cpp"
     break;
 
   case 15: // exp: "(" exp ")"
-#line 96 "parser.y"
+#line 92 "parser.y"
               {  }
-#line 714 "pregen-source/parser.cpp"
+#line 699 "pregen-source/parser.cpp"
     break;
 
   case 16: // exp: "identifier" "(" list ")"
-#line 97 "parser.y"
+#line 93 "parser.y"
                           { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < int > ()); }
-#line 720 "pregen-source/parser.cpp"
+#line 705 "pregen-source/parser.cpp"
     break;
 
-  case 17: // exp: "identifier" "[" indices_list "]"
-#line 98 "parser.y"
-                                  { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
-#line 726 "pregen-source/parser.cpp"
-    break;
-
-  case 18: // exp: "identifier"
-#line 99 "parser.y"
+  case 17: // exp: "identifier"
+#line 94 "parser.y"
               { drv.createNode(yystack_[0].value.as < std::string > ()); }
-#line 732 "pregen-source/parser.cpp"
+#line 711 "pregen-source/parser.cpp"
     break;
 
-  case 19: // exp: VARNAME
-#line 100 "parser.y"
+  case 18: // exp: VARNAME
+#line 95 "parser.y"
            { drv.createNode(yystack_[0].value.as < std::string > ()); }
-#line 738 "pregen-source/parser.cpp"
+#line 717 "pregen-source/parser.cpp"
     break;
 
-  case 20: // indices_list: %empty
-#line 105 "parser.y"
-         { yylhs.value.as < std::vector<std::tuple<int, int, int>> > () = {}; }
-#line 744 "pregen-source/parser.cpp"
+  case 19: // exp: ATTRNAME
+#line 96 "parser.y"
+            { drv.add_attribute_node(yystack_[0].value.as < std::string > ()); }
+#line 723 "pregen-source/parser.cpp"
     break;
 
-  case 21: // list: %empty
-#line 128 "parser.y"
+  case 20: // list: %empty
+#line 101 "parser.y"
          { yylhs.value.as < int > () = 0; }
-#line 750 "pregen-source/parser.cpp"
+#line 729 "pregen-source/parser.cpp"
     break;
 
-  case 22: // list: exp "," list
-#line 129 "parser.y"
+  case 21: // list: exp "," list
+#line 102 "parser.y"
                  { yylhs.value.as < int > () = yystack_[0].value.as < int > () + 1; }
-#line 756 "pregen-source/parser.cpp"
+#line 735 "pregen-source/parser.cpp"
     break;
 
-  case 23: // list: exp
-#line 130 "parser.y"
+  case 22: // list: exp
+#line 103 "parser.y"
       { yylhs.value.as < int > () = 1; }
-#line 762 "pregen-source/parser.cpp"
+#line 741 "pregen-source/parser.cpp"
     break;
 
 
-#line 766 "pregen-source/parser.cpp"
+#line 745 "pregen-source/parser.cpp"
 
             default:
               break;
@@ -946,9 +925,9 @@ namespace adios2 { namespace detail {
   {
     static const char *const yy_sname[] =
     {
-    "end of file", "error", "invalid token", "=", ",", ":", "(", ")", "[",
-  "]", "+", "-", "*", "/", "^", "identifier", "VARNAME", "NUM", "UMINUS",
-  "$accept", "lines", "assignment", "exp", "indices_list", "list", YY_NULLPTR
+    "end of file", "error", "invalid token", "=", ",", "(", ")", "+", "-",
+  "*", "/", "^", "identifier", "VARNAME", "ATTRNAME", "NUM", "UMINUS",
+  "$accept", "lines", "assignment", "exp", "list", YY_NULLPTR
     };
     return yy_sname[yysymbol];
   }
@@ -1217,100 +1196,97 @@ namespace adios2 { namespace detail {
   }
 
 
-  const signed char parser::yypact_ninf_ = -29;
+  const signed char parser::yypact_ninf_ = -13;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      -2,    15,    15,     0,   -29,   -29,     2,    -2,    38,    19,
-      33,    -9,    -5,    15,   -29,   -29,   -29,    15,    15,    15,
-      15,    15,   -29,    20,    45,    25,    26,    46,    10,    10,
-      -9,    -9,    -9,   -29,   -29,    15,   -29,   -29,    47,    48,
-     -29,   -29,   -29
+      -3,    16,    16,     1,   -13,   -13,   -13,     3,    -3,    39,
+       2,    34,     4,    40,    16,   -13,   -13,    16,    16,    16,
+      16,    16,   -13,   -13,   -13,   -13,   -13,    28,     8,    47,
+      47,     4,     4,     4,    16,   -13,   -13
   };
 
   const signed char
   parser::yydefact_[] =
   {
-       0,     0,     0,    18,    19,     8,     0,     0,     3,    18,
-       0,    14,     0,    21,    20,     1,     2,     0,     0,     0,
-       0,     0,    15,     5,     4,    23,     0,     0,     9,    10,
-      11,    12,    13,    20,    20,    21,    16,    17,     0,     0,
-      22,     7,     6
+       0,     0,     0,    17,    18,    19,     8,     0,     0,     3,
+      17,     0,    14,     0,    20,     1,     2,     0,     0,     0,
+       0,     0,    15,     5,     4,     7,     6,    22,     0,     9,
+      10,    11,    12,    13,    20,    16,    21
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-     -29,    51,   -29,    -1,     8,   -28
+     -13,     0,   -13,    -1,   -12
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-       0,     6,     7,     8,    27,    26
+       0,     7,     8,     9,    28
   };
 
   const signed char
   parser::yytable_[] =
   {
-      10,    11,    15,    12,     1,    21,    13,    40,    14,     2,
-      23,    24,    25,     3,     4,     5,    28,    29,    30,    31,
-      32,     1,    19,    20,    21,    13,     2,    14,    33,    35,
-       9,     4,     5,    36,    25,    17,    18,    19,    20,    21,
-      22,    38,    39,    17,    18,    19,    20,    21,    17,    18,
-      19,    20,    21,    34,     0,    37,    41,    42,    16
+      11,    12,     1,    15,    13,     2,    14,    14,    16,     3,
+       4,     5,     6,    27,    35,    21,    29,    30,    31,    32,
+      33,     1,    36,     0,     2,     0,     0,     0,    10,     4,
+       5,     6,    34,    27,     0,    17,    18,    19,    20,    21,
+      22,    17,    18,    19,    20,    21,    17,    18,    19,    20,
+      21,     0,    23,    24,    25,    26,    19,    20,    21
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       1,     2,     0,     3,     6,    14,     6,    35,     8,    11,
-      15,    16,    13,    15,    16,    17,    17,    18,    19,    20,
-      21,     6,    12,    13,    14,     6,    11,     8,     8,     4,
-      15,    16,    17,     7,    35,    10,    11,    12,    13,    14,
-       7,    33,    34,    10,    11,    12,    13,    14,    10,    11,
-      12,    13,    14,     8,    -1,     9,     9,     9,     7
+       1,     2,     5,     0,     3,     8,     5,     5,     8,    12,
+      13,    14,    15,    14,     6,    11,    17,    18,    19,    20,
+      21,     5,    34,    -1,     8,    -1,    -1,    -1,    12,    13,
+      14,    15,     4,    34,    -1,     7,     8,     9,    10,    11,
+       6,     7,     8,     9,    10,    11,     7,     8,     9,    10,
+      11,    -1,    12,    13,    14,    15,     9,    10,    11
   };
 
   const signed char
   parser::yystos_[] =
   {
-       0,     6,    11,    15,    16,    17,    20,    21,    22,    15,
-      22,    22,     3,     6,     8,     0,    20,    10,    11,    12,
-      13,    14,     7,    15,    16,    22,    24,    23,    22,    22,
-      22,    22,    22,     8,     8,     4,     7,     9,    23,    23,
-      24,     9,     9
+       0,     5,     8,    12,    13,    14,    15,    18,    19,    20,
+      12,    20,    20,     3,     5,     0,    18,     7,     8,     9,
+      10,    11,     6,    12,    13,    14,    15,    20,    21,    20,
+      20,    20,    20,    20,     4,     6,    21
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    19,    20,    20,    21,    21,    21,    21,    22,    22,
-      22,    22,    22,    22,    22,    22,    22,    22,    22,    22,
-      23,    24,    24,    24
+       0,    17,    18,    18,    19,    19,    19,    19,    20,    20,
+      20,    20,    20,    20,    20,    20,    20,    20,    20,    20,
+      21,    21,    21
   };
 
   const signed char
   parser::yyr2_[] =
   {
-       0,     2,     2,     1,     3,     3,     6,     6,     1,     3,
-       3,     3,     3,     3,     2,     3,     4,     4,     1,     1,
-       0,     0,     3,     1
+       0,     2,     2,     1,     3,     3,     3,     3,     1,     3,
+       3,     3,     3,     3,     2,     3,     4,     1,     1,     1,
+       0,     3,     1
   };
 
 
 
 
 #if YYDEBUG
-  const unsigned char
+  const signed char
   parser::yyrline_[] =
   {
-       0,    77,    77,    78,    82,    83,    84,    85,    89,    90,
-      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
-     105,   128,   129,   130
+       0,    73,    73,    74,    78,    79,    80,    81,    85,    86,
+      87,    88,    89,    90,    91,    92,    93,    94,    95,    96,
+     101,   102,   103
   };
 
   void
@@ -1343,9 +1319,9 @@ namespace adios2 { namespace detail {
 
 #line 12 "parser.y"
 } } // adios2::detail
-#line 1347 "pregen-source/parser.cpp"
+#line 1323 "pregen-source/parser.cpp"
 
-#line 131 "parser.y"
+#line 104 "parser.y"
 
 
 void

@@ -16,18 +16,31 @@ namespace detail
 {
 
 static const std::map<std::string, ExpressionOperator> string_to_op_new = {
-    {"ALIAS", ExpressionOperator::OP_ALIAS},    {"PATH", ExpressionOperator::OP_PATH},
-    {"NUM", ExpressionOperator::OP_NUM},        {"INDEX", ExpressionOperator::OP_INDEX},
-    {"SUM", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
-    {"MINUS", ExpressionOperator::OP_SUBTRACT}, {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"NEGATE", ExpressionOperator::OP_NEGATE},  {"DIV", ExpressionOperator::OP_DIV},
-    {"DIVIDE", ExpressionOperator::OP_DIV},     {"MULT", ExpressionOperator::OP_MULT},
-    {"MULTIPLY", ExpressionOperator::OP_MULT},  {"SQRT", ExpressionOperator::OP_SQRT},
-    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
-    {"SIN", ExpressionOperator::OP_SIN},        {"COS", ExpressionOperator::OP_COS},
-    {"TAN", ExpressionOperator::OP_TAN},        {"ASIN", ExpressionOperator::OP_ASIN},
-    {"ACOS", ExpressionOperator::OP_ACOS},      {"ATAN", ExpressionOperator::OP_ATAN},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"CROSS", ExpressionOperator::OP_CROSS},
+    {"ALIAS", ExpressionOperator::OP_ALIAS},
+    {"PATH", ExpressionOperator::OP_PATH},
+    {"NUM", ExpressionOperator::OP_NUM},
+    {"ATTR", ExpressionOperator::OP_ATTR},
+    {"INDEX", ExpressionOperator::OP_INDEX},
+    {"SUM", ExpressionOperator::OP_ADD},
+    {"ADD", ExpressionOperator::OP_ADD},
+    {"MINUS", ExpressionOperator::OP_SUBTRACT},
+    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"NEGATE", ExpressionOperator::OP_NEGATE},
+    {"DIV", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},
+    {"MULT", ExpressionOperator::OP_MULT},
+    {"MULTIPLY", ExpressionOperator::OP_MULT},
+    {"SQRT", ExpressionOperator::OP_SQRT},
+    {"POW", ExpressionOperator::OP_POW},
+    {"^", ExpressionOperator::OP_POW},
+    {"SIN", ExpressionOperator::OP_SIN},
+    {"COS", ExpressionOperator::OP_COS},
+    {"TAN", ExpressionOperator::OP_TAN},
+    {"ASIN", ExpressionOperator::OP_ASIN},
+    {"ACOS", ExpressionOperator::OP_ACOS},
+    {"ATAN", ExpressionOperator::OP_ATAN},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN},
+    {"CROSS", ExpressionOperator::OP_CROSS},
     {"CURL", ExpressionOperator::OP_CURL}};
 
 static ExpressionOperator ConvertOp(const std::string &opname)
@@ -55,6 +68,15 @@ static adios2::derived::ExprNode ASTNodeToExprNode(ASTNode *node)
         // Variable leaf
         result.Op = ExpressionOperator::OP_NULL;
         result.VarName = node->get_varname();
+        return result;
+
+    case ExpressionOperator::OP_ATTR:
+        // Attribute leaf: a runtime scalar input. The "@" prefix keeps it out
+        // of the variable namespace in every downstream name-keyed map; the IO
+        // layer injects the attribute's current value at each evaluation.
+        result.Op = ExpressionOperator::OP_NULL;
+        result.VarName = "@" + node->get_varname();
+        result.AttrName = node->get_varname();
         return result;
 
     case ExpressionOperator::OP_NUM:
@@ -94,6 +116,27 @@ adios2::derived::ExprNode ParseToExprNode(const std::string &exprString)
     ASTDriver drv(exprString);
     ASTNode *ast = drv.getAST();
     return ASTNodeToExprNode(ast);
+}
+
+}
+}
+
+namespace adios2
+{
+namespace derived
+{
+
+std::vector<std::string> AttributeNameList(const ExprNode &node)
+{
+    std::vector<std::string> names;
+    if (!node.AttrName.empty())
+        names.push_back(node.AttrName);
+    for (const auto &child : node.Children)
+    {
+        auto childNames = AttributeNameList(child);
+        names.insert(names.end(), childNames.begin(), childNames.end());
+    }
+    return names;
 }
 
 }

@@ -225,6 +225,11 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
             m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
         MDPosition += ThisADSize;
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-derived variables with attribute bindings stay pending until the
+    // attributes (installed above, after variable metadata) are available.
+    m_BP5Deserializer->InstallReaderDerivedVariables();
+#endif
 }
 
 void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
@@ -329,6 +334,11 @@ void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
             m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
         MDPosition += ThisADSize;
     }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    // Reader-derived variables with attribute bindings stay pending until the
+    // attributes (installed above, after variable metadata) are available.
+    m_BP5Deserializer->InstallReaderDerivedVariables();
+#endif
 }
 
 StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)

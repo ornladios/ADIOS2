@@ -33,6 +33,36 @@ There are currently two types of derived variables accepted by ADIOS2, one that 
                                 "magnitude(x, y)",
                                 adios2::DerivedVarType::StatsOnly);
 
+The expression consists of optional binding lines (``name = ...``) followed by the formula.
+Formula identifiers are simple names; ADIOS variable names containing ``/`` or ``.``
+(including leading-``/`` absolute paths) must either be bound to a simple name as above,
+or written inline between backticks (``` `var/Ux` + 1 ```).  Within a formula, ``/`` is
+always division: ``a/b`` divides the variables ``a`` and ``b``.
+
+A binding whose right-hand side is a number defines a named constant, usable anywhere in
+the formula and evaluated at definition time::
+
+   bpIO.DefineDerivedVariable("energy",
+                              "c = 2.99792458e8 \n"
+                              "ux = var/Ux \n uy = var/Uy \n uz = var/Uz \n m0 = var/m0 \n"
+                              "sqrt((ux*ux + uy*uy + uz*uz)*c^2 + (m0*c)^2)",
+                              adios2::DerivedVarType::StatsOnly);
+
+``@name`` refers to the single-element numeric attribute ``name``, either directly in the
+formula or through a binding.  ``@`` composes with every form a variable name can take:
+plain names inline, backticked names with special characters (``@`group/scale```), and
+both forms as binding right-hand sides.  The attribute must be defined before the derived variable,
+and its *current* value is used each time the expression is evaluated, so modifiable
+attributes take effect step by step::
+
+   bpIO.DefineAttribute<double>("scale", 1.5, "", "/", true /* modifiable */);
+   bpIO.DefineDerivedVariable("scaled", "a * @scale", adios2::DerivedVarType::StoreData);
+
+Input variables may also be single-value (scalar) variables.  A scalar input broadcasts its
+per-step value across the array inputs, so ``a * dt`` with array ``a`` and single-value
+``dt`` scales every element by the value of ``dt`` written in that step.  An expression
+must have at least one array input to define the output's shape.
+
 Derived variables can be defined at any time and are computed (and potentially stored) during the ``EndStep`` operation.
 
 The ``bpls`` utility can identify derived variables and show the math expression when the ``--show-derived`` option.
