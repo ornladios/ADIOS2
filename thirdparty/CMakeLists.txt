@@ -131,6 +131,10 @@ if(NOT ADIOS2_USE_EXTERNAL_FFS)
   find_package(dill 4.0 QUIET)
 
   add_subdirectory(ffs)
+else()
+  # external FFS: look for an external dill too; if it's absent or too old,
+  # derived variables build without JIT fusion (interpreter only)
+  find_package(dill 4.0 QUIET)
 endif()
 find_package(ffs REQUIRED)
 adios2_add_thirdparty_target(atl atl::atl)

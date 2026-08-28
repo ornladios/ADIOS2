@@ -801,9 +801,26 @@ void BP5Writer::ComputeDerivedVariables()
         std::vector<std::string> varList = derivedVar->VariableNameList();
         // to create a mapping between variable name and the varInfo (dim and data pointer)
         std::map<std::string, std::unique_ptr<MinVarInfo>> nameToVarInfo;
+        // native-typed storage for injected attribute values; must outlive
+        // ApplyExpression below
+        std::vector<std::unique_ptr<uint64_t>> attrValues;
         bool computeDerived = true;
         for (auto varName : varList)
         {
+            if (varName[0] == '@')
+            {
+                // attribute input: inject the attribute's current value as a
+                // single-value (0-dim) block; modifiable attributes take
+                // effect every step
+                attrValues.push_back(std::unique_ptr<uint64_t>(new uint64_t(0)));
+                m_IO.DerivedAttributeValue(varName.substr(1), attrValues.back().get());
+                auto mvi = std::unique_ptr<MinVarInfo>(new MinVarInfo(0, (const size_t *)nullptr));
+                MinBlockInfo blk = {};
+                blk.BufferP = attrValues.back().get();
+                mvi->BlocksInfo.push_back(blk);
+                nameToVarInfo.insert({varName, std::move(mvi)});
+                continue;
+            }
             auto itVariable = m_Variables.find(varName);
             if (itVariable == m_Variables.end())
                 helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",

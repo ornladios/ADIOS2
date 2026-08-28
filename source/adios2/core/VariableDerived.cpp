@@ -79,8 +79,11 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
                     start.push_back(variable.second->BlocksInfo[i].Start[d]);
                 count.push_back(variable.second->BlocksInfo[i].Count[d]);
             }
-            varData.push_back(adios2::derived::DerivedData(
-                {variable.second->BlocksInfo[i].BufferP, start, count, type}));
+            adios2::derived::DerivedData dd(
+                {variable.second->BlocksInfo[i].BufferP, start, count, type});
+            // single-value inputs broadcast across the block
+            dd.IsScalar = (variable.second->Dims == 0);
+            varData.push_back(dd);
         }
         inputData.insert({variable.first, varData});
     }

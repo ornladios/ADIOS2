@@ -45,6 +45,11 @@ public:
 
     void add_lookup_entry(std::string alias, std::string var_name, indx_type indices);
     void add_lookup_entry(std::string alias, std::string var_name);
+    /* bind a name to a numeric constant (binding line "c = 2.99792458e8") */
+    void add_constant_entry(std::string alias, double value);
+    /* bind a name to an ADIOS attribute (binding line "s = @scale") */
+    void add_attribute_entry(std::string alias, std::string attr_name);
+    void add_attribute_node(std::string attr_name);
     void add_number(double);
 
     void createNode(std::string, size_t);
@@ -70,6 +75,8 @@ private:
     // Variable lookup table: maps alias names
     // to variable names and indices from alias definition
     std::map<std::string, std::tuple<std::string, indx_type>> aliases;
+    std::map<std::string, std::string> constants;  // alias -> numeric literal text
+    std::map<std::string, std::string> attributes; // alias -> attribute name
 };
 
 }

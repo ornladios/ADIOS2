@@ -70,6 +70,31 @@ expression)``, then ``InquireVariable``/``Get`` after Open. The reader computes
 it from the file data. BP5 only; inputs must be same-shaped global arrays.
 C++, C, Fortran, Python.
 
+Derived expressions: attribute and scalar inputs
+------------------------------------------------
+
+Derived expressions can now use single-value (scalar) variables and numeric
+attributes alongside array inputs. A scalar variable broadcasts its per-step
+value across the array inputs (``pressure * dt``). ``@name`` references the
+single-element numeric attribute ``name``; its current value is read at each
+evaluation, so modifiable attributes take effect step by step. A binding with
+a numeric right-hand side defines a named constant (``c = 2.99792458e8``).
+Variable names containing special characters are referenced through binding
+lines (``x = sim/data.Ux``) or inline backticks (``` `sim/Ux` + 1 ```), and
+``/`` in a formula always means division.
+
+JIT fusion for derived expressions
+----------------------------------
+
+Element-wise derived expressions over float or double arrays (``+``, ``-``,
+``*``, ``/``, negate, ``sqrt``, including ``^2`` by strength reduction) can be
+JIT-compiled into a single fused vector loop via the bundled dill library's
+new 128-bit vector API, typically 3-4x faster than the interpreter and within
+a few percent of natively compiled code. Results are bit-identical to the
+interpreter. Opt-in for now via the ``DerivedFuse`` environment variable;
+expressions the fuser cannot handle fall back to the interpreter, as do
+builds without dill >= 4.0.
+
 Missing min/max reported as N/A
 -------------------------------
 

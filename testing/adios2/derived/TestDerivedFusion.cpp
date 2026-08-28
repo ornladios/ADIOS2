@@ -23,7 +23,12 @@ using namespace adios2::detail;
 // Reference values must not be FMA-contracted: the fused JIT loop emits
 // exactly the multiplies and adds the expression wrote (bit-identical to the
 // interpreter), while clang would fuse the C references below by default.
+// Only clang-family compilers (incl. icx) implement this pragma; GCC warns
+// unknown-pragma and gets -ffp-contract=off from CMake instead, and MSVC/icc
+// don't contract at the optimization levels CI tests under.
+#if defined(__clang__)
 #pragma STDC FP_CONTRACT OFF
+#endif
 
 // Helper: build a code stream from an expression string with float variables
 static ExprCodeStream BuildCS(const std::string &expr, const std::vector<std::string> &varNames)

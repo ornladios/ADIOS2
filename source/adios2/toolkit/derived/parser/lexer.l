@@ -96,6 +96,11 @@
 
 %option noyywrap nounput noinput batch
 
+/* Binding right-hand sides (after '=') are name/number territory: an ADIOS
+   variable name there may contain slashes, dots, leading '/', etc., and is
+   taken verbatim up to whitespace.  Everywhere else '/' is division. */
+%x BINDRHS
+
 %{
   // A number symbol corresponding to the value in S.
   adios2::detail::parser::symbol_type
@@ -103,7 +108,6 @@
 %}
 
 id    [a-zA-Z][a-zA-Z_0-9_]*
-path  [a-zA-Z][a-zA-Z0-9._\/]*
 num   [0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?
 blank [ \t\r]
 
@@ -121,13 +125,10 @@ blank [ \t\r]
 {blank}+   loc.step ();
 \n+        loc.lines (yyleng); loc.step ();
 
-"="        return adios2::detail::parser::make_ASSIGN  (loc);
+"="        { BEGIN(BINDRHS); return adios2::detail::parser::make_ASSIGN (loc); }
 ","        return adios2::detail::parser::make_COMMA   (loc);
-":"        return adios2::detail::parser::make_COLON   (loc);
 "("        return adios2::detail::parser::make_L_PAREN (loc);
 ")"        return adios2::detail::parser::make_R_PAREN (loc);
-"["        return adios2::detail::parser::make_L_BRACE (loc);
-"]"        return adios2::detail::parser::make_R_BRACE (loc);
 "+"        return adios2::detail::parser::make_PLUS    (loc);
 "-"        return adios2::detail::parser::make_MINUS   (loc);
 "**"       return adios2::detail::parser::make_CARET   (loc);
@@ -137,12 +138,21 @@ blank [ \t\r]
 
 {num}      return make_NUM (yytext, loc);
 `[^`]+`    { std::string s(yytext + 1, yyleng - 2); return adios2::detail::parser::make_VARNAME (s, loc); }
+@`[^`]+`   { std::string s(yytext + 2, yyleng - 3); return adios2::detail::parser::make_ATTRNAME (s, loc); }
+@{id}      return adios2::detail::parser::make_ATTRNAME (yytext + 1, loc);
 {id}       return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
-{path}     return adios2::detail::parser::make_VARNAME (yytext, loc);
 .          {
              throw adios2::detail::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
+
+<BINDRHS>{blank}+  loc.step ();
+<BINDRHS>{num}     { BEGIN(INITIAL); return make_NUM (yytext, loc); }
+<BINDRHS>`[^`]+`   { BEGIN(INITIAL); std::string s(yytext + 1, yyleng - 2); return adios2::detail::parser::make_VARNAME (s, loc); }
+<BINDRHS>@`[^`]+`  { BEGIN(INITIAL); std::string s(yytext + 2, yyleng - 3); return adios2::detail::parser::make_ATTRNAME (s, loc); }
+<BINDRHS>@[^ \t\r\n`]+ { BEGIN(INITIAL); return adios2::detail::parser::make_ATTRNAME (yytext + 1, loc); }
+<BINDRHS>[^ \t\r\n`]+ { BEGIN(INITIAL); return adios2::detail::parser::make_VARNAME (yytext, loc); }
+<BINDRHS>\n+       { BEGIN(INITIAL); loc.lines (yyleng); loc.step (); }
 <<EOF>>    return adios2::detail::parser::make_YYEOF (loc);
 %%
 

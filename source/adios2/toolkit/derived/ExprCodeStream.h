@@ -55,6 +55,9 @@ struct BufferDescriptor
     size_t LastUse = 0;
     size_t PhysicalSlot = 0; // assigned by PlanBuffers
     DataType Type = DataType::None;
+    /** input names a single-value ADIOS variable: broadcast at evaluation
+        (set by MarkScalarInputs from the Define-time shape information) */
+    bool IsScalarInput = false;
 };
 
 /** Signature of a TryFuse-generated single-pass loop: inputs[] ordered by
@@ -117,6 +120,10 @@ bool HasHalo(const ExprCodeStream &cs);
     Returns a map from input variable name to (start, count). */
 std::map<std::string, std::pair<Dims, Dims>>
 ComputeInputSelections(const ExprCodeStream &cs, const Dims &outputStart, const Dims &outputCount);
+
+/** Mark inputs that name single-value (scalar) variables, so evaluation
+    broadcasts them and TryFuse splats them instead of streaming. */
+void MarkScalarInputs(ExprCodeStream &cs, const std::vector<std::string> &scalarNames);
 
 /** JIT-compile an element-wise, type-homogeneous float/double code stream
     into a fused vector loop (via dill).  No-op (stream unchanged, interpreter

@@ -185,6 +185,16 @@ public:
                           const DerivedVarType varType = DerivedVarType::StatsOnly);
 
     /**
+     * @brief Look up a single-element numeric attribute referenced by a derived
+     * expression ("@name"). Returns its type; if valueOut is non-null, copies
+     * the current value's native bytes there (caller provides >= 16 bytes).
+     * Throws if the attribute is missing, non-numeric, or not single-element.
+     * Engines call this at each evaluation so modifiable attributes take
+     * effect per step.
+     */
+    DataType DerivedAttributeValue(const std::string &attrName, void *valueOut);
+
+    /**
      * @brief Define a reader-side derived variable: an expression the reader
      * supplies over variables present in a file it opens, without those
      * variables having been marked derived at write time. The reader's own

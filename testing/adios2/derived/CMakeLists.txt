@@ -12,13 +12,31 @@ gtest_add_tests_helper(DerivedCorrectnessMPI MPI_ALLOW BP Derived. "")
 gtest_add_tests_helper(ReaderDerived MPI_NONE BP Derived. "")
 gtest_add_tests_helper(ReaderDerivedMPI MPI_ONLY BP Derived. "")
 
-add_executable(Test.Derived.Fusion.Serial TestDerivedFusion.cpp)
-target_link_libraries(Test.Derived.Fusion.Serial adios2_core adios2_core_derived adios2::thirdparty::gtest)
-set_target_properties(Test.Derived.Fusion.Serial PROPERTIES
-  INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
-add_test(NAME Derived.Fusion.Serial COMMAND Test.Derived.Fusion.Serial)
+if(ADIOS2_HAVE_DILL_FUSION)
+  # These two assert/measure that fusion actually happens, so they need the
+  # dill 4.x vector API at build time.  TestExprGrammar's both-ways harness is
+  # fusion-agnostic (it skips the comparison when TryFuse is a no-op).
+  add_executable(Test.Derived.Fusion.Serial TestDerivedFusion.cpp)
+  target_link_libraries(Test.Derived.Fusion.Serial adios2_core adios2_core_derived adios2::thirdparty::gtest)
+  set_target_properties(Test.Derived.Fusion.Serial PROPERTIES
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
+  add_test(NAME Derived.Fusion.Serial COMMAND Test.Derived.Fusion.Serial)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC ignores "#pragma STDC FP_CONTRACT OFF"; pin it so the C reference
+    # values stay uncontracted (bit-identical to the interpreter) at any -O level
+    set_source_files_properties(TestDerivedFusion.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+  endif()
 
-add_executable(Bench.Derived.Fused BenchFused.cpp)
-target_link_libraries(Bench.Derived.Fused adios2_core adios2_core_derived)
-set_target_properties(Bench.Derived.Fused PROPERTIES
+  add_executable(Bench.Derived.Fused BenchFused.cpp)
+  target_link_libraries(Bench.Derived.Fused adios2_core adios2_core_derived)
+  set_target_properties(Bench.Derived.Fused PROPERTIES
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
+endif()
+
+add_executable(Test.Derived.ExprGrammar.Serial TestExprGrammar.cpp)
+target_link_libraries(Test.Derived.ExprGrammar.Serial adios2_core adios2_core_derived adios2::thirdparty::gtest)
+set_target_properties(Test.Derived.ExprGrammar.Serial PROPERTIES
   INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
+add_test(NAME Derived.ExprGrammar.Serial COMMAND Test.Derived.ExprGrammar.Serial)
+
+gtest_add_tests_helper(DerivedScalarAttr MPI_NONE BP Derived. "")

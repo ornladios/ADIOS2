@@ -966,6 +966,36 @@ void IO::CheckTransportType(const std::string type) const
 }
 
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+
+DataType IO::DerivedAttributeValue(const std::string &attrName, void *valueOut)
+{
+    const DataType t = InquireAttributeType(attrName);
+    if (t == DataType::None)
+        helper::Throw<std::invalid_argument>("Core", "IO", "DerivedAttributeValue",
+                                             "derived expression references unknown attribute @" +
+                                                 attrName);
+#define declare_attr_lookup(T)                                                                     \
+    if (t == helper::GetDataType<T>())                                                             \
+    {                                                                                              \
+        Attribute<T> *a = InquireAttribute<T>(attrName);                                           \
+        if (!a || a->m_Elements != 1)                                                              \
+            helper::Throw<std::invalid_argument>("Core", "IO", "DerivedAttributeValue",            \
+                                                 "derived expression attribute @" + attrName +     \
+                                                     " must be single-element numeric");           \
+        if (valueOut)                                                                              \
+        {                                                                                          \
+            const T v = a->m_IsSingleValue ? a->m_DataSingleValue : a->m_DataArray[0];             \
+            memcpy(valueOut, &v, sizeof(T));                                                       \
+        }                                                                                          \
+        return t;                                                                                  \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_attr_lookup)
+#undef declare_attr_lookup
+    helper::Throw<std::invalid_argument>("Core", "IO", "DerivedAttributeValue",
+                                         "derived expression attribute @" + attrName +
+                                             " has non-numeric type " + ToString(t));
+    return DataType::None;
+}
 VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::string &exp_string,
                                            const DerivedVarType varType)
 {
@@ -1005,9 +1035,22 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
     std::vector<std::string> var_list = derived::VariableNameList(exprTree);
     std::map<std::string, DataType> name_to_type;
     std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
+    std::vector<std::string> scalar_inputs; // single-value inputs: broadcast
     // check correctness for the variable names and types within the expression
     for (auto var_name : var_list)
     {
+        if (var_name[0] == '@')
+        {
+            // attribute input: validate now, value injected at each evaluation
+            if (m_Variables.find(var_name) != m_Variables.end())
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineDerivedVariable",
+                    "derived variable " + name + " references attribute " + var_name.substr(1) +
+                        " but a variable literally named " + var_name +
+                        " also exists; the two cannot be distinguished in an expression");
+            name_to_type.insert({var_name, DerivedAttributeValue(var_name.substr(1), nullptr)});
+            continue;
+        }
         auto itVariable = m_Variables.find(var_name);
         if (itVariable == m_Variables.end())
             helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
@@ -1018,6 +1061,8 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
         name_to_dims.insert({var_name,
                              {(itVariable->second)->m_Start, (itVariable->second)->m_Count,
                               (itVariable->second)->m_Shape}});
+        if ((itVariable->second)->m_ShapeID == ShapeID::GlobalValue)
+            scalar_inputs.push_back(var_name);
     }
 
     // Resolve types on tree, then generate code, then run linear passes
@@ -1026,6 +1071,7 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
     codeStream.ExprString = exp_string;
     derived::SemanticsPass(codeStream, name_to_type);
     derived::PlanBuffers(codeStream);
+    derived::MarkScalarInputs(codeStream, scalar_inputs);
     {
         // Opt-in JIT fusion of element-wise expressions (vector loop via dill)
         static const bool doFuse = (getenv("DerivedFuse") != nullptr);
@@ -1139,6 +1185,15 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
     // installed (e.g. a step that has not written it), stay pending and let a
     // later step resolve. Check before ResolveTreeTypes, which annotates the
     // tree in place and needs every input type.
+    // Attribute bindings resolve against the file's attributes, which are
+    // installed after variable metadata; stay pending until they appear.
+    for (const auto &attr : derived::AttributeNameList(rec.ExprTree))
+    {
+        if (m_Attributes.find(attr) == m_Attributes.end())
+        {
+            return nullptr; // attribute not present yet
+        }
+    }
     std::vector<std::string> var_list = derived::VariableNameList(rec.ExprTree);
     if (var_list.empty())
     {
@@ -1151,8 +1206,22 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
     }
     std::map<std::string, DataType> name_to_type;
     std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
+    std::vector<std::string> scalar_inputs; // single-value inputs: broadcast
     for (const auto &var_name : var_list)
     {
+        if (var_name[0] == '@')
+        {
+            // attribute input: presence checked above; validate numeric single-
+            // element and record its type. Value is injected at each Get.
+            if (m_Variables.find(var_name) != m_Variables.end())
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "ResolveReaderDerivedVariable",
+                    "reader derived variable " + name + " references attribute " +
+                        var_name.substr(1) + " but a variable literally named " + var_name +
+                        " also exists; the two cannot be distinguished in an expression");
+            name_to_type.insert({var_name, DerivedAttributeValue(var_name.substr(1), nullptr)});
+            continue;
+        }
         auto itVariable = m_Variables.find(var_name);
         if (itVariable == m_Variables.end())
         {
@@ -1169,6 +1238,8 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
         name_to_dims.insert({var_name,
                              {itVariable->second->m_Start, itVariable->second->m_Count,
                               itVariable->second->m_Shape}});
+        if (itVariable->second->m_ShapeID == ShapeID::GlobalValue)
+            scalar_inputs.push_back(var_name);
     }
 
     // Require input congruence. The reader-side read path takes the derived
@@ -1176,15 +1247,31 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
     // the same global shape (differing per-rank start/count is fine). This is the
     // reader-side contract; shape-changing or broadcasting expressions are not
     // supported on read.
-    const Dims &refShape = std::get<2>(name_to_dims.at(var_list.front()));
+    // single-value inputs broadcast: they neither provide the reference shape
+    // nor participate in the congruence requirement
+    std::string refName;
+    for (const auto &var_name : var_list)
+        if (var_name[0] != '@' && !std::get<2>(name_to_dims.at(var_name)).empty())
+        {
+            refName = var_name;
+            break;
+        }
+    if (refName.empty())
+        helper::Throw<std::invalid_argument>(
+            "Core", "IO", "ResolveReaderDerivedVariable",
+            "reader derived variable " + name +
+                " has only single-value inputs; at least one array input is required");
+    const Dims &refShape = std::get<2>(name_to_dims.at(refName));
     for (const auto &var_name : var_list)
     {
+        if (var_name[0] == '@' || std::get<2>(name_to_dims.at(var_name)).empty())
+            continue;
         if (std::get<2>(name_to_dims.at(var_name)) != refShape)
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "ResolveReaderDerivedVariable",
-                "reader derived variable " + name + " requires congruent inputs, but " + var_name +
-                    " and " + var_list.front() + " have different shapes");
+            helper::Throw<std::invalid_argument>("Core", "IO", "ResolveReaderDerivedVariable",
+                                                 "reader derived variable " + name +
+                                                     " requires congruent inputs, but " + var_name +
+                                                     " and " + refName + " have different shapes");
         }
     }
 
@@ -1196,6 +1283,7 @@ VariableDerived *IO::ResolveReaderDerivedVariable(const std::string &name)
     codeStream.ExprString = rec.Expression;
     derived::SemanticsPass(codeStream, name_to_type);
     derived::PlanBuffers(codeStream);
+    derived::MarkScalarInputs(codeStream, scalar_inputs);
     {
         // Opt-in JIT fusion of element-wise expressions (vector loop via dill)
         static const bool doFuse = (getenv("DerivedFuse") != nullptr);
