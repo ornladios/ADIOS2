@@ -209,6 +209,11 @@ private:
      */
     bool CheckWriterActive();
 
+    /** set FailOnEOF on all read transports once the writer is known
+     * inactive; idempotent */
+    void ApplyFailOnEOFPolicy();
+    bool m_FailOnEOFApplied = false;
+
     /** Check for a step that is already in memory but haven't
      * been processed yet.
      *  @return true: if new step has been found and processed, false otherwise

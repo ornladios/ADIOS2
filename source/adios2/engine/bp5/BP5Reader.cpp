@@ -930,18 +930,7 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
 
     std::call_once(m_InitialWriterActiveCheckFlag, [this]() {
         CheckWriterActive();
-        if (!m_WriterIsActive)
-        {
-            Params transportParameters;
-            transportParameters["FailOnEOF"] = "true";
-            m_DataFiles->SetParameters(transportParameters);
-            if (m_MDIndexFile)
-                m_MDIndexFile->SetParameters(transportParameters);
-            if (m_MDFile)
-                m_MDFile->SetParameters(transportParameters);
-            if (m_MetaMetadataFile)
-                m_MetaMetadataFile->SetParameters(transportParameters);
-        }
+        ApplyFailOnEOFPolicy();
     });
     // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
@@ -1620,14 +1609,27 @@ void BP5Reader::InitTransports()
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
 {
     size_t Position = m_MetaMetaDataFileAlreadyProcessedSize;
-    while (Position < buffer.m_Buffer.size())
+    const size_t size = buffer.m_Buffer.size();
+    while (Position < size)
     {
         format::BP5Base::MetaMetaInfoBlock MMI;
 
+        // A record cut short by a killed writer (or one still being appended
+        // in streaming) must not be installed: stop at the last complete
+        // record and leave Position there so a later, longer read retries it.
+        const size_t savedPosition = Position;
+        if (size - Position < 2 * sizeof(uint64_t))
+            break;
         MMI.MetaMetaIDLen =
             helper::ReadValue<uint64_t>(buffer.m_Buffer, Position, m_Minifooter.IsLittleEndian);
         MMI.MetaMetaInfoLen =
             helper::ReadValue<uint64_t>(buffer.m_Buffer, Position, m_Minifooter.IsLittleEndian);
+        if (MMI.MetaMetaIDLen > size - Position || MMI.MetaMetaInfoLen > size - Position ||
+            MMI.MetaMetaIDLen + MMI.MetaMetaInfoLen > size - Position)
+        {
+            Position = savedPosition;
+            break;
+        }
         MMI.MetaMetaID = buffer.Data() + Position;
         MMI.MetaMetaInfo = buffer.Data() + Position + MMI.MetaMetaIDLen;
         m_BP5Deserializer->InstallMetaMetaData(MMI);
@@ -1693,6 +1695,17 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
     // broadcast metadata index buffer to all ranks from zero
     m_Comm.BroadcastVector(m_MetadataIndex.m_Buffer);
     newIdxSize = m_MetadataIndex.m_Buffer.size();
+
+    if (newIdxSize == 0 && m_OpenMode == Mode::ReadRandomAccess && !m_MDIndexFileAlreadyReadSize)
+    {
+        // The index file exists but is empty: a writer was interrupted before
+        // it produced anything. In random access the file is final, so this
+        // cannot resolve by waiting.
+        helper::Throw<std::runtime_error>("Engine", "BP5Reader", "UpdateBuffer",
+                                          "metadata index file of " + m_Name +
+                                              " is empty; the file was likely truncated by an "
+                                              "interrupted writer and contains no readable data");
+    }
 
     size_t parsedIdxSize = 0;
     const auto stepsBefore = m_StepsCount;
@@ -1877,6 +1890,21 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
 
     if (hasHeader)
     {
+        if (buffer.size() < m_IndexHeaderSize)
+        {
+            // A file shorter than its own 64-byte header. In streaming mode a
+            // just-created file can transiently look like this, so report
+            // nothing parsed and let the poll loop retry; in random access
+            // the file is final and unusable.
+            if (m_OpenMode == Mode::ReadRandomAccess)
+                helper::Throw<std::runtime_error>(
+                    "Engine", "BP5Reader", "ParseMetadataIndex",
+                    "metadata index file is smaller than its header (" +
+                        std::to_string(buffer.size()) +
+                        " bytes); the file is truncated or corrupt, possibly by an "
+                        "interrupted writer");
+            return 0;
+        }
         // Read header (64 bytes)
         // long version string
         position = m_VersionTagPosition;
@@ -2108,6 +2136,28 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
     return m_WriterIsActive;
 }
 
+void BP5Reader::ApplyFailOnEOFPolicy()
+{
+    // Once the writer is known inactive, no file can legitimately be shorter
+    // than its metadata promises: make transport-level EOF a bounded wait and
+    // then a clean error instead of an indefinite wait for a writer to append.
+    if (m_WriterIsActive || m_FailOnEOFApplied)
+        return;
+    m_FailOnEOFApplied = true;
+    Params transportParameters;
+    transportParameters["FailOnEOF"] = "true";
+    if (m_DataFiles)
+        m_DataFiles->SetParameters(transportParameters);
+    if (m_MetadataFiles && m_MetadataFiles != m_DataFiles)
+        m_MetadataFiles->SetParameters(transportParameters);
+    if (m_MDIndexFile)
+        m_MDIndexFile->SetParameters(transportParameters);
+    if (m_MDFile)
+        m_MDFile->SetParameters(transportParameters);
+    if (m_MetaMetadataFile)
+        m_MetaMetadataFile->SetParameters(transportParameters);
+}
+
 bool BP5Reader::CheckWriterActive()
 {
     if (m_ReadMetadataFromFile && m_WriterIsActive)
@@ -2131,6 +2181,7 @@ bool BP5Reader::CheckWriterActive()
     {
         m_WriterIsActive = false;
     }
+    ApplyFailOnEOFPolicy();
     return m_WriterIsActive;
 }
 
@@ -2237,7 +2288,12 @@ void BP5Reader::DoGetStructDeferred(VariableStruct &variable, void *data)
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if (!m_BP5Deserializer)
+    {
+        // Open never got far enough to build the deserializer (e.g. the
+        // metadata index was empty or unusable); nothing to flush.
+    }
+    else if (m_OpenMode == Mode::ReadRandomAccess)
     {
         PerformGets();
     }
@@ -2338,6 +2394,11 @@ size_t BP5Reader::DoSteps() const
 
 void BP5Reader::NotifyEngineNoVarsQuery()
 {
+    // In random access an empty-but-valid (or truncated-to-empty) file is
+    // simply a file with no variables; InquireVariable returning nullptr is
+    // the right answer. The advice below is for streaming misuse only.
+    if (m_OpenMode == Mode::ReadRandomAccess)
+        return;
     if (!m_BetweenStepPairs)
     {
         helper::Throw<std::logic_error>(

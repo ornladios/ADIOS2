@@ -517,13 +517,27 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                     // reaches 30 seconds (nearly 45 seconds total
                     // wait time) and we still don't have data, treat
                     // this as a real failure and throw an exception.
+                    // One full wait per file suffices: once EOF has been
+                    // confirmed past the consistency window, further reads
+                    // of this (truncated) file fail immediately rather
+                    // than each re-waiting the full window.
+                    if (m_EOFConfirmed)
+                        helper::Throw<std::ios_base::failure>(
+                            "Toolkit", "transport::file::FilePOSIX", "Read",
+                            "file " + m_Name + " ends " + std::to_string(size) +
+                                " bytes before data that its metadata refers to; it was "
+                                "likely truncated by an interrupted writer");
                     std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
                     backoff_ns *= 2;
                     if (std::chrono::nanoseconds(backoff_ns) > std::chrono::seconds(30))
+                    {
+                        m_EOFConfirmed = true;
                         helper::Throw<std::ios_base::failure>(
                             "Toolkit", "transport::file::FilePOSIX", "Read",
-                            "Read past end of file on " + m_Name + " trying to read " +
-                                std::to_string(size) + " bytes " + SysErrMsg(localErrno));
+                            "file " + m_Name + " ends " + std::to_string(size) +
+                                " bytes before data that its metadata refers to; it was "
+                                "likely truncated by an interrupted writer");
+                    }
                 }
                 else
                 {
@@ -735,7 +749,10 @@ void FilePOSIX::SetParameters(const Params &params)
     // Otherwise, they are set from environment if present
     // Otherwise, they remain at their default value
 
+    // key arrives verbatim from direct SetParameters calls but lowercased
+    // through the OpenFile path (LowerCaseParams); accept both
     helper::GetParameter(params, "FailOnEOF", m_FailOnEOF);
+    helper::GetParameter(params, "failoneof", m_FailOnEOF);
 }
 
 } // end namespace transport

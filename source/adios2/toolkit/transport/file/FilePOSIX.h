@@ -71,6 +71,9 @@ private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
     bool m_FailOnEOF = false; // default to false for historic reasons
+    /** EOF persisted through a full backoff window once already; the file is
+     * truncated and later reads past its end fail without re-waiting */
+    bool m_EOFConfirmed = false;
     bool m_IsOpening = false;
     std::future<std::pair<int, int>> m_OpenFuture;
     bool m_DirectIO = false;
