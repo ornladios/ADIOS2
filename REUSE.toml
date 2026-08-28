@@ -233,3 +233,9 @@ path = ["testing/contract/lammps/in.test", "testing/contract/scorpio/**.dump"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "kotoba/fixtures/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
+SPDX-License-Identifier = "Apache-2.0"

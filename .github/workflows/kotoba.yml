@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Kotoba v1
+
+on:
+  push:
+    paths:
+      - "kotoba/**"
+      - ".github/workflows/kotoba.yml"
+  pull_request:
+    paths:
+      - "kotoba/**"
+      - ".github/workflows/kotoba.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Header and magic fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Run Kotoba v1 checks
+        run: bash kotoba/checks.sh

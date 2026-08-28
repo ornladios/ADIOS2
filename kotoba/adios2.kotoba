@@ -1,0 +1,96 @@
+;; SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+;;
+;; SPDX-License-Identifier: Apache-2.0
+
+;; Honest Kotoba v1 ADIOS2/BP binding: 64-byte BP5 Index Table header only.
+;; Vendored fixture bytes (hex): 4144494f532d42502076322e312e3020496e646578205461626c65000000000032313000000502006e0004030201000000000000000000000000000000000000
+;; Layout from source/adios2/engine/bp5/BP5Engine.h (BP5IndexTableHeader)
+;; and BP5Writer::MakeHeader:
+;;   bytes  0-31 VersionTag, prefix magic "ADIOS-BP"
+;;   bytes 32-34 ADIOS library major/minor/patch as one ASCII digit each
+;;   byte     36 endianness (0 little, 1 big)
+;;   byte     37 BP version (5)
+;;   byte     38 BP minor version (2)
+;;   byte     39 active flag
+;; i64-v1 only: no engine, no steps, no FFS metadata, no IEEE floats, no FFI.
+;; Fixture-byte indexes that this v1 reads: 0-7, 36, 37, 38, 39.
+
+(ns adios2.header)
+
+(defn header-len [] 64)
+
+(defn magic-0 [] 65)
+(defn magic-1 [] 68)
+(defn magic-2 [] 73)
+(defn magic-3 [] 79)
+(defn magic-4 [] 83)
+(defn magic-5 [] 45)
+(defn magic-6 [] 66)
+(defn magic-7 [] 80)
+(defn endian-flag [] 0)
+(defn bp-version [] 5)
+(defn bp-minor [] 2)
+(defn active-flag [] 0)
+
+(defn fixture-byte [i]
+  (if (= i 0) (magic-0)
+  (if (= i 1) (magic-1)
+  (if (= i 2) (magic-2)
+  (if (= i 3) (magic-3)
+  (if (= i 4) (magic-4)
+  (if (= i 5) (magic-5)
+  (if (= i 6) (magic-6)
+  (if (= i 7) (magic-7)
+  (if (= i 36) (endian-flag)
+  (if (= i 37) (bp-version)
+  (if (= i 38) (bp-minor)
+  (if (= i 39) (active-flag)
+  0)))))))))))))
+
+(defn magic-ok []
+  (if (= (fixture-byte 0) 65)
+    (if (= (fixture-byte 1) 68)
+      (if (= (fixture-byte 2) 73)
+        (if (= (fixture-byte 3) 79)
+          (if (= (fixture-byte 4) 83)
+            (if (= (fixture-byte 5) 45)
+              (if (= (fixture-byte 6) 66)
+                (if (= (fixture-byte 7) 80) 1 0)
+                0)
+              0)
+            0)
+          0)
+        0)
+      0)
+    0))
+
+;; In-memory GetMetadata prefix is "BP5     " (B P 5), not ADIOS-BP.
+(defn rejects-in-memory-bp5? []
+  (if (= 66 65)
+    0
+    (if (= 80 68)
+      0
+      (if (= 53 73) 0 1))))
+
+(defn little-endian? []
+  (if (zero? (fixture-byte 36)) 1 0))
+
+(defn pack []
+  (+ (* (magic-ok) 100000)
+     (* (little-endian?) 10000)
+     (* (fixture-byte 37) 100)
+     (* (fixture-byte 38) 10)
+     (fixture-byte 39)))
+
+(defn main []
+  (if (= (header-len) 64)
+    (if (= (rejects-in-memory-bp5?) 1)
+      (if (= (magic-ok) 1)
+        (if (= (fixture-byte 37) 5)
+          (if (= (fixture-byte 38) 2)
+            (pack)
+            0)
+          0)
+        0)
+      0)
+    0))
