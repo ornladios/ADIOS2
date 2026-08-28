@@ -2,6 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# Fork-only Kotoba header checks. Path-filtered to kotoba/** so this
+# workflow is the one that runs for this tree. reuse.yml, pypackaging.yml,
+# and everything.yml (git_checks) path-ignore the same kotoba paths so a
+# kotoba-only PR does not enqueue those jobs.
+
 name: Kotoba v1
 
 on:

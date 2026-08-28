@@ -2,9 +2,11 @@
 ;;
 ;; SPDX-License-Identifier: Apache-2.0
 
-;; Honest Kotoba v1 ADIOS2/BP binding: magic + 64-byte Index Table header only.
+;; Honest Kotoba v1 ADIOS2/BP binding: identification fields only.
+;; Fixture file is 64 bytes; this module special-cases bytes 0-7 and 36-39.
+;; Every other fixture-byte index returns 0. Rest of the file is not parsed.
 ;; Vendored fixture bytes (hex): 4144494f532d42502076322e312e3020496e646578205461626c65000000000032313000000502006e0004030201000000000000000000000000000000000000
-;; Layout (header struct only) from source/adios2/engine/bp5/BP5Engine.h:
+;; Identification fields from source/adios2/engine/bp5/BP5Engine.h:
 ;;   bytes  0-7  magic "ADIOS-BP"
 ;;   byte     36 endianness (0 little, 1 big)
 ;;   byte     37 BP version (5)

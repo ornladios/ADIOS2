@@ -17,11 +17,14 @@ The module compiles with [Kotoba](https://github.com/kotoba-lang/kotoba) CLI
 **0.7.2** to `wasm32-kotoba-v1` under the `i64-v1` value profile: no FFI, no
 IEEE floats, no vector or externref ABI.
 
-## What this implements
+## Identification fields vs fixture file
 
-Enough of the on-disk 64-byte BP5 Index Table header to identify the format.
-Field offsets match `BP5IndexTableHeader` in
-`source/adios2/engine/bp5/BP5Engine.h` (layout source only).
+`fixtures/bp5-index-header.bin` is a 64-byte file (the on-disk
+`BP5IndexTableHeader` size). That is the **fixture**. The module does not
+walk or special-case all 64 bytes.
+
+`adios2.kotoba` special-cases only these identification fields. Every other
+`fixture-byte` index returns `0`:
 
 | Offset | Fixture | Meaning |
 | ------ | ------- | ------- |
@@ -31,8 +34,12 @@ Field offsets match `BP5IndexTableHeader` in
 | 38 | `2` | BP5 minor version |
 | 39 | `0` | Header active-flag byte |
 
-The fixture is `fixtures/bp5-index-header.bin` (exactly 64 bytes).
-`adios2.kotoba` reads those identification fields and packs them as `110520`:
+The rest of the fixture file (VersionTag tail, ASCII library digits, UUID,
+padding) may be non-zero. `checks.sh` locks the full file hex. The module
+does not parse those bytes. Layout source (struct only):
+`source/adios2/engine/bp5/BP5Engine.h`.
+
+Packed return `110520` is those identification fields:
 
 - `1` magic `ADIOS-BP`
 - `1` little-endian
@@ -64,8 +71,8 @@ This is not a claim that Kotoba can open production ADIOS2 datasets.
 - the artifact starts with wasm magic and carries `wasm32-kotoba-v1`
 
 It then runs the module and requires runtime value `110520`. The script fails
-if the fixture, module comment, or field literals drift. It does not invent a
-pass.
+if the fixture file, module comment, or identification-field literals drift.
+It does not invent a pass. A local `110520` is not a CI result.
 
 ```sh
 bash kotoba/checks.sh

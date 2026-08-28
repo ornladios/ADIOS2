@@ -19,12 +19,24 @@ on:
           - 'pypi'
 
   pull_request:
+    paths-ignore:
+      - 'kotoba/**'
+      - '.github/workflows/kotoba.yml'
+      - '.github/workflows/reuse.yml'
+      - '.github/workflows/pypackaging.yml'
+      - '.github/workflows/everything.yml'
   push:
     branches:
       - master
       - release_[0-9]+
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*
+    paths-ignore:
+      - 'kotoba/**'
+      - '.github/workflows/kotoba.yml'
+      - '.github/workflows/reuse.yml'
+      - '.github/workflows/pypackaging.yml'
+      - '.github/workflows/everything.yml'
   release:
     types:
       - published
