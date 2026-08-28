@@ -2,18 +2,16 @@
 ;;
 ;; SPDX-License-Identifier: Apache-2.0
 
-;; Honest Kotoba v1 ADIOS2/BP binding: 64-byte BP5 Index Table header only.
+;; Honest Kotoba v1 ADIOS2/BP binding: magic + 64-byte Index Table header only.
 ;; Vendored fixture bytes (hex): 4144494f532d42502076322e312e3020496e646578205461626c65000000000032313000000502006e0004030201000000000000000000000000000000000000
-;; Layout from source/adios2/engine/bp5/BP5Engine.h (BP5IndexTableHeader)
-;; and BP5Writer::MakeHeader:
-;;   bytes  0-31 VersionTag, prefix magic "ADIOS-BP"
-;;   bytes 32-34 ADIOS library major/minor/patch as one ASCII digit each
+;; Layout (header struct only) from source/adios2/engine/bp5/BP5Engine.h:
+;;   bytes  0-7  magic "ADIOS-BP"
 ;;   byte     36 endianness (0 little, 1 big)
 ;;   byte     37 BP version (5)
 ;;   byte     38 BP minor version (2)
 ;;   byte     39 active flag
-;; i64-v1 only: no engine, no steps, no FFS metadata, no IEEE floats, no FFI.
-;; Fixture-byte indexes that this v1 reads: 0-7, 36, 37, 38, 39.
+;; Owner constraint: magic/header or one record. No I/O engine, no BP writer,
+;; no timestep/query. i64-v1, wasm32, no FFI, no IEEE floats.
 
 (ns adios2.header)
 
@@ -64,14 +62,6 @@
       0)
     0))
 
-;; In-memory GetMetadata prefix is "BP5     " (B P 5), not ADIOS-BP.
-(defn rejects-in-memory-bp5? []
-  (if (= 66 65)
-    0
-    (if (= 80 68)
-      0
-      (if (= 53 73) 0 1))))
-
 (defn little-endian? []
   (if (zero? (fixture-byte 36)) 1 0))
 
@@ -84,12 +74,10 @@
 
 (defn main []
   (if (= (header-len) 64)
-    (if (= (rejects-in-memory-bp5?) 1)
-      (if (= (magic-ok) 1)
-        (if (= (fixture-byte 37) 5)
-          (if (= (fixture-byte 38) 2)
-            (pack)
-            0)
+    (if (= (magic-ok) 1)
+      (if (= (fixture-byte 37) 5)
+        (if (= (fixture-byte 38) 2)
+          (pack)
           0)
         0)
       0)

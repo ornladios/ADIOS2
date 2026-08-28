@@ -4,9 +4,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Compile the Kotoba v1 ADIOS2/BP5 header module with CLI 0.7.2 and
-# assert the vendored 64-byte Index Table header. Do not invent a pass:
-# every gate reads the fixture, a compiler receipt, or a runtime value.
+# Compile the Kotoba v1 ADIOS2/BP magic+header module with CLI 0.7.2 and
+# assert the vendored 64-byte Index Table header. Owner constraint:
+# magic/header only — no engine, writer, or timestep/query.
+# Do not invent a pass: every gate reads the fixture, a compiler receipt,
+# or a runtime value.
 
 set -euo pipefail
 
