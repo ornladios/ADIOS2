@@ -56,6 +56,10 @@ public:
     void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
                          size_t Step = SIZE_MAX);
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step = SIZE_MAX);
+    /** is the FFS format this metadata block was encoded with already
+     * installed? False means the describing mmd.0 record is absent (e.g.
+     * truncated away), so the block cannot be decoded. */
+    bool MetadataFormatKnown(void *MetadataBlock);
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     // Retry resolution of pending reader-derived variables. Idempotent and
     // cheap once none remain; also called after attribute install, since

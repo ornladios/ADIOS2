@@ -58,6 +58,7 @@ def classify(cmd, cwd=None):
 
 
 def readers_for(bpdir):
+    os.environ.setdefault("CR_EOF_WAIT", "1")
     return [
         ("bpls", [BPLS, "-la", bpdir]),
         ("ra", [READER, bpdir, "ra"]),

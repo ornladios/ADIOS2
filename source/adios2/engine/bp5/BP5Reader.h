@@ -196,7 +196,7 @@ private:
      *   m_FilteredMetadataInfo
      */
     size_t ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t absoluteStartPos,
-                              const bool hasHeader);
+                              const bool hasHeader, const size_t mdFileSize = adios2::MaxSizeT);
 
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table
@@ -213,6 +213,13 @@ private:
      * inactive; idempotent */
     void ApplyFailOnEOFPolicy();
     bool m_FailOnEOFApplied = false;
+
+    /** ParseMetadataIndex stopped before index records whose metadata extents
+     * exceed md.0's actual size (truncated or not yet flushed) */
+    bool m_MDTrimmedSteps = false;
+
+    /** warned once that attributes are unreadable (format lost to truncation) */
+    bool m_AttrFormatWarned = false;
 
     /** Check for a step that is already in memory but haven't
      * been processed yet.
@@ -276,8 +283,11 @@ private:
     format::BufferMalloc m_Metadata;
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
-    void InstallMetadataForTimestep(size_t Step);
-    void ParallelInstallMetadataForTimestep(size_t Step);
+    /** false = the step references formats a truncated mmd.0 no longer
+     * describes (random access only; streaming throws instead) */
+    bool InstallMetadataForTimestep(size_t Step);
+    bool ParallelInstallMetadataForTimestep(size_t Step);
+    bool StepMetadataFormatsKnown(size_t Step);
     double ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
                     const uint64_t StartOffset, const size_t Length, char *Destination);
 

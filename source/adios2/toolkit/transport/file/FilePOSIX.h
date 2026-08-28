@@ -74,6 +74,10 @@ private:
     /** EOF persisted through a full backoff window once already; the file is
      * truncated and later reads past its end fail without re-waiting */
     bool m_EOFConfirmed = false;
+    /** how long an EOF read on promised data may wait for filesystem
+     * consistency before failing (FailOnEOF mode); backoff doubling makes
+     * total wait roughly 1.5x this */
+    float m_EOFWaitSecs = 30.0f;
     bool m_IsOpening = false;
     std::future<std::pair<int, int>> m_OpenFuture;
     bool m_DirectIO = false;

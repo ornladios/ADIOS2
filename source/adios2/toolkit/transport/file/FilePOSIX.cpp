@@ -529,7 +529,8 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                                 "likely truncated by an interrupted writer");
                     std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
                     backoff_ns *= 2;
-                    if (std::chrono::nanoseconds(backoff_ns) > std::chrono::seconds(30))
+                    if (std::chrono::duration<double, std::nano>((double)backoff_ns) >
+                        std::chrono::duration<double>(m_EOFWaitSecs))
                     {
                         m_EOFConfirmed = true;
                         helper::Throw<std::ios_base::failure>(
@@ -749,10 +750,12 @@ void FilePOSIX::SetParameters(const Params &params)
     // Otherwise, they are set from environment if present
     // Otherwise, they remain at their default value
 
-    // key arrives verbatim from direct SetParameters calls but lowercased
+    // keys arrive verbatim from direct SetParameters calls but lowercased
     // through the OpenFile path (LowerCaseParams); accept both
     helper::GetParameter(params, "FailOnEOF", m_FailOnEOF);
     helper::GetParameter(params, "failoneof", m_FailOnEOF);
+    helper::GetParameter(params, "EOFWaitSecs", m_EOFWaitSecs);
+    helper::GetParameter(params, "eofwaitsecs", m_EOFWaitSecs);
 }
 
 } // end namespace transport

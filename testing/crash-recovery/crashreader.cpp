@@ -39,6 +39,8 @@ int main(int argc, char **argv)
         adios2::ADIOS adios;
         adios2::IO io = adios.DeclareIO("r");
         io.SetEngine("BP5");
+        if (const char *w = getenv("CR_EOF_WAIT"))
+            io.SetParameter("EOFWaitSecs", w);
         if (!ra)
         {
             // bound the streaming Open: a writer killed before producing a
