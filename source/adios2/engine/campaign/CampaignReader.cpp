@@ -866,7 +866,8 @@ void CampaignReader::InitTransports()
                 {
                     if (m_Options.verbose > 0)
                     {
-                        std::cout << "      " << tsorder << ". " << ds.name << " Skipping \n";
+                        std::cout << "      " << tsorder << ". " << ds.name
+                                  << " No local metadata available. Skipping \n";
                     }
                 }
             }
@@ -912,7 +913,7 @@ void CampaignReader::InitTransports()
             localPath = SaveRemoteMD(dsIdx, repIdx, io, false);
             if (!localPath.empty())
             {
-                if (m_Options.verbose > 0)
+                if (m_Options.verbose > 0 && !in_memory_object.size())
                 {
                     std::cout << "    " << ds.name << " local file " << localPath << "\n";
                 }
@@ -921,8 +922,9 @@ void CampaignReader::InitTransports()
             {
                 if (m_Options.verbose > 0)
                 {
-                    std::cout << "    " << ds.name << " Skipping \n";
+                    std::cout << "    " << ds.name << " No local metadata available. Skipping \n";
                 }
+                continue;
             }
         }
         else
@@ -1134,18 +1136,19 @@ void CampaignReader::OpenDatasetWithADIOS(std::string prefixName, FileFormat for
                                           adios2::core::IO &io, std::string &localPath)
 {
     auto lf_Open = [&]() -> adios2::core::Engine & {
-        if (localPath.empty())
+        if (in_memory_object.size())
         {
             std::string engineName(in_memory_object.data(), 8);
+            std::string name = (localPath.empty() ? prefixName : localPath);
             helper::RightTrim(engineName);
             // in memory ADIOS metadata
             if (m_Options.verbose > 0)
             {
-                std::cout << "     Open in-memory for " << prefixName << " using engine ["
-                          << engineName << "] \n";
+                std::cout << "     Open in-memory for " << name << " using engine [" << engineName
+                          << "] \n";
             }
             io.SetEngine(engineName);
-            auto &e = io.Open(prefixName, m_OpenMode, m_Comm.Duplicate(), in_memory_object.data(),
+            auto &e = io.Open(name, m_OpenMode, m_Comm.Duplicate(), in_memory_object.data(),
                               in_memory_object.size());
             in_memory_object.clear();
             return e;
