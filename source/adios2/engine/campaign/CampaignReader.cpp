@@ -14,9 +14,9 @@
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 
 #include <algorithm> // std:find in vector
+#include <filesystem>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -31,6 +31,17 @@ namespace core
 {
 namespace engine
 {
+
+namespace
+{
+// Returns 0 if the file does not exist or its size cannot be determined.
+size_t FileLength(const std::string &path)
+{
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(path, ec);
+    return ec ? 0 : static_cast<size_t>(size);
+}
+} // end anonymous namespace
 
 CampaignReader::CampaignReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("CampaignReader", io, name, mode, std::move(comm))
@@ -462,7 +473,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         {
             CampaignFile &cf = m_CampaignData.files[fileid];
             std::string path =
-                localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(cf.name);
+                localPath + PathSeparator + std::filesystem::path(cf.name).filename().string();
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable, will read from DB directly, no local path
@@ -600,21 +611,21 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 
                     if (ho.isAWS_EC2)
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
+                        helper::PutEnv("AWS_EC2_METADATA_DISABLED=false");
                     }
                     else
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
+                        helper::PutEnv("AWS_EC2_METADATA_DISABLED=true");
                     }
 
                     if (ho.awsProfile.empty())
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
+                        helper::PutEnv("AWS_PROFILE=default");
                     }
                     else
                     {
                         std::string es = "AWS_PROFILE=" + ho.awsProfile;
-                        adios2sys::SystemTools::PutEnv(es);
+                        helper::PutEnv(es);
                     }
                 }
             }
@@ -688,11 +699,11 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 void CampaignReader::InitTransports()
 {
     std::string path = m_Name;
-    if (!adios2sys::SystemTools::FileExists(path) && path[0] != '/' && path[0] != '\\' &&
+    if (!std::filesystem::exists(path) && path[0] != '/' && path[0] != '\\' &&
         !m_Options.campaignstorepath.empty())
     {
         std::string path2 = m_Options.campaignstorepath + PathSeparator + m_Name;
-        if (adios2sys::SystemTools::FileExists(path2))
+        if (std::filesystem::exists(path2))
         {
             path = path2;
         }
@@ -827,7 +838,7 @@ void CampaignReader::InitTransports()
         std::string localCachePath =
             m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
         std::string atsFilePath = localCachePath + PathSeparator + ts.name + ".ats";
-        auto atsDir = adios2sys::SystemTools::GetFilenamePath(atsFilePath);
+        auto atsDir = std::filesystem::path(atsFilePath).parent_path().string();
         helper::CreateDirectory(atsDir);
         if (m_Options.verbose > 0)
         {
@@ -998,8 +1009,8 @@ void CampaignReader::InitTransports()
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable
-                CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                   repIdx, true, localPath, taropt);
+                CreateTextVariable(ds.name, FileLength(localPath), dsIdx, repIdx, true, localPath,
+                                   taropt);
             }
         }
 
@@ -1122,8 +1133,8 @@ void CampaignReader::InitTransports()
                         }
                     }
                 }
-                CreateImageVariable(imgName, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                    repIdx, true, localPath, taropt);
+                CreateImageVariable(imgName, FileLength(localPath), dsIdx, repIdx, true, localPath,
+                                    taropt);
             }
             else
             {

@@ -58,7 +58,7 @@
 #include "adios2/helper/adiosString.h" // EndsWith
 #include "adios2/helper/adiosSystem.h" //isHDF5File
 #include <adios2sys/CommandLineArguments.hxx>
-#include <adios2sys/SystemTools.hxx>
+#include <filesystem>
 #include <pugixml.hpp>
 
 namespace adios2
@@ -492,7 +492,8 @@ bool introspectAsBPDir(const std::string &name) noexcept
 
 void introspect_file(const char *filename) noexcept
 {
-    if (adios2sys::SystemTools::FileIsDirectory(filename))
+    std::error_code fileIsDirEc;
+    if (std::filesystem::is_directory(filename, fileIsDirEc))
     {
         if (!introspectAsBPDir(filename))
         {
@@ -1707,11 +1708,11 @@ int doList(std::string path)
     }
     else
     {
-        bool exists = adios2sys::SystemTools::FileExists(path);
+        bool exists = std::filesystem::exists(path);
         if (!exists && !userOptions.campaign.campaignstorepath.empty() && path[0] != PathSeparator)
         {
             std::string path2 = userOptions.campaign.campaignstorepath + PathSeparator + path;
-            exists = adios2sys::SystemTools::FileExists(path2);
+            exists = std::filesystem::exists(path2);
             if (exists)
             {
                 ; // path = path2.c_str();
@@ -1720,7 +1721,7 @@ int doList(std::string path)
             {
                 std::string path3 =
                     userOptions.campaign.campaignstorepath + PathSeparator + path + ".aca";
-                exists = adios2sys::SystemTools::FileExists(path3);
+                exists = std::filesystem::exists(path3);
                 if (exists)
                 {
                     path += ".aca"; // path = path3.c_str();

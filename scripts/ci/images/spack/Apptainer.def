@@ -11,11 +11,24 @@ From: docker.io/ornladios/adios2:spack-dependencies-{{ baseos }}
 %post
     set -e
     . /opt/spack/share/spack/setup-env.sh
+
+    # spack-dependencies-ubuntu-bionic only ships Ubuntu Bionic's default
+    # GCC 7, which lacks stable std::filesystem support; install and
+    # register a newer GCC for spack to build adios2 with.
+    apt-get update
+    apt-get install -y software-properties-common
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    apt-get update
+    apt-get install -y gcc-9 g++-9 gfortran-9
+    rm -rf /var/lib/apt/lists/*
+    spack compiler find /usr/bin
+
     spack dev-build \
         -j$(grep -c '^processor' /proc/cpuinfo) \
         -d /opt/adios2/source \
         --skip-patch \
-        adios2@develop ~python
+        --reuse \
+        adios2@develop %gcc@9: ~python
     spack clean -a
 
     spack env create --without-view adios2
