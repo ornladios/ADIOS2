@@ -111,6 +111,30 @@ size_t RaiseLimitNoFile();
 void CleanupBPDirectory(const std::string &directory, const std::vector<std::string> &filesToKeep,
                         helper::Comm &comm);
 
+/**
+ * Portable environment variable lookup.
+ * @param key environment variable name
+ * @param result set to the variable's value on success, left untouched otherwise
+ * @return true if the variable is set
+ */
+bool GetEnv(const std::string &key, std::string &result) noexcept;
+
+/**
+ * Portable environment variable assignment.
+ * @param env "key=value" to set, or "key" to unset the variable
+ * @return true on success
+ */
+bool PutEnv(const std::string &env) noexcept;
+
+/**
+ * Split a string on a separator character.
+ * @param input string to split
+ * @param separator character to split on
+ * @param isPath if true, a leading '/' is kept as its own leading component
+ * @return the split components
+ */
+std::vector<std::string> SplitString(const std::string &input, char separator, bool isPath);
+
 } // end namespace helper
 } // end namespace adios2
 

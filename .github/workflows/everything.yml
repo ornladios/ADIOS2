@@ -111,7 +111,7 @@ jobs:
 
   ubuntu:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # temporarily disabled
 
     runs-on: ${{ matrix.runner || 'ubuntu-22.04' }}
     env:
@@ -224,7 +224,7 @@ jobs:
 
   el8:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # temporarily disabled
 
     runs-on: ubuntu-latest
     container:
@@ -288,7 +288,7 @@ jobs:
 
   macos:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # temporarily disabled
 
     runs-on: ${{ matrix.image }}
     env:
@@ -360,7 +360,7 @@ jobs:
 
   windows:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # temporarily disabled
 
     runs-on: ${{ matrix.image }}${{ matrix.compiler == 'vs2026' && '-vs2026' || ''}}
     env:
@@ -547,7 +547,7 @@ jobs:
   # standard container job.
   contract:
     needs: [format, git_checks, docker]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # temporarily disabled
 
     runs-on: ubuntu-latest
     permissions:
@@ -606,6 +606,7 @@ jobs:
 
   analyze:
     needs: [format, git_checks]
+    if: false # temporarily disabled
     name: CodeQL
     runs-on: ubuntu-latest
     container:

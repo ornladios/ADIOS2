@@ -33,11 +33,16 @@ option(ADIOS2_USE_EXTERNAL_YAMLCPP
   "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PERFSTUBS
   "Use an externally supplied perfstubs library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_CLI11
+  "Use an externally supplied CLI11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
 add_subdirectory(KWSys)
 
 add_subdirectory(perfstubs)
 adios2_add_thirdparty_target(perfstubs-interface perfstubs-interface)
+
+add_subdirectory(CLI11)
+adios2_add_thirdparty_target(CLI11 CLI11_wrapper)
 
 if(BUILD_TESTING)
   if(ADIOS2_USE_EXTERNAL_GTEST)
