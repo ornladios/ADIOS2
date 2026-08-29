@@ -821,17 +821,18 @@ void connect_and_get_status(int ServerPort)
 
 static atom_t CM_IP_PORT = -1;
 
-static bool server_timeout(void *CMvoid, int time_since_service)
+static bool server_timeout(int time_since_service)
 {
-    CManager cm = (CManager)CMvoid;
     if (verbose && (time_since_service > 90))
         log_output(std::to_string(time_since_service) + " seconds since last service.");
     if (time_since_service > 6000)
     {
         if (verbose)
             log_output("Timing out remote server");
-        CManager_close(cm);
-        return true;
+        /* Don't CManager_close() from this thread: the main thread is inside CMrun_network()
+         * and races on the CManager being torn down (use-after-free, heap corruption). There
+         * are no active clients at this point by definition, so just exit. */
+        exit(0);
     }
     return false;
 }
@@ -850,17 +851,17 @@ uint64_t rand64(void)
     return r;
 }
 
-static void timer_start(void *param, unsigned int interval)
+static void timer_start(unsigned int interval)
 {
 
-    std::thread([param, interval]() {
+    std::thread([interval]() {
         while (true)
         {
             auto now = std::chrono::steady_clock::now();
             auto secs =
                 std::chrono::duration_cast<std::chrono::seconds>(now - last_service_time).count();
             auto x = now + std::chrono::milliseconds(interval);
-            if (server_timeout(param, (int)secs))
+            if (server_timeout((int)secs))
                 return;
             std::this_thread::sleep_until(x);
         }
@@ -1089,7 +1090,7 @@ int main(int argc, char **argv)
 
     cm = CManager_create();
     if (!no_timeout)
-        timer_start((void *)cm, 60 * 1000); // check timeout on 1 minute boundaries
+        timer_start(60 * 1000); // check timeout on 1 minute boundaries
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
     attr_list listen_list = NULL;
 
