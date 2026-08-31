@@ -576,8 +576,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 if (ho.protocol == HostAccessProtocol::S3)
                 {
                     const std::string endpointURL = ho.endpoint;
-                    const std::string objPath =
-                        m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
+                    const std::string objPath = remotePath;
                     Params p;
                     p.emplace("library", "awssdk");
                     p.emplace("endpoint", endpointURL);
