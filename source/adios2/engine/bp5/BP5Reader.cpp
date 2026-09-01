@@ -193,8 +193,44 @@ void BP5Reader::ProcessMetadataFromMemory(const char *md)
     }
 }
 
-void BP5Reader::InstallMetadataForTimestep(size_t Step)
+bool BP5Reader::StepMetadataFormatsKnown(size_t Step)
 {
+    // Can every writer rank's metadata block for this step be decoded, i.e.
+    // is each block's format among the (possibly truncated) mmd.0 records
+    // installed so far? Checked before any block is installed so a step is
+    // either fully available or not present at all.
+    size_t pgstart = m_MetadataIndexTable[Step][0];
+    size_t Position = pgstart + sizeof(uint64_t); // skip total data size
+    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
+    size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        size_t ThisMDSize =
+            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
+        char *ThisMD = m_Metadata.Data() + MDPosition;
+        if (!m_BP5Deserializer->MetadataFormatKnown(ThisMD))
+        {
+            return false;
+        }
+        MDPosition += ThisMDSize;
+    }
+    return true;
+}
+
+bool BP5Reader::InstallMetadataForTimestep(size_t Step)
+{
+    if (!StepMetadataFormatsKnown(Step))
+    {
+        if (m_OpenMode != Mode::ReadRandomAccess)
+        {
+            helper::Throw<std::runtime_error>(
+                "Engine", "BP5Reader", "InstallMetadataForTimestep",
+                "step metadata references data formats missing from a truncated "
+                "meta-metadata (mmd.0) file; the file was likely cut short by an "
+                "interrupted writer");
+        }
+        return false;
+    }
     size_t pgstart = m_MetadataIndexTable[Step][0];
     size_t Position = pgstart + sizeof(uint64_t); // skip total data size
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
@@ -222,7 +258,24 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
             helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
         char *ThisAD = m_Metadata.Data() + MDPosition;
         if (ThisADSize > 0)
-            m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+        {
+            if (m_BP5Deserializer->MetadataFormatKnown(ThisAD))
+            {
+                m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+            }
+            else if (!m_AttrFormatWarned)
+            {
+                // format lost to a truncated mmd.0: variables may still be
+                // fully readable, so degrade to serving them without attributes
+                m_AttrFormatWarned = true;
+                if (m_Comm.Rank() == 0)
+                    std::cerr << "ADIOS2 BP5 reader WARNING: " << m_Name
+                              << " attribute metadata references a data format missing from "
+                                 "the meta-metadata file (truncated by an interrupted "
+                                 "writer?); attributes will be unavailable"
+                              << std::endl;
+            }
+        }
         MDPosition += ThisADSize;
     }
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
@@ -230,10 +283,23 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
     // attributes (installed above, after variable metadata) are available.
     m_BP5Deserializer->InstallReaderDerivedVariables();
 #endif
+    return true;
 }
 
-void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
+bool BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
 {
+    if (!StepMetadataFormatsKnown(Step))
+    {
+        if (m_OpenMode != Mode::ReadRandomAccess)
+        {
+            helper::Throw<std::runtime_error>(
+                "Engine", "BP5Reader", "ParallelInstallMetadataForTimestep",
+                "step metadata references data formats missing from a truncated "
+                "meta-metadata (mmd.0) file; the file was likely cut short by an "
+                "interrupted writer");
+        }
+        return false;
+    }
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
     size_t m_MetadataThreads = m_Parameters.MetadataThreads;
     size_t nThreads = (m_MetadataThreads < WriterCount ? m_MetadataThreads : WriterCount);
@@ -331,7 +397,24 @@ void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
             helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
         char *ThisAD = m_Metadata.Data() + MDPosition;
         if (ThisADSize > 0)
-            m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+        {
+            if (m_BP5Deserializer->MetadataFormatKnown(ThisAD))
+            {
+                m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+            }
+            else if (!m_AttrFormatWarned)
+            {
+                // format lost to a truncated mmd.0: variables may still be
+                // fully readable, so degrade to serving them without attributes
+                m_AttrFormatWarned = true;
+                if (m_Comm.Rank() == 0)
+                    std::cerr << "ADIOS2 BP5 reader WARNING: " << m_Name
+                              << " attribute metadata references a data format missing from "
+                                 "the meta-metadata file (truncated by an interrupted "
+                                 "writer?); attributes will be unavailable"
+                              << std::endl;
+            }
+        }
         MDPosition += ThisADSize;
     }
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
@@ -339,6 +422,7 @@ void BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
     // attributes (installed above, after variable metadata) are available.
     m_BP5Deserializer->InstallReaderDerivedVariables();
 #endif
+    return true;
 }
 
 StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -493,7 +577,22 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
             helper::Throw<std::overflow_error>("Engine", "BP5Reader", "ReadData",
                                                "file offset exceeds size_t on this platform");
         }
-        DataFile->Read(Destination, Length, static_cast<size_t>(base + offset));
+        try
+        {
+            DataFile->Read(Destination, Length, static_cast<size_t>(base + offset));
+        }
+        catch (std::ios_base::failure &e)
+        {
+            if (m_WriterIsActive)
+            {
+                helper::Throw<std::ios_base::failure>(
+                    "Engine", "BP5Reader", "ReadData",
+                    std::string(e.what()) +
+                        " -- the file is still marked as actively written; if its writer no "
+                        "longer exists, run adios2_deactivate_bp on it to mark it final");
+            }
+            throw;
+        }
     };
     size_t InfoStartPos = DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
     uint64_t SumDataSize = 0; // count in contiguous space
@@ -930,18 +1029,7 @@ void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)
 
     std::call_once(m_InitialWriterActiveCheckFlag, [this]() {
         CheckWriterActive();
-        if (!m_WriterIsActive)
-        {
-            Params transportParameters;
-            transportParameters["FailOnEOF"] = "true";
-            m_DataFiles->SetParameters(transportParameters);
-            if (m_MDIndexFile)
-                m_MDIndexFile->SetParameters(transportParameters);
-            if (m_MDFile)
-                m_MDFile->SetParameters(transportParameters);
-            if (m_MetaMetadataFile)
-                m_MetaMetadataFile->SetParameters(transportParameters);
-        }
+        ApplyFailOnEOFPolicy();
     });
     // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
@@ -1620,14 +1708,27 @@ void BP5Reader::InitTransports()
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
 {
     size_t Position = m_MetaMetaDataFileAlreadyProcessedSize;
-    while (Position < buffer.m_Buffer.size())
+    const size_t size = buffer.m_Buffer.size();
+    while (Position < size)
     {
         format::BP5Base::MetaMetaInfoBlock MMI;
 
+        // A record cut short by a killed writer (or one still being appended
+        // in streaming) must not be installed: stop at the last complete
+        // record and leave Position there so a later, longer read retries it.
+        const size_t savedPosition = Position;
+        if (size - Position < 2 * sizeof(uint64_t))
+            break;
         MMI.MetaMetaIDLen =
             helper::ReadValue<uint64_t>(buffer.m_Buffer, Position, m_Minifooter.IsLittleEndian);
         MMI.MetaMetaInfoLen =
             helper::ReadValue<uint64_t>(buffer.m_Buffer, Position, m_Minifooter.IsLittleEndian);
+        if (MMI.MetaMetaIDLen > size - Position || MMI.MetaMetaInfoLen > size - Position ||
+            MMI.MetaMetaIDLen + MMI.MetaMetaInfoLen > size - Position)
+        {
+            Position = savedPosition;
+            break;
+        }
         MMI.MetaMetaID = buffer.Data() + Position;
         MMI.MetaMetaInfo = buffer.Data() + Position + MMI.MetaMetaIDLen;
         m_BP5Deserializer->InstallMetaMetaData(MMI);
@@ -1694,13 +1795,46 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
     m_Comm.BroadcastVector(m_MetadataIndex.m_Buffer);
     newIdxSize = m_MetadataIndex.m_Buffer.size();
 
+    // md.0's actual size bounds which index records are usable: a step whose
+    // metadata extent is not (yet) backed by md.0 bytes is not readable
+    size_t mdActualSize = 0;
+    if (m_Comm.Rank() == 0 && m_MDFile)
+    {
+        mdActualSize = m_MDFile->GetSize();
+    }
+    mdActualSize = m_Comm.BroadcastValue(mdActualSize, 0);
+
+    if (newIdxSize == 0 && m_OpenMode == Mode::ReadRandomAccess && !m_MDIndexFileAlreadyReadSize)
+    {
+        // The index file exists but is empty: a writer was interrupted before
+        // it produced anything. In random access the file is final, so this
+        // cannot resolve by waiting.
+        helper::Throw<std::runtime_error>("Engine", "BP5Reader", "UpdateBuffer",
+                                          "metadata index file of " + m_Name +
+                                              " is empty; the file was likely truncated by an "
+                                              "interrupted writer and contains no readable data");
+    }
+
     size_t parsedIdxSize = 0;
     const auto stepsBefore = m_StepsCount;
     if (newIdxSize > 0)
     {
         /* Parse metadata index table */
         const bool hasHeader = (!m_MDIndexFileAlreadyReadSize);
-        parsedIdxSize = ParseMetadataIndex(m_MetadataIndex, 0, hasHeader);
+        m_MDTrimmedSteps = false;
+        parsedIdxSize = ParseMetadataIndex(m_MetadataIndex, 0, hasHeader, mdActualSize);
+        if (m_MDTrimmedSteps && m_OpenMode == Mode::ReadRandomAccess && m_Comm.Rank() == 0)
+        {
+            std::cerr << "ADIOS2 BP5 reader WARNING: " << m_Name
+                      << " lists steps whose metadata the md.0 file does not contain; the "
+                         "file appears truncated by an interrupted writer. Serving the "
+                      << m_StepsCount << " complete step(s)."
+                      << (m_WriterIsActive
+                              ? " The file is still marked as actively written; if its writer "
+                                "is gone, run adios2_deactivate_bp on it to mark it final."
+                              : "")
+                      << std::endl;
+        }
         // now we are sure the index header has been parsed,
         // first step parsing done
         // m_FilteredMetadataInfo is created
@@ -1776,9 +1910,12 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                         " metadata size = " + std::to_string(actualFileSize) +
                         " expected size = " + std::to_string(expectedMinFileSize) +
                         ". One reason could be if the reader finds old "
-                        "data "
-                        "while "
-                        "the writer is creating the new files.");
+                        "data while the writer is creating the new files." +
+                        std::string(m_WriterIsActive
+                                        ? " The file is marked as actively written; if its "
+                                          "writer no longer exists, run adios2_deactivate_bp "
+                                          "on it to mark it final."
+                                        : ""));
             }
 
             /* Read new meta-meta-data into memory and append to existing one in
@@ -1825,13 +1962,36 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             {
                 m_BP5Deserializer->SetupForStep(Step,
                                                 m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
+                bool ok;
                 if (m_Parameters.MetadataThreads > 1)
                 {
-                    ParallelInstallMetadataForTimestep(Step);
+                    ok = ParallelInstallMetadataForTimestep(Step);
                 }
                 else
                 {
-                    InstallMetadataForTimestep(Step);
+                    ok = InstallMetadataForTimestep(Step);
+                }
+                if (!ok)
+                {
+                    // This step's metadata needs formats beyond what a
+                    // truncated mmd.0 still describes; it and all later
+                    // steps are unreadable. Serve the complete prefix.
+                    if (m_Comm.Rank() == 0)
+                    {
+                        std::cerr << "ADIOS2 BP5 reader WARNING: " << m_Name << " step " << Step
+                                  << " and beyond reference data formats missing from the "
+                                     "meta-metadata file; the file appears truncated by an "
+                                     "interrupted writer. Serving the first "
+                                  << Step << " step(s)."
+                                  << (m_WriterIsActive
+                                          ? " The file is still marked as actively written; "
+                                            "if its writer is gone, run adios2_deactivate_bp "
+                                            "on it to mark it final."
+                                          : "")
+                                  << std::endl;
+                    }
+                    m_StepsCount = Step;
+                    break;
                 }
             }
         }
@@ -1870,13 +2030,28 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 }
 
 size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t absoluteStartPos,
-                                     const bool hasHeader)
+                                     const bool hasHeader, const size_t mdFileSize)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t &position = bufferSTL.m_Position;
 
     if (hasHeader)
     {
+        if (buffer.size() < m_IndexHeaderSize)
+        {
+            // A file shorter than its own 64-byte header. In streaming mode a
+            // just-created file can transiently look like this, so report
+            // nothing parsed and let the poll loop retry; in random access
+            // the file is final and unusable.
+            if (m_OpenMode == Mode::ReadRandomAccess)
+                helper::Throw<std::runtime_error>(
+                    "Engine", "BP5Reader", "ParseMetadataIndex",
+                    "metadata index file is smaller than its header (" +
+                        std::to_string(buffer.size()) +
+                        " bytes); the file is truncated or corrupt, possibly by an "
+                        "interrupted writer");
+            return 0;
+        }
         // Read header (64 bytes)
         // long version string
         position = m_VersionTagPosition;
@@ -1968,6 +2143,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
         }
 
         const size_t savedPosition = position;
+        bool stopParsing = false;
         const unsigned char recordID =
             helper::ReadValue<unsigned char>(buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t recordLength =
@@ -2013,6 +2189,19 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
             const uint64_t FlushCount =
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+
+            if (MetadataPos + MetadataSize > mdFileSize)
+            {
+                /* The index promises metadata that md.0 does not (yet) hold.
+                   Streaming: the writer's md flush may just not be visible
+                   yet; stop here and let the next poll retry from this
+                   record. A killed writer never delivers it, and the steps
+                   before this one remain fully readable. */
+                m_MDTrimmedSteps = true;
+                position = savedPosition;
+                stopParsing = true;
+                break;
+            }
 
             if (!n)
             {
@@ -2072,6 +2261,10 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
             break;
         }
         }
+        if (stopParsing)
+        {
+            break;
+        }
         // dbg
         if ((position - dbgRecordStartPosition) != (size_t)recordLength)
         {
@@ -2108,6 +2301,29 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
     return m_WriterIsActive;
 }
 
+void BP5Reader::ApplyFailOnEOFPolicy()
+{
+    // Once the writer is known inactive, no file can legitimately be shorter
+    // than its metadata promises: make transport-level EOF a bounded wait and
+    // then a clean error instead of an indefinite wait for a writer to append.
+    if (m_FailOnEOFApplied || (m_WriterIsActive && m_OpenMode != Mode::ReadRandomAccess))
+        return;
+    m_FailOnEOFApplied = true;
+    Params transportParameters;
+    transportParameters["FailOnEOF"] = "true";
+    transportParameters["EOFWaitSecs"] = std::to_string(m_Parameters.EOFWaitSecs);
+    if (m_DataFiles)
+        m_DataFiles->SetParameters(transportParameters);
+    if (m_MetadataFiles && m_MetadataFiles != m_DataFiles)
+        m_MetadataFiles->SetParameters(transportParameters);
+    if (m_MDIndexFile)
+        m_MDIndexFile->SetParameters(transportParameters);
+    if (m_MDFile)
+        m_MDFile->SetParameters(transportParameters);
+    if (m_MetaMetadataFile)
+        m_MetaMetadataFile->SetParameters(transportParameters);
+}
+
 bool BP5Reader::CheckWriterActive()
 {
     if (m_ReadMetadataFromFile && m_WriterIsActive)
@@ -2131,6 +2347,7 @@ bool BP5Reader::CheckWriterActive()
     {
         m_WriterIsActive = false;
     }
+    ApplyFailOnEOFPolicy();
     return m_WriterIsActive;
 }
 
@@ -2237,7 +2454,12 @@ void BP5Reader::DoGetStructDeferred(VariableStruct &variable, void *data)
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if (!m_BP5Deserializer)
+    {
+        // Open never got far enough to build the deserializer (e.g. the
+        // metadata index was empty or unusable); nothing to flush.
+    }
+    else if (m_OpenMode == Mode::ReadRandomAccess)
     {
         PerformGets();
     }
@@ -2338,6 +2560,11 @@ size_t BP5Reader::DoSteps() const
 
 void BP5Reader::NotifyEngineNoVarsQuery()
 {
+    // In random access an empty-but-valid (or truncated-to-empty) file is
+    // simply a file with no variables; InquireVariable returning nullptr is
+    // the right answer. The advice below is for streaming misuse only.
+    if (m_OpenMode == Mode::ReadRandomAccess)
+        return;
     if (!m_BetweenStepPairs)
     {
         helper::Throw<std::logic_error>(

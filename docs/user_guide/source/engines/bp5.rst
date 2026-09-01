@@ -58,6 +58,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    1. **OpenTimeoutSecs**: (Streaming mode) Reader may want to wait for the creation of the file in ``io.Open()``. By default the Open() function returns with an error if file is not found.
 
+   1. **EOFWaitSecs**: How long a read of data the metadata refers to may wait on an end-of-file before failing, once the writer is known to be gone. The wait absorbs shared-filesystem consistency lag; on a file truncated by an interrupted writer, reads of the missing bytes fail cleanly after roughly 1.5x this many seconds. Recovery tools can set it low to fail fast.
+
    #. **BeginStepPollingFrequencySecs**: (Streaming mode) Reader can set how frequently to check the file (and file system) for new steps. Default is 1 seconds which may be stressful for the file system and unnecessary for the application.
 
 #. Aggregation
@@ -170,6 +172,7 @@ This engine allows the user to fine tune the buffering operations through the fo
 ================================ ===================== ===========================================================
  OpenTimeoutSecs                 float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
  BeginStepPollingFrequencySecs   float                 **1**, 10.0 
+ EOFWaitSecs                     float                 **30**, ``1.0``
  AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, DataSizeBased, EveryoneWrites
  NumAggregators                  integer >= 1          **0 (one file per compute node)**
  AggregatorRatio                 integer >= 1          not used unless set

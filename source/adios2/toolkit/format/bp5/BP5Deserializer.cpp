@@ -823,6 +823,11 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
     InstallMetadataBuffer(BaseData, WriterRank, Step, FFSformat);
 }
 
+bool BP5Deserializer::MetadataFormatKnown(void *MetadataBlock)
+{
+    return FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock) != nullptr;
+}
+
 FFSTypeHandle BP5Deserializer::BufferMetaMetaPrep(void *MetadataBlock)
 {
     FFSTypeHandle FFSformat = FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
