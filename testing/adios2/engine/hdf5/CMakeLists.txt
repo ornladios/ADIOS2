@@ -42,3 +42,15 @@ else()
   )
 endif()
 target_link_libraries(Test.Engine.HDF5.NativeHDF5WriteRead${hdf5_sfx} ${HDF5_C_LIBRARIES})
+
+gtest_add_tests_helper(TransportVFD MPI_NONE HDF5 Engine.HDF5. "")
+if(HDF5_C_INCLUDE_DIRS)
+  target_include_directories(Test.Engine.HDF5.TransportVFD.Serial
+    PRIVATE ${HDF5_C_INCLUDE_DIRS}
+  )
+else()
+  target_include_directories(Test.Engine.HDF5.TransportVFD.Serial
+    PRIVATE ${HDF5_INCLUDE_DIRS}
+  )
+endif()
+target_link_libraries(Test.Engine.HDF5.TransportVFD.Serial ${HDF5_C_LIBRARIES})

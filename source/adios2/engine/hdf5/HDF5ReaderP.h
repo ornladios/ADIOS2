@@ -101,7 +101,11 @@ private:
 
     // Remote data access variables and functions
     std::shared_ptr<Remote> m_Remote;
+    hid_t m_RemoteFileId = -1;
     bool CheckRemote();
+    bool ShouldUseRemoteObject(const Dims &shape) const;
+    void OpenRemoteObject();
+    hid_t OpenRemoteDataset(const std::string &name, size_t step);
 };
 
 } // end namespace engine

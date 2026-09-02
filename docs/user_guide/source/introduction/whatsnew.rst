@@ -2,6 +2,16 @@
 What's new in Development
 ==============================
 
+Campaign HDF5 reads over HTTPS and S3
+-------------------------------------
+
+The Campaign Reader can now read HDF5 dataset values from HTTPS and S3
+objects without downloading the complete object. A read-only HDF5 virtual file
+driver maps HDF5 byte requests to ADIOS2 transports, while the HDF5 metadata
+surrogate embedded in the campaign remains the primary file for discovery and
+small values. Individual HDF5 objects and HDF5 members in indexed TAR objects
+are supported, including multistep and hyperslab selections.
+
 Leaner default build for packagers
 ----------------------------------
 

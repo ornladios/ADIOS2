@@ -176,6 +176,11 @@ void HDF5Common::ParseParameters(core::IO &io)
             m_dataIsRemote = true;
             continue;
         }
+        if (key == "remoteobjectpath")
+        {
+            m_RemoteObjectPath = it.second;
+            continue;
+        }
         if (key == "remotehost")
         {
             m_RemoteHost = it.second;
@@ -314,7 +319,7 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
     else
     {
         // read a file collectively
-        if (m_FileIsInTAR && !m_dataIsRemote)
+        if (m_FileIsInTAR && !m_dataIsRemote && m_RemoteObjectPath.empty())
         {
             // from a local TAR file
             // We cannot use the MPI driver and the TAR driver at the same time
