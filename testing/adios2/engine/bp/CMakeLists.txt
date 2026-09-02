@@ -338,7 +338,7 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR} TIMEOUT 60)
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES DEPENDS "generateXRootDHttpConfig")
 
-   add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh)
+   add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh /tmp/xrootd-http-${XROOTD_HTTP_PORT}.pid)
    set_tests_properties(remoteXRHttpsServerCleanup PROPERTIES FIXTURES_CLEANUP XRHttpsServer)
 
    ##### add HTTPS remote tests below this line
