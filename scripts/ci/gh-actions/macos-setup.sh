@@ -49,6 +49,7 @@ conda init --all
 conda config --remove channels defaults
 conda config --add channels conda-forge
 conda config --set channel_priority strict
+conda update -n base -c conda-forge conda -y
 conda update --all -y
 
 conda env create --verbose -f "gha/scripts/ci/gh-actions/conda-env-macos.yml"
