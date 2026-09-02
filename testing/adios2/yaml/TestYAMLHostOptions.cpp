@@ -24,6 +24,8 @@ std::string ConfigPath(const std::string &name)
     return str(YAML_CONFIG_DIR) + std::string(&adios2::PathSeparator, 1) + name;
 }
 
+} // end anonymous namespace
+
 TEST(YAMLHostOptions, HTTPS)
 {
     adios2::helper::Comm comm = adios2::helper::CommDummy();
@@ -56,8 +58,6 @@ TEST(YAMLHostOptions, HTTPSEndpointIsRequired)
                      comm, ConfigPath("hosts-https-missing-endpoint.yaml"), hosts, homePath),
                  std::invalid_argument);
 }
-
-} // end anonymous namespace
 
 int main(int argc, char **argv)
 {
