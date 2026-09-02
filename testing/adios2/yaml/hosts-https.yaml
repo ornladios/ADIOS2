@@ -1,0 +1,6 @@
+docker-https:
+  docker-https-loopback:
+    protocol: https
+    endpoint: https://127.0.0.1:8443
+    ca_file: ~/certs/hpc-campaign-test.crt
+    verbose: 2

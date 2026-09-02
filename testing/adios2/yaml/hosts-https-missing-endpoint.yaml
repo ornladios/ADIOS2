@@ -1,0 +1,3 @@
+docker-https:
+  docker-https-loopback:
+    protocol: https

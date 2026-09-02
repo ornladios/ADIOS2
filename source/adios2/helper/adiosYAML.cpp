@@ -326,6 +326,10 @@ HostAccessProtocol GetHostAccessProtocol(std::string valueStr)
     {
         return HostAccessProtocol::XRootD;
     }
+    else if (valueStr == "https")
+    {
+        return HostAccessProtocol::HTTPS;
+    }
     return HostAccessProtocol::Invalid;
 }
 
@@ -477,6 +481,12 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
                 SetOption(hc.endpoint, "endpoint", hostmap, hint, isMandatory);
                 SetOption(hc.isAWS_EC2, "aws_ec2_metadata", hostmap, hint);
                 SetOption(hc.recheckMetadata, "recheck_metadata", hostmap, hint);
+                break;
+            }
+            case HostAccessProtocol::HTTPS: {
+                SetOption(hc.endpoint, "endpoint", hostmap, hint, isMandatory);
+                SetOption(hc.caFile, "ca_file", hostmap, hint);
+                FixHomePath(hc.caFile, homePath);
                 break;
             }
             default:

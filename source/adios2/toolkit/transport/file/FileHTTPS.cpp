@@ -10,6 +10,7 @@
 
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
 
 namespace adios2
@@ -17,27 +18,100 @@ namespace adios2
 namespace transport
 {
 
-void ParseURL(const std::string &url, std::string &hostname, std::string &path)
+void ParseURL(const std::string &url, std::string &hostname, uint16_t &port,
+              std::string &hostHeader, std::string &path)
 {
     const std::string httpsPrefix = "https://";
-    size_t pos = 0;
-
-    // Skip scheme if present
-    if (url.rfind(httpsPrefix, 0) == 0)
-        pos = httpsPrefix.size();
-
-    // Find first '/' after hostname
-    size_t slashPos = url.find('/', pos);
-    if (slashPos == std::string::npos)
+    if (url.rfind(httpsPrefix, 0) != 0)
     {
-        hostname = url.substr(pos);
-        path = "";
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                                             "expected an https:// URL, got " + url);
+    }
+
+    const size_t authorityBegin = httpsPrefix.size();
+    const size_t pathBegin = url.find('/', authorityBegin);
+    const std::string authority =
+        url.substr(authorityBegin,
+                   pathBegin == std::string::npos ? std::string::npos : pathBegin - authorityBegin);
+    if (authority.empty())
+    {
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                                             "URL has no hostname: " + url);
+    }
+
+    std::string portString;
+    if (authority.front() == '[')
+    {
+        const size_t closeBracket = authority.find(']');
+        if (closeBracket == std::string::npos)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                "URL has an invalid bracketed IPv6 address: " + url);
+        }
+        hostname = authority.substr(1, closeBracket - 1);
+        if (closeBracket + 1 < authority.size())
+        {
+            if (authority[closeBracket + 1] != ':')
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                    "URL has invalid text after its IPv6 address: " + url);
+            }
+            portString = authority.substr(closeBracket + 2);
+        }
     }
     else
     {
-        hostname = url.substr(pos, slashPos - pos);
-        path = url.substr(slashPos);
+        const size_t colon = authority.rfind(':');
+        if (colon != std::string::npos)
+        {
+            if (authority.find(':') != colon)
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                    "IPv6 addresses in HTTPS URLs must be enclosed in brackets: " + url);
+            }
+            hostname = authority.substr(0, colon);
+            portString = authority.substr(colon + 1);
+        }
+        else
+        {
+            hostname = authority;
+        }
     }
+
+    if (hostname.empty())
+    {
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileHTTPS", "ParseURL",
+                                             "URL has no hostname: " + url);
+    }
+
+    port = 443;
+    if (!portString.empty())
+    {
+        size_t parsedCharacters = 0;
+        unsigned long parsedPort = 0;
+        try
+        {
+            parsedPort = std::stoul(portString, &parsedCharacters);
+        }
+        catch (const std::exception &)
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileHTTPS",
+                                                 "ParseURL", "URL has an invalid port: " + url);
+        }
+        if (parsedCharacters != portString.size() || parsedPort == 0 ||
+            parsedPort > std::numeric_limits<uint16_t>::max())
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileHTTPS",
+                                                 "ParseURL", "URL has an invalid port: " + url);
+        }
+        port = static_cast<uint16_t>(parsedPort);
+    }
+
+    hostHeader = authority;
+    path = pathBegin == std::string::npos ? "/" : url.substr(pathBegin);
 }
 
 std::string ExtractHeaderValue(const std::string &headers, const std::string &key)
@@ -62,12 +136,14 @@ void FileHTTPS::SetParameters(const Params &params)
     helper::SetParameterValue("cache", params, m_CachePath);
     helper::SetParameterValue("hostname", params, m_hostname);
     helper::SetParameterValue("path", params, m_path);
+    helper::SetParameterValue("ca_file", params, m_CAFile);
     helper::SetParameterValueInt("verbose", params, m_Verbose, "");
     helper::SetParameterValue("filenameintar", params, m_FileNameInTar);
 
     std::string recheckStr = "true";
     helper::SetParameterValue("recheck_metadata", params, recheckStr);
     m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
+    m_ssl.SetCAFile(m_CAFile);
 
     if (m_Verbose > 0)
     {
@@ -197,11 +273,16 @@ void FileHTTPS::Open(const std::string &name, const Mode openMode, const bool as
 {
     if (m_hostname.empty())
     {
-        ParseURL(name, m_hostname, m_path);
+        ParseURL(name, m_hostname, m_server_port, m_HostHeader, m_path);
+    }
+    else if (m_HostHeader.empty())
+    {
+        m_HostHeader = m_hostname;
     }
     if (m_Verbose)
     {
-        std::cout << "FileHTTPS::Open( hostname = " << m_hostname << ", path = " << m_path << ")\n";
+        std::cout << "FileHTTPS::Open( hostname = " << m_hostname << ", port = " << m_server_port
+                  << ", path = " << m_path << ")\n";
     }
     // GetSize();
     m_OpenMode = openMode;
@@ -251,7 +332,7 @@ void FileHTTPS::Read(char *buffer, size_t size, size_t start)
     }
 
     const size_t BUF_SIZE = 8192;
-    std::string request = "GET " + m_path + " HTTP/1.1\r\nHost: " + m_hostname +
+    std::string request = "GET " + m_path + " HTTP/1.1\r\nHost: " + m_HostHeader +
                           "\r\nRange: bytes=" + std::to_string(start + m_BaseOffset) + "-" +
                           std::to_string(start + m_BaseOffset + size - 1) + "\r\n\r\n";
 
@@ -330,7 +411,7 @@ size_t FileHTTPS::GetSize()
     m_ssl.Connect(m_hostname, m_server_port);
 
     std::string request =
-        "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_hostname + "\r\nConnection: close\r\n\r\n";
+        "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_HostHeader + "\r\nConnection: close\r\n\r\n";
 
     if (m_Verbose > 1)
     {

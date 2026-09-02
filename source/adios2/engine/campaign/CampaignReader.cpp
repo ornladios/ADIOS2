@@ -620,16 +620,51 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         }
         else if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "https")
         {
-            std::string url =
-                "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" + remotePath;
+            const CampaignHost &campaignHost = m_CampaignData.hosts[rep.hostIdx];
+            const HostConfig *httpsConfig = nullptr;
+            auto hostOptions = ADIOS::GetHostOptions().find(campaignHost.hostname);
+            if (hostOptions != ADIOS::GetHostOptions().end())
+            {
+                for (const HostConfig &hostConfig : hostOptions->second)
+                {
+                    if (hostConfig.protocol == HostAccessProtocol::HTTPS)
+                    {
+                        httpsConfig = &hostConfig;
+                        break;
+                    }
+                }
+            }
+
+            std::string endpoint = "https://" + campaignHost.longhostname;
+            if (httpsConfig)
+            {
+                endpoint = httpsConfig->endpoint;
+            }
+
+            std::string url = endpoint;
+            if (!url.empty() && url.back() != '/')
+            {
+                url += '/';
+            }
+            if (!remotePath.empty() && remotePath.front() == '/')
+            {
+                url += remotePath.substr(1);
+            }
+            else
+            {
+                url += remotePath;
+            }
+
             Params p;
             p.emplace("library", "https");
-            // p.emplace("hostname", m_CampaignData.hosts[rep.hostIdx].longhostname);
-            // p.emplace("path", m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath +
-            // rep.name);
             p.emplace("cache", cachePath);
-            p.emplace("verbose", std::to_string(m_Options.verbose));
+            p.emplace("verbose",
+                      std::to_string(httpsConfig ? httpsConfig->verbose : m_Options.verbose));
             p.emplace("recheck_metadata", "false");
+            if (httpsConfig && !httpsConfig->caFile.empty())
+            {
+                p.emplace("ca_file", httpsConfig->caFile);
+            }
             if (cvii)
             {
                 cvii->params = p;
