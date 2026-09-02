@@ -17,6 +17,12 @@ endforeach()
 #  "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
 #)
 
+gtest_add_tests_helper(YAMLHostOptions MPI_NONE "" "" "")
+foreach(tgt IN LISTS Test.YAMLHostOptions-TARGETS)
+  target_compile_definitions(${tgt} PRIVATE
+    "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+endforeach()
 
 gtest_add_tests_helper(YAMLConfig MPI_ALLOW "" "" "")
 
@@ -25,4 +31,3 @@ foreach(tgt IN LISTS Test.YAMLConfig-TARGETS)
     "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
   )
 endforeach()
-

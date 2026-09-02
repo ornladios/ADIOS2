@@ -63,7 +63,7 @@ public:
     void MkDir(const std::string &fileName) final;
 
 private:
-    std::string m_hostname, m_path;
+    std::string m_hostname, m_path, m_HostHeader;
     uint16_t m_server_port = 443; // HTTPS default
     helper::SSLSocket m_ssl;
 
@@ -92,6 +92,7 @@ private:
     FileFStream *m_CacheFileRead;
     std::string m_CacheFilePath; // full path to file in cache
     std::string m_FileNameInTar; // original file name if we work inside a TAR file
+    std::string m_CAFile;
 };
 
 } // end namespace transport

@@ -492,9 +492,26 @@ void NetworkSocket::Close()
 struct SSLData
 {
     NetworkSocket m_Socket;
-    SSL *m_SSL;
+    SSL *m_SSL = nullptr;
     SSL_CTX *m_sslCtx = nullptr;
 };
+
+namespace
+{
+
+std::string LastSSLError()
+{
+    const unsigned long error = ERR_get_error();
+    if (error == 0)
+    {
+        return "unknown OpenSSL error";
+    }
+    char buffer[256];
+    ERR_error_string_n(error, buffer, sizeof(buffer));
+    return buffer;
+}
+
+} // end anonymous namespace
 
 SSLSocket::SSLSocket()
 {
@@ -513,10 +530,13 @@ SSLSocket::SSLSocket()
         helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork::SSLSocket",
                                               "SSLSocket", "cannot create SSL context");
     }
+    SSL_CTX_set_verify(m_Data->m_sslCtx, SSL_VERIFY_PEER, nullptr);
+    SSL_CTX_set_default_verify_paths(m_Data->m_sslCtx);
 };
 
 SSLSocket::~SSLSocket()
 {
+    Close();
     if (m_Data->m_sslCtx)
     {
         SSL_CTX_free(m_Data->m_sslCtx);
@@ -530,17 +550,72 @@ bool SSLSocket::valid() const
     return (m_Data->m_Socket.valid() && m_Data->m_sslCtx != nullptr && m_Data->m_SSL != nullptr);
 };
 
+void SSLSocket::SetCAFile(const std::string &caFile)
+{
+    if (caFile.empty())
+    {
+        return;
+    }
+    ERR_clear_error();
+    if (SSL_CTX_load_verify_locations(m_Data->m_sslCtx, caFile.c_str(), nullptr) != 1)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Helper", "helper::adiosNetwork::SSLSocket", "SetCAFile",
+            "cannot load certificate authority file " + caFile + ": " + LastSSLError());
+    }
+}
+
 void SSLSocket::Connect(const std::string &hostname, uint16_t port, std::string protocol)
 {
     m_Data->m_Socket.Connect(hostname, port);
     m_Data->m_SSL = SSL_new(m_Data->m_sslCtx);
+    if (!m_Data->m_SSL)
+    {
+        m_Data->m_Socket.Close();
+        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork::SSLSocket",
+                                              "Connect", "cannot create SSL connection");
+    }
     SSL_set_fd(m_Data->m_SSL, m_Data->m_Socket.GetSocket());
 
+    unsigned char address[sizeof(struct in6_addr)];
+    const bool isIPAddress = inet_pton(AF_INET, hostname.c_str(), address) == 1 ||
+                             inet_pton(AF_INET6, hostname.c_str(), address) == 1;
+    X509_VERIFY_PARAM *verifyParameters = SSL_get0_param(m_Data->m_SSL);
+    int configured = 0;
+    if (isIPAddress)
+    {
+        configured = X509_VERIFY_PARAM_set1_ip_asc(verifyParameters, hostname.c_str());
+    }
+    else
+    {
+        configured = SSL_set_tlsext_host_name(m_Data->m_SSL, hostname.c_str()) == 1 &&
+                     X509_VERIFY_PARAM_set1_host(verifyParameters, hostname.c_str(), 0) == 1;
+    }
+    if (!configured)
+    {
+        Close();
+        helper::Throw<std::ios_base::failure>(
+            "Helper", "helper::adiosNetwork::SSLSocket", "Connect",
+            "cannot configure TLS hostname verification for " + hostname);
+    }
+
+    ERR_clear_error();
     if (SSL_connect(m_Data->m_SSL) <= 0)
     {
-        ERR_print_errors_fp(stderr);
-        helper::Throw<std::ios_base::failure>("Helper", "helper::adiosNetwork::SSLSocket",
-                                              "Connect", "SSL handshake failed");
+        const std::string error = LastSSLError();
+        Close();
+        helper::Throw<std::ios_base::failure>(
+            "Helper", "helper::adiosNetwork::SSLSocket", "Connect",
+            "TLS handshake or certificate verification failed for " + hostname + ": " + error);
+    }
+    const long verificationResult = SSL_get_verify_result(m_Data->m_SSL);
+    if (verificationResult != X509_V_OK)
+    {
+        const std::string error = X509_verify_cert_error_string(verificationResult);
+        Close();
+        helper::Throw<std::ios_base::failure>(
+            "Helper", "helper::adiosNetwork::SSLSocket", "Connect",
+            "certificate verification failed for " + hostname + ": " + error);
     }
 }
 

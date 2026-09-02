@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+docker-https:
+  docker-https-loopback:
+    protocol: https
+    endpoint: https://127.0.0.1:8443
+    ca_file: ~/certs/hpc-campaign-test.crt
+    verbose: 2
