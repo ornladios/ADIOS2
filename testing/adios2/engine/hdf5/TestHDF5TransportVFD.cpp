@@ -21,8 +21,6 @@
 namespace
 {
 
-const std::string HDF5File = "TestHDF5TransportVFD.h5";
-const std::string ContainerFile = "TestHDF5TransportVFD.container";
 constexpr size_t PrefixSize = 513;
 
 } // end anonymous namespace
@@ -32,7 +30,12 @@ class HDF5TransportVFDTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        const hid_t file = H5Fcreate(HDF5File.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        const std::string testName =
+            ::testing::UnitTest::GetInstance()->current_test_info()->name();
+        m_HDF5File = "TestHDF5TransportVFD." + testName + ".h5";
+        m_ContainerFile = "TestHDF5TransportVFD." + testName + ".container";
+
+        const hid_t file = H5Fcreate(m_HDF5File.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         ASSERT_GE(file, 0);
 
         const hsize_t dimensions[] = {256};
@@ -56,8 +59,8 @@ protected:
 
     void TearDown() override
     {
-        std::remove(HDF5File.c_str());
-        std::remove(ContainerFile.c_str());
+        std::remove(m_HDF5File.c_str());
+        std::remove(m_ContainerFile.c_str());
     }
 
     static void Verify(const std::string &path, const adios2::Params &parameters)
@@ -86,28 +89,31 @@ protected:
         EXPECT_GE(H5Dclose(dataset), 0);
         EXPECT_GE(H5Fclose(file), 0);
     }
+
+    std::string m_HDF5File;
+    std::string m_ContainerFile;
 };
 
-TEST_F(HDF5TransportVFDTest, File) { Verify(HDF5File, {{"library", "posix"}}); }
+TEST_F(HDF5TransportVFDTest, File) { Verify(m_HDF5File, {{"library", "posix"}}); }
 
 TEST_F(HDF5TransportVFDTest, EmbeddedFile)
 {
-    std::ifstream input(HDF5File, std::ios::binary);
+    std::ifstream input(m_HDF5File, std::ios::binary);
     ASSERT_TRUE(input);
     const std::vector<char> contents((std::istreambuf_iterator<char>(input)),
                                      std::istreambuf_iterator<char>());
     input.close();
 
-    std::ofstream output(ContainerFile, std::ios::binary | std::ios::trunc);
+    std::ofstream output(m_ContainerFile, std::ios::binary | std::ios::trunc);
     ASSERT_TRUE(output);
     const std::vector<char> prefix(PrefixSize, 'x');
     output.write(prefix.data(), static_cast<std::streamsize>(prefix.size()));
     output.write(contents.data(), static_cast<std::streamsize>(contents.size()));
     output.close();
 
-    Verify(ContainerFile, {{"library", "posix"},
-                           {"taroffset", std::to_string(PrefixSize)},
-                           {"tarsize", std::to_string(contents.size())}});
+    Verify(m_ContainerFile, {{"library", "posix"},
+                             {"taroffset", std::to_string(PrefixSize)},
+                             {"tarsize", std::to_string(contents.size())}});
 }
 
 int main(int argc, char **argv)

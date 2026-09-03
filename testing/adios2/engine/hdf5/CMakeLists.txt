@@ -43,7 +43,7 @@ else()
 endif()
 target_link_libraries(Test.Engine.HDF5.NativeHDF5WriteRead${hdf5_sfx} ${HDF5_C_LIBRARIES})
 
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_MPI AND HDF5_IS_PARALLEL)
   gtest_add_tests_helper(InTar MPI_ONLY HDF5 Engine.HDF5. "")
   if(HDF5_C_INCLUDE_DIRS)
     target_include_directories(Test.Engine.HDF5.InTar.MPI
