@@ -104,6 +104,7 @@ void HDF5ReaderP::Init()
 // returns -1 to advise do not continue
 template <class T>
 size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values,
+                                const size_t stepStart,
                                 std::vector<Remote::GetHandle> &remoteHandles)
 {
     hid_t fileSpace = H5Dget_space(dataSetId);
@@ -180,9 +181,9 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
         if (useRemote)
         {
             // read from remote
-            auto handle = m_Remote->Get(variable.m_Name.c_str(), variable.m_StepsStart,
-                                        variable.m_StepsCount, variable.m_BlockID, variable.m_Count,
-                                        variable.m_Start, variable.m_AccuracyRequested, values, 0);
+            auto handle = m_Remote->Get(variable.m_Name.c_str(), stepStart, 1, variable.m_BlockID,
+                                        variable.m_Count, variable.m_Start,
+                                        variable.m_AccuracyRequested, values, slabsize * sizeof(T));
             remoteHandles.push_back(handle);
         }
         else
@@ -235,7 +236,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type,
             if (dataSetId < 0)
                 return;
             interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
-            ReadDataset(dataSetId, h5Type, variable, data, remoteHandles);
+            ReadDataset(dataSetId, h5Type, variable, data, 0, remoteHandles);
             return;
         }
         else
@@ -250,7 +251,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type,
             }
 
             interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
-            ReadDataset(dataSetId, h5Type, variable, data, remoteHandles);
+            ReadDataset(dataSetId, h5Type, variable, data, 0, remoteHandles);
             return;
         }
     }
@@ -301,7 +302,8 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type,
             return;
         }
 
-        size_t slabsize = ReadDataset(dataSetId, h5Type, variable, values, remoteHandles);
+        size_t slabsize =
+            ReadDataset(dataSetId, h5Type, variable, values, variableStart + ts, remoteHandles);
 
         if (slabsize == 0)
         {

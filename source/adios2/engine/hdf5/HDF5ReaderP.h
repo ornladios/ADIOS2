@@ -69,7 +69,7 @@ private:
 
     template <class T>
     size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values,
-                       std::vector<Remote::GetHandle> &remoteHandles);
+                       const size_t stepStart, std::vector<Remote::GetHandle> &remoteHandles);
 
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
