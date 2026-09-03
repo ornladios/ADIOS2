@@ -498,7 +498,6 @@ if(ADIOS2_HAVE_HDF5)
     engine/hdf5/HDF5WriterP.cpp
     toolkit/interop/hdf5/HDF5Common.cpp
     toolkit/interop/hdf5/HDF5Common.tcc
-    toolkit/interop/hdf5/HDF5TarOffsetVFD.cpp
     toolkit/interop/hdf5/HDF5TransportVFD.cpp
   )
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)

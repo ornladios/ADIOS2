@@ -35,7 +35,6 @@ struct TransportFile
     std::shared_ptr<adios2::Transport> transport;
     haddr_t size = 0;
     haddr_t eoa = 0;
-    std::mutex mutex;
 };
 
 void *TransportFAPLCopy(const void *fapl)
@@ -133,7 +132,6 @@ herr_t TransportRead(H5FD_t *fileHandle, H5FD_mem_t, hid_t, haddr_t address, siz
 
     try
     {
-        std::lock_guard<std::mutex> lock(file->mutex);
         file->transport->Read(static_cast<char *>(buffer), size, static_cast<size_t>(address));
         return 0;
     }

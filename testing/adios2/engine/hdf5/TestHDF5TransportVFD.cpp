@@ -25,6 +25,8 @@ const std::string HDF5File = "TestHDF5TransportVFD.h5";
 const std::string ContainerFile = "TestHDF5TransportVFD.container";
 constexpr size_t PrefixSize = 513;
 
+} // end anonymous namespace
+
 class HDF5TransportVFDTest : public ::testing::Test
 {
 protected:
@@ -107,8 +109,6 @@ TEST_F(HDF5TransportVFDTest, EmbeddedFile)
                            {"taroffset", std::to_string(PrefixSize)},
                            {"tarsize", std::to_string(contents.size())}});
 }
-
-} // end anonymous namespace
 
 int main(int argc, char **argv)
 {

@@ -6,7 +6,9 @@
 
 #include "HDF5Common.h"
 #include "HDF5Common.tcc"
-#include "HDF5TarOffsetVFD.h"
+#include "HDF5TransportVFD.h"
+
+#include "adios2/toolkit/transport/OpenFile.h"
 
 #include <complex>
 #include <ios>
@@ -325,7 +327,19 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
             // We cannot use the MPI driver and the TAR driver at the same time
             // so we have to use per-process readers
             H5Pclose(m_PropertyListId);
-            m_PropertyListId = H5Pset_fapl_taroffset(m_TarOffset, m_TarSize);
+            const Params parameters{{"library", "posix"},
+                                    {"taroffset", std::to_string(m_TarOffset)},
+                                    {"tarsize", std::to_string(m_TarSize)}};
+            auto fileTransport = transport::OpenFile(comm, name, Mode::Read, parameters, false);
+            m_PropertyListId = H5Pset_fapl_adios2_transport(
+                fileTransport, static_cast<haddr_t>(fileTransport->GetSize()));
+            if (m_PropertyListId < 0)
+            {
+                fileTransport->Close();
+                helper::Throw<std::runtime_error>(
+                    "Toolkit", "interop::hdf5::HDF5Common", "Init",
+                    "failed to create the HDF5 transport VFD for local TAR member");
+            }
         }
         m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, m_PropertyListId);
         if (m_FileId >= 0)
