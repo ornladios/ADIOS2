@@ -103,7 +103,7 @@ void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
 {
     auto lf_CheckStartCount = [&](const std::string &name, const size_t length, const size_t start,
                                   const size_t count) {
-        if (start + count > length)
+        if (start > length || count > length - start)
         {
             helper::Throw<std::invalid_argument>(
                 "Engine", "CampaignReader", "Get(Sync)",

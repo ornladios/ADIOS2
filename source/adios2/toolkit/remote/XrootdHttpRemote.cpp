@@ -206,6 +206,12 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     m_OpenSuccess = true;
 }
 
+void XrootdHttpRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
+                                      const std::string filename, const Params &params)
+{
+    Open(hostname, port, filename, Mode::ReadRandomAccess, true, params);
+}
+
 void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 
 // ---------------------------------------------------------------------

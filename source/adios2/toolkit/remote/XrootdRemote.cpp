@@ -339,6 +339,12 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
     return;
 }
 
+void XrootdRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
+                                  const std::string filename, const Params &params)
+{
+    Open(hostname, port, filename, Mode::ReadRandomAccess, true, params);
+}
+
 bool XrootdRemote::WaitForGet(GetHandle handle)
 {
     std::promise<bool> *p = (std::promise<bool> *)handle;
