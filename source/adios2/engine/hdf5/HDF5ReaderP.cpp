@@ -579,9 +579,6 @@ bool HDF5ReaderP::CheckRemote()
         Params params;
         if (m_H5File.m_FileIsInTAR)
             params["TarInfo"] = m_H5File.m_TarInfoString;
-        // Send our file id so the server can detect stale cached metadata (0 = none).
-        if (!m_H5File.m_UUID.empty())
-            params["FileUUID"] = m_H5File.m_UUID;
 
         m_Remote = GetRemote(rs, RemoteName, m_OpenMode, RowMajorOrdering, params);
 

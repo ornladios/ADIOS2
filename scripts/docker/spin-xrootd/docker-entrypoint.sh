@@ -13,6 +13,10 @@ echo "=========================================="
 # Create required directories
 mkdir -p /var/log/xrootd /var/spool/xrootd /run/xrootd
 
+# Do not let the unprivileged service inherit root's personal ADIOS configuration.
+# /tmp is writable for both the packaged xrootd user and Spin's arbitrary UID.
+export HOME=/tmp
+
 # Fix SSL key permissions for XRootD (requires restricted access, not world-readable)
 # Copy to new files owned by current UID, then tighten key permissions
 cp /tmp/server.key /tmp/xrootd-server.key
@@ -36,6 +40,9 @@ echo "=========================================="
 if (( EUID == 0 )); then
     USER_SPEC=("-R" "xrootd")
     echo "Running as root, will switch to xrootd user"
+    # XRootD drops privileges before its HTTP plugin reads the TLS files.
+    # Keep the private key restricted while making it accessible to that user.
+    chown xrootd:xrootd /tmp/xrootd-server.key /tmp/xrootd-server.crt /tmp/xrootd-http.cfg
     # Ensure xrootd user can access data directory
     chown -R xrootd:xrootd /data 2>/dev/null || true
 else

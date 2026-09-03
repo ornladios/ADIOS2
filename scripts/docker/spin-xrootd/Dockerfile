@@ -11,7 +11,7 @@ RUN dnf update -y && \
 
 # Install XRootD and dependencies
 # Note: xrootd-* installs all XRootD components including HTTP plugin
-RUN dnf install -y cmake git 'xrootd-*' libcurl-devel openssl && \
+RUN dnf install -y cmake git 'xrootd-*' hdf5-devel libcurl-devel openssl && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
@@ -34,6 +34,7 @@ RUN git clone --depth 1 --branch ${ADIOS2_BRANCH} ${ADIOS2_REPO} /ADIOS2-src && 
     cmake \
         -DADIOS2_USE_XRootD=ON \
         -DADIOS2_USE_CURL=ON \
+        -DADIOS2_USE_HDF5=ON \
         -DADIOS2_USE_MPI=OFF \
         -DADIOS2_USE_Fortran=OFF \
         -DADIOS2_USE_Python=OFF \
