@@ -40,6 +40,9 @@ public:
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering, const Params &params = Params()) override;
 
+    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename,
+                        const Params &params = Params()) override;
+
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
                   Dims &Start, Accuracy &accuracy, void *dest, size_t destSize) override;
 

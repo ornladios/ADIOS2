@@ -52,7 +52,8 @@ public:
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
-    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
+    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename,
+                        const Params &params = Params()) override;
 
     /*
      * OpenReadSimpleFile() is a synchronous call that returns the

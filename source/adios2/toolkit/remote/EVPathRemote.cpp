@@ -186,7 +186,7 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
 }
 
 void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
-                                  const std::string filename)
+                                  const std::string filename, const Params & /*params*/)
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
@@ -449,7 +449,7 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
                         const Mode mode, bool RowMajorOrdering){};
 
 void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
-                                  const std::string filename){};
+                                  const std::string filename, const Params &params){};
 
 EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
                                           Dims &Start, void *dest)
