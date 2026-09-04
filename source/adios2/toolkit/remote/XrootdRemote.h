@@ -96,21 +96,21 @@ public:
     bool m_OpenSuccess = false;
 
     XrootdRemote(const RemoteSetup &remoteSetup);
-    ~XrootdRemote();
+    ~XrootdRemote() override;
 
-    explicit operator bool() const { return m_OpenSuccess; }
+    explicit operator bool() const override { return m_OpenSuccess; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode, bool RowMajorOrdering, const Params &params = Params());
+              const Mode mode, bool RowMajorOrdering, const Params &params = Params()) override;
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename,
                         const Params &params = Params()) override;
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize);
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize) override;
 
-    GetHandle Read(size_t Start, size_t Size, void *Dest);
-    bool WaitForGet(GetHandle handle);
+    GetHandle Read(size_t Start, size_t Size, void *Dest) override;
+    bool WaitForGet(GetHandle handle) override;
 };
 
 } // end namespace adios2

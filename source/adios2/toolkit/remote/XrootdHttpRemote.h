@@ -33,7 +33,7 @@ public:
     profiling::IOChrono m_Profiler;
 
     XrootdHttpRemote(const RemoteSetup &remoteSetup);
-    ~XrootdHttpRemote();
+    ~XrootdHttpRemote() override;
 
     explicit operator bool() const override { return m_OpenSuccess; }
 
