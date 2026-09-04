@@ -36,9 +36,9 @@ public:
      * @param comm passed to m_Comm
      */
     EVPathRemote(const RemoteSetup &remoteSetup);
-    ~EVPathRemote();
+    ~EVPathRemote() override;
 
-    explicit operator bool() const { return m_Active; }
+    explicit operator bool() const override { return m_Active; }
 
     /*
      * Open() and OpenSimpleFile() are synchronous calls that
@@ -50,9 +50,10 @@ public:
      * EVPathRemote object.
      */
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode, bool RowMajorOrdering, const Params &params = Params());
+              const Mode mode, bool RowMajorOrdering, const Params &params = Params()) override;
 
-    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
+    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename,
+                        const Params &params = Params()) override;
 
     /*
      * OpenReadSimpleFile() is a synchronous call that returns the
@@ -61,14 +62,14 @@ public:
      * an open file on the server.
      */
     void OpenReadSimpleFile(const std::string hostname, const int32_t port,
-                            const std::string filename, std::vector<char> &contents);
+                            const std::string filename, std::vector<char> &contents) override;
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize);
+                  Dims &Start, Accuracy &accuracy, void *dest, size_t destSize) override;
 
-    bool WaitForGet(GetHandle handle);
+    bool WaitForGet(GetHandle handle) override;
 
-    GetHandle Read(size_t Start, size_t Size, void *Dest);
+    GetHandle Read(size_t Start, size_t Size, void *Dest) override;
 
     /*
      * EVPathRemote::Close is an active synchronous operation that
@@ -80,7 +81,7 @@ public:
      * This is a passive asynchronous operation that will happen
      * sometime after the EVPathRemote object is destroyed.
      */
-    void Close();
+    void Close() override;
 
     int64_t m_ID;
 
