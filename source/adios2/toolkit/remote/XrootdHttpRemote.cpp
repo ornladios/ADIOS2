@@ -519,11 +519,16 @@ bool XrootdHttpRemote::WaitForGet(GetHandle handle)
     if (!handle)
         return false;
 
-    AsyncGet *asyncOp = static_cast<AsyncGet *>(handle);
+    std::unique_ptr<AsyncGet> asyncOp(static_cast<AsyncGet *>(handle));
     bool result = asyncOp->promise.get_future().get();
-
-    delete asyncOp;
-    return result;
+    if (!result)
+    {
+        const std::string detail =
+            asyncOp->errorMsg.empty() ? "unknown transport error" : asyncOp->errorMsg;
+        helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "WaitForGet",
+                                          "request failed for file " + m_Filename + ": " + detail);
+    }
+    return true;
 }
 
 Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest) { return nullptr; }

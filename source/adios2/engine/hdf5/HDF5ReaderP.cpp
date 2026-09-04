@@ -9,13 +9,20 @@
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 #include "adios2/helper/adiosFunctions.h" //IsHDF5
+#include "adios2/toolkit/interop/hdf5/HDF5TransportVFD.h"
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
+#include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2sys/SystemTools.hxx"
 
 #include <limits>
 #include <stdexcept>
 #include <vector>
+
+namespace
+{
+constexpr size_t CampaignHDF5EmbeddedElements = 128;
+}
 
 namespace adios2
 {
@@ -68,7 +75,7 @@ void HDF5ReaderP::Init()
     m_H5File.InitMPI(m_Comm);
     m_H5File.ParseParameters(m_IO);
 
-    if (!m_H5File.m_FileIsInTAR)
+    if (!m_H5File.m_FileIsInTAR || !m_H5File.m_RemoteObjectPath.empty())
     {
         if (!helper::IsHDF5File(m_Name, m_IO, m_Comm, {}))
         {
@@ -97,6 +104,7 @@ void HDF5ReaderP::Init()
 // returns -1 to advise do not continue
 template <class T>
 size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values,
+                                const size_t stepStart,
                                 std::vector<Remote::GetHandle> &remoteHandles)
 {
     hid_t fileSpace = H5Dget_space(dataSetId);
@@ -167,14 +175,15 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
         /* FIXME: Right now it's baked into campaign management that HDF5 metadata files contain
            data for arrays of <= 128 elements. This code must be in sync with what the
            hpc_campaign_hdf5_metadata.py script does */
-        bool useRemote = (total_size > 128 && CheckRemote());
+        bool useRemote = (m_H5File.m_RemoteObjectPath.empty() &&
+                          total_size > CampaignHDF5EmbeddedElements && CheckRemote());
 
         if (useRemote)
         {
             // read from remote
-            auto handle = m_Remote->Get(variable.m_Name.c_str(), variable.m_StepsStart,
-                                        variable.m_StepsCount, variable.m_BlockID, variable.m_Count,
-                                        variable.m_Start, variable.m_AccuracyRequested, values, 0);
+            auto handle = m_Remote->Get(variable.m_Name.c_str(), stepStart, 1, variable.m_BlockID,
+                                        variable.m_Count, variable.m_Start,
+                                        variable.m_AccuracyRequested, values, slabsize * sizeof(T));
             remoteHandles.push_back(handle);
         }
         else
@@ -213,30 +222,36 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type,
                              std::vector<Remote::GetHandle> &remoteHandles)
 {
 
+    const bool useRemoteObject = ShouldUseRemoteObject(variable.m_Shape);
+
     if (!m_H5File.m_IsGeneratedByAdios)
     {
         std::size_t found = variable.m_Name.find("__");
         if (found != std::string::npos)
         {
             std::string h5name = variable.m_Name.substr(0, found);
-            hid_t dataSetId = H5Dopen(m_H5File.m_FileId, h5name.c_str(), H5P_DEFAULT);
+            hid_t dataSetId = useRemoteObject
+                                  ? OpenRemoteDataset(h5name, 0)
+                                  : H5Dopen(m_H5File.m_FileId, h5name.c_str(), H5P_DEFAULT);
             if (dataSetId < 0)
                 return;
             interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
-            ReadDataset(dataSetId, h5Type, variable, data, remoteHandles);
+            ReadDataset(dataSetId, h5Type, variable, data, 0, remoteHandles);
             return;
         }
         else
         {
             // UseHDFReadNativeFile(variable, data, h5Type);
-            hid_t dataSetId = H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
+            hid_t dataSetId =
+                useRemoteObject ? OpenRemoteDataset(variable.m_Name, 0)
+                                : H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
             if (dataSetId < 0)
             {
                 return;
             }
 
             interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
-            ReadDataset(dataSetId, h5Type, variable, data, remoteHandles);
+            ReadDataset(dataSetId, h5Type, variable, data, 0, remoteHandles);
             return;
         }
     }
@@ -265,20 +280,30 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type,
             break;
         }
 
+        hid_t dataSetId = -1;
         std::vector<hid_t> chain;
-        if (!m_H5File.OpenDataset(variable.m_Name, chain))
+        if (useRemoteObject)
+        {
+            dataSetId = OpenRemoteDataset(variable.m_Name, variableStart + ts);
+            chain.push_back(dataSetId);
+        }
+        else if (m_H5File.OpenDataset(variable.m_Name, chain))
+        {
+            dataSetId = chain.back();
+        }
+        else
         {
             return;
         }
-        hid_t dataSetId = chain.back();
-        interop::HDF5DatasetGuard g(chain);
+        interop::HDF5DatasetGuard datasetGuard(chain);
 
         if (dataSetId < 0)
         {
             return;
         }
 
-        size_t slabsize = ReadDataset(dataSetId, h5Type, variable, values, remoteHandles);
+        size_t slabsize =
+            ReadDataset(dataSetId, h5Type, variable, values, variableStart + ts, remoteHandles);
 
         if (slabsize == 0)
         {
@@ -401,6 +426,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void HDF5ReaderP::DoClose(const int transportIndex)
 {
     EndStep();
+    if (m_RemoteFileId >= 0)
+    {
+        H5Fclose(m_RemoteFileId);
+        m_RemoteFileId = -1;
+    }
     m_H5File.Close();
     m_IsOpen = false;
 }
@@ -412,6 +442,96 @@ void HDF5ReaderP::DestructorClose(bool Verbose) noexcept
 }
 
 size_t HDF5ReaderP::DoSteps() const { return m_H5File.GetAdiosStep(); }
+
+bool HDF5ReaderP::ShouldUseRemoteObject(const Dims &shape) const
+{
+    if (m_H5File.m_RemoteObjectPath.empty() || shape.empty())
+    {
+        return false;
+    }
+
+    size_t elements = 1;
+    for (const size_t dimension : shape)
+    {
+        if (dimension == 0)
+        {
+            return false;
+        }
+        if (elements > CampaignHDF5EmbeddedElements / dimension)
+        {
+            return true;
+        }
+        elements *= dimension;
+    }
+    return elements > CampaignHDF5EmbeddedElements;
+}
+
+void HDF5ReaderP::OpenRemoteObject()
+{
+    if (m_RemoteFileId >= 0)
+    {
+        return;
+    }
+    if (m_IO.m_TransportsParameters.size() != 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Engine", "HDF5ReaderP", "OpenRemoteObject",
+            "exactly one file transport is required to read a remote HDF5 object");
+    }
+
+    Params parameters = m_IO.m_TransportsParameters.front();
+    if (m_H5File.m_FileIsInTAR)
+    {
+        parameters["taroffset"] = std::to_string(m_H5File.m_TarOffset);
+        parameters["tarsize"] = std::to_string(m_H5File.m_TarSize);
+    }
+
+    auto transport =
+        transport::OpenFile(m_Comm, m_H5File.m_RemoteObjectPath, Mode::Read, parameters, false);
+    const size_t size = transport->GetSize();
+    const hid_t fapl = H5Pset_fapl_adios2_transport(transport, static_cast<haddr_t>(size));
+    if (fapl < 0)
+    {
+        transport->Close();
+        helper::Throw<std::runtime_error>("Engine", "HDF5ReaderP", "OpenRemoteObject",
+                                          "failed to create the HDF5 transport VFD");
+    }
+
+    m_RemoteFileId = H5Fopen(m_H5File.m_RemoteObjectPath.c_str(), H5F_ACC_RDONLY, fapl);
+    H5Pclose(fapl);
+    if (m_RemoteFileId < 0)
+    {
+        if (transport->m_IsOpen)
+        {
+            transport->Close();
+        }
+        helper::Throw<std::ios_base::failure>("Engine", "HDF5ReaderP", "OpenRemoteObject",
+                                              "remote HDF5 object " + m_H5File.m_RemoteObjectPath +
+                                                  " cannot be opened");
+    }
+}
+
+hid_t HDF5ReaderP::OpenRemoteDataset(const std::string &name, const size_t step)
+{
+    OpenRemoteObject();
+    std::string path = name;
+    if (m_H5File.m_IsGeneratedByAdios)
+    {
+        std::string stepPath;
+        interop::HDF5Common::StaticGetAdiosStepString(stepPath, step);
+        path = stepPath + (name.empty() || name.front() == '/' ? "" : "/") + name;
+    }
+
+    const hid_t dataSetId = H5Dopen(m_RemoteFileId, path.c_str(), H5P_DEFAULT);
+    if (dataSetId < 0)
+    {
+        helper::Throw<std::ios_base::failure>("Engine", "HDF5ReaderP", "OpenRemoteDataset",
+                                              "dataset " + path +
+                                                  " cannot be opened in remote HDF5 object " +
+                                                  m_H5File.m_RemoteObjectPath);
+    }
+    return dataSetId;
+}
 
 bool HDF5ReaderP::CheckRemote()
 {
@@ -461,9 +581,6 @@ bool HDF5ReaderP::CheckRemote()
         Params params;
         if (m_H5File.m_FileIsInTAR)
             params["TarInfo"] = m_H5File.m_TarInfoString;
-        // Send our file id so the server can detect stale cached metadata (0 = none).
-        if (!m_H5File.m_UUID.empty())
-            params["FileUUID"] = m_H5File.m_UUID;
 
         m_Remote = GetRemote(rs, RemoteName, m_OpenMode, RowMajorOrdering, params);
 

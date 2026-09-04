@@ -144,7 +144,17 @@ Assuming we are in
 
 Remote access
 =============
-For now, we have one way to access data, through SSH port forwarding and running a remote server program to read in data on the remote host and to send back the data to the local ADIOS program. `adios2_remote_server` is included in the adios installation. You need to use the one built on the host.
+
+Campaign replicas can be accessed through SSH, HTTPS, S3, or XRootD when the
+corresponding access method is configured in
+``~/.config/hpc-campaign/hosts.yaml``. HTTPS and S3 use direct byte-range
+requests and do not require the campaign connector. They support BP, HDF5,
+image, and text objects, including members of indexed TAR objects. See the
+:doc:`../engines/campaign` engine documentation for HTTPS and S3 configuration.
+
+The following example uses SSH port forwarding and runs a remote server to
+read data on the remote host. ``adios2_remote_server`` is included in the
+ADIOS2 installation; use the executable built for the remote host.
 
 Assuming the campaign archive was synced to a local machine's campaign store under `csc143/demoproject`, now we can look at some of the content:
 
@@ -253,4 +263,3 @@ the passcode to login to OLCF, and logs on screen activity similar to this:
     Got the forward server
     Starting.
     Connected!  Tunnel open ('127.0.0.1', 50492) -> ('160.91.195.184', 22) -> ('dtn.olcf.ornl.gov', 58547)
-

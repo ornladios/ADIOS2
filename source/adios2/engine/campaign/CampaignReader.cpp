@@ -593,9 +593,20 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                     {
                         io.AddTransport("File", p);
                         io.SetParameter("UUID", ds.uuid);
-                        io.SetEngine("BP5");
+                        if (ds.format == FileFormat::HDF5)
+                        {
+                            io.SetParameter("RemoteObjectPath", objPath);
+                            io.SetEngine("HDF5");
+                        }
+                        else
+                        {
+                            io.SetEngine("BP5");
+                        }
                     }
-                    newLocalPath = remotePath;
+                    if (ds.format != FileFormat::HDF5)
+                    {
+                        newLocalPath = remotePath;
+                    }
 
                     if (ho.isAWS_EC2)
                     {
@@ -677,6 +688,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 
                 if (ds.format == FileFormat::HDF5)
                 {
+                    io.SetParameter("RemoteObjectPath", url);
                     io.SetEngine("HDF5");
                 }
                 else
@@ -688,7 +700,10 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             {
                 std::cout << "Open remote URL " << url << " \n";
             }
-            newLocalPath = url;
+            if (ds.format != FileFormat::HDF5)
+            {
+                newLocalPath = url;
+            }
         }
     }
     else

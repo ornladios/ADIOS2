@@ -234,6 +234,7 @@ public:
 
     // Variables for Remote data access
     std::string m_RemoteDataPath;
+    std::string m_RemoteObjectPath;
     std::string m_RemoteHost;
     std::string m_UUID;
     bool m_dataIsRemote = false;

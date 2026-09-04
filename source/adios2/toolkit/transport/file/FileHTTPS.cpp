@@ -8,9 +8,11 @@
 #include "adios2/helper/adiosString.h"
 #include <adios2sys/SystemTools.hxx>
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 
 namespace adios2
@@ -116,12 +118,120 @@ void ParseURL(const std::string &url, std::string &hostname, uint16_t &port,
 
 std::string ExtractHeaderValue(const std::string &headers, const std::string &key)
 {
-    size_t pos = headers.find(key);
+    const std::string lowerHeaders = helper::LowerCase(headers);
+    const std::string lowerKey = helper::LowerCase(key);
+    size_t pos = lowerHeaders.find(lowerKey);
     if (pos == std::string::npos)
         return "";
     pos += key.size();
-    size_t end = headers.find("\r\n", pos);
-    return headers.substr(pos, end - pos);
+    const size_t lineEnd = headers.find("\r\n", pos);
+    const size_t end = lineEnd == std::string::npos ? headers.size() : lineEnd;
+    const size_t first = headers.find_first_not_of(" \t", pos);
+    if (first == std::string::npos || first >= end)
+        return "";
+    const size_t last = headers.find_last_not_of(" \t", end - 1);
+    return headers.substr(first, last - first + 1);
+}
+
+int HTTPStatusCode(const std::string &headers)
+{
+    const size_t firstSpace = headers.find(' ');
+    if (firstSpace == std::string::npos)
+        return 0;
+    const size_t secondSpace = headers.find(' ', firstSpace + 1);
+    const std::string code = headers.substr(firstSpace + 1, secondSpace == std::string::npos
+                                                                ? std::string::npos
+                                                                : secondSpace - firstSpace - 1);
+    try
+    {
+        return std::stoi(code);
+    }
+    catch (const std::exception &)
+    {
+        return 0;
+    }
+}
+
+size_t HTTPContentLength(const std::string &headers, const std::string &operation)
+{
+    const std::string value = ExtractHeaderValue(headers, "Content-Length:");
+    try
+    {
+        size_t parsedCharacters = 0;
+        const unsigned long long parsed = std::stoull(value, &parsedCharacters);
+        if (parsedCharacters != value.size() || parsed > std::numeric_limits<size_t>::max())
+            throw std::out_of_range("content length");
+        return static_cast<size_t>(parsed);
+    }
+    catch (const std::exception &)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileHTTPS", operation,
+            "HTTPS response has an invalid Content-Length header: '" + value + "'");
+    }
+    return 0;
+}
+
+std::string ReadHTTPHeaders(helper::SSLSocket &ssl, std::string &initialBody,
+                            const std::string &operation)
+{
+    constexpr size_t BufferSize = 8192;
+    constexpr size_t MaxHeaderSize = 1024 * 1024;
+    std::string response;
+    char buffer[BufferSize];
+    while (true)
+    {
+        const int bytes = ssl.Read(buffer, sizeof(buffer));
+        if (bytes <= 0)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileHTTPS", operation,
+                "connection closed before the HTTPS response headers were complete");
+        }
+        response.append(buffer, static_cast<size_t>(bytes));
+        const size_t headerEnd = response.find("\r\n\r\n");
+        if (headerEnd != std::string::npos)
+        {
+            initialBody.assign(response, headerEnd + 4, std::string::npos);
+            return response.substr(0, headerEnd + 4);
+        }
+        if (response.size() > MaxHeaderSize)
+        {
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS",
+                                                  operation, "HTTPS response headers exceed 1 MiB");
+        }
+    }
+}
+
+bool MatchesContentRange(const std::string &headers, const size_t expectedStart,
+                         const size_t expectedEnd)
+{
+    const std::string value = ExtractHeaderValue(headers, "Content-Range:");
+    std::istringstream stream(value);
+    std::string unit;
+    std::string range;
+    stream >> unit >> range;
+    if (helper::LowerCase(unit) != "bytes")
+        return false;
+
+    const size_t dash = range.find('-');
+    const size_t slash = range.find('/', dash == std::string::npos ? 0 : dash + 1);
+    if (dash == std::string::npos || slash == std::string::npos)
+        return false;
+    try
+    {
+        size_t startCharacters = 0;
+        size_t endCharacters = 0;
+        const unsigned long long start = std::stoull(range.substr(0, dash), &startCharacters);
+        const std::string endString = range.substr(dash + 1, slash - dash - 1);
+        const unsigned long long end = std::stoull(endString, &endCharacters);
+        return startCharacters == dash && endCharacters == endString.size() &&
+               start == expectedStart && end == expectedEnd;
+    }
+    catch (const std::exception &)
+    {
+        return false;
+    }
 }
 
 FileHTTPS::FileHTTPS(helper::Comm const &comm) : Transport("File", "HTTPS", comm) {}
@@ -271,6 +381,7 @@ void FileHTTPS::CheckCache(const size_t fileSize)
 void FileHTTPS::Open(const std::string &name, const Mode openMode, const bool async,
                      const bool directio)
 {
+    m_Name = name;
     if (m_hostname.empty())
     {
         ParseURL(name, m_hostname, m_server_port, m_HostHeader, m_path);
@@ -319,80 +430,133 @@ void FileHTTPS::Write(const char *buffer, size_t size, size_t start) { return; }
 
 void FileHTTPS::Read(char *buffer, size_t size, size_t start)
 {
-    if (m_IsCached)
+    if (start != MaxSizeT)
     {
         m_SeekPos = start;
-        m_CacheFileRead->Read(buffer, size, m_SeekPos);
+    }
+    const size_t logicalStart = m_SeekPos;
+    const size_t logicalSize = m_BaseSize > 0 ? m_BaseSize : m_fileSize;
+    if (logicalSize > 0 && (logicalStart > logicalSize || size > logicalSize - logicalStart))
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Read",
+                                              "logical byte range is outside the HTTPS object " +
+                                                  m_Name);
+    }
+    if (size == 0)
+    {
+        return;
+    }
+    if (m_BaseOffset > std::numeric_limits<size_t>::max() - logicalStart)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "transport::file::FileHTTPS", "Read",
+                                           "HTTPS byte-range start overflows size_t");
+    }
+    const size_t physicalStart = m_BaseOffset + logicalStart;
+    if (size - 1 > std::numeric_limits<size_t>::max() - physicalStart)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "transport::file::FileHTTPS", "Read",
+                                           "HTTPS byte-range end overflows size_t");
+    }
+    const size_t physicalEnd = physicalStart + size - 1;
+
+    if (m_IsCached)
+    {
+        m_CacheFileRead->Read(buffer, size, logicalStart);
         if (m_Verbose > 0)
         {
             std::cout << "FileHTTPS::Read: Read from cache " << m_CacheFileRead->m_Name
-                      << " start = " << m_SeekPos << " size = " << size << std::endl;
+                      << " start = " << logicalStart << " size = " << size << std::endl;
         }
+        m_SeekPos = logicalStart + size;
         return;
     }
 
-    const size_t BUF_SIZE = 8192;
     std::string request = "GET " + m_path + " HTTP/1.1\r\nHost: " + m_HostHeader +
-                          "\r\nRange: bytes=" + std::to_string(start + m_BaseOffset) + "-" +
-                          std::to_string(start + m_BaseOffset + size - 1) + "\r\n\r\n";
+                          "\r\nRange: bytes=" + std::to_string(physicalStart) + "-" +
+                          std::to_string(physicalEnd) + "\r\nConnection: close\r\n\r\n";
 
-    m_ssl.Connect(m_hostname, m_server_port);
-
-    if (m_Verbose > 1)
+    try
     {
-        std::cout << "FileHTTPS::Read Request: [" << request << "]" << std::endl;
-    }
+        m_ssl.Connect(m_hostname, m_server_port);
 
-    m_ssl.Write(request.c_str(), (int)request.size());
-
-    // first we have to read and parse the header to get to the actual data bytes
-    bool headerParsed = false;
-    std::string response;
-    int bytes;
-    char buf[BUF_SIZE];
-    size_t bytes_recd = 0;
-    while (!headerParsed)
-    {
-        bytes = m_ssl.Read(buf, sizeof(buf));
-        response.append(buf, bytes);
-        size_t headerEnd = response.find("\r\n\r\n");
-        if (headerEnd != std::string::npos)
+        if (m_Verbose > 1)
         {
-            headerParsed = true;
-            size_t bodyStart = headerEnd + 4;
-            size_t bodyLength = response.size() - bodyStart;
-            memcpy(buffer, response.data() + bodyStart, bodyLength);
-            bytes_recd = bodyLength;
+            std::cout << "FileHTTPS::Read Request: [" << request << "]" << std::endl;
         }
-    }
 
-    while (bytes_recd < size)
-    {
-        int read_len = (int)((size - bytes_recd) < BUF_SIZE ? (size - bytes_recd) : BUF_SIZE);
-        int nbytes = m_ssl.Read(buffer + bytes_recd, read_len);
-        if (nbytes <= 0)
+        m_ssl.Write(request.c_str(), (int)request.size());
+
+        std::string initialBody;
+        const std::string headers = ReadHTTPHeaders(m_ssl, initialBody, "Read");
+        const int status = HTTPStatusCode(headers);
+        const size_t contentLength = HTTPContentLength(headers, "Read");
+        if (contentLength != size)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileHTTPS", "Read",
+                "HTTPS response length " + std::to_string(contentLength) +
+                    " does not match requested length " + std::to_string(size));
+        }
+        if (status == 206)
+        {
+            if (!MatchesContentRange(headers, physicalStart, physicalEnd))
+            {
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FileHTTPS", "Read",
+                    "HTTPS Content-Range does not match the requested byte range");
+            }
+        }
+        else if (status != 200 || physicalStart != 0)
         {
             helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "Read",
-                                                  "SSL_read failed");
+                                                  "HTTPS range request returned status " +
+                                                      std::to_string(status));
         }
-        bytes_recd += nbytes;
-    }
-    if (m_Verbose > 0)
-    {
-        std::cout << "FileHTTPS::Read Downloaded " << bytes_recd << " bytes.\n";
-    }
-    /* Save to cache */
-    if (m_CachingThisFile)
-    {
-        m_CacheFileWrite->Write(buffer, size, m_SeekPos);
-        m_CacheFileWrite->Flush();
+        if (initialBody.size() > size)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileHTTPS", "Read",
+                "HTTPS response body is larger than the requested buffer");
+        }
+
+        std::memcpy(buffer, initialBody.data(), initialBody.size());
+        size_t bytesReceived = initialBody.size();
+        constexpr size_t BufferSize = 8192;
+        while (bytesReceived < size)
+        {
+            const size_t remaining = size - bytesReceived;
+            const int readLength = static_cast<int>(std::min(remaining, BufferSize));
+            const int bytes = m_ssl.Read(buffer + bytesReceived, readLength);
+            if (bytes <= 0)
+            {
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FileHTTPS", "Read",
+                    "connection closed before the requested HTTPS range was complete");
+            }
+            bytesReceived += static_cast<size_t>(bytes);
+        }
         if (m_Verbose > 0)
         {
-            std::cout << "FileHTTPS::Read: Written to cache " << m_CacheFileWrite->m_Name
-                      << " start = " << m_SeekPos << " size = " << size << std::endl;
+            std::cout << "FileHTTPS::Read Downloaded " << bytesReceived << " bytes.\n";
         }
+        if (m_CachingThisFile)
+        {
+            m_CacheFileWrite->Write(buffer, size, logicalStart);
+            m_CacheFileWrite->Flush();
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileHTTPS::Read: Written to cache " << m_CacheFileWrite->m_Name
+                          << " start = " << logicalStart << " size = " << size << std::endl;
+            }
+        }
+        m_SeekPos = logicalStart + size;
+        m_ssl.Close();
     }
-    m_ssl.Close();
+    catch (...)
+    {
+        m_ssl.Close();
+        throw;
+    }
 }
 
 size_t FileHTTPS::GetSize()
@@ -400,48 +564,51 @@ size_t FileHTTPS::GetSize()
 
     if (m_IsCached && !m_RecheckMetadata)
     {
-        return m_Size;
+        return m_BaseSize > 0 ? m_BaseSize : m_Size;
     }
 
-    if (m_BaseSize > 0)
+    try
     {
-        return m_BaseSize;
+        m_ssl.Connect(m_hostname, m_server_port);
+
+        const std::string request = "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_HostHeader +
+                                    "\r\nConnection: close\r\n\r\n";
+
+        if (m_Verbose > 1)
+        {
+            std::cout << "FileHTTPS::GetSize Request: [" << request << "]" << std::endl;
+        }
+        m_ssl.Write(request.c_str(), (int)request.size());
+
+        std::string initialBody;
+        const std::string headers = ReadHTTPHeaders(m_ssl, initialBody, "GetSize");
+        const int status = HTTPStatusCode(headers);
+        if (status < 200 || status >= 300)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileHTTPS", "GetSize",
+                "HTTPS HEAD request returned status " + std::to_string(status));
+        }
+        m_fileSize = HTTPContentLength(headers, "GetSize");
+        if (m_BaseOffset > m_fileSize || (m_BaseSize > 0 && m_BaseSize > m_fileSize - m_BaseOffset))
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileHTTPS", "GetSize",
+                "logical byte range is outside the physical HTTPS object " + m_Name);
+        }
+        if (m_Verbose > 0)
+        {
+            std::cout << "File size: " << m_fileSize << " bytes\n";
+        }
+
+        m_ssl.Close();
+        return m_BaseSize > 0 ? m_BaseSize : m_fileSize;
     }
-
-    m_ssl.Connect(m_hostname, m_server_port);
-
-    std::string request =
-        "HEAD " + m_path + " HTTP/1.1\r\nHost: " + m_HostHeader + "\r\nConnection: close\r\n\r\n";
-
-    if (m_Verbose > 1)
+    catch (...)
     {
-        std::cout << "FileHTTPS::GetSize Request: [" << request << "]" << std::endl;
+        m_ssl.Close();
+        throw;
     }
-    m_ssl.Write(request.c_str(), (int)request.size());
-
-    char buffer[4096] = {0};
-    int nbytes = m_ssl.Read(buffer, sizeof(buffer) - 1);
-    buffer[nbytes] = '\0';
-    if (nbytes <= 0)
-    {
-        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTPS", "GetSize",
-                                              "failed to read HEAD response");
-    }
-
-    std::string headers(buffer);
-    if (m_Verbose > 1)
-    {
-        std::cout << "Headers: " << headers << "\n";
-    }
-    std::string cl = ExtractHeaderValue(headers, "Content-Length: ");
-    m_fileSize = cl.empty() ? 0 : std::stoul(cl);
-    if (m_Verbose > 0)
-    {
-        std::cout << "File size: " << m_fileSize << " bytes\n";
-    }
-
-    m_ssl.Close();
-    return m_fileSize;
 }
 
 // void FileHTTPS::Flush() {}
