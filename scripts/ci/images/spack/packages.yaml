@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+packages:
+  gcc:
+    externals:
+    - spec: gcc@12.3.0 languages='c,c++,fortran'
+      prefix: /usr
+      extra_attributes:
+        compilers:
+          c: /usr/bin/gcc-12
+          cxx: /usr/bin/g++-12
+          fortran: /usr/bin/gfortran-12
+    buildable: false
