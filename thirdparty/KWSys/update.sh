@@ -23,6 +23,9 @@ git_archive_no_attributes () {
 
 extract_source () {
     git_archive_no_attributes
+    pushd "$extractdir/$name-reduced"
+    patch -p4 --no-backup-if-mismatch < "${toplevel_dir}/thirdparty/KWSys/patches/0001-wrap-TARGET_OBJECTS-in-BUILD_INTERFACE.patch"
+    popd
 }
 
 . "${BASH_SOURCE%/*}/../update-common.sh"
