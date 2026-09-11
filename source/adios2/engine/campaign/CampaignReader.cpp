@@ -1604,23 +1604,22 @@ void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::st
                                                   remoteHost + ":" + remotePath + advice);
     }
 
+    // The SSH/EVPath lane completes the read inside Read(); the XRootD lanes
+    // issue it asynchronously and WaitForGet() throws with detail on failure.
     Remote::GetHandle handle = remote->Read(offset, size, data);
     if (rs.protocol == HostAccessProtocol::XRootD)
     {
         if (handle == nullptr)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Engine", "CampaignReader", "ReadRemoteFile",
-                "The configured XRootD transport does not support raw file reads for " +
-                    remoteHost + ":" + remotePath);
-        }
-        if (!remote->WaitForGet(handle))
-        {
             helper::Throw<std::ios_base::failure>("Engine", "CampaignReader", "ReadRemoteFile",
-                                                  "The XRootD raw file read failed for " +
+                                                  "Could not issue the XRootD raw file read for " +
                                                       remoteHost + ":" + remotePath);
         }
+        remote->WaitForGet(handle);
     }
+    // Release the server-side file handle (the SSH lane keeps one open per
+    // OpenSimpleFile until told otherwise).
+    remote->Close();
 }
 
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,

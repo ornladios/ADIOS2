@@ -16,34 +16,50 @@ This document covers operator-facing configuration. Other operational knobs
 (file-pool FD/metadata limits, the admin HTTP interface) are described in the
 release notes and will be folded in here over time.
 
-## URL path prefix
+## Request routing
 
-The HTTP handler answers only requests whose URL path starts with a configured
-prefix; everything else falls through to XRootD's regular HTTP file serving.
-The prefix defaults to `/adios` and is set server-side via the exthandler
-parameters in the XRootD config:
+The HTTP handler claims a URL when it carries the reserved `_adios` segment
+after the dataset path:
 
 ```
-http.exthandler xrdhttpssi /path/to/libadios2_xrootd_http.so "ssilib=/path/to/libadios2_xrootd.so prefix=/my/namespace"
+GET /<dataset path>/_adios/<file-config>/<request>
 ```
 
-The client must build URLs with the same prefix. It defaults to `/adios` and is
-set per host in `hosts.yaml` with the `serverpath` key of an `xrootd` protocol
-entry (or the `XRootDServerPath` environment variable when using the
-`DoXRootDHttps`/`DoXRootDXrdCl` env-var access path):
+Every other URL falls through to XRootD's regular file serving, so campaign
+image and text replicas, and whole tar archives, are read as plain files with
+ordinary `Range` requests, `HEAD`, and `stat`, and any HTTP or Pelican cache
+handles them as files. `_adios` is therefore a reserved name: no served
+dataset or file may use it as a path component.
 
-```yaml
-myserver:
-  remote:
-      protocol: xrootd
-      host: myserver.example.org
-      port: 8443
-      transfer_protocol: https
-      serverpath: /my/namespace
+For that fall-through to work the xrootd instance must serve files as well as
+SSI requests. Stack SSI over the default file system and list the data
+directories:
+
+```
+xrootd.fslib libXrdSsi.so default
+oss.statlib -2 libXrdSsi.so
+ssi.svclib /path/to/libadios2_xrootd.so
+ssi.fspath /data
+all.export /data r/o
+http.exthandler xrdhttpssi /path/to/libadios2_xrootd_http.so ssilib=/path/to/libadios2_xrootd.so
 ```
 
-This matters for Pelican-style deployments, where the path prefix is a
-federation namespace rather than a fixed string.
+Without `default` on the `fslib` line SSI is the only file system and plain
+reads return nothing. The same stacking lets the native xroot-protocol client
+read plain files from the same server with XrdCl.
+
+Older clients put a `/adios` prefix in front of the dataset path instead of
+the marker (`/adios/<dataset path>/<file-config>/<request>`, and before that a
+query-string form). The handler still answers those; the prefix it recognises
+is the `prefix=` handler parameter, `/adios` by default. Note that XRootD
+passes only the first word after the library name as handler parameters, so
+`ssilib=` and `prefix=` cannot both be given.
+
+The client-side `serverpath` key in `hosts.yaml` (or the `XRootDServerPath`
+environment variable in the env-var access lane) is now an optional prefix
+placed before the dataset path, for deployments such as a Pelican federation
+whose URL namespace does not begin at the server's file system root. It plays
+no part in routing.
 
 ## HEAD requests
 

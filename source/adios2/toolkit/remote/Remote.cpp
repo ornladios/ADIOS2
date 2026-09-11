@@ -273,6 +273,12 @@ RemoteSetup GetRemoteSetup(const std::string &remoteHost)
                 }
             }
         }
+        if (rs.protocol == HostAccessProtocol::Invalid && rs.hostName == "localhost")
+        {
+            // No hosts.yaml entry needed for a remote server on this machine
+            // (the SSH lane connects to its default port without a tunnel).
+            rs.protocol = HostAccessProtocol::SSH;
+        }
     }
     else
     {
@@ -411,10 +417,11 @@ GetRemoteCommon(const RemoteSetup &remoteSetup, const std::string &RemoteFileNam
         params["UseHttps"] = useHttps ? "true" : "false";
         if (useXrdCl)
             params["Backend"] = "XrdCl";
-        // URL path prefix that routes requests to the ADIOS handler on the
-        // server: hosts.yaml `serverpath` (XRootDServerPath env in the
-        // env-var lane), default "/adios".  A Pelican deployment sets this
-        // to the namespace the federation exports.
+        // Optional path prefix placed before the dataset path in URLs:
+        // hosts.yaml `serverpath` (XRootDServerPath env in the env-var
+        // lane), none by default.  A Pelican deployment sets this to the
+        // namespace the federation exports.  Routing to the ADIOS handler
+        // is by the `_adios` segment, not by this prefix.
         if (remoteSetup.hostConfig && !remoteSetup.hostConfig->remoteServerPath.empty())
         {
             params["ServerPath"] = remoteSetup.hostConfig->remoteServerPath;

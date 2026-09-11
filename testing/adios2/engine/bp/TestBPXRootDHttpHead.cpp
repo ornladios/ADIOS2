@@ -6,11 +6,14 @@
 
 // HEAD support on the path-encoded wire form: a data-request URL must answer
 // HEAD with the exact Content-Length the corresponding GET would carry and no
-// body, so an HTTP cache can size a response without fetching it.
+// body, so an HTTP cache can size a response without fetching it.  Plain files
+// next to the dataset (campaign image/text replicas) are served by XRootD
+// itself with Range and HEAD; those are checked here too.
 
 #include <array>
 #include <climits>
 #include <cstring>
+#include <fstream>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -33,7 +36,10 @@ size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 }
 
 constexpr long kHttpOK = 200;
-constexpr size_t kNElems = 16; // elements in the test variable
+constexpr size_t kNElems = 16;     // elements in the test variable
+constexpr size_t kRawSize = 4096;  // bytes in the plain test file
+constexpr size_t kRawOffset = 100; // range used by the plain-file tests
+constexpr size_t kRawCount = 200;
 
 struct FetchResult
 {
@@ -42,8 +48,9 @@ struct FetchResult
     std::vector<char> body;
 };
 
-// Synchronous GET or HEAD; returns false only on curl-level failure.
-bool Fetch(const std::string &url, bool head, FetchResult &out)
+// Synchronous GET or HEAD, optionally with a byte range ("first-last");
+// returns false only on curl-level failure.
+bool Fetch(const std::string &url, bool head, FetchResult &out, const char *range = nullptr)
 {
     CURL *curl = curl_easy_init();
     if (!curl)
@@ -51,6 +58,10 @@ bool Fetch(const std::string &url, bool head, FetchResult &out)
         return false;
     }
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    if (range)
+    {
+        curl_easy_setopt(curl, CURLOPT_RANGE, range);
+    }
     if (head)
     {
         curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
@@ -101,15 +112,28 @@ protected:
         std::array<char, PATH_MAX> cwd{};
         ASSERT_NE(getcwd(cwd.data(), cwd.size()), nullptr);
         s_GetUrl =
-            "https://" + std::string(host) + "/adios" + cwd.data() + "/headtest.bp/r1/g~dA~c16o0";
+            "https://" + std::string(host) + cwd.data() + "/headtest.bp/_adios/v1r1/g~dA~c16o0";
+
+        // A plain file next to the dataset, served by XRootD, not the handler.
+        s_RawData.resize(kRawSize);
+        for (size_t i = 0; i < kRawSize; ++i)
+            s_RawData[i] = static_cast<char>((i * 7 + 3) & 0xFF);
+        std::ofstream raw("headtest.bin", std::ios::binary | std::ios::trunc);
+        raw.write(s_RawData.data(), static_cast<std::streamsize>(s_RawData.size()));
+        ASSERT_TRUE(raw.good());
+        s_RawUrl = "https://" + std::string(host) + cwd.data() + "/headtest.bin";
     }
 
     static std::vector<double> s_Expected;
     static std::string s_GetUrl;
+    static std::vector<char> s_RawData;
+    static std::string s_RawUrl;
 };
 
 std::vector<double> XRootDHttpHead::s_Expected;
 std::string XRootDHttpHead::s_GetUrl;
+std::vector<char> XRootDHttpHead::s_RawData;
+std::string XRootDHttpHead::s_RawUrl;
 
 // HEAD: 200, Content-Length of the would-be body, no body bytes.
 TEST_F(XRootDHttpHead, Head)
@@ -152,6 +176,50 @@ TEST_F(XRootDHttpHead, HeadError)
     ASSERT_TRUE(Fetch(badUrl, true, r));
     EXPECT_NE(r.httpCode, kHttpOK);
     EXPECT_TRUE(r.body.empty());
+}
+
+// Plain file HEAD: XRootD reports the file size, no body.
+TEST_F(XRootDHttpHead, PlainFileHead)
+{
+    FetchResult r;
+    ASSERT_TRUE(Fetch(s_RawUrl, true, r));
+    EXPECT_EQ(r.httpCode, kHttpOK);
+    EXPECT_EQ(r.contentLength, (long long)kRawSize);
+    EXPECT_TRUE(r.body.empty());
+}
+
+// Plain file byte range: 206 with exactly the requested bytes.
+TEST_F(XRootDHttpHead, PlainFileRange)
+{
+    const std::string range =
+        std::to_string(kRawOffset) + "-" + std::to_string(kRawOffset + kRawCount - 1);
+    FetchResult r;
+    ASSERT_TRUE(Fetch(s_RawUrl, false, r, range.c_str()));
+    EXPECT_EQ(r.httpCode, 206);
+    ASSERT_EQ(r.body.size(), kRawCount);
+    EXPECT_EQ(memcmp(r.body.data(), s_RawData.data() + kRawOffset, kRawCount), 0);
+}
+
+// A range starting past EOF is refused (416), not answered short.
+TEST_F(XRootDHttpHead, PlainFileRangePastEnd)
+{
+    const std::string range =
+        std::to_string(kRawSize + 10) + "-" + std::to_string(kRawSize + 10 + kRawCount - 1);
+    FetchResult r;
+    ASSERT_TRUE(Fetch(s_RawUrl, false, r, range.c_str()));
+    EXPECT_EQ(r.httpCode, 416);
+}
+
+// A plain path never reaches the handler even when it looks query-like:
+// only the reserved /_adios/ segment routes there.
+TEST_F(XRootDHttpHead, MarkerRoutesOnlyMarkedPaths)
+{
+    FetchResult r;
+    ASSERT_TRUE(Fetch(s_RawUrl + "/v1r1/g~dA~c16o0", false, r));
+    EXPECT_NE(r.httpCode, kHttpOK); // no such file; ADIOS never saw it
+    ASSERT_TRUE(
+        Fetch(s_RawUrl.substr(0, s_RawUrl.rfind('/')) + "/headtest.bp/_adios/v1r1", false, r));
+    EXPECT_NE(r.httpCode, kHttpOK); // handler: request segment missing
 }
 
 int main(int argc, char **argv)

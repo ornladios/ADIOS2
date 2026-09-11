@@ -91,6 +91,10 @@ public:
 #endif
     int reqLen;
     std::string m_Filename;
+    std::string m_Host;
+    int32_t m_Port = 1094;
+    /** Failure detail from the last Read(), reported by WaitForGet(). */
+    std::string m_LastError;
     Mode m_Mode;
     bool m_RowMajorOrdering;
     bool m_OpenSuccess = false;
@@ -111,6 +115,14 @@ public:
 
     GetHandle Read(size_t Start, size_t Size, void *Dest) override;
     bool WaitForGet(GetHandle handle) override;
+
+    /* Nothing is held on the server between requests. */
+    void Close() override { m_OpenSuccess = false; }
+
+private:
+#ifdef ADIOS2_HAVE_XROOTD
+    GetHandle SubmitRequest(const std::string &reqData, void *dest, size_t destSize);
+#endif
 };
 
 } // end namespace adios2

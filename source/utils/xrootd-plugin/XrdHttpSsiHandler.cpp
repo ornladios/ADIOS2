@@ -55,9 +55,16 @@ std::string UrlEncode(const std::string &s)
 // Wire grammar matches the client encoder in
 // source/adios2/toolkit/remote/XrootdHttpRemote.cpp:
 //
-//   /adios/<urlenc-filename>/<file-config>/<request>
+//   <filename>/_adios/<file-config>/<request>          (v1, current clients)
+//   /adios/<filename>/<file-config>/<request>          (v0, prefix form)
 //
-//   file-config:   r<digit>?p<base64url-EP>?    (or `_` placeholder)
+// The reserved `_adios` segment after the dataset path is what marks a
+// request for this handler; a path without it is a plain file and never
+// reaches here.  The prefix form is what clients emitted before the
+// marker and is still accepted (the prefix is the handler's `prefix=`
+// parameter, "/adios" by default).
+//
+//   file-config:   v<n>?r<digit>?u<n>?e<n>?p<base64url-EP>?  (or `_`)
 //   single get:    g~<base64url-var>~<paramstring>     (or `_` if no params)
 //   batch get:     b~N~<v1>~<p1>~<v2>~<p2>~...~<vN>~<pN>
 //
@@ -251,9 +258,13 @@ bool DecodeFileConfigSegment(const std::string &fileConfig, std::ostringstream &
     return i == n;
 }
 
-// Top-level decoder.  Strips the route prefix, splits the path, and
-// composes the legacy ssiCommand from the three segments.  On parse
-// error returns false with an explanation in `errorOut`.
+// The reserved segment that separates the dataset path from the request.
+const char kMarker[] = "/_adios/";
+
+// Top-level decoder.  Locates the dataset path, file-config, and request
+// segments (marker form first, prefix form as the fallback) and composes
+// the ssiCommand from them.  On parse error returns false with an
+// explanation in `errorOut`.
 bool DecodePathEncodedRequest(const std::string &fullresource, const std::string &pathPrefix,
                               std::string &ssiCommandOut, std::string &resourceOut,
                               std::string &errorOut)
@@ -265,34 +276,49 @@ bool DecodePathEncodedRequest(const std::string &fullresource, const std::string
     if (qpos != std::string::npos)
         path = path.substr(0, qpos);
 
-    const std::string fullPrefix = pathPrefix + "/";
-    if (path.compare(0, fullPrefix.size(), fullPrefix) != 0)
-    {
-        errorOut = "URL does not start with " + fullPrefix;
-        return false;
-    }
-    path = path.substr(fullPrefix.size());
-
-    // Three segments after the prefix: filename, file-config, request.
     // The filename's slashes are literal path separators (not encoded),
-    // so it spans multiple segments.  The last two are file-config and
-    // request; everything before them is the filename.
-    std::vector<std::string> segments = SplitOn(path, '/');
-    if (segments.size() < 3)
+    // so it spans multiple segments.  In the marker form everything before
+    // the last `/_adios/` is the filename and exactly two segments follow.
+    // In the prefix form the last two segments are file-config and request
+    // and everything between the prefix and them is the filename.
+    std::string encodedFilename, fileConfigSeg, requestSeg;
+    const size_t marker = path.rfind(kMarker);
+    if (marker != std::string::npos && marker > 0)
     {
-        errorOut = "URL must have filename, file-config, and request segments";
-        return false;
+        encodedFilename = path.substr(0, marker);
+        std::vector<std::string> tail = SplitOn(path.substr(marker + strlen(kMarker)), '/');
+        if (tail.size() != 2 || tail[0].empty() || tail[1].empty())
+        {
+            errorOut = "Expected <file-config>/<request> after /_adios/";
+            return false;
+        }
+        fileConfigSeg = tail[0];
+        requestSeg = tail[1];
     }
-    const std::string requestSeg = segments.back();
-    segments.pop_back();
-    const std::string fileConfigSeg = segments.back();
-    segments.pop_back();
-    std::string encodedFilename;
-    for (size_t i = 0; i < segments.size(); ++i)
+    else
     {
-        if (i > 0)
-            encodedFilename += "/";
-        encodedFilename += segments[i];
+        const std::string fullPrefix = pathPrefix + "/";
+        if (path.compare(0, fullPrefix.size(), fullPrefix) != 0)
+        {
+            errorOut = "URL has no /_adios/ segment and does not start with " + fullPrefix;
+            return false;
+        }
+        std::vector<std::string> segments = SplitOn(path.substr(fullPrefix.size()), '/');
+        if (segments.size() < 3)
+        {
+            errorOut = "URL must have filename, file-config, and request segments";
+            return false;
+        }
+        requestSeg = segments.back();
+        segments.pop_back();
+        fileConfigSeg = segments.back();
+        segments.pop_back();
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            if (i > 0)
+                encodedFilename += "/";
+            encodedFilename += segments[i];
+        }
     }
 
     // Ensure leading '/' so the resource matches the legacy form
@@ -662,31 +688,34 @@ bool XrdHttpSsiHandler::ObtainSSIService()
     return true;
 }
 
+// XrdHttp asks this before it considers serving the path as a file, so a
+// "yes" here is what turns a URL into an ADIOS request; everything else
+// under the same namespace stays a plain file served by XRootD itself.
 bool XrdHttpSsiHandler::MatchesPath(const char *verb, const char *path)
 {
     if (!verb || !path)
     {
         return false;
     }
-
-    // HEAD is answered for ADIOS data requests only (headers-only response,
-    // so caches can size a response without fetching it).
-    if (strcmp(verb, "HEAD") == 0)
-    {
-        return strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0;
-    }
-
-    // Accept POST and GET
-    if (strcmp(verb, "POST") != 0 && strcmp(verb, "GET") != 0)
+    const bool isHead = (strcmp(verb, "HEAD") == 0);
+    if (!isHead && strcmp(verb, "GET") != 0 && strcmp(verb, "POST") != 0)
     {
         return false;
     }
 
-    // Match admin paths or prefix
+    // Admin endpoints live at the root (/_adios/stats ...); no HEAD there.
     if (strncmp(path, "/_adios", 7) == 0)
+    {
+        return !isHead;
+    }
+    // A data request: the reserved `_adios` segment after the dataset path.
+    // HEAD is answered for these (headers-only, so caches can size a
+    // response without fetching it).
+    if (strstr(path, kMarker) != nullptr)
     {
         return true;
     }
+    // Prefix form from earlier clients.
     if (strncmp(path, m_pathPrefix.c_str(), m_pathPrefix.length()) == 0)
     {
         return true;
@@ -728,12 +757,13 @@ int XrdHttpSsiHandler::ProcessReq(XrdHttpExtReq &req)
         resource = "/";
     }
 
-    // The handler accepts two GET wire forms while old clients are
+    // The handler accepts three GET wire forms while old clients are
     // still being phased out:
-    //   - path-encoded GET (new, cache-friendly):
+    //   - marker form (current, cache-friendly):
+    //       <filename>/_adios/<file-config>/<request>
+    //   - prefix form (path-encoded clients before the marker):
     //       /adios/<filename>/<file-config>/<request>
-    //     Distinguished by the absence of any '?' in the URL.
-    //   - legacy query-string GET (old client form):
+    //   - legacy query-string GET (v2.12.0 clients):
     //       /adios/<filename>?<verb>&<key>=<val>&...
     // POST is no longer supported (legacy POST builds are out of
     // circulation).  HEAD runs the request as a size-only query: the SSI

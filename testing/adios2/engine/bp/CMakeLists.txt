@@ -234,9 +234,16 @@ if (ADIOS2_HAVE_XRootD)
    add_test(NAME remoteXRServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd.sh )
    set_tests_properties(remoteXRServerCleanup         PROPERTIES FIXTURES_CLEANUP    XRServer)
 
+   # Raw byte-range reads (campaign image/text replicas) through
+   # GetRemoteSimpleFile(); registered once per XRootD lane below.
+   add_executable(Test.Engine.BP.XRootDSimpleFile.Serial TestBPXRootDSimpleFile.cpp)
+   target_link_libraries(Test.Engine.BP.XRootDSimpleFile.Serial
+      adios2::cxx adios2_core adios2::thirdparty::gtest)
+
    ##### add remote tests below this line
    add_get_xrremote_tests_helper(WriteReadADIOS2Transport)
    add_get_xrremote_tests_helper(WriteMemorySelectionRead)
+   add_get_xrremote_tests_helper(XRootDSimpleFile)
 endif()
 
 # HTTPS-based remote tests (requires both XRootD for server and CURL for client)
@@ -344,8 +351,10 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    ##### add HTTPS remote tests below this line
    add_get_xrhttps_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_tests_helper(WriteMemorySelectionRead)
+   add_get_xrhttps_tests_helper(XRootDSimpleFile)
    add_get_xrhttps_xrdcl_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_xrdcl_tests_helper(WriteMemorySelectionRead)
+   add_get_xrhttps_xrdcl_tests_helper(XRootDSimpleFile)
 endif()
 
 if(ADIOS2_HAVE_MPI)

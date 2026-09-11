@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Verifies the client-side `serverpath` URL-prefix plumbing (hosts.yaml
-// `serverpath`, or the XRootDServerPath environment variable in the env-var
-// access lane): the reader must build request URLs with the configured prefix
-// in place of the built-in "/adios".
+// Verifies the client-side `serverpath` plumbing (hosts.yaml `serverpath`,
+// or the XRootDServerPath environment variable in the env-var access lane):
+// the reader must place the configured prefix before the dataset path in
+// every request URL.  The prefix no longer routes to the ADIOS handler (the
+// reserved /_adios/ segment does); it exists for deployments whose URL
+// namespace does not start at the server's file system root.
 //
-// Runs against the standard HTTPS test server, whose handler answers at the
-// default "/adios" prefix:
-//   - prefix explicitly set to "/adios": reads succeed with correct data,
-//     proving the configured value produces working URLs;
-//   - prefix set to anything else: requests miss the ADIOS handler and the
-//     read throws, proving the setting actually reaches the URL.
+// Runs against the standard HTTPS test server, which serves the test tree
+// at its real path:
+//   - prefix "/" (none): reads succeed with correct data;
+//   - prefix set to anything else: the dataset path in the URL no longer
+//     exists on the server and the read throws, proving the setting reaches
+//     the URL.
 
 #include <cstdlib>
 #include <exception>
@@ -77,17 +79,18 @@ protected:
 
 std::vector<double> XRootDServerPath::s_Expected;
 
-// A configured prefix matching the server's works end to end.
-TEST_F(XRootDServerPath, MatchingPrefix)
+// An explicit "no prefix" works end to end.
+TEST_F(XRootDServerPath, NoPrefix)
 {
-    setenv("XRootDServerPath", "/adios", 1);
+    setenv("XRootDServerPath", "/", 1);
     EXPECT_EQ(ReadRemote(), s_Expected);
 }
 
-// A non-matching prefix must land in the URL and miss the handler.
+// A prefix must land in the URL: the dataset then lives at a path the
+// server does not have.
 TEST_F(XRootDServerPath, WrongPrefix)
 {
-    setenv("XRootDServerPath", "/not-the-adios-handler", 1);
+    setenv("XRootDServerPath", "/not-a-real-namespace", 1);
     EXPECT_THROW(ReadRemote(), std::exception);
 }
 
