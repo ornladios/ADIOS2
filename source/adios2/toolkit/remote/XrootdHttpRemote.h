@@ -33,12 +33,15 @@ public:
     profiling::IOChrono m_Profiler;
 
     XrootdHttpRemote(const RemoteSetup &remoteSetup);
-    ~XrootdHttpRemote();
+    ~XrootdHttpRemote() override;
 
     explicit operator bool() const override { return m_OpenSuccess; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering, const Params &params = Params()) override;
+
+    void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename,
+                        const Params &params = Params()) override;
 
     GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
                   Dims &Start, Accuracy &accuracy, void *dest, size_t destSize) override;
@@ -58,11 +61,16 @@ public:
     void SetVerifySSL(bool verify) { m_VerifySSL = verify; }
 
 private:
-    /** Path-encoded request builders.  Each produces one URL path segment.
-     *  See developer notes for the wire grammar; summary:
-     *    file-config:  r0?p<base64url-EP>?    (`_` placeholder if empty)
+    /** Wire-format version emitted in every query's file-config segment. */
+    static constexpr unsigned kWireVersion = 1;
+
+    /** Path-encoded request builders.  Each produces one URL path segment,
+     *  placed after the reserved `_adios` segment that follows the dataset
+     *  path.  See developer notes for the wire grammar; summary:
+     *    file-config:  v1r0?u<uuid>?e1?p<base64url-EP>?
      *    single get:   g~<base64url-var>~<paramstring>     (`_` if no params)
      *    batch get:    b~N~<v1>~<p1>~…~<vN>~<pN>
+     *  Byte ranges of plain files (Read()) use the bare path with no marker.
      *  Varnames and EngineParams are base64url-encoded (RFC 4648 §5).
      *  Paramstring fields are letter-prefixed and self-delimiting; vector
      *  elements use `,`; outer delimiter is `~`; floats use `.` as decimal. */
@@ -82,10 +90,9 @@ private:
 
     std::string m_BaseUrl;
     std::string m_Filename;
-    /** URL path prefix that routes requests to the ADIOS handler on the
-     *  server (hosts.yaml `serverpath`); must match the prefix the server's
-     *  HTTP handler was configured with. */
-    std::string m_ServerPath = "/adios";
+    /** Optional path prefix before the dataset path (hosts.yaml
+     *  `serverpath`, e.g. a federation namespace); none by default. */
+    std::string m_ServerPath;
     std::string m_EngineParams;
     /** File id from the reader's metadata, sent for the server's staleness check;
      *  0 = none (legacy file). */

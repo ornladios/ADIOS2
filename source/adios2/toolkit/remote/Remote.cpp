@@ -36,7 +36,7 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
 };
 
 void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
-                            const std::string filename)
+                            const std::string filename, const Params &params)
 {
     ThrowUp("RemoteSimpleOpen");
 };
@@ -273,6 +273,12 @@ RemoteSetup GetRemoteSetup(const std::string &remoteHost)
                 }
             }
         }
+        if (rs.protocol == HostAccessProtocol::Invalid && rs.hostName == "localhost")
+        {
+            // No hosts.yaml entry needed for a remote server on this machine
+            // (the SSH lane connects to its default port without a tunnel).
+            rs.protocol = HostAccessProtocol::SSH;
+        }
     }
     else
     {
@@ -317,10 +323,19 @@ RemoteSetup GetRemoteSetup(const std::string &remoteHost)
     return rs;
 }
 
-std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
-                                          const std::string &RemoteFileName,
-                                          const adios2::Mode openMode, const bool rowMajorOrdering,
-                                          const Params &remoteParams)
+namespace
+{
+
+enum class RemoteOpenKind
+{
+    ADIOS,
+    SimpleFile
+};
+
+std::shared_ptr<adios2::Remote>
+GetRemoteCommon(const RemoteSetup &remoteSetup, const std::string &RemoteFileName,
+                const adios2::Mode openMode, const bool rowMajorOrdering,
+                const Params &remoteParams, const RemoteOpenKind openKind)
 {
 #if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
     auto lf_getXRootDHostPort = [&](int defaultPort) -> std::tuple<std::string, int> {
@@ -375,6 +390,17 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
     if (!fileuuid.empty())
         params["FileUUID"] = fileuuid;
 
+    auto lf_OpenRemote = [&](const std::string &hostname, const int32_t port) {
+        if (openKind == RemoteOpenKind::SimpleFile)
+        {
+            remote->OpenSimpleFile(hostname, port, RemoteFileName, params);
+        }
+        else
+        {
+            remote->Open(hostname, port, RemoteFileName, openMode, rowMajorOrdering, params);
+        }
+    };
+
 #if defined(ADIOS2_HAVE_CURL) || defined(ADIOS2_HAVE_XROOTD)
     if (remoteSetup.protocol == HostAccessProtocol::XRootD &&
         (remoteSetup.xrootdTransferProtocol == XRootDTransferProtocol::HTTP ||
@@ -391,10 +417,11 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
         params["UseHttps"] = useHttps ? "true" : "false";
         if (useXrdCl)
             params["Backend"] = "XrdCl";
-        // URL path prefix that routes requests to the ADIOS handler on the
-        // server: hosts.yaml `serverpath` (XRootDServerPath env in the
-        // env-var lane), default "/adios".  A Pelican deployment sets this
-        // to the namespace the federation exports.
+        // Optional path prefix placed before the dataset path in URLs:
+        // hosts.yaml `serverpath` (XRootDServerPath env in the env-var
+        // lane), none by default.  A Pelican deployment sets this to the
+        // namespace the federation exports.  Routing to the ADIOS handler
+        // is by the `_adios` segment, not by this prefix.
         if (remoteSetup.hostConfig && !remoteSetup.hostConfig->remoteServerPath.empty())
         {
             params["ServerPath"] = remoteSetup.hostConfig->remoteServerPath;
@@ -408,8 +435,7 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
         {
             params["VerifySSL"] = "false";
         }
-        remote->Open(std::get<0>(tup), std::get<1>(tup), RemoteFileName, openMode, rowMajorOrdering,
-                     params);
+        lf_OpenRemote(std::get<0>(tup), std::get<1>(tup));
         return remote;
     }
 #endif
@@ -419,8 +445,7 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
     {
         auto tup = lf_getXRootDHostPort(1094);
         remote = std::make_unique<XrootdRemote>(remoteSetup);
-        remote->Open(std::get<0>(tup), std::get<1>(tup), RemoteFileName, openMode, rowMajorOrdering,
-                     params);
+        lf_OpenRemote(std::get<0>(tup), std::get<1>(tup));
         return remote;
     }
 #endif
@@ -432,13 +457,31 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
         int localPort = pair.second;
         if (remote && localPort > -1)
         {
-            remote->Open("localhost", localPort, RemoteFileName, openMode, rowMajorOrdering,
-                         params);
+            lf_OpenRemote("localhost", localPort);
         }
         return remote;
     }
 #endif
     return remote;
+}
+
+} // end anonymous namespace
+
+std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
+                                          const std::string &RemoteFileName,
+                                          const adios2::Mode openMode, const bool rowMajorOrdering,
+                                          const Params &remoteParams)
+{
+    return GetRemoteCommon(remoteSetup, RemoteFileName, openMode, rowMajorOrdering, remoteParams,
+                           RemoteOpenKind::ADIOS);
+}
+
+std::shared_ptr<adios2::Remote> GetRemoteSimpleFile(const RemoteSetup &remoteSetup,
+                                                    const std::string &remoteFileName,
+                                                    const Params &remoteParams)
+{
+    return GetRemoteCommon(remoteSetup, remoteFileName, Mode::ReadRandomAccess, true, remoteParams,
+                           RemoteOpenKind::SimpleFile);
 }
 
 } // end namespace adios2

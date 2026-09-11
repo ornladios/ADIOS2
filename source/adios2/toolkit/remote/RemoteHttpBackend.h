@@ -28,9 +28,15 @@ struct AsyncGet
 {
     std::promise<bool> promise;
     std::string errorMsg;
-    void *destBuffer = nullptr;     ///< single-get dest; null for batch
-    size_t destSize = 0;            ///< bytes delivered to destBuffer on success
-    size_t expectedSize = 0;        ///< expected response bytes; 0 = unchecked
+    void *destBuffer = nullptr; ///< single-get dest; null for batch
+    size_t destSize = 0;        ///< bytes delivered to destBuffer on success
+    size_t expectedSize = 0;    ///< expected response bytes; 0 = unchecked
+    bool exactSize = false;     ///< a body shorter than expectedSize is an error
+    /** Plain-file byte range: the URL names a file, not a query, and the
+     *  backend asks for [rangeOffset, rangeOffset + expectedSize) with the
+     *  transport's own range mechanism (HTTP Range, XrdCl offset read). */
+    bool rangeRead = false;
+    size_t rangeOffset = 0;
     std::vector<char> responseData; ///< full response body
 };
 

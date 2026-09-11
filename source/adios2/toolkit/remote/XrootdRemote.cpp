@@ -12,6 +12,7 @@
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
 #ifdef ADIOS2_HAVE_XROOTD
+#include "XrdCl/XrdClFile.hh"
 #include "XrdSsi/XrdSsiProvider.hh"
 #include "XrdSsi/XrdSsiRequest.hh"
 #include "XrdSsi/XrdSsiService.hh"
@@ -244,15 +245,8 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // Now we check if we need to ask for more data. If last is false, we do!
-    //
-    if (!last && !clUI.doOnce)
-    {
-        GetResponseData(rspBuff, readSZ);
-        return;
-    }
-
-    // fill in destination buffer; reject a response that would overrun dest
+    // Append this chunk to the destination; a response larger than readSZ
+    // arrives in several calls.  Reject a response that would overrun dest
     // (stale metadata, wrong-size reply). 0 = caller gave no expected size.
     //
     if (expectedSize != 0 &&
@@ -265,8 +259,16 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         delete this;
         return;
     }
+    memcpy(dest + totbytes, buff, dlen);
     totbytes += dlen;
-    memcpy(dest, buff, dlen);
+
+    // Now we check if we need to ask for more data. If last is false, we do!
+    //
+    if (!last && !clUI.doOnce)
+    {
+        GetResponseData(rspBuff, readSZ);
+        return;
+    }
 
     // We are done with our request. We avoid calling Finished if we got here
     // because we were cancelled.
@@ -326,6 +328,8 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
     m_Mode = mode;
     m_RowMajorOrdering = RowMajorOrdering;
 
+    m_Host = hostname;
+    m_Port = port;
     const std::string contact = hostname + ":" + std::to_string(port);
     clUI.cmdName = strdup("adios:");
     clUI.contact = strdup(contact.c_str());
@@ -333,19 +337,37 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
     {
         fprintf(XrdSsiCl::outErr, "Unable to get service object for %s; %s\n", clUI.contact,
                 eInfo.Get().c_str());
+        m_OpenSuccess = false;
+        return;
     }
     m_OpenSuccess = true;
 #endif
     return;
 }
 
+void XrootdRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
+                                  const std::string filename, const Params &params)
+{
+    // A plain file is read with XrdCl over the xroot protocol (Read() below);
+    // no SSI service is involved, so nothing is contacted until the read.
+    m_Host = hostname;
+    m_Port = port;
+    m_Filename = filename;
+    m_Mode = Mode::ReadRandomAccess;
+    m_OpenSuccess = true;
+}
+
 bool XrootdRemote::WaitForGet(GetHandle handle)
 {
     std::promise<bool> *p = (std::promise<bool> *)handle;
     bool result = p->get_future().get();
-    if (!result)
-        throw std::runtime_error("XRootD - Get failed for file " + m_Filename);
     delete p;
+    if (!result)
+    {
+        std::string detail = m_LastError.empty() ? "" : ": " + m_LastError;
+        m_LastError.clear();
+        throw std::runtime_error("XRootD - Get failed for file " + m_Filename + detail);
+    }
     return true;
 }
 
@@ -355,9 +377,6 @@ Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t Ste
 {
 // FIXME: StepCount is not implemented here yet
 #ifdef ADIOS2_HAVE_XROOTD
-    char rName[512] = "/etc";
-    XrdSsiResource rSpec((std::string)rName);
-    myRequest *reqP;
     std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
                           std::to_string(m_RowMajorOrdering) + std::string("&Varname=") +
                           std::string(VarName);
@@ -375,6 +394,73 @@ Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t Ste
     {
         reqData += "&Start=" + std::to_string(s);
     }
+
+    return SubmitRequest(reqData, dest, destSize);
+#else
+    return (GetHandle)(intptr_t)0;
+#endif
+}
+
+XrootdRemote::GetHandle XrootdRemote::Read(size_t Start, size_t Size, void *Dest)
+{
+#ifdef ADIOS2_HAVE_XROOTD
+    if (!m_OpenSuccess)
+        return static_cast<GetHandle>(0);
+    // A byte range of a plain file, read the ordinary XRootD way: XrdCl over
+    // the xroot protocol against the same server (which must pass the data
+    // path through to its file system with `ssi.fspath`).  Synchronous; the
+    // handle carries the outcome for WaitForGet().
+    auto *promise = new std::promise<bool>();
+    if (Size > static_cast<size_t>(INT32_MAX))
+    {
+        m_LastError = "range of " + std::to_string(Size) + " bytes exceeds a single XrdCl read";
+        promise->set_value(false);
+        return (GetHandle)(intptr_t)promise;
+    }
+    const std::string url = "root://" + m_Host + ":" + std::to_string(m_Port) + "/" + m_Filename;
+    XrdCl::File file;
+    XrdCl::XRootDStatus status = file.Open(url, XrdCl::OpenFlags::Read);
+    if (!status.IsOK())
+    {
+        m_LastError = "open " + url + ": " + status.ToString();
+        promise->set_value(false);
+        return (GetHandle)(intptr_t)promise;
+    }
+    uint32_t bytesRead = 0;
+    status = file.Read(Start, static_cast<uint32_t>(Size), Dest, bytesRead);
+    XrdCl::XRootDStatus closeStatus = file.Close();
+    (void)closeStatus;
+    if (!status.IsOK())
+    {
+        m_LastError = "read " + url + ": " + status.ToString();
+        promise->set_value(false);
+    }
+    else if (bytesRead != Size)
+    {
+        m_LastError = "read " + url + ": got " + std::to_string(bytesRead) + " of " +
+                      std::to_string(Size) + " bytes";
+        promise->set_value(false);
+    }
+    else
+    {
+        promise->set_value(true);
+    }
+    return (GetHandle)(intptr_t)promise;
+#else
+    return static_cast<GetHandle>(0);
+#endif
+};
+
+#ifdef ADIOS2_HAVE_XROOTD
+// Hand one ASCII request to the SSI service; the response is copied into dest
+// (checked against destSize) by the request's callbacks, which then set the
+// promise returned here as the handle.
+XrootdRemote::GetHandle XrootdRemote::SubmitRequest(const std::string &reqData, void *dest,
+                                                    size_t destSize)
+{
+    char rName[512] = "/etc";
+    XrdSsiResource rSpec((std::string)rName);
+    myRequest *reqP;
 
     // The first step is to define the resource we will be using. So, just
     // initialize a resource object. It need only to exist during ProcessRequest()
@@ -405,14 +491,7 @@ Remote::GetHandle XrootdRemote::Get(const char *VarName, size_t Step, size_t Ste
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
     // thread synchronization
     return (GetHandle)(intptr_t)(reqP->promise);
-#else
-    return (GetHandle)(intptr_t)0;
-#endif
 }
-
-XrootdRemote::GetHandle XrootdRemote::Read(size_t Start, size_t Size, void *Dest)
-{
-    return static_cast<GetHandle>(0);
-};
+#endif
 
 }

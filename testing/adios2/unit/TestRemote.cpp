@@ -54,9 +54,11 @@ TEST(Remote, OpenRead)
     }
 
     {
-        std::unique_ptr<Remote> remote = nullptr;
-        remote = std::make_unique<EVPathRemote>(rs);
-        remote->OpenSimpleFile("localhost", localPort, FNAME);
+        RemoteSetup simpleFileSetup = rs;
+        simpleFileSetup.hostName = "localhost";
+        simpleFileSetup.protocol = HostAccessProtocol::SSH;
+        std::shared_ptr<Remote> remote = GetRemoteSimpleFile(simpleFileSetup, FNAME);
+        ASSERT_NE(remote, nullptr);
         std::cout << "Contents size is " << remote->m_Size << std::endl;
         contents.resize(remote->m_Size); // should be unnecessary
         remote->Read(0, remote->m_Size, contents.data());

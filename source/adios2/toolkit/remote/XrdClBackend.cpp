@@ -23,22 +23,28 @@ namespace
 // through a (void) cast; deliberately-ignored statuses are routed here.
 void IgnoreStatus(const XrdCl::XRootDStatus &) {}
 
-// Fetch one URL synchronously into op: Open(url) then a single Read(0,
-// expectedSize) of the whole response into the destination buffer (single Get)
-// or into responseData (batch, which the caller then frames/parses).  Returns
-// true on success; on failure sets op->errorMsg and returns false.  Does not
-// touch op->promise -- RunGet sets it exactly once, so the many exit paths here
-// cannot forget to.
+// Fetch one URL synchronously into op: Open(url) then a single Read of
+// expectedSize bytes into the destination buffer (single Get) or into
+// responseData (batch, which the caller then frames/parses).  A query URL is
+// read from offset 0 in full-download mode; a plain-file range read
+// (op->rangeRead) is an ordinary XrdCl offset read, which the curl plugin
+// turns into an HTTP Range request.  Returns true on success; on failure sets
+// op->errorMsg and returns false.  Does not touch op->promise -- RunGet sets it
+// exactly once, so the many exit paths here cannot forget to.
 bool Fetch(const std::string &url, AsyncGet *op)
 {
     XrdCl::File file;
 
-    // The xrdcl-curl plugin fetches the whole response in one GET (full_download
-    // mode; the origin returns a complete body per GET).  This no-op Open
-    // (Compress/None) is the plugin's documented hook to instantiate itself so
-    // the following SetProperty reaches the plugin object; then the real Open runs.
-    IgnoreStatus(file.Open(url, XrdCl::OpenFlags::Compress, XrdCl::Access::None, nullptr, 0));
-    (void)file.SetProperty("XrdClCurlFullDownload", "true");
+    if (!op->rangeRead)
+    {
+        // The xrdcl-curl plugin fetches the whole response in one GET
+        // (full_download mode; the origin returns a complete body per GET).
+        // This no-op Open (Compress/None) is the plugin's documented hook to
+        // instantiate itself so the following SetProperty reaches the plugin
+        // object; then the real Open runs.
+        IgnoreStatus(file.Open(url, XrdCl::OpenFlags::Compress, XrdCl::Access::None, nullptr, 0));
+        (void)file.SetProperty("XrdClCurlFullDownload", "true");
+    }
 
     XrdCl::XRootDStatus status = file.Open(url, XrdCl::OpenFlags::Read);
     if (!status.IsOK())
@@ -78,7 +84,8 @@ bool Fetch(const std::string &url, AsyncGet *op)
     }
 
     uint32_t bytesRead = 0;
-    status = file.Read(0, size, target, bytesRead);
+    const uint64_t offset = op->rangeRead ? op->rangeOffset : 0;
+    status = file.Read(offset, size, target, bytesRead);
     IgnoreStatus(file.Close());
 
     if (!status.IsOK())

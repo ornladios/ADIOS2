@@ -126,9 +126,9 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     if (it != params.end())
         m_FileUUID = static_cast<uint32_t>(std::stoul(it->second));
 
-    // URL path prefix that routes requests to the ADIOS handler on the
-    // server; must match the prefix the server's HTTP handler was configured
-    // with (default "/adios" on both ends).  "/" or "" means no prefix.
+    // Optional path prefix placed before the dataset path in every URL (a
+    // federation namespace, for example).  Routing to the ADIOS handler no
+    // longer depends on it; "/" or "" means none.
     it = params.find("ServerPath");
     if (it != params.end())
     {
@@ -206,23 +206,32 @@ void XrootdHttpRemote::Open(const std::string hostname, const int32_t port,
     m_OpenSuccess = true;
 }
 
+void XrootdHttpRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
+                                      const std::string filename, const Params &params)
+{
+    Open(hostname, port, filename, Mode::ReadRandomAccess, true, params);
+}
+
 void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 
 // ---------------------------------------------------------------------
 // Path-encoded URL builders (Pelican/XCache-friendly form).
 //
-// Full URL: <scheme>://<host>:<port><serverpath><filename>/<file-config>/<request>
+// Full URL: <scheme>://<host>:<port><serverpath><filename>/_adios/<file-config>/<request>
 //
-// <serverpath> is the prefix that routes the request to the ADIOS handler
-// on the server ("/adios" unless hosts.yaml `serverpath` overrides it).
+// The reserved `_adios` segment after the dataset path is what routes the
+// request to the ADIOS handler on the server; a URL without it is a plain
+// file, served by XRootD itself (Read() below uses that for byte ranges).
+// <serverpath> is an optional prefix before the dataset path (hosts.yaml
+// `serverpath`, e.g. a federation namespace); it plays no routing role.
 //
 // The filename keeps its literal slashes (it is not URL-encoded), so
-// it occupies multiple path segments.  The server identifies the last
-// two segments as file-config and request and rejoins everything
-// before them as the filename.
+// it occupies multiple path segments.  The server splits at the last
+// `/_adios/` and takes the two segments after it as file-config and
+// request.
 //
 // Per-segment grammar:
-//   file-config:   r<digit>(p<base64url-EP>)?       (always at least r0/r1)
+//   file-config:   v1r<digit>(u<uuid>)?(e1)?(p<base64url-EP>)?  (wire version first)
 //   single get:    g~<base64url-var>~<paramstring>  (`_` if no params)
 //   batch get:     b~N~<v1>~<p1>~<v2>~<p2>~...~<vN>~<pN>
 //
@@ -237,6 +246,9 @@ void XrootdHttpRemote::Close() { m_OpenSuccess = false; }
 std::string XrootdHttpRemote::BuildFileConfigSegment()
 {
     std::ostringstream s;
+    // Wire-format version of the marker form (v1); the server rejects a
+    // version newer than it knows.  Must come first.
+    s << "v" << kWireVersion;
     // Always emit RMOrder so the server doesn't have to guess the default.
     s << "r" << (m_RowMajorOrdering ? "1" : "0");
     // File id for the identity check (omit when 0). Must precede the greedy `p`.
@@ -371,7 +383,7 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
         std::vector<BatchGetRequest> subRequests(requests.begin() + startIdx,
                                                  requests.begin() + startIdx + count);
         std::string url =
-            m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
+            m_BaseUrl + "/_adios/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
 
         AsyncGet *asyncOp = new AsyncGet();
         asyncOp->expectedSize = ExpectedBatchResponseSize(subRequests);
@@ -405,8 +417,8 @@ bool XrootdHttpRemote::BatchGet(const std::vector<BatchGetRequest> &requests)
 
                 std::vector<BatchGetRequest> subRequests(requests.begin() + sb.startIdx,
                                                          requests.begin() + sb.startIdx + sb.count);
-                std::string url =
-                    m_BaseUrl + "/" + m_FileConfigSegment + "/" + BuildBatchGetSegment(subRequests);
+                std::string url = m_BaseUrl + "/_adios/" + m_FileConfigSegment + "/" +
+                                  BuildBatchGetSegment(subRequests);
 
                 AsyncGet *retryOp = new AsyncGet();
                 retryOp->expectedSize = ExpectedBatchResponseSize(subRequests);
@@ -508,7 +520,7 @@ Remote::GetHandle XrootdHttpRemote::Get(const char *VarName, size_t Step, size_t
     asyncOp->expectedSize = destSize;
 
     std::string url =
-        m_BaseUrl + "/" + m_FileConfigSegment + "/" +
+        m_BaseUrl + "/_adios/" + m_FileConfigSegment + "/" +
         BuildSingleGetSegment(VarName, Step, StepCount, BlockID, Count, Start, accuracy);
     m_Backend->SubmitGet(url, asyncOp);
     return static_cast<GetHandle>(asyncOp);
@@ -528,9 +540,34 @@ bool XrootdHttpRemote::WaitForGet(GetHandle handle)
         helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "WaitForGet",
                                           "request failed for file " + m_Filename + ": " + detail);
     }
+    if (asyncOp->exactSize && asyncOp->destSize != asyncOp->expectedSize)
+    {
+        helper::Throw<std::runtime_error>("Remote", "XrootdHttpRemote", "WaitForGet",
+                                          "short response for file " + m_Filename + ": received " +
+                                              std::to_string(asyncOp->destSize) + " of " +
+                                              std::to_string(asyncOp->expectedSize) + " bytes");
+    }
     return true;
 }
 
-Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest) { return nullptr; }
+Remote::GetHandle XrootdHttpRemote::Read(size_t Start, size_t Size, void *Dest)
+{
+    if (!m_OpenSuccess)
+    {
+        return nullptr;
+    }
+
+    AsyncGet *asyncOp = new AsyncGet();
+    asyncOp->destBuffer = Dest;
+    asyncOp->expectedSize = Size;
+    asyncOp->exactSize = true;
+    asyncOp->rangeRead = true;
+    asyncOp->rangeOffset = Start;
+
+    // A byte range of the file itself: the bare path, no `_adios` segment,
+    // served by XRootD's own file handling (and cacheable as such).
+    m_Backend->SubmitGet(m_BaseUrl, asyncOp);
+    return static_cast<GetHandle>(asyncOp);
+}
 
 } // end namespace adios2

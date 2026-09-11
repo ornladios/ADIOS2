@@ -10,8 +10,6 @@
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
-#include "adios2/toolkit/remote/EVPathRemote.h"
-#include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
@@ -1578,34 +1576,50 @@ void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, size_t re
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
                                     const size_t offset, const size_t size, void *data)
 {
-    std::unique_ptr<Remote> remote = nullptr;
-#ifdef ADIOS2_HAVE_XROOTD
-    if (getenv("DoXRootD"))
+    const RemoteSetup rs = GetRemoteSetup(remoteHost);
+    if (rs.protocol != HostAccessProtocol::XRootD && rs.protocol != HostAccessProtocol::SSH)
     {
-        const RemoteSetup rs = GetRemoteSetup("localhost");
-        remote = std::make_unique<XrootdRemote>(rs);
-        remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
+        helper::Throw<std::invalid_argument>(
+            "Engine", "CampaignReader", "ReadRemoteFile",
+            "No SSH or XRootD access configuration found for host " + remoteHost +
+                ". Add a valid entry in ~/.config/hpc-campaign/hosts.yaml");
     }
-    else
-#endif
-#ifdef ADIOS2_HAVE_SST
-    {
-        const RemoteSetup rs = GetRemoteSetup(remoteHost);
-        remote = std::make_unique<EVPathRemote>(rs);
-        int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
-        remote->OpenSimpleFile("localhost", localPort, remotePath);
-    }
-#endif
+
+    // Both SSH/EVPath and XRootD open the replica as an unstructured byte
+    // stream.  Transport selection and connection setup are handled by the
+    // common remote factory.
+    std::shared_ptr<Remote> remote = GetRemoteSimpleFile(rs, remotePath);
+
     // evaluate validity of object, not just that the pointer is non-NULL
     if (remote == nullptr || !(*remote))
     {
-        helper::Throw<std::ios_base::failure>(
-            "Engine", "CampaignReader", "ReadRemoteFile",
-            "Cannot get remote connection to read file " + remoteHost + ":" + remotePath +
-                ". Make sure connection manager is running, and the server specification for the "
-                "host is valid.");
+        const std::string advice =
+            (rs.protocol == HostAccessProtocol::XRootD)
+                ? ". Make sure the configured XRootD transport is enabled in this ADIOS2 build "
+                  "and the host entry is valid."
+                : ". Make sure connection manager is running, and the server specification for "
+                  "the host is valid.";
+        helper::Throw<std::ios_base::failure>("Engine", "CampaignReader", "ReadRemoteFile",
+                                              "Cannot get remote connection to read file " +
+                                                  remoteHost + ":" + remotePath + advice);
     }
-    remote->Read(offset, size, data);
+
+    // The SSH/EVPath lane completes the read inside Read(); the XRootD lanes
+    // issue it asynchronously and WaitForGet() throws with detail on failure.
+    Remote::GetHandle handle = remote->Read(offset, size, data);
+    if (rs.protocol == HostAccessProtocol::XRootD)
+    {
+        if (handle == nullptr)
+        {
+            helper::Throw<std::ios_base::failure>("Engine", "CampaignReader", "ReadRemoteFile",
+                                                  "Could not issue the XRootD raw file read for " +
+                                                      remoteHost + ":" + remotePath);
+        }
+        remote->WaitForGet(handle);
+    }
+    // Release the server-side file handle (the SSH lane keeps one open per
+    // OpenSimpleFile until told otherwise).
+    remote->Close();
 }
 
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
