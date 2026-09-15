@@ -475,6 +475,9 @@ endif()
 if(ADIOS2_USE_PIP)
   find_package(Python ${adios2_python_min_ver} REQUIRED
     COMPONENTS Interpreter Development.Module ${maybe_python_sabi_component})
+  if(ADIOS2_HAVE_MPI)
+    find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
+  endif()
   set(ADIOS2_HAVE_PIP TRUE)
 elseif(ADIOS2_USE_Python STREQUAL AUTO)
   find_package(Python ${adios2_python_min_ver}
