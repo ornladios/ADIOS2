@@ -10,6 +10,7 @@
 #include "ADIOS2fstream.h"
 
 #include "adios2/core/Stream.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -114,7 +115,7 @@ std::vector<T> fstream::read(const std::string &name, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
     auto vec = m_Stream->Read<IOType>(name, blockID);
-    return reinterpret_cast<std::vector<T> &>(vec);
+    return helper::NewVectorType<IOType, T>(vec);
 }
 
 template <class T>
@@ -123,7 +124,7 @@ std::vector<T> fstream::read(const std::string &name, const size_t stepsStart,
 {
     using IOType = typename TypeInfo<T>::IOType;
     auto vec = m_Stream->Read<IOType>(name, Box<size_t>(stepsStart, stepsCount), blockID);
-    return reinterpret_cast<std::vector<T> &>(vec);
+    return helper::NewVectorType<IOType, T>(vec);
 }
 
 template <class T>
@@ -132,7 +133,7 @@ std::vector<T> fstream::read(const std::string &name, const Dims &start, const D
 {
     using IOType = typename TypeInfo<T>::IOType;
     auto vec = m_Stream->Read<IOType>(name, Box<Dims>(start, count), blockID);
-    return reinterpret_cast<std::vector<T> &>(vec);
+    return helper::NewVectorType<IOType, T>(vec);
 }
 
 template <class T>
@@ -142,7 +143,7 @@ std::vector<T> fstream::read(const std::string &name, const Dims &start, const D
     using IOType = typename TypeInfo<T>::IOType;
     auto vec = m_Stream->Read<IOType>(name, Box<Dims>(start, count),
                                       Box<size_t>(stepStart, stepCount), blockID);
-    return reinterpret_cast<std::vector<T> &>(vec);
+    return helper::NewVectorType<IOType, T>(vec);
 }
 
 template <class T>
