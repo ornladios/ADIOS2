@@ -186,7 +186,7 @@ list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_M
 
 set (SST_SPECIFIC_TESTS  "")
 import_bp_test(WriteMemorySelectionRead 1 1)
-list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.1x1;3x5EarlyExit")
+list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.1x1;3x5EarlyExit;1x1.LateJoinAttrs")
 list (APPEND SST_SPECIFIC_TESTS  "1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3;OnDemandSingle.1x1")
 
 if (ADIOS2_HAVE_MPI)

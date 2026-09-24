@@ -141,6 +141,9 @@ set (1x1.Modes_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestComm
 
 # 1x1.Attrs tests writing and reading of attributes defined before Open
 set (1x1.Attrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs>")
+# 1x1.LateJoinAttrs tests that a reader that connects after the first steps
+# still receives the attributes, which were defined before it connected
+set (1x1.LateJoinAttrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 -rd 3 -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs> --warg=--ms_delay --warg=500 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--late_join")
 set (1x1.ModAttrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs> --rarg=--modifiable_attributes --warg=--modifiable_attributes")
 
 # Basic Fortran tests, Fortran to C, C to Fortran and Fortran to Fortran

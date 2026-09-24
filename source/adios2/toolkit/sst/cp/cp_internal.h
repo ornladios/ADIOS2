@@ -94,6 +94,23 @@ struct _SentTimestepRec
     struct _SentTimestepRec *Next;
 };
 
+/*
+ * A complete set of attributes, as the writer ranks last marshaled them (one
+ * block per writer rank, as in TimestepMetadataMsg.AttributeData). Timesteps
+ * only carry attributes when some attribute was defined or changed, so the
+ * writer keeps the set that was current for each timestep in order to send it
+ * to readers that did not receive it, i.e. readers that connected later.
+ * Reference counted: held by the stream (the current set) and by each timestep
+ * entry.
+ */
+typedef struct _CPAttributeSet
+{
+    int Generation;
+    int ReferenceCount;
+    int CohortSize;
+    struct _SstData *Blocks;
+} *CPAttributeSet;
+
 typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
@@ -109,6 +126,7 @@ typedef struct _WS_ReaderInfo
     ssize_t PreloadModeActiveTimestep;
     ssize_t OldestUnreleasedTimestep;
     size_t FormatSentCount;
+    int AttributeGenerationSent;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
@@ -143,6 +161,7 @@ typedef struct _CPTimestepEntry
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
+    CPAttributeSet AttributeSet;
     struct _CPTimestepEntry *Next;
 } *CPTimestepList;
 
@@ -209,6 +228,8 @@ struct _SstStream
     size_t DataSize;
     void *D; // building data block
     FFSFormatList PreviousFormats;
+    CPAttributeSet CurrentAttributeSet;
+    int AttributeGeneration;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
     int LockDefnsCount;
@@ -580,6 +601,7 @@ extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level, char *Format
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int ReaderSide);
+extern void CP_ReleaseAttributeSet(CPAttributeSet Set);
 
 typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string, const char *data_string);
 extern char *IPDiagString;

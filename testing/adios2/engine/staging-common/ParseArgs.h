@@ -39,6 +39,7 @@ int ZeroDataRank = 0;
 int DelayWhileHoldingStep = 0;
 int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
+int LateJoin = 0;
 int LockGeometry = 0;
 bool VaryingDataSize = false;
 bool TestVarDestruction = false;
@@ -126,6 +127,10 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {
             IgnoreTimeGap++;
+        }
+        else if (std::string(argv[1]) == "--late_join")
+        {
+            LateJoin++;
         }
         else if (std::string(argv[1]) == "--compress_sz")
         {
