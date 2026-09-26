@@ -645,7 +645,9 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &p
                 }
             } while (SleepOrQuit(timeoutInstant, pollSeconds));
 
-            if (fileSize >= expectedMinFileSize)
+            /* newIdxSize == 0 means only a partial index record was visible
+             * (the writer is mid-append), so there is nothing new to read yet */
+            if (newIdxSize > 0 && fileSize >= expectedMinFileSize)
             {
                 /* Read corresponding new metadata (throwing away the old)
                  * There may be unprocessed entries in the metadata if the index
@@ -658,7 +660,7 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &p
                 {
                     m_BP4Deserializer.m_Metadata.Resize(newMDSize,
                                                         "allocating metadata buffer, in call to "
-                                                        "BP4Reader Open");
+                                                        "BP4Reader::UpdateBuffer");
                 }
                 m_BP4Deserializer.m_Metadata.Reset(true, false);
                 m_MDFileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(), newMDSize,
