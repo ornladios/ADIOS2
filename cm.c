@@ -725,6 +725,38 @@ static thr_mutex_t atl_mutex;
 static int atl_mutex_initialized = 0;
 static void process_pending_queue(CManager cm, void *junk);
 
+static uint64_t
+mix64(uint64_t x)
+{
+    /* splitmix64 finalizer */
+    x ^= x >> 30;
+    x *= 0xbf58476d1ce4e5b9ULL;
+    x ^= x >> 27;
+    x *= 0x94d049bb133111ebULL;
+    x ^= x >> 31;
+    return x;
+}
+
+/*
+ * CMinternal_get_conn() reuses any connection whose remote CManager ID
+ * matches, so IDs must differ between processes.  Seeding lrand48() with
+ * getpid() + time() gave equal IDs whenever pid N started one second after
+ * pid N+1, and messages went to the wrong process.
+ */
+static int
+generate_CManager_ID(CManager cm)
+{
+    int stack_var;
+    uint64_t x = mix64((uint64_t)getpid());
+    x = mix64(x ^ (uint64_t)time(NULL));
+    x = mix64(x ^ (uint64_t)clock());
+    x = mix64(x ^ (uint64_t)(uintptr_t)cm);
+    x = mix64(x ^ (uint64_t)(uintptr_t)&stack_var);
+    /* high bit is a flag in the handshake, and 0 means "unknown" */
+    int id = (int)(x & 0x7fffffff);
+    return id ? id : 1;
+}
+
 extern
 CManager
 INT_CManager_create()
@@ -782,9 +814,7 @@ INT_CManager_create_control(char *control_module)
     cm->transports = NULL;
     cm->initialized = 0;
     cm->reference_count = 1;
-    uint64_t seed = getpid() + time(NULL);
-    srand48(seed);
-    cm->CManager_ID = (int)lrand48();
+    cm->CManager_ID = generate_CManager_ID(cm);
 
     char *tmp;
     if ((tmp = getenv("CMControlModule"))) {
