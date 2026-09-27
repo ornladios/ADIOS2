@@ -8,7 +8,6 @@ program TestBPWriteReadHeatMap6D
 
   implicit none
 
-  integer(kind=8) :: sum_i1, sum_i2
   type(adios2_adios) :: adios
   type(adios2_io) :: ioPut, ioGet
   type(adios2_engine) :: bpWriter, bpReader
@@ -36,7 +35,6 @@ program TestBPWriteReadHeatMap6D
   integer(kind=8), dimension(6) :: sel_start, sel_count
   integer :: ierr, irank, isize, step_status
   integer :: in1, in2, in3, in4, in5, in6
-  integer :: i1, i2, i3, i4, i5, i6
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -193,45 +191,27 @@ program TestBPWriteReadHeatMap6D
 
     call adios2_close(bpReader, ierr)
 
-    sum_i1 = 0
-    sum_i2 = 0
-
-    do i6 = 1, INT(sel_count(6), 4)
-      do i5 = 1, INT(sel_count(5), 4)
-        do i4 = 1, INT(sel_count(4), 4)
-          do i3 = 1, INT(sel_count(3), 4)
-            do i2 = 1, INT(sel_count(2), 4)
-              do i1 = 1, INT(sel_count(1), 4)
-                sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2, i3, i4, i5, i6)
-                sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2, i3, i4, i5, i6)
-              end do
-            end do
-          end do
-        end do
-      end do
-    end do
-
-    if (sum_i1 /= 1000000*isize) then
+    if (any(sel_temperatures_i1 /= 1_1)) then
        write(*,*) 'Test failed integer*1'
        stop 1
     end if
-    if (sum_i2 /= 1000000*isize) then
+    if (any(sel_temperatures_i2 /= 1_2)) then
        write(*,*) 'Test failed integer*2'
        stop 1
     end if
-    if (sum(sel_temperatures_i4) /= 1000000*isize) then
+    if (any(sel_temperatures_i4 /= 1_4)) then
        write(*,*) 'Test failed integer*4'
        stop 1
     end if
-    if (sum(sel_temperatures_i8) /= 1000000*isize) then
+    if (any(sel_temperatures_i8 /= 1_8)) then
        write(*,*) 'Test failed integer*8'
        stop 1
     end if
-    if (sum(sel_temperatures_r4) /= 1000000*isize) then
+    if (any(sel_temperatures_r4 /= 1.0_4)) then
        write(*,*) 'Test failed real*4'
        stop 1
     end if
-    if (sum(sel_temperatures_r8) /= 1000000*isize) then
+    if (any(sel_temperatures_r8 /= 1.0_8)) then
        write(*,*) 'Test failed real*8'
        stop 1
     end if

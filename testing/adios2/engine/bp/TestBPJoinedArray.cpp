@@ -170,12 +170,13 @@ TEST_F(BPJoinedArray, MultiBlock)
                 std::vector<double> data(Nrows * Ncols);
                 reader.Get(var, data.data());
                 reader.PerformGets();
+                const double upperBound = (step + 1) * 1.0 + nproc * 0.1;
                 for (size_t i = 0; i < Nrows; ++i)
                 {
                     for (size_t j = 0; j < Ncols; ++j)
                     {
                         EXPECT_GE(data[i * Ncols + j], (step + 1) * 1.0);
-                        EXPECT_LT(data[i * Ncols + j], (nsteps + 1) * 1.0 + 0.9999);
+                        EXPECT_LT(data[i * Ncols + j], upperBound);
                     }
                 }
             }
