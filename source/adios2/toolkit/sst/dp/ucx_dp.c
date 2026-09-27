@@ -168,6 +168,7 @@ typedef struct fabric_state *FabricState;
 typedef struct _UcxCompletionHandle
 {
     ucs_status_ptr_t req;
+    ucp_rkey_h rkey;
     void *CPStream;
     void *Buffer;
     size_t Length;
@@ -531,12 +532,14 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
     param.op_attr_mask = 0;
     ret->req =
         ucp_get_nbx(RS_Stream->WriterEP[Rank], Buffer, Length, (uint64_t)Addr, rkey_p, &param);
-    ucp_rkey_destroy(rkey_p);
+    /* An in-progress get still uses the rkey, so release it after completion. */
+    ret->rkey = rkey_p;
     status = UCS_PTR_STATUS(ret->req);
     if (status != UCS_OK && status != UCS_INPROGRESS)
     {
         Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
                       "UCX Error during ucp_get_nbx() with: %s.\n", ucs_status_string(status));
+        ucp_rkey_destroy(ret->rkey);
         free(ret);
         return NULL;
     }
@@ -574,12 +577,11 @@ static int UcxWaitForCompletion(CP_Services Svcs, void *Handle_v)
             ucp_worker_progress(Stream->Fabric->ucp_worker);
             status = ucp_request_check_status(Handle->req);
         } while (status == UCS_INPROGRESS);
-        // check if status is Okay here and free the request
-        if (status == UCS_OK)
-            ucp_request_free(Handle->req);
+        ucp_request_free(Handle->req);
     }
     else if (UCS_PTR_STATUS(Handle->req) != UCS_OK)
     {
+        status = UCS_PTR_STATUS(Handle->req);
         Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "RPC failed, not a pointer");
     }
     else
@@ -590,10 +592,10 @@ static int UcxWaitForCompletion(CP_Services Svcs, void *Handle_v)
     if (status == UCS_OK)
     {
         Stream->Stats->DataBytesReceived += Handle->Length;
-        free(Handle);
-        return 1;
     }
-    return 0;
+    ucp_rkey_destroy(Handle->rkey);
+    free(Handle);
+    return status == UCS_OK;
 }
 
 static void UcxProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
