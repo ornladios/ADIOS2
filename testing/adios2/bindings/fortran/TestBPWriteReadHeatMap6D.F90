@@ -8,7 +8,6 @@ program TestBPWriteReadHeatMap6D
 
   implicit none
 
-  integer(kind=8) :: sum_i1, sum_i2
   type(adios2_adios) :: adios
   type(adios2_io) :: ioPut, ioGet
   type(adios2_engine) :: bpWriter, bpReader
@@ -37,6 +36,7 @@ program TestBPWriteReadHeatMap6D
   integer :: ierr, irank, isize, step_status
   integer :: in1, in2, in3, in4, in5, in6
   integer :: i1, i2, i3, i4, i5, i6
+  integer(kind=8) :: index_value
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -60,12 +60,25 @@ program TestBPWriteReadHeatMap6D
   allocate (temperatures_r4(in1, in2, in3, in4, in5, in6))
   allocate (temperatures_r8(in1, in2, in3, in4, in5, in6))
 
-  temperatures_i1 = 1
-  temperatures_i2 = 1
-  temperatures_i4 = 1
-  temperatures_i8 = 1_8
-  temperatures_r4 = 1.0
-  temperatures_r8 = 1.0_8
+  do i6 = 1, in6
+    do i5 = 1, in5
+      do i4 = 1, in4
+        do i3 = 1, in3
+          do i2 = 1, in2
+            do i1 = 1, in1
+              index_value = HeatMapIndex(i1, i2, i3, i4, i5, i6, irank)
+              temperatures_i1(i1, i2, i3, i4, i5, i6) = ExpectedInteger1(index_value)
+              temperatures_i2(i1, i2, i3, i4, i5, i6) = ExpectedInteger2(index_value)
+              temperatures_i4(i1, i2, i3, i4, i5, i6) = ExpectedInteger4(index_value)
+              temperatures_i8(i1, i2, i3, i4, i5, i6) = ExpectedInteger8(index_value)
+              temperatures_r4(i1, i2, i3, i4, i5, i6) = ExpectedReal4(index_value)
+              temperatures_r8(i1, i2, i3, i4, i5, i6) = ExpectedReal8(index_value)
+            end do
+          end do
+        end do
+      end do
+    end do
+  end do
 
   ! Start adios2 Writer
   call adios2_init(adios, MPI_COMM_WORLD, ierr)
@@ -120,132 +133,152 @@ program TestBPWriteReadHeatMap6D
   if (allocated(temperatures_r4)) deallocate (temperatures_r4)
   if (allocated(temperatures_r8)) deallocate (temperatures_r8)
 
-  ! Start adios2 Reader in rank 0
-  if (irank == 0) then
+  ! Each MPI rank reads the same hyperslab it wrote.
+  call adios2_declare_io(ioGet, adios, 'HeatMapRead', ierr)
+  call adios2_open(bpReader, ioGet, 'HeatMap6D_f.bp', adios2_mode_read, ierr)
 
-    call adios2_declare_io(ioGet, adios, 'HeatMapRead', ierr)
+  call adios2_begin_step(bpReader, adios2_step_mode_read, -1., step_status, ierr)
 
-    call adios2_open(bpReader, ioGet, 'HeatMap6D_f.bp', &
-                     adios2_mode_read, MPI_COMM_SELF, ierr)
+  call adios2_inquire_variable(var_temperaturesIn(1), ioGet, &
+                               'temperatures_i1', ierr)
+  call adios2_inquire_variable(var_temperaturesIn(2), ioGet, &
+                               'temperatures_i2', ierr)
+  call adios2_inquire_variable(var_temperaturesIn(3), ioGet, &
+                               'temperatures_i4', ierr)
+  call adios2_inquire_variable(var_temperaturesIn(4), ioGet, &
+                               'temperatures_i8', ierr)
+  call adios2_inquire_variable(var_temperaturesIn(5), ioGet, &
+                               'temperatures_r4', ierr)
+  call adios2_inquire_variable(var_temperaturesIn(6), ioGet, &
+                               'temperatures_r8', ierr)
 
-    call adios2_begin_step(bpReader, adios2_step_mode_read, -1., &
-                           step_status, ierr)
+  sel_start = istart
+  sel_count = icount
 
-    call adios2_inquire_variable(var_temperaturesIn(1), ioGet, &
-                                 'temperatures_i1', ierr)
-    call adios2_inquire_variable(var_temperaturesIn(2), ioGet, &
-                                 'temperatures_i2', ierr)
-    call adios2_inquire_variable(var_temperaturesIn(3), ioGet, &
-                                 'temperatures_i4', ierr)
-    call adios2_inquire_variable(var_temperaturesIn(4), ioGet, &
-                                 'temperatures_i8', ierr)
-    call adios2_inquire_variable(var_temperaturesIn(5), ioGet, &
-                                 'temperatures_r4', ierr)
-    call adios2_inquire_variable(var_temperaturesIn(6), ioGet, &
-                                 'temperatures_r8', ierr)
+  allocate (sel_temperatures_i1(in1, in2, in3, in4, in5, in6))
+  allocate (sel_temperatures_i2(in1, in2, in3, in4, in5, in6))
+  allocate (sel_temperatures_i4(in1, in2, in3, in4, in5, in6))
+  allocate (sel_temperatures_i8(in1, in2, in3, in4, in5, in6))
+  allocate (sel_temperatures_r4(in1, in2, in3, in4, in5, in6))
+  allocate (sel_temperatures_r8(in1, in2, in3, in4, in5, in6))
 
-    sel_start = (/0, 0, 0, 0, 0, 0/)
-    sel_count = (/ishape(1), ishape(2), ishape(3), ishape(4), ishape(5), &
-                  ishape(6)/)
+  call adios2_set_selection(var_temperaturesIn(1), 6, sel_start, sel_count, ierr)
+  call adios2_set_selection(var_temperaturesIn(2), 6, sel_start, sel_count, ierr)
+  call adios2_set_selection(var_temperaturesIn(3), 6, sel_start, sel_count, ierr)
+  call adios2_set_selection(var_temperaturesIn(4), 6, sel_start, sel_count, ierr)
+  call adios2_set_selection(var_temperaturesIn(5), 6, sel_start, sel_count, ierr)
+  call adios2_set_selection(var_temperaturesIn(6), 6, sel_start, sel_count, ierr)
 
-    allocate (sel_temperatures_i1(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
-    allocate (sel_temperatures_i2(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
-    allocate (sel_temperatures_i4(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
-    allocate (sel_temperatures_i8(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
-    allocate (sel_temperatures_r4(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
-    allocate (sel_temperatures_r8(ishape(1), ishape(2), ishape(3), ishape(4), &
-                                  ishape(5), ishape(6)))
+  call adios2_get(bpReader, var_temperaturesIn(1), sel_temperatures_i1, ierr)
+  call adios2_get(bpReader, var_temperaturesIn(2), sel_temperatures_i2, ierr)
+  call adios2_get(bpReader, var_temperaturesIn(3), sel_temperatures_i4, ierr)
+  call adios2_get(bpReader, var_temperaturesIn(4), sel_temperatures_i8, ierr)
+  call adios2_get(bpReader, var_temperaturesIn(5), sel_temperatures_r4, ierr)
+  call adios2_get(bpReader, var_temperaturesIn(6), sel_temperatures_r8, ierr)
 
-    sel_temperatures_i1 = 0
-    sel_temperatures_i2 = 0
-    sel_temperatures_i4 = 0
-    sel_temperatures_i8 = 0_8
-    sel_temperatures_r4 = 0.0_4
-    sel_temperatures_r8 = 0.0_8
+  call adios2_end_step(bpReader, ierr)
+  call adios2_close(bpReader, ierr)
 
-    call adios2_set_selection(var_temperaturesIn(1), 6, sel_start, sel_count, &
-                              ierr)
-    call adios2_set_selection(var_temperaturesIn(2), 6, sel_start, sel_count, &
-                              ierr)
-    call adios2_set_selection(var_temperaturesIn(3), 6, sel_start, sel_count, &
-                              ierr)
-    call adios2_set_selection(var_temperaturesIn(4), 6, sel_start, sel_count, &
-                              ierr)
-    call adios2_set_selection(var_temperaturesIn(5), 6, sel_start, sel_count, &
-                              ierr)
-    call adios2_set_selection(var_temperaturesIn(6), 6, sel_start, sel_count, &
-                              ierr)
-
-    call adios2_get(bpReader, var_temperaturesIn(1), sel_temperatures_i1, ierr)
-    call adios2_get(bpReader, var_temperaturesIn(2), sel_temperatures_i2, ierr)
-    call adios2_get(bpReader, var_temperaturesIn(3), sel_temperatures_i4, ierr)
-    call adios2_get(bpReader, var_temperaturesIn(4), sel_temperatures_i8, ierr)
-    call adios2_get(bpReader, var_temperaturesIn(5), sel_temperatures_r4, ierr)
-    call adios2_get(bpReader, var_temperaturesIn(6), sel_temperatures_r8, ierr)
-
-
-    call adios2_end_step(bpReader, ierr)
-
-    call adios2_close(bpReader, ierr)
-
-    sum_i1 = 0
-    sum_i2 = 0
-
-    do i6 = 1, INT(sel_count(6), 4)
-      do i5 = 1, INT(sel_count(5), 4)
-        do i4 = 1, INT(sel_count(4), 4)
-          do i3 = 1, INT(sel_count(3), 4)
-            do i2 = 1, INT(sel_count(2), 4)
-              do i1 = 1, INT(sel_count(1), 4)
-                sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2, i3, i4, i5, i6)
-                sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2, i3, i4, i5, i6)
-              end do
+  do i6 = 1, in6
+    do i5 = 1, in5
+      do i4 = 1, in4
+        do i3 = 1, in3
+          do i2 = 1, in2
+            do i1 = 1, in1
+              index_value = HeatMapIndex(i1, i2, i3, i4, i5, i6, irank)
+              if (sel_temperatures_i1(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedInteger1(index_value)) then
+                write(*,*) 'Test failed integer*1 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
+              if (sel_temperatures_i2(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedInteger2(index_value)) then
+                write(*,*) 'Test failed integer*2 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
+              if (sel_temperatures_i4(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedInteger4(index_value)) then
+                write(*,*) 'Test failed integer*4 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
+              if (sel_temperatures_i8(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedInteger8(index_value)) then
+                write(*,*) 'Test failed integer*8 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
+              if (sel_temperatures_r4(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedReal4(index_value)) then
+                write(*,*) 'Test failed real*4 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
+              if (sel_temperatures_r8(i1, i2, i3, i4, i5, i6) /= &
+                  ExpectedReal8(index_value)) then
+                write(*,*) 'Test failed real*8 at rank/coordinate ', irank, &
+                           i1, i2, i3, i4, i5, i6
+                stop 1
+              end if
             end do
           end do
         end do
       end do
     end do
+  end do
 
-    if (sum_i1 /= 1000000*isize) then
-       write(*,*) 'Test failed integer*1'
-       stop 1
-    end if
-    if (sum_i2 /= 1000000*isize) then
-       write(*,*) 'Test failed integer*2'
-       stop 1
-    end if
-    if (sum(sel_temperatures_i4) /= 1000000*isize) then
-       write(*,*) 'Test failed integer*4'
-       stop 1
-    end if
-    if (sum(sel_temperatures_i8) /= 1000000*isize) then
-       write(*,*) 'Test failed integer*8'
-       stop 1
-    end if
-    if (sum(sel_temperatures_r4) /= 1000000*isize) then
-       write(*,*) 'Test failed real*4'
-       stop 1
-    end if
-    if (sum(sel_temperatures_r8) /= 1000000*isize) then
-       write(*,*) 'Test failed real*8'
-       stop 1
-    end if
-
-    if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
-    if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
-    if (allocated(sel_temperatures_i4)) deallocate (sel_temperatures_i4)
-    if (allocated(sel_temperatures_i8)) deallocate (sel_temperatures_i8)
-    if (allocated(sel_temperatures_r4)) deallocate (sel_temperatures_r4)
-    if (allocated(sel_temperatures_r8)) deallocate (sel_temperatures_r8)
-
-  end if
+  if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
+  if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
+  if (allocated(sel_temperatures_i4)) deallocate (sel_temperatures_i4)
+  if (allocated(sel_temperatures_i8)) deallocate (sel_temperatures_i8)
+  if (allocated(sel_temperatures_r4)) deallocate (sel_temperatures_r4)
+  if (allocated(sel_temperatures_r8)) deallocate (sel_temperatures_r8)
 
   call adios2_finalize(adios, ierr)
   call MPI_Finalize(ierr)
+
+contains
+
+  pure integer(kind=8) function HeatMapIndex(i1, i2, i3, i4, i5, i6, rank) result(index)
+    integer, intent(in) :: i1, i2, i3, i4, i5, i6, rank
+    integer(kind=8) :: global_i6
+
+    global_i6 = 10_8 * int(rank, kind=8) + int(i6 - 1, kind=8)
+    index = int(i1 - 1, kind=8) + 10_8 * (int(i2 - 1, kind=8) + 10_8 * &
+            (int(i3 - 1, kind=8) + 10_8 * (int(i4 - 1, kind=8) + 10_8 * &
+            (int(i5 - 1, kind=8) + 10_8 * global_i6))))
+  end function HeatMapIndex
+
+  pure integer(kind=1) function ExpectedInteger1(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = int(modulo(index, 251_8) - 125_8, kind=1)
+  end function ExpectedInteger1
+
+  pure integer(kind=2) function ExpectedInteger2(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = int(modulo(index, 32749_8) - 16374_8, kind=2)
+  end function ExpectedInteger2
+
+  pure integer(kind=4) function ExpectedInteger4(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = int(index + 1_8, kind=4)
+  end function ExpectedInteger4
+
+  pure integer(kind=8) function ExpectedInteger8(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = index + 1_8
+  end function ExpectedInteger8
+
+  pure real(kind=4) function ExpectedReal4(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = real(modulo(index, 16777213_8), kind=4)
+  end function ExpectedReal4
+
+  pure real(kind=8) function ExpectedReal8(index) result(value)
+    integer(kind=8), intent(in) :: index
+    value = real(index + 1_8, kind=8)
+  end function ExpectedReal8
 
 end program TestBPWriteReadHeatMap6D

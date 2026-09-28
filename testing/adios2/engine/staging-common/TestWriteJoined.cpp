@@ -5,9 +5,6 @@
  */
 
 #include <cstdint>
-#include <cstring>
-#include <ctime>
-
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -37,6 +34,29 @@ const std::vector<int> nblocksPerProcess = {2, 3, 2, 1, 3, 2};
 int nMyTotalRows[nsteps];
 int nTotalRows[nsteps];
 
+namespace
+{
+constexpr size_t MaxEncodedRanks = 6;
+constexpr size_t MaxEncodedBlocks = 3;
+constexpr size_t MaxEncodedRows = 11;
+
+size_t RowsForBlock(int step, int rank, size_t block)
+{
+    return 5 + static_cast<size_t>((step * 3 + rank * 5 + block * 2) % 6);
+}
+
+uint64_t EncodeElement(size_t step, int rank, size_t block, size_t row, size_t col)
+{
+    return (((((static_cast<uint64_t>(step) * MaxEncodedRanks + static_cast<uint64_t>(rank)) *
+               MaxEncodedBlocks +
+               block) *
+                  MaxEncodedRows +
+              row) *
+                 Ncols) +
+            col);
+}
+} // namespace
+
 // ADIOS2 COMMON write
 TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
@@ -46,8 +66,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const int nblocks =
-        (mpiRank < static_cast<int>(nblocksPerProcess.size()) ? nblocksPerProcess[mpiRank] : 1);
+    const int nblocks = mpiRank < static_cast<int>(nblocksPerProcess.size())
+                            ? nblocksPerProcess[mpiRank]
+                            : 1;
 #else
     const int nblocks = nblocksPerProcess[0];
 #endif
@@ -70,6 +91,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
                                              {nblocksPerProcess.size()});
 
     auto rows_var = outIO.DefineVariable<int>("totalrows");
+    auto writers_var = outIO.DefineVariable<int>("numwriters");
 
     auto var = outIO.DefineVariable<double>(
         "table", {static_cast<size_t>(adios2::JoinedDim), Ncols}, {}, {1, Ncols});
@@ -81,15 +103,15 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     for (int step = 0; step < nsteps; step++)
     {
-        // Application variables for output random size per process, 5..10
-        // each
+        // Use deterministic, varying block sizes so the reader can derive the
+        // expected global row layout independently.
         std::vector<size_t> Nrows;
         nMyTotalRows[step] = 0;
         for (int i = 0; i < nblocks; ++i)
         {
-            int n = rand() % 6 + 5;
-            Nrows.push_back(static_cast<size_t>(n));
-            nMyTotalRows[step] += n;
+            const size_t rows = RowsForBlock(step, mpiRank, static_cast<size_t>(i));
+            Nrows.push_back(rows);
+            nMyTotalRows[step] += static_cast<int>(rows);
         }
 
         nTotalRows[step] = nMyTotalRows[step];
@@ -103,14 +125,11 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
 
         writer.BeginStep();
-        if ((step == 0) && (mpiRank == 0))
-        {
-            writer.Put(bpp_var, nblocksPerProcess.data());
-        }
         if (mpiRank == 0)
         {
-            std::cout << "Writer Generating " << nTotalRows[step] << " in total" << std::endl;
+            writer.Put(bpp_var, nblocksPerProcess.data());
             writer.Put(rows_var, nTotalRows[step]);
+            writer.Put(writers_var, mpiSize);
         }
         for (int block = 0; block < nblocks; ++block)
         {
@@ -119,9 +138,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             {
                 for (size_t col = 0; col < Ncols; col++)
                 {
-                    mytable[row * Ncols + col] =
-                        static_cast<double>((step + 1) * 1.0 + mpiRank * 0.1 + block * 0.01 +
-                                            row * 0.001 + col * 0.0001);
+                    mytable[row * Ncols + col] = static_cast<double>(EncodeElement(
+                        static_cast<size_t>(step), mpiRank, static_cast<size_t>(block), row, col));
                 }
             }
 
