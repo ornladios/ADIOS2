@@ -48,7 +48,6 @@
 #endif
 
 #include "atl.h"
-typedef int atom_t;
 #include "atom_internal.h"
 
 /* Parsed URL components */
@@ -110,6 +109,9 @@ parse_url(const char *url)
     return 1;
 }
 
+/* Connect timeout in milliseconds.  Override with ATL_HTTP_TIMEOUT env var. */
+#define DEFAULT_CONNECT_TIMEOUT_MS 3000
+
 static SOCKET
 http_connect_new(void)
 {
@@ -117,6 +119,21 @@ http_connect_new(void)
     struct hostent *he;
     SOCKET sock;
     int delay_value = 1;
+    int timeout_ms = DEFAULT_CONNECT_TIMEOUT_MS;
+    const char *timeout_env;
+    struct pollfd pfd;
+    int rc;
+#ifndef HAVE_WINDOWS_H
+    int sock_err;
+    socklen_t errlen = sizeof(sock_err);
+    int flags;
+#else
+    u_long nonblock;
+#endif
+
+    timeout_env = getenv("ATL_HTTP_TIMEOUT");
+    if (timeout_env) timeout_ms = atoi(timeout_env);
+    if (timeout_ms <= 0) timeout_ms = DEFAULT_CONNECT_TIMEOUT_MS;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == INVALID_SOCKET) return INVALID_SOCKET;
@@ -137,10 +154,50 @@ http_connect_new(void)
         addr.sin_addr.s_addr = ip;
     }
 
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        closesocket(sock);
-        return INVALID_SOCKET;
+    /* Set non-blocking for connect with timeout */
+#ifndef HAVE_WINDOWS_H
+    flags = fcntl(sock, F_GETFL, 0);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+#else
+    nonblock = 1;
+    ioctlsocket(sock, FIONBIO, &nonblock);
+#endif
+
+    rc = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+    if (rc < 0) {
+#ifndef HAVE_WINDOWS_H
+        if (errno != EINPROGRESS) {
+#else
+        if (WSAGetLastError() != WSAEWOULDBLOCK) {
+#endif
+            closesocket(sock);
+            return INVALID_SOCKET;
+        }
+        /* Wait for connect to complete or timeout */
+        pfd.fd = sock;
+        pfd.events = POLLOUT;
+        rc = sock_poll(&pfd, 1, timeout_ms);
+        if (rc <= 0) {
+            /* Timeout or error */
+            closesocket(sock);
+            return INVALID_SOCKET;
+        }
+#ifndef HAVE_WINDOWS_H
+        /* Check if connect actually succeeded */
+        if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sock_err, &errlen) < 0 || sock_err != 0) {
+            closesocket(sock);
+            return INVALID_SOCKET;
+        }
+#endif
     }
+
+    /* Restore blocking mode */
+#ifndef HAVE_WINDOWS_H
+    fcntl(sock, F_SETFL, flags);
+#else
+    nonblock = 0;
+    ioctlsocket(sock, FIONBIO, &nonblock);
+#endif
 
     setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
                (char *)&delay_value, sizeof(delay_value));
