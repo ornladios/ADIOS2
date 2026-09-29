@@ -195,6 +195,99 @@ TEST_F(BPJoinedArray, MultiBlock)
 #endif
 }
 
+TEST_F(BPJoinedArray, RandomAccessShape)
+{
+    // With ReadRandomAccess the joined dimension must be per step (#5198):
+    // "vary" grows by one row per process each step, "once" is only written
+    // in the first step
+    const size_t nsteps = 4;
+    const size_t Ncols = 10;
+    int rank = 0, nproc = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname = "BPJoinedArrayRandomAccess_MPI.bp";
+#else
+    adios2::ADIOS adios;
+    const std::string fname = "BPJoinedArrayRandomAccess.bp";
+#endif
+    const size_t np = static_cast<size_t>(nproc);
+
+    {
+        adios2::IO outIO = adios.DeclareIO("RandomAccessOutput");
+        if (!engineName.empty())
+        {
+            outIO.SetEngine(engineName);
+        }
+        auto varVary =
+            outIO.DefineVariable<double>("vary", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
+        auto varOnce =
+            outIO.DefineVariable<double>("once", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
+        adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
+        for (size_t step = 0; step < nsteps; ++step)
+        {
+            std::vector<double> data((step + 1) * Ncols, static_cast<double>(step));
+            writer.BeginStep();
+            varVary.SetSelection({{}, {step + 1, Ncols}});
+            writer.Put(varVary, data.data(), adios2::Mode::Sync);
+            if (step == 0)
+            {
+                writer.Put(varOnce, data.data(), adios2::Mode::Sync);
+            }
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    if (!rank)
+    {
+        adios2::IO inIO = adios.DeclareIO("RandomAccessInput");
+        if (!engineName.empty())
+        {
+            inIO.SetEngine(engineName);
+        }
+#if ADIOS2_USE_MPI
+        adios2::Engine reader = inIO.Open(fname, adios2::Mode::ReadRandomAccess, MPI_COMM_SELF);
+#else
+        adios2::Engine reader = inIO.Open(fname, adios2::Mode::ReadRandomAccess);
+#endif
+        auto varVary = inIO.InquireVariable<double>("vary");
+        ASSERT_TRUE(varVary);
+        EXPECT_EQ(varVary.Steps(), nsteps);
+        for (size_t step = 0; step < nsteps; ++step)
+        {
+            varVary.SetStepSelection({step, 1});
+            EXPECT_EQ(varVary.Shape()[0], (step + 1) * np) << "step " << step;
+            EXPECT_EQ(varVary.Shape()[1], Ncols);
+            varVary.SetSelection({{0, 0}, varVary.Shape()});
+            std::vector<double> in;
+            reader.Get(varVary, in, adios2::Mode::Sync);
+            EXPECT_EQ(in.size(), (step + 1) * np * Ncols) << "step " << step;
+            for (const double v : in)
+            {
+                EXPECT_EQ(v, static_cast<double>(step));
+            }
+        }
+
+        auto varOnce = inIO.InquireVariable<double>("once");
+        ASSERT_TRUE(varOnce);
+        EXPECT_EQ(varOnce.Shape()[0], np);
+        varOnce.SetSelection({{0, 0}, varOnce.Shape()});
+        std::vector<double> in;
+        reader.Get(varOnce, in, adios2::Mode::Sync);
+        EXPECT_EQ(in.size(), np * Ncols);
+        reader.Close();
+    }
+
+#if ADIOS2_USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI

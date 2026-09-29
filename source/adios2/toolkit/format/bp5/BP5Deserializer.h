@@ -175,6 +175,9 @@ private:
         size_t JoinedDimen = SIZE_MAX;
         uint64_t *LastJoinedOffset = NULL;
         uint64_t *LastJoinedShape = NULL;
+        // RandomAccess installs every step up front, so LastJoinedShape only
+        // describes the last step; keep each step's joined shape here
+        std::vector<uint64_t *> JoinedShapeByStep;
         bool Derived = false;
         // Reader-side derived variable: no file metadata of its own. Its block
         // structure is taken from ReaderDerivedStructInput (a congruent input

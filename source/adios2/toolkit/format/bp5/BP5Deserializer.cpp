@@ -1051,6 +1051,14 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                             VarRec->LastJoinedShape = VarRec->GlobalDims;
                             // overwrite the JoinedDimen value in that entry
                             VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
+                            if (m_RandomAccessMode)
+                            {
+                                if (VarRec->JoinedShapeByStep.size() < Step + 1)
+                                {
+                                    VarRec->JoinedShapeByStep.resize(Step + 1, NULL);
+                                }
+                                VarRec->JoinedShapeByStep[Step] = VarRec->LastJoinedShape;
+                            }
                         }
                         VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
                             meta_base->Count[(b * meta_base->Dims) + VarRec->JoinedDimen];
@@ -3203,7 +3211,12 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     }
     if (VarRec->OrigShapeID == ShapeID::JoinedArray)
     {
-        MV->Shape = BP5MVIOwnDims(MV, VarRec->LastJoinedShape, (size_t)MV->Dims);
+        uint64_t *JoinedShape = VarRec->LastJoinedShape;
+        if (m_RandomAccessMode && (AbsStep < VarRec->JoinedShapeByStep.size()))
+        {
+            JoinedShape = VarRec->JoinedShapeByStep[AbsStep];
+        }
+        MV->Shape = BP5MVIOwnDims(MV, JoinedShape, (size_t)MV->Dims);
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -3532,12 +3545,17 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
     else
     {
         // Joined array case.  This was calculated during metadata installation
-        if (VarRec->LastJoinedShape)
+        uint64_t *JoinedShape = VarRec->LastJoinedShape;
+        if (m_RandomAccessMode && (AbsStep < VarRec->JoinedShapeByStep.size()))
+        {
+            JoinedShape = VarRec->JoinedShapeByStep[AbsStep];
+        }
+        if (JoinedShape)
         {
             Shape.resize(VarRec->DimCount);
             for (size_t i = 0; i < VarRec->DimCount; i++)
             {
-                Shape[i] = VarRec->LastJoinedShape[i];
+                Shape[i] = JoinedShape[i];
             }
             return true;
         }
