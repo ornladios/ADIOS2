@@ -49,8 +49,6 @@ MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 # TODO: adios2 is built "--with-device=ch3:sock:tcp".  Once this is fixed
 # TODO:  in the mpi_dp, we can re-enable these tests.
 list(APPEND EXCLUDE_EXPRESSIONS
-  "Engine.BPEngineTest.SzComplex.MPI"
-  "Engine.BPEngineTest.ZfpComplex.MPI"
   "KillReader"
   "KillWriter"
   "PreciousTimestep")
