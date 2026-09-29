@@ -22,7 +22,8 @@
 #endif
 #endif
 #include <fcntl.h>
-#include <tclHash.h>
+#include <string>
+#include <unordered_map>
 typedef int atom_t;
 #include <stdint.h>
 #include "atom_internal.h"
@@ -34,91 +35,73 @@ typedef int atom_t;
 
 #define MAXBUFLEN 100
 
-extern Tcl_HashTable *stringhash;
-extern Tcl_HashTable *valuehash;
-extern char *atom_to_string(Tcl_HashTable *, Tcl_HashTable *, int);
-extern int string_to_atom(Tcl_HashTable *, Tcl_HashTable *, char *);
-extern int set_string_and_atom(Tcl_HashTable *, Tcl_HashTable *, char *, int);
+/* string<->atom cache, formerly a pair of Tcl hash tables */
+typedef std::unordered_map<std::string, send_get_atom_msg_ptr> atom_string_map;
+typedef std::unordered_map<int64_t, send_get_atom_msg_ptr> atom_value_map;
+
+static char *atom_to_string(atom_string_map *, atom_value_map *, int);
+static int string_to_atom(atom_string_map *, atom_value_map *, char *);
+static int set_string_and_atom(atom_string_map *, atom_value_map *, char *, int);
 static void close_client(int client);
 static void server_init(int udp_socket, int tcp_socket);
 static int poll_and_handle();
 
 
-Tcl_HashTable *stringhash;
-Tcl_HashTable *valuehash;
+static atom_string_map *stringhash;
+static atom_value_map *valuehash;
 
 int verbose = 0;
 
 #define LOG printf
 
-char *
-atom_to_string(Tcl_HashTable * string_hash_table, Tcl_HashTable * value_hash_table, int value)
+static char *
+atom_to_string(atom_string_map * string_hash_table, atom_value_map * value_hash_table, int value)
 {
-    Tcl_HashEntry *entry = NULL;
-    send_get_atom_msg_ptr value_string;
-
     if (verbose)
 	printf("Doing a atom_to_string\n");
 
-    entry = Tcl_FindHashEntry(value_hash_table, (char *) (int64_t)value);
-
-    if (entry) {
-	value_string = (send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
-	return value_string->atom_string;
+    auto it = value_hash_table->find((int64_t)value);
+    if (it != value_hash_table->end()) {
+	return it->second->atom_string;
     }
     return 0;
 
 }
 
-int
-string_to_atom(Tcl_HashTable * string_hash_table, Tcl_HashTable * value_hash_table, char *a)
+static int
+string_to_atom(atom_string_map * string_hash_table, atom_value_map * value_hash_table, char *a)
 {
-    Tcl_HashEntry *entry = NULL;
-    send_get_atom_msg_ptr return_msg;
-
     if (verbose)
 	printf("Doing a string_to_atom\n");
 
-    entry = Tcl_FindHashEntry(string_hash_table, a);
-
-    if (entry) {
-	return_msg = (send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
-	return return_msg->atom;
+    auto it = string_hash_table->find(a);
+    if (it != string_hash_table->end()) {
+	return it->second->atom;
     }
     return -1;	/* the string was not in the db */
 
 }
 
-int
-set_string_and_atom(Tcl_HashTable * string_hash_table, Tcl_HashTable * value_hash_table, char *a, int set_atom)
+static int
+set_string_and_atom(atom_string_map * string_hash_table, atom_value_map * value_hash_table, char *a, int set_atom)
 {
-
-    send_get_atom_msg_ptr return_msg;
-    Tcl_HashEntry *entry = NULL;
-    int new;
     send_get_atom_msg_ptr stored;
 
     stored = (send_get_atom_msg_ptr) malloc(sizeof(send_get_atom_msg));
     stored->atom_string = strdup(a);
 
     stored->atom = set_atom;
-    entry = Tcl_CreateHashEntry(string_hash_table, a, &new);
-    Tcl_SetHashValue(entry, stored);
-    entry = Tcl_CreateHashEntry(value_hash_table, (char *) (int64_t)stored->atom,
-				&new);
-    Tcl_SetHashValue(entry, stored);
-    return_msg = (send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
-    return return_msg->atom;	/* Success */
+    (*string_hash_table)[a] = stored;
+    (*value_hash_table)[(int64_t)stored->atom] = stored;
+    return stored->atom;	/* Success */
 
 }
 
 void
 Initialize(void)
 {
-    stringhash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
-    Tcl_InitHashTable(stringhash, TCL_STRING_KEYS);
-    valuehash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
-    Tcl_InitHashTable(valuehash, TCL_ONE_WORD_KEYS);
+    stringhash = new atom_string_map();
+    valuehash = new atom_value_map();
 }
 
 
@@ -290,7 +273,7 @@ process_data(char* buf, char *response)
 	/* request translation of string to a numeric value */
 	int value = string_to_atom(stringhash, valuehash, &buf[1]);
 
-	sprintf(response, "N%d", value);
+	snprintf(response, MAXBUFLEN, "N%d", value);
 	if (verbose)
 	    printf("Sending %s\n", response);
 	return;
@@ -299,19 +282,18 @@ process_data(char* buf, char *response)
 	/* create an association between a string and a value */
 	int atom = 0;
 	char *str;
-	Tcl_HashEntry *entry = NULL;
 
 	atom = strtol(&buf[1], &str, 10);
 	str++;
-	entry = Tcl_FindHashEntry(stringhash, str);
-	if (entry != NULL) {
+	{
+	    auto it = stringhash->find(str);
 	    send_get_atom_msg_ptr atom_entry =
-		(send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
+		(it != stringhash->end()) ? it->second : NULL;
 	    if ((atom_entry != NULL) && (atom_entry->atom != atom)) {
 		if (verbose)
 		    printf("Atom cache inconsistency, tried to associate string \"%s\" with value %d\n	Previous association was value %d\n",
 			   str, atom, atom_entry->atom);
-		sprintf(response, "E%d %s", atom_entry->atom,
+		snprintf(response, MAXBUFLEN, "E%d %s", atom_entry->atom,
 			atom_entry->atom_string);
 		if (verbose)
 		    printf("Sending %s\n", response);
@@ -319,16 +301,16 @@ process_data(char* buf, char *response)
 		return;
 	    }
 	}
-	entry = Tcl_FindHashEntry(valuehash, (char *) (int64_t) atom);
-	if (entry != NULL) {
+	{
+	    auto it = valuehash->find((int64_t) atom);
 	    send_get_atom_msg_ptr atom_entry =
-		(send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
+		(it != valuehash->end()) ? it->second : NULL;
 	    if ((atom_entry != NULL) &&
 		(strcmp(atom_entry->atom_string, str) != 0)) {
 		if (verbose)
 		    printf("Atom cache inconsistency, tried to associate value %d with string \"%s\"\n	Previous association was string \"%s\"\n",
 			   atom, str, atom_entry->atom_string);
-		sprintf(response, "E%d %s", atom_entry->atom,
+		snprintf(response, MAXBUFLEN, "E%d %s", atom_entry->atom,
 			atom_entry->atom_string);
 		if (verbose)
 		    printf("Sending %s\n", response);
