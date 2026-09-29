@@ -7,7 +7,9 @@
 #include <cstdint>
 #include <cstring>
 
+#include <algorithm>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 
 #include <adios2.h>
@@ -37,6 +39,9 @@ TEST_F(BPJoinedArray, MultiBlock)
     const int nsteps = 3;
     const size_t Ncols = 4;
     const std::vector<int> nblocksPerProcess = {2, 3, 2, 1, 3, 2};
+    // Values encode (step, rank, block, row, col) as an exact integer
+    const int64_t MaxBlocks = *std::max_element(nblocksPerProcess.begin(), nblocksPerProcess.end());
+    const int64_t MaxRows = 10; // blocks have 5..10 rows
 
     int rank = 0, nproc = 1;
 
@@ -106,9 +111,9 @@ TEST_F(BPJoinedArray, MultiBlock)
                 {
                     for (size_t col = 0; col < Ncols; col++)
                     {
-                        mytable[row * Ncols + col] =
-                            static_cast<double>((step + 1) * 1.0 + rank * 0.1 + block * 0.01 +
-                                                row * 0.001 + col * 0.0001);
+                        mytable[row * Ncols + col] = static_cast<double>(
+                            (((step * nproc + rank) * MaxBlocks + block) * MaxRows + row) * Ncols +
+                            col);
                     }
                 }
 
@@ -170,14 +175,29 @@ TEST_F(BPJoinedArray, MultiBlock)
                 std::vector<double> data(Nrows * Ncols);
                 reader.Get(var, data.data());
                 reader.PerformGets();
+                // Row order across writers is not guaranteed, so decode each
+                // row and require every written row exactly once
+                std::set<int64_t> seen;
                 for (size_t i = 0; i < Nrows; ++i)
                 {
+                    const int64_t id = static_cast<int64_t>(data[i * Ncols]) / Ncols;
                     for (size_t j = 0; j < Ncols; ++j)
                     {
-                        EXPECT_GE(data[i * Ncols + j], (step + 1) * 1.0);
-                        EXPECT_LT(data[i * Ncols + j], (nsteps + 1) * 1.0 + 0.9999);
+                        EXPECT_EQ(data[i * Ncols + j], static_cast<double>(id * Ncols + j));
                     }
+                    const int64_t row = id % MaxRows;
+                    const int64_t block = id / MaxRows % MaxBlocks;
+                    const int64_t wrank = id / MaxRows / MaxBlocks % nproc;
+                    const int64_t wstep = id / MaxRows / MaxBlocks / nproc;
+                    const int wblocks = (wrank < static_cast<int64_t>(nblocksPerProcess.size())
+                                             ? nblocksPerProcess[wrank]
+                                             : 1);
+                    EXPECT_EQ(wstep, step);
+                    EXPECT_LT(block, wblocks);
+                    EXPECT_LT(row, MaxRows);
+                    EXPECT_TRUE(seen.insert(id).second) << "duplicate row " << i;
                 }
+                EXPECT_EQ(seen.size(), Nrows);
             }
 
             reader.EndStep();
