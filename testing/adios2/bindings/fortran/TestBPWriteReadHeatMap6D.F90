@@ -8,7 +8,7 @@ program TestBPWriteReadHeatMap6D
 
   implicit none
 
-  integer(kind=8) :: sum_i1, sum_i2
+  integer(kind=4), dimension(:, :, :, :, :, :), allocatable :: expected
   type(adios2_adios) :: adios
   type(adios2_io) :: ioPut, ioGet
   type(adios2_engine) :: bpWriter, bpReader
@@ -60,12 +60,27 @@ program TestBPWriteReadHeatMap6D
   allocate (temperatures_r4(in1, in2, in3, in4, in5, in6))
   allocate (temperatures_r8(in1, in2, in3, in4, in5, in6))
 
-  temperatures_i1 = 1
-  temperatures_i2 = 1
-  temperatures_i4 = 1
-  temperatures_i8 = 1_8
-  temperatures_r4 = 1.0
-  temperatures_r8 = 1.0_8
+  ! Value depends on the global position, modulo a prime below 128 so it is
+  ! exact in every type, including integer*1
+  do i6 = 1, in6
+    do i5 = 1, in5
+      do i4 = 1, in4
+        do i3 = 1, in3
+          do i2 = 1, in2
+            do i1 = 1, in1
+              temperatures_i4(i1, i2, i3, i4, i5, i6) = &
+                mod(i1 + 2*i2 + 3*i3 + 5*i4 + 7*i5 + 11*(i6 + in6*irank), 127)
+            end do
+          end do
+        end do
+      end do
+    end do
+  end do
+  temperatures_i1 = int(temperatures_i4, 1)
+  temperatures_i2 = int(temperatures_i4, 2)
+  temperatures_i8 = int(temperatures_i4, 8)
+  temperatures_r4 = real(temperatures_i4, 4)
+  temperatures_r8 = real(temperatures_i4, 8)
 
   ! Start adios2 Writer
   call adios2_init(adios, MPI_COMM_WORLD, ierr)
@@ -193,8 +208,8 @@ program TestBPWriteReadHeatMap6D
 
     call adios2_close(bpReader, ierr)
 
-    sum_i1 = 0
-    sum_i2 = 0
+    allocate (expected(ishape(1), ishape(2), ishape(3), ishape(4), &
+                       ishape(5), ishape(6)))
 
     do i6 = 1, INT(sel_count(6), 4)
       do i5 = 1, INT(sel_count(5), 4)
@@ -202,8 +217,8 @@ program TestBPWriteReadHeatMap6D
           do i3 = 1, INT(sel_count(3), 4)
             do i2 = 1, INT(sel_count(2), 4)
               do i1 = 1, INT(sel_count(1), 4)
-                sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2, i3, i4, i5, i6)
-                sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2, i3, i4, i5, i6)
+                expected(i1, i2, i3, i4, i5, i6) = &
+                  mod(i1 + 2*i2 + 3*i3 + 5*i4 + 7*i5 + 11*i6, 127)
               end do
             end do
           end do
@@ -211,30 +226,32 @@ program TestBPWriteReadHeatMap6D
       end do
     end do
 
-    if (sum_i1 /= 1000000*isize) then
+    if (any(sel_temperatures_i1 /= int(expected, 1))) then
        write(*,*) 'Test failed integer*1'
        stop 1
     end if
-    if (sum_i2 /= 1000000*isize) then
+    if (any(sel_temperatures_i2 /= int(expected, 2))) then
        write(*,*) 'Test failed integer*2'
        stop 1
     end if
-    if (sum(sel_temperatures_i4) /= 1000000*isize) then
+    if (any(sel_temperatures_i4 /= expected)) then
        write(*,*) 'Test failed integer*4'
        stop 1
     end if
-    if (sum(sel_temperatures_i8) /= 1000000*isize) then
+    if (any(sel_temperatures_i8 /= int(expected, 8))) then
        write(*,*) 'Test failed integer*8'
        stop 1
     end if
-    if (sum(sel_temperatures_r4) /= 1000000*isize) then
+    if (any(sel_temperatures_r4 /= real(expected, 4))) then
        write(*,*) 'Test failed real*4'
        stop 1
     end if
-    if (sum(sel_temperatures_r8) /= 1000000*isize) then
+    if (any(sel_temperatures_r8 /= real(expected, 8))) then
        write(*,*) 'Test failed real*8'
        stop 1
     end if
+
+    if (allocated(expected)) deallocate (expected)
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
