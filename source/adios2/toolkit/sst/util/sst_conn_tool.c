@@ -70,9 +70,6 @@ static atom_t TRANSPORT = -1;
 static atom_t IP_PORT = -1;
 /* static atom_t IP_HOSTNAME = -1; */
 static atom_t IP_ADDR = -1;
-static atom_t ENET_PORT = -1;
-/* static atom_t ENET_HOSTNAME = -1; */
-static atom_t ENET_ADDR = -1;
 
 struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"listen", no_argument, NULL, 'l'},
@@ -128,9 +125,6 @@ static void init_atoms()
     /* IP_HOSTNAME = attr_atom_from_string("IP_HOST"); */
     IP_PORT = attr_atom_from_string("IP_PORT");
     IP_ADDR = attr_atom_from_string("IP_ADDR");
-    /* ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST"); */
-    ENET_PORT = attr_atom_from_string("CM_ENET_PORT");
-    ENET_ADDR = attr_atom_from_string("CM_ENET_ADDR");
 }
 
 static int info = 0;
@@ -212,19 +206,6 @@ static void DecodeAttrList(const char *attrs, char **in_transport, char **in_ip,
         if (in_port)
             *in_port = port;
     }
-    else if (strcmp(transport, "enet") == 0)
-    {
-        /* reliable UDP transport "enet" */
-        struct in_addr addr;
-        int ip = -1, port = -1;
-        get_int_attr(listen_info, ENET_PORT, &port);
-        get_int_attr(listen_info, ENET_ADDR, &ip);
-        addr.s_addr = htonl(ip);
-        if (in_ip)
-            *in_ip = strdup(inet_ntoa(addr));
-        if (in_port)
-            *in_port = port;
-    }
     else
     {
         dump_attr_list(listen_info);
@@ -252,12 +233,6 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
                    "%s, port %d\n\n",
                    IP, port);
         }
-        else if (strcmp(transport, "enet") == 0)
-        {
-            printf("\n\tSst writer is listening for UDP connection at IP %s, "
-                   "port %d\n\n",
-                   IP, port);
-        }
         else
         {
             printf("\n\tWarning, unknown control network transport operating\n");
@@ -272,10 +247,6 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
         {
             printf("\n\tSst reader at IP %s, listen TCP/IP port %d\n\n", IP, port);
         }
-        else if (strcmp(transport, "enet") == 0)
-        {
-            printf("\n\tSst reader at IP %s, listening UDP port %d\n\n", IP, port);
-        }
         else
         {
             printf("\n\tWarning, unknown control network transport operating\n");
@@ -286,12 +257,6 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
         if (!transport)
         {
             printf("\n\tAttempting TCP/IP connection to writer at IP %s, port "
-                   "%d\n\n",
-                   IP, port);
-        }
-        else if (strcmp(transport, "enet") == 0)
-        {
-            printf("\n\tAttempting UDP connection to writer at IP %s,a port "
                    "%d\n\n",
                    IP, port);
         }
@@ -309,7 +274,6 @@ static void do_connect()
     memset(&Params, 0, sizeof(Params));
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
-    Params.ControlTransport = "enet";
     if (screen)
     {
         Params.RegistrationMethod = SstRegisterScreen;
@@ -348,7 +312,6 @@ static void do_listen()
     }
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
-    //    Params.ControlTransport = "enet";
     writer = SstWriterOpen("SstConnToolTemp", &Params, SMPI_COMM_WORLD);
     printf("Connection success, all is well!\n");
     SstWriterClose(writer);

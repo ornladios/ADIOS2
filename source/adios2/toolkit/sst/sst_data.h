@@ -74,7 +74,6 @@ typedef struct _SstStats
     MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                                             \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                                          \
     MACRO(FirstTimestepPrecious, Bool, int, 0)                                                     \
-    MACRO(ControlTransport, String, char *, NULL)                                                  \
     MACRO(NetworkInterface, String, char *, NULL)                                                  \
     MACRO(ControlInterface, String, char *, NULL)                                                  \
     MACRO(DataInterface, String, char *, NULL)                                                     \
