@@ -74,6 +74,9 @@
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif
 
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 869)
@@ -311,7 +314,7 @@ socket_accept_conn(void *void_trans, void *void_conn_sock)
 	return;
     }
     socket_conn_data->remote_contact_port =
-	ntohs(socket_conn_data->remote_contact_port);
+	ntohs((u_short)socket_conn_data->remote_contact_port);
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (intptr_t)socket_conn_data->remote_contact_port);
     svc->trace_out(sd->cm, "Remote host (IP %x) is listening at port %d\n",
@@ -398,16 +401,16 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
         svc->trace_out(cm, "TCP/IP transport connect to host_IP %lx", host_ip);
     }
     if ((host_name == NULL) && (host_ip == 0))
-	return -1;
+	return INVALID_SOCKET;
 
     if (!query_attr(attrs, CM_IP_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_PORT attribute");
-	return -1;
+	return INVALID_SOCKET;
     } else {
         svc->trace_out(cm, "TCP/IP transport connect to port %d", int_port_num);
     }
-    port_num = int_port_num;
+    port_num = (u_short)int_port_num;
     linger_val.l_onoff = 1;
     linger_val.l_linger = 60;
 
@@ -426,7 +429,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	}
 #else
 	fprintf(stderr, "socket initiate_conn port_num parameter == -1 and unix sockets not available.\n");
-	return -1;
+	return INVALID_SOCKET;
 #endif
     } else {
 	/* INET socket connection, host_name is the machine name */
@@ -434,7 +437,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
 	    svc->trace_out(cm, " CMSocket connect FAILURE --> Couldn't create socket");
-	    return -1;
+	    return INVALID_SOCKET;
 	}
 	((struct sockaddr_in *) &sock_addr)->sin_family = AF_INET;
 	if (host_name != NULL) {
@@ -494,11 +497,11 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
     {
 	int local_listen_port = 0;
 	if (sd->listen_count) {
-	    local_listen_port = htons(sd->listen_ports[0]);
+	    local_listen_port = htons((u_short)sd->listen_ports[0]);
 	}
 	if (write(sock, (const char *) & local_listen_port, 4) != 4) {
 	    svc->trace_out(cm, "Write failed\n");
-	    return -1;
+	    return INVALID_SOCKET;
 	}
     }
     svc->trace_out(cm, "--> Connection established");
@@ -626,6 +629,7 @@ libcmsockets_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry t
 extern int
 libcmsockets_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, socket_conn_data_ptr scd)
 {
+    (void)trans;
 
     int int_port_num;
     int requested_IP = -1;
@@ -697,7 +701,7 @@ libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transpor
 	    fprintf(stderr, "Requested port number %d is invalid\n", attr_port_num);
 	    return NULL;
 	}
-	port_num = attr_port_num;
+	port_num = (u_short)attr_port_num;
     }
 
     svc->trace_out(cm, "CMSocket begin listen, requested port %d", attr_port_num);
@@ -753,7 +757,9 @@ libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transpor
 		return NULL;
 	    }
 	} else {
-	    long seedval = (long) time(NULL) + getpid();
+	    /* time + pid repeats when pid N starts a second after pid N+1, so mix */
+	    long seedval = (long)((unsigned long)time(NULL) * 2654435761UL ^ (unsigned long)getpid() ^
+				  (unsigned long)(size_t)cm ^ (unsigned long)clock());
 	    /* port num is free.  Constrain to range to standards */
 	    int size = port_range_high - port_range_low;
 	    int tries = 30;
@@ -761,7 +767,7 @@ libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transpor
 	    srand(seedval);
 	    while (tries > 0) {
 		int target = port_range_low + (rand() % size);
-		sock_addr.sin_port = htons(target);
+		sock_addr.sin_port = htons((u_short)target);
 		svc->trace_out(cm, "CMSocket trying to bind port %d", target);
 		result = bind(conn_sock, (struct sockaddr *) &sock_addr,
 			      sizeof sock_addr);
@@ -769,7 +775,7 @@ libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transpor
 		if (result != SOCKET_ERROR) tries = 0;
 		if (tries%5 == 4) {
 		    /* try reseeding in case we're in sync with another process */
-		    srand((int)time(NULL) + (int)getpid());
+		    srand((unsigned int)(seedval ^ (long)clock()));
 		}
 		if (tries == 20) {
 		    /* damn, tried a lot, increase the range (This might violate specified range) */
@@ -1162,6 +1168,7 @@ libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, voi
 extern ssize_t
 libcmsockets_LTX_NBwritev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs)
 {
+    (void)attrs;
     SOCKET fd = scd->fd;
     ssize_t init_bytes, left = 0;
     ssize_t iget = 0;
@@ -1223,6 +1230,7 @@ static WSADATA wsaData;
 static void
 free_socket_data(CManager cm, void *sdv)
 {
+    (void)cm;
     socket_client_data_ptr sd = (socket_client_data_ptr) sdv;
     CMtrans_services svc = sd->svc;
     if (sd->hostname != NULL)
@@ -1295,6 +1303,7 @@ extern attr_list
 libcmsockets_LTX_get_transport_characteristics(transport_entry trans, CMtrans_services svc,
 					       void* vsd)
 {
+    (void)trans; (void)svc;
     struct socket_client_data * sd = (struct socket_client_data *) vsd;
     add_ref_attr_list(sd->characteristics);
     return sd->characteristics;

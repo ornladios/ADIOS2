@@ -83,7 +83,9 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
 	return 0;
     }
     {
-	long seedval = (long)time(NULL) + (long)getpid();
+	/* time + pid repeats when pid N starts a second after pid N+1, so mix */
+	long seedval = (long)((unsigned long)time(NULL) * 2654435761UL ^ (unsigned long)getpid() ^
+			      (unsigned long)(size_t)cm ^ (unsigned long)clock());
 	/* port num is free.  Constrain to range to standards */
 	int size = high_bound - low_bound;
 	int tries = 30;
@@ -91,7 +93,7 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
 	srand48(seedval);
 	while (tries > 0) {
 	    int target = low_bound + (int)(size * drand48());
-	    sock_addr.sin_port = htons(target);
+	    sock_addr.sin_port = htons((u_short)target);
 	    CMtrace_out(cm, CMConnectionVerbose, "CMSocket trying to bind port %d", target);
 	    result = bind(conn_sock, (struct sockaddr *) &sock_addr,
 			  sizeof sock_addr);
@@ -100,7 +102,7 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
 	    if (result != SOCKET_ERROR) tries = 0;
 	    if (tries%5 == 4) {
 		/* try reseeding in case we're in sync with another process */
-		srand48(time(NULL) + getpid());
+		srand48(seedval ^ (long)clock());
 	    }
 	    if (tries == 20) {
 		/* damn, tried a lot, increase the range (This might violate specified range) */

@@ -61,7 +61,7 @@
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
-#define srand48(x)
+#define srand48(x) srand((unsigned int)(x))
 #include <ws2tcpip.h>
 #endif
 #ifdef HAVE_UNISTD_H
@@ -283,6 +283,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
+    (void)file; (void)line;
 //    if (file) printf("(PID %lx, TID %lx) Trying ENET Lock at %s, line %d\n", (long) getpid(), (long)gettid(), file, line);
     thr_mutex_lock(ecd->enet_lock);
 //    if (file) printf("GOT ENET Lock at %s, line %d\n", file, line);
@@ -292,6 +293,7 @@ IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
+    (void)file; (void)line;
 //    if (file) printf("(PID %lx, TID %lx) ENET Unlock at %s, line %d\n", (long) getpid(), (long)gettid(), file, line);
     ecd->enet_locked--;
     thr_mutex_unlock(ecd->enet_lock);
@@ -328,9 +330,11 @@ static enet_conn_data_ptr
 create_enet_conn_data(CMtrans_services svc)
 {
     enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) svc->malloc_func(sizeof(struct enet_connection_data));
-    enet_conn_data->remote_host = NULL;
+    /* zero everything first.  conn in particular is tested before use from
+     * the ENet event loop, which can see this struct (via peer->data) before
+     * the connection is established, and stale heap contents pass that test. */
+    memset(enet_conn_data, 0, sizeof(struct enet_connection_data));
     enet_conn_data->remote_contact_port = -1;
-    enet_conn_data->read_buffer = NULL;
     enet_conn_data->read_buffer_len = 1;
     return enet_conn_data;
 }
@@ -484,7 +488,10 @@ enet_service_network(CManager cm, void *void_trans)
 	    enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n", event.peer->data);
 
-            enet_conn_data = (enet_conn_data_ptr) event.peer->data;
+            if (enet_conn_data == NULL) {
+		/* already shut down, nothing left to fail */
+		break;
+	    }
 	    enet_conn_data->read_buffer_len = -1;
             if (enet_conn_data->conn) {
                 svc->connection_fail(enet_conn_data->conn);
@@ -643,6 +650,12 @@ extern
 void
 INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
+    if (scd->peer) {
+	/* ENet can still deliver events for this peer after we're gone, so
+	 * don't leave it pointing at the struct we're about to free. */
+	scd->peer->data = NULL;
+	scd->peer = NULL;
+    }
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
     free(scd);
@@ -833,6 +846,7 @@ CMConnection
 INTERFACE_NAME(finalize_conn_nonblocking)(CManager cm, CMtrans_services svc,
                                           transport_entry trans, void *client_data, int result)
 {
+    (void)cm;
     enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
     enet_conn_data_ptr final_conn_data = (enet_conn_data_ptr) client_data;
     enet_conn_data_ptr last = NULL, enet_conn_data = ecd->pending_connections;
@@ -1089,7 +1103,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 	    fprintf(stderr, "Requested port number %d is invalid\n", attr_port_num);
 	    return NULL;
 	}
-	port_num = attr_port_num;
+	port_num = (u_short)attr_port_num;
     }
 
     svc->trace_out(cm, "CMEnet begin listen, requested port %d", attr_port_num);
@@ -1155,14 +1169,16 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
             /* port num is free.  Constrain to range 26000 : 26100 */
             int size;
             int tries;
-            srand48(time(NULL) + getpid());
+            /* time + pid repeats when pid N starts a second after pid N+1, so mix */
+            srand48((long)((unsigned long)time(NULL) * 2654435761UL ^ (unsigned long)getpid() ^
+                           (unsigned long)(size_t)ecd ^ (unsigned long)clock()));
 
         restart:
             size = high_bound - low_bound;
             tries = 10;
             while (tries > 0) {
                 int target = low_bound + (int)(size * drand48());
-                address.port = target;
+                address.port = (enet_uint16)target;
                 
                 svc->trace_out(cm, "CMEnet trying to bind port %d", target);
                 
@@ -1177,7 +1193,8 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
                 if (server != NULL) tries = 0;
                 if (tries == 5) {
                     /* try reseeding in case we're in sync with another process */
-                    srand48(time(NULL) + getpid());
+                    srand48((long)((unsigned long)time(NULL) * 2654435761UL ^ (unsigned long)getpid() ^
+                                   (unsigned long)(size_t)ecd ^ (unsigned long)clock()));
                 }
             }
             if (server == NULL) {
@@ -1223,6 +1240,7 @@ INTERFACE_NAME(read_block_func)(CMtrans_services svc,
                                 enet_conn_data_ptr conn_data, ssize_t *actual_len,
                                 ssize_t *offset_ptr)
 {
+    (void)svc;
     CMbuffer cb;
 
     if (conn_data->read_buffer_len == -1) return NULL;
@@ -1355,8 +1373,7 @@ shutdown_enet_thread
 
 #ifdef HAVE_WINDOWS_H
 static char*
-WSAerror_str(err)
-int err;
+WSAerror_str(int err)
 {
     switch(err) {
     case WSAEINTR: return "WSAEINTR";
@@ -1418,13 +1435,11 @@ int err;
  */
 
 static int
-pipe(filedes)
-SOCKET filedes[2];
+pipe(SOCKET filedes[2])
 {
     
     int length;
     struct sockaddr_in sock_addr;
-    int sock_opt_val = 1;
     SOCKET sock1, sock2, conn_sock;
     unsigned long block = TRUE;
     int delay_value = 1;
@@ -1515,8 +1530,13 @@ void *
 INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
 			 transport_entry trans, attr_list attrs)
 {
+    (void)trans;
     static int atom_init = 0;
+#ifdef HAVE_WINDOWS_H
+    SOCKET filedes[2];	/* our pipe() replacement returns sockets */
+#else
     int filedes[2];
+#endif
     char *env = getenv("ENET_HOST_SERVICE_WARN_INTERVAL");
 
     enet_client_data_ptr enet_data;
@@ -1564,8 +1584,8 @@ INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
 	perror("Pipe for wake not created.  ENET wake mechanism inoperative.");
 	return NULL;
     }
-    enet_data->wake_read_fd = filedes[0];
-    enet_data->wake_write_fd = filedes[1];
+    enet_data->wake_read_fd = (int)filedes[0];
+    enet_data->wake_write_fd = (int)filedes[1];
     svc->add_shutdown_task(cm, shutdown_enet_thread, (void *) enet_data, SHUTDOWN_TASK);
     svc->add_shutdown_task(cm, free_enet_data, (void *) enet_data, FREE_TASK);
     return (void *) enet_data;

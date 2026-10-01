@@ -1398,6 +1398,7 @@ dfg_deploy_handler(CManager cm, CMConnection conn, void *vmsg,
 static void
 free_master(CManager cm, void *vmaster)
 {
+    (void)cm;
     EVmaster master = (EVmaster)vmaster;
     int i;
     for (i=0; i < master->node_count; i++) {
@@ -1417,6 +1418,7 @@ free_master(CManager cm, void *vmaster)
 static void
 free_client(CManager cm, void *vclient)
 {
+    (void)cm;
     EVclient client = (EVclient)vclient;
     if (client->master_connection) 
 	INT_CMConnection_close(client->master_connection);
@@ -1428,6 +1430,7 @@ free_client(CManager cm, void *vclient)
 static void
 free_dfg(CManager cm, void *vdfg)
 {
+    (void)cm;
     EVdfg dfg = vdfg;
     int i;
     for (i=0; i < dfg->stone_count; i++) {
@@ -1554,6 +1557,7 @@ INT_EVmaster_create(CManager cm)
 static EVdfg_configuration
 new_dfg_configuration(EVdfg master)
 {
+    (void)master;
     EVdfg_configuration ret = malloc(sizeof(*ret));
     memset(ret, 0, sizeof(*ret));
     ret->stone_count = 0;
@@ -1953,6 +1957,7 @@ extern EVclient
 dfg_assoc_client(CManager cm, char* node_name, char *master_contact, EVmaster master,
 		 EVclient_sources source_capabilities, EVclient_sinks sink_capabilities)
 {
+    (void)source_capabilities; (void)sink_capabilities;
     event_path_data evp = cm->evp;
     attr_list master_attrs = NULL;
     CMConnection conn;
@@ -2147,6 +2152,7 @@ add_bridge_stones(EVdfg dfg, EVdfg_configuration config)
 static void
 add_unfreeze_actions(EVdfg dfg, EVdfg_configuration config)
 {
+    (void)dfg;
     int i;
     for (i=0; i< config->stone_count; i++) {
 	EVdfg_stone_state cur = config->stones[i];
@@ -2164,6 +2170,7 @@ add_unfreeze_actions(EVdfg dfg, EVdfg_configuration config)
 static void
 add_stone_to_deploy_msg(EVdfg_configuration config, EVdfg_deploy_msg *msg, EVdfg_stone_state dstone) 	    
 {
+    (void)config;
     deploy_msg_stone mstone;
     int k;
     msg->stone_list = realloc(msg->stone_list, (msg->stone_count +1) * sizeof(msg->stone_list[0]));
@@ -2479,6 +2486,7 @@ static void
 dfg_master_msg_handler(CManager cm, CMConnection conn, void *vmsg,
 		       void *client_data, attr_list attrs)
 {
+    (void)cm; (void)attrs;
     EVmaster master = (EVmaster)((uintptr_t)client_data & (~0x7));
     EVmaster_msg_type msg_type = (EVmaster_msg_type) ((uintptr_t)client_data & 0x7);
     queue_master_msg(master, vmsg, msg_type, conn, /*copy*/1);
