@@ -92,7 +92,8 @@ inline size_t GetDataTypeSize(const DataType type) noexcept
 }
 
 /** Return the total number of elements (product of dimensions) times elementSize. */
-inline size_t GetTotalSize(const Dims &dimensions, const size_t elementSize = 1) noexcept
+template <typename T>
+inline size_t GetTotalSize(const std::vector<T> &dimensions, const size_t elementSize = 1) noexcept
 {
     return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
                            std::multiplies<size_t>());
