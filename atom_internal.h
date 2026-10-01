@@ -17,6 +17,7 @@ extern char *atl_http_server_url;
 extern int http_set_string_and_atom(const char *str, atom_t atom);
 extern atom_t http_atom_from_string(const char *str);
 extern char *http_string_from_atom(atom_t atom);
+extern void http_atom_client_after_fork(void);
 #ifdef __cplusplus
 }
 #endif
