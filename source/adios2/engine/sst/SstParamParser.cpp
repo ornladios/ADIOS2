@@ -156,31 +156,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params,
         return false;
     };
 
-    auto lf_SetCPCommPatternParameter = [&](const std::string key, size_t &parameter) {
-        auto itKey = io.m_Parameters.find(key);
-        if (itKey != io.m_Parameters.end())
-        {
-            std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
-            if (method == "min")
-            {
-                parameter = SstCPCommMin;
-            }
-            else if (method == "peer")
-            {
-                parameter = SstCPCommPeer;
-            }
-            else
-            {
-                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
-                                                     "Unknown Sst CPCommPattern parameter \"" +
-                                                         method + "\"");
-            }
-            return true;
-        }
-        return false;
-    };
-
     auto lf_SetQueueFullPolicyParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())

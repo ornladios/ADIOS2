@@ -181,24 +181,9 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         }
         free(SelectedTransport);
     }
-    Stream->ConnectionUsleepMultiplier = 50;
-    if ((strcmp(Params->ControlTransport, "enet") == 0) && getenv("USLEEP_MULTIPLIER"))
-    {
-        sscanf("%d", getenv("USLEEP_MULTIPLIER"), &Stream->ConnectionUsleepMultiplier);
-    }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
         Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
-    }
-    if ((strcmp(Params->ControlTransport, "enet") == 0) && getenv("USLEEP_MULTIPLIER"))
-    {
-        int tmp;
-        if (sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &tmp) == 1)
-        {
-            Stream->ConnectionUsleepMultiplier = tmp;
-        }
-        CP_verbose(Stream, PerStepVerbose, "USING %d as usleep multiplier before connections\n",
-                   Stream->ConnectionUsleepMultiplier);
     }
     CP_verbose(Stream, PerStepVerbose, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
@@ -246,7 +231,6 @@ static char *SstRegStr[] = {"File", "Screen", "Cloud"};
 static char *SstMarshalStr[] = {"FFS", "BP", "BP5"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
-static char *SstCommPatternStr[] = {"Min", "Peer"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin", "StepsOnDemand"};
 
@@ -280,7 +264,6 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int Reade
     {
         fprintf(stderr, "Param -   CompressionMethod=%s\n",
                 SstCompressStr[Params->CompressionMethod]);
-        fprintf(stderr, "Param -   CPCommPattern=%s\n", SstCommPatternStr[Params->CPCommPattern]);
         fprintf(stderr, "Param -   MarshalMethod=%s\n", SstMarshalStr[Params->MarshalMethod]);
         fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
@@ -557,16 +540,6 @@ static FMField CommPatternLockedList[] = {
 static FMStructDescRec CommPatternLockedStructs[] = {
     {"CommPatternLocked", CommPatternLockedList, sizeof(struct _CommPatternLockedMsg), NULL},
     {NULL, NULL, 0, NULL}};
-
-static FMField PeerSetupList[] = {
-    {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _PeerSetupMsg *, RS_Stream)},
-    {"WriterRank", "integer", sizeof(int), FMOffset(struct _PeerSetupMsg *, WriterRank)},
-    {"WriterCohortSize", "integer", sizeof(int),
-     FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec PeerSetupStructs[] = {
-    {"PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg), NULL}, {NULL, NULL, 0, NULL}};
 
 static FMField ReaderActivateList[] = {
     {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
@@ -916,9 +889,6 @@ static void FreeCustomStructs(CP_StructList *List)
 
 static void doPrelimCMFormatRegistration(CP_GlobalCMInfo CPInfo)
 {
-    CPInfo->PeerSetupFormat = CMregister_format(CPInfo->cm, PeerSetupStructs);
-    CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
-
     CPInfo->DPQueryFormat = CMregister_format(CPInfo->cm, CP_DPQueryStructs);
     CMregister_handler(CPInfo->DPQueryFormat, CP_DPQueryHandler, NULL);
     CPInfo->DPQueryResponseFormat = CMregister_format(CPInfo->cm, CP_DPQueryResponseStructs);
@@ -1178,10 +1148,6 @@ extern void SstStreamDestroy(SstStream Stream)
                 free(Stream->Readers[i]->Connections);
                 Stream->Readers[i]->Connections = NULL;
             }
-            if (Stream->Readers[i]->Peers)
-            {
-                free(Stream->Readers[i]->Peers);
-            }
             // Stream->Readers[i] is free'd in LastCall
         }
         Stream->ReaderCount = 0;
@@ -1233,7 +1199,6 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->ConnectionsToWriter);
             Stream->ConnectionsToWriter = NULL;
         }
-        free(Stream->Peers);
         if (Stream->RanksRead)
             free(Stream->RanksRead);
     }
@@ -1487,94 +1452,6 @@ static SMPI_Comm CP_getMPIComm(SstStream Stream);
 
 struct _CP_Services Svcs = {(CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
                             (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
-
-static int *PeerArray(int MySize, int MyRank, int PeerSize)
-{
-    int PortionSize = PeerSize / MySize;
-    int Leftovers = PeerSize - PortionSize * MySize;
-    int StartOffset = Leftovers;
-    int Start;
-    if (MyRank < Leftovers)
-    {
-        PortionSize++;
-        StartOffset = 0;
-    }
-    Start = PortionSize * MyRank + StartOffset;
-    int *MyPeers = malloc((PortionSize + 1) * sizeof(int));
-    for (int i = 0; i < PortionSize; i++)
-    {
-        MyPeers[i] = Start + i;
-    }
-    MyPeers[PortionSize] = -1;
-
-    return MyPeers;
-}
-
-static int *reversePeerArray(int MySize, int MyRank, int PeerSize, int *forward_entry)
-{
-    int PeerCount = 0;
-    int *ReversePeers = malloc(sizeof(int));
-
-    *forward_entry = -1;
-    for (int i = 0; i < PeerSize; i++)
-    {
-        int *their_peers = PeerArray(PeerSize, i, MySize);
-        int j;
-        j = 0;
-        while (their_peers[j] != -1)
-        {
-            if (their_peers[j] == MyRank)
-            {
-                ReversePeers = realloc(ReversePeers, (PeerCount + 2) * sizeof(int));
-                ReversePeers[PeerCount] = i;
-                PeerCount++;
-                if (j == 0)
-                    *forward_entry = i;
-            }
-            j++;
-        }
-        free(their_peers);
-    }
-    ReversePeers[PeerCount] = -1;
-    return ReversePeers;
-}
-
-extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
-                          int **reverseArray)
-{
-    if (MySize < PeerSize)
-    {
-        /* more of them than me.  I will have at least one entry in my forward
-         * array. */
-        *forwardArray = PeerArray(MySize, MyRank, PeerSize);
-        /* all need to be notified, but I'm only the forward peer to one of them
-         * (the first), so send reverse peer entry only to zeroth entry */
-        if (reverseArray)
-        {
-            *reverseArray = malloc(sizeof(int) * 2);
-            (*reverseArray)[0] = (*forwardArray)[0];
-            (*reverseArray)[1] = -1;
-        }
-    }
-    else
-    {
-        /* More of me than of them, there may be 0 or 1 entries in my forward
-         * array, but there must be one opposing peer that I should notify so
-         * that I am in his forward array */
-        int *reverse;
-        *forwardArray = malloc(sizeof(int) * 2);
-        (*forwardArray)[1] = -1;
-        reverse = reversePeerArray(MySize, MyRank, PeerSize, &((*forwardArray)[0]));
-        if (reverseArray)
-        {
-            *reverseArray = reverse;
-        }
-        else
-        {
-            free(reverse);
-        }
-    }
-}
 
 static void DP_verbose(SstStream s, int Level, char *Format, ...)
 {

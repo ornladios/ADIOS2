@@ -44,16 +44,17 @@
 
 # (I.E. things with _CMD strings defined like above) and creates a new
 # set of tests where a specified engine parameter gets added to the in
-# the location of the WENGINE_PARAMS string.  MutateTestSet takes 4 parameters:
-# output_test_list, param_name, param_spec, and input test list.  For example
-# MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
+# the location of the WENGINE_PARAMS string.  MutateTestSet takes 5 parameters:
+# output_test_list, param_name, participant, param_spec, and input test list.
+# For example
+# MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${BASIC_SST_TESTS}" )
 # If BASIC_SST_TESTS contains "1x1" as defined above, MutateTestSet
-# will add the test "1x1.CommMin", by defining the variable
-# 1x1.CommMin_CMD, using the original value of 1x1_CMD buth with
-# "CPCommPattern=Min: added to the WENGINE_PARAMS location (if
+# will add the test "1x1.BP5", by defining the variable
+# 1x1.BP5_CMD, using the original value of 1x1_CMD but with
+# "MarshalMethod=BP5" added to the WENGINE_PARAMS location (if
 # present).  Any 1x1_TIMEOUT and 1x1_PROPERTIES values will also be
-# propogated to 1x1.CommMin_TIMEOUT and 1x1.CommMin_PROPERTIES.
-# "1x1.CommMin" will also be added to the output test list.
+# propogated to 1x1.BP5_TIMEOUT and 1x1.BP5_PROPERTIES.
+# "1x1.BP5" will also be added to the output test list.
 # 
 # Note that MutateTestSet() can be used multiple times to add multiple
 # engine params.  The WENGINE_PARAMS string is retained in the
