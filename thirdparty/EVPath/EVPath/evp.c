@@ -987,6 +987,7 @@ extern void
 INT_EVassoc_conversion_action(CManager cm, int stone_id, int stage, 
 			      FMFormat target_format, FMFormat incoming_format)
 {
+    (void)stage;
     response_cache_element *act;
     stone_type stone;
     int a;
@@ -1033,6 +1034,7 @@ int
 INT_EVaction_set_output(CManager cm, EVstone stone_num, EVaction act_num, 
 		    int output_index, EVstone output_stone)
 {
+    (void)act_num;
     return INT_EVstone_set_output(cm, stone_num, output_index, output_stone);
 }
 
@@ -1076,6 +1078,7 @@ static action_class cached_stage_for_action(proto_action*);
 static int
 check_response_cache(CManager cm, stone_type stone, action_class stage, event_item *event)
 {
+    (void)cm;
     int i;
     for (i=0; i < stone->response_cache_count; i++) {
 //	CMtrace_out(cm, EVerbose, "Response cache %d reference_format is %p (%s), Type %s, stage is %d, requires_decoded is %d\n", i, 
@@ -1116,6 +1119,7 @@ check_response_cache(CManager cm, stone_type stone, action_class stage, event_it
 static int
 determine_action(CManager cm, stone_type stone, action_class stage, event_item *event, int recursed_already)
 {
+    (void)recursed_already;
     int return_response;
     if (event->reference_format == NULL) {
 	CMtrace_out(cm, EVerbose, "Call to determine_action, event reference_format is NULL\n");
@@ -1495,7 +1499,6 @@ fdump_stone(FILE* out, stone_type stone)
 	    stone->local_id, stone, stone->default_action);
     fprintf(out, "       Target Stones:");
     {
-	int i;
 	for(i = 0; i < stone->output_count; i++) {
 	    if (i != stone->output_count - 1) {
 		fprintf(out, " %d,", stone->output_stone_ids[i]);
@@ -1635,6 +1638,7 @@ push_activation_record_on_stack(CManager cm, ev_handler_activation_ptr rec)
 static void
 pop_activation_record_from_stack(CManager cm, ev_handler_activation_ptr rec)
 {
+    (void)rec;
     event_path_data evp = cm->evp;
     ev_handler_activation_ptr tmp;
     thr_thread_id self = thr_thread_self();
@@ -1853,7 +1857,7 @@ process_events_stone(CManager cm, int s, action_class c)
 			free(tmp);
 		    } else {
 			queue_item *tmp = cm->evp->current_event_list;
-			queue_item *last;
+			queue_item *last = NULL;
 			while(tmp->item != event) {
 			    last = tmp;
 			    tmp = tmp->next;
@@ -2628,6 +2632,7 @@ extern int
 INT_EVaction_add_split_target(CManager cm, EVstone stone_num, 
 			  EVaction action_num, EVstone new_stone_target)
 {
+    (void)action_num;
     return INT_EVstone_add_split_target(cm, stone_num, new_stone_target);
 }
 
@@ -2658,6 +2663,7 @@ extern void
 INT_EVaction_remove_split_target(CManager cm, EVstone stone_num, 
 			  EVaction action_num, EVstone stone_target)
 {
+    (void)action_num;
     INT_EVstone_remove_split_target(cm, stone_num, stone_target);
 }
 
@@ -3345,6 +3351,7 @@ internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf,
 
 static void free_ioBuffer(void *event_data, void *client_data)
 {
+    (void)event_data;
     free_FFSBuffer((FFSBuffer) client_data);
 }    
 

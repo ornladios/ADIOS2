@@ -86,9 +86,33 @@ add_transport_to_cm(CManager cm, transport_entry transport)
     return transport;
 }
 
+#if NO_DYNAMIC_LINKING
+extern transport_entry cmsockets_add_static_transport(CManager cm, CMtrans_services svc);
+extern transport_entry cmudp_add_static_transport(CManager cm, CMtrans_services svc);
+#ifdef EVPATH_HAS_NNTI
+extern transport_entry cmnnti_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#ifdef EVPATH_HAS_LIBFABRIC
+extern transport_entry cmfabric_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#ifdef EVPATH_HAS_IB
+extern transport_entry cmib_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#ifdef EVPATH_HAS_ENET
+extern transport_entry cmenet_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#ifdef EVPATH_HAS_ZPL_ENET
+extern transport_entry cmzplenet_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#ifdef EVPATH_HAS_UDT4
+extern transport_entry cmudt4_add_static_transport(CManager cm, CMtrans_services svc);
+#endif
+#endif
+
 int
 load_transport(CManager cm, const char *trans_name, int quiet)
 {
+    (void)quiet;
     transport_entry *trans_list = global_transports;
     transport_entry transport = NULL;
     int i = 0;
@@ -196,9 +220,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     free(transport_to_free);	/* returned transport is a copy */
 #else
     if (strcmp(trans_name, "sockets") == 0) {
-	extern transport_entry cmsockets_add_static_transport(CManager cm,
-							      CMtrans_services
-							      svc);
 	transport =
 	    cmsockets_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
@@ -208,9 +229,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
     if (strcmp(trans_name, "udp") == 0) {
-	extern transport_entry cmudp_add_static_transport(CManager cm,
-							  CMtrans_services
-							  svc);
 	transport = cmudp_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */
@@ -220,9 +238,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     }
 #ifdef EVPATH_HAS_NNTI
     if (strcmp(trans_name, "nnti") == 0) {
-	extern transport_entry cmnnti_add_static_transport(CManager cm,
-							   CMtrans_services
-							   svc);
 	transport = cmnnti_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */
@@ -233,9 +248,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 #endif
 #ifdef EVPATH_HAS_LIBFABRIC
     if (strcmp(trans_name, "fabric") == 0) {
-	extern transport_entry cmfabric_add_static_transport(CManager cm,
-							     CMtrans_services
-							     svc);
 	transport =
 	    cmfabric_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
@@ -247,9 +259,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 #endif
 #ifdef EVPATH_HAS_IB
     if (strcmp(trans_name, "ib") == 0) {
-	extern transport_entry cmib_add_static_transport(CManager cm,
-							 CMtrans_services
-							 svc);
 	transport = cmib_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */
@@ -260,9 +269,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 #endif
 #ifdef EVPATH_HAS_ENET
     if (strcmp(trans_name, "enet") == 0) {
-	extern transport_entry cmenet_add_static_transport(CManager cm,
-							   CMtrans_services
-							   svc);
 	transport = cmenet_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */
@@ -273,9 +279,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 #endif
 #ifdef EVPATH_HAS_ZPL_ENET
     if (strcmp(trans_name, "zplenet") == 0) {
-	extern transport_entry cmzplenet_add_static_transport(CManager cm,
-							   CMtrans_services
-							   svc);
 	transport = cmzplenet_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */
@@ -286,9 +289,6 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 #endif
 #ifdef EVPATH_HAS_UDT4
     if (strcmp(trans_name, "udt4") == 0) {
-	extern transport_entry cmudt4_add_static_transport(CManager cm,
-							   CMtrans_services
-							   svc);
 	transport = cmudt4_add_static_transport(cm, &CMstatic_trans_svcs);
 	transport->data_available = CMDataAvailable;	/* callback
 							 * pointer */

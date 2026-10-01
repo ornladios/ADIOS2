@@ -245,6 +245,7 @@ check_host(char *hostname, void *sin_addr)
 static int
 initiate_udp_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr udp_conn_data, attr_list conn_attr_list)
 {
+    (void)conn_attr_list;
     int int_port_num;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
     char *host_name;
@@ -321,7 +322,7 @@ initiate_udp_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr
 	}
     }
     dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(int_port_num);
+    dest_addr.sin_port = htons((u_short)int_port_num);
 
     svc->trace_out(cm, "--> Connection established");
 
@@ -487,6 +488,7 @@ libcmudp_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans
 extern int
 libcmudp_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr ucd)
 {
+    (void)trans;
 
     int int_port_num;
     int requested_IP = -1;
@@ -557,7 +559,7 @@ libcmudp_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_en
 	perror("socket");
 	exit(1);
     }
-    port_num = int_port_num;
+    port_num = (u_short)int_port_num;
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -620,6 +622,7 @@ struct iovec {
 extern void *
 libcmudp_LTX_read_block_func(CMtrans_services svc, udp_conn_data_ptr ucd, size_t *actual_len, size_t *offset_ptr)
 {
+    (void)svc;
     *actual_len = ucd->read_buf_len;
     *offset_ptr = 0;
     ucd->read_buf_len = 0;
@@ -634,6 +637,7 @@ libcmudp_LTX_read_block_func(CMtrans_services svc, udp_conn_data_ptr ucd, size_t
 extern int
 libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iovec *iov, size_t iovcnt, attr_list attrs)
 {
+    (void)attrs;
     SOCKET fd = ucd->utd->socket_fd;
     if (ucd->utd->socket_fd == INVALID_SOCKET) {
 	if ((ucd->utd->socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
@@ -684,6 +688,7 @@ static WSADATA wsaData;
 static void
 free_udp_data(CManager cm, void *utdv)
 {
+    (void)cm;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) utdv;
     CMtrans_services svc = utd->svc;
     free_attr_list(utd->characteristics);
@@ -735,6 +740,7 @@ extern attr_list
 libcmudp_LTX_get_transport_characteristics(transport_entry trans, CMtrans_services svc,
 					   udp_transport_data_ptr utd)
 {
+    (void)trans; (void)svc;
     add_ref_attr_list(utd->characteristics);
     return utd->characteristics;
 }

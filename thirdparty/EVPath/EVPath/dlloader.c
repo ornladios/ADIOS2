@@ -21,6 +21,7 @@ static struct {
 
 void* dlopen(const char* filename, int flags)
 {
+    (void)flags;
     HINSTANCE hInst;
 
     hInst = LoadLibrary(filename);
@@ -107,6 +108,7 @@ CMset_dlopen_verbose(int verbose)
 void *
 CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
 {
+    (void)CMTrace_filev; (void)in_lib; (void)mode;
 #if NO_DYNAMIC_LINKING
     return NULL;
 #else
@@ -131,18 +133,18 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
     }
     char **list = search_list;
     while(list && (list[0] != NULL)) {
-        char *tmp = malloc(strlen(list[0]) + strlen(lib) + 2);
-	sprintf(tmp, "%s/%s", list[0], lib);
-	handle = dlopen(tmp, RTLD_LAZY);
+        char *path = malloc(strlen(list[0]) + strlen(lib) + 2);
+	sprintf(path, "%s/%s", list[0], lib);
+	handle = dlopen(path, RTLD_LAZY);
 	const char *err = dlerror();
 	if (dlopen_verbose) {
 	    if (err) {
-		fprintf(CMTrace_file, "Failed to dlopen %s, error is %s\n", tmp, err);
+		fprintf(CMTrace_file, "Failed to dlopen %s, error is %s\n", path, err);
 	    } else {
-		fprintf(CMTrace_file, "DLopen of %s succeeded\n", tmp);
+		fprintf(CMTrace_file, "DLopen of %s succeeded\n", path);
 	    }
 	}
-	free(tmp);
+	free(path);
  	list++;
 	if (handle) list = NULL; // fall out
     }
@@ -187,6 +189,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
 void*
 CMdlsym(void *vdlh, char *sym)
 {
+    (void)vdlh; (void)sym;
 #if NO_DYNAMIC_LINKING
     return NULL;
 #else
@@ -214,6 +217,7 @@ CMdlsym(void *vdlh, char *sym)
 void
 CMdlclose(void *vdlh)
 {
+    (void)vdlh;
 #if NO_DYNAMIC_LINKING
     return;
 #else

@@ -2595,6 +2595,7 @@ REVunstall_stone_handler(CManager cm, CMConnection conn, void *data,void *client
 static void
 REV_response_handler(CManager cm, CMConnection conn, void *data,void *client_data,attr_list attrs)
 {
+    (void)conn; (void)client_data; (void)attrs;
     EV_void_response *response = (EV_void_response*) data;
     void **response_ptr = CMCondition_get_client_data(cm, response->condition_var);
     if (NULL != response_ptr) {
@@ -2606,6 +2607,7 @@ REV_response_handler(CManager cm, CMConnection conn, void *data,void *client_dat
 static void
 REV_int_response_handler(CManager cm, CMConnection conn, void *data,void *client_data,attr_list attrs)
 {
+    (void)conn; (void)client_data; (void)attrs;
     EV_void_response *response = (EV_void_response*) data;
     void **response_ptr = CMCondition_get_client_data(cm, response->condition_var);
     if (NULL != response_ptr) {
@@ -2617,6 +2619,7 @@ REV_int_response_handler(CManager cm, CMConnection conn, void *data,void *client
 static void
 REV_string_response_handler(CManager cm, CMConnection conn, void *data,void *client_data,attr_list attrs)
 {
+    (void)conn; (void)client_data; (void)attrs;
     EV_string_response *response = (EV_string_response*) data;
     EV_string_response *stub_ptr = CMCondition_get_client_data(cm, response->condition_var);
     if (NULL != stub_ptr) {
@@ -2629,6 +2632,7 @@ REV_string_response_handler(CManager cm, CMConnection conn, void *data,void *cli
 static void
 REV_EVevent_list_response_handler(CManager cm, CMConnection conn, void *data,void *client_data,attr_list attrs)
 {
+    (void)conn; (void)client_data; (void)attrs;
     EV_EVevent_list_response *response = (EV_EVevent_list_response*) data;
     EV_EVevent_list_response *stub_ptr = CMCondition_get_client_data(cm, response->condition_var);
     if (NULL != stub_ptr) {

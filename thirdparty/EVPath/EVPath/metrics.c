@@ -94,6 +94,7 @@ char * skip_token (const char *p)
 
 int slurpfile(const char *filename, char *buffer, int buflen)
 {
+    (void)filename; (void)buffer; (void)buflen;
 #ifndef _MSC_VER
     int fd, read_len;
     fd = open(filename, O_RDONLY);
@@ -184,6 +185,7 @@ unsigned long total_jiffies_func ( void ) {
 
 void cpu_and_core_usage_func (double usage[])
 {
+    (void)usage;
 #ifndef _MSC_VER
    char *p;
    int n, numcores, i;

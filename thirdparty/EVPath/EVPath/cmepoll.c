@@ -430,6 +430,13 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 		increment_time(&this_periodic_task->next_time,
 			       this_periodic_task->period_sec,
 			       this_periodic_task->period_usec);
+		if (!timercmp(&this_periodic_task->next_time, &now, >)) {
+		    /* fell behind, skip missed periods rather than stay due forever */
+		    this_periodic_task->next_time = now;
+		    increment_time(&this_periodic_task->next_time,
+				   this_periodic_task->period_sec,
+				   this_periodic_task->period_usec);
+		}
 		if (this_periodic_task->executing == (thr_thread_t)-1) {
 		    this_periodic_task->executing = thr_thread_self();
 		    DROP_CM_LOCK(svc, sd->cm);
