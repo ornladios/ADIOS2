@@ -443,7 +443,6 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
                                          void **providedWriterInfo_v)
 {
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)RS_Stream_v;
-    FabricState Fabric = RS_Stream->Fabric;
     UcxWriterContactInfo *providedWriterInfo = (UcxWriterContactInfo *)providedWriterInfo_v;
 
     RS_Stream->PeerCohort = PeerCohort;
@@ -454,21 +453,27 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
      * make a copy of writer contact information (original will not be
      * preserved)
      */
-    RS_Stream->WriterContactInfo = malloc(sizeof(struct _UcxWriterContactInfo) * writerCohortSize);
+    RS_Stream->WriterContactInfo = calloc(writerCohortSize, sizeof(*RS_Stream->WriterContactInfo));
+    if (!RS_Stream->WriterEP || !RS_Stream->WriterContactInfo)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "Failed to allocate UCX writer contacts.\n");
+        return;
+    }
     for (int i = 0; i < writerCohortSize; i++)
     {
         RS_Stream->WriterContactInfo[i].WS_Stream = providedWriterInfo[i]->WS_Stream;
-        ucp_ep_params_t ep_params;
-        ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
-        ep_params.address = providedWriterInfo[i]->Address;
-        ucs_status_t status =
-            ucp_ep_create(Fabric->ucp_worker, &ep_params, &RS_Stream->WriterEP[i]);
-        if (status != UCS_OK)
+        RS_Stream->WriterContactInfo[i].Length = providedWriterInfo[i]->Length;
+        RS_Stream->WriterContactInfo[i].Address = malloc(providedWriterInfo[i]->Length);
+        if (RS_Stream->WriterContactInfo[i].Address)
+        {
+            memcpy(RS_Stream->WriterContactInfo[i].Address, providedWriterInfo[i]->Address,
+                   providedWriterInfo[i]->Length);
+        }
+        else
         {
             Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
-                          "UCX Error during ucp_ep_create() with: %s. Let's ignore for now, this "
-                          "point-to-point connection might not be needed.\n",
-                          ucs_status_string(status));
+                          "Failed to copy UCX address for Writer Rank %d.\n", i);
         }
         Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
@@ -482,6 +487,38 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)Stream_v;
     UcxBufferHandle Info = (UcxBufferHandle)DP_TimestepInfo;
     uint8_t *Addr;
+    /* SST calls remote reads from the main program thread.  Connect only to
+     * writers whose data is requested, rather than allocating an all-to-all
+     * set of queue pairs during contact exchange. */
+    if (Rank < 0 || Rank >= RS_Stream->WriterCohortSize ||
+        !RS_Stream->WriterContactInfo || !RS_Stream->WriterEP)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "Invalid UCX writer contact for Writer Rank %d.\n", Rank);
+        return NULL;
+    }
+    if (!RS_Stream->WriterEP[Rank])
+    {
+        if (!RS_Stream->WriterContactInfo[Rank].Address)
+        {
+            Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                          "Missing UCX address for Writer Rank %d.\n", Rank);
+            return NULL;
+        }
+        ucp_ep_params_t ep_params = {0};
+        ucp_ep_h ep = NULL;
+        ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
+        ep_params.address = RS_Stream->WriterContactInfo[Rank].Address;
+        ucs_status_t status = ucp_ep_create(RS_Stream->Fabric->ucp_worker, &ep_params, &ep);
+        if (status != UCS_OK)
+        {
+            Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                          "UCX Error connecting to Writer Rank %d: %s.\n", Rank,
+                          ucs_status_string(status));
+            return NULL;
+        }
+        RS_Stream->WriterEP[Rank] = ep;
+    }
     UcxCompletionHandle ret = malloc(sizeof(struct _UcxCompletionHandle));
 
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
@@ -566,6 +603,9 @@ static void UcxNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int Fa
  */
 static int UcxWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
+    /* Submission can fail before a completion handle is allocated. */
+    if (!Handle_v)
+        return 0;
     UcxCompletionHandle Handle = (UcxCompletionHandle)Handle_v;
     Ucx_RS_Stream Stream = Handle->CPStream;
     ucs_status_t status = UCS_ERR_LAST;
@@ -716,6 +756,33 @@ static void UcxDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)RS_Stream_v;
 
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on reader.\n");
+    for (int i = 0; i < RS_Stream->WriterCohortSize; i++)
+    {
+        if (RS_Stream->WriterEP && RS_Stream->WriterEP[i])
+        {
+            ucp_request_param_t param = {0};
+            ucs_status_ptr_t req = ucp_ep_close_nbx(RS_Stream->WriterEP[i], &param);
+            ucs_status_t status = UCS_PTR_STATUS(req);
+            if (UCS_PTR_IS_PTR(req))
+            {
+                do
+                {
+                    ucp_worker_progress(RS_Stream->Fabric->ucp_worker);
+                    status = ucp_request_check_status(req);
+                } while (status == UCS_INPROGRESS);
+                ucp_request_free(req);
+            }
+            if (status != UCS_OK)
+            {
+                Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                              "UCX Error closing Writer Rank %d endpoint: %s.\n", i,
+                              ucs_status_string(status));
+            }
+        }
+        if (RS_Stream->WriterContactInfo)
+            free(RS_Stream->WriterContactInfo[i].Address);
+    }
+    free(RS_Stream->WriterEP);
     if (RS_Stream->Fabric)
     {
         fini_fabric(RS_Stream->Fabric);
