@@ -169,12 +169,17 @@ applications running on different interconnects, the Wide Area Network
 Writer and Reader engines.
 
 7. ``WANDataTransport``: Default **sockets**.  If the SST
-**DataTransport** parameter is **"WAN**, this string value specifies
+**DataTransport** parameter is **"WAN"**, this string value specifies
 the EVPath-level data transport to use for exchanging data.  The value
-must be a data transport known to EVPath, such as **"sockets"**
-or **"ib"**.  Generally both the reader and writer should
-be using the same EVPath-level data transport.  This value is
-interpreted by both SST Writer and Reader engines.
+must be a data transport provided by the EVPath that ADIOS2 was built
+against.  The EVPath bundled with ADIOS2 provides only **"sockets"**,
+because its RDMA transports are disabled and its transports are
+compiled in rather than loaded at runtime.  Other transports, such as
+**"ib"**, are available only when building against an external EVPath
+(``ADIOS2_USE_EXTERNAL_EVPATH=ON``) that provides them.  Generally both
+the reader and writer should be using the same EVPath-level data
+transport.  This value is interpreted by both SST Writer and Reader
+engines.
 
 8. ``MercuryProtocol``: Default **"tcp"**.  If the SST **DataTransport**
 parameter is **"Mercury"**, this string value specifies the underlying
@@ -289,7 +294,7 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   QueueFullPolicy               string                **Block**, Discard
   ReserveQueueLimit             integer               **0** (no queue limits)
   DataTransport                 string                **default varies by platform**, UCX, MPI, RDMA, Mercury, WAN
-  WANDataTransport              string                **sockets**, ib
+  WANDataTransport              string                **sockets** (ib requires external EVPath)
   MercuryProtocol               string                **tcp**, cxi://, ofi+tcp, ofi+verbs, bmi+tcp, na+sm
   MarshalMethod                 string                **BP5**, BP, FFS
   NetworkInterface              string                **NULL**
