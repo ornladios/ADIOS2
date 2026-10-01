@@ -340,6 +340,9 @@ CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 	    length += 4;
 	} else {
 	    assert(0);
+	    internal_connection_close(conn);
+	    CManager_unlock(conn->cm);
+	    return 0;
 	}
     } else {
 	incoming_length = (int *)(buffer + used_length);

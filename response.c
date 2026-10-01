@@ -1427,6 +1427,7 @@ response_determination(CManager cm, stone_type stone, action_class stage, event_
 void
 response_data_free(CManager cm, void *resp_void)
 {
+    (void)cm;
     struct response_spec *resp = (struct response_spec*)resp_void;
     switch(resp->response_type) {
     case Response_Filter:
@@ -1580,6 +1581,7 @@ cod_max_output(cod_exec_context ec)
 static int
 cod_target_stone_on_port(cod_exec_context ec, int port, void *data, void *type_info, attr_list attrs)
 {
+    (void)data; (void)type_info; (void)attrs;
     struct ev_state_data *ev_state = (void*)cod_get_client_data(ec, 0x34567890);
     EVstone target_stone = port_to_stone(ev_state, port);
 

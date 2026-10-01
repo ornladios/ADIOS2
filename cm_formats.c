@@ -155,13 +155,13 @@ add_format_to_cm(CManager cm, CMFormat format)
 	    if (format->registration_pending) {
 		CMcomplete_format_registration(format, 0);
 		if (format->registration_pending) {
-		    int i = 0;
+		    int j = 0;
 		    /* if still pending, it's a duplicate format */
-		    for(i=0; i < cm->in_format_count; i++) {
-			if (cm->in_formats[i].format == format->ffsformat) {
+		    for(j=0; j < cm->in_format_count; j++) {
+			if (cm->in_formats[j].format == format->ffsformat) {
 			    free(format->format_name);
 			    free(format);
-			    return cm->in_formats[i].f2_format;
+			    return cm->in_formats[j].f2_format;
 			}
 		    }
 		    printf("Gack, duplicate format, but didn't find it\n");

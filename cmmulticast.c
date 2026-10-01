@@ -7,6 +7,7 @@
 #define FD_SETSIZE 1024
 #endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <ws2ipdef.h>
 #include <windows.h>
 #else
@@ -71,6 +72,9 @@
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
+#endif
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
 #endif
 
 typedef struct func_list_item {
@@ -210,12 +214,12 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	svc->trace_out(cm, "CMMulticast transport connect to mcast_IP %lx", mcast_ip);
     }
     if (mcast_ip == 0)
-	return -1;
+	return INVALID_SOCKET;
 
     if (!query_attr(attrs, CM_MCAST_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *) (intptr_t) &int_port_num)) {
 	svc->trace_out(cm, "CMMulticast transport found no MCAST_PORT attribute");
-	return -1;
+	return INVALID_SOCKET;
     } else {
 	svc->trace_out(cm, "CMMulticast transport connect to port %d", int_port_num);
     }
@@ -223,7 +227,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	perror("socket");
 	exit(1);
     }
-    port_num = int_port_num;
+    port_num = (u_short)int_port_num;
 
     get_qual_hostname(cm, my_host_name, sizeof(my_host_name) - 1, svc, NULL, NULL);
 
@@ -286,7 +290,7 @@ libcmmulticast_data_available(void *vtrans, void *vmcd)
     int nbytes;
     mcast_conn_data_ptr mcd = vmcd;
     struct sockaddr_in addr;
-    unsigned int addrlen = sizeof(addr);
+    socklen_t addrlen = sizeof(addr);
 
     char *msgbuf = &mcd->read_buffer[0];
     if ((nbytes = recvfrom(mcd->input_fd, msgbuf, MSGBUFSIZE, 0,
@@ -295,7 +299,7 @@ libcmmulticast_data_available(void *vtrans, void *vmcd)
 	exit(1);
     }
     if (mcd->my_addr.sin_port == 0) {
-	unsigned int nl;
+	socklen_t nl;
 	int IP = get_self_ip_addr(NULL, mcd->mtd->svc);
 	nl = sizeof(struct sockaddr_in);
 	if (getsockname(mcd->output_fd, (struct sockaddr *) &mcd->my_addr, &nl) != 0)
@@ -346,12 +350,14 @@ libcmmulticast_LTX_initiate_conn(CManager cm,CMtrans_services svc, transport_ent
 extern int
 libcmmulticast_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
+    (void)cm; (void)svc; (void)trans; (void)attrs;
     return 0;
 }
 
 extern int
 libcmmulticast_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, mcast_conn_data_ptr mcd)
 {
+    (void)trans;
 
     int int_port_num;
     int requested_IP = -1;
@@ -381,6 +387,7 @@ libcmmulticast_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_en
 extern attr_list
 libcmmulticast_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
+    (void)listen_info; (void)cm; (void)svc; (void)trans;
     /* meaningless in muticast */
     return NULL;
 }
@@ -405,6 +412,7 @@ struct iovec {
 extern void *
 libcmmulticast_LTX_read_func(CMtrans_services svc, mcast_conn_data_ptr mcd, int requested_len, int *actual_len)
 {
+    (void)svc;
     char *ret = &mcd->read_buffer[mcd->read_pointer];
     *actual_len = requested_len;
     mcd->read_pointer += requested_len;
@@ -422,6 +430,7 @@ libcmmulticast_LTX_read_func(CMtrans_services svc, mcast_conn_data_ptr mcd, int 
 extern int
 libcmmulticast_LTX_writev_func(CMtrans_services svc, mcast_conn_data_ptr mcd, struct iovec *iov, int iovcnt, attr_list attrs)
 {
+    (void)attrs; (void)iov;
     SOCKET fd = mcd->output_fd;
 #ifndef _MSC_VER
     // no real equivalent on windows
@@ -440,7 +449,7 @@ libcmmulticast_LTX_writev_func(CMtrans_services svc, mcast_conn_data_ptr mcd, st
     }
 #endif
     if (mcd->my_addr.sin_port == 0) {
-	unsigned int nl;
+	socklen_t nl;
 	int IP = get_self_ip_addr(NULL, svc);
 	nl = sizeof(struct sockaddr_in);
 	if (getsockname(fd, (struct sockaddr *) &mcd->my_addr, &nl) != 0)
@@ -462,6 +471,7 @@ static WSADATA wsaData;
 static void
 free_mcast_data(CManager cm, void *mtdv)
 {
+    (void)cm;
     multicast_transport_data_ptr mtd = (multicast_transport_data_ptr) mtdv;
     CMtrans_services svc = mtd->svc;
     svc->free_func(mtd);
