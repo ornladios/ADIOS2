@@ -33,8 +33,17 @@
 #pragma warning(disable: 4996)
 #endif
 
+#include <atomic>
+#include <condition_variable>
+#include <deque>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
+#include <utility>
+#ifdef HAVE_WINDOWS_H
+#include <process.h>
+#endif
 
 #include "atl.h"
 #include "atom_internal.h"
@@ -196,6 +205,91 @@ enter_atom_into_cache(atom_server as, send_get_atom_msg_ptr msg)
     return 1;
 }
 
+/*
+ * Registration with an HTTP atom server.  An atom's value is a hash of its
+ * string, so a process never needs the server to create one.  Registering
+ * only lets some other process translate the value back to text, which is
+ * rare, so atom_from_string must never wait on the network for it.
+ * Registrations are queued and sent from a background thread instead, and
+ * any still queued at exit are dropped.  All HTTP client calls hold
+ * http_lock, since the client keeps a single persistent connection.
+ *
+ * This state is per-process.  A forked child inherits copies of the locks,
+ * possibly held by a thread that doesn't exist in the child, so the child
+ * abandons (leaks) the parent's state and starts over.
+ */
+static long
+current_pid()
+{
+#ifdef HAVE_WINDOWS_H
+    return (long) _getpid();
+#else
+    return (long) getpid();
+#endif
+}
+
+struct http_client_state {
+    explicit http_client_state(long p) : pid(p) {}
+    long pid;
+    std::mutex http_lock;
+    std::mutex queue_lock;
+    std::condition_variable queue_cv;
+    std::deque<std::pair<std::string, atom_t> > queue;
+    bool sender_running = false;
+};
+
+static std::atomic<http_client_state *> http_state(NULL);
+
+static http_client_state *
+get_http_state()
+{
+    long pid = current_pid();
+    http_client_state *st = http_state.load();
+    while ((st == NULL) || (st->pid != pid)) {
+	http_client_state *fresh = new http_client_state(pid);
+	if (http_state.compare_exchange_strong(st, fresh)) {
+	    if (st != NULL) http_atom_client_after_fork();
+	    return fresh;
+	}
+	delete fresh;	/* lost a race, st now holds the winner */
+    }
+    return st;
+}
+
+static void
+http_sender(http_client_state *st)
+{
+    std::unique_lock<std::mutex> q(st->queue_lock);
+    for (;;) {
+	st->queue_cv.wait(q, [st] { return !st->queue.empty(); });
+	std::pair<std::string, atom_t> item = std::move(st->queue.front());
+	st->queue.pop_front();
+	q.unlock();
+	{
+	    std::lock_guard<std::mutex> h(st->http_lock);
+	    http_set_string_and_atom(item.first.c_str(), item.second);
+	}
+	q.lock();
+    }
+}
+
+static void
+queue_http_registration(const char *str, atom_t atom)
+{
+    http_client_state *st = get_http_state();
+    std::lock_guard<std::mutex> q(st->queue_lock);
+    if (!st->sender_running) {
+	try {
+	    std::thread(http_sender, st).detach();
+	} catch (...) {
+	    return;	/* registration is best-effort */
+	}
+	st->sender_running = true;
+    }
+    st->queue.emplace_back(str, atom);
+    st->queue_cv.notify_one();
+}
+
 /* Not declared in atl.h, but referenced by C translation units (atom_test.c,
  * evpath); keep C linkage so the symbol name stays unmangled. */
 extern "C" void
@@ -243,7 +337,7 @@ set_string_and_atom(atom_server as, char *str, atom_t atom)
     if (!is_new) return;
     /* HTTP mode - dispatch to http_atom_client */
     if (atl_http_server_url != NULL) {
-	http_set_string_and_atom(str, atom);
+	queue_http_registration(str, atom);
 	return;
     }
     snprintf((char *)&buf[1], MAXDATASIZE - 1, "A%d %s", atom, str);
@@ -430,7 +524,12 @@ string_from_atom(atom_server as, atom_t atom)
     if (it == as->value_hash_table.end()) {
 	/* HTTP mode - dispatch to http_atom_client */
 	if (atl_http_server_url != NULL) {
-	    char *str = http_string_from_atom(atom);
+	    http_client_state *st = get_http_state();
+	    char *str;
+	    {
+		std::lock_guard<std::mutex> h(st->http_lock);
+		str = http_string_from_atom(atom);
+	    }
 	    if (str) {
 		send_get_atom_msg tmp;
 		tmp.atom_string = str;
@@ -519,6 +618,8 @@ static const char *in_use_values[] = {
 "CM_CONN_BLOCKING",
 "CM_ENET_ADDR",
 "CM_ENET_HOST",
+"CM_ENET_CONN_REUSE",
+"CM_ENET_CONN_TIMEOUT",
 "CM_ENET_PORT",
 "CM_EVENT_SIZE",
 "CM_FD",
@@ -535,6 +636,7 @@ static const char *in_use_values[] = {
 "CM_TRANSPORT_RELIABLE",
 "CM_TRANS_MEGABITS_SEC",
 "CM_TRANS_TEST_DURATION_SECS",
+"CM_TRANS_TEST_NODE",
 "CM_TRANS_TEST_RECEIVED_COUNT",
 "CM_TRANS_TEST_REPEAT",
 "CM_TRANS_TEST_REUSE_WRITE_BUFFER",
@@ -554,12 +656,15 @@ static const char *in_use_values[] = {
 "EV_BACKPRESSURE_LOW",
 "EV_EVENT_COUNT",
 "EV_EVENT_LSUM",
+"EVP_STONE_NAME",
 "EventCount",
 "IP_ADDR",
 "IP_HOST",
+"IP_INTERFACE",
 "IP_PORT",
 "MCAST_ADDR",
 "MCAST_PORT",
+"NETWORK_POSTFIX",
 "NNTI_ADDR",
 "NNTI_ENET_CONTROL",
 "NNTI_IMMEDIATE_PULL_WAIT",
