@@ -490,8 +490,8 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
     /* SST calls remote reads from the main program thread.  Connect only to
      * writers whose data is requested, rather than allocating an all-to-all
      * set of queue pairs during contact exchange. */
-    if (Rank < 0 || Rank >= RS_Stream->WriterCohortSize ||
-        !RS_Stream->WriterContactInfo || !RS_Stream->WriterEP)
+    if (Rank < 0 || Rank >= RS_Stream->WriterCohortSize || !RS_Stream->WriterContactInfo ||
+        !RS_Stream->WriterEP)
     {
         Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
                       "Invalid UCX writer contact for Writer Rank %d.\n", Rank);

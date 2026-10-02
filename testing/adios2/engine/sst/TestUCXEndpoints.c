@@ -8,16 +8,17 @@
  * an RDMA device. Unused entry points are discarded with --gc-sections.
  */
 #include <sys/time.h>
+
 #include "adios2/toolkit/sst/dp/ucx_dp.c"
 
-#define CHECK(condition) \
-    do \
-    { \
-        if (!(condition)) \
-        { \
-            fprintf(stderr, "FAIL at line %d: %s\n", __LINE__, #condition); \
-            exit(1); \
-        } \
+#define CHECK(condition)                                                                           \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(condition))                                                                          \
+        {                                                                                          \
+            fprintf(stderr, "FAIL at line %d: %s\n", __LINE__, #condition);                        \
+            exit(1);                                                                               \
+        }                                                                                          \
     } while (0)
 
 static int creation_attempts;
@@ -37,7 +38,7 @@ static void quiet_verbose(void *stream, int level, char *format, ...)
 }
 
 ucs_status_t __wrap_ucp_ep_create(ucp_worker_h worker, const ucp_ep_params_t *params,
-                                ucp_ep_h *endpoint)
+                                  ucp_ep_h *endpoint)
 {
     (void)worker;
     creation_attempts++;
@@ -53,8 +54,7 @@ ucs_status_t __wrap_ucp_ep_create(ucp_worker_h worker, const ucp_ep_params_t *pa
     return UCS_OK;
 }
 
-ucs_status_t __wrap_ucp_ep_rkey_unpack(ucp_ep_h endpoint, const void *packed,
-                                     ucp_rkey_h *key)
+ucs_status_t __wrap_ucp_ep_rkey_unpack(ucp_ep_h endpoint, const void *packed, ucp_rkey_h *key)
 {
     (void)packed;
     (void)key;
@@ -87,7 +87,10 @@ void __wrap_ucp_cleanup(ucp_context_h context)
 
 int main(void)
 {
-    enum { writer_count = 2048 };
+    enum
+    {
+        writer_count = 2048
+    };
     struct _CP_Services services = {0};
     services.verbose = quiet_verbose;
     Ucx_RS_Stream stream = calloc(1, sizeof(*stream));
@@ -113,8 +116,7 @@ int main(void)
     struct _UcxBufferHandle info = {0};
     info.Block = buffer;
     info.rkey = "mock key";
-    void *handle = UcxReadRemoteMemory(&services, stream, 0, 0, 0,
-                                     sizeof(buffer), buffer, &info);
+    void *handle = UcxReadRemoteMemory(&services, stream, 0, 0, 0, sizeof(buffer), buffer, &info);
     CHECK(handle == NULL && unpack_attempts == 0);
     CHECK(stream->WriterEP[0] == NULL);
     CHECK(UcxWaitForCompletion(&services, handle) == 0);
