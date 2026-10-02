@@ -26,7 +26,6 @@ typedef struct _CP_GlobalCMInfo
     CMFormat ReaderRegisterFormat;
     CMFormat WriterResponseFormat;
     CMFormat DeliverTimestepMetadataFormat;
-    CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
     CMFormat ReaderRequestStepFormat;
     CMFormat ReleaseTimestepFormat;
@@ -113,7 +112,6 @@ typedef struct _WS_ReaderInfo
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
-    int *Peers;
     CP_PeerConnection *Connections;
 } *WS_ReaderInfo;
 
@@ -224,7 +222,6 @@ struct _SstStream
     struct _TimestepMetadataList *Timesteps;
     int WriterCohortSize;
     ssize_t ReaderTimestep;
-    int *Peers;
     CP_PeerConnection *ConnectionsToWriter;
     ssize_t FinalTimestep;
     ssize_t CurrentWorkingTimestep;
@@ -241,7 +238,6 @@ struct _SstStream
     ssize_t DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
     ssize_t LastDPNotifiedTimestep;
-    int FailureContactRank;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;
@@ -252,9 +248,6 @@ struct _SstStream
     ArrayBlocksInfoUpcallFunc ArrayBlocksInfoUpcall;
     void *SetupUpcallReader;
     void *ReaderMarshalData;
-
-    /* stream parameters */
-    int ConnectionUsleepMultiplier;
 };
 
 /*
@@ -378,17 +371,6 @@ struct _WriterResponseMsg
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
 };
-
-/*
- * The timestepMetadata message carries the metadata from all writer ranks.
- * One is sent to each reader.
- */
-typedef struct _PeerSetupMsg
-{
-    void *RS_Stream;
-    int WriterRank;
-    int WriterCohortSize;
-} *PeerSetupMsg;
 
 /*
  * The ReaderActivate message informs the writer that this reader is now ready
@@ -556,8 +538,6 @@ extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *msg_v
                                      attr_list attrs);
 extern void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
-                                attr_list attrs);
 extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
 extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *msg_v,
@@ -579,8 +559,6 @@ extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSMarshalInstallPreciousMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
 extern void FFSFreeMarshalData(SstStream Stream);
-extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
-                          int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
 extern CMConnection Tunneling_get_conn(CManager cm, attr_list attrs);
 

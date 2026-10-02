@@ -503,32 +503,10 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn, void *
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
-static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
-{
-    CMConnection conn = reader->Connections[reversePeer].CMconn;
-    SstStream Stream = reader->ParentStream;
-    struct _PeerSetupMsg setup;
-    memset(&setup, 0, sizeof(setup));
-    setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
-    setup.WriterRank = myRank;
-    setup.WriterCohortSize = Stream->CohortSize;
-    STREAM_ASSERT_UNLOCKED(Stream);
-    if (CMwrite(conn, Stream->CPInfo->SharedCM->PeerSetupFormat, &setup) != 1)
-    {
-        CP_verbose(Stream, CriticalVerbose,
-                   "Message failed to send to reader peer rank %d in sendPeerSetup in "
-                   "reader open\n",
-                   reversePeer);
-    }
-}
-
 static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo *reader_info)
 {
     SstStream Stream = reader->ParentStream;
-    int WriterSize = reader->ParentStream->CohortSize;
-    int WriterRank = reader->ParentStream->Rank;
     int i;
-    int *reverseArray;
     reader->ReaderCohortSize = ReaderSize;
     if (!reader->Connections)
     {
@@ -542,155 +520,27 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
         }
         reader->Connections[i].RemoteStreamID = reader_info[i]->ReaderID;
     }
-    if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+    /* Only writer rank 0 initiates a connection to the reader */
+    if (Stream->Rank == 0)
     {
-        /*
-         *   Peering.
-         *   We use peering for two things:
-         *     - failure awareness (each rank needs a close handler on one
-         connection to some opposite rank so they can detect failure)
-         *     - notification (how info gets sent from reader to writer and vice
-         versa)
-         *
-         *   A connection that exists for notification is also useful for
-         *   failure awareness, but where not are necessary for
-         *   notification, we still may make some for failure
-         *   notification.
-
-         *   In this code, all connections are made by the writing side,
-         *   but the reader side must be sent notifications so that it is
-         *   aware of what connections are made for it and what they are
-         *   to be used for (I.E. notification, or only existing passively
-         *   for failure notification).
-         *
-         *   Connections that are used for notification from writer to
-         *   reader will be in the Peer list and we'll send messages down
-         *   them later.  If there are many more writers than readers
-         *   (presumed normal case), the peer list will have 0 or 1
-         *   entries.  Connections in the reverseArray are for failure
-         *   awareness and/or notification from reader to writer.  If
-         *   there are many more readers than writers, the reverseArray
-         *   will have one entry (to the one reader that will send us
-         *   notifications and which we will use for failure awareness).
-
-         *   If there are equal numbers of readers and writers, then each
-         *   rank is peered only with the same rank in the opposing.
-
-         *   If there happen to be many more readers than writers, then
-         *   the Peer list will contain a lot of entries (all those that
-         *   get notifications from us.  The reverseArray will also
-         *   contain a lot of entries, but only the first will send us
-         *   notifications.  The others will just use the connections for
-         *   failure awareness.
-
-         */
-        getPeerArrays(WriterSize, WriterRank, ReaderSize, &reader->Peers, &reverseArray);
-
-        i = 0;
-        while (reverseArray[i] != -1)
+        if (!reader->Connections[0].CMconn)
         {
-            int peer = reverseArray[i];
-            if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
-                usleep(WriterRank * reader->ParentStream->ConnectionUsleepMultiplier);
-            if (!reader->Connections[peer].CMconn)
-            {
-                reader->Connections[peer].CMconn =
-                    Tunneling_get_conn(reader->ParentStream->CPInfo->SharedCM->cm,
-                                       reader->Connections[peer].ContactList);
-            }
-
-            if (!reader->Connections[peer].CMconn)
-            {
-                CP_error(reader->ParentStream, "Connection failed in "
-                                               "SstInitWSReader! Contact list "
-                                               "was:\n");
-                CP_error(reader->ParentStream, "%s\n",
-                         attr_list_to_string(reader->Connections[peer].ContactList));
-                /* fail the stream */
-                return 0;
-            }
-
-            CP_verbose(Stream, TraceVerbose,
-                       "Registering a close handler for connection %p, to peer %d\n",
-                       reader->Connections[peer].CMconn, peer);
-            CMconn_register_close_handler(reader->Connections[peer].CMconn, WriterConnCloseHandler,
-                                          (void *)reader);
-            if (i == 0)
-            {
-                /* failure awareness for reader rank */
-                CP_verbose(reader->ParentStream, TraceVerbose, "Sending peer setup to rank %d\n",
-                           peer);
-                SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
-            }
-            else
-            {
-                CP_verbose(reader->ParentStream, TraceVerbose, "Sending peer setup to rank %d\n",
-                           peer);
-                /* failure awareness for reader rank */
-                SendPeerSetupMsg(reader, peer, -1);
-            }
-            i++;
+            reader->Connections[0].CMconn = Tunneling_get_conn(
+                reader->ParentStream->CPInfo->SharedCM->cm, reader->Connections[0].ContactList);
         }
-        free(reverseArray);
-        i = 0;
-        while (reader->Peers[i] != -1)
+        if (!reader->Connections[0].CMconn)
         {
-            int peer = reader->Peers[i];
-            if (reader->Connections[peer].CMconn)
-            {
-                /* already made this above */
-                i++;
-                continue;
-            }
-            if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
-                usleep(WriterRank * reader->ParentStream->ConnectionUsleepMultiplier);
-            reader->Connections[peer].CMconn = Tunneling_get_conn(
-                reader->ParentStream->CPInfo->SharedCM->cm, reader->Connections[peer].ContactList);
-
-            if (!reader->Connections[peer].CMconn)
-            {
-                CP_error(reader->ParentStream, "Connection failed in "
-                                               "SstInitWSReader! Contact list "
-                                               "was:\n");
-                CP_error(reader->ParentStream, "%s\n",
-                         attr_list_to_string(reader->Connections[peer].ContactList));
-                /* fail the stream */
-                return 0;
-            }
-
-            CMconn_register_close_handler(reader->Connections[peer].CMconn, WriterConnCloseHandler,
-                                          (void *)reader);
-            /* failure awareness for reader rank */
-            CP_verbose(reader->ParentStream, TraceVerbose, "Sending peer setup to rank %d\n", peer);
-            SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
-            i++;
+            CP_error(reader->ParentStream, "Connection failed in "
+                                           "SstInitWSReader! Contact list "
+                                           "was:\n");
+            CP_error(reader->ParentStream, "%s\n",
+                     attr_list_to_string(reader->Connections[0].ContactList));
+            /* fail the stream */
+            return 0;
         }
-    }
-    else
-    {
-        /* Comm Minimum pattern only Writer rank 0 initiates a connection to
-         * Reader Peers */
-        if (Stream->Rank == 0)
-        {
-            if (!reader->Connections[0].CMconn)
-            {
-                reader->Connections[0].CMconn = Tunneling_get_conn(
-                    reader->ParentStream->CPInfo->SharedCM->cm, reader->Connections[0].ContactList);
-            }
-            if (!reader->Connections[0].CMconn)
-            {
-                CP_error(reader->ParentStream, "Connection failed in "
-                                               "SstInitWSReader! Contact list "
-                                               "was:\n");
-                CP_error(reader->ParentStream, "%s\n",
-                         attr_list_to_string(reader->Connections[0].ContactList));
-                /* fail the stream */
-                return 0;
-            }
 
-            CMconn_register_close_handler(reader->Connections[0].CMconn, WriterConnCloseHandler,
-                                          (void *)reader);
-        }
+        CMconn_register_close_handler(reader->Connections[0].CMconn, WriterConnCloseHandler,
+                                      (void *)reader);
     }
 
     return 1;
@@ -934,62 +784,28 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg, void **RS_StreamPtr)
 {
     SstStream Stream = CP_WSR_Stream->ParentStream;
-    int j = 0;
-
     STREAM_ASSERT_LOCKED(Stream);
-    if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+    if (Stream->Rank == 0)
     {
-        while (CP_WSR_Stream->Peers[j] != -1)
-        {
-            int peer = CP_WSR_Stream->Peers[j];
-            CMConnection conn = CP_WSR_Stream->Connections[peer].CMconn;
-            /* add the reader-rank-specific Stream identifier to each outgoing
-             * message */
-            *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-            CP_verbose(Stream, TraceVerbose, "Sending a message to reader %d (%p)\n", peer,
-                       (void *)*RS_StreamPtr);
+        int peer = 0;
+        CMConnection conn = CP_WSR_Stream->Connections[peer].CMconn;
+        /* add the reader-rank-specific Stream identifier to each outgoing
+         * message */
+        *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
+        CP_verbose(Stream, TraceVerbose, "Sending a message to reader %d (%p)\n", peer,
+                   (void *)*RS_StreamPtr);
 
-            if (conn)
-            {
-                int res;
-                STREAM_MUTEX_UNLOCK(Stream);
-                res = CMwrite(conn, f, Msg);
-                STREAM_MUTEX_LOCK(Stream);
-                if (res != 1)
-                {
-                    CP_verbose(Stream, PerStepVerbose, "Message failed to send to reader %d (%p)\n",
-                               peer, (void *)*RS_StreamPtr);
-                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
-                }
-            }
-            j++;
-        }
-    }
-    else
-    {
-        /* CommMin */
-        if (Stream->Rank == 0)
+        if (conn)
         {
-            int peer = 0;
-            CMConnection conn = CP_WSR_Stream->Connections[peer].CMconn;
-            /* add the reader-rank-specific Stream identifier to each outgoing
-             * message */
-            *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-            CP_verbose(Stream, TraceVerbose, "Sending a message to reader %d (%p)\n", peer,
-                       (void *)*RS_StreamPtr);
-
-            if (conn)
+            int res;
+            STREAM_MUTEX_UNLOCK(Stream);
+            res = CMwrite(conn, f, Msg);
+            STREAM_MUTEX_LOCK(Stream);
+            if (res != 1)
             {
-                int res;
-                STREAM_MUTEX_UNLOCK(Stream);
-                res = CMwrite(conn, f, Msg);
-                STREAM_MUTEX_LOCK(Stream);
-                if (res != 1)
-                {
-                    CP_verbose(Stream, PerStepVerbose, "Message failed to send to reader %d (%p)\n",
-                               peer, (void *)*RS_StreamPtr);
-                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
-                }
+                CP_verbose(Stream, PerStepVerbose, "Message failed to send to reader %d (%p)\n",
+                           peer, (void *)*RS_StreamPtr);
+                CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
             }
         }
     }
@@ -1348,22 +1164,14 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
             CP_error(Stream, "Potential reader registration failed\n");
             break;
         }
-        if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+        if (Stream->Rank == 0)
         {
             waitForReaderResponseAndSendQueued(reader);
-            SMPI_Barrier(Stream->mpiComm);
+            SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0, Stream->mpiComm);
         }
         else
         {
-            if (Stream->Rank == 0)
-            {
-                waitForReaderResponseAndSendQueued(reader);
-                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0, Stream->mpiComm);
-            }
-            else
-            {
-                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0, Stream->mpiComm);
-            }
+            SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0, Stream->mpiComm);
         }
         Stream->RendezvousReaderCount--;
     }
@@ -1526,17 +1334,13 @@ void SstWriterClose(SstStream Stream)
     usleep(100 * 1000);
     STREAM_MUTEX_LOCK(Stream);
 
-    if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) || (Stream->Rank == 0))
+    if (Stream->Rank == 0)
     {
         if (Stream->ReleaseCount > 0)
         {
-            if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
-            {
-                SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-                SMPI_Bcast(Stream->ReleaseList,
-                           Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)), SMPI_BYTE, 0,
-                           Stream->mpiComm);
-            }
+            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+            SMPI_Bcast(Stream->ReleaseList, Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)),
+                       SMPI_BYTE, 0, Stream->mpiComm);
             Stream->ReleaseCount = 0;
             free(Stream->ReleaseList);
             Stream->ReleaseList = NULL;
@@ -1582,63 +1386,54 @@ void SstWriterClose(SstStream Stream)
             }
             /* NEED TO HANDLE FAILURE HERE */
             STREAM_CONDITION_WAIT(Stream);
-            if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
+            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+            if (Stream->ReleaseCount > 0)
             {
-                SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-                if (Stream->ReleaseCount > 0)
-                {
-                    SMPI_Bcast(Stream->ReleaseList,
-                               Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)), SMPI_BYTE, 0,
-                               Stream->mpiComm);
-                    Stream->ReleaseCount = 0;
-                    free(Stream->ReleaseList);
-                    Stream->ReleaseList = NULL;
-                }
+                SMPI_Bcast(Stream->ReleaseList,
+                           Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)), SMPI_BYTE, 0,
+                           Stream->mpiComm);
+                Stream->ReleaseCount = 0;
+                free(Stream->ReleaseList);
+                Stream->ReleaseList = NULL;
             }
         }
-        if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
-        {
-            Stream->ReleaseCount = -1;
-            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-            Stream->ReleaseCount = 0;
-        }
+        Stream->ReleaseCount = -1;
+        SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+        Stream->ReleaseCount = 0;
     }
 
-    if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
+    if (Stream->Rank != 0)
     {
-        if (Stream->Rank != 0)
+        struct _ReturnMetadataInfo ReleaseData;
+        while (1)
         {
-            struct _ReturnMetadataInfo ReleaseData;
-            while (1)
+            SMPI_Bcast(&ReleaseData.ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+            if (ReleaseData.ReleaseCount == -1)
             {
-                SMPI_Bcast(&ReleaseData.ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-                if (ReleaseData.ReleaseCount == -1)
-                {
-                    break;
-                }
-                else if (ReleaseData.ReleaseCount > 0)
-                {
-                    ReleaseData.ReleaseList =
-                        malloc(ReleaseData.ReleaseCount * sizeof(*ReleaseData.ReleaseList));
-                    SMPI_Bcast(ReleaseData.ReleaseList,
-                               ReleaseData.ReleaseCount * sizeof(*ReleaseData.ReleaseList),
-                               SMPI_BYTE, 0, Stream->mpiComm);
-                    STREAM_MUTEX_UNLOCK(Stream);
-                    ProcessReleaseList(Stream, &ReleaseData);
-                    STREAM_MUTEX_LOCK(Stream);
-                    free(ReleaseData.ReleaseList);
-                    ReleaseData.ReleaseList = NULL;
-                }
+                break;
+            }
+            else if (ReleaseData.ReleaseCount > 0)
+            {
+                ReleaseData.ReleaseList =
+                    malloc(ReleaseData.ReleaseCount * sizeof(*ReleaseData.ReleaseList));
+                SMPI_Bcast(ReleaseData.ReleaseList,
+                           ReleaseData.ReleaseCount * sizeof(*ReleaseData.ReleaseList), SMPI_BYTE,
+                           0, Stream->mpiComm);
+                STREAM_MUTEX_UNLOCK(Stream);
+                ProcessReleaseList(Stream, &ReleaseData);
+                STREAM_MUTEX_LOCK(Stream);
+                free(ReleaseData.ReleaseList);
+                ReleaseData.ReleaseList = NULL;
             }
         }
-        /*
-         * if we're CommMin, getting here implies that Rank 0 has released all
-         * timesteps, other ranks can follow suit after barrier
-         */
-        STREAM_MUTEX_UNLOCK(Stream);
-        SMPI_Barrier(Stream->mpiComm);
-        STREAM_MUTEX_LOCK(Stream);
     }
+    /*
+     * getting here implies that Rank 0 has released all timesteps,
+     * other ranks can follow suit after barrier
+     */
+    STREAM_MUTEX_UNLOCK(Stream);
+    SMPI_Barrier(Stream->mpiComm);
+    STREAM_MUTEX_LOCK(Stream);
     STREAM_MUTEX_UNLOCK(Stream);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
@@ -1970,7 +1765,6 @@ Upon TimestepProvision:
 
         Distribute from rank 0:
                 this timestep discard decision.
-                if (not discard && not CommMin) aggregated metadata
                 release list
                 Waiting reader count
 
@@ -2026,8 +1820,7 @@ Arrival of ReleaseTimestep message:
         Decremement reference count on queueitem:
         update Reader LastReleased item
         notify DP of per-reader release
-        if (CommMin)
-           // must be rank 0
+        if (rank 0)
            add reader/TS pair to release-list to notify other writer ranks.
         QueueMaintenance
         UNLOCK
@@ -2236,7 +2029,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
 
     ProcessLockDefnsList(Stream, ReturnData);
 
-    if ((Stream->ConfigParams->CPCommPattern == SstCPCommMin) && (Stream->Rank != 0))
+    if (Stream->Rank != 0)
     {
         ProcessReleaseList(Stream, ReturnData);
     }
@@ -2294,28 +2087,21 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
             CP_error(Stream, "Potential reader registration failed\n");
             break;
         }
-        if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+        enum StreamStatus LocalStatus;
+        if (Stream->Rank == 0)
         {
             waitForReaderResponseAndSendQueued(reader);
+            STREAM_MUTEX_LOCK(Stream);
+            LocalStatus = reader->ReaderStatus;
+            STREAM_MUTEX_UNLOCK(Stream);
+            SMPI_Bcast(&LocalStatus, 1, SMPI_INT, 0, Stream->mpiComm);
         }
         else
         {
-            enum StreamStatus LocalStatus;
-            if (Stream->Rank == 0)
-            {
-                waitForReaderResponseAndSendQueued(reader);
-                STREAM_MUTEX_LOCK(Stream);
-                LocalStatus = reader->ReaderStatus;
-                STREAM_MUTEX_UNLOCK(Stream);
-                SMPI_Bcast(&LocalStatus, 1, SMPI_INT, 0, Stream->mpiComm);
-            }
-            else
-            {
-                SMPI_Bcast(&LocalStatus, 1, SMPI_INT, 0, Stream->mpiComm);
-                STREAM_MUTEX_LOCK(Stream);
-                reader->ReaderStatus = LocalStatus;
-                STREAM_MUTEX_UNLOCK(Stream);
-            }
+            SMPI_Bcast(&LocalStatus, 1, SMPI_INT, 0, Stream->mpiComm);
+            STREAM_MUTEX_LOCK(Stream);
+            reader->ReaderStatus = LocalStatus;
+            STREAM_MUTEX_UNLOCK(Stream);
         }
     }
     PERFSTUBS_TIMER_STOP(timerTS);
@@ -2530,10 +2316,6 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v, vo
                "Reader Request Step  message received "
                "for Stream %p.\n",
                CP_WSR_Stream);
-    if (CP_WSR_Stream->ParentStream->ConfigParams->CPCommPattern == SstCPCommPeer)
-    {
-        assert(0);
-    }
 
     STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
     CPTimestepList List = Stream->QueuedTimesteps;
@@ -2651,7 +2433,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn, void *Msg_
     /* decrement the reference count for the released timestep */
     CP_verbose(ParentStream, TraceVerbose, "Got the lock in release timestep\n");
     Reader->LastReleasedTimestep = Msg->Timestep;
-    if ((ParentStream->Rank == 0) && (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
+    if (ParentStream->Rank == 0)
     {
         ParentStream->ReleaseList =
             realloc(ParentStream->ReleaseList,

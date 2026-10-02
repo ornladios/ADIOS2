@@ -66,12 +66,6 @@ typedef enum
 
 typedef enum
 {
-    SstCPCommMin,
-    SstCPCommPeer
-} SstCPCommPattern;
-
-typedef enum
-{
     SstQueueFullBlock = 0,
     SstQueueFullDiscard = 1
 } SstQueueFullPolicy;
