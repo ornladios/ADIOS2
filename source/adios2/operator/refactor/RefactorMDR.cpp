@@ -21,6 +21,13 @@ namespace core
 namespace refactor
 {
 
+inline size_t MyGetTotalSize(const std::vector<mgard_x::SIZE> &dimensions,
+                             const size_t elementSize = 1) noexcept
+{
+    return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
+                           std::multiplies<size_t>());
+}
+
 RefactorMDR::RefactorMDR(const Params &parameters)
 : Operator("mdr", REFACTOR_MDR, "refactor", parameters)
 {
@@ -437,7 +444,7 @@ size_t RefactorMDR::ReconstructV1(const char *bufferIn, const size_t sizeIn, cha
                                 false);
 
     size_t refactoredSize =
-        helper::GetTotalSize(reconstructed_data.shape[0], helper::GetDataTypeSize(type));
+        MyGetTotalSize(reconstructed_data.shape[0], helper::GetDataTypeSize(type));
     assert(sizeOut == refactoredSize);
     std::memcpy(dataOut, reconstructed_data.data[0], sizeOut);
 
