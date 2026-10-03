@@ -1,0 +1,22 @@
+diff --git a/thirdparty/KWSys/adios2sys/CMakeLists.txt b/thirdparty/KWSys/adios2sys/CMakeLists.txt
+index bcb3b1795..0ffc13333 100644
+--- a/thirdparty/KWSys/adios2sys/CMakeLists.txt
++++ b/thirdparty/KWSys/adios2sys/CMakeLists.txt
+@@ -745,7 +745,7 @@ if(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
+     target_link_libraries(${KWSYS_TARGET_LINK} INTERFACE
+       ${KWSYS_TARGET_INTERFACE})
+     target_sources(${KWSYS_TARGET_LINK} INTERFACE
+-      $<TARGET_OBJECTS:${KWSYS_TARGET_OBJECT}>)
++      $<BUILD_INTERFACE:$<TARGET_OBJECTS:${KWSYS_TARGET_OBJECT}>>)
+     target_compile_features(${KWSYS_TARGET_OBJECT} PRIVATE ${KWSYS_CXX_COMPILE_FEATURES})
+     target_compile_features(${KWSYS_TARGET_INTERFACE} INTERFACE ${KWSYS_CXX_COMPILE_FEATURES})
+   else()
+@@ -848,7 +848,7 @@ if(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
+     target_link_libraries(${KWSYS_TARGET_C_LINK} INTERFACE
+       ${KWSYS_TARGET_C_INTERFACE})
+     target_sources(${KWSYS_TARGET_C_LINK} INTERFACE
+-      $<TARGET_OBJECTS:${KWSYS_TARGET_C_OBJECT}>)
++      $<BUILD_INTERFACE:$<TARGET_OBJECTS:${KWSYS_TARGET_C_OBJECT}>>)
+   else()
+     set(KWSYS_TARGET_C_INTERFACE ${KWSYS_NAMESPACE}_c)
+     set(KWSYS_TARGET_C_OBJECT ${KWSYS_NAMESPACE}_c)
