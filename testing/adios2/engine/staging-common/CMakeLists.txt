@@ -187,12 +187,12 @@ list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_M
 set (SST_SPECIFIC_TESTS  "")
 import_bp_test(WriteMemorySelectionRead 1 1)
 list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.1x1;3x5EarlyExit")
-list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3;OnDemandSingle.1x1")
+list (APPEND SST_SPECIFIC_TESTS  "1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3;OnDemandSingle.1x1")
 
 if (ADIOS2_HAVE_MPI)
   import_bp_test(WriteMemorySelectionRead 3 3)
   list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.3x3")
-  list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;3x5BiDir")
+  list (APPEND SST_SPECIFIC_TESTS  "2x1.LocalMultiblock;5x3.LocalMultiblock;3x5BiDir")
 endif()
 
 #
@@ -205,15 +205,7 @@ if(ADIOS2_HAVE_SST)
   list (REMOVE_ITEM BASIC_SST_TESTS 1x1.SpanMinMax)
 endif()
 
-
-#  For the moment, only test the default comm pattern (Min)
-MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
-#MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BASIC_SST_TESTS}" )
-
-# temporarily remove PreciousTimestep CommPeer tests
-list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
-
-MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${BASIC_SST_TESTS}" )
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)

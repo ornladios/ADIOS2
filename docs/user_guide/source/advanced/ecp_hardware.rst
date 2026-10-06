@@ -39,7 +39,7 @@ Examples of launching ADIOS2 SST unit tests using MPI DP:
   # setting the CMAKE variable `MPIEXEC_EXECUTABLE`.
 
   # Launch simple writer test instance
-  srun {PROJFLAGS } -N 1 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonWrite SST mpi_dp_test CPCommPattern=Min,MarshalMethod=BP5
+  srun {PROJFLAGS } -N 1 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonWrite SST mpi_dp_test MarshalMethod=BP5
 
   # On another terminal launch multiple instances of the Reader test
   srun {PROJFLAGS} -N 2 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonRead SST mpi_dp_test

@@ -111,10 +111,6 @@ cmake_dependent_option(ADIOS2_USE_EXTERNAL_DILL
   "Use an externally supplied DILL library" OFF
   "NOT ADIOS2_USE_EXTERNAL_FFS" ON
 )
-cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
-  "Use an externally supplied ENET library" OFF
-  "NOT ADIOS2_USE_EXTERNAL_EVPATH" ON
-)
 
 if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_ATL)
@@ -141,11 +137,6 @@ adios2_add_thirdparty_target(atl atl::atl)
 adios2_add_thirdparty_target(ffs ffs::ffs)
 
 if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
-  if(NOT ADIOS2_USE_EXTERNAL_ENET)
-    add_subdirectory(enet)
-  endif()
-  find_package(enet REQUIRED)
-
   add_subdirectory(EVPath)
 endif()
 find_package(EVPath REQUIRED)
