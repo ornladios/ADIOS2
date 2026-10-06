@@ -8,7 +8,10 @@ The ``Put`` and ``Get`` functions in the default file engine (BP5) and some stre
     Buffers allocated on the device with CUDA, HIP and SYCL are supported.
 
 If ADIOS2 is built without GPU support, only buffers allocated on the host are supported.
-When GPU support is enabled, the default behavior is for ADIOS2 to automatically detect where the buffer memory physically resides.
+When GPU support is enabled with CUDA or HIP backends, the default behavior is for ADIOS2 to automatically detect where the buffer memory physically resides.
+
+.. note::
+    When using the SYCL backend, automatic memory space detection is not supported. Users **must** manually specify the memory space using the ``SetMemorySpace`` function.
 
 Users can also provide information about where the buffer was allocated by using the ``SetMemorySpace`` function within each variable.
 
@@ -99,6 +102,9 @@ Underneath, ADIOS2 relies on the backend used at build time to transfer the data
 
 .. note::
     The SYCL backend in Kokkos can be used to run on Nvida, AMD and Intel GPUs, but we recommand using SYCL for Intel, HIP for AMD and CUDA for Nvidia.
+
+.. warning::
+    When using SYCL, automatic memory space detection is **not available**. You must use ``SetMemorySpace(adios2::MemorySpace::GPU)`` before any ``Put`` or ``Get`` operations with device buffers. Failing to do so will result in a runtime error.
 
 
 Kokkos applications
