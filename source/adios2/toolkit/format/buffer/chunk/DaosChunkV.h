@@ -118,8 +118,12 @@ private:
     daos_size_t m_BaseArrayOffset;
     profiling::JSONProfiler &m_Profiler; // not owned (engine-lifetime)
 
-    daos_size_t m_SubmittedHigh = 0;    // bytes submitted, this step
-    size_t m_LastSubmittedDataVIdx = 0; // exclusive cursor into DataV
+    daos_size_t m_SubmittedHigh = 0; // bytes submitted, this step
+    // Submit cursor: the first unsubmitted byte is m_SubmitInEntry bytes into
+    // DataV[m_SubmitIdx].  Byte-granular because the tail entry is submitted while
+    // its chunk is still open, and later copied Puts append to that same entry.
+    size_t m_SubmitIdx = 0;
+    size_t m_SubmitInEntry = 0;
     size_t m_LastSubmittedOffset =
         0; // byte offset (CurOffset) at last submission; trigger when pending >= chunk_size
 
@@ -134,15 +138,19 @@ private:
     };
     std::vector<std::unique_ptr<PendingSubmit>> m_Pending;
 
-    /** Submit DataV[firstIdx..lastIdx] (inclusive) as one async write
-     *  starting at m_BaseArrayOffset + m_SubmittedHigh; advance
-     *  m_SubmittedHigh by the total bytes submitted.  No-op if range is
-     *  empty. */
-    void SubmitRange(size_t firstIdx, size_t lastIdx);
+    /** Iovs for every byte at or after the submit cursor. */
+    std::vector<d_iov_t> PendingIovs() const;
 
-    /** Non-blocking poll: reap any events that have completed and free
-     *  the corresponding PendingSubmits.  Bounds m_Pending growth. */
-    void ReapCompleted();
+    /** Submit everything after the submit cursor as async writes starting at
+     *  m_BaseArrayOffset + m_SubmittedHigh, then advance the cursor to the end
+     *  of DataV and m_SubmittedHigh by the bytes submitted. */
+    void SubmitPending();
+
+    /** Reap completed events and free their PendingSubmits.  wait=false polls
+     *  once without blocking; wait=true blocks until m_Pending is empty.
+     *  Throws on the first per-event error, but only after finalizing every
+     *  event the poll returned. */
+    void Reap(bool wait, const char *caller);
 };
 
 } // namespace format
