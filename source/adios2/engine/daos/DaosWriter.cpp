@@ -243,7 +243,7 @@ void DaosWriter::WriteData(format::BufferV *Data)
         // iov per VecEntry in the SGL.  Same shape as DaosChunkV's async
         // submits, just synchronous and last.  Chunked into bounded
         // sub-writes to keep each Mercury bulk transfer small (mirrors
-        // DaosChunkV::SubmitRange); DAOS_WRITE_CHUNK_BYTES=0 (default)
+        // DaosChunkV::SubmitPending); DAOS_WRITE_CHUNK_BYTES=0 (default)
         // restores the single-write behavior for A/B testing.
         std::vector<d_iov_t> sgiovs;
         daos_size_t total = 0;
