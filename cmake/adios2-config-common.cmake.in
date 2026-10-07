@@ -88,7 +88,7 @@ endif()
 if(NOT @BUILD_SHARED_LIBS@)
   set(ADIOS2_HAVE_Blosc2 @ADIOS2_HAVE_Blosc2@)
   if(ADIOS2_HAVE_Blosc2)
-    find_dependency(Blosc2 2.10.1)
+    find_dependency(Blosc2 @ADIOS2_Blosc2_FIND_VERSION@)
   endif()
 
   set(ADIOS2_HAVE_BigWhoop @ADIOS2_HAVE_BigWhoop@)
