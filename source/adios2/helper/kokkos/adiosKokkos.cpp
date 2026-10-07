@@ -11,7 +11,6 @@
 #include "adios2/common/ADIOSMacros.h"
 
 #include <Kokkos_Core.hpp>
-#include <stdexcept>
 
 namespace
 {
@@ -98,11 +97,8 @@ bool IsGPUbuffer(const void *ptr)
         return true;
     }
 #endif
-#ifdef ADIOS2_HAVE_KOKKOS_SYCL
-    throw std::runtime_error("ADIOS2 cannot automatically detect memory space for SYCL "
-                             "buffers. Please manually specify the memory space when using "
-                             "SYCL backend.");
-#endif
+    // SYCL device pointers cannot be detected, so Detect means Host; device buffers need
+    // SetMemorySpace(GPU). Throwing here would reject every host buffer too.
     return false;
 }
 

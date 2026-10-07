@@ -11,7 +11,7 @@ If ADIOS2 is built without GPU support, only buffers allocated on the host are s
 When GPU support is enabled with CUDA or HIP backends, the default behavior is for ADIOS2 to automatically detect where the buffer memory physically resides.
 
 .. note::
-    When using the SYCL backend, automatic memory space detection is not supported. Users **must** manually specify the memory space using the ``SetMemorySpace`` function.
+    When using the SYCL backend, automatic memory space detection is not supported: buffers default to host memory, and device buffers **must** be declared with the ``SetMemorySpace`` function. Kokkos Views carry their memory space and need no declaration.
 
 Users can also provide information about where the buffer was allocated by using the ``SetMemorySpace`` function within each variable.
 
@@ -104,7 +104,7 @@ Underneath, ADIOS2 relies on the backend used at build time to transfer the data
     The SYCL backend in Kokkos can be used to run on Nvida, AMD and Intel GPUs, but we recommand using SYCL for Intel, HIP for AMD and CUDA for Nvidia.
 
 .. warning::
-    When using SYCL, automatic memory space detection is **not available**. You must use ``SetMemorySpace(adios2::MemorySpace::GPU)`` before any ``Put`` or ``Get`` operations with device buffers. Failing to do so will result in a runtime error.
+    When using SYCL, automatic memory space detection is **not available**. You must use ``SetMemorySpace(adios2::MemorySpace::GPU)`` before any ``Put`` or ``Get`` operations with device buffers. Otherwise the buffer is treated as host memory, which typically ends in a segmentation fault.
 
 
 Kokkos applications
