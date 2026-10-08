@@ -24,8 +24,6 @@ if(NOT TARGET adios2_core)
     list(APPEND _components MPI)
   endif()
 
-  find_package(ZeroMQ 4.1 QUIET)
-
   find_package(Kokkos 3.7 QUIET)
   if(Kokkos_FOUND AND DEFINED Kokkos_CXX_COMPILER)
     set(CMAKE_CXX_COMPILER "${Kokkos_CXX_COMPILER}")
