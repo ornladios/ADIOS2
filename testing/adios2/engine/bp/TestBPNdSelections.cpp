@@ -143,8 +143,7 @@ Case MakeCase(std::mt19937_64 &rng, size_t id)
     c.id = id;
     c.writerRowMajor = id & 1;
     c.readerRowMajor = (id >> 1) & 1;
-    // BP5 writer memory selections ignore a C++ IO's ColumnMajor ordering
-    const bool memSel = ((id >> 2) & 1) && c.writerRowMajor;
+    const bool memSel = (id >> 2) & 1;
     const size_t n = rnd(1, 4);
     c.shape.resize(n);
     for (auto &s : c.shape)
