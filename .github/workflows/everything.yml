@@ -510,7 +510,6 @@ jobs:
             echo "image_name=ghcr.io/ornladios/adios2-apptainer-sif-${target_branch}-${target_arch}" >> "$GITHUB_ENV"
             echo "timestamp=$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
             apptainer build --fakeroot \
-                --build-arg baseos=${{ matrix.baseos }} \
                 adios2-ci.sif \
                 ci-source/scripts/ci/images/spack/Apptainer.def
             ls -lah adios2-ci.sif

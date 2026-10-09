@@ -15,6 +15,7 @@
 #include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2sys/SystemTools.hxx"
 
+#include <filesystem>
 #include <limits>
 #include <stdexcept>
 #include <vector>
@@ -593,7 +594,7 @@ bool HDF5ReaderP::CheckRemote()
             {
                 m_KVCache.RemotePathHashMd5(RemoteName, m_Fingerprint);
             }
-            m_KVCache.SetLocalCacheFile(adios2sys::SystemTools::GetParentDirectory(m_Name) +
+            m_KVCache.SetLocalCacheFile(std::filesystem::path(m_Name).parent_path().string() +
                                         PathSeparator + "data");
         }
 #endif

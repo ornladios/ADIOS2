@@ -9,9 +9,9 @@
 
 #include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 #include <yaml-cpp/yaml.h>
 
+#include <filesystem>
 #include <ios>
 #include <iostream>
 #include <limits>
@@ -203,7 +203,7 @@ void TimeSeriesReader::InitParameters()
 
 void TimeSeriesReader::InitTransports()
 {
-    m_ATSFileDir = adios2sys::SystemTools::GetFilenamePath(m_Name);
+    m_ATSFileDir = std::filesystem::path(m_Name).parent_path().string();
     bool ret = CheckForFiles();
     if (m_OpenMode == Mode::ReadRandomAccess)
     {

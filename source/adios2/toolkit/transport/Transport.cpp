@@ -6,8 +6,8 @@
 
 #include "Transport.h"
 #include "adios2/core/CoreTypes.h"
-#include <adios2sys/SystemTools.hxx>
 #include <algorithm> // max
+#include <filesystem>
 #include <map>
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
@@ -166,7 +166,7 @@ void Transport::ProfilerStop(const std::string process) noexcept
 #if ADIOS2_ENABLE_DELAYED_WRITE
         if (process == "write")
         {
-            std::string fname = adios2sys::SystemTools::GetFilenameName(m_Name);
+            std::string fname = std::filesystem::path(m_Name).filename().string();
             std::replace(fname.begin(), fname.end(), '.', '_');
             double writeDelayFraction = GetWriteDelay(fname);
             m_Profiler.m_Timers.at(process).Pause(writeDelayFraction);
