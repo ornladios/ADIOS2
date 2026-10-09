@@ -38,8 +38,6 @@ option(ADIOS2_USE_EXTERNAL_XXHASH
 option(ADIOS2_USE_EXTERNAL_CLI11
   "Use an externally supplied CLI11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
-add_subdirectory(KWSys)
-
 add_subdirectory(perfstubs)
 adios2_add_thirdparty_target(perfstubs-interface perfstubs-interface)
 

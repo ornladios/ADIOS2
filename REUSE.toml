@@ -49,12 +49,6 @@ SPDX-FileCopyrightText = "2008 Google Inc."
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
-path = "thirdparty/KWSys/**"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2000-2016 Kitware, Inc. and Contributors"
-SPDX-License-Identifier = "BSD-3-Clause"
-
-[[annotations]]
 path = "thirdparty/nanobind/nanobind/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2022 Wenzel Jakob <wenzel.jakob@epfl.ch>"
@@ -103,7 +97,7 @@ SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/KWSys/CMakeLists.txt", "thirdparty/mingw-w64/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt", "thirdparty/xxhash/CMakeLists.txt"]
+path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/mingw-w64/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt", "thirdparty/xxhash/CMakeLists.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
