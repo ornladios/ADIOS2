@@ -21,6 +21,7 @@
 #include <daos.h>
 #include <daos_obj.h>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -135,6 +136,8 @@ private:
     std::vector<daos_obj_id_t> m_DataOids;
     /// Per-writer-rank open array handles (parallel to m_DataOids).
     std::vector<daos_handle_t> m_DataArrayHandles;
+    /// Per-writer-rank DAOS array chunk size (the dkey granularity), from open.
+    std::vector<daos_size_t> m_DataArrayChunk;
     void LoadDataOidsIndex();
     void OpenDataArrays();
     void CloseDataArrays();
@@ -241,24 +244,11 @@ private:
     void ReadObjectIDsFromFile();
     void OpenDAOSObjects();
 
-    /** Process the new metadata coming in (in UpdateBuffer)
-     *  @param newIdxSize: the size of the new content from Index Table
-     */
-    void ProcessMetadataForNewSteps(const size_t newIdxSize);
-
     /** Check the active status of the writer.
      *  @return true if writer is still active.
      *  It sets m_WriterIsActive.
      */
     bool CheckWriterActive();
-
-    /** Check for a step that is already in memory but haven't
-     * been processed yet.
-     *  @return true: if new step has been found and processed, false otherwise
-     *  Used by CheckForNewSteps() to get the next step from memory if there is
-     * one.
-     */
-    bool ProcessNextStepInMemory();
 
     /** Check for new steps withing timeout and only if writer is active.
      *  @return the status flag
@@ -287,14 +277,10 @@ private:
     void DoGetStructSync(VariableStruct &, void *);
     void DoGetStructDeferred(VariableStruct &, void *);
 
-    template <class T>
-    void ReadVariableBlocks(Variable<T> &variable);
-
     size_t DoSteps() const final;
 
     void DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const final;
 
-    uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
     bool m_WriterIsRowMajor = true;
 
@@ -324,15 +310,19 @@ private:
     /// format-ID bytes; install each unique ID exactly once for the
     /// lifetime of the reader.
     std::unordered_set<std::string> m_InstalledMetaMetaIDs;
-    /// SubRanges, when non-empty, lists the contiguous runs actually wanted
-    /// within [StartOffset, StartOffset+Length) as (relative offset, length)
-    /// pairs; fetching just those avoids reading the gaps of a strided
-    /// selection.  Empty means read the whole range.
-    std::pair<double, double> ReadData(const size_t WriterRank, const size_t Timestep,
-                                       const size_t StartOffset, const size_t Length,
-                                       char *Destination,
-                                       const std::vector<std::pair<size_t, size_t>> &SubRanges =
-                                           std::vector<std::pair<size_t, size_t>>());
+    /// Event queue for all data reads; created on first use and kept for the
+    /// engine's lifetime (daos_eq_create costs ~300 ms).
+    daos_handle_t m_ReadEQ{};
+    /// Per-rank budget of array chunks touched by reads in flight.
+    size_t m_ReadTokens = 256;
+    /// Threads that scatter staged runs and run FinalizeGet; never call DAOS.
+    size_t m_ReadCopyThreads = 1;
+    /// Span-sized scratch for requests not placed in app memory, kept across steps.
+    std::vector<std::unique_ptr<char[]>> m_ReadScratch;
+    size_t m_ReadScratchCap = 0;
+    /// Read-path timing totals, reported at Close under DAOS_THREAD_DEBUG.
+    double m_ReadPollWait = 0.0, m_ReadCopyBusy = 0.0, m_ReadGetsTime = 0.0;
+    size_t m_ReadGetsCalls = 0;
 
     struct WriterMapStruct
     {
@@ -348,8 +338,6 @@ private:
     std::vector<uint64_t> m_WriterMapIndex;
 
     void DestructorClose(bool Verbose) noexcept;
-
-    unsigned int m_Threads;
 
     void daos_handle_share(daos_handle_t *, int);
 };

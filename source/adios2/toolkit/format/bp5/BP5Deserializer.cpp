@@ -2610,12 +2610,11 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
-                                    ComputeSubRanges(VarRec->DimCount,
-                                                     &writer_meta_base->Count[StartDim],
-                                                     &intersectionstart[0], &intersectioncount[0],
-                                                     VB->m_ElementSize, m_ReaderIsRowMajor,
-                                                     StartOffsetInBlock, RR.ReadLength,
-                                                     RR.SubRanges);
+                                    ComputeSubRanges(
+                                        VarRec->DimCount, &writer_meta_base->Count[StartDim],
+                                        &intersectionstart[0], &intersectioncount[0],
+                                        VB->m_ElementSize, m_ReaderIsRowMajor, StartOffsetInBlock,
+                                        RR.ReadLength, RR.SubRanges);
                                     size_t DestOffset = 0;
                                     if (Req->MemSpace != MemorySpace::Host)
                                         RR.DirectToAppMemory = false;

@@ -12,10 +12,14 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <algorithm> // std::min
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <cstddef> // ptrdiff_t
 #include <cstdio>  // fprintf (DAOS_MD_DEBUG)
 #include <cstdlib> // getenv
 #include <cstring> // memcpy
+#include <deque>
 #include <errno.h>
 #include <exception> // std::exception (DAOS_MD_DEBUG)
 #include <fstream>
@@ -285,8 +289,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     if (WriterCount == 0)
     {
         helper::Throw<std::runtime_error>("Engine", "DaosReader", "DaosArrayReadMetadata",
-                                          "step " + std::to_string(Step) +
-                                              " reports zero writers");
+                                          "step " + std::to_string(Step) + " reports zero writers");
     }
 
     uint64_t *list_writer_mdsize = (uint64_t *)malloc(sizeof(uint64_t) * WriterCount);
@@ -738,397 +741,566 @@ void DaosReader::EndStep()
     }
 }
 
-std::pair<double, double>
-DaosReader::ReadData(const size_t WriterRank, const size_t Timestep, const size_t StartOffset,
-                     const size_t Length, char *Destination,
-                     const std::vector<std::pair<size_t, size_t>> &SubRanges)
+namespace
 {
-    /*
-     * Warning: this function is called by multiple threads
-     */
-    // Phase-1: each rank's data is contiguous in its own per-rank DAOS
-    // array, so the read offset is simply step_start + StartOffset.  The
-    // step_start was extracted from the rank's metadata-blob trailer in
-    // InstallMetadataForTimestep.
-    if (WriterRank >= m_DataArrayHandles.size())
-    {
-        helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                          "WriterRank " + std::to_string(WriterRank) +
-                                              " has no entry in OID index (size=" +
-                                              std::to_string(m_DataArrayHandles.size()) + ")");
-    }
-    auto it = m_RankStartDataPos.find(Timestep);
-    if (it == m_RankStartDataPos.end() || WriterRank >= it->second.size())
-    {
-        helper::Throw<std::runtime_error>(
-            "Engine", "DaosReader", "ReadData",
-            "missing step-start for Timestep=" + std::to_string(Timestep) +
-                " WriterRank=" + std::to_string(WriterRank));
-    }
-    daos_handle_t aoh = m_DataArrayHandles[WriterRank];
-    TP startRead = NOW();
-    size_t arrayOffset = it->second[WriterRank] + StartOffset;
+// One daos_array_read in flight.
+struct ReadOp
+{
+    daos_event_t ev;
+    daos_range_t rg;               // contiguous op
+    std::vector<daos_range_t> rgs; // strided batch
+    daos_array_iod_t iod;
+    d_iov_t iov;
+    d_sg_list_t sgl;
+    size_t req = 0;
+    size_t tokens = 0;
+    // Strided: runs [firstRun, endRun) arrive packed in stage, in range order.
+    size_t firstRun = 0, endRun = 0;
+    std::unique_ptr<char[]> stage;
+    size_t stageCap = 0;
+};
 
-    // Chunk large reads to bound Mercury bulk registration.  A single
-    // daos_array_read of the full per-rank blob (hundreds of MiB), issued
-    // concurrently by many reader threads (this function runs multi-threaded),
-    // exhausts Mercury's NA memory descriptors -> DER_NOMEM in hg_bulk_create.
-    // Reading in bounded pieces keeps each bulk transfer small.  IOR-DFS avoids
-    // the problem the same way (--dfs.chunk_size).  DAOS_READ_CHUNK_BYTES=0
-    // restores the single-read behavior (for A/B).
+// Array chunks (dkeys) that [off, off+len) touches; DAOS registers one bulk
+// buffer per chunk touched, so this is an op's cost against the budget.
+size_t ChunksSpanned(size_t off, size_t len, size_t chunk)
+{
+    return len ? (off + len - 1) / chunk - off / chunk + 1 : 0;
+}
+
+double Elapsed(std::chrono::steady_clock::time_point a, std::chrono::steady_clock::time_point b)
+{
+    return std::chrono::duration<double>(b - a).count();
+}
+} // namespace
+
+/*
+ * All DAOS reads of a step are issued from this one thread on one event queue.
+ * Reader threads each calling daos_array_read synchronously leak registrations
+ * until the node's pool is exhausted and the client double-frees (large reads at
+ * 4 threads abort every run of 16+ steps; the same reads from one thread never
+ * do), so concurrency comes from reads in flight instead of threads.
+ *
+ * In flight is bounded by m_ReadTokens, counted in array chunks touched -- the
+ * unit the registration pool is consumed in.  Contiguous requests are split into
+ * DAOS_READ_CHUNK_BYTES reads; strided ones into batches of runs bounded by
+ * bytes and by array span (a 16 MiB column-stripe batch can otherwise span a
+ * writer's whole block), each staged through its own contiguous buffer.
+ *
+ * The CPU work -- scattering staged runs and FinalizeGet's extraction -- runs on
+ * copy workers that never call DAOS, so it overlaps the reads instead of
+ * stalling the issuing thread.  A request is finalized once it is fully issued
+ * and every read of it has landed.
+ */
+void DaosReader::PerformGets()
+{
+    PERFSTUBS_SCOPED_TIMER("DaosReader::PerformGets");
+    using Clock = std::chrono::steady_clock;
+    const auto tStart = Clock::now();
+    size_t maxReadSize;
+    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(false, &maxReadSize);
+    const size_t nRequest = ReadRequests.size();
+
     static const size_t readChunk = []() -> size_t {
-        if (const char *e = std::getenv("DAOS_READ_CHUNK_BYTES"))
-            return static_cast<size_t>(std::strtoull(e, nullptr, 10));
-        return size_t{16} * 1024 * 1024; // 16 MiB default
+        const char *e = std::getenv("DAOS_READ_CHUNK_BYTES");
+        const size_t v = e ? static_cast<size_t>(std::strtoull(e, nullptr, 10)) : 0;
+        return v ? v : size_t{64} * 1024 * 1024;
     }();
-    const size_t step = (readChunk == 0) ? Length : readChunk;
-
-    /*
-     * Strided selection: fetch only the runs the deserializer identified rather
-     * than the bounding span.  A selection cutting across the fast dimension
-     * spans nearly the whole writer block, so reading the span moves roughly
-     * (span / wanted) times too much data -- for a column stripe of a
-     * row-decomposed write that is the block count, i.e. tens of times.
-     *
-     * Many ranges ride in ONE daos_array_read, so the transport builds one bulk
-     * handle per batch instead of one per run.  Batches are bounded by both
-     * range count and bytes because registered bytes in flight (threads x batch
-     * bytes) is what exhausts the NIC's registration pool -- and that pool is
-     * shared node-wide, not per process, so it is reached sooner the more ranks
-     * share a node.
-     *
-     * The destination is ONE contiguous staging buffer (sg_nr=1) that the runs
-     * are copied out of, not one iovec per run: a multi-segment sgl registers
-     * every segment separately, so registrations tracked the run count and the
-     * batching above bought RPC count only.  DAOS packs the ranges into the sgl
-     * in order regardless of how it is divided, so the wire transfer is
-     * identical and the cost is a memcpy of the wanted bytes.
-     *
-     * There is deliberately NO switch back to whole-span reads for a strided
-     * selection.  That is the configuration that exhausts the registration pool
-     * and aborts the reader, and an abort there takes the DAOS servers down with
-     * it, so it must not be reachable at runtime.  When SubRanges is empty the
-     * span IS the wanted data (a contiguous selection) and the loop below is the
-     * correct path -- that is the only way to get there.
-     */
-    // Staging decoupled the range count from the registration count -- a batch is
-    // one registration however many ranges it carries -- so the byte bound above
-    // is what should govern, and this is only a backstop on the size of the
-    // descriptor array.  It still has to stay under DAOS_ARRAY_LIST_IO_LIMIT
+    static const size_t batchBytesMax = []() -> size_t {
+        const char *e = std::getenv("DAOS_SUBRANGE_BATCH_BYTES");
+        const size_t v = e ? static_cast<size_t>(std::strtoull(e, nullptr, 10)) : 0;
+        return v ? v : size_t{16} * 1024 * 1024;
+    }();
+    static const size_t batchSpanChunks = []() -> size_t {
+        const char *e = std::getenv("DAOS_SUBRANGE_SPAN_CHUNKS");
+        const size_t v = e ? static_cast<size_t>(std::strtoull(e, nullptr, 10)) : 0;
+        return v ? v : 8;
+    }();
+    // Backstop on the descriptor array; must stay under DAOS_ARRAY_LIST_IO_LIMIT
     // (16384), which binds for ranges below DAOS_ARRAY_RG_LEN_THD (16 bytes).
-    //
-    // 0 means "no count limit" here, matching DAOS_READ_CHUNK_BYTES above.  It
-    // must not leave the batch empty: an empty batch yields arr_nr=0 with a NULL
-    // arr_rgs AND never advances i, i.e. an infinite loop of malformed reads.
-    static const size_t maxBatchRanges = []() -> size_t {
-        if (const char *e = std::getenv("DAOS_SUBRANGE_BATCH"))
-        {
-            const size_t v = static_cast<size_t>(std::strtoull(e, nullptr, 10));
-            return v == 0 ? std::numeric_limits<size_t>::max() : v;
-        }
-        return 1024;
+    constexpr size_t maxBatchRanges = 1024;
+    // Requests the deserializer cannot place in application memory read into a
+    // span-sized scratch buffer; this many may be open at once.  Four keep the
+    // copy workers busy on strided reads; each holds a span across steps.
+    static const size_t scratchSlots = []() -> size_t {
+        const char *e = std::getenv("DAOS_READ_SCRATCH_SLOTS");
+        const size_t v = e ? static_cast<size_t>(std::strtoull(e, nullptr, 10)) : 0;
+        return v ? v : 4;
     }();
 
-    // A/B switch for the staging buffer above: 0 scatters the read straight into
-    // Destination (sg_nr = run count), which is what exhausted the registration
-    // pool.  Measurement only -- delete once the staging form is confirmed.
-    static const bool stageSubRanges = []() -> bool {
-        const char *e = std::getenv("DAOS_SUBRANGE_STAGE");
-        return !(e && std::strtoll(e, nullptr, 10) == 0);
-    }();
-
-    if (!SubRanges.empty())
+    if (m_ReadEQ.cookie == 0)
     {
-        if (!Destination)
+        const int rc = daos_eq_create(&m_ReadEQ);
+        if (rc)
         {
-            helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                              "NULL destination for a strided read of " +
-                                                  std::to_string(SubRanges.size()) +
-                                                  " runs, WriterRank=" +
-                                                  std::to_string(WriterRank));
+            helper::Throw<std::runtime_error>("Engine", "DaosReader", "PerformGets",
+                                              "daos_eq_create failed rc=" + std::to_string(rc));
         }
-        // Grown, never shrunk, and reused across batches and calls: batchBytes is
-        // capped by the chunk bound above, so this settles at one chunk per thread.
-        // Uninitialized on purpose -- every byte is overwritten by the read.  new
-        // throws rather than returning NULL, so unlike the malloc sites this cannot
-        // silently hand DAOS an sgl pointing at nothing; the one way to get there is
-        // a zero-byte batch leaving it unallocated, rejected below.
-        static thread_local std::unique_ptr<char[]> stage;
-        static thread_local size_t stageCap = 0;
-        size_t i = 0;
-        while (i < SubRanges.size())
+    }
+
+    // Scratch persists across steps: a fresh span-sized buffer per step costs a
+    // page fault per page every step.  Uninitialized on purpose -- NdCopy only
+    // visits bytes the reads wrote.
+    if (m_ReadScratchCap < maxReadSize)
+    {
+        m_ReadScratch.clear();
+        m_ReadScratchCap = maxReadSize;
+    }
+
+    struct ReqState
+    {
+        bool started = false;
+        bool issued = false; // every read of the request has been submitted
+        size_t next = 0;     // contiguous: next byte; strided: next run
+        size_t arrayOffset = 0;
+        size_t arrayChunk = 1;
+        daos_handle_t aoh{};
+        int scratch = -1; // scratch slot, or -1 when reading into app memory
+        // Reads not yet landed, plus one held until the request is fully
+        // issued; whoever drops it to zero queues the finalize.
+        std::atomic<size_t> outstanding{0};
+    };
+    std::vector<ReqState> st(nRequest);
+    std::vector<int> freeScratch; // guarded by mtx
+    std::vector<std::unique_ptr<ReadOp>> idleOps;
+    std::vector<std::unique_ptr<ReadOp>> returnedOps; // guarded by mtx
+    std::unordered_map<daos_event_t *, std::unique_ptr<ReadOp>> busy;
+    // Signed: a read costlier than the whole budget is admitted alone and
+    // drives this negative until it completes.
+    std::ptrdiff_t tokensFree = static_cast<std::ptrdiff_t>(m_ReadTokens);
+    size_t cur = 0;
+    std::string err;       // issuing thread only
+    std::string workerErr; // guarded by mtx
+    size_t finalized = 0;  // guarded by mtx
+
+    // Copy-worker queue.  A task is a landed strided op to scatter (op set), or
+    // a request to finalize (op null).
+    struct Task
+    {
+        ReadOp *op;
+        size_t req;
+    };
+    std::mutex mtx;
+    std::condition_variable workCv, doneCv;
+    std::deque<Task> tasks;
+    bool stopWorkers = false;
+    double workerBusy = 0.0; // guarded by mtx
+
+    auto lf_QueueFinalize = [&](size_t r) {
+        std::lock_guard<std::mutex> g(mtx);
+        tasks.push_back(Task{nullptr, r});
+        workCv.notify_one();
+    };
+    auto lf_Release = [&](size_t r) {
+        if (st[r].outstanding.fetch_sub(1) == 1)
         {
-            std::vector<daos_range_t> rgs;
-            std::vector<d_iov_t> iovs;
-            size_t batchBytes = 0;
-            const size_t firstRun = i;
-            while (i < SubRanges.size() && rgs.size() < maxBatchRanges &&
-                   (batchBytes == 0 || batchBytes + SubRanges[i].second <= step))
+            lf_QueueFinalize(r);
+        }
+    };
+
+    auto lf_Worker = [&]() {
+        std::unique_lock<std::mutex> lk(mtx);
+        while (true)
+        {
+            workCv.wait(lk, [&] { return stopWorkers || !tasks.empty(); });
+            if (tasks.empty())
             {
-                daos_range_t rg;
-                rg.rg_idx = arrayOffset + SubRanges[i].first;
-                rg.rg_len = SubRanges[i].second;
-                rgs.push_back(rg);
-                batchBytes += SubRanges[i].second;
-                ++i;
+                return;
             }
-            if (rgs.empty() || batchBytes == 0)
+            Task t = tasks.front();
+            tasks.pop_front();
+            const bool skip = !workerErr.empty();
+            lk.unlock();
+            const auto t0 = Clock::now();
+            std::string e;
+            auto &Req = ReadRequests[t.req];
+            if (t.op)
             {
-                // Unreachable: the first pass of the inner loop always admits a
-                // range (batchBytes==0) and maxBatchRanges is never 0, and a run
-                // list is only built when the runs carry bytes.  Checked anyway
-                // because both shapes are malformed descriptors -- no ranges is a
-                // NULL arr_rgs plus a non-advancing outer loop, and no bytes leaves
-                // the staging buffer unallocated, i.e. sg_nr=1 at a NULL address
-                // while arr_nr counts ranges.
-                helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                                  "subrange batch of " +
-                                                      std::to_string(rgs.size()) + " runs and " +
-                                                      std::to_string(batchBytes) +
-                                                      " bytes at run " + std::to_string(i) +
-                                                      " of " +
-                                                      std::to_string(SubRanges.size()));
-            }
-            d_iov_t stageIov;
-            if (stageSubRanges)
-            {
-                if (stageCap < batchBytes)
+                if (!skip)
                 {
-                    stage.reset();
-                    stageCap = 0;
-                    stage.reset(new char[batchBytes]);
-                    stageCap = batchBytes;
+                    // Scatter the packed runs to where a whole-span read would
+                    // have put them, which is what the extraction addresses.
+                    size_t packed = 0;
+                    for (size_t j = t.op->firstRun; j < t.op->endRun; ++j)
+                    {
+                        std::memcpy(Req.DestinationAddr + Req.SubRanges[j].first,
+                                    t.op->stage.get() + packed, Req.SubRanges[j].second);
+                        packed += Req.SubRanges[j].second;
+                    }
                 }
-                stageIov.iov_buf = stage.get();
-                stageIov.iov_buf_len = batchBytes;
-                stageIov.iov_len = batchBytes;
+            }
+            else if (!skip)
+            {
+                try
+                {
+                    m_BP5Deserializer->FinalizeGet(Req, false);
+                }
+                catch (std::exception &ex)
+                {
+                    e = ex.what();
+                }
+            }
+            const double dt = Elapsed(t0, Clock::now());
+            lk.lock();
+            workerBusy += dt;
+            if (!e.empty() && workerErr.empty())
+            {
+                workerErr = e;
+            }
+            if (t.op)
+            {
+                returnedOps.emplace_back(t.op);
+                lk.unlock();
+                lf_Release(t.req);
+                lk.lock();
             }
             else
             {
-                iovs.reserve(rgs.size());
-                for (size_t k = firstRun; k < i; ++k)
+                if (st[t.req].scratch >= 0)
                 {
-                    d_iov_t iov;
-                    iov.iov_buf = Destination + SubRanges[k].first;
-                    iov.iov_buf_len = SubRanges[k].second;
-                    iov.iov_len = SubRanges[k].second;
-                    iovs.push_back(iov);
+                    freeScratch.push_back(st[t.req].scratch);
+                    st[t.req].scratch = -1;
                 }
+                ++finalized;
             }
-            daos_array_iod_t iodr;
-            iodr.arr_nr = static_cast<daos_size_t>(rgs.size());
-            iodr.arr_rgs = rgs.data();
-            d_sg_list_t sglr;
-            sglr.sg_nr = stageSubRanges ? 1u : static_cast<uint32_t>(iovs.size());
-            sglr.sg_nr_out = 0;
-            sglr.sg_iovs = stageSubRanges ? &stageIov : iovs.data();
-            int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
-            if (rc)
-            {
-                helper::Throw<std::runtime_error>(
-                    "Engine", "DaosReader", "ReadData",
-                    "daos_array_read (subranges) failed rc=" + std::to_string(rc) +
-                        " WriterRank=" + std::to_string(WriterRank) +
-                        " nranges=" + std::to_string(rgs.size()) +
-                        " bytes=" + std::to_string(batchBytes));
-            }
-            if (stageSubRanges)
-            {
-                // Runs land packed in range order; scatter them to the offsets a
-                // whole-span read would have put them at, which is what the
-                // extraction step addresses against.
-                size_t packed = 0;
-                for (size_t k = firstRun; k < i; ++k)
-                {
-                    std::memcpy(Destination + SubRanges[k].first, stage.get() + packed,
-                                SubRanges[k].second);
-                    packed += SubRanges[k].second;
-                }
-            }
+            doneCv.notify_all();
         }
-        TP endSub = NOW();
-        double timeSub = DURATION(startRead, endSub);
-        return std::make_pair(0.0, timeSub);
-    }
-
-    for (size_t done = 0; done < Length; done += step)
+    };
+    std::vector<std::thread> workers;
+    for (size_t i = 0; i < m_ReadCopyThreads; ++i)
     {
-        const size_t thisLen = std::min(step, Length - done);
-        daos_range_t rgr;
-        rgr.rg_idx = arrayOffset + done;
-        rgr.rg_len = thisLen;
-        daos_array_iod_t iodr;
-        iodr.arr_nr = 1;
-        iodr.arr_rgs = &rgr;
-        d_iov_t iovr;
-        iovr.iov_buf = Destination + done;
-        iovr.iov_buf_len = thisLen;
-        iovr.iov_len = thisLen;
-        d_sg_list_t sglr;
-        sglr.sg_nr = 1;
-        sglr.sg_nr_out = 0;
-        sglr.sg_iovs = &iovr;
-        int rc = daos_array_read(aoh, DAOS_TX_NONE, &iodr, &sglr, NULL);
-        if (rc)
+        workers.emplace_back(lf_Worker);
+    }
+    auto lf_StopWorkers = [&]() {
         {
-            helper::Throw<std::runtime_error>("Engine", "DaosReader", "ReadData",
-                                              "daos_array_read failed rc=" + std::to_string(rc) +
-                                                  " WriterRank=" + std::to_string(WriterRank) +
-                                                  " offset=" + std::to_string(arrayOffset + done) +
-                                                  " len=" + std::to_string(thisLen));
+            std::lock_guard<std::mutex> g(mtx);
+            stopWorkers = true;
+        }
+        workCv.notify_all();
+        for (auto &w : workers)
+        {
+            w.join();
+        }
+        workers.clear();
+    };
+
+    // Resolves where request r reads from and to.  False when it must wait for
+    // a scratch slot; sets err on a malformed request.
+    auto lf_Start = [&](size_t r) -> bool {
+        auto &Req = ReadRequests[r];
+        auto &s = st[r];
+        if (Req.WriterRank >= m_DataArrayHandles.size())
+        {
+            err = "WriterRank " + std::to_string(Req.WriterRank) +
+                  " has no entry in OID index (size=" + std::to_string(m_DataArrayHandles.size()) +
+                  ")";
+            return false;
+        }
+        auto it = m_RankStartDataPos.find(Req.Timestep);
+        if (it == m_RankStartDataPos.end() || Req.WriterRank >= it->second.size())
+        {
+            err = "missing step-start for Timestep=" + std::to_string(Req.Timestep) +
+                  " WriterRank=" + std::to_string(Req.WriterRank);
+            return false;
+        }
+        if (!Req.DestinationAddr)
+        {
+            std::lock_guard<std::mutex> g(mtx);
+            if (freeScratch.empty())
+            {
+                if (m_ReadScratch.size() >= scratchSlots)
+                {
+                    return false;
+                }
+                // new char[] is non-null even at size 0.
+                m_ReadScratch.emplace_back(new char[m_ReadScratchCap]);
+                freeScratch.push_back(static_cast<int>(m_ReadScratch.size() - 1));
+            }
+            s.scratch = freeScratch.back();
+            freeScratch.pop_back();
+            Req.DestinationAddr = m_ReadScratch[s.scratch].get();
+        }
+        s.aoh = m_DataArrayHandles[Req.WriterRank];
+        s.arrayOffset = it->second[Req.WriterRank] + Req.StartOffset;
+        s.arrayChunk = m_DataArrayChunk[Req.WriterRank] ? m_DataArrayChunk[Req.WriterRank] : 1;
+        s.started = true;
+        s.outstanding = 1;
+        s.issued = Req.SubRanges.empty() ? Req.ReadLength == 0 : false;
+        return true;
+    };
+    // Scratch slots held by requests that predate this step's reuse.
+    {
+        std::lock_guard<std::mutex> g(mtx);
+        for (size_t i = 0; i < m_ReadScratch.size(); ++i)
+        {
+            freeScratch.push_back(static_cast<int>(i));
         }
     }
-    TP endRead = NOW();
-    double timeRead = DURATION(startRead, endRead);
-    return std::make_pair(0.0, timeRead);
-}
 
-void DaosReader::PerformGets()
-{
-    auto lf_CompareReqSubfile = [&](adios2::format::BP5Deserializer::ReadRequest &r1,
-                                    adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
-        return (m_WriterMap[m_WriterMapIndex[r1.Timestep]].RankToSubfile[r1.WriterRank] <
-                m_WriterMap[m_WriterMapIndex[r2.Timestep]].RankToSubfile[r2.WriterRank]);
-    };
-
-    // TP start = NOW();
-    PERFSTUBS_SCOPED_TIMER("DaosReader::PerformGets");
-    size_t maxReadSize;
-
-    // TP startGenerate = NOW();
-    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(false, &maxReadSize);
-    size_t nRequest = ReadRequests.size();
-    // TP endGenerate = NOW();
-    // double generateTime = DURATION(startGenerate, endGenerate);
-
-    size_t nextRequest = 0;
-    std::mutex mutexReadRequests;
-
-    auto lf_GetNextRequest = [&]() -> size_t {
-        std::lock_guard<std::mutex> lockGuard(mutexReadRequests);
-        size_t reqidx = MaxSizeT;
-        if (nextRequest < nRequest)
+    // Describes request r's next read into op; returns its token cost.
+    auto lf_Plan = [&](size_t r, ReadOp &op) -> size_t {
+        auto &Req = ReadRequests[r];
+        auto &s = st[r];
+        op.req = r;
+        if (Req.SubRanges.empty())
         {
-            reqidx = nextRequest;
-            ++nextRequest;
+            // Keep one read within the budget even when the budget is small.
+            const size_t maxLen = std::max<size_t>(1, m_ReadTokens - 1) * s.arrayChunk;
+            const size_t len = std::min({readChunk, maxLen, Req.ReadLength - s.next});
+            op.rg.rg_idx = s.arrayOffset + s.next;
+            op.rg.rg_len = len;
+            op.iod.arr_nr = 1;
+            op.iod.arr_rgs = &op.rg;
+            op.iov.iov_buf = Req.DestinationAddr + s.next;
+            op.iov.iov_buf_len = len;
+            op.iov.iov_len = len;
+            op.tokens = ChunksSpanned(op.rg.rg_idx, len, s.arrayChunk);
+            return op.tokens;
         }
-        return reqidx;
-    };
-
-    auto lf_Reader = [&]() -> std::tuple<double, double, double, size_t> {
-        double copyTotal = 0.0;
-        double readTotal = 0.0;
-        double subfileTotal = 0.0;
-        size_t nReads = 0;
-        // Uninitialized on purpose: vector<char>(n) value-initializes, i.e.
-        // memsets maxReadSize per thread per step to deliver a fraction of it.
-        // Nothing reads a byte the fetch did not write -- NdCopy only visits the
-        // intersection box -- so the fill is dead work.  new char[] also yields a
-        // non-null pointer at size 0, unlike vector::data().
-        std::unique_ptr<char[]> buf(new char[maxReadSize]);
-
-        while (true)
+        const auto &runs = Req.SubRanges;
+        const size_t first = s.next;
+        const size_t firstChunk = (s.arrayOffset + runs[first].first) / s.arrayChunk;
+        size_t i = first, bytes = 0, lastChunk = firstChunk;
+        op.rgs.clear();
+        while (i < runs.size() && op.rgs.size() < maxBatchRanges)
         {
-            const auto reqidx = lf_GetNextRequest();
-            if (reqidx > nRequest)
+            const size_t end = s.arrayOffset + runs[i].first + runs[i].second;
+            const size_t endChunk = runs[i].second ? (end - 1) / s.arrayChunk : firstChunk;
+            if (bytes && (bytes + runs[i].second > batchBytesMax ||
+                          endChunk - firstChunk >= batchSpanChunks))
             {
                 break;
             }
-            auto &Req = ReadRequests[reqidx];
-            if (!Req.DestinationAddr)
-            {
-                Req.DestinationAddr = buf.get();
-            }
-            std::pair<double, double> t =
-                ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
-                         Req.DestinationAddr, Req.SubRanges);
-
-            TP startCopy = NOW();
-            m_BP5Deserializer->FinalizeGet(Req, false);
-            TP endCopy = NOW();
-            subfileTotal += t.first;
-            readTotal += t.second;
-            copyTotal += DURATION(startCopy, endCopy);
-            ++nReads;
+            daos_range_t rg;
+            rg.rg_idx = s.arrayOffset + runs[i].first;
+            rg.rg_len = runs[i].second;
+            op.rgs.push_back(rg);
+            bytes += runs[i].second;
+            lastChunk = std::max(lastChunk, endChunk);
+            ++i;
         }
-        return std::make_tuple(subfileTotal, readTotal, copyTotal, nReads);
+        op.firstRun = first;
+        op.endRun = i;
+        if (bytes == 0)
+        {
+            // A zero-byte batch would hand DAOS an sgl at an unallocated stage.
+            err = "zero-byte strided batch at run " + std::to_string(first) + " of " +
+                  std::to_string(runs.size());
+            return 0;
+        }
+        if (op.stageCap < bytes)
+        {
+            op.stage.reset();
+            op.stageCap = 0;
+            op.stage.reset(new char[bytes]);
+            op.stageCap = bytes;
+        }
+        op.iod.arr_nr = static_cast<daos_size_t>(op.rgs.size());
+        op.iod.arr_rgs = op.rgs.data();
+        op.iov.iov_buf = op.stage.get();
+        op.iov.iov_buf_len = bytes;
+        op.iov.iov_len = bytes;
+        op.tokens = lastChunk - firstChunk + 1;
+        return op.tokens;
     };
 
-    // Threads engage only when a reader's box spans several writer blocks, so a
-    // configured thread count is not the count that runs.  Report both: a sweep
-    // over Threads is measuring nothing when nRequest is 1.
-    if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0)
+    double pollWait = 0.0;
+    bool eqDead = false;
+    while (true)
     {
-        const size_t effective =
-            (m_Threads > 1 && nRequest > 1) ? std::min<size_t>(m_Threads, nRequest) : 1;
-        fprintf(stderr,
-                "[DAOS_THREAD_DEBUG] PerformGets: nRequest=%zu Threads=%u -> effective=%zu "
-                "maxReadSize=%zu\n",
-                nRequest, m_Threads, effective, maxReadSize);
-    }
-
-    // TP startRead = NOW();
-    // double sortTime = 0.0;
-    if (m_Threads > 1 && nRequest > 1)
-    {
-        // TP startSort = NOW();
-        std::sort(ReadRequests.begin(), ReadRequests.end(), lf_CompareReqSubfile);
-        // TP endSort = NOW();
-        // sortTime = DURATION(startSort, endSort);
-        size_t nThreads = (m_Threads < nRequest ? m_Threads : nRequest);
-
-        std::vector<std::future<std::tuple<double, double, double, size_t>>> futures(nThreads - 1);
-
-        // launch Threads-1 threads to process subsets of requests,
-        // then main thread process the last subset
-        for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            futures[tid] = std::async(std::launch::async, lf_Reader);
-        }
-        // main thread runs last subset of reads
-        /*auto tMain = */ lf_Reader();
-        /*{
-            double tSubfile = std::get<0>(tMain);
-            double tRead = std::get<1>(tMain);
-            double tCopy = std::get<2>(tMain);
-            size_t nReads = std::get<3>(tMain);
-            std::cout << " -> PerformGets() thread MAIN total = "
-                      << tSubfile + tRead + tCopy << "s, subfile = " << tSubfile
-                      << "s, read = " << tRead << "s, copy = " << tCopy
-                      << ", nReads = " << nReads << std::endl;
-        }*/
-
-        // wait for all async threads
-        int tid = 1;
-        for (auto &f : futures)
-        {
-            /*auto t = */ f.get();
-            /*double tSubfile = std::get<0>(t);
-            double tRead = std::get<1>(t);
-            double tCopy = std::get<2>(t);
-            size_t nReads = std::get<3>(t);
-            std::cout << " -> PerformGets() thread " << tid
-                      << " total = " << tSubfile + tRead + tCopy
-                      << "s, subfile = " << tSubfile << "s, read = " << tRead
-                      << "s, copy = " << tCopy << ", nReads = " << nReads
-                      << std::endl;*/
-            ++tid;
-        }
-    }
-    else
-    {
-        // Uninitialized: see the threaded path above.
-        std::unique_ptr<char[]> buf(new char[maxReadSize]);
-        for (auto &Req : ReadRequests)
-        {
-            if (!Req.DestinationAddr)
+            std::lock_guard<std::mutex> g(mtx);
+            for (auto &op : returnedOps)
             {
-                Req.DestinationAddr = buf.get();
+                idleOps.push_back(std::move(op));
             }
-            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
-                     Req.DestinationAddr, Req.SubRanges);
-            m_BP5Deserializer->FinalizeGet(Req, false);
+            returnedOps.clear();
+            if (err.empty() && !workerErr.empty())
+            {
+                err = workerErr;
+            }
         }
+
+        // Issue in request order while the budget allows; always admit one read
+        // when nothing is in flight, so a read costlier than the budget runs alone.
+        while (err.empty() && cur < nRequest)
+        {
+            auto &s = st[cur];
+            if (!s.started && !lf_Start(cur))
+            {
+                break; // waiting for scratch, or err set
+            }
+            if (s.issued)
+            {
+                lf_Release(cur); // drop the issuing hold
+                ++cur;
+                continue;
+            }
+            std::unique_ptr<ReadOp> op;
+            if (idleOps.empty())
+            {
+                op.reset(new ReadOp);
+            }
+            else
+            {
+                op = std::move(idleOps.back());
+                idleOps.pop_back();
+            }
+            const size_t tokens = lf_Plan(cur, *op);
+            if (!err.empty())
+            {
+                idleOps.push_back(std::move(op));
+                break;
+            }
+            if (static_cast<std::ptrdiff_t>(tokens) > tokensFree && !busy.empty())
+            {
+                idleOps.push_back(std::move(op));
+                break;
+            }
+            op->sgl.sg_nr = 1;
+            op->sgl.sg_nr_out = 0;
+            op->sgl.sg_iovs = &op->iov;
+            int rc = daos_event_init(&op->ev, m_ReadEQ, nullptr);
+            if (!rc)
+            {
+                rc = daos_array_read(s.aoh, DAOS_TX_NONE, &op->iod, &op->sgl, &op->ev);
+                if (rc)
+                {
+                    daos_event_fini(&op->ev);
+                }
+            }
+            if (rc)
+            {
+                err = "daos_array_read submit failed rc=" + std::to_string(rc) +
+                      " WriterRank=" + std::to_string(ReadRequests[cur].WriterRank);
+                idleOps.push_back(std::move(op));
+                break;
+            }
+            tokensFree -= static_cast<std::ptrdiff_t>(tokens);
+            ++s.outstanding;
+            if (ReadRequests[cur].SubRanges.empty())
+            {
+                s.next += op->rg.rg_len;
+                s.issued = s.next >= ReadRequests[cur].ReadLength;
+            }
+            else
+            {
+                s.next = op->endRun;
+                s.issued = s.next >= ReadRequests[cur].SubRanges.size();
+            }
+            daos_event_t *key = &op->ev;
+            busy.emplace(key, std::move(op));
+            if (s.issued)
+            {
+                lf_Release(cur);
+                ++cur;
+            }
+        }
+
+        if (busy.empty())
+        {
+            // Nothing to reap: wait for the workers to free a scratch slot or
+            // finish, or stop if an error leaves nothing more to issue.
+            std::unique_lock<std::mutex> lk(mtx);
+            if (finalized == nRequest || !err.empty() || !workerErr.empty())
+            {
+                break;
+            }
+            const size_t f = finalized, nf = freeScratch.size();
+            doneCv.wait(lk, [&] {
+                return finalized != f || freeScratch.size() != nf || !workerErr.empty();
+            });
+            continue;
+        }
+
+        daos_event_t *doneEv[64];
+        const auto tp = Clock::now();
+        const int nd = daos_eq_poll(m_ReadEQ, 1, DAOS_EQ_WAIT, 64, doneEv);
+        pollWait += Elapsed(tp, Clock::now());
+        if (nd < 0)
+        {
+            eqDead = true;
+            err = "daos_eq_poll failed rc=" + std::to_string(nd);
+            break;
+        }
+        for (int k = 0; k < nd; ++k)
+        {
+            auto bit = busy.find(doneEv[k]);
+            if (bit == busy.end())
+            {
+                continue; // not ours; cannot happen on a private EQ
+            }
+            std::unique_ptr<ReadOp> op = std::move(bit->second);
+            busy.erase(bit);
+            const size_t r = op->req;
+            if (op->ev.ev_error && err.empty())
+            {
+                err = "daos_array_read failed rc=" + std::to_string(op->ev.ev_error) +
+                      " WriterRank=" + std::to_string(ReadRequests[r].WriterRank);
+            }
+            daos_event_fini(&op->ev);
+            tokensFree += static_cast<std::ptrdiff_t>(op->tokens);
+            if (!ReadRequests[r].SubRanges.empty())
+            {
+                std::lock_guard<std::mutex> g(mtx);
+                tasks.push_back(Task{op.release(), r});
+                workCv.notify_one();
+            }
+            else
+            {
+                idleOps.push_back(std::move(op));
+                lf_Release(r);
+            }
+        }
+    }
+
+    if (eqDead)
+    {
+        // The EQ is unusable, so in-flight reads can never be waited for; leak
+        // their descriptors and every buffer they may target rather than free
+        // memory DAOS may still touch.
+        for (auto &b : busy)
+        {
+            b.second.release();
+        }
+        for (auto &sb : m_ReadScratch)
+        {
+            sb.release();
+        }
+        m_ReadScratch.clear();
+        m_ReadScratchCap = 0;
+    }
+    lf_StopWorkers();
+    for (auto &op : returnedOps)
+    {
+        idleOps.push_back(std::move(op));
+    }
+    if (err.empty())
+    {
+        err = workerErr;
+    }
+
+    m_ReadPollWait += pollWait;
+    m_ReadCopyBusy += workerBusy;
+    m_ReadGetsTime += Elapsed(tStart, Clock::now());
+    if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0 && m_ReadGetsCalls == 0)
+    {
+        fprintf(stderr,
+                "[DAOS_READ_DEBUG] PerformGets: nRequest=%zu tokens=%zu chunk=%zu "
+                "maxReadSize=%zu copyThreads=%zu\n",
+                nRequest, m_ReadTokens, readChunk, maxReadSize, m_ReadCopyThreads);
+    }
+
+    ++m_ReadGetsCalls;
+
+    if (!err.empty())
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "PerformGets", err);
+    }
+    if (finalized != nRequest)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosReader", "PerformGets",
+                                          "finalized " + std::to_string(finalized) + " of " +
+                                              std::to_string(nRequest) + " read requests");
     }
 
     // clear pending requests inside deserializer
@@ -1136,13 +1308,6 @@ void DaosReader::PerformGets()
         std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
         m_BP5Deserializer->FinalizeGets(empty);
     }
-
-    /*TP end = NOW();
-    double t1 = DURATION(start, end);
-    double t2 = DURATION(startRead, end);
-    std::cout << " -> PerformGets() total = " << t1 << "s, Read loop = " << t2
-              << "s, sort = " << sortTime << "s, generate = " << generateTime
-              << ", nRequests = " << nRequest << std::endl;*/
 }
 
 // PRIVATE
@@ -1226,52 +1391,26 @@ void DaosReader::InitParameters()
         }
     }
 
-    m_Threads = m_Parameters.Threads;
-    // Only meaningful on the auto path below; 0 means "not computed".
-    unsigned int NodeSize = 0, NodeThreadSize = 0;
-    if (m_Threads == 0)
-    {
-        helper::Comm m_NodeComm = m_Comm.GroupByShm("creating per-node comm at BP5 Open(read)");
-        NodeSize = static_cast<unsigned int>(m_NodeComm.Size());
-        NodeThreadSize = helper::NumHardwareThreadsPerNode();
-        /*
-         * Reader concurrency is a per-NODE resource, so threads substitute for
-         * ranks rather than adding to them: bandwidth peaks near this many
-         * concurrent readers per node however they are split between the two.
-         * Measured on Aurora: best at 1 thread with 32 ranks/node and at 4 with
-         * 8 ranks/node -- both ~32 readers/node -- while more threads degrade
-         * sharply and enough more abort the reader on registration exhaustion.
-         * Dividing the node's hardware threads instead (the old rule) gives 6
-         * at 32 ranks/node, an order of magnitude off the measured optimum.
-         */
-        constexpr unsigned int TargetReadersPerNode = 32;
-        unsigned int budget = TargetReadersPerNode / NodeSize;
-        // never promise more threads than the node has hardware for
-        if (NodeThreadSize > 0 && NodeThreadSize / NodeSize < budget)
-        {
-            budget = NodeThreadSize / NodeSize;
-        }
-        m_Threads = helper::SetWithinLimit(budget, 1U, 16U);
-    }
-
-    // The budget above divides a node's hardware threads among the ranks
-    // sharing it, so a wrong NodeSize over-threads by the ranks-per-node
-    // factor -- invisible per rank, and a cliff once the node oversubscribes.
-    // Logged rather than asserted because the right value is site-dependent.
+    // Registration budget for reads in flight, in array chunks.  The pool it
+    // guards is node-wide (aborts at ~15.7k), so a node budget is split among
+    // the ranks sharing the node.  DAOS_READ_TOKENS sets the per-rank value
+    // directly.  The Threads parameter no longer applies: all reads are issued
+    // from one thread (see PerformGets).
+    helper::Comm nodeComm = m_Comm.GroupByShm("creating per-node comm at DAOS Open(read)");
+    const size_t nodeSize = std::max<size_t>(1, static_cast<size_t>(nodeComm.Size()));
+    const char *perRank = std::getenv("DAOS_READ_TOKENS");
+    const char *perNode = std::getenv("DAOS_READ_NODE_TOKENS");
+    const size_t nodeTokens = perNode ? std::strtoull(perNode, nullptr, 10) : 8192;
+    m_ReadTokens = perRank ? std::strtoull(perRank, nullptr, 10) : nodeTokens / nodeSize;
+    m_ReadTokens = std::max<size_t>(m_ReadTokens, 16);
+    // Copy workers share the node's cores with the other ranks: ~32 per node.
+    const char *copyThr = std::getenv("DAOS_READ_COPY_THREADS");
+    const size_t copyThreads = copyThr ? std::strtoull(copyThr, nullptr, 10) : 32 / nodeSize;
+    m_ReadCopyThreads = std::min<size_t>(std::max<size_t>(copyThreads, 1), 16);
     if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0)
     {
-        if (NodeThreadSize > 0 || NodeSize > 0)
-        {
-            fprintf(stderr,
-                    "[DAOS_THREAD_DEBUG] auto: NodeSize=%u NodeThreadSize=%u -> Threads=%u "
-                    "(readers/node = %u, target 32; hw threads %u)\n",
-                    NodeSize, NodeThreadSize, m_Threads, NodeSize * m_Threads, NodeThreadSize);
-        }
-        else
-        {
-            fprintf(stderr, "[DAOS_THREAD_DEBUG] explicit: Threads=%u (auto path not taken)\n",
-                    m_Threads);
-        }
+        fprintf(stderr, "[DAOS_READ_DEBUG] NodeSize=%zu -> tokens/rank=%zu copyThreads=%zu\n",
+                nodeSize, m_ReadTokens, m_ReadCopyThreads);
     }
 }
 
@@ -2252,6 +2391,21 @@ void DaosReader::DoClose(const int transportIndex)
         m_MetaMetadataFile->Close();
     }
     CloseDataArrays();
+    if (std::getenv("DAOS_THREAD_DEBUG") && m_Comm.Rank() == 0 && m_ReadGetsCalls)
+    {
+        fprintf(stderr,
+                "[DAOS_READ_DEBUG] rank0 totals: PerformGets=%.3f s pollWait=%.3f s "
+                "copyBusy=%.3f s (over %zu workers) steps=%zu\n",
+                m_ReadGetsTime, m_ReadPollWait, m_ReadCopyBusy, m_ReadCopyThreads, m_ReadGetsCalls);
+    }
+    m_ReadScratch.clear();
+    m_ReadScratchCap = 0;
+    // PerformGets reaps every read before returning, so the queue is empty.
+    if (m_ReadEQ.cookie != 0)
+    {
+        daos_eq_destroy(m_ReadEQ, 0);
+        m_ReadEQ = {};
+    }
 
     // Release DAOS handles in reverse of init order; mirrors DaosWriter::DoClose.
     if (oh.cookie != 0)
@@ -2338,10 +2492,9 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
     if (ghdl.iov_buf == NULL)
     {
-        helper::Throw<std::runtime_error>("Engine", "DaosReader", "daos_handle_share",
-                                          "out of memory for a " +
-                                              std::to_string(ghdl.iov_buf_len) +
-                                              " byte global handle");
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosReader", "daos_handle_share",
+            "out of memory for a " + std::to_string(ghdl.iov_buf_len) + " byte global handle");
     }
     ghdl.iov_len = ghdl.iov_buf_len;
 
@@ -2438,12 +2591,12 @@ void DaosReader::LoadDataOidsIndex()
 void DaosReader::OpenDataArrays()
 {
     m_DataArrayHandles.assign(m_DataOids.size(), daos_handle_t{});
+    m_DataArrayChunk.assign(m_DataOids.size(), 0);
     daos_size_t cell_size_out = 0;
-    daos_size_t chunk_size_out = 0;
     for (size_t r = 0; r < m_DataOids.size(); ++r)
     {
         int rc = daos_array_open(coh, m_DataOids[r], DAOS_TX_NONE, DAOS_OO_RO, &cell_size_out,
-                                 &chunk_size_out, &m_DataArrayHandles[r], NULL);
+                                 &m_DataArrayChunk[r], &m_DataArrayHandles[r], NULL);
         if (rc)
         {
             helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDataArrays",
@@ -2464,6 +2617,7 @@ void DaosReader::CloseDataArrays()
         }
     }
     m_DataArrayHandles.clear();
+    m_DataArrayChunk.clear();
     m_DataOids.clear();
 }
 
