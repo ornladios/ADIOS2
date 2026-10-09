@@ -217,6 +217,13 @@ if(NOT @BUILD_SHARED_LIBS@)
     target_link_libraries(adios2::thirdparty::CLI11 INTERFACE CLI11::CLI11)
   endif()
 
+  adios2_add_thirdparty_target(xxhash)
+  set(ADIOS2_USE_EXTERNAL_XXHASH @ADIOS2_USE_EXTERNAL_XXHASH@)
+  if(ADIOS2_USE_EXTERNAL_XXHASH)
+    find_dependency(xxHash)
+    target_link_libraries(adios2::thirdparty::xxhash INTERFACE xxHash::xxhash)
+  endif()
+
   set(ADIOS2_USE_EXTERNAL_YAMLCPP @ADIOS2_USE_EXTERNAL_YAMLCPP@)
   set(yaml_cpp_target "yaml-cpp")
   if(ADIOS2_USE_EXTERNAL_YAMLCPP)

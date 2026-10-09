@@ -46,6 +46,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
   helper/adiosLog.cpp
+  helper/adiosHash.cpp
   helper/adiosRangeFilter.cpp
 
   # engine derived classes
@@ -257,6 +258,7 @@ target_include_directories(adios2_core
 )
 target_link_libraries(adios2_core PRIVATE
   adios2sys_interface
+  adios2::thirdparty::xxhash
   adios2::thirdparty::pugixml
   adios2::thirdparty::yaml-cpp
   adios2::thirdparty::nlohmann_json

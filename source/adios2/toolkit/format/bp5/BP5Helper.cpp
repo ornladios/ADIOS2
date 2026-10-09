@@ -6,8 +6,9 @@
 
 #include "BP5Helper.h"
 #include "adios2/helper/adiosFunctions.h"
-#include <adios2sys/MD5.h> // Include the MD5 header
-#include <iomanip>         // put_time
+#include "adios2/helper/adiosHash.h"
+#include <cstring>
+#include <iomanip> // put_time
 
 #include "fm.h"
 
@@ -22,24 +23,9 @@ namespace format
 
 BP5Helper::digest BP5Helper::HashOfBlock(const void *block, const size_t block_len)
 {
-    adios2sysMD5 *md5 = adios2sysMD5_New();
-    if (!md5)
-    {
-        throw std::runtime_error("Failed to create MD5 instance");
-    }
-
-    // Initialize the MD5 instance
-    adios2sysMD5_Initialize(md5);
-
-    // Update the MD5 instance with the input data
-    adios2sysMD5_Append(md5, reinterpret_cast<const unsigned char *>(block), (int)block_len);
-
-    // Finalize the MD5 digest and get the hash value
     BP5Helper::digest ret;
-    adios2sysMD5_Finalize(md5, (unsigned char *)&ret.x[0]);
-
-    // Clean up the MD5 instance
-    adios2sysMD5_Delete(md5);
+    const auto hash = helper::Hash128(block, block_len);
+    std::memcpy(&ret.x[0], hash.data(), hash.size());
 
     return ret;
 }

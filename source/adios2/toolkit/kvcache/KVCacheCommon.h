@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include <adios2sys/MD5.h> // Include the MD5 header
+#include "adios2/helper/adiosHash.h"
 
 #ifdef ADIOS2_HAVE_KVCACHE
 #include <hiredis/hiredis.h>
