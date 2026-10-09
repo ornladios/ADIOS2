@@ -97,14 +97,8 @@ bool IsGPUbuffer(const void *ptr)
         return true;
     }
 #endif
-#ifdef ADIOS2_HAVE_KOKKOS_SYCL
-    auto ret = sycl::address_space_cast<sycl::access::address_space::global_space,
-                                        sycl::access::decorated::no>(ptr);
-    if (ret != nullptr)
-    {
-        return true;
-    }
-#endif
+    // SYCL device pointers cannot be detected, so Detect means Host; device buffers need
+    // SetMemorySpace(GPU). Throwing here would reject every host buffer too.
     return false;
 }
 

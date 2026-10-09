@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <numeric>
+#include <string>
 
 std::string engineName;
 
@@ -21,7 +22,14 @@ const float INCREMENT = 10.0f;
 
 void KokkosDetectMemSpace(const std::string mode)
 {
+    int mpiRank = 0, mpiSize = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRKokkosDetect" + mode + "_MPI.bp");
+#else
     const std::string fname("BPWRKokkosDetect" + mode + ".bp");
+#endif
     adios2::Mode ioMode = adios2::Mode::Deferred;
     if (mode == "Sync")
         ioMode = adios2::Mode::Sync;
@@ -29,7 +37,11 @@ void KokkosDetectMemSpace(const std::string mode)
     const size_t Nx = 5;
     const size_t NSteps = 2;
 
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
     { // write
         Kokkos::View<float *, Kokkos::HostSpace> cpuData("simBuffer", Nx);
         Kokkos::parallel_for(
@@ -40,8 +52,8 @@ void KokkosDetectMemSpace(const std::string mode)
             Kokkos::DefaultExecutionSpace::memory_space{}, cpuData);
 
         adios2::IO io = adios.DeclareIO("TestIO");
-        const adios2::Dims shape{Nx};
-        const adios2::Dims start{0};
+        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_gpur32 = io.DefineVariable<float>("gpur32", shape, start, count);
@@ -89,6 +101,8 @@ void KokkosDetectMemSpace(const std::string mode)
             auto var_gpur32 = io.InquireVariable<float>("gpur32");
             EXPECT_TRUE(var_r32);
             EXPECT_TRUE(var_gpur32);
+            var_r32.SetSelection({{Nx * mpiRank}, {Nx}});
+            var_gpur32.SetSelection({{Nx * mpiRank}, {Nx}});
 
             std::vector<float> r32o(Nx);
             Kokkos::View<float *, Kokkos::DefaultExecutionSpace::memory_space> gpuData("readBuffer",
@@ -375,6 +389,18 @@ bool compareSelection2D(
     return (match == 0);
 }
 
+// Per-rank file name for tests that run serially on every rank
+std::string RankFileName(const std::string &base)
+{
+#if ADIOS2_USE_MPI
+    int mpiRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    return base + "_MPI_" + std::to_string(mpiRank) + ".bp";
+#else
+    return base + ".bp";
+#endif
+}
+
 void KokkosWriteReadSelection2D()
 {
     adios2::MemorySpace adiosMemSpace = adios2::MemorySpace::Host;
@@ -387,7 +413,7 @@ void KokkosWriteReadSelection2D()
     constexpr size_t C2 = 4;
     constexpr size_t DIM1 = 3 * C1;
     constexpr size_t DIM2 = 3 * C2;
-    const std::string filename = "BPWRKokkosSel2D.bp";
+    const std::string filename = RankFileName("BPWRKokkosSel2D");
     Kokkos::View<double **, Kokkos::DefaultExecutionSpace::memory_space> inputData("inBuffer", DIM1,
                                                                                    DIM2);
     Kokkos::parallel_for(
@@ -504,7 +530,7 @@ void KokkosWriteReadStruct()
     if (!std::is_same<Kokkos::DefaultExecutionSpace::memory_space, Kokkos::HostSpace>::value)
         adiosMemSpace = adios2::MemorySpace::GPU;
 #endif
-    const std::string filename = "BPWRKokkosStruct.bp";
+    const std::string filename = RankFileName("BPWRKokkosStruct");
     struct particle
     {
         double a;
@@ -642,16 +668,19 @@ int main(int argc, char **argv)
 #endif
     Kokkos::initialize(argc, argv);
 
-    Kokkos::DefaultExecutionSpace exe_space;
-    std::cout << "Testing on memory space: " << exe_space.name() << std::endl;
-
     int result;
-    ::testing::InitGoogleTest(&argc, argv);
-    if (argc > 1)
     {
-        engineName = std::string(argv[1]);
+        // Execution space instances must be destroyed before Kokkos::finalize()
+        Kokkos::DefaultExecutionSpace exe_space;
+        std::cout << "Testing on memory space: " << exe_space.name() << std::endl;
+
+        ::testing::InitGoogleTest(&argc, argv);
+        if (argc > 1)
+        {
+            engineName = std::string(argv[1]);
+        }
+        result = RUN_ALL_TESTS();
     }
-    result = RUN_ALL_TESTS();
 
     Kokkos::finalize();
 #if ADIOS2_USE_MPI
