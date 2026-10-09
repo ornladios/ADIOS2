@@ -23,7 +23,7 @@
 std::size_t Nx = 10;
 
 std::string data_S1 = "Testing ADIOS2 String type";
-std::vector<std::string> data_S1array = {"one"};
+std::vector<std::string> data_S1array = {"one", "two"};
 std::vector<std::string> data_S3 = {"one", "two", "three"};
 
 std::vector<int8_t> data_I8;

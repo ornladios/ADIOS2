@@ -14,7 +14,9 @@
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/sst/sst.h"
 
+#include <list>
 #include <memory>
+#include <vector>
 
 namespace adios2
 {
@@ -88,6 +90,10 @@ private:
     long m_WriterStep = -1;
     bool m_DefinitionsNotified = false;
     bool m_MarshalAttributesNecessary = true; // first time through, marshal
+    // The BP5 serializer keeps a pointer to the data of array attributes and
+    // encodes it later, so the char* arrays for string array attributes must
+    // outlive MarshalAttributes().
+    std::list<std::vector<const char *>> m_StringArrayAttributeData;
     struct _SstParams Params;
 
     void MarshalAttributes();

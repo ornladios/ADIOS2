@@ -189,6 +189,9 @@ void SstWriter::MarshalAttributes()
     if (!m_MarshalAttributesNecessary)
         return;
 
+    // every attribute is marshaled again below, replacing the old pointers
+    m_StringArrayAttributeData.clear();
+
     for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
@@ -200,19 +203,36 @@ void SstWriter::MarshalAttributes()
         else if (type == helper::GetDataType<std::string>())
         {
             core::Attribute<std::string> &attribute = *m_IO.InquireAttribute<std::string>(name);
-            int element_count = -1;
-            const char *data_addr = attribute.m_DataSingleValue.c_str();
-            if (!attribute.m_IsSingleValue)
+            if (attribute.m_IsSingleValue)
             {
-                //
+                const char *data_addr = attribute.m_DataSingleValue.c_str();
+                if (Params.MarshalMethod == SstMarshalFFS)
+                    SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type, sizeof(char *), -1,
+                                           data_addr);
+                else if (Params.MarshalMethod == SstMarshalBP5)
+                    m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), -1,
+                                                      data_addr);
             }
-
-            if (Params.MarshalMethod == SstMarshalFFS)
-                SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type, sizeof(char *),
-                                       element_count, data_addr);
             else if (Params.MarshalMethod == SstMarshalBP5)
+            {
+                // array of strings, marshaled as an array of char pointers
+                const int element_count = (int)attribute.m_Elements;
+                m_StringArrayAttributeData.emplace_back(element_count);
+                auto &strings = m_StringArrayAttributeData.back();
+                for (int i = 0; i < element_count; i++)
+                {
+                    strings[i] = attribute.m_DataArray[i].c_str();
+                }
                 m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
-                                                  data_addr);
+                                                  strings.data());
+            }
+            else
+            {
+                helper::Log("Engine", "SstWriter", "MarshalAttributes",
+                            "String array attribute " + name +
+                                " is not supported with MarshalMethod FFS and will not be sent",
+                            helper::LogMode::WARNING);
+            }
         }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \

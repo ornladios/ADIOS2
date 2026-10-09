@@ -104,7 +104,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         generateCommonTestData((int)0, mpiRank, mpiSize, (int)Nx, (int)Nx);
         auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
-        //        auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
+        auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
         auto attr_i8 = io.InquireAttribute<int8_t>(i8_Single);
         auto attr_i16 = io.InquireAttribute<int16_t>(i16_Single);
         auto attr_i32 = io.InquireAttribute<int32_t>(i32_Single);
@@ -119,11 +119,15 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(attr_s1.Type(), adios2::GetType<std::string>());
         ASSERT_EQ(attr_s1.Data().front(), data_S1);
 
-        // EXPECT_TRUE(attr_s1a);
-        // ASSERT_EQ(attr_s1a.Name(), s1_Array);
-        // ASSERT_EQ(attr_s1a.Data().size() == 1, true);
-        // ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
-        // ASSERT_EQ(attr_s1a.Data()[0], currentTestData.S1array[0]);
+        // SSC does not transport string array attributes yet: its attribute
+        // serialization only carries a single string per string attribute.
+        if (::engine != "SSC" && ::engine != "ssc")
+        {
+            EXPECT_TRUE(attr_s1a);
+            ASSERT_EQ(attr_s1a.Name(), s1_Array);
+            ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
+            ASSERT_EQ(attr_s1a.Data(), data_S1array);
+        }
 
         EXPECT_TRUE(attr_i8);
         ASSERT_EQ(attr_i8.Name(), i8_Single);
