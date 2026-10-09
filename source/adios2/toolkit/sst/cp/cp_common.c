@@ -1119,6 +1119,8 @@ extern void SstStreamDestroy(SstStream Stream)
 
     FFSFormatList FFSList = Stream->PreviousFormats;
     Stream->PreviousFormats = NULL;
+    CP_ReleaseAttributeSet(Stream->CurrentAttributeSet);
+    Stream->CurrentAttributeSet = NULL;
     free(Stream->ReleaseList);
     free(Stream->LockDefnsList);
     while (FFSList)

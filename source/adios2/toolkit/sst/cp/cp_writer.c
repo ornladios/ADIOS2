@@ -264,6 +264,54 @@ static void removeContactInfo(SstStream Stream)
 }
 
 /*
+ * Returns a copy of the attributes in a timestep's metadata message, or NULL
+ * if the timestep carries no attributes.  The copy belongs to the caller
+ * (ReferenceCount 1) and has the next attribute generation.
+ */
+static CPAttributeSet CopyAttributeSet(SstStream Stream, struct _TimestepMetadataMsg *Msg)
+{
+    int HaveAttributes = 0;
+    if (!Msg->AttributeData)
+        return NULL;
+    for (int i = 0; i < Msg->CohortSize; i++)
+    {
+        if (Msg->AttributeData[i].DataSize)
+            HaveAttributes = 1;
+    }
+    if (!HaveAttributes)
+        return NULL;
+
+    CPAttributeSet Set = malloc(sizeof(*Set));
+    Set->Generation = ++Stream->AttributeGeneration;
+    Set->ReferenceCount = 1;
+    Set->CohortSize = Msg->CohortSize;
+    Set->Blocks = calloc(Msg->CohortSize, sizeof(Set->Blocks[0]));
+    for (int i = 0; i < Msg->CohortSize; i++)
+    {
+        size_t Size = Msg->AttributeData[i].DataSize;
+        if (Size)
+        {
+            Set->Blocks[i].block = malloc(Size);
+            memcpy(Set->Blocks[i].block, Msg->AttributeData[i].block, Size);
+            Set->Blocks[i].DataSize = Size;
+        }
+    }
+    return Set;
+}
+
+extern void CP_ReleaseAttributeSet(CPAttributeSet Set)
+{
+    if (!Set || (--Set->ReferenceCount > 0))
+        return;
+    for (int i = 0; i < Set->CohortSize; i++)
+    {
+        free(Set->Blocks[i].block);
+    }
+    free(Set->Blocks);
+    free(Set);
+}
+
+/*
 RemoveQueueEntries:
         If the number of timesteps older than OldestCurrentReaderTimestep, mark
 them as Expired Dequeue and free any timestep that is Expired, not Precious and
@@ -304,6 +352,7 @@ static void RemoveQueueEntries(SstStream Stream)
             //            free(ItemToFree->MetadataArray);
             //            free(ItemToFree->DP_TimestepInfo);
             free(ItemToFree->DataBlockToFree);
+            CP_ReleaseAttributeSet(ItemToFree->AttributeSet);
             free(ItemToFree);
             AnythingRemoved++;
 
@@ -941,9 +990,25 @@ static void SendTimestepEntryToSingleReader(SstStream Stream, CPTimestepList Ent
 
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
+        {
+            /*
+             * Timesteps only carry attributes when attributes were defined or
+             * changed.  A reader that has not received the attributes that are
+             * current for this timestep, because it connected after they were
+             * sent, gets them with this timestep.
+             */
+            struct _SstData *EntryAttributeData = Entry->Msg->AttributeData;
+            CPAttributeSet Set = Entry->AttributeSet;
+            if (Set && (CP_WSR_Stream->AttributeGenerationSent < Set->Generation))
+            {
+                Entry->Msg->AttributeData = Set->Blocks;
+                CP_WSR_Stream->AttributeGenerationSent = Set->Generation;
+            }
             sendOneToWSRCohort(CP_WSR_Stream,
                                Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat, Entry->Msg,
                                &Entry->Msg->RS_Stream);
+            Entry->Msg->AttributeData = EntryAttributeData;
+        }
     }
 }
 
@@ -2024,6 +2089,28 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
     Entry->MetadataArray = Msg->Metadata;
     Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
     Entry->DataBlockToFree = data_block2;
+
+    /*
+     * Keep the attributes that are current as of this timestep, so that they
+     * can be sent to readers that did not receive them (see
+     * SendTimestepEntryToSingleReader).  Attribute blocks are complete sets,
+     * except with UseOneTimeAttributes, where they only hold the attributes
+     * defined since the last one and so cannot be resent this way.
+     */
+    STREAM_MUTEX_LOCK(Stream);
+    if (!Stream->ConfigParams->UseOneTimeAttributes)
+    {
+        CPAttributeSet NewSet = CopyAttributeSet(Stream, Msg);
+        if (NewSet)
+        {
+            CP_ReleaseAttributeSet(Stream->CurrentAttributeSet);
+            Stream->CurrentAttributeSet = NewSet;
+        }
+        Entry->AttributeSet = Stream->CurrentAttributeSet;
+        if (Entry->AttributeSet)
+            Entry->AttributeSet->ReferenceCount++;
+    }
+    STREAM_MUTEX_UNLOCK(Stream);
 
     ProcessReaderStatusList(Stream, ReturnData);
 

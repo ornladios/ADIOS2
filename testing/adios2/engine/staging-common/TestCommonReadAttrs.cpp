@@ -98,6 +98,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             break;
         }
         const size_t currentStep = engine.CurrentStep();
+        if (LateJoin && begin_statuses.size() == 1)
+        {
+            // A reader that connects late starts after the first step, and
+            // must still receive the attributes, which were defined before it.
+            EXPECT_GT(currentStep, 0);
+            t = static_cast<unsigned int>(currentStep);
+        }
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
         size_t writerSize;

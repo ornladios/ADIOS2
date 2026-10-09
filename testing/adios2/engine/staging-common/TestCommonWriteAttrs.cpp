@@ -8,8 +8,10 @@
 #include <cstring>
 #include <ctime>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -183,6 +185,10 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         if (ModifiableAttributes)
             io.DefineAttribute<double>(r64_Single, (double)3.14159 + (double)step, "", "/", true);
         engine.EndStep();
+        if (DelayMS > 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(DelayMS));
+        }
     }
 
     // Close the file
@@ -194,6 +200,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
+    DelayMS = 0; // no delay between steps unless --ms_delay is given
     ParseArgs(argc, argv);
 
 #if ADIOS2_USE_MPI
