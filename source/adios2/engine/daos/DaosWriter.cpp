@@ -1840,10 +1840,9 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
     if (ghdl.iov_buf == NULL)
     {
-        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "daos_handle_share",
-                                          "out of memory for a " +
-                                              std::to_string(ghdl.iov_buf_len) +
-                                              " byte global handle");
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosWriter", "daos_handle_share",
+            "out of memory for a " + std::to_string(ghdl.iov_buf_len) + " byte global handle");
     }
     ghdl.iov_len = ghdl.iov_buf_len;
 
