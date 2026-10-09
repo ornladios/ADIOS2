@@ -103,9 +103,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     const std::string r64_Single = std::string("r64_Single_") + zero;
 
     io.DefineAttribute<std::string>(s1_Single, data_S1);
-    //        io.DefineAttribute<std::string>(s1_Array,
-    //                                        data_S1array.data(),
-    //                                        data_S1array.size());
+    io.DefineAttribute<std::string>(s1_Array, data_S1array.data(), data_S1array.size());
 
     generateCommonTestData((int)0, mpiRank, mpiSize, (int)Nx, (int)Nx);
     io.DefineAttribute<int8_t>(i8_Single, data_I8.front());
