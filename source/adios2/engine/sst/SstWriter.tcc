@@ -79,7 +79,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                     ObjSize = helper::GetDataTypeSize(variable.m_Type);
                 }
 
-                const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+                const bool sourceRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
                 helper::DimsArray MemoryStart(variable.m_MemoryStart);
                 helper::DimsArray MemoryCount(variable.m_MemoryCount);
                 helper::DimsArray varCount(variable.m_Count);
