@@ -1954,6 +1954,60 @@ bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offse
     return (((struct BP5VarRec *)Req->VarRec)->DimCount == 1);
 }
 
+/*
+ * A block's intersection with a global-array selection can be read straight
+ * into application memory when it is one contiguous run in both the writer's
+ * block and the selection's buffer: full extent in every dimension faster than
+ * some dimension k, any extent in k, and extent 1 in every slower dimension.
+ * An exact match of block and selection is the common case.  On success
+ * *destOffset is the byte offset of the intersection in the application
+ * buffer.  Memory selections lay the buffer out differently, so they never
+ * qualify.
+ */
+bool BP5Deserializer::ContiguousDestination(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                                            const uint64_t *blkCount,
+                                            const size_t *interStartInBlock,
+                                            const size_t *interCount, size_t elemSize,
+                                            size_t *destOffset)
+{
+    const size_t n = ((struct BP5VarRec *)Req->VarRec)->DimCount;
+    if (!blkOffsets || n == 0 || n > helper::MAX_DIMS || Req->Start.size() != n ||
+        Req->Count.size() != n || !Req->MemoryStart.empty() || !Req->MemoryCount.empty())
+    {
+        return false;
+    }
+    std::array<uint64_t, helper::MAX_DIMS> selCount;
+    for (size_t d = 0; d < n; ++d)
+    {
+        selCount[d] = Req->Count[d];
+    }
+    auto lf_OneRun = [&](const uint64_t *full) {
+        size_t i = 0;
+        // fastest-varying first
+        auto dim = [&](size_t k) { return m_ReaderIsRowMajor ? n - 1 - k : k; };
+        while (i < n && interCount[dim(i)] == full[dim(i)])
+            ++i;
+        ++i; // the one dimension that may be partial
+        for (; i < n; ++i)
+        {
+            if (interCount[dim(i)] != 1)
+                return false;
+        }
+        return true;
+    };
+    if (!lf_OneRun(blkCount) || !lf_OneRun(selCount.data()))
+    {
+        return false;
+    }
+    std::array<size_t, helper::MAX_DIMS> pos;
+    for (size_t d = 0; d < n; ++d)
+    {
+        pos[d] = blkOffsets[d] + interStartInBlock[d] - Req->Start[d];
+    }
+    *destOffset = elemSize * LinearIndex(n, selCount.data(), pos.data(), m_ReaderIsRowMajor);
+    return true;
+}
+
 std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTempBuffers,
                                       size_t *maxReadSize)
@@ -2466,31 +2520,19 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                    size_t DestOffset = 0;
                                     if (Req->MemSpace != MemorySpace::Host)
                                         RR.DirectToAppMemory = false;
                                     else if (m_SourceIsLittleEndian != m_ReaderIsLittleEndian)
                                         RR.DirectToAppMemory = false;
                                     else
-                                        RR.DirectToAppMemory = IsContiguousTransfer(
-                                            Req, &writer_meta_base->Offsets[StartDim],
-                                            &writer_meta_base->Count[StartDim]);
+                                        RR.DirectToAppMemory = ContiguousDestination(
+                                            Req, blkOffsets, blkCount, &intersectionstart[0],
+                                            &intersectioncount[0], VB->m_ElementSize,
+                                            &DestOffset);
                                     if (RR.DirectToAppMemory)
                                     {
-                                        /*
-                                         * DirectToAppMemory handles only 1D, so offset
-                                         * calc is 1D only for the moment ContigOffset
-                                         * handles the case where our destination is not
-                                         * the start of the destination memory (because
-                                         * some other block filled in that start)
-                                         */
-
-                                        ssize_t ContigOffset =
-                                            (writer_meta_base->Offsets[StartDim + 0] -
-                                             Req->Start[0]) *
-                                            VB->m_ElementSize;
-                                        if (ContigOffset < 0)
-                                            ContigOffset = 0;
-                                        RR.DestinationAddr = (char *)Req->Data + ContigOffset;
+                                        RR.DestinationAddr = (char *)Req->Data + DestOffset;
                                     }
                                     else
                                     {
