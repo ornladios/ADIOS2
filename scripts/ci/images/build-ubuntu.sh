@@ -22,88 +22,55 @@ set -ex
 # Some overridable defaults
 BUILD_TOOL="${IMAGE_BUILD_TOOL:-podman}"
 TAG_PREFIX="${IMAGE_TAG_PREFIX:-ghcr.io/ornladios/adios2}"
+DATE_TAG="${IMAGE_DATE:-$(date +%Y%m%d)}"
 
-ARCH="${1:-all}"
+# Build the base image
+${BUILD_TOOL} build --progress=plain \
+  --build-arg PATCH_VARIANT_XROOTD=ON \
+  --build-arg EXTRA_SPECS="sz3" \
+  --rm -f ./Dockerfile.ci-spack-ubuntu22.04-base \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  .
 
-build_x86_64() {
-  # Build the base image
-  ${BUILD_TOOL} build --progress=plain \
-    --build-arg PATCH_VARIANT_XROOTD=ON \
-    --build-arg EXTRA_SPECS="sz3" \
-    --rm -f ./Dockerfile.ci-spack-ubuntu22.04-base \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    .
+# Build the gcc10, gcc12, and gcc14 images
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  --build-arg GCC_VERSION=14 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-gcc14:${DATE_TAG}" \
+  .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  --build-arg GCC_VERSION=12 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-gcc12:${DATE_TAG}" \
+  .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  --build-arg GCC_VERSION=10 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-gcc10:${DATE_TAG}" \
+  .
 
-  # Build the gcc9, gcc10, and gcc12 images
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    --build-arg GCC_VERSION=12 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12" \
-    .
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    --build-arg GCC_VERSION=10 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc10" \
-    .
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    --build-arg GCC_VERSION=9 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-gcc \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc9" \
-    .
+# Build the clang11 and clang14 images
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  --build-arg CLANG_VERSION=11 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-clang11:${DATE_TAG}" \
+  .
+${BUILD_TOOL} build --rm \
+  --build-arg BASE_IMAGE="${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest" \
+  --build-arg CLANG_VERSION=14 \
+  -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
+  -t "${TAG_PREFIX}/ci-spack-ubuntu22.04-clang14:${DATE_TAG}" \
+  .
 
-  # Build the clang11 and clang14 images
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    --build-arg CLANG_VERSION=11 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang11" \
-    .
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-base" \
-    --build-arg CLANG_VERSION=14 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-clang \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14" \
-    .
-
-  ${BUILD_TOOL} build --rm \
-    --build-arg BASE_IMAGE="${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12" \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-gcc-external \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12-external" \
-    .
-
-  # Tag the ubuntu 22.04 gcc11 img
-  ${BUILD_TOOL} tag "${TAG_PREFIX}:ci-spack-ubuntu22.04-base" "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
-
-  # Push images to github container registry
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-base"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc9"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc10"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang11"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-clang14"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12"
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc12-external"
-}
-
-build_aarch64() {
-  ${BUILD_TOOL} build --rm \
-    --platform linux/arm64 \
-    -f ./Dockerfile.ci-spack-ubuntu22.04-aarch64-base \
-    -t "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11-aarch64" \
-    .
-
-  ${BUILD_TOOL} push "${TAG_PREFIX}:ci-spack-ubuntu22.04-gcc11-aarch64"
-}
-
-case "${ARCH}" in
-  x86_64)  build_x86_64 ;;
-  aarch64) build_aarch64 ;;
-  all)     build_x86_64; build_aarch64 ;;
-  *)
-    echo "Usage: $0 [x86_64|aarch64]  (default: all)"
-    exit 1
-    ;;
-esac
+# Push images to github container registry
+${BUILD_TOOL} push "${TAG_PREFIX}/ci-spack-ubuntu22.04-base:latest"
+for img in gcc10 gcc12 gcc14 clang11 clang14; do
+  ${BUILD_TOOL} tag "${TAG_PREFIX}/ci-spack-ubuntu22.04-${img}:${DATE_TAG}" \
+    "${TAG_PREFIX}/ci-spack-ubuntu22.04-${img}:latest"
+  ${BUILD_TOOL} push "${TAG_PREFIX}/ci-spack-ubuntu22.04-${img}:${DATE_TAG}"
+  ${BUILD_TOOL} push "${TAG_PREFIX}/ci-spack-ubuntu22.04-${img}:latest"
+done
