@@ -234,32 +234,7 @@ void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix,
 
 void KVCacheCommon::RemotePathHashMd5(const std::string &remotePath, std::string &result)
 {
-    adios2sysMD5 *md5 = adios2sysMD5_New();
-    if (!md5)
-    {
-        throw std::runtime_error("Failed to create MD5 instance");
-    }
-
-    // Initialize the MD5 instance
-    adios2sysMD5_Initialize(md5);
-
-    // Update the MD5 instance with the input data
-    adios2sysMD5_Append(md5, reinterpret_cast<const unsigned char *>(remotePath.c_str()),
-                        remotePath.size());
-
-    // Finalize the MD5 digest and get the hash value
-    unsigned char digest[16];
-    adios2sysMD5_Finalize(md5, digest);
-
-    // Convert the digest to a hexadecimal string
-    char hexDigest[32];
-    adios2sysMD5_DigestToHex(digest, hexDigest);
-
-    // Clean up the MD5 instance
-    adios2sysMD5_Delete(md5);
-
-    // from 0 to 31
-    result = std::string(hexDigest, 32);
+    result = helper::Hash128ToHex(helper::Hash128(remotePath.data(), remotePath.size()));
 }
 };     // namespace kvcache
 };     // namespace adios2

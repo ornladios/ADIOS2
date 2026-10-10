@@ -46,6 +46,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
   helper/adiosLog.cpp
+  helper/adiosHash.cpp
   helper/adiosRangeFilter.cpp
 
   # engine derived classes
@@ -256,7 +257,7 @@ target_include_directories(adios2_core
   $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/bindings/CXX>
 )
 target_link_libraries(adios2_core PRIVATE
-  adios2sys_interface
+  adios2::thirdparty::xxhash
   adios2::thirdparty::pugixml
   adios2::thirdparty::yaml-cpp
   adios2::thirdparty::nlohmann_json
@@ -559,9 +560,6 @@ if(ADIOS2_HAVE_HDF5)
       endforeach()
     endif()
   endforeach()
-
-  # Add dependencies to HDF5 engine here
-  target_link_libraries(adios2_hdf5 PRIVATE adios2sys_interface)
 
   if(ADIOS2_HAVE_XRootD)
     target_include_directories(adios2_hdf5 PRIVATE ${XROOTD_INCLUDE_DIRS})

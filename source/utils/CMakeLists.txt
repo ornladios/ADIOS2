@@ -57,7 +57,6 @@ endif()
 
 # BPSPLIT
 #add_executable(bpsplit ./bpsplit/bpsplit.cpp)
-#target_link_libraries(bpsplit adios2::cxx adios2sys_interface adios2::thirdparty::pugixml)
 #install(TARGETS bpsplit EXPORT adios2
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 #)
