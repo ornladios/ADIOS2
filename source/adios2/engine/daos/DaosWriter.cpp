@@ -1731,13 +1731,22 @@ void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync
         }
         void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
-        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        const bool sourceRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+        helper::DimsArray MemoryStart(variable.m_MemoryStart);
+        helper::DimsArray MemoryCount(variable.m_MemoryCount);
+        helper::DimsArray varCount(variable.m_Count);
+        // NdCopy's column-major mode takes dimensions slowest-first
+        if (!sourceRowMajor)
+        {
+            std::reverse(MemoryStart.begin(), MemoryStart.end());
+            std::reverse(MemoryCount.begin(), MemoryCount.end());
+            std::reverse(varCount.begin(), varCount.end());
+        }
 
-        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), variable.m_MemoryCount,
-                       sourceRowMajor, false, (char *)ptr, variable.m_MemoryStart, variable.m_Count,
-                       sourceRowMajor, false, ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */,
-                       variable.m_MemSpace);
+        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
+                       sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
+                       false, ObjSize, helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+                       helper::CoreDims(), false /* safemode */, variable.m_MemSpace);
     }
     else if (variable.m_Type == DataType::String)
     {
