@@ -2528,8 +2528,7 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     else
                                         RR.DirectToAppMemory = ContiguousDestination(
                                             Req, blkOffsets, blkCount, &intersectionstart[0],
-                                            &intersectioncount[0], VB->m_ElementSize,
-                                            &DestOffset);
+                                            &intersectioncount[0], VB->m_ElementSize, &DestOffset);
                                     if (RR.DirectToAppMemory)
                                     {
                                         RR.DestinationAddr = (char *)Req->Data + DestOffset;
