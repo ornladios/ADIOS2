@@ -379,6 +379,7 @@ bp_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 
 bp_gtest_add_tests_helper(SelectionsOnRowMajorData MPI_NONE)
 bp_gtest_add_tests_helper(SelectionsOnColumnMajorData MPI_NONE)
+bp_gtest_add_tests_helper(NdSelections MPI_NONE)
 
 # Fortran writer C++ reader test
 if(ADIOS2_HAVE_Fortran)
