@@ -210,6 +210,13 @@ if(NOT @BUILD_SHARED_LIBS@)
     target_link_libraries(adios2::thirdparty::pugixml INTERFACE pugixml)
   endif()
 
+  adios2_add_thirdparty_target(CLI11)
+  set(ADIOS2_USE_EXTERNAL_CLI11 @ADIOS2_USE_EXTERNAL_CLI11@)
+  if(ADIOS2_USE_EXTERNAL_CLI11)
+    find_dependency(CLI11)
+    target_link_libraries(adios2::thirdparty::CLI11 INTERFACE CLI11::CLI11)
+  endif()
+
   set(ADIOS2_USE_EXTERNAL_YAMLCPP @ADIOS2_USE_EXTERNAL_YAMLCPP@)
   set(yaml_cpp_target "yaml-cpp")
   if(ADIOS2_USE_EXTERNAL_YAMLCPP)
