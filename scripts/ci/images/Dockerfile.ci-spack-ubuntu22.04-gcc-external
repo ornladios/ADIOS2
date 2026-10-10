@@ -12,7 +12,8 @@ ENV DEPENDENCIES \
     nlohmann-json \
     perfstubs \
     pugixml \
-    py-nanobind
+    py-nanobind \
+    xxhash
 
 RUN . /spack/share/spack/setup-env.sh && \
     SPACK_PKG_ROOT=$(spack repo list | awk '/builtin/{print $NF}' | sed 's|/repos/.*||') && \
