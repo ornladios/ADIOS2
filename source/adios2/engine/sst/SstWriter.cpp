@@ -172,7 +172,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 size_t SstWriter::CurrentStep() const { return m_WriterStep; }
 
-void SstWriter::MarshalAttributes()
+void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringArrayData)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
@@ -188,9 +188,6 @@ void SstWriter::MarshalAttributes()
     // if there are no new attributes, nothing to do
     if (!m_MarshalAttributesNecessary)
         return;
-
-    // every attribute is marshaled again below, replacing the old pointers
-    m_StringArrayAttributeData.clear();
 
     for (const auto &attributePair : attributes)
     {
@@ -217,8 +214,8 @@ void SstWriter::MarshalAttributes()
             {
                 // array of strings, marshaled as an array of char pointers
                 const int element_count = (int)attribute.m_Elements;
-                m_StringArrayAttributeData.emplace_back(element_count);
-                auto &strings = m_StringArrayAttributeData.back();
+                stringArrayData.emplace_back(element_count);
+                auto &strings = stringArrayData.back();
                 for (int i = 0; i < element_count; i++)
                 {
                     strings[i] = attribute.m_DataArray[i].c_str();
@@ -295,13 +292,18 @@ void SstWriter::EndStep()
     {
         PERFSTUBS_SCOPED_TIMER("Marshaling Overhead");
         PERFSTUBS_TIMER_START(timer, "SstMarshalFFS");
-        MarshalAttributes();
+        std::list<std::vector<const char *>> stringArrayData;
+        MarshalAttributes(stringArrayData);
         PERFSTUBS_TIMER_STOP(timer);
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (Params.MarshalMethod == SstMarshalBP5)
     {
-        MarshalAttributes();
+        // The serializer keeps pointers to the char* arrays of string array
+        // attributes and encodes them in CloseTimestep(), so they must live
+        // until then.
+        std::list<std::vector<const char *>> stringArrayData;
+        MarshalAttributes(stringArrayData);
         format::BP5Serializer::TimestepInfo *TSInfo =
             new format::BP5Serializer::TimestepInfo(m_BP5Serializer->CloseTimestep(m_WriterStep));
         auto lf_FreeBlocks = [](void *vBlock) {

@@ -90,13 +90,9 @@ private:
     long m_WriterStep = -1;
     bool m_DefinitionsNotified = false;
     bool m_MarshalAttributesNecessary = true; // first time through, marshal
-    // The BP5 serializer keeps a pointer to the data of array attributes and
-    // encodes it later, so the char* arrays for string array attributes must
-    // outlive MarshalAttributes().
-    std::list<std::vector<const char *>> m_StringArrayAttributeData;
     struct _SstParams Params;
 
-    void MarshalAttributes();
+    void MarshalAttributes(std::list<std::vector<const char *>> &stringArrayData);
     void DoClose(const int transportIndex = -1) final;
 };
 
