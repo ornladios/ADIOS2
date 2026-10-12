@@ -8,32 +8,13 @@
 
 #include <cmath>
 #include <cstring>
-#include <getopt.h>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
+#include <CLI/CLI.hpp>
+
 #include "adios2/helper/adiosLog.h"
-
-struct option options[] = {{"help", no_argument, NULL, 'h'},
-                           {"verbose", no_argument, NULL, 'v'},
-                           {"appid", required_argument, NULL, 'a'},
-                           {"config", required_argument, NULL, 'c'},
-                           {"decomp", required_argument, NULL, 'd'},
-                           {"decomp-ratio", required_argument, NULL, 'D'},
-                           {"xml", required_argument, NULL, 'x'},
-                           {"path", required_argument, NULL, 'p'},
-                           {"strong-scaling", no_argument, NULL, 's'},
-                           {"weak-scaling", no_argument, NULL, 'w'},
-                           {"timer", no_argument, NULL, 't'},
-                           {"fixed", no_argument, NULL, 'F'},
-                           {"multithreaded-mpi", no_argument, NULL, 'T'},
-#ifdef ADIOS2_HAVE_HDF5_PARALLEL
-                           {"hdf5", no_argument, NULL, 'H'},
-#endif
-                           {NULL, 0, NULL, 0}};
-
-static const char *optstring = "-hvswtTFHa:c:d:D:x:p:";
 
 size_t Settings::ndigits(size_t n) const
 {
@@ -141,151 +122,87 @@ int Settings::rescaleDecomp()
 
 int Settings::processArgs(int argc, char *argv[])
 {
-    bool appIdDefined = false;
-    bool scalingDefined = false;
-    bool decompDefined = false;
-    int c;
-    int last_c = '_';
+    bool help = false;
+    bool strong = false;
+    bool weak = false;
+    bool ratio = false;
+    std::vector<std::string> decomp;
+    std::vector<std::string> decompRatio;
 
-    /* Process the arguments */
-    while ((c = getopt_long(argc, argv, optstring, options, NULL)) != -1)
-    {
-        switch (c)
-        {
-        case 'a':
-            appId = stringToNumber("appID", optarg);
-            appIdDefined = true;
-            break;
-        case 'c':
-            configFileName = optarg;
-            break;
-        case 'd':
-            if (decompDefined && isRatioDecomp)
-            {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "settings", "processArgs",
-                    "Cannot have -D and -d used at the same time");
-            }
-            if (strchr(optarg, ','))
-            {
-                parseCSDecomp(optarg);
-            }
-            else
-            {
-                processDecomp[nDecomp] = stringToNumber("decomposition in dimension 1", optarg);
-                ++nDecomp;
-            }
-            decompDefined = true;
-            break;
-        case 'D':
-            if (decompDefined && !isRatioDecomp)
-            {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "settings", "processArgs",
-                    "Cannot have -D and -d used at the same time");
-            }
-            if (strchr(optarg, ','))
-            {
-                parseCSDecomp(optarg);
-            }
-            else
-            {
-                processDecomp[nDecomp] = stringToNumber("decomposition in dimension 1", optarg);
-                ++nDecomp;
-            }
-            decompDefined = true;
-            isRatioDecomp = true;
-            break;
-        case 'F':
-            fixedPattern = true;
-            break;
-        case 'T':
-            multithreadedMPI = true;
-            break;
-        case 'h':
-            if (!myRank)
-            {
-                displayHelp();
-            }
-            return 1;
+    CLI::App app;
+    app.set_help_flag();
+    app.add_flag("-h,--help", help);
+    app.add_flag("-v,--verbose", verbose);
+    auto *appIdOpt = app.add_option("-a,--appid", appId);
+    app.add_option("-c,--config", configFileName);
+    app.add_option("-d,--decomp", decomp)->expected(-1);
+    app.add_option("-D,--decomp-ratio", decompRatio)->expected(-1);
+    app.add_option("-x,--xml", adiosConfigFileName);
+    app.add_option("-p,--path", outputPath);
+    app.add_flag("-s,--strong-scaling", strong);
+    app.add_flag("-w,--weak-scaling", weak);
+    app.add_flag("-t,--timer", ioTimer);
+    app.add_flag("-F,--fixed", fixedPattern);
+    app.add_flag("-T,--multithreaded-mpi", multithreadedMPI);
 #ifdef ADIOS2_HAVE_HDF5_PARALLEL
-        case 'H':
-            iolib = IOLib::HDF5;
-            break;
+    bool hdf5 = false;
+    app.add_flag("-H,--hdf5", hdf5);
 #endif
-        case 's':
-            if (scalingDefined && !isStrongScaling)
-            {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "settings", "processArgs",
-                    "Cannot have -w and -s used at the same time");
-            }
-            isStrongScaling = true;
-            scalingDefined = true;
-            break;
-        case 'v':
-            ++verbose;
-            break;
-        case 'w':
-            if (scalingDefined && isStrongScaling)
-            {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "settings", "processArgs",
-                    "Cannot have -s and -w used at the same time");
-            }
-            isStrongScaling = false;
-            scalingDefined = true;
-            break;
-        case 't':
-            ioTimer = true;
-            break;
-        case 'x':
-            adiosConfigFileName = optarg;
-            break;
-        case 'p':
-            outputPath = optarg;
-            break;
-        case 1:
-            /* This means a field is unknown, or could be multiple arg or bad
-             * arg*/
 
-            if (last_c == 'd' || last_c == 'D')
-            { // --decomp extra arg (or not if not a number)
-                processDecomp[nDecomp] = stringToNumber(
-                    "decomposition in dimension " + std::to_string(nDecomp + 1), optarg);
-                ++nDecomp;
-            }
-            else
-            {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "settings", "processArgs",
-                    "Invalid argument " + std::string(optarg));
-            }
-            break;
-
-        default:
-            adios2::helper::Throw<std::invalid_argument>(
-                "Utils::adios_iotest", "settings", "processArgs",
-                "Invalid argument option " + std::string(optarg));
-        } /* end switch */
-        if (c != 1)
-        {
-            last_c = c;
-        }
-    } /* end while */
-
-    /* Check if we have extra unprocessed arguments */
-    if (optind < argc)
+    try
     {
-        std::string s;
-        while (optind < argc)
-        {
-            s += std::string(argv[optind]) + " ";
-            ++optind;
-        }
-        adios2::helper::Throw<std::invalid_argument>(
-            "Utils::adios_iotest", "settings", "processArgs", "There are unknown arguments: " + s);
+        app.parse(argc, argv);
     }
+    catch (const CLI::ParseError &e)
+    {
+        adios2::helper::Throw<std::invalid_argument>("Utils::adios_iotest", "settings",
+                                                     "processArgs", e.what());
+    }
+
+    if (help)
+    {
+        if (!myRank)
+        {
+            displayHelp();
+        }
+        return 1;
+    }
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
+    if (hdf5)
+    {
+        iolib = IOLib::HDF5;
+    }
+#endif
+    if (strong && weak)
+    {
+        adios2::helper::Throw<std::invalid_argument>("Utils::adios_iotest", "settings",
+                                                     "processArgs",
+                                                     "Cannot have -w and -s used at the same time");
+    }
+    if (!decomp.empty() && !decompRatio.empty())
+    {
+        adios2::helper::Throw<std::invalid_argument>("Utils::adios_iotest", "settings",
+                                                     "processArgs",
+                                                     "Cannot have -D and -d used at the same time");
+    }
+    ratio = !decompRatio.empty();
+    isRatioDecomp = ratio;
+    for (const std::string &arg : ratio ? decompRatio : decomp)
+    {
+        if (arg.find(',') != std::string::npos)
+        {
+            parseCSDecomp(arg.c_str());
+        }
+        else
+        {
+            processDecomp[nDecomp] = stringToNumber(
+                "decomposition in dimension " + std::to_string(nDecomp + 1), arg.c_str());
+            ++nDecomp;
+        }
+    }
+    const bool appIdDefined = appIdOpt->count() > 0;
+    const bool scalingDefined = strong || weak;
+    isStrongScaling = !weak;
 
     /* Check if we have a everything defined */
     if (!appIdDefined)
