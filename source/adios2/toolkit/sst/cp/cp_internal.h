@@ -202,21 +202,12 @@ struct _SstStream
     StepRequest StepRequestQueue;
     int CloseMessagesSent;
 
-    /* writer side marshal info */
-    void *WriterMarshalData;
-    size_t MetadataSize;
-    void *M; // building metadata block
-    size_t DataSize;
-    void *D; // building data block
     FFSFormatList PreviousFormats;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
     int LockDefnsCount;
     struct _ReleaseRec *LockDefnsList;
     enum StreamStatus Status;
-    AssembleMetadataUpcallFunc AssembleMetadataUpcall;
-    FreeMetadataUpcallFunc FreeMetadataUpcall;
-    void *UpcallWriter;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -238,16 +229,6 @@ struct _SstStream
     ssize_t DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
     ssize_t LastDPNotifiedTimestep;
-
-    /* reader side marshal info */
-    FFSContext ReaderFFSContext;
-    VarSetupUpcallFunc VarSetupUpcall;
-    ArraySetupUpcallFunc ArraySetupUpcall;
-    MinArraySetupUpcallFunc MinArraySetupUpcall;
-    AttrSetupUpcallFunc AttrSetupUpcall;
-    ArrayBlocksInfoUpcallFunc ArrayBlocksInfoUpcall;
-    void *SetupUpcallReader;
-    void *ReaderMarshalData;
 };
 
 /*
@@ -554,10 +535,6 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v, v
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                   attr_list attrs);
 
-extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSMarshalInstallPreciousMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSClearTimestepData(SstStream Stream);
-extern void FFSFreeMarshalData(SstStream Stream);
 extern void AddToLastCallFreeList(void *Block);
 extern CMConnection Tunneling_get_conn(CManager cm, attr_list attrs);
 

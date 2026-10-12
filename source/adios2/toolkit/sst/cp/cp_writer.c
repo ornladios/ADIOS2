@@ -1531,11 +1531,10 @@ static FFSFormatList AddUniqueFormats(FFSFormatList List, FFSFormatList Candidat
     return List;
 }
 
-static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
-                             MetadataPlusDPInfo *pointers)
+static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
+                            MetadataPlusDPInfo *pointers)
 {
     FFSFormatList XmitFormats = NULL;
-    void *MetadataFreeValue = NULL;
 
     /* build the Metadata Msg */
     Msg->CohortSize = Stream->CohortSize;
@@ -1578,25 +1577,9 @@ static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
         Msg->DP_TimestepInfo = NULL;
     }
 
-    if (Stream->AssembleMetadataUpcall)
-    {
-        MetadataFreeValue = Stream->AssembleMetadataUpcall(Stream->UpcallWriter, Stream->CohortSize,
-                                                           Msg->Metadata, Msg->AttributeData);
-        /* Assume rank 0 values alone are useful now, zero others */
-        for (int i = 1; i < Stream->CohortSize; i++)
-        {
-            Msg->Metadata[i].DataSize = 0;
-            Msg->Metadata[i].block = NULL;
-            Msg->AttributeData[i].DataSize = 0;
-            Msg->AttributeData[i].block = NULL;
-        }
-    }
-
     free(pointers);
 
     Stream->PreviousFormats = AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
-
-    return MetadataFreeValue;
 }
 
 static void ProcessReaderStatusList(SstStream Stream, ReturnMetadataInfo Metadata)
@@ -1938,7 +1921,6 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
         int DiscardThisTimestep = 0;
         struct _ReturnMetadataInfo TimestepMetaData;
         RegisterQueue ArrivingReader;
-        void *MetadataFreeValue;
         STREAM_MUTEX_LOCK(Stream);
         ArrivingReader = Stream->ReaderRegisterQueue;
         QueueMaintenance(Stream);
@@ -1988,15 +1970,10 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
         /* Only rank 0 sends metadata to readers, so only it assembles the
          * message; its blocks point into the gather buffer, data_block1 */
         memset(Msg, 0, sizeof(*Msg));
-        MetadataFreeValue = FillMetadataMsg(Stream, Msg, pointers);
+        FillMetadataMsg(Stream, Msg, pointers);
         STREAM_MUTEX_UNLOCK(Stream);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat, &data_block2);
-        if (Stream->FreeMetadataUpcall)
-        {
-            Stream->FreeMetadataUpcall(Stream->UpcallWriter, Msg->Metadata, Msg->AttributeData,
-                                       MetadataFreeValue);
-        }
         free(TimestepMetaData.ReaderStatus);
         if (TimestepMetaData.ReleaseList)
             free(TimestepMetaData.ReleaseList);
@@ -2137,16 +2114,6 @@ extern void SstWriterDefinitionLock(SstStream Stream, long EffectiveTimestep)
     STREAM_MUTEX_UNLOCK(Stream);
     CP_verbose(Stream, PerStepVerbose, "Writer-side definitions lock as of timestep %ld\n",
                EffectiveTimestep);
-}
-
-extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata, SstData Data, long Timestep,
-                               DataFreeFunc FreeTimestep, void *FreeClientData,
-                               SstData AttributeData, DataFreeFunc FreeAttributeData,
-                               void *FreeAttributeClientData)
-{
-    SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, NULL, FreeTimestep,
-                               FreeClientData, AttributeData, FreeAttributeData,
-                               FreeAttributeClientData);
 }
 
 extern void SstProvideTimestepMM(SstStream Stream, SstData LocalMetadata, SstData Data,
@@ -2483,13 +2450,4 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn, void
     }
     STREAM_MUTEX_UNLOCK(ParentStream);
     PERFSTUBS_TIMER_STOP_FUNC(timer);
-}
-
-void SstWriterInitMetadataCallback(SstStream Stream, void *Writer,
-                                   AssembleMetadataUpcallFunc AssembleCallback,
-                                   FreeMetadataUpcallFunc FreeCallback)
-{
-    Stream->AssembleMetadataUpcall = AssembleCallback;
-    Stream->FreeMetadataUpcall = FreeCallback;
-    Stream->UpcallWriter = Writer;
 }

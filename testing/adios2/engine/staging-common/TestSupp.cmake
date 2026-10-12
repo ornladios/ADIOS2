@@ -153,10 +153,6 @@ set (FtoC.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommo
 set (CtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -r $<TARGET_FILE:TestCommonRead_f>")
 set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
 
-# Tests for ZFP compression (where supported by an engine param)
-set (ZFPCompression.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
-set (ZFPCompression.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
-
 # Test if writer will survive readers departing unexpectedly
 set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReadersSerialized.3x2_TIMEOUT "300")

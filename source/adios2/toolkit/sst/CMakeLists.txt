@@ -13,7 +13,6 @@ add_library(sst OBJECT
   cp/cp_reader.c
   cp/cp_writer.c
   cp/cp_common.c
-  cp/ffs_marshal.c
   sst_comm.cpp
 )
 if(BUILD_SHARED_LIBS)
@@ -42,11 +41,6 @@ if(ADIOS2_HAVE_DAOS)
   target_sources(sst PRIVATE dp/daos_dp.c)
   target_link_libraries(sst PRIVATE DAOS::DAOS)
   set(CMAKE_REQUIRED_INCLUDES ${DAOS_INCLUDE_DIRS})
-endif()
-
-if(ADIOS2_HAVE_ZFP)
-  target_sources(sst PRIVATE cp/ffs_zfp.c)
-  target_link_libraries(sst PRIVATE zfp::zfp)
 endif()
 
 if(ADIOS2_HAVE_MPI)

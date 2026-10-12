@@ -193,9 +193,8 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
-static char *SstMarshalStr[] = {"FFS", "BP", "BP5"};
+static char *SstMarshalStr[] = {"BP5"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
-static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin", "StepsOnDemand"};
 
@@ -226,8 +225,6 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int Reade
                                   : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   CompressionMethod=%s\n",
-                SstCompressStr[Params->CompressionMethod]);
         fprintf(stderr, "Param -   MarshalMethod=%s\n", SstMarshalStr[Params->MarshalMethod]);
         fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
@@ -1122,23 +1119,9 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if (Stream->WriterConfigParams && (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS))
-    {
-        FFSFreeMarshalData(Stream);
-        if (Stream->M)
-            free(Stream->M);
-        if (Stream->D)
-            free(Stream->D);
-    }
-
     if (Stream->Role == ReaderRole)
     {
         /* reader side */
-        if (Stream->ReaderFFSContext)
-        {
-            free_FFSContext(Stream->ReaderFFSContext);
-            Stream->ReaderFFSContext = NULL;
-        }
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
@@ -1155,10 +1138,6 @@ extern void SstStreamDestroy(SstStream Stream)
         }
         if (Stream->RanksRead)
             free(Stream->RanksRead);
-    }
-    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
-    {
-        FFSFreeMarshalData(Stream);
     }
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->DataTransport);

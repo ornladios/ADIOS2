@@ -96,31 +96,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params,
         return false;
     };
 
-    auto lf_SetCompressionMethodParameter = [&](const std::string key, size_t &parameter) {
-        auto itKey = io.m_Parameters.find(key);
-        if (itKey != io.m_Parameters.end())
-        {
-            std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
-            if (method == "zfp")
-            {
-                parameter = SstCompressZFP;
-            }
-            else if (method == "none")
-            {
-                parameter = SstCompressNone;
-            }
-            else
-            {
-                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
-                                                     "Unknown Sst CompressionMethod parameter \"" +
-                                                         method + "\"");
-            }
-            return true;
-        }
-        return false;
-    };
-
     // not really a parameter, but a convenient way to pass this around
     auto lf_SetIsRowMajorParameter = [&](const std::string key, int &parameter) {
         parameter = (io.m_ArrayOrder == adios2::ArrayOrdering::RowMajor);
@@ -133,15 +108,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params,
         {
             std::string method = itKey->second;
             std::transform(method.begin(), method.end(), method.begin(), ::tolower);
-            if (method == "ffs")
-            {
-                parameter = SstMarshalFFS;
-            }
-            else if (method == "bp")
-            {
-                parameter = SstMarshalBP;
-            }
-            else if (method == "bp5")
+            if (method == "bp5")
             {
                 parameter = SstMarshalBP5;
             }

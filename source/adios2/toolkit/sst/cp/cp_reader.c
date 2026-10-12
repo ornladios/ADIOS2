@@ -682,14 +682,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
     Stream->WriterConfigParams = ReturnData->WriterConfigParams;
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing FFS-based marshalling\n");
-    }
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing BP-based marshalling\n");
-    }
     STREAM_MUTEX_LOCK(Stream);
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
 
@@ -742,10 +734,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 //  program thread.  It can only be called after initialization and
 //  only accesses data installed durinig initialization, it needs no
 //  locking.
-extern void SstReaderGetParams(SstStream Stream, SstMarshalMethod *WriterMarshalMethod,
-                               int *WriterIsRowMajor)
+extern void SstReaderGetParams(SstStream Stream, int *WriterIsRowMajor)
 {
-    *WriterMarshalMethod = (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
     *WriterIsRowMajor = Stream->WriterConfigParams->IsRowMajor;
 }
 
@@ -1173,15 +1163,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
              * before discarding, install any precious metadata from this
              * message
              */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
-                AddAttributesToAttrDataList(Stream, This->MetadataMsg);
-            }
+            AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
+            AddAttributesToAttrDataList(Stream, This->MetadataMsg);
 
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
@@ -1293,15 +1276,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
                            "SstAdvanceStep installing precious "
                            "metadata for discarded TS %ld\n",
                            Next->MetadataMsg->Timestep);
-                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-                {
-                    FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
-                }
-                else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-                {
-                    AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
-                    AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
-                }
+                AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
+                AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
@@ -1555,10 +1531,6 @@ extern void SstReleaseStep(SstStream Stream)
     sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
                          &Msg.WSR_Stream);
 
-    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-    {
-        FFSClearTimestepData(Stream);
-    }
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
@@ -1753,14 +1725,7 @@ static SstStatusValue AdvanceStepInternal(SstStream Stream, SstStepMode mode,
 
     if (ReturnData->ReturnValue != SstSuccess)
     {
-        if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (ReturnData->TSmsg))
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "SstAdvanceStep installing precious metadata before exiting\n");
-            FFSMarshalInstallPreciousMetadata(Stream, ReturnData->TSmsg);
-        }
-        else if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5) &&
-                 (ReturnData->TSmsg))
+        if (ReturnData->TSmsg)
         {
             AddFormatsToMetaMetaInfo(Stream, ReturnData->TSmsg);
             AddAttributesToAttrDataList(Stream, ReturnData->TSmsg);
@@ -1789,17 +1754,8 @@ static SstStatusValue AdvanceStepInternal(SstStream Stream, SstStepMode mode,
         NotifyDPArrivedMetadata(Stream, MetadataMsg);
 
         Stream->ReaderTimestep = MetadataMsg->Timestep;
-        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-        {
-            CP_verbose(Stream, TraceVerbose, "Calling install  metadata from metadata block %p\n",
-                       MetadataMsg);
-            FFSMarshalInstallMetadata(Stream, MetadataMsg);
-        }
-        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-        {
-            AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
-            AddAttributesToAttrDataList(Stream, MetadataMsg);
-        }
+        AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
+        AddAttributesToAttrDataList(Stream, MetadataMsg);
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;

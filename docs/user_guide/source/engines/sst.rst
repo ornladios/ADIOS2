@@ -60,10 +60,10 @@ something that would have only had to happen once if ``Get()`` differed were use
 instead.  Thus the use of ``Get()`` sync is likely to incur a substantial
 performance penalty.
 
-On the writer side, depending upon the chosen data marshaling option there
-may be some (relatively small) performance differences between ``Put()`` sync and
-``Put()`` deferred, but they are unlikely to be as substantial as between
-``Get()`` sync and ``Get()`` deferred.
+On the writer side, there may be some (relatively small) performance
+differences between ``Put()`` sync and ``Put()`` deferred, but they are
+unlikely to be as substantial as between ``Get()`` sync and ``Get()``
+deferred.
 
 Note that SST readers and writers do not necessarily move in lockstep, but
 depending upon the queue length parameters and queueing policies specified,
@@ -296,7 +296,7 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   DataTransport                 string                **default varies by platform**, UCX, MPI, RDMA, Mercury, WAN
   WANDataTransport              string                **sockets** (ib requires external EVPath)
   MercuryProtocol               string                **tcp**, cxi://, ofi+tcp, ofi+verbs, bmi+tcp, na+sm
-  MarshalMethod                 string                **BP5**, BP, FFS
+  MarshalMethod                 string                **BP5**
   NetworkInterface              string                **NULL**
   ControlInterface              string                **NULL**
   DataInterface                 string                **NULL**
