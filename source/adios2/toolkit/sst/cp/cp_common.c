@@ -455,8 +455,6 @@ static FMField ReturnMetadataInfoList[] = {
     {"ReaderCount", "integer", sizeof(int), FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
     {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
      FMOffset(struct _ReturnMetadataInfo *, ReaderStatus)},
-    {"Msg", "timestepMetadata", sizeof(struct _TimestepMetadataMsg),
-     FMOffset(struct _ReturnMetadataInfo *, Msg)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec TimestepMetadataDistributionStructs[] = {
@@ -470,9 +468,6 @@ static FMStructDescRec TimestepMetadataDistributionStructs[] = {
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
     {"ReturnMetadataInfo", ReturnMetadataInfoList, sizeof(struct _ReturnMetadataInfo), NULL},
     {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
-    {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
-    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
-    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField ReleaseTimestepList[] = {
@@ -947,12 +942,9 @@ static void doFFSFormatRegistration(CP_Info CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
 
-    CombinedMetadataStructs =
-        combineCpDpFormats(ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
-    f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
+    f = FMregister_data_format(CPInfo->fm_c, ReturnMetadataInfoStructs);
     CPInfo->ReturnMetadataInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
-    FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
-    AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
+    FFSset_fixed_target(CPInfo->ffs_c, ReturnMetadataInfoStructs);
 }
 
 static pthread_mutex_t StateMutex = PTHREAD_MUTEX_INITIALIZER;

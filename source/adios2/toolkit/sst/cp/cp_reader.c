@@ -368,7 +368,7 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
 extern size_t SstCurrentStep(SstStream Stream) { return (size_t)Stream->ReaderTimestep; }
 
 static void releasePriorTimesteps(SstStream Stream, ssize_t Latest);
-static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
+static void sendToWriterRankZero(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
 
 static void **ParticipateInReaderInitDataExchange(SstStream Stream, void *dpInfo,
                                                   void **ret_data_block)
@@ -729,8 +729,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         ReturnData->DP_WriterInfo);
     CP_verbose(Stream, PerRankVerbose, "Sending Reader Activate messages to writer\n");
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
+                         &Msg.WSR_Stream);
     CP_verbose(Stream, PerStepVerbose,
                "Finish opening Stream \"%s\", starting with Step number %ld\n", Filename,
                ReturnData->StartingStepNumber);
@@ -769,8 +769,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
                        "Sending ReleaseTimestep message for PRIOR DISCARD "
                        "timestep %ld, one to each writer\n",
                        tsm->Timestep);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
         }
         else
         {
@@ -896,50 +896,12 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v, voi
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
     STREAM_MUTEX_LOCK(Stream);
-    if (Stream->Rank != 0)
-    {
-        /* All ranks are getting this */
-        if (Msg->Metadata == NULL)
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "Received a message that timestep %ld has been discarded\n", Msg->Timestep);
+    /* Writers only send this to reader rank 0, which distributes it to the
+     * other ranks */
+    /* arrange for this message data to stay around */
+    CMtake_buffer(cm, Msg);
 
-            /*
-             * before discarding, install any precious metadata from this
-             * message
-             */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, Msg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, Msg);
-                AddAttributesToAttrDataList(Stream, Msg);
-            }
-            STREAM_MUTEX_UNLOCK(Stream);
-
-            return;
-        }
-        else
-        {
-            CP_verbose(Stream, PerStepVerbose,
-                       "Received an incoming metadata message for timestep %ld\n", Msg->Timestep);
-        }
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
-    else
-    {
-        /* I must be rank 0 and only I got this, I'll need to distribute it to
-         * everyone */
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
+    queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
     STREAM_MUTEX_UNLOCK(Stream);
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
@@ -1243,8 +1205,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
                 Last->Next = Next;
             }
             STREAM_MUTEX_UNLOCK(Stream);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
             if (This->MetadataMsg == NULL)
                 printf("READER RETURN_BUFFER, metadatamsg == %p, line %d\n", This->MetadataMsg,
                        __LINE__);
@@ -1512,15 +1474,14 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, size_t UTimestep, s
                                                   Length, Buffer, DP_TimestepInfo);
 }
 
-static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
+static void sendToWriterRankZero(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
 {
     if (Stream->Rank == 0)
     {
-        int peer = 0;
-        CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
-        /* add the writer Stream identifier to each outgoing
-         * message */
-        *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
+        /* the control plane only talks to writer rank 0 */
+        CMConnection conn = Stream->ConnectionsToWriter[0].CMconn;
+        /* add the writer Stream identifier to each outgoing message */
+        *WS_StreamPtr = Stream->ConnectionsToWriter[0].RemoteStreamID;
         if (CMwrite(conn, f, Msg) != 1)
         {
             switch (Stream->Status)
@@ -1528,8 +1489,8 @@ static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, voi
             case NotOpen:
             case Opening:
             case Established:
-                CP_verbose(Stream, CriticalVerbose, "Message failed to send to writer %d (%p)\n",
-                           peer, (void *)*WS_StreamPtr);
+                CP_verbose(Stream, CriticalVerbose,
+                           "Message failed to send to writer rank 0 (%p)\n", (void *)*WS_StreamPtr);
                 break;
             case PeerClosed:
             case PeerFailed:
@@ -1552,8 +1513,8 @@ extern void SstReaderDefinitionLock(SstStream Stream, size_t UEffectiveTimestep)
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = EffectiveTimestep;
 
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
+                         &Msg.WSR_Stream);
 }
 
 //  SstReleaseStep is only called by the main program thread.  It
@@ -1591,8 +1552,8 @@ extern void SstReleaseStep(SstStream Stream)
      */
     CP_verbose(Stream, PerRankVerbose,
                "Sending ReleaseTimestep message for timestep %ld, one to each writer\n", Timestep);
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                         &Msg.WSR_Stream);
 
     if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
     {
@@ -1893,8 +1854,8 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
         struct _ReaderRequestStepMsg Msg;
         CP_verbose(Stream, PerRankVerbose, "Sending Reader Request Step messages to writer\n");
         memset(&Msg, 0, sizeof(Msg));
-        sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
-                                &Msg.WSR_Stream);
+        sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
+                             &Msg.WSR_Stream);
     }
 
     SstStepMode mode = SstNextAvailable;
@@ -1925,8 +1886,8 @@ extern void SstReaderClose(SstStream Stream)
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
+                         &Msg.WSR_Stream);
     Stream->Stats.StreamValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)

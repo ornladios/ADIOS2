@@ -375,7 +375,7 @@ struct _WriterResponseMsg
 /*
  * The ReaderActivate message informs the writer that this reader is now ready
  * to receive data/timesteps.
- * One is sent to each writer rank.
+ * Sent from reader rank 0 to writer rank 0.
  */
 struct _ReaderActivateMsg
 {
@@ -393,7 +393,7 @@ struct _ReaderRequestStepMsg
 
 /*
  * The timestepMetadata message carries the metadata from all writer ranks.
- * One is sent to each reader in peer mode, between rank 0's in min mode.
+ * Sent from writer rank 0 to reader rank 0.
  */
 typedef struct _TimestepMetadataMsg
 {
@@ -434,7 +434,6 @@ typedef struct _ReturnMetadataInfo
 {
     int DiscardThisTimestep;
     int PendingReaderCount;
-    struct _TimestepMetadataMsg Msg;
     int ReleaseCount;
     ReleaseRecPtr ReleaseList;
     int ReaderCount;
@@ -446,7 +445,7 @@ typedef struct _ReturnMetadataInfo
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
  * a particular timestep.
- * One is sent to each writer rank.
+ * Sent from reader rank 0 to writer rank 0.
  */
 struct _ReleaseTimestepMsg
 {
@@ -456,7 +455,7 @@ struct _ReleaseTimestepMsg
 
 /*
  * The LockReaderDefinitions message informs the writers that this reader has
- * fixed its read schedule. One is sent to each writer rank.
+ * fixed its read schedule. Sent from reader rank 0 to writer rank 0.
  */
 struct _LockReaderDefinitionsMsg
 {
@@ -479,7 +478,7 @@ typedef struct _CommPatternLockedMsg
  * orderly shutdown
  * of the stream.  Data will still be served, but no new timesteps will be
  * forthcoming.
- * One is sent to each reader rank.
+ * Sent from writer rank 0 to reader rank 0.
  */
 typedef struct _WriterCloseMsg
 {
@@ -489,7 +488,7 @@ typedef struct _WriterCloseMsg
 
 /*
  * The ReaderClose message informs the readers that the reader is beginning an
- * orderly shutdown of the stream.  One is sent to each writer rank.
+ * orderly shutdown of the stream.  Sent from reader rank 0 to writer rank 0.
  */
 typedef struct _ReaderCloseMsg
 {

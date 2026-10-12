@@ -300,9 +300,10 @@ static void RemoveQueueEntries(SstStream Stream)
                        ItemToFree->Timestep, ItemToFree->Expired, ItemToFree->PreciousTimestep,
                        ItemToFree->ReferenceCount, Stream->QueuedTimestepCount);
             ItemToFree->FreeTimestep(ItemToFree->FreeClientData);
+            free(ItemToFree->Msg->Metadata);
+            free(ItemToFree->Msg->AttributeData);
+            free(ItemToFree->Msg->DP_TimestepInfo);
             free(ItemToFree->Msg);
-            //            free(ItemToFree->MetadataArray);
-            //            free(ItemToFree->DP_TimestepInfo);
             free(ItemToFree->DataBlockToFree);
             free(ItemToFree);
             AnythingRemoved++;
@@ -787,12 +788,11 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg, void
     STREAM_ASSERT_LOCKED(Stream);
     if (Stream->Rank == 0)
     {
-        int peer = 0;
-        CMConnection conn = CP_WSR_Stream->Connections[peer].CMconn;
-        /* add the reader-rank-specific Stream identifier to each outgoing
-         * message */
-        *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-        CP_verbose(Stream, TraceVerbose, "Sending a message to reader %d (%p)\n", peer,
+        /* the control plane only talks to the reader cohort's rank 0 */
+        CMConnection conn = CP_WSR_Stream->Connections[0].CMconn;
+        /* add the reader Stream identifier to each outgoing message */
+        *RS_StreamPtr = CP_WSR_Stream->Connections[0].RemoteStreamID;
+        CP_verbose(Stream, TraceVerbose, "Sending a message to reader rank 0 (%p)\n",
                    (void *)*RS_StreamPtr);
 
         if (conn)
@@ -803,8 +803,8 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg, void
             STREAM_MUTEX_LOCK(Stream);
             if (res != 1)
             {
-                CP_verbose(Stream, PerStepVerbose, "Message failed to send to reader %d (%p)\n",
-                           peer, (void *)*RS_StreamPtr);
+                CP_verbose(Stream, PerStepVerbose, "Message failed to send to reader rank 0 (%p)\n",
+                           (void *)*RS_StreamPtr);
                 CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
             }
         }
@@ -1183,7 +1183,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     return Stream;
 }
 
-void sendOneToEachReaderRank(SstStream Stream, CMFormat f, void *Msg, void **RS_StreamPtr)
+void sendToEachReaderCohort(SstStream Stream, CMFormat f, void *Msg, void **RS_StreamPtr)
 {
     STREAM_ASSERT_LOCKED(Stream);
     for (int i = 0; i < Stream->ReaderCount; i++)
@@ -1295,8 +1295,8 @@ static void SendCloseMsgs(SstStream Stream)
                "SstWriterClose, Sending Close at Timestep %ld, one to each reader\n",
                Msg.FinalTimestep);
 
-    sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat, &Msg,
-                            &Msg.RS_Stream);
+    sendToEachReaderCohort(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat, &Msg,
+                           &Msg.RS_Stream);
     Stream->CloseMessagesSent = 1;
 }
 
@@ -1985,7 +1985,10 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
         Stream->ReleaseList = NULL;
         Stream->LockDefnsCount = 0;
         Stream->LockDefnsList = NULL;
-        MetadataFreeValue = FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers);
+        /* Only rank 0 sends metadata to readers, so only it assembles the
+         * message; its blocks point into the gather buffer, data_block1 */
+        memset(Msg, 0, sizeof(*Msg));
+        MetadataFreeValue = FillMetadataMsg(Stream, Msg, pointers);
         STREAM_MUTEX_UNLOCK(Stream);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat, &data_block2);
@@ -1999,20 +2002,15 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
             free(TimestepMetaData.ReleaseList);
         if (TimestepMetaData.LockDefnsList)
             free(TimestepMetaData.LockDefnsList);
-        free(TimestepMetaData.Msg.Metadata);
-        free(TimestepMetaData.Msg.AttributeData);
     }
     else
     {
         /* other ranks */
         ReturnData = CP_distributeDataFromRankZero(
             Stream, NULL, Stream->CPInfo->ReturnMetadataInfoFormat, &data_block2);
-        Stream->PreviousFormats =
-            AddUniqueFormats(Stream->PreviousFormats, ReturnData->Msg.Formats, /*copy*/ 1);
+        memset(Msg, 0, sizeof(*Msg));
     }
-    free(data_block1);
     PendingReaderCount = ReturnData->PendingReaderCount;
-    *Msg = ReturnData->Msg;
     Msg->CohortSize = Stream->CohortSize;
     Msg->Timestep = Timestep;
     PERFSTUBS_TIMER_STOP(timerMD);
@@ -2023,7 +2021,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
     Entry->Msg = Msg;
     Entry->MetadataArray = Msg->Metadata;
     Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
-    Entry->DataBlockToFree = data_block2;
+    Entry->DataBlockToFree = data_block1; /* NULL except on rank 0 */
 
     ProcessReaderStatusList(Stream, ReturnData);
 
@@ -2041,7 +2039,9 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
          * reader so that it knows a step was discarded, but actually so that we
          * get an error return if the write fails */
 
+        free(Msg->Metadata);
         Msg->Metadata = NULL;
+        free(Msg->DP_TimestepInfo);
         Msg->DP_TimestepInfo = NULL;
 
         CP_verbose(Stream, PerStepVerbose,
@@ -2050,8 +2050,8 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
                    Timestep);
 
         STREAM_MUTEX_LOCK(Stream);
-        sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat,
-                                Msg, &Msg->RS_Stream);
+        sendToEachReaderCohort(Stream, Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat, Msg,
+                               &Msg->RS_Stream);
 
         Entry->Expired = 1;
         Entry->ReferenceCount = 0;
@@ -2073,6 +2073,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
         QueueMaintenance(Stream);
         STREAM_MUTEX_UNLOCK(Stream);
     }
+    free(data_block2);
     while (PendingReaderCount--)
     {
         WS_ReaderInfo reader;
