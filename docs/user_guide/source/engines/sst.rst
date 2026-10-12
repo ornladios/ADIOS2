@@ -296,7 +296,6 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   DataTransport                 string                **default varies by platform**, UCX, MPI, RDMA, Mercury, WAN
   WANDataTransport              string                **sockets** (ib requires external EVPath)
   MercuryProtocol               string                **tcp**, cxi://, ofi+tcp, ofi+verbs, bmi+tcp, na+sm
-  MarshalMethod                 string                **BP5**
   NetworkInterface              string                **NULL**
   ControlInterface              string                **NULL**
   DataInterface                 string                **NULL**

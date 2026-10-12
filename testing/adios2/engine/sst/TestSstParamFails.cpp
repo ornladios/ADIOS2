@@ -28,38 +28,15 @@ std::string fname = "ADIOS2Sst";
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, ParamNoValue)
 {
-    EXPECT_THROW(adios2::Params engineParams = ParseEngineParams("MarshalMethod="),
+    EXPECT_THROW(adios2::Params engineParams = ParseEngineParams("QueueLimit="),
                  std::invalid_argument);
 }
 
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, ParamNoValue2)
 {
-    EXPECT_THROW(adios2::Params engineParams = ParseEngineParams("MarshalMethod"),
+    EXPECT_THROW(adios2::Params engineParams = ParseEngineParams("QueueLimit"),
                  std::invalid_argument);
-}
-
-// ADIOS2 Sst param fail
-TEST_F(SstParamFailTest, MarshalMethodUnknown)
-{
-    adios2::Params engineParams = ParseEngineParams("MarshalMethod=unknown");
-
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
-#else
-    adios2::ADIOS adios;
-#endif
-
-    adios2::IO io = adios.DeclareIO("TestIO");
-
-    // Create the Engine
-    io.SetEngine("Sst");
-    io.SetParameters(engineParams);
-
-    adios2::Engine engine;
-    EXPECT_THROW(engine = io.Open(fname, adios2::Mode::Write), std::invalid_argument);
-    // Close the file
-    EXPECT_FALSE(engine);
 }
 
 // ADIOS2 Sst param fail

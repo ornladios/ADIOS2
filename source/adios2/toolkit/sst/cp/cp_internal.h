@@ -198,7 +198,6 @@ struct _SstStream
     WS_ReaderInfo *Readers;
     char *Filename;
     char *AbsoluteFilename;
-    int GlobalOpRequired;
     StepRequest StepRequestQueue;
     int CloseMessagesSent;
 

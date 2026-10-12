@@ -193,7 +193,6 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
-static char *SstMarshalStr[] = {"BP5"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin", "StepsOnDemand"};
@@ -225,7 +224,6 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int Reade
                                   : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   MarshalMethod=%s\n", SstMarshalStr[Params->MarshalMethod]);
         fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
         fprintf(stderr, "Param -   IsRowMajor=%d  (not user settable) \n", Params->IsRowMajor);

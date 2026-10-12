@@ -200,9 +200,7 @@ if(ADIOS2_HAVE_SST)
   list (REMOVE_ITEM BASIC_SST_TESTS 1x1.SpanMinMax)
 endif()
 
-MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${BASIC_SST_TESTS}" )
-
-foreach(test ${SST_TESTS})
+foreach(test ${BASIC_SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 

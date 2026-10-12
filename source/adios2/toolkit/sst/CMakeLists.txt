@@ -8,7 +8,6 @@
 #------------------------------------------------------------------------------#
 add_library(sst OBJECT
   dp/dp.c
-  dp/dummy_dp.c
   dp/evpath_dp.c
   cp/cp_reader.c
   cp/cp_writer.c
@@ -70,7 +69,6 @@ set(SST_CONFIG_OPTS
   FI_GNI
   CRAY_DRC
   CRAY_CXI
-  NVStream
   MPI
   MPI_DP_HEURISTICS_PASSED
 )

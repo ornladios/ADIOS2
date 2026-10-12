@@ -47,14 +47,14 @@
 # the location of the WENGINE_PARAMS string.  MutateTestSet takes 5 parameters:
 # output_test_list, param_name, participant, param_spec, and input test list.
 # For example
-# MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${BASIC_SST_TESTS}" )
+# MutateTestSet( SST_TESTS "QL" writer "QueueLimit=1" "${BASIC_SST_TESTS}" )
 # If BASIC_SST_TESTS contains "1x1" as defined above, MutateTestSet
-# will add the test "1x1.BP5", by defining the variable
-# 1x1.BP5_CMD, using the original value of 1x1_CMD but with
-# "MarshalMethod=BP5" added to the WENGINE_PARAMS location (if
+# will add the test "1x1.QL", by defining the variable
+# 1x1.QL_CMD, using the original value of 1x1_CMD but with
+# "QueueLimit=1" added to the WENGINE_PARAMS location (if
 # present).  Any 1x1_TIMEOUT and 1x1_PROPERTIES values will also be
-# propogated to 1x1.BP5_TIMEOUT and 1x1.BP5_PROPERTIES.
-# "1x1.BP5" will also be added to the output test list.
+# propogated to 1x1.QL_TIMEOUT and 1x1.QL_PROPERTIES.
+# "1x1.QL" will also be added to the output test list.
 # 
 # Note that MutateTestSet() can be used multiple times to add multiple
 # engine params.  The WENGINE_PARAMS string is retained in the

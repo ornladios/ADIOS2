@@ -59,11 +59,6 @@ typedef struct _SstParams *SstParams;
 
 typedef enum
 {
-    SstMarshalBP5
-} SstMarshalMethod;
-
-typedef enum
-{
     SstQueueFullBlock = 0,
     SstQueueFullDiscard = 1
 } SstQueueFullPolicy;
