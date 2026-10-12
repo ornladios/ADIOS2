@@ -172,7 +172,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 size_t SstWriter::CurrentStep() const { return m_WriterStep; }
 
-void SstWriter::MarshalAttributes()
+void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringArrayData)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
@@ -200,19 +200,36 @@ void SstWriter::MarshalAttributes()
         else if (type == helper::GetDataType<std::string>())
         {
             core::Attribute<std::string> &attribute = *m_IO.InquireAttribute<std::string>(name);
-            int element_count = -1;
-            const char *data_addr = attribute.m_DataSingleValue.c_str();
-            if (!attribute.m_IsSingleValue)
+            if (attribute.m_IsSingleValue)
             {
-                //
+                const char *data_addr = attribute.m_DataSingleValue.c_str();
+                if (Params.MarshalMethod == SstMarshalFFS)
+                    SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type, sizeof(char *), -1,
+                                           data_addr);
+                else if (Params.MarshalMethod == SstMarshalBP5)
+                    m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), -1,
+                                                      data_addr);
             }
-
-            if (Params.MarshalMethod == SstMarshalFFS)
-                SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type, sizeof(char *),
-                                       element_count, data_addr);
             else if (Params.MarshalMethod == SstMarshalBP5)
+            {
+                // array of strings, marshaled as an array of char pointers
+                const int element_count = (int)attribute.m_Elements;
+                stringArrayData.emplace_back(element_count);
+                auto &strings = stringArrayData.back();
+                for (int i = 0; i < element_count; i++)
+                {
+                    strings[i] = attribute.m_DataArray[i].c_str();
+                }
                 m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
-                                                  data_addr);
+                                                  strings.data());
+            }
+            else
+            {
+                helper::Log("Engine", "SstWriter", "MarshalAttributes",
+                            "String array attribute " + name +
+                                " is not supported with MarshalMethod FFS and will not be sent",
+                            helper::LogMode::WARNING);
+            }
         }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \
@@ -275,13 +292,18 @@ void SstWriter::EndStep()
     {
         PERFSTUBS_SCOPED_TIMER("Marshaling Overhead");
         PERFSTUBS_TIMER_START(timer, "SstMarshalFFS");
-        MarshalAttributes();
+        std::list<std::vector<const char *>> stringArrayData;
+        MarshalAttributes(stringArrayData);
         PERFSTUBS_TIMER_STOP(timer);
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (Params.MarshalMethod == SstMarshalBP5)
     {
-        MarshalAttributes();
+        // The serializer keeps pointers to the char* arrays of string array
+        // attributes and encodes them in CloseTimestep(), so they must live
+        // until then.
+        std::list<std::vector<const char *>> stringArrayData;
+        MarshalAttributes(stringArrayData);
         format::BP5Serializer::TimestepInfo *TSInfo =
             new format::BP5Serializer::TimestepInfo(m_BP5Serializer->CloseTimestep(m_WriterStep));
         auto lf_FreeBlocks = [](void *vBlock) {

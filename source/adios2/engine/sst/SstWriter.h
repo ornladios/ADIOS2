@@ -14,7 +14,9 @@
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/sst/sst.h"
 
+#include <list>
 #include <memory>
+#include <vector>
 
 namespace adios2
 {
@@ -90,7 +92,7 @@ private:
     bool m_MarshalAttributesNecessary = true; // first time through, marshal
     struct _SstParams Params;
 
-    void MarshalAttributes();
+    void MarshalAttributes(std::list<std::vector<const char *>> &stringArrayData);
     void DoClose(const int transportIndex = -1) final;
 };
 
