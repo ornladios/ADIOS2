@@ -193,9 +193,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
-static char *SstMarshalStr[] = {"FFS", "BP", "BP5"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
-static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin", "StepsOnDemand"};
 
@@ -226,9 +224,6 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int Reade
                                   : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   CompressionMethod=%s\n",
-                SstCompressStr[Params->CompressionMethod]);
-        fprintf(stderr, "Param -   MarshalMethod=%s\n", SstMarshalStr[Params->MarshalMethod]);
         fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
         fprintf(stderr, "Param -   IsRowMajor=%d  (not user settable) \n", Params->IsRowMajor);
@@ -416,7 +411,9 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
     {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, Metadata)},
-    {"attribute_data", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
+    {"attribute_block_count", "integer", sizeof(int),
+     FMOffset(struct _TimestepMetadataMsg *, AttributeBlockCount)},
+    {"attribute_data", "SstBlock[attribute_block_count]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, AttributeData)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
@@ -455,8 +452,6 @@ static FMField ReturnMetadataInfoList[] = {
     {"ReaderCount", "integer", sizeof(int), FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
     {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
      FMOffset(struct _ReturnMetadataInfo *, ReaderStatus)},
-    {"Msg", "timestepMetadata", sizeof(struct _TimestepMetadataMsg),
-     FMOffset(struct _ReturnMetadataInfo *, Msg)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec TimestepMetadataDistributionStructs[] = {
@@ -470,9 +465,6 @@ static FMStructDescRec TimestepMetadataDistributionStructs[] = {
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
     {"ReturnMetadataInfo", ReturnMetadataInfoList, sizeof(struct _ReturnMetadataInfo), NULL},
     {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
-    {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
-    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
-    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField ReleaseTimestepList[] = {
@@ -947,12 +939,9 @@ static void doFFSFormatRegistration(CP_Info CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
 
-    CombinedMetadataStructs =
-        combineCpDpFormats(ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
-    f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
+    f = FMregister_data_format(CPInfo->fm_c, ReturnMetadataInfoStructs);
     CPInfo->ReturnMetadataInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
-    FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
-    AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
+    FFSset_fixed_target(CPInfo->ffs_c, ReturnMetadataInfoStructs);
 }
 
 static pthread_mutex_t StateMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1119,6 +1108,11 @@ extern void SstStreamDestroy(SstStream Stream)
 
     FFSFormatList FFSList = Stream->PreviousFormats;
     Stream->PreviousFormats = NULL;
+    for (size_t i = 0; i < Stream->AttributeLogCount; i++)
+        free(Stream->AttributeLog[i].block);
+    free(Stream->AttributeLog);
+    Stream->AttributeLog = NULL;
+    Stream->AttributeLogCount = 0;
     free(Stream->ReleaseList);
     free(Stream->LockDefnsList);
     while (FFSList)
@@ -1130,23 +1124,9 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if (Stream->WriterConfigParams && (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS))
-    {
-        FFSFreeMarshalData(Stream);
-        if (Stream->M)
-            free(Stream->M);
-        if (Stream->D)
-            free(Stream->D);
-    }
-
     if (Stream->Role == ReaderRole)
     {
         /* reader side */
-        if (Stream->ReaderFFSContext)
-        {
-            free_FFSContext(Stream->ReaderFFSContext);
-            Stream->ReaderFFSContext = NULL;
-        }
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
@@ -1163,10 +1143,6 @@ extern void SstStreamDestroy(SstStream Stream)
         }
         if (Stream->RanksRead)
             free(Stream->RanksRead);
-    }
-    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
-    {
-        FFSFreeMarshalData(Stream);
     }
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->DataTransport);

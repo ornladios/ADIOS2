@@ -175,11 +175,7 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     std::string elc = argEngine;
     std::transform(elc.begin(), elc.end(), elc.begin(), ::tolower);
-    if (elc == "sst")
-    {
-        engineParams["MarshalMethod"] = "BP";
-    }
-    else if (elc == "insitumpi")
+    if (elc == "insitumpi")
     {
         engineParams["verbose"] = "1";
     }

@@ -109,6 +109,7 @@ typedef struct _WS_ReaderInfo
     ssize_t PreloadModeActiveTimestep;
     ssize_t OldestUnreleasedTimestep;
     size_t FormatSentCount;
+    size_t AttributeSentCount;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
@@ -143,6 +144,7 @@ typedef struct _CPTimestepEntry
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
+    size_t AttributeLogEnd; /* attribute log length once this step was added */
     struct _CPTimestepEntry *Next;
 } *CPTimestepList;
 
@@ -198,25 +200,18 @@ struct _SstStream
     WS_ReaderInfo *Readers;
     char *Filename;
     char *AbsoluteFilename;
-    int GlobalOpRequired;
     StepRequest StepRequestQueue;
     int CloseMessagesSent;
 
-    /* writer side marshal info */
-    void *WriterMarshalData;
-    size_t MetadataSize;
-    void *M; // building metadata block
-    size_t DataSize;
-    void *D; // building data block
     FFSFormatList PreviousFormats;
+    /* every unique attribute block, in order; readers are caught up from here */
+    size_t AttributeLogCount;
+    struct _SstData *AttributeLog;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
     int LockDefnsCount;
     struct _ReleaseRec *LockDefnsList;
     enum StreamStatus Status;
-    AssembleMetadataUpcallFunc AssembleMetadataUpcall;
-    FreeMetadataUpcallFunc FreeMetadataUpcall;
-    void *UpcallWriter;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -238,16 +233,6 @@ struct _SstStream
     ssize_t DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
     ssize_t LastDPNotifiedTimestep;
-
-    /* reader side marshal info */
-    FFSContext ReaderFFSContext;
-    VarSetupUpcallFunc VarSetupUpcall;
-    ArraySetupUpcallFunc ArraySetupUpcall;
-    MinArraySetupUpcallFunc MinArraySetupUpcall;
-    AttrSetupUpcallFunc AttrSetupUpcall;
-    ArrayBlocksInfoUpcallFunc ArrayBlocksInfoUpcall;
-    void *SetupUpcallReader;
-    void *ReaderMarshalData;
 };
 
 /*
@@ -375,7 +360,7 @@ struct _WriterResponseMsg
 /*
  * The ReaderActivate message informs the writer that this reader is now ready
  * to receive data/timesteps.
- * One is sent to each writer rank.
+ * Sent from reader rank 0 to writer rank 0.
  */
 struct _ReaderActivateMsg
 {
@@ -393,7 +378,7 @@ struct _ReaderRequestStepMsg
 
 /*
  * The timestepMetadata message carries the metadata from all writer ranks.
- * One is sent to each reader in peer mode, between rank 0's in min mode.
+ * Sent from writer rank 0 to reader rank 0.
  */
 typedef struct _TimestepMetadataMsg
 {
@@ -403,6 +388,7 @@ typedef struct _TimestepMetadataMsg
     SstPreloadModeType PreloadMode;
     FFSFormatList Formats;
     SstData Metadata;
+    int AttributeBlockCount;
     SstData AttributeData;
     void **DP_TimestepInfo;
 } *TSMetadataMsg;
@@ -434,7 +420,6 @@ typedef struct _ReturnMetadataInfo
 {
     int DiscardThisTimestep;
     int PendingReaderCount;
-    struct _TimestepMetadataMsg Msg;
     int ReleaseCount;
     ReleaseRecPtr ReleaseList;
     int ReaderCount;
@@ -446,7 +431,7 @@ typedef struct _ReturnMetadataInfo
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
  * a particular timestep.
- * One is sent to each writer rank.
+ * Sent from reader rank 0 to writer rank 0.
  */
 struct _ReleaseTimestepMsg
 {
@@ -456,7 +441,7 @@ struct _ReleaseTimestepMsg
 
 /*
  * The LockReaderDefinitions message informs the writers that this reader has
- * fixed its read schedule. One is sent to each writer rank.
+ * fixed its read schedule. Sent from reader rank 0 to writer rank 0.
  */
 struct _LockReaderDefinitionsMsg
 {
@@ -479,7 +464,7 @@ typedef struct _CommPatternLockedMsg
  * orderly shutdown
  * of the stream.  Data will still be served, but no new timesteps will be
  * forthcoming.
- * One is sent to each reader rank.
+ * Sent from writer rank 0 to reader rank 0.
  */
 typedef struct _WriterCloseMsg
 {
@@ -489,7 +474,7 @@ typedef struct _WriterCloseMsg
 
 /*
  * The ReaderClose message informs the readers that the reader is beginning an
- * orderly shutdown of the stream.  One is sent to each writer rank.
+ * orderly shutdown of the stream.  Sent from reader rank 0 to writer rank 0.
  */
 typedef struct _ReaderCloseMsg
 {
@@ -555,10 +540,6 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v, v
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                   attr_list attrs);
 
-extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSMarshalInstallPreciousMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSClearTimestepData(SstStream Stream);
-extern void FFSFreeMarshalData(SstStream Stream);
 extern void AddToLastCallFreeList(void *Block);
 extern CMConnection Tunneling_get_conn(CManager cm, attr_list attrs);
 

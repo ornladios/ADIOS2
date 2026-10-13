@@ -176,13 +176,8 @@ if (ADIOS2_HAVE_MPI)
   endif()
 endif()
  
-set (SIMPLE_ZFP_TESTS "")
-if (ADIOS2_HAVE_ZFP)
-   set (SIMPLE_ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
-endif()
-
 set (ALL_SIMPLE_TESTS "")
-list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
+list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS})
 
 set (SST_SPECIFIC_TESTS  "")
 import_bp_test(WriteMemorySelectionRead 1 1)
@@ -205,9 +200,7 @@ if(ADIOS2_HAVE_SST)
   list (REMOVE_ITEM BASIC_SST_TESTS 1x1.SpanMinMax)
 endif()
 
-MutateTestSet( SST_TESTS "BP5" writer "MarshalMethod=BP5" "${BASIC_SST_TESTS}" )
-
-foreach(test ${SST_TESTS})
+foreach(test ${BASIC_SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 

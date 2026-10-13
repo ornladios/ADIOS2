@@ -91,6 +91,15 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
+    if (AdvancingAttrs)
+    {
+        // never changed after Open, so a late reader must be caught up
+        io.DefineAttribute<std::string>("FixedAttr", "fixed");
+        // only the last rank defines this one
+        if (mpiRank == mpiSize - 1)
+            io.DefineAttribute<int32_t>("LastRankAttr", mpiSize - 1);
+    }
+
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
     // Advance to the next time step
@@ -163,6 +172,8 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         {
             const std::string r64_Single = std::string("r64_PerStep_") + std::to_string(step);
             io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
+            if (mpiRank == 0)
+                io.DefineAttribute<int32_t>("StepAttr", (int32_t)step, "", "/", true);
         }
         engine.EndStep();
         std::cout << "Writer finished step " << step << std::endl;

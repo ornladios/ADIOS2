@@ -47,7 +47,7 @@
  *   descriptions of the data structures to be communicated at init time.
  *   This allows for the future possibility of loading planes at run-time, etc.
  *
- *   This "nvstream" data plane uses control plane functionality to implement
+ *   This "daos" data plane uses control plane functionality to implement
  *   the ReadRemoteMemory functionality.  That is, it both the request to
  *   read memory and the response which carries the data are actually
  *   accomplished using the connections and message delivery facilities of

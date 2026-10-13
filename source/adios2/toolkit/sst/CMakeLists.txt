@@ -8,12 +8,10 @@
 #------------------------------------------------------------------------------#
 add_library(sst OBJECT
   dp/dp.c
-  dp/dummy_dp.c
   dp/evpath_dp.c
   cp/cp_reader.c
   cp/cp_writer.c
   cp/cp_common.c
-  cp/ffs_marshal.c
   sst_comm.cpp
 )
 if(BUILD_SHARED_LIBS)
@@ -44,11 +42,6 @@ if(ADIOS2_HAVE_DAOS)
   set(CMAKE_REQUIRED_INCLUDES ${DAOS_INCLUDE_DIRS})
 endif()
 
-if(ADIOS2_HAVE_ZFP)
-  target_sources(sst PRIVATE cp/ffs_zfp.c)
-  target_link_libraries(sst PRIVATE zfp::zfp)
-endif()
-
 if(ADIOS2_HAVE_MPI)
   target_sources(sst PRIVATE dp/mpi_dp.c)
   target_link_libraries(sst PRIVATE MPI::MPI_C)
@@ -76,7 +69,6 @@ set(SST_CONFIG_OPTS
   FI_GNI
   CRAY_DRC
   CRAY_CXI
-  NVStream
   MPI
   MPI_DP_HEURISTICS_PASSED
 )

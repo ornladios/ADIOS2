@@ -368,7 +368,7 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
 extern size_t SstCurrentStep(SstStream Stream) { return (size_t)Stream->ReaderTimestep; }
 
 static void releasePriorTimesteps(SstStream Stream, ssize_t Latest);
-static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
+static void sendToWriterRankZero(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
 
 static void **ParticipateInReaderInitDataExchange(SstStream Stream, void *dpInfo,
                                                   void **ret_data_block)
@@ -682,14 +682,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
     Stream->WriterConfigParams = ReturnData->WriterConfigParams;
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing FFS-based marshalling\n");
-    }
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing BP-based marshalling\n");
-    }
     STREAM_MUTEX_LOCK(Stream);
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
 
@@ -729,8 +721,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         ReturnData->DP_WriterInfo);
     CP_verbose(Stream, PerRankVerbose, "Sending Reader Activate messages to writer\n");
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
+                         &Msg.WSR_Stream);
     CP_verbose(Stream, PerStepVerbose,
                "Finish opening Stream \"%s\", starting with Step number %ld\n", Filename,
                ReturnData->StartingStepNumber);
@@ -742,10 +734,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 //  program thread.  It can only be called after initialization and
 //  only accesses data installed durinig initialization, it needs no
 //  locking.
-extern void SstReaderGetParams(SstStream Stream, SstMarshalMethod *WriterMarshalMethod,
-                               int *WriterIsRowMajor)
+extern void SstReaderGetParams(SstStream Stream, int *WriterIsRowMajor)
 {
-    *WriterMarshalMethod = (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
     *WriterIsRowMajor = Stream->WriterConfigParams->IsRowMajor;
 }
 
@@ -769,8 +759,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
                        "Sending ReleaseTimestep message for PRIOR DISCARD "
                        "timestep %ld, one to each writer\n",
                        tsm->Timestep);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
         }
         else
         {
@@ -800,8 +790,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
     Stream->Stats.TimestepMetadataReceived++;
     if (tsm->Metadata)
     {
-        Stream->Stats.MetadataBytesReceived +=
-            (tsm->Metadata->DataSize + tsm->AttributeData->DataSize);
+        Stream->Stats.MetadataBytesReceived += tsm->Metadata->DataSize;
+        for (int i = 0; i < tsm->AttributeBlockCount; i++)
+            Stream->Stats.MetadataBytesReceived += tsm->AttributeData[i].DataSize;
     }
     CP_verbose(Stream, PerRankVerbose,
                "Received a Timestep metadata message for timestep %ld, "
@@ -871,19 +862,22 @@ void AddAttributesToAttrDataList(SstStream Stream, struct _TimestepMetadataMsg *
         Stream->InternalAttrDataCount = 0;
         Stream->AttrsRetrieved = 0;
     }
-    if (Msg->AttributeData->DataSize == 0)
-        return;
-
-    Stream->InternalAttrDataInfo =
-        realloc(Stream->InternalAttrDataInfo,
-                (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
-    struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
-    Stream->InternalAttrDataCount++;
-    NewInfo->BlockData = malloc(Msg->AttributeData->DataSize);
-    NewInfo->BlockSize = Msg->AttributeData->DataSize;
-    memcpy(NewInfo->BlockData, Msg->AttributeData->block, Msg->AttributeData->DataSize);
-    memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
-           sizeof(struct _SstData));
+    for (int i = 0; i < Msg->AttributeBlockCount; i++)
+    {
+        SstData Attrs = &Msg->AttributeData[i];
+        if (Attrs->DataSize == 0)
+            continue;
+        Stream->InternalAttrDataInfo =
+            realloc(Stream->InternalAttrDataInfo,
+                    (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
+        struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
+        Stream->InternalAttrDataCount++;
+        NewInfo->BlockData = malloc(Attrs->DataSize);
+        NewInfo->BlockSize = Attrs->DataSize;
+        memcpy(NewInfo->BlockData, Attrs->block, Attrs->DataSize);
+        memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
+               sizeof(struct _SstData));
+    }
 }
 
 // CP_TimestepMetadataHandler is called by the network handler thread
@@ -896,50 +890,12 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v, voi
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
     STREAM_MUTEX_LOCK(Stream);
-    if (Stream->Rank != 0)
-    {
-        /* All ranks are getting this */
-        if (Msg->Metadata == NULL)
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "Received a message that timestep %ld has been discarded\n", Msg->Timestep);
+    /* Writers only send this to reader rank 0, which distributes it to the
+     * other ranks */
+    /* arrange for this message data to stay around */
+    CMtake_buffer(cm, Msg);
 
-            /*
-             * before discarding, install any precious metadata from this
-             * message
-             */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, Msg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, Msg);
-                AddAttributesToAttrDataList(Stream, Msg);
-            }
-            STREAM_MUTEX_UNLOCK(Stream);
-
-            return;
-        }
-        else
-        {
-            CP_verbose(Stream, PerStepVerbose,
-                       "Received an incoming metadata message for timestep %ld\n", Msg->Timestep);
-        }
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
-    else
-    {
-        /* I must be rank 0 and only I got this, I'll need to distribute it to
-         * everyone */
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
+    queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
     STREAM_MUTEX_UNLOCK(Stream);
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
@@ -1211,15 +1167,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
              * before discarding, install any precious metadata from this
              * message
              */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
-                AddAttributesToAttrDataList(Stream, This->MetadataMsg);
-            }
+            AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
+            AddAttributesToAttrDataList(Stream, This->MetadataMsg);
 
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
@@ -1243,8 +1192,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
                 Last->Next = Next;
             }
             STREAM_MUTEX_UNLOCK(Stream);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
             if (This->MetadataMsg == NULL)
                 printf("READER RETURN_BUFFER, metadatamsg == %p, line %d\n", This->MetadataMsg,
                        __LINE__);
@@ -1331,15 +1280,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
                            "SstAdvanceStep installing precious "
                            "metadata for discarded TS %ld\n",
                            Next->MetadataMsg->Timestep);
-                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-                {
-                    FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
-                }
-                else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-                {
-                    AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
-                    AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
-                }
+                AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
+                AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
@@ -1512,15 +1454,14 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, size_t UTimestep, s
                                                   Length, Buffer, DP_TimestepInfo);
 }
 
-static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
+static void sendToWriterRankZero(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
 {
     if (Stream->Rank == 0)
     {
-        int peer = 0;
-        CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
-        /* add the writer Stream identifier to each outgoing
-         * message */
-        *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
+        /* the control plane only talks to writer rank 0 */
+        CMConnection conn = Stream->ConnectionsToWriter[0].CMconn;
+        /* add the writer Stream identifier to each outgoing message */
+        *WS_StreamPtr = Stream->ConnectionsToWriter[0].RemoteStreamID;
         if (CMwrite(conn, f, Msg) != 1)
         {
             switch (Stream->Status)
@@ -1528,8 +1469,8 @@ static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, voi
             case NotOpen:
             case Opening:
             case Established:
-                CP_verbose(Stream, CriticalVerbose, "Message failed to send to writer %d (%p)\n",
-                           peer, (void *)*WS_StreamPtr);
+                CP_verbose(Stream, CriticalVerbose,
+                           "Message failed to send to writer rank 0 (%p)\n", (void *)*WS_StreamPtr);
                 break;
             case PeerClosed:
             case PeerFailed:
@@ -1552,8 +1493,8 @@ extern void SstReaderDefinitionLock(SstStream Stream, size_t UEffectiveTimestep)
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = EffectiveTimestep;
 
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
+                         &Msg.WSR_Stream);
 }
 
 //  SstReleaseStep is only called by the main program thread.  It
@@ -1591,13 +1532,9 @@ extern void SstReleaseStep(SstStream Stream)
      */
     CP_verbose(Stream, PerRankVerbose,
                "Sending ReleaseTimestep message for timestep %ld, one to each writer\n", Timestep);
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                         &Msg.WSR_Stream);
 
-    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-    {
-        FFSClearTimestepData(Stream);
-    }
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
@@ -1792,14 +1729,7 @@ static SstStatusValue AdvanceStepInternal(SstStream Stream, SstStepMode mode,
 
     if (ReturnData->ReturnValue != SstSuccess)
     {
-        if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (ReturnData->TSmsg))
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "SstAdvanceStep installing precious metadata before exiting\n");
-            FFSMarshalInstallPreciousMetadata(Stream, ReturnData->TSmsg);
-        }
-        else if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5) &&
-                 (ReturnData->TSmsg))
+        if (ReturnData->TSmsg)
         {
             AddFormatsToMetaMetaInfo(Stream, ReturnData->TSmsg);
             AddAttributesToAttrDataList(Stream, ReturnData->TSmsg);
@@ -1828,17 +1758,8 @@ static SstStatusValue AdvanceStepInternal(SstStream Stream, SstStepMode mode,
         NotifyDPArrivedMetadata(Stream, MetadataMsg);
 
         Stream->ReaderTimestep = MetadataMsg->Timestep;
-        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-        {
-            CP_verbose(Stream, TraceVerbose, "Calling install  metadata from metadata block %p\n",
-                       MetadataMsg);
-            FFSMarshalInstallMetadata(Stream, MetadataMsg);
-        }
-        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-        {
-            AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
-            AddAttributesToAttrDataList(Stream, MetadataMsg);
-        }
+        AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
+        AddAttributesToAttrDataList(Stream, MetadataMsg);
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
@@ -1893,8 +1814,8 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
         struct _ReaderRequestStepMsg Msg;
         CP_verbose(Stream, PerRankVerbose, "Sending Reader Request Step messages to writer\n");
         memset(&Msg, 0, sizeof(Msg));
-        sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
-                                &Msg.WSR_Stream);
+        sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
+                             &Msg.WSR_Stream);
     }
 
     SstStepMode mode = SstNextAvailable;
@@ -1925,8 +1846,8 @@ extern void SstReaderClose(SstStream Stream)
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
+                         &Msg.WSR_Stream);
     Stream->Stats.StreamValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)
