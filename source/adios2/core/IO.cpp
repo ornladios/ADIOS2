@@ -256,6 +256,7 @@ void IO::SetEngine(const std::string engineType) noexcept
         finalEngineType = "filestream";
         lf_InsertParam("OpenTimeoutSecs", "3600");
         lf_InsertParam("StreamReader", "true");
+        lf_InsertParam("IgnoreActiveFlag", "false");
     }
     /* "file" is handled entirely in IO::Open() as it needs the name */
     else

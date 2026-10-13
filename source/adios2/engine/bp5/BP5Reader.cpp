@@ -1307,16 +1307,10 @@ void BP5Reader::Init()
 void BP5Reader::InitParameters()
 {
     ParseParams(m_IO, m_Parameters);
+    // Don't wait for a missing file unless asked to (FileStream sets a timeout)
     if (m_Parameters.OpenTimeoutSecs < 0.0f)
     {
-        if (m_OpenMode == Mode::ReadRandomAccess)
-        {
-            m_Parameters.OpenTimeoutSecs = 0.0f;
-        }
-        else
-        {
-            m_Parameters.OpenTimeoutSecs = 3600.0f;
-        }
+        m_Parameters.OpenTimeoutSecs = 0.0f;
     }
 
     m_Threads = m_Parameters.Threads;
@@ -1767,7 +1761,8 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
            byte (for the first read before ParseMetadataIndex runs). */
         if (newIdxSize > 0 && (!m_WriterIsActive ||
                                (!m_MDIndexFileAlreadyReadSize && newIdxSize >= m_IndexHeaderSize &&
-                                m_MetadataIndex.m_Buffer[m_ActiveFlagPosition] != '\1')))
+                                (m_MetadataIndex.m_Buffer[m_ActiveFlagPosition] != '\1' ||
+                                 m_Parameters.IgnoreActiveFlag))))
         {
             for (int retry = 0; retry < 20; retry++)
             {
@@ -2093,7 +2088,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t 
         position = m_ActiveFlagPosition;
         const char activeChar =
             helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
-        m_WriterIsActive = (activeChar == '\1' ? true : false);
+        m_WriterIsActive = (activeChar == '\1') && !m_Parameters.IgnoreActiveFlag;
 
         position = m_ColumnMajorFlagPosition;
         const uint8_t val =
@@ -2297,7 +2292,7 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
     size_t position = m_ActiveFlagPosition;
     const char activeChar =
         helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
-    m_WriterIsActive = (activeChar == '\1' ? true : false);
+    m_WriterIsActive = (activeChar == '\1') && !m_Parameters.IgnoreActiveFlag;
     return m_WriterIsActive;
 }
 

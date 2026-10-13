@@ -161,6 +161,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
         ior.SetEngine(engineName);
     }
     ior.SetParameter("OpenTimeoutSecs", "10.0");
+    // reading while the writer is still active
+    ior.SetParameter("IgnoreActiveFlag", "false");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
@@ -291,6 +293,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
         ior.SetEngine(engineName);
     }
     ior.SetParameter("OpenTimeoutSecs", "10.0");
+    // reading while the writer is still active
+    ior.SetParameter("IgnoreActiveFlag", "false");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
@@ -440,6 +444,8 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
         ior.SetEngine(engineName);
     }
     ior.SetParameter("OpenTimeoutSecs", "10.0");
+    // reading while the writer is still active
+    ior.SetParameter("IgnoreActiveFlag", "false");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 

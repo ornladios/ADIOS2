@@ -267,7 +267,7 @@ endforeach()
 #
 if(NOT MSVC)    # not on windows
     LIST (APPEND BP5_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP5_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP5_STREAM_TESTS}")
+    MutateTestSet( BP5_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1,IgnoreActiveFlag=false" "${BP5_STREAM_TESTS}")
     # Discard not a feature of BP5
     list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1.*BPS$")
     # PreciousTimestep not a feature of BP5
