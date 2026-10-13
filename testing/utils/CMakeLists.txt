@@ -20,4 +20,5 @@ endif()
 
 add_subdirectory(cwriter)
 add_subdirectory(changingshape)
+add_subdirectory(reorganize)
 
