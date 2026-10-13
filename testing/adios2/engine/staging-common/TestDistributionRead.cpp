@@ -109,6 +109,20 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine1.Get(step_var, &step);
         engine1.EndStep();
 
+        auto step1Attr = io1.InquireAttribute<std::string>("Step1Attr");
+        if (step >= 1)
+        {
+            EXPECT_TRUE(step1Attr);
+            if (step1Attr)
+            {
+                EXPECT_EQ(step1Attr.Data().front(), "step1");
+            }
+        }
+        else
+        {
+            EXPECT_FALSE(step1Attr);
+        }
+
         int result =
             validateSimpleForwardData(in_R64_1, (int)step, myStart, myLength, writerSize * Nx);
         if (first_step == SIZE_MAX)

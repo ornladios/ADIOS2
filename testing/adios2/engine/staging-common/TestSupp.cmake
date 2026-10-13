@@ -154,19 +154,19 @@ set (CtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -r $<TARGET_FILE:TestCommo
 set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
 
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (KillReadersSerialized.3x2_TIMEOUT "300")
-set (KillReaders3Max.3x6_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReaders3Max.3x6_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (KillReaders3Max.3x6_TIMEOUT "300")
 
 set (KillWriter_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer   -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
 set (KillWriterTimeout_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
-set (PreciousTimestep.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
+set (PreciousTimestep.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --warg=--advancing_attributes --rarg=--advancing_attributes")
 
 set (PreciousTimestep.3x2_TIMEOUT "300")
 
-set (PreciousTimestepDiscard.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
+set (PreciousTimestepDiscard.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500 --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (PreciousTimestepDiscard.3x2_TIMEOUT "300")
 
 # Writer StepDistributionModes.  Here we run the writer and three clients
