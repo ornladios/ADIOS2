@@ -28,41 +28,33 @@ macro(fix_default_compiler_settings_)
              CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
              CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
       if (NOT BUILD_SHARED_LIBS AND NOT gtest_force_shared_crt)
-        # When Google Test is built as a shared library, it should also use
-        # shared runtime libraries.  Otherwise, it may end up with multiple
-        # copies of runtime library data in different modules, resulting in
-        # hard-to-find crashes. When it is built as a static library, it is
-        # preferable to use CRT as static libraries, as we don't have to rely
-        # on CRT DLLs being available. CMake always defaults to using shared
-        # CRT libraries, so we override that default here.
-        string(REPLACE "/MD" "-MT" ${flag_var} "${${flag_var}}")
-
         # When using Ninja with Clang, static builds pass -D_DLL on Windows.
         # This is incorrect and should not happen, so we fix that here.
-        string(REPLACE "-D_DLL" "" ${flag_var} "${${flag_var}}")
+        string(REGEX REPLACE "([/-])D_DLL" "" ${flag_var} "${${flag_var}}")
       endif()
 
       # We prefer more strict warning checking for building Google Test.
       # Replaces /W3 with /W4 in defaults.
-      string(REPLACE "/W3" "/W4" ${flag_var} "${${flag_var}}")
+      string(REGEX REPLACE "([/-])W3" "\\1W4" ${flag_var} "${${flag_var}}")
 
       # Prevent D9025 warning for targets that have exception handling
       # turned off (/EHs-c- flag). Where required, exceptions are explicitly
       # re-enabled using the cxx_exception_flags variable.
-      string(REPLACE "/EHsc" "" ${flag_var} "${${flag_var}}")
+      string(REGEX REPLACE "([/-])EHsc" "" ${flag_var} "${${flag_var}}")
     endforeach()
   endif()
 endmacro()
 
 # Defines the compiler/linker flags used to build Google Test and
-# Google Mock.  You can tweak these definitions to suit your need.  A
+# Google Mock. You can tweak these definitions to suit your need. A
 # variable's value is empty before it's explicitly assigned to.
 macro(config_compiler_and_linker)
   # Note: pthreads on MinGW is not supported, even if available
-  # instead, we use windows threading primitives
+  # instead, we use windows threading primitives.
   unset(GTEST_HAS_PTHREAD)
   if (NOT gtest_disable_pthreads AND NOT MINGW)
     # Defines CMAKE_USE_PTHREADS_INIT and CMAKE_THREAD_LIBS_INIT.
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     find_package(Threads)
     if (CMAKE_USE_PTHREADS_INIT)
       set(GTEST_HAS_PTHREAD ON)
@@ -70,17 +62,30 @@ macro(config_compiler_and_linker)
   endif()
 
   fix_default_compiler_settings_()
+  set(cxx_strict_flags "")
   if (MSVC)
+    # When Google Test is built as a shared library, it should also use shared
+    # runtime libraries. Otherwise, it may end up with multiple copies of
+    # runtime library data in different modules, resulting in hard-to-find
+    # crashes. When it is built as a static library, it is preferable to use CRT
+    # as static libraries, as we don't have to rely on CRT DLLs being available.
+    # CMake always defaults to using shared CRT libraries, so we override that
+    # default here.
+    if (NOT BUILD_SHARED_LIBS AND NOT gtest_force_shared_crt AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY
+        AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
+
     # Newlines inside flags variables break CMake's NMake generator.
     # TODO(vladl@google.com): Add -RTCs and -RTCu to debug builds.
-    set(cxx_base_flags "-GS -W4 -WX -wd4251 -wd4275 -nologo -J")
+    set(cxx_base_flags "-GS -W4 -wd4251 -wd4275 -nologo -J")
     set(cxx_base_flags "${cxx_base_flags} -D_UNICODE -DUNICODE -DWIN32 -D_WIN32")
     set(cxx_base_flags "${cxx_base_flags} -DSTRICT -DWIN32_LEAN_AND_MEAN")
     set(cxx_exception_flags "-EHsc -D_HAS_EXCEPTIONS=1")
     set(cxx_no_exception_flags "-EHs-c- -D_HAS_EXCEPTIONS=0")
     set(cxx_no_rtti_flags "-GR-")
-    # Suppress "unreachable code" warning
-    # http://stackoverflow.com/questions/3232669 explains the issue.
+    # Suppress "unreachable code" warning,
+    # https://stackoverflow.com/questions/3232669 explains the issue.
     set(cxx_base_flags "${cxx_base_flags} -wd4702")
     # Ensure MSVC treats source files as UTF-8 encoded.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -100,7 +105,12 @@ macro(config_compiler_and_linker)
       set(cxx_strict_flags "${cxx_strict_flags} -Wchar-subscripts")
     endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-      set(cxx_base_flags "${cxx_base_flags} -Wno-implicit-float-size-conversion -ffp-model=precise")
+      set(cxx_base_flags "${cxx_base_flags} -ffp-model=precise")
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 2025.2.0)
+        set(cxx_base_flags "${cxx_base_flags} -Wno-implicit-float-size-conversion")
+      else()
+        set(cxx_base_flags "${cxx_base_flags} -Wno-sycl-implicit-float-size-conversion")
+      endif()
     endif()
   elseif (CMAKE_COMPILER_IS_GNUCXX)
     set(cxx_base_flags "-Wall -Wshadow -Wundef")
@@ -110,7 +120,7 @@ macro(config_compiler_and_linker)
     set(cxx_exception_flags "-fexceptions")
     set(cxx_no_exception_flags "-fno-exceptions")
     # Until version 4.3.2, GCC doesn't define a macro to indicate
-    # whether RTTI is enabled.  Therefore we define GTEST_HAS_RTTI
+    # whether RTTI is enabled. Therefore we define GTEST_HAS_RTTI
     # explicitly.
     set(cxx_no_rtti_flags "-fno-rtti -DGTEST_HAS_RTTI=0")
     set(cxx_strict_flags
@@ -127,7 +137,7 @@ macro(config_compiler_and_linker)
     set(cxx_exception_flags "-qeh")
     set(cxx_no_exception_flags "-qnoeh")
     # Until version 9.0, Visual Age doesn't define a macro to indicate
-    # whether RTTI is enabled.  Therefore we define GTEST_HAS_RTTI
+    # whether RTTI is enabled. Therefore we define GTEST_HAS_RTTI
     # explicitly.
     set(cxx_no_rtti_flags "-qnortti -DGTEST_HAS_RTTI=0")
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "HP")
@@ -157,7 +167,7 @@ macro(config_compiler_and_linker)
   set(cxx_strict "${cxx_default} ${cxx_strict_flags}")
 endmacro()
 
-# Defines the gtest & gtest_main libraries.  User tests should link
+# Defines the gtest & gtest_main libraries. User tests should link
 # with one of them.
 function(cxx_library_with_type name type cxx_flags)
   # type can be either STATIC or SHARED to denote a static or shared library.
@@ -167,7 +177,7 @@ function(cxx_library_with_type name type cxx_flags)
   set_target_properties(${name}
     PROPERTIES
     COMPILE_FLAGS "${cxx_flags}")
-  # Set the output directory for build artifacts
+  # Set the output directory for build artifacts.
   set_target_properties(${name}
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -175,7 +185,7 @@ function(cxx_library_with_type name type cxx_flags)
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-  # make PDBs match library name
+  # Make PDBs match library name.
   get_target_property(pdb_debug_postfix ${name} DEBUG_POSTFIX)
   set_target_properties(${name}
     PROPERTIES
@@ -185,17 +195,25 @@ function(cxx_library_with_type name type cxx_flags)
     COMPILE_PDB_NAME_DEBUG "${name}${pdb_debug_postfix}")
 
   if (BUILD_SHARED_LIBS OR type STREQUAL "SHARED")
-    set_target_properties(${name}
-      PROPERTIES
-      COMPILE_DEFINITIONS "GTEST_CREATE_SHARED_LIBRARY=1")
+    target_compile_definitions(${name} PRIVATE
+      "GTEST_CREATE_SHARED_LIBRARY=1")
     target_compile_definitions(${name} INTERFACE
-      $<INSTALL_INTERFACE:GTEST_LINKED_AS_SHARED_LIBRARY=1>)
+      $<BUILD_INTERFACE:GTEST_LINKED_AS_SHARED_LIBRARY=1>
+      $<INSTALL_INTERFACE:GTEST_LINKED_AS_SHARED_LIBRARY=1>
+    )
+    if(APPLE)
+      set_target_properties(${name} PROPERTIES
+        INSTALL_RPATH "@loader_path")
+    elseif(UNIX)
+      set_target_properties(${name} PROPERTIES
+        INSTALL_RPATH "$ORIGIN")
+    endif()
   endif()
   if (DEFINED GTEST_HAS_PTHREAD)
     target_link_libraries(${name} PUBLIC Threads::Threads)
   endif()
 
-  target_compile_features(${name} PUBLIC cxx_std_14)
+  target_compile_features(${name} PUBLIC cxx_std_17)
 endfunction()
 
 ########################################################################
@@ -212,7 +230,7 @@ endfunction()
 
 # cxx_executable_with_flags(name cxx_flags libs srcs...)
 #
-# creates a named C++ executable that depends on the given libraries and
+# Creates a named C++ executable that depends on the given libraries and
 # is built from the given source files with the given compiler flags.
 function(cxx_executable_with_flags name cxx_flags libs)
   add_executable(${name} ${ARGN})
@@ -226,9 +244,8 @@ function(cxx_executable_with_flags name cxx_flags libs)
       COMPILE_FLAGS "${cxx_flags}")
   endif()
   if (BUILD_SHARED_LIBS)
-    set_target_properties(${name}
-      PROPERTIES
-      COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
+    target_compile_definitions(${name} PRIVATE
+      "GTEST_LINKED_AS_SHARED_LIBRARY=1")
   endif()
   # To support mixing linking in static and dynamic libraries, link each
   # library in with an extra call to target_link_libraries.
@@ -239,19 +256,26 @@ endfunction()
 
 # cxx_executable(name dir lib srcs...)
 #
-# creates a named target that depends on the given libs and is built
-# from the given source files.  dir/name.cc is implicitly included in
+# Creates a named target that depends on the given libs and is built
+# from the given source files. dir/name.cc is implicitly included in
 # the source file list.
 function(cxx_executable name dir libs)
   cxx_executable_with_flags(
     ${name} "${cxx_default}" "${libs}" "${dir}/${name}.cc" ${ARGN})
 endfunction()
 
-find_package(Python3)
+if(gtest_build_tests)
+  # Only the interpreter is needed for Python tests. Specifying the component
+  # explicitly avoids a crash in CMake <= 3.23's FindPython3 module when no
+  # Python installation is present (the module calls list(GET) on an empty
+  # list).  QUIET lets the build continue without Python tests instead of
+  # failing outright.
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+endif()
 
 # cxx_test_with_flags(name cxx_flags libs srcs...)
 #
-# creates a named C++ test that depends on the given libs and is built
+# Creates a named C++ test that depends on the given libs and is built
 # from the given source files with the given compiler flags.
 function(cxx_test_with_flags name cxx_flags libs)
   cxx_executable_with_flags(${name} "${cxx_flags}" "${libs}" ${ARGN})
@@ -260,8 +284,8 @@ endfunction()
 
 # cxx_test(name libs srcs...)
 #
-# creates a named test target that depends on the given libs and is
-# built from the given source files.  Unlike cxx_test_with_flags,
+# Creates a named test target that depends on the given libs and is
+# built from the given source files. Unlike cxx_test_with_flags,
 # test/name.cc is already implicitly included in the source file list.
 function(cxx_test name libs)
   cxx_test_with_flags("${name}" "${cxx_default}" "${libs}"
@@ -270,8 +294,8 @@ endfunction()
 
 # py_test(name)
 #
-# creates a Python test with the given name whose main module is in
-# test/name.py.  It does nothing if Python is not installed.
+# Creates a Python test with the given name whose main module is in
+# test/name.py. It does nothing if Python is not installed.
 function(py_test name)
   if (NOT Python3_Interpreter_FOUND)
     return()
@@ -307,15 +331,19 @@ function(install_project)
       ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-      # Install PDBs
+      # Install PDBs.
       foreach(t ${ARGN})
         get_target_property(t_pdb_name ${t} COMPILE_PDB_NAME)
         get_target_property(t_pdb_name_debug ${t} COMPILE_PDB_NAME_DEBUG)
-        get_target_property(t_pdb_output_directory ${t} PDB_OUTPUT_DIRECTORY)
+        get_target_property(t_pdb_output_directory ${t} COMPILE_PDB_OUTPUT_DIRECTORY)
+        get_target_property(t_shared_pdb_name ${t} PDB_NAME)
+        get_target_property(t_shared_pdb_name_debug ${t} PDB_NAME_DEBUG)
+        get_target_property(t_shared_pdb_output_directory ${t} PDB_OUTPUT_DIRECTORY)
         install(FILES
-          "${t_pdb_output_directory}/\${CMAKE_INSTALL_CONFIG_NAME}/$<$<CONFIG:Debug>:${t_pdb_name_debug}>$<$<NOT:$<CONFIG:Debug>>:${t_pdb_name}>.pdb"
+          "$<$<STREQUAL:$<TARGET_PROPERTY:${t},TYPE>,STATIC_LIBRARY>:${t_pdb_output_directory}/\${CMAKE_INSTALL_CONFIG_NAME}/$<IF:$<CONFIG:Debug>,${t_pdb_name_debug},${t_pdb_name}>.pdb>"
+          "$<$<STREQUAL:$<TARGET_PROPERTY:${t},TYPE>,SHARED_LIBRARY>:${t_shared_pdb_output_directory}/\${CMAKE_INSTALL_CONFIG_NAME}/$<IF:$<CONFIG:Debug>,${t_shared_pdb_name_debug},${t_shared_pdb_name}>.pdb>"
           COMPONENT "${PROJECT_NAME}"
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          DESTINATION $<IF:$<STREQUAL:$<TARGET_PROPERTY:${t},TYPE>,STATIC_LIBRARY>,${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_BINDIR}>
           OPTIONAL)
       endforeach()
     endif()
