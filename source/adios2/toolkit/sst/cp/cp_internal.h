@@ -109,6 +109,7 @@ typedef struct _WS_ReaderInfo
     ssize_t PreloadModeActiveTimestep;
     ssize_t OldestUnreleasedTimestep;
     size_t FormatSentCount;
+    size_t AttributeSentCount;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
@@ -143,6 +144,7 @@ typedef struct _CPTimestepEntry
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
+    size_t AttributeLogEnd; /* attribute log length once this step was added */
     struct _CPTimestepEntry *Next;
 } *CPTimestepList;
 
@@ -202,6 +204,9 @@ struct _SstStream
     int CloseMessagesSent;
 
     FFSFormatList PreviousFormats;
+    /* every unique attribute block, in order; readers are caught up from here */
+    size_t AttributeLogCount;
+    struct _SstData *AttributeLog;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
     int LockDefnsCount;
@@ -383,6 +388,7 @@ typedef struct _TimestepMetadataMsg
     SstPreloadModeType PreloadMode;
     FFSFormatList Formats;
     SstData Metadata;
+    int AttributeBlockCount;
     SstData AttributeData;
     void **DP_TimestepInfo;
 } *TSMetadataMsg;

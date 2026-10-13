@@ -301,7 +301,6 @@ static void RemoveQueueEntries(SstStream Stream)
                        ItemToFree->ReferenceCount, Stream->QueuedTimestepCount);
             ItemToFree->FreeTimestep(ItemToFree->FreeClientData);
             free(ItemToFree->Msg->Metadata);
-            free(ItemToFree->Msg->AttributeData);
             free(ItemToFree->Msg->DP_TimestepInfo);
             free(ItemToFree->Msg);
             free(ItemToFree->DataBlockToFree);
@@ -941,9 +940,32 @@ static void SendTimestepEntryToSingleReader(SstStream Stream, CPTimestepList Ent
 
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
+        {
+            /*
+             * Send this reader its own copy of the message, carrying the
+             * attribute blocks it hasn't seen yet (from earlier steps it
+             * missed, or everything if it joined late).  The lock is dropped
+             * during the write, so the shared message isn't modified.
+             */
+            struct _TimestepMetadataMsg ReaderMsg = *Entry->Msg;
+            size_t PriorAttrs = CP_WSR_Stream->AttributeSentCount;
+            ReaderMsg.Formats = ToSend;
+            ReaderMsg.AttributeBlockCount = 0;
+            ReaderMsg.AttributeData = NULL;
+            if (Entry->AttributeLogEnd > PriorAttrs)
+            {
+                size_t Count = Entry->AttributeLogEnd - PriorAttrs;
+                ReaderMsg.AttributeBlockCount = (int)Count;
+                ReaderMsg.AttributeData = malloc(Count * sizeof(ReaderMsg.AttributeData[0]));
+                memcpy(ReaderMsg.AttributeData, &Stream->AttributeLog[PriorAttrs],
+                       Count * sizeof(ReaderMsg.AttributeData[0]));
+                CP_WSR_Stream->AttributeSentCount = Entry->AttributeLogEnd;
+            }
             sendOneToWSRCohort(CP_WSR_Stream,
-                               Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat, Entry->Msg,
-                               &Entry->Msg->RS_Stream);
+                               Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat, &ReaderMsg,
+                               &ReaderMsg.RS_Stream);
+            free(ReaderMsg.AttributeData);
+        }
     }
 }
 
@@ -1542,7 +1564,10 @@ static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
 
     /* separate metadata and DP_info to separate arrays */
     Msg->Metadata = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
-    Msg->AttributeData = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
+    /* attribute blocks are filled in per reader at send time from the log */
+    Msg->AttributeBlockCount = 0;
+    Msg->AttributeData = NULL;
+    size_t StepLogStart = Stream->AttributeLogCount;
     Msg->DP_TimestepInfo = malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
     int NullCount = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
@@ -1556,14 +1581,27 @@ static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
             Msg->Metadata[i].DataSize = 0;
             Msg->Metadata[i].block = NULL;
         }
-        if (pointers[i]->AttributeData)
+        SstData Attrs = pointers[i]->AttributeData;
+        if (Attrs && Attrs->DataSize)
         {
-            Msg->AttributeData[i] = *(pointers[i]->AttributeData);
-        }
-        else
-        {
-            Msg->AttributeData[i].DataSize = 0;
-            Msg->AttributeData[i].block = NULL;
+            /* ranks commonly produce identical blocks, log each one once per step */
+            size_t j;
+            for (j = StepLogStart; j < Stream->AttributeLogCount; j++)
+            {
+                if ((Stream->AttributeLog[j].DataSize == Attrs->DataSize) &&
+                    (memcmp(Stream->AttributeLog[j].block, Attrs->block, Attrs->DataSize) == 0))
+                    break;
+            }
+            if (j == Stream->AttributeLogCount)
+            {
+                Stream->AttributeLog =
+                    realloc(Stream->AttributeLog,
+                            (Stream->AttributeLogCount + 1) * sizeof(Stream->AttributeLog[0]));
+                Stream->AttributeLog[j].DataSize = Attrs->DataSize;
+                Stream->AttributeLog[j].block = malloc(Attrs->DataSize);
+                memcpy(Stream->AttributeLog[j].block, Attrs->block, Attrs->DataSize);
+                Stream->AttributeLogCount++;
+            }
         }
         Msg->DP_TimestepInfo[i] = pointers[i]->DP_TimestepInfo;
         if (pointers[i]->DP_TimestepInfo == NULL)
@@ -1971,6 +2009,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
          * message; its blocks point into the gather buffer, data_block1 */
         memset(Msg, 0, sizeof(*Msg));
         FillMetadataMsg(Stream, Msg, pointers);
+        Entry->AttributeLogEnd = Stream->AttributeLogCount;
         STREAM_MUTEX_UNLOCK(Stream);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat, &data_block2);

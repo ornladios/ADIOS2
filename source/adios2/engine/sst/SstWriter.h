@@ -75,7 +75,7 @@ private:
         SstMetaMetaList MetaMetaBlocks;
         format::BP5Serializer::TimestepInfo *TSInfo;
     };
-    std::unique_ptr<format::BP5Serializer> m_BP5Serializer;
+    format::BP5Serializer m_BP5Serializer;
 
     SstStream m_Output;
     long m_WriterStep = -1;

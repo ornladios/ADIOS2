@@ -50,13 +50,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
 
     m_BetweenStepPairs = true;
-    if (!m_BP5Serializer)
-    {
-        m_BP5Serializer = std::make_unique<format::BP5Serializer>();
-        m_BP5Serializer->m_StatsLevel = Params.StatsLevel;
-    }
-    m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));
-    m_BP5Serializer->m_Engine = this;
+    m_BP5Serializer.InitStep(new format::MallocV("SstWriter", true));
     return StepStatus::OK;
 }
 
@@ -71,8 +65,9 @@ void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringAr
     {
         for (const auto &attributePair : attributes)
         {
-            m_BP5Serializer->OnetimeMarshalAttribute(*(attributePair.second));
+            m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
         }
+        m_MarshalAttributesNecessary = false;
     }
 
     // if there are no new attributes, nothing to do
@@ -93,8 +88,7 @@ void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringAr
             if (attribute.m_IsSingleValue)
             {
                 const char *data_addr = attribute.m_DataSingleValue.c_str();
-                m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), -1,
-                                                  data_addr);
+                m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), -1, data_addr);
             }
             else
             {
@@ -106,8 +100,8 @@ void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringAr
                 {
                     strings[i] = attribute.m_DataArray[i].c_str();
                 }
-                m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
-                                                  strings.data());
+                m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
+                                                 strings.data());
             }
         }
 #define declare_type(T)                                                                            \
@@ -121,8 +115,8 @@ void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringAr
             element_count = (int)attribute.m_Elements;                                             \
             data_addr = attribute.m_DataArray.data();                                              \
         }                                                                                          \
-        m_BP5Serializer->MarshalAttribute(attribute.m_Name.c_str(), type, sizeof(T),               \
-                                          element_count, data_addr);                               \
+        m_BP5Serializer.MarshalAttribute(attribute.m_Name.c_str(), type, sizeof(T), element_count, \
+                                         data_addr);                                               \
     }
 
         ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -145,7 +139,7 @@ void SstWriter::NotifyEngineAttribute(std::string name, AttributeBase *Attr, voi
         return;
     }
 
-    m_BP5Serializer->OnetimeMarshalAttribute(*Attr);
+    m_BP5Serializer.OnetimeMarshalAttribute(*Attr);
     m_MarshalAttributesNecessary = false;
 }
 
@@ -169,7 +163,7 @@ void SstWriter::EndStep()
     std::list<std::vector<const char *>> stringArrayData;
     MarshalAttributes(stringArrayData);
     format::BP5Serializer::TimestepInfo *TSInfo =
-        new format::BP5Serializer::TimestepInfo(m_BP5Serializer->CloseTimestep(m_WriterStep));
+        new format::BP5Serializer::TimestepInfo(m_BP5Serializer.CloseTimestep(m_WriterStep));
     auto lf_FreeBlocks = [](void *vBlock) {
         BP5DataBlock *BlockToFree = reinterpret_cast<BP5DataBlock *>(vBlock);
         //  Free data and metadata blocks here.  BlockToFree is the newblock
@@ -241,6 +235,8 @@ void SstWriter::Init()
                                              "integer in the range [0,5], in call to "
                                              "Open or Engine constructor\n");
     }
+    m_BP5Serializer.m_StatsLevel = Params.StatsLevel;
+    m_BP5Serializer.m_Engine = this;
 }
 
 #define declare_type(T)                                                                            \
@@ -283,9 +279,9 @@ void SstWriter::PutStructCommon(VariableBase &variable, const void *data)
         DimCount = variable.m_Count.size();
         Count = variable.m_Count.data();
     }
-    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                             variable.m_ElementSize, DimCount, Shape, Count, Start, data, true,
-                             nullptr);
+    m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                            variable.m_ElementSize, DimCount, Shape, Count, Start, data, true,
+                            nullptr);
 }
 
 void SstWriter::DoPutStructSync(VariableStruct &variable, const void *data)

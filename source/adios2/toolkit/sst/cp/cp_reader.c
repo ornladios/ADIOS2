@@ -790,8 +790,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
     Stream->Stats.TimestepMetadataReceived++;
     if (tsm->Metadata)
     {
-        Stream->Stats.MetadataBytesReceived +=
-            (tsm->Metadata->DataSize + tsm->AttributeData->DataSize);
+        Stream->Stats.MetadataBytesReceived += tsm->Metadata->DataSize;
+        for (int i = 0; i < tsm->AttributeBlockCount; i++)
+            Stream->Stats.MetadataBytesReceived += tsm->AttributeData[i].DataSize;
     }
     CP_verbose(Stream, PerRankVerbose,
                "Received a Timestep metadata message for timestep %ld, "
@@ -861,19 +862,22 @@ void AddAttributesToAttrDataList(SstStream Stream, struct _TimestepMetadataMsg *
         Stream->InternalAttrDataCount = 0;
         Stream->AttrsRetrieved = 0;
     }
-    if (Msg->AttributeData->DataSize == 0)
-        return;
-
-    Stream->InternalAttrDataInfo =
-        realloc(Stream->InternalAttrDataInfo,
-                (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
-    struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
-    Stream->InternalAttrDataCount++;
-    NewInfo->BlockData = malloc(Msg->AttributeData->DataSize);
-    NewInfo->BlockSize = Msg->AttributeData->DataSize;
-    memcpy(NewInfo->BlockData, Msg->AttributeData->block, Msg->AttributeData->DataSize);
-    memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
-           sizeof(struct _SstData));
+    for (int i = 0; i < Msg->AttributeBlockCount; i++)
+    {
+        SstData Attrs = &Msg->AttributeData[i];
+        if (Attrs->DataSize == 0)
+            continue;
+        Stream->InternalAttrDataInfo =
+            realloc(Stream->InternalAttrDataInfo,
+                    (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
+        struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
+        Stream->InternalAttrDataCount++;
+        NewInfo->BlockData = malloc(Attrs->DataSize);
+        NewInfo->BlockSize = Attrs->DataSize;
+        memcpy(NewInfo->BlockData, Attrs->block, Attrs->DataSize);
+        memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
+               sizeof(struct _SstData));
+    }
 }
 
 // CP_TimestepMetadataHandler is called by the network handler thread

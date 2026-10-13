@@ -411,7 +411,9 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
     {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, Metadata)},
-    {"attribute_data", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
+    {"attribute_block_count", "integer", sizeof(int),
+     FMOffset(struct _TimestepMetadataMsg *, AttributeBlockCount)},
+    {"attribute_data", "SstBlock[attribute_block_count]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, AttributeData)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
@@ -1106,6 +1108,11 @@ extern void SstStreamDestroy(SstStream Stream)
 
     FFSFormatList FFSList = Stream->PreviousFormats;
     Stream->PreviousFormats = NULL;
+    for (size_t i = 0; i < Stream->AttributeLogCount; i++)
+        free(Stream->AttributeLog[i].block);
+    free(Stream->AttributeLog);
+    Stream->AttributeLog = NULL;
+    Stream->AttributeLogCount = 0;
     free(Stream->ReleaseList);
     free(Stream->LockDefnsList);
     while (FFSList)

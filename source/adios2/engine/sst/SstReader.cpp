@@ -142,7 +142,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     i = 0;
     while (AttributeBlockList && AttributeBlockList[i].BlockData)
     {
-        m_IO.RemoveAllAttributes();
         m_BP5Deserializer->InstallAttributeData(AttributeBlockList[i].BlockData,
                                                 AttributeBlockList[i].BlockSize);
         i++;

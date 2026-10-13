@@ -79,10 +79,10 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         // get a temporary span then fill with memselection now
         format::BufferV::BufferPos bp5span(0, 0, 0);
 
-        m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                 variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
-                                 false, &bp5span);
-        void *ptr = m_BP5Serializer->GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
+                                false, &bp5span);
+        void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
         if (!sourceRowMajor)
         {
@@ -101,15 +101,15 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         {
             std::string &source = *(std::string *)values;
             void *p = &(source[0]);
-            m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                     variable.m_ElementSize, DimCount, Shape, Count, Start, &p,
-                                     true, nullptr);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                    variable.m_ElementSize, DimCount, Shape, Count, Start, &p, true,
+                                    nullptr);
         }
         else
         {
-            m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                                     variable.m_ElementSize, DimCount, Shape, Count, Start, values,
-                                     true, nullptr);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                    variable.m_ElementSize, DimCount, Shape, Count, Start, values,
+                                    true, nullptr);
         }
     }
 }
