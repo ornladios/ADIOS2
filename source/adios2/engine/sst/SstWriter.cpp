@@ -56,75 +56,6 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 size_t SstWriter::CurrentStep() const { return m_WriterStep; }
 
-void SstWriter::MarshalAttributes(std::list<std::vector<const char *>> &stringArrayData)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-    const auto &attributes = m_IO.GetAttributes();
-
-    if ((m_WriterStep == 0) && Params.UseOneTimeAttributes)
-    {
-        for (const auto &attributePair : attributes)
-        {
-            m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
-        }
-        m_MarshalAttributesNecessary = false;
-    }
-
-    // if there are no new attributes, nothing to do
-    if (!m_MarshalAttributesNecessary)
-        return;
-
-    for (const auto &attributePair : attributes)
-    {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-
-        if (type == DataType::None)
-        {
-        }
-        else if (type == helper::GetDataType<std::string>())
-        {
-            core::Attribute<std::string> &attribute = *m_IO.InquireAttribute<std::string>(name);
-            if (attribute.m_IsSingleValue)
-            {
-                const char *data_addr = attribute.m_DataSingleValue.c_str();
-                m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), -1, data_addr);
-            }
-            else
-            {
-                // array of strings, marshaled as an array of char pointers
-                const int element_count = (int)attribute.m_Elements;
-                stringArrayData.emplace_back(element_count);
-                auto &strings = stringArrayData.back();
-                for (int i = 0; i < element_count; i++)
-                {
-                    strings[i] = attribute.m_DataArray[i].c_str();
-                }
-                m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
-                                                 strings.data());
-            }
-        }
-#define declare_type(T)                                                                            \
-    else if (type == helper::GetDataType<T>())                                                     \
-    {                                                                                              \
-        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);                           \
-        int element_count = -1;                                                                    \
-        void *data_addr = &attribute.m_DataSingleValue;                                            \
-        if (!attribute.m_IsSingleValue)                                                            \
-        {                                                                                          \
-            element_count = (int)attribute.m_Elements;                                             \
-            data_addr = attribute.m_DataArray.data();                                              \
-        }                                                                                          \
-        m_BP5Serializer.MarshalAttribute(attribute.m_Name.c_str(), type, sizeof(T), element_count, \
-                                         data_addr);                                               \
-    }
-
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-    m_MarshalAttributesNecessary = false;
-}
-
 void SstWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
 {
     helper::Throw<std::invalid_argument>("SstWriter", "Engine", "ThrowUp",
@@ -133,14 +64,7 @@ void SstWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
 
 void SstWriter::NotifyEngineAttribute(std::string name, AttributeBase *Attr, void *data) noexcept
 {
-    if (!Params.UseOneTimeAttributes)
-    {
-        m_MarshalAttributesNecessary = true;
-        return;
-    }
-
     m_BP5Serializer.OnetimeMarshalAttribute(*Attr);
-    m_MarshalAttributesNecessary = false;
 }
 
 void SstWriter::EndStep()
@@ -157,11 +81,6 @@ void SstWriter::EndStep()
         SstWriterDefinitionLock(m_Output, m_WriterStep);
         m_DefinitionsNotified = true;
     }
-    // The serializer keeps pointers to the char* arrays of string array
-    // attributes and encodes them in CloseTimestep(), so they must live
-    // until then.
-    std::list<std::vector<const char *>> stringArrayData;
-    MarshalAttributes(stringArrayData);
     format::BP5Serializer::TimestepInfo *TSInfo =
         new format::BP5Serializer::TimestepInfo(m_BP5Serializer.CloseTimestep(m_WriterStep));
     auto lf_FreeBlocks = [](void *vBlock) {
@@ -237,6 +156,9 @@ void SstWriter::Init()
     }
     m_BP5Serializer.m_StatsLevel = Params.StatsLevel;
     m_BP5Serializer.m_Engine = this;
+    // attributes defined before Open; later ones arrive via NotifyEngineAttribute
+    for (const auto &attributePair : m_IO.GetAttributes())
+        m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
 }
 
 #define declare_type(T)                                                                            \

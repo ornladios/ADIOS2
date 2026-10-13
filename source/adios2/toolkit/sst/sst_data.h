@@ -81,7 +81,6 @@ typedef struct _SstStats
     MACRO(SpecAutoNodeThreshold, Int, int, 1)                                                      \
     MACRO(ReaderShortCircuitReads, Bool, int, 0)                                                   \
     MACRO(StatsLevel, Int, int, 0)                                                                 \
-    MACRO(UseOneTimeAttributes, Bool, int, 1)                                                      \
     MACRO(RemoteGroup, String, char *, NULL)                                                       \
     MACRO(ControlModule, String, char *, NULL)
 
