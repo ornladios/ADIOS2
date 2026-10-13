@@ -248,6 +248,8 @@ endif()
 set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${BP5File_ONLY_TESTS})
 # Delayed reader not worth testing on file engines
 list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
+# TimeoutReader streams through the file; covered by the BP5_stream variant
+list (FILTER BP5_TESTS EXCLUDE REGEX "TimeoutReader")
 # Discard not a feature of BP5
 list (FILTER BP5_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1")
 # PreciousTimestep not a feature of BP5

@@ -62,7 +62,7 @@ These are the actual settings in ADIOS when a virtual engine is selected. The pa
 ============================== ===================== ===========================================================
  OpenTimeoutSecs                float                 **3600**  (wait for up to an hour)
  BeginStepPollingFrequencySecs  float                 **1**     (poll the file system with 1 second frequency
- IgnoreActiveFlag               boolean               **false** (wait for new steps while the file is being written)
+ IgnoreActiveFlag               boolean               **false** (overrides the BP5 default of true: wait for new steps while the file is being written)
 ============================== ===================== ===========================================================
 
 3. ``InSituAnalysis``. The engine is ``SST``. The parameters are set to:
