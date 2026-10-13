@@ -12,6 +12,7 @@ ENV DEPENDENCIES \
     nlohmann-json \
     perfstubs \
     pugixml \
+    googletest@1.14 \
     py-nanobind
 
 RUN . /spack/share/spack/setup-env.sh && \
