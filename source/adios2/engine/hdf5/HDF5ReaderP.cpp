@@ -13,7 +13,6 @@
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/OpenFile.h"
-#include "adios2sys/SystemTools.hxx"
 
 #include <filesystem>
 #include <limits>

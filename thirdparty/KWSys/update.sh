@@ -13,6 +13,16 @@ readonly tag="master"
 readonly shortlog="true"
 readonly exact_tree_match="false"
 readonly paths="
+CMakeLists.txt
+Configure.h.in
+Configure.hxx.in
+Copyright.txt
+kwsysPlatformTestsC.c
+kwsysPlatformTests.cmake
+kwsysPlatformTestsCXX.cxx
+kwsysPrivate.h
+MD5.c
+MD5.h.in
 "
 
 git_archive_no_attributes () {
