@@ -4,6 +4,19 @@
 
 """The ADIOS2 high-level API module"""
 
+from importlib.metadata import PackageNotFoundError, version as _dist_version
+
+try:
+    _dist_version("adios2")
+    _dist_version("adios2-mpi")
+except PackageNotFoundError:
+    pass
+else:
+    raise ImportError(
+        "Both 'adios2' and 'adios2-mpi' are installed and conflict with each other. "
+        "Uninstall both and reinstall only one of them."
+    )
+
 import adios2.bindings
 
 from adios2.adios import *

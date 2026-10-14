@@ -91,6 +91,37 @@ jobs:
           name: artifact_wheels_linux_${{ matrix.arch }}
           path: wheelhouse/*.whl
 
+  build_wheels_linux_mpi:
+    name: Wheels Linux MPI ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          fetch-depth: 0
+      - name: Generate common version file
+        run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
+      - name: Build adios2-mpi wheels (abi3 only on pull requests)
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        with:
+          package-dir: packaging/adios2-mpi
+        env:
+          CIBW_BUILD: >-
+            ${{ github.event_name == 'pull_request'
+              && format('cp312-manylinux_{0}', matrix.arch)
+              || format('cp39-manylinux_{0} cp310-manylinux_{0} cp311-manylinux_{0} cp312-manylinux_{0} cp314t-manylinux_{0}', matrix.arch) }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: artifact_wheels_linux_mpi_${{ matrix.arch }}
+          path: wheelhouse/*.whl
+
   build_wheels_macos:
     name: Wheels macOS ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
@@ -131,11 +162,25 @@ jobs:
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
         with:
-          pattern: artifact_wheels_*
+          pattern: artifact_wheels_linux_x86_64
           path: dist
           merge-multiple: true
       - run: python -m pip install --find-links=dist adios2
       - run: python -c "import adios2"
+
+  test_wheels_mpi:
+    name: Test MPI wheel on ubuntu
+    needs: [build_wheels_linux_mpi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+        with:
+          pattern: artifact_wheels_linux_mpi_*
+          path: dist
+          merge-multiple: true
+      - run: sudo apt-get install -y mpich
+      - run: python -m pip install --find-links=dist adios2-mpi
+      - run: mpiexec -n 2 python -c "import adios2; assert adios2.is_built_with_mpi"
 
   test_wheels_macos:
     name: Test wheel on macOS ${{ matrix.arch }}
@@ -182,7 +227,7 @@ jobs:
         shell: bash
 
   upload_pypi:
-    needs: [build_wheels_linux, build_wheels_macos, make_sdist]
+    needs: [build_wheels_linux, build_wheels_linux_mpi, build_wheels_macos, make_sdist]
     environment: pypi
     permissions:
       contents: read
@@ -205,7 +250,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1
 
   upload_test_pypi:
-    needs: [build_wheels_linux, build_wheels_macos, make_sdist]
+    needs: [build_wheels_linux, build_wheels_linux_mpi, build_wheels_macos, make_sdist]
     environment: testpypi
     permissions:
       contents: read
