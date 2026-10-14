@@ -11,6 +11,7 @@
  */
 
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -99,6 +100,32 @@ TEST_F(BPActiveFlag, DefaultReadsKilledFile)
     auto values = ReadSteps(fname, {}, -1.0f, status);
     EXPECT_EQ(status, adios2::StepStatus::EndOfStream);
     EXPECT_EQ(values, std::vector<double>({0.0, 1.0, 2.0}));
+}
+
+// a writer killed before it completed its first step leaves empty files and
+// an index without a header, so there is no active flag to read
+TEST_F(BPActiveFlag, KilledBeforeFirstStep)
+{
+    const std::string fname = "ActiveFlagNoHeader.bp";
+    std::filesystem::remove_all(fname);
+    std::filesystem::create_directory(fname);
+    std::vector<std::string> files = {"data.0", "md.0", "md.idx"};
+    if (engineName != "BP4")
+    {
+        files.push_back("mmd.0");
+    }
+    for (const auto &file : files)
+    {
+        std::ofstream(std::filesystem::path(fname) / file);
+    }
+
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("Read");
+    io.SetEngine(engineName);
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+    // default timeout waits forever when the flag is honored; here it must not
+    EXPECT_EQ(reader.BeginStep(), adios2::StepStatus::EndOfStream);
+    reader.Close();
 }
 
 TEST_F(BPActiveFlag, HonorActiveFlag)

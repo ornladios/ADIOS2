@@ -2321,7 +2321,9 @@ void BP5Reader::ApplyFailOnEOFPolicy()
 
 bool BP5Reader::CheckWriterActive()
 {
-    if (m_ReadMetadataFromFile && m_WriterIsActive)
+    // with IgnoreActiveFlag the writer is never waited for, even if the index
+    // has no header yet (writer killed before its first step)
+    if (m_ReadMetadataFromFile && m_WriterIsActive && !m_Parameters.IgnoreActiveFlag)
     {
         size_t flag = 1;
         if (m_Comm.Rank() == 0)
