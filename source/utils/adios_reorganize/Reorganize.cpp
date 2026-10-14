@@ -155,8 +155,10 @@ void Reorganize::Run()
                 if (!m_Rank)
                 {
                     std::cout << " No new steps arrived in a while " << std::endl;
-                    // BP5 is only NotReady while the input is marked as being written
-                    if (rStream.m_EngineType == "BP5Reader" && waitedSecs >= nextWarningSecs)
+                    // BP4/BP5 are only NotReady while the input is marked as being written
+                    if ((rStream.m_EngineType == "BP4Reader" ||
+                         rStream.m_EngineType == "BP5Reader") &&
+                        waitedSecs >= nextWarningSecs)
                     {
                         std::cout << " WARNING: no new step for " << (int)waitedSecs
                                   << " seconds, but the input is still marked as being "
@@ -309,7 +311,7 @@ void Reorganize::PrintUsage() const noexcept
     std::cout << "Usage: adios_reorganize [--ignore-active-flag] input output rmethod "
                  "\"params\" wmethod \"params\" "
                  "<decomposition>\n"
-                 "    --ignore-active-flag  Read a BP5 input to its last step even if it\n"
+                 "    --ignore-active-flag  Read a BP4/BP5 input to its last step even if it\n"
                  "            is still marked as being written (e.g. its writer was killed).\n"
                  "            By default reorganize waits for more steps.\n"
                  "    input   Input stream path\n"

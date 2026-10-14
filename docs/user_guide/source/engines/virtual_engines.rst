@@ -19,7 +19,7 @@ The following I/O uses cases are supported by virtual engine names:
    (in BeginStep() up to the specificed timeout in that function) as long as the Producer has not closed the file.
    If the Producer is killed before closing the file, the Consumer keeps waiting; set ``IgnoreActiveFlag=true`` to read
    the steps that are present, or mark the file complete with ``adios2_deactivate_bp``. The plain ``BP5`` engine does
-   not wait for new steps unless ``IgnoreActiveFlag=false`` is set.
+   not wait for new steps unless ``IgnoreActiveFlag=false`` is set (``BP4`` likewise).
 
    When writing, ``FileStream`` produces the ``BP5`` format. When reading, it uses the format of the existing dataset (``BP4`` or
    ``BP5``); a stream that does not exist yet is assumed to be ``BP5``.
@@ -62,7 +62,7 @@ These are the actual settings in ADIOS when a virtual engine is selected. The pa
 ============================== ===================== ===========================================================
  OpenTimeoutSecs                float                 **3600**  (wait for up to an hour)
  BeginStepPollingFrequencySecs  float                 **1**     (poll the file system with 1 second frequency
- IgnoreActiveFlag               boolean               **false** (overrides the BP5 default of true: wait for new steps while the file is being written)
+ IgnoreActiveFlag               boolean               **false** (overrides the BP4/BP5 default of true: wait for new steps while the file is being written)
 ============================== ===================== ===========================================================
 
 3. ``InSituAnalysis``. The engine is ``SST``. The parameters are set to:

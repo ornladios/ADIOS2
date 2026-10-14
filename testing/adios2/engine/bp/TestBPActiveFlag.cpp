@@ -5,7 +5,7 @@
  */
 
 /*
- * A writer that is killed never clears the active flag in md.idx.  Readers
+ * A BP4/BP5 writer that is killed never clears the active flag in md.idx.  Readers
  * ignore that flag by default (IgnoreActiveFlag=true) and only wait for more
  * steps when asked to (IgnoreActiveFlag=false, as FileStream does).
  */
@@ -21,8 +21,8 @@
 
 std::string engineName; // comes from command line
 
-// offset of activeFlag in the BP5 md.idx header
-constexpr std::streamoff ActiveFlagPosition = 39;
+// offset of activeFlag in the md.idx header
+static std::streamoff ActiveFlagPosition() { return (engineName == "BP4") ? 38 : 39; }
 
 static void WriteSteps(const std::string &fname, const adios2::Mode mode, const size_t nsteps,
                        const double base, const adios2::Params &params = {})
@@ -45,7 +45,7 @@ static void WriteSteps(const std::string &fname, const adios2::Mode mode, const 
 static char GetActiveFlag(const std::string &fname)
 {
     std::ifstream idx(fname + "/md.idx", std::ios::binary);
-    idx.seekg(ActiveFlagPosition);
+    idx.seekg(ActiveFlagPosition());
     char flag = 0;
     idx.read(&flag, 1);
     return flag;
@@ -56,7 +56,7 @@ static void MarkActive(const std::string &fname)
 {
     std::fstream idx(fname + "/md.idx", std::ios::in | std::ios::out | std::ios::binary);
     ASSERT_TRUE(idx.is_open());
-    idx.seekp(ActiveFlagPosition);
+    idx.seekp(ActiveFlagPosition());
     const char active = 1;
     idx.write(&active, 1);
 }
@@ -140,6 +140,10 @@ TEST_F(BPActiveFlag, AppendToKilledFile)
 
 TEST_F(BPActiveFlag, AppendAfterStepsToKilledFile)
 {
+    if (engineName == "BP4")
+    {
+        GTEST_SKIP() << "BP4 has no AppendAfterSteps";
+    }
     const std::string fname = "ActiveFlagAppendAfter.bp";
     WriteSteps(fname, adios2::Mode::Write, 3, 0.0);
     MarkActive(fname);

@@ -297,7 +297,7 @@ endif()
 if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
     LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP4_STREAM_TESTS}")
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1,IgnoreActiveFlag=false" "${BP4_STREAM_TESTS}")
     # no BP4 streaming doesn't do Joined?
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "Joined*")
     # SharedVars fail with BP4_streaming*
