@@ -625,8 +625,28 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
     return timeRead;
 }
 
+void BP5Reader::ThrowIfNoMetadataForGet(const VariableBase &variable) const
+{
+    if (!m_BP5Deserializer)
+    {
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "Get",
+                                        "cannot read variable " + variable.m_Name + " from " +
+                                            m_Name +
+                                            ": no metadata was read yet, the file has no "
+                                            "complete step");
+    }
+}
+
 void BP5Reader::PerformGets()
 {
+    if (!m_BP5Deserializer)
+    {
+        // No metadata was read yet, e.g. the metadata index is still empty
+        // because the writer did not complete a step before it was killed.
+        // Get() cannot have queued anything, so there is nothing to do.
+        return;
+    }
+
     // if dataIsRemote is true and m_Remote is not true, this is our first time through
     // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
     // remote file (or die trying)

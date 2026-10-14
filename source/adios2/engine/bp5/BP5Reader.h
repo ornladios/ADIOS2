@@ -253,6 +253,9 @@ private:
 
     void FlushProfiler();
 
+    /** Throws if no metadata was read yet, since a Get() cannot be queued then */
+    void ThrowIfNoMetadataForGet(const VariableBase &variable) const;
+
     void GetSyncCommon(VariableBase &variable, void *data);
 
     void GetDeferredCommon(VariableBase &variable, void *data);

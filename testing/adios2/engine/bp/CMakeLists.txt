@@ -157,6 +157,7 @@ bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
 bp5_gtest_add_tests_helper(GetContextIsolation MPI_NONE)
 bp5_gtest_add_tests_helper(FileUUID MPI_NONE)
+bp5_gtest_add_tests_helper(EmptyMetadataIndex MPI_NONE)
 
 if (ADIOS2_HAVE_MPI)
   # Extra arguments: engine parameters, number of timesteps
