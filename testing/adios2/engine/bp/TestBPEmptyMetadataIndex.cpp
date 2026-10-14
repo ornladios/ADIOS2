@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -20,10 +22,35 @@ std::string engineParameters; // comes from command line
 namespace
 {
 
+const std::size_t Nx = 4;
+
+adios2::IO DeclareIO(adios2::ADIOS &adios, const std::string &name)
+{
+    adios2::IO io = adios.DeclareIO(name);
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    if (!engineParameters.empty())
+    {
+        io.SetParameters(engineParameters);
+    }
+    return io;
+}
+
+void ExpectFiles(const std::string &fname)
+{
+    for (const char *file : {"data.0", "md.0", "md.idx", "mmd.0"})
+    {
+        ASSERT_TRUE(std::filesystem::exists(std::filesystem::path(fname) / file))
+            << fname << "/" << file;
+    }
+}
+
 // A BP5 writer writes the metadata index header together with the record of
 // its first step. A writer that is killed before it completes its first step
 // leaves all files of the output empty.
-void CreateOutputOfKilledWriter(const std::string &fname)
+void WriteKilledBeforeFirstStep(const std::string &fname)
 {
     std::filesystem::remove_all(fname);
     std::filesystem::create_directory(fname);
@@ -31,54 +58,117 @@ void CreateOutputOfKilledWriter(const std::string &fname)
     {
         std::ofstream(std::filesystem::path(fname) / file);
     }
+    ExpectFiles(fname);
 }
 
-adios2::IO DeclareReadIO(adios2::ADIOS &adios)
+// A writer that is destroyed without Close() before it completes its first
+// step, e.g. while an exception unwinds, only marks the output as no longer
+// written: the metadata index is shorter than its header.
+void WriteDestroyedBeforeFirstStep(const std::string &fname)
 {
-    adios2::IO io = adios.DeclareIO("ReadIO");
-    if (!engineName.empty())
+    std::filesystem::remove_all(fname);
     {
-        io.SetEngine(engineName);
+        adios2::ADIOS adios;
+        adios2::IO io = DeclareIO(adios, "WriteIO");
+        auto var = io.DefineVariable<double>("x", {Nx}, {0}, {Nx});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        std::vector<double> data(Nx, 1.0);
+        writer.Put(var, data.data(), adios2::Mode::Sync);
     }
-    return io;
+    ExpectFiles(fname);
+}
+
+// The metadata index lists a step whose metadata the metadata file does not
+// hold, e.g. if the file system lost the end of md.0 when the writer died.
+void WriteStepWithoutMetadata(const std::string &fname)
+{
+    std::filesystem::remove_all(fname);
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = DeclareIO(adios, "WriteIO");
+        auto var = io.DefineVariable<double>("x", {Nx}, {0}, {Nx});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        std::vector<double> data(Nx, 1.0);
+        writer.Put(var, data.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+    std::filesystem::resize_file(std::filesystem::path(fname) / "md.0", 0);
+    ExpectFiles(fname);
+}
+
+// Reading from an output without metadata must throw, not crash. The variable
+// is defined by the reader itself, since the output holds none.
+void ExpectNoData(adios2::IO &io, adios2::Engine &reader)
+{
+    auto var = io.DefineVariable<double>("notInFile", {Nx}, {0}, {Nx});
+    std::vector<double> data(Nx);
+    EXPECT_THROW(reader.Get(var, data.data(), adios2::Mode::Sync), std::runtime_error);
+    EXPECT_THROW(reader.Get(var, data.data(), adios2::Mode::Deferred), std::runtime_error);
+    EXPECT_THROW(reader.BlocksInfo(var, 0), std::runtime_error);
+    EXPECT_NO_THROW(reader.PerformGets());
+}
+
+void ReadInRandomAccess(const std::string &fname)
+{
+    adios2::ADIOS adios;
+    adios2::IO io = DeclareIO(adios, "ReadIO");
+    adios2::Engine reader;
+    try
+    {
+        reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    }
+    catch (std::ios_base::failure const &e)
+    {
+        // a subclass of std::runtime_error, so catch it first
+        FAIL() << "unexpected I/O error: " << e.what();
+    }
+    catch (std::runtime_error const &)
+    {
+        // the output is final and has no readable step
+        return;
+    }
+    EXPECT_EQ(reader.Steps(), 0u);
+    ExpectNoData(io, reader);
+    EXPECT_NO_THROW(reader.Close());
+}
+
+void ReadInStreamingMode(const std::string &fname)
+{
+    adios2::ADIOS adios;
+    adios2::IO io = DeclareIO(adios, "ReadIO");
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+    ExpectNoData(io, reader);
+    EXPECT_NE(reader.BeginStep(adios2::StepMode::Read, 0.0f), adios2::StepStatus::OK);
+    EXPECT_NO_THROW(reader.Close());
 }
 
 } // namespace
 
-// In random access, the output is final and holds no step: Open() reports that.
-TEST(BPEmptyMetadataIndex, ReadRandomAccessThrows)
+TEST(BPEmptyMetadataIndex, KilledBeforeFirstStep)
 {
-    const std::string fname = "BPEmptyMetadataIndexRandomAccess.bp";
-    CreateOutputOfKilledWriter(fname);
-
-    adios2::ADIOS adios;
-    adios2::IO io = DeclareReadIO(adios);
-    EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::runtime_error);
+    const std::string fname = "BPEmptyMetadataIndexKilled.bp";
+    WriteKilledBeforeFirstStep(fname);
+    ReadInRandomAccess(fname);
+    ReadInStreamingMode(fname);
 }
 
-// In streaming mode, the reader opens the output and finds no step yet.
-// Nothing may dereference the deserializer, which is only created once the
-// metadata index has content.
-TEST(BPEmptyMetadataIndex, ReadWithoutStep)
+TEST(BPEmptyMetadataIndex, DestroyedBeforeFirstStep)
 {
-    const std::string fname = "BPEmptyMetadataIndexRead.bp";
-    CreateOutputOfKilledWriter(fname);
+    const std::string fname = "BPEmptyMetadataIndexDestroyed.bp";
+    WriteDestroyedBeforeFirstStep(fname);
+    ReadInRandomAccess(fname);
+    ReadInStreamingMode(fname);
+}
 
-    adios2::ADIOS adios;
-    adios2::IO io = DeclareReadIO(adios);
-    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
-
-    EXPECT_NO_THROW(reader.PerformGets());
-
-    // a variable that the reader defines itself, since the output holds none
-    auto var = io.DefineVariable<double>("x", {4}, {0}, {4});
-    std::vector<double> data(4);
-    EXPECT_THROW(reader.Get(var, data.data(), adios2::Mode::Sync), std::logic_error);
-    EXPECT_THROW(reader.Get(var, data.data(), adios2::Mode::Deferred), std::logic_error);
-
-    EXPECT_EQ(reader.BeginStep(adios2::StepMode::Read, 0.0f), adios2::StepStatus::NotReady);
-
-    EXPECT_NO_THROW(reader.Close());
+TEST(BPEmptyMetadataIndex, StepWithoutMetadata)
+{
+    const std::string fname = "BPEmptyMetadataIndexNoMetadata.bp";
+    WriteStepWithoutMetadata(fname);
+    ReadInRandomAccess(fname);
+    ReadInStreamingMode(fname);
 }
 
 int main(int argc, char **argv)

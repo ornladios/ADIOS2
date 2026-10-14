@@ -21,32 +21,24 @@ namespace engine
 
 inline void BP5Reader::GetSyncCommon(VariableBase &variable, void *data)
 {
-    ThrowIfNoMetadataForGet(variable);
-    auto sel = InferSelection(variable);
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, sel, m_dataIsRemote);
-    if (need_sync)
-        PerformGets();
+    GetSyncCommon(variable, data, InferSelection(variable));
 }
 
 void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data)
 {
-    ThrowIfNoMetadataForGet(variable);
-    auto sel = InferSelection(variable);
-    (void)m_BP5Deserializer->QueueGet(variable, data, sel, m_dataIsRemote);
+    GetDeferredCommon(variable, data, InferSelection(variable));
 }
 
 inline void BP5Reader::GetSyncCommon(VariableBase &variable, void *data, const Selection &selection)
 {
-    ThrowIfNoMetadataForGet(variable);
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, selection, m_dataIsRemote);
+    bool need_sync = Deserializer("Get").QueueGet(variable, data, selection, m_dataIsRemote);
     if (need_sync)
         PerformGets();
 }
 
 void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data, const Selection &selection)
 {
-    ThrowIfNoMetadataForGet(variable);
-    (void)m_BP5Deserializer->QueueGet(variable, data, selection, m_dataIsRemote);
+    (void)Deserializer("Get").QueueGet(variable, data, selection, m_dataIsRemote);
 }
 
 } // end namespace engine

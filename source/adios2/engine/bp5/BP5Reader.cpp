@@ -625,25 +625,25 @@ double BP5Reader::ReadData(PoolableFile *DataFile, const size_t WriterRank, cons
     return timeRead;
 }
 
-void BP5Reader::ThrowIfNoMetadataForGet(const VariableBase &variable) const
+format::BP5Deserializer &BP5Reader::Deserializer(const std::string &activity) const
 {
     if (!m_BP5Deserializer)
     {
-        helper::Throw<std::logic_error>("Engine", "BP5Reader", "Get",
-                                        "cannot read variable " + variable.m_Name + " from " +
-                                            m_Name +
-                                            ": no metadata was read yet, the file has no "
-                                            "complete step");
+        helper::Throw<std::runtime_error>("Engine", "BP5Reader", activity,
+                                          "no metadata of " + m_Name +
+                                              " was read yet: its writer has not completed a "
+                                              "step yet, or was killed before it did");
     }
+    return *m_BP5Deserializer;
 }
 
 void BP5Reader::PerformGets()
 {
     if (!m_BP5Deserializer)
     {
-        // No metadata was read yet, e.g. the metadata index is still empty
-        // because the writer did not complete a step before it was killed.
-        // Get() cannot have queued anything, so there is nothing to do.
+        // The header of the metadata index was not read yet, e.g. because the
+        // writer did not complete a step before it was killed. Get() cannot
+        // have queued anything, so there is nothing to do.
         return;
     }
 
@@ -741,7 +741,7 @@ void BP5Reader::DoGetContextDeferred(core::GetContext &abstract_ctx, VariableBas
                                      void *data, const Selection &selection)
 {
     auto &ctx = static_cast<format::BP5Deserializer::BP5GetContext &>(abstract_ctx);
-    m_BP5Deserializer->QueueGet(ctx, variable, data, selection);
+    Deserializer("Get").QueueGet(ctx, variable, data, selection);
 }
 
 void BP5Reader::PerformGets(core::GetContext &abstract_ctx)
@@ -752,6 +752,7 @@ void BP5Reader::PerformGets(core::GetContext &abstract_ctx)
                                         "Context-bearing PerformGets is supported only for "
                                         "local (non-remote) BP5 reads");
     }
+    (void)Deserializer("PerformGets(GetContext&)");
     auto &ctx = static_cast<format::BP5Deserializer::BP5GetContext &>(abstract_ctx);
     PerformLocalGets(ctx);
 }
@@ -1536,29 +1537,29 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
 
 MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var, const size_t Step) const
 {
-    return m_BP5Deserializer->MinBlocksInfo(Var, Step);
+    return Deserializer("BlocksInfo").MinBlocksInfo(Var, Step);
 }
 
 MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var, const size_t Step,
                                      const size_t WriterID, const size_t BlockID) const
 {
-    return m_BP5Deserializer->MinBlocksInfo(Var, Step, WriterID, BlockID);
+    return Deserializer("BlocksInfo").MinBlocksInfo(Var, Step, WriterID, BlockID);
 }
 
 bool BP5Reader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const
 {
-    return m_BP5Deserializer->VarShape(Var, Step, Shape);
+    return Deserializer("Shape").VarShape(Var, Step, Shape);
 }
 
 bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMaxStruct &MinMax)
 {
-    return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
+    return Deserializer("MinMax").VariableMinMax(Var, Step, MinMax);
 }
 
 std::string BP5Reader::VariableExprStr(const VariableBase &Var)
 {
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    char *expPtr = m_BP5Deserializer->VariableExprStr(Var);
+    char *expPtr = Deserializer("VariableExprStr").VariableExprStr(Var);
     if (expPtr != nullptr)
     {
         derived::ExprNode node = detail::ParseToExprNode(expPtr);
@@ -1866,8 +1867,10 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         m_MDIndexFileAlreadyReadSize += parsedIdxSize;
 
         // At this point first in time we learned the writer's major and we can
-        // create the serializer object
-        if (!m_BP5Deserializer)
+        // create the serializer object. Not before the index header was parsed,
+        // e.g. while the index is shorter than its header: the deserializer
+        // would get default layout settings and never be rebuilt.
+        if (!m_BP5Deserializer && m_MDIndexFileAlreadyReadSize > 0)
         {
             m_BP5Deserializer = new format::BP5Deserializer(
                 m_WriterIsRowMajor, m_ReaderIsRowMajor, (m_OpenMode != Mode::Read),
@@ -2431,7 +2434,7 @@ StepStatus BP5Reader::CheckForNewSteps(Seconds timeoutSeconds)
 
 void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const
 {
-    m_BP5Deserializer->GetAbsoluteSteps(variable, keys);
+    Deserializer("GetAbsoluteSteps").GetAbsoluteSteps(variable, keys);
     return;
 }
 
