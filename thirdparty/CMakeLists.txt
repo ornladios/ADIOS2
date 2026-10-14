@@ -93,10 +93,6 @@ if(yaml-cpp_VERSION VERSION_GREATER_EQUAL 0.8)
   target_link_directories(adios2::thirdparty::yaml-cpp INTERFACE ${YAML_CPP_LIBRARY_DIR})
 endif()
 
-if(WIN32)
-  add_subdirectory(mingw-w64)
-endif()
-
 #------------------------------------------------------------------------------#
 # SST / EVPath stuff
 #------------------------------------------------------------------------------#
