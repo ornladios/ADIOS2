@@ -2,6 +2,22 @@
 What's new in Development
 ==============================
 
+Native DAOS engine
+------------------
+
+The ``DAOS`` engine now keeps all bulk data in DAOS objects, reading and writing
+through the DAOS array API rather than through POSIX files on a dfuse mount.
+Earlier releases shipped only a prototype that placed metadata in DAOS and wrote
+data as files. Each writer rank writes its own DAOS array, with no cross-rank
+aggregation, and issues asynchronous writes as its buffer fills, so transfers
+overlap the remaining ``Put`` calls of the step. Per-rank, per-step metadata is
+stored in DAOS as well; only the small rank-0 index and format files remain in
+the dataset directory. On reads, a selection that does not match the writer's
+decomposition fetches only the bytes it needs, batched into a few large DAOS
+requests. Select it with ``io.SetEngine("daos")``, and set ``DAOS_POOL`` and
+``DAOS_CONT`` on every rank. See the DAOS engine documentation for build
+requirements, parameters and current limitations.
+
 Campaign HDF5 reads over HTTPS and S3
 -------------------------------------
 
