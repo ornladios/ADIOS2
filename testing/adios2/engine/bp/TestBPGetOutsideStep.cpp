@@ -69,6 +69,52 @@ TEST(BPGetOutsideStep, Read)
     reader.Close();
 }
 
+// a variable the reader defined itself is not in the file
+TEST(BPGetOutsideStep, ReaderDefinedVariable)
+{
+    const std::string fname = "GetReaderDefined.bp";
+    const size_t Nx = 4;
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("Write");
+        io.SetEngine(engineName);
+        auto var = io.DefineVariable<double>("x", {Nx}, {0}, {Nx});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        std::vector<double> data(Nx, 1.0);
+        writer.BeginStep();
+        writer.Put(var, data.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+    std::vector<double> data(Nx);
+    for (const auto mode : {adios2::Mode::Read, adios2::Mode::ReadRandomAccess})
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("Read");
+        io.SetEngine(engineName);
+        adios2::Engine reader = io.Open(fname, mode);
+        if (mode == adios2::Mode::Read)
+        {
+            ASSERT_EQ(reader.BeginStep(), adios2::StepStatus::OK);
+        }
+        auto mine = io.DefineVariable<double>("notInFile", {Nx}, {0}, {Nx});
+        try
+        {
+            reader.Get(mine, data.data(), adios2::Mode::Sync);
+            ADD_FAILURE() << "Get() of a variable not in the file did not throw";
+        }
+        catch (const std::runtime_error &e)
+        {
+            EXPECT_NE(std::string(e.what()).find("notInFile"), std::string::npos) << e.what();
+        }
+        if (mode == adios2::Mode::Read)
+        {
+            reader.EndStep();
+        }
+        reader.Close();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

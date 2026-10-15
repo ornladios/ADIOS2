@@ -287,9 +287,10 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
         return rd->second->ReaderDerivedStructInput;
     }
 #endif
-    helper::Throw<std::runtime_error>(
-        "Toolkit", "format::BP5Deserializer", "LookupVarByKey",
-        "Attempt to lookup variable unknown to BP5 reader engine.  Possible logic error?");
+    // every key is the address of a VariableBase
+    helper::Throw<std::runtime_error>("Toolkit", "format::BP5Deserializer", "LookupVarByKey",
+                                      "variable " + static_cast<core::VariableBase *>(Key)->m_Name +
+                                          " is not in the metadata read by the BP5 reader engine");
     return nullptr;
 }
 
