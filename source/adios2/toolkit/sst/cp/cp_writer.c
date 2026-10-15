@@ -1026,6 +1026,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
                 goto retry;
             }
         }
+        break;
     }
     }
 }
