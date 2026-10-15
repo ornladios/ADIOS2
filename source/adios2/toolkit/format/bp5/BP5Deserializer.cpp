@@ -2098,6 +2098,50 @@ bool BP5Deserializer::ContiguousDestination(const BP5ArrayRequest *Req, const ui
     return true;
 }
 
+/*
+ * Fills RR.SubRangeDest with each run's address in the selection's buffer.  A
+ * run spans the fastest dimension of the intersection, which the selection
+ * holds contiguously as well, so a run maps to one contiguous destination.
+ * Leaves it empty under the same exclusions as ContiguousDestination.
+ */
+void BP5Deserializer::SubRangeDestinations(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                                           const uint64_t *blkCount, size_t elemSize,
+                                           size_t startOffsetInBlock, ReadRequest &RR)
+{
+    RR.SubRangeDest.clear();
+    const size_t n = ((struct BP5VarRec *)Req->VarRec)->DimCount;
+    if (RR.SubRanges.empty() || !blkOffsets || n == 0 || n > helper::MAX_DIMS ||
+        Req->Start.size() != n || Req->Count.size() != n || !Req->MemoryStart.empty() ||
+        !Req->MemoryCount.empty() || !Req->Data)
+    {
+        return;
+    }
+    std::array<uint64_t, helper::MAX_DIMS> selCount;
+    for (size_t d = 0; d < n; ++d)
+    {
+        selCount[d] = Req->Count[d];
+    }
+    std::array<size_t, helper::MAX_DIMS> pos;
+    RR.SubRangeDest.reserve(RR.SubRanges.size());
+    for (const auto &run : RR.SubRanges)
+    {
+        // block coordinates of the run's first element, fastest dimension first
+        size_t lin = (startOffsetInBlock + run.first) / elemSize;
+        for (size_t k = 0; k < n; ++k)
+        {
+            const size_t d = m_ReaderIsRowMajor ? n - 1 - k : k;
+            pos[d] = lin % blkCount[d];
+            lin /= blkCount[d];
+        }
+        for (size_t d = 0; d < n; ++d)
+        {
+            pos[d] = blkOffsets[d] + pos[d] - Req->Start[d];
+        }
+        const size_t dest = LinearIndex(n, selCount.data(), pos.data(), m_ReaderIsRowMajor);
+        RR.SubRangeDest.push_back((char *)Req->Data + elemSize * dest);
+    }
+}
+
 std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTempBuffers,
                                       size_t *maxReadSize)
@@ -2633,6 +2677,13 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                     }
                                     else
                                     {
+                                        if (Req->MemSpace == MemorySpace::Host &&
+                                            m_SourceIsLittleEndian == m_ReaderIsLittleEndian)
+                                        {
+                                            SubRangeDestinations(Req, blkOffsets, blkCount,
+                                                                 VB->m_ElementSize,
+                                                                 StartOffsetInBlock, RR);
+                                        }
                                         RR.DestinationAddr = nullptr;
                                         if (doAllocTempBuffers)
                                         {

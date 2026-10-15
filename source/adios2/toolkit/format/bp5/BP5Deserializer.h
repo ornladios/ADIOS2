@@ -67,6 +67,13 @@ public:
          * scatter/gather a single request benefit from honoring it.
          */
         std::vector<std::pair<size_t, size_t>> SubRanges;
+        /*
+         * When non-empty, parallel to SubRanges: where run i belongs in
+         * application memory, each run being contiguous there too.  An engine
+         * that places every run there needs no DestinationAddr and must set
+         * DirectToAppMemory so FinalizeGet skips the extraction.
+         */
+        std::vector<char *> SubRangeDest;
     };
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
@@ -340,6 +347,9 @@ private:
     bool ContiguousDestination(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
                                const uint64_t *blkCount, const size_t *interStartInBlock,
                                const size_t *interCount, size_t elemSize, size_t *destOffset);
+    void SubRangeDestinations(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                              const uint64_t *blkCount, size_t elemSize, size_t startOffsetInBlock,
+                              ReadRequest &RR);
     char *FillBlock(std::map<BP5VarRec *, MinVarInfo *> &map);
 
     size_t CurTimestep = 0;
