@@ -751,11 +751,14 @@ struct ReadOp
     std::vector<daos_range_t> rgs; // strided batch
     daos_array_iod_t iod;
     d_iov_t iov;
+    std::vector<d_iov_t> iovs; // zero-copy strided batch: one per run
     d_sg_list_t sgl;
     size_t req = 0;
     size_t tokens = 0;
-    // Strided: runs [firstRun, endRun) arrive packed in stage, in range order.
+    // Strided: runs [firstRun, endRun) arrive packed in stage, in range order,
+    // or straight into application memory when zeroCopy.
     size_t firstRun = 0, endRun = 0;
+    bool zeroCopy = false;
     std::unique_ptr<char[]> stage;
     size_t stageCap = 0;
 };
@@ -825,6 +828,13 @@ void DaosReader::PerformGets()
         const char *e = std::getenv("DAOS_READ_SCRATCH_SLOTS");
         const size_t v = e ? static_cast<size_t>(std::strtoull(e, nullptr, 10)) : 0;
         return v ? v : 4;
+    }();
+    // Strided runs with a known application address go there as their own iovs
+    // (no copy, one bulk segment per run) by default; DAOS_SUBRANGE_ZEROCOPY=0
+    // routes them through the stage instead (one memcpy each, one segment).
+    static const bool subrangeZeroCopy = []() {
+        const char *e = std::getenv("DAOS_SUBRANGE_ZEROCOPY");
+        return !e || std::atoi(e) != 0;
     }();
 
     if (m_ReadEQ.cookie == 0)
@@ -919,11 +929,13 @@ void DaosReader::PerformGets()
                 {
                     // Scatter the packed runs to where a whole-span read would
                     // have put them, which is what the extraction addresses.
+                    const bool toApp = !Req.SubRangeDest.empty();
                     size_t packed = 0;
                     for (size_t j = t.op->firstRun; j < t.op->endRun; ++j)
                     {
-                        std::memcpy(Req.DestinationAddr + Req.SubRanges[j].first,
-                                    t.op->stage.get() + packed, Req.SubRanges[j].second);
+                        char *dst = toApp ? Req.SubRangeDest[j]
+                                          : Req.DestinationAddr + Req.SubRanges[j].first;
+                        std::memcpy(dst, t.op->stage.get() + packed, Req.SubRanges[j].second);
                         packed += Req.SubRanges[j].second;
                     }
                 }
@@ -1002,7 +1014,12 @@ void DaosReader::PerformGets()
                   " WriterRank=" + std::to_string(Req.WriterRank);
             return false;
         }
-        if (!Req.DestinationAddr)
+        if (!Req.SubRangeDest.empty())
+        {
+            // Every run lands in application memory; nothing left to extract.
+            Req.DirectToAppMemory = true;
+        }
+        else if (!Req.DestinationAddr)
         {
             std::lock_guard<std::mutex> g(mtx);
             if (freeScratch.empty())
@@ -1053,6 +1070,9 @@ void DaosReader::PerformGets()
             op.iov.iov_buf = Req.DestinationAddr + s.next;
             op.iov.iov_buf_len = len;
             op.iov.iov_len = len;
+            op.zeroCopy = false;
+            op.sgl.sg_nr = 1;
+            op.sgl.sg_iovs = &op.iov;
             op.tokens = ChunksSpanned(op.rg.rg_idx, len, s.arrayChunk);
             return op.tokens;
         }
@@ -1087,6 +1107,21 @@ void DaosReader::PerformGets()
                   std::to_string(runs.size());
             return 0;
         }
+        op.iod.arr_nr = static_cast<daos_size_t>(op.rgs.size());
+        op.iod.arr_rgs = op.rgs.data();
+        op.tokens = lastChunk - firstChunk + 1;
+        op.zeroCopy = subrangeZeroCopy && !Req.SubRangeDest.empty();
+        if (op.zeroCopy)
+        {
+            op.iovs.resize(i - first);
+            for (size_t j = first; j < i; ++j)
+            {
+                d_iov_set(&op.iovs[j - first], Req.SubRangeDest[j], runs[j].second);
+            }
+            op.sgl.sg_nr = static_cast<uint32_t>(op.iovs.size());
+            op.sgl.sg_iovs = op.iovs.data();
+            return op.tokens;
+        }
         if (op.stageCap < bytes)
         {
             op.stage.reset();
@@ -1094,12 +1129,11 @@ void DaosReader::PerformGets()
             op.stage.reset(new char[bytes]);
             op.stageCap = bytes;
         }
-        op.iod.arr_nr = static_cast<daos_size_t>(op.rgs.size());
-        op.iod.arr_rgs = op.rgs.data();
         op.iov.iov_buf = op.stage.get();
         op.iov.iov_buf_len = bytes;
         op.iov.iov_len = bytes;
-        op.tokens = lastChunk - firstChunk + 1;
+        op.sgl.sg_nr = 1;
+        op.sgl.sg_iovs = &op.iov;
         return op.tokens;
     };
 
@@ -1156,9 +1190,7 @@ void DaosReader::PerformGets()
                 idleOps.push_back(std::move(op));
                 break;
             }
-            op->sgl.sg_nr = 1;
             op->sgl.sg_nr_out = 0;
-            op->sgl.sg_iovs = &op->iov;
             int rc = daos_event_init(&op->ev, m_ReadEQ, nullptr);
             if (!rc)
             {
@@ -1239,7 +1271,7 @@ void DaosReader::PerformGets()
             }
             daos_event_fini(&op->ev);
             tokensFree += static_cast<std::ptrdiff_t>(op->tokens);
-            if (!ReadRequests[r].SubRanges.empty())
+            if (!ReadRequests[r].SubRanges.empty() && !op->zeroCopy)
             {
                 std::lock_guard<std::mutex> g(mtx);
                 tasks.push_back(Task{op.release(), r});
