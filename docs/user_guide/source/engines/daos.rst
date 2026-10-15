@@ -126,9 +126,10 @@ This engine accepts the following optional parameters via
 1. **BufferChunkSize**: Size in bytes of each internal data chunk.
    Async ``daos_array_write`` is triggered whenever the bytes
    accumulated since the last submit cross this threshold; larger
-   values produce fewer, larger DAOS writes.  This value is also
-   used as the internal ``chunk_size`` of the DAOS array on
-   creation.  Default is 128 MiB.  When per-step data per rank is
+   values produce fewer, larger DAOS writes.  Default is 128 MiB.
+   It does not set the DAOS array's own ``chunk_size``, which is
+   1 MiB so that each rank's data spreads across many DAOS
+   targets.  When per-step data per rank is
    small, setting this value to roughly one quarter of that size
    keeps multiple submits in flight per step.
 
@@ -142,9 +143,17 @@ This engine accepts the following optional parameters via
 3. **StatsLevel**: 0 disables the per-Put GetMinMax computation,
    which removes that work from the data path.  Default is 1.
 
-4. **UseOneTimeAttributes**: If true, attributes are marshalled once
-   at the first ``BeginStep`` instead of re-marshalled every step.
-   Lowers per-step metadata cost when attributes are static.
+4. **UseOneTimeAttributes**: If true (the default), attributes are
+   marshalled once at the first ``BeginStep`` instead of re-marshalled
+   every step.  Lowers per-step metadata cost when attributes are
+   static.
+
+The reader needs no performance tuning, and the ``Threads``
+parameter does not affect DAOS reads.  Each step's reads are issued
+from one thread, with a bounded number in flight per rank sized from
+the number of ranks sharing the node; copying into application memory
+runs on separate worker threads.  (Issuing DAOS reads from many
+threads at once can exhaust the network's memory registrations.)
 
 The metadata-layout choice is exposed through the environment
 variable ``DAOS_METADATA_LAYOUT`` rather than an IO parameter.  Its
@@ -167,10 +176,11 @@ Performance notes
 Limitations
 ===========
 
-* **Span Puts are not supported.**  ``Put(var, span, init, value)``
-  cannot meet ADIOS semantics in this engine: async submits during
-  subsequent ``Put`` calls may flush the span's bytes to DAOS
-  before the user has filled it.
+* **Fill a Span before the next Put.**  ``Put(var, span, init, value)``
+  is accepted, but the async submits issued by later ``Put`` calls
+  may send the span's bytes to DAOS before they are filled.  A span
+  filled later in the step, for example just before ``EndStep``,
+  can be written unfilled.
 * Append mode is not supported (``Mode::Append`` is rejected at
   open).
 * Both ``Mode::Read`` (step-by-step) and ``Mode::ReadRandomAccess``
