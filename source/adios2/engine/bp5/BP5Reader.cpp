@@ -1503,9 +1503,39 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
         }
     }
 
-    /* At this point we may have an empty index table.
-     * The writer has created the file but no content may have been stored yet.
-     */
+    /* The writer stores the index header together with its first step. A
+     * reader that follows the writer (IgnoreActiveFlag=false) opens without it
+     * and waits for steps in BeginStep(), possibly in the writer's own process.
+     * Any other reader waits for the header within the open timeout: without
+     * it there is nothing to read (e.g. the writer was killed before it
+     * completed a step). */
+    if ((m_OpenMode != Mode::ReadRandomAccess) && !m_Parameters.IgnoreActiveFlag)
+    {
+        return;
+    }
+    size_t haveHeader = 0;
+    if (m_Comm.Rank() == 0)
+    {
+        const Seconds headerPoll = std::max(pollSeconds, Seconds(0.1));
+        do
+        {
+            if (m_MDIndexFile->GetSize() >= m_IndexHeaderSize)
+            {
+                haveHeader = 1;
+                break;
+            }
+        } while (SleepOrQuit(timeoutInstant, headerPoll));
+    }
+    haveHeader = m_Comm.BroadcastValue(haveHeader, 0);
+    if (!haveHeader)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Reader", "OpenFiles",
+            "metadata index file of " + m_Name + " has no header after the " +
+                std::to_string(timeoutSeconds.count()) +
+                "s timeout: its writer has not completed a step, or was interrupted before it "
+                "did, so it contains no readable data");
+    }
 }
 
 MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var, const size_t Step) const
@@ -1798,17 +1828,6 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         mdActualSize = m_MDFile->GetSize();
     }
     mdActualSize = m_Comm.BroadcastValue(mdActualSize, 0);
-
-    if (newIdxSize == 0 && m_OpenMode == Mode::ReadRandomAccess && !m_MDIndexFileAlreadyReadSize)
-    {
-        // The index file exists but is empty: a writer was interrupted before
-        // it produced anything. In random access the file is final, so this
-        // cannot resolve by waiting.
-        helper::Throw<std::runtime_error>("Engine", "BP5Reader", "UpdateBuffer",
-                                          "metadata index file of " + m_Name +
-                                              " is empty; the file was likely truncated by an "
-                                              "interrupted writer and contains no readable data");
-    }
 
     size_t parsedIdxSize = 0;
     const auto stepsBefore = m_StepsCount;

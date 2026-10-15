@@ -102,11 +102,11 @@ TEST_F(BPActiveFlag, DefaultReadsKilledFile)
     EXPECT_EQ(values, std::vector<double>({0.0, 1.0, 2.0}));
 }
 
-// a writer killed before it completed its first step leaves empty files and
-// an index without a header, so there is no active flag to read
-TEST_F(BPActiveFlag, KilledBeforeFirstStep)
+// A writer killed before it completed its first step leaves an index without
+// a header: empty, or 40 bytes if it was destroyed without Close() and only
+// cleared its active flag.  There is nothing to read and no flag to wait on.
+static void WriteNoHeader(const std::string &fname, const size_t idxSize)
 {
-    const std::string fname = "ActiveFlagNoHeader.bp";
     std::filesystem::remove_all(fname);
     std::filesystem::create_directory(fname);
     std::vector<std::string> files = {"data.0", "md.0", "md.idx"};
@@ -118,13 +118,51 @@ TEST_F(BPActiveFlag, KilledBeforeFirstStep)
     {
         std::ofstream(std::filesystem::path(fname) / file);
     }
+    std::filesystem::resize_file(std::filesystem::path(fname) / "md.idx", idxSize);
+}
 
+TEST_F(BPActiveFlag, KilledBeforeFirstStep)
+{
+    for (const size_t idxSize : {0, 40})
+    {
+        const std::string fname = "ActiveFlagNoHeader" + std::to_string(idxSize) + ".bp";
+        WriteNoHeader(fname, idxSize);
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("Read");
+        io.SetEngine(engineName);
+        if (engineName == "BP4")
+        {
+            // default timeout waits forever when the flag is honored; here it must not
+            adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+            EXPECT_EQ(reader.BeginStep(), adios2::StepStatus::EndOfStream);
+            reader.Close();
+        }
+        else
+        {
+            // BP5 waits for the index header within OpenTimeoutSecs (plus a
+            // few seconds of grace for the file system), then gives up
+            const auto mode = idxSize ? adios2::Mode::ReadRandomAccess : adios2::Mode::Read;
+            EXPECT_THROW(io.Open(fname, mode), std::runtime_error);
+        }
+    }
+}
+
+// a reader that follows the writer opens before the writer's first step, so
+// it must not need the index header to open
+TEST_F(BPActiveFlag, FollowBeforeFirstStep)
+{
+    if (engineName == "BP4")
+    {
+        GTEST_SKIP() << "BP4 needs the index header to open";
+    }
+    const std::string fname = "ActiveFlagFollowNoHeader.bp";
+    WriteNoHeader(fname, 0);
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("Read");
     io.SetEngine(engineName);
+    io.SetParameter("IgnoreActiveFlag", "false");
     adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
-    // default timeout waits forever when the flag is honored; here it must not
-    EXPECT_EQ(reader.BeginStep(), adios2::StepStatus::EndOfStream);
+    EXPECT_EQ(reader.BeginStep(adios2::StepMode::Read, 0.0f), adios2::StepStatus::NotReady);
     reader.Close();
 }
 
