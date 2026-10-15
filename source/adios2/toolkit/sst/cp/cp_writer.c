@@ -995,6 +995,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
         SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream,
                                         (int)Stream->NextRRDistribution);
         Stream->NextRRDistribution++;
+        break;
     }
     case StepsOnDemand: {
         if (Stream->ReaderCount == 0)
@@ -1025,6 +1026,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
                 goto retry;
             }
         }
+        break;
     }
     }
 }
