@@ -505,6 +505,18 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t BP5Reader::CurrentStep() const { return m_CurrentStep; }
 
+void BP5Reader::CheckGetInStep(const VariableBase &variable) const
+{
+    if (m_OpenMode == Mode::Read && !m_BetweenStepPairs)
+    {
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "Get",
+                                        "Get() of variable " + variable.m_Name +
+                                            " outside a BeginStep()/EndStep() pair. In Mode::Read "
+                                            "data is read step by step; to read without steps, "
+                                            "open the file in Mode::ReadRandomAccess");
+    }
+}
+
 void BP5Reader::EndStep()
 {
     if (m_OpenMode != Mode::Read)
