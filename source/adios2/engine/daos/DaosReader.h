@@ -323,6 +323,8 @@ private:
     /// Read-path timing totals, reported at Close under DAOS_THREAD_DEBUG.
     double m_ReadPollWait = 0.0, m_ReadCopyBusy = 0.0, m_ReadGetsTime = 0.0;
     size_t m_ReadGetsCalls = 0;
+    /// High-water mark of sgl segments in flight, reported with the totals.
+    size_t m_ReadPeakSegs = 0;
 
     struct WriterMapStruct
     {

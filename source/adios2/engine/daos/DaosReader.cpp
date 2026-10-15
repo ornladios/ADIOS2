@@ -874,6 +874,8 @@ void DaosReader::PerformGets()
     std::vector<std::unique_ptr<ReadOp>> idleOps;
     std::vector<std::unique_ptr<ReadOp>> returnedOps; // guarded by mtx
     std::unordered_map<daos_event_t *, std::unique_ptr<ReadOp>> busy;
+    // Peak sgl segments in flight, a gauge of load on the bulk path.
+    size_t segsInFlight = 0;
     // Signed: a read costlier than the whole budget is admitted alone and
     // drives this negative until it completes.
     std::ptrdiff_t tokensFree = static_cast<std::ptrdiff_t>(m_ReadTokens);
@@ -1209,6 +1211,8 @@ void DaosReader::PerformGets()
             }
             tokensFree -= static_cast<std::ptrdiff_t>(tokens);
             ++s.outstanding;
+            segsInFlight += op->sgl.sg_nr;
+            m_ReadPeakSegs = std::max(m_ReadPeakSegs, segsInFlight);
             if (ReadRequests[cur].SubRanges.empty())
             {
                 s.next += op->rg.rg_len;
@@ -1271,6 +1275,7 @@ void DaosReader::PerformGets()
             }
             daos_event_fini(&op->ev);
             tokensFree += static_cast<std::ptrdiff_t>(op->tokens);
+            segsInFlight -= op->sgl.sg_nr;
             if (!ReadRequests[r].SubRanges.empty() && !op->zeroCopy)
             {
                 std::lock_guard<std::mutex> g(mtx);
@@ -2427,8 +2432,9 @@ void DaosReader::DoClose(const int transportIndex)
     {
         fprintf(stderr,
                 "[DAOS_READ_DEBUG] rank0 totals: PerformGets=%.3f s pollWait=%.3f s "
-                "copyBusy=%.3f s (over %zu workers) steps=%zu\n",
-                m_ReadGetsTime, m_ReadPollWait, m_ReadCopyBusy, m_ReadCopyThreads, m_ReadGetsCalls);
+                "copyBusy=%.3f s (over %zu workers) steps=%zu peakSegs=%zu\n",
+                m_ReadGetsTime, m_ReadPollWait, m_ReadCopyBusy, m_ReadCopyThreads, m_ReadGetsCalls,
+                m_ReadPeakSegs);
     }
     m_ReadScratch.clear();
     m_ReadScratchCap = 0;
