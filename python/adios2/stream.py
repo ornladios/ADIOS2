@@ -587,12 +587,13 @@ class Stream:  # noqa: PLR0902
         if dtype(10).dtype != buf_type:
             raise RuntimeError(f"Read buffer type {buf_type} does not match variable type {dtype}")
 
-        count = np.prod(variable.count())
+        # selection_size() covers all selected steps; variable.count() is one step.
+        count = variable.selection_size()
         buf_size = buffer.size
         if ADIOS2_HAS_TORCH and isinstance(buffer, torch.Tensor):
             buf_size = buffer.numel()
         if count != buf_size:
-            raise RuntimeError("Read buffer size {buf_size} does not match variable size {count}")
+            raise RuntimeError(f"Read buffer size {buf_size} does not match variable size {count}")
 
         mode = bindings.Mode.Sync
         if defer_read:

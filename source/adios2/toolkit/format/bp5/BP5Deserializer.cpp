@@ -1541,10 +1541,60 @@ bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable, B
     return true;
 }
 
+Dims BP5Deserializer::StepShape(BP5VarRec *VarRec, size_t AbsStep) const
+{
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
+    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    {
+        const MetaArrayRec *meta =
+            (const MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        if (meta && meta->Shape)
+        {
+            return Dims(meta->Shape, meta->Shape + meta->Dims);
+        }
+    }
+    return Dims();
+}
+
+size_t BP5Deserializer::BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const
+{
+    size_t NodeFirstBlock = 0;
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
+    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    {
+        const MetaArrayRec *meta =
+            (const MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        if (!meta || !meta->BlockCount)
+        {
+            continue; // not written on this step by this rank
+        }
+        const size_t NodeLastBlock = NodeFirstBlock + meta->BlockCount - 1;
+        if ((NodeFirstBlock <= BlockID) && (NodeLastBlock >= BlockID))
+        {
+            const size_t NeededBlock = BlockID - NodeFirstBlock;
+            const size_t StartDim = NeededBlock * VarRec->DimCount;
+            size_t total = 1;
+            for (size_t d = 0; d < VarRec->DimCount; d++)
+            {
+                total *= (size_t)meta->Count[StartDim + d];
+            }
+            return total;
+        }
+        NodeFirstBlock += meta->BlockCount;
+    }
+    return 0;
+}
+
 bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable,
                                      void *DestData, size_t AbsStep, size_t RelStep,
-                                     const core::Selection &selection)
+                                     const core::Selection &selection, size_t *DestElements)
 {
+    // Elements this step contributes; QueueGet advances by it, so every path
+    // that writes or queues must set it.  Must agree with SelectionSize().
+    if (DestElements)
+    {
+        *DestElements = 0;
+    }
     // Use find, not operator[]: a reader-derived placeholder is not in VarByKey,
     // and inserting a NULL entry would crash the teardown loop that dereferences
     // it. Fall back to the reader-derived routing map on a miss.
@@ -1573,6 +1623,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
 
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
+        if (DestElements)
+        {
+            *DestElements = 1;
+        }
         const size_t writerCohortSize = WriterCohortSize(AbsStep);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
@@ -1589,6 +1643,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             const Dims &start = selection.GetStart();
             const Dims &count = selection.GetCount();
+            if (DestElements)
+            {
+                *DestElements = count[0];
+            }
             for (size_t WriterRank = start[0]; WriterRank < count[0] + start[0]; WriterRank++)
             {
                 (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
@@ -1598,6 +1656,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         }
         else if (hasBlock)
         {
+            if (DestElements)
+            {
+                *DestElements = 1;
+            }
             size_t WriterRank = blockID;
             (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
                                              hasBlock, blockID);
@@ -1606,6 +1668,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             // Read all writer ranks
             const size_t writerCohortSize = WriterCohortSize(AbsStep);
+            if (DestElements)
+            {
+                *DestElements = writerCohortSize;
+            }
             for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
             {
                 (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
@@ -1630,10 +1696,17 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         }
         else
         {
-            // GlobalArray or JoinedArray — read the whole thing
+            // GlobalArray or JoinedArray — read the whole thing.  Use the shape
+            // at this step; m_Shape is the inquired shape and is wrong once the
+            // global dimensions change between steps.
             effectiveSelType = adios2::SelectionType::BoundingBox;
-            effectiveStart = Dims(variable.m_Shape.size(), 0);
-            effectiveCount = variable.m_Shape;
+            Dims stepShape = StepShape(VarRec, AbsStep);
+            if (stepShape.empty())
+            {
+                stepShape = variable.m_Shape;
+            }
+            effectiveStart = Dims(stepShape.size(), 0);
+            effectiveCount = stepShape;
         }
     }
     else
@@ -1662,6 +1735,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         Req.MemoryCount = memoryCount;
         Req.AccuracyRequested = accuracy;
         Req.Step = AbsStep;
+        if (DestElements)
+        {
+            *DestElements = helper::GetTotalSize(effectiveCount);
+        }
         Req.RelStep = RelStep;
         Req.StepCount = 1;
         Req.MemSpace = MemSpace;
@@ -1680,6 +1757,14 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             Req.Start = effectiveStart;
             Req.Count = effectiveCount;
+            if (DestElements)
+            {
+                *DestElements = helper::GetTotalSize(effectiveCount);
+            }
+        }
+        else if (DestElements)
+        {
+            *DestElements = BlockElementCount(VarRec, AbsStep, Req.BlockID);
         }
         Req.MemoryStart = memoryStart;
         Req.MemoryCount = memoryCount;
@@ -1844,10 +1929,14 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
                 {
                     if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                     {
-                        // This writer wrote on this timestep
-                        ret = QueueGetSingle(ctx, variable, DestData, AbsStep, RelStep, selection);
-                        size_t increment = variable.TotalSize() * variable.m_ElementSize;
-                        DestData = (void *)((char *)DestData + increment);
+                        // This writer wrote on this timestep.  Advance by the
+                        // selection's per-step size, not variable.TotalSize(),
+                        // which strides past a SelectionSize() allocation.
+                        size_t DestElements = 0;
+                        ret = QueueGetSingle(ctx, variable, DestData, AbsStep, RelStep, selection,
+                                             &DestElements);
+                        DestData =
+                            (void *)((char *)DestData + DestElements * variable.m_ElementSize);
                         break;
                     }
                 }

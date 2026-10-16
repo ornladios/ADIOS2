@@ -178,7 +178,14 @@ size_t Variable<T>::SelectionSize(const Selection &selection) const
 {
     const size_t stepCount = selection.GetStepCount();
     const size_t stepStart = selection.GetStepStart();
-    const SelectionType selType = selection.GetSelectionType();
+    SelectionType selType = selection.GetSelectionType();
+
+    // Block(n) leaves the spatial type at All, so promote it or the All branch
+    // sizes the whole array instead of the block.
+    if ((selType == SelectionType::All) && selection.HasBlockSelection())
+    {
+        selType = SelectionType::WriteBlock;
+    }
 
     if (selType == SelectionType::BoundingBox)
     {

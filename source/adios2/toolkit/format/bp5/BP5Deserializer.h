@@ -314,7 +314,12 @@ private:
     bool GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank, bool hasBlock, size_t blockID);
     bool QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
-                        size_t AbsStep, size_t RelStep, const core::Selection &selection);
+                        size_t AbsStep, size_t RelStep, const core::Selection &selection,
+                        size_t *DestElements = nullptr);
+    // Global shape at AbsStep, empty if none.
+    Dims StepShape(BP5VarRec *VarRec, size_t AbsStep) const;
+    // Elements in global block BlockID at AbsStep, 0 if no such block.
+    size_t BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const;
     bool QueueGetSingleRemote(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,
                               size_t RelStep, size_t StepCount, const core::Selection &selection);
     void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
