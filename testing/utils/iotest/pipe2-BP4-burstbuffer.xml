@@ -28,6 +28,7 @@
     <io name="io_T2_in">
         <engine type="BP4">
             <parameter key="OpenTimeoutSecs" value="10.0"/>
+            <parameter key="IgnoreActiveFlag" value="false"/>
         </engine>
     </io>
 

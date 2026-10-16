@@ -248,6 +248,8 @@ endif()
 set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${BP5File_ONLY_TESTS})
 # Delayed reader not worth testing on file engines
 list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
+# TimeoutReader streams through the file; covered by the BP5_stream variant
+list (FILTER BP5_TESTS EXCLUDE REGEX "TimeoutReader")
 # Discard not a feature of BP5
 list (FILTER BP5_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1")
 # PreciousTimestep not a feature of BP5
@@ -267,7 +269,7 @@ endforeach()
 #
 if(NOT MSVC)    # not on windows
     LIST (APPEND BP5_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP5_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP5_STREAM_TESTS}")
+    MutateTestSet( BP5_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1,IgnoreActiveFlag=false" "${BP5_STREAM_TESTS}")
     # Discard not a feature of BP5
     list (FILTER BP5_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1.*BPS$")
     # PreciousTimestep not a feature of BP5
@@ -295,7 +297,7 @@ endif()
 if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
     LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP4_STREAM_TESTS}")
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1,IgnoreActiveFlag=false" "${BP4_STREAM_TESTS}")
     # no BP4 streaming doesn't do Joined?
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "Joined*")
     # SharedVars fail with BP4_streaming*

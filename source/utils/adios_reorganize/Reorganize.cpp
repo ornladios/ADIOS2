@@ -7,6 +7,7 @@
 #include "Reorganize.h"
 
 #include <assert.h>
+#include <chrono>
 #include <iomanip>
 #include <string>
 
@@ -46,6 +47,13 @@ Reorganize::Reorganize(int argc, char *argv[]) : Utils("adios_reorganize", argc,
 #endif
     m_Rank = m_Comm.Rank();
     m_Size = m_Comm.Size();
+
+    if (argc > 1 && std::string(argv[1]) == "--ignore-active-flag")
+    {
+        ignoreActiveFlag = true;
+        argc--;
+        argv++;
+    }
 
     if (argc < 7)
     {
@@ -132,6 +140,8 @@ void Reorganize::Run()
 
     int steps = 0;
     int curr_step = -1;
+    auto lastStepTime = std::chrono::steady_clock::now();
+    double nextWarningSecs = 60.0;
     while (true)
     {
         adios2::StepStatus status = rStream.BeginStep(adios2::StepMode::Read, 10.0);
@@ -139,9 +149,28 @@ void Reorganize::Run()
         {
             if (handleAsStream)
             {
+                const double waitedSecs =
+                    std::chrono::duration<double>(std::chrono::steady_clock::now() - lastStepTime)
+                        .count();
                 if (!m_Rank)
                 {
                     std::cout << " No new steps arrived in a while " << std::endl;
+                    // BP4/BP5 are only NotReady while the input is marked as being written
+                    if ((rStream.m_EngineType == "BP4Reader" ||
+                         rStream.m_EngineType == "BP5Reader") &&
+                        waitedSecs >= nextWarningSecs)
+                    {
+                        std::cout << " WARNING: no new step for " << (int)waitedSecs
+                                  << " seconds, but the input is still marked as being "
+                                     "written. If its writer is no longer running, rerun "
+                                     "with --ignore-active-flag, or mark the input complete "
+                                     "with adios2_deactivate_bp."
+                                  << std::endl;
+                    }
+                }
+                if (waitedSecs >= nextWarningSecs)
+                {
+                    nextWarningSecs *= 2;
                 }
                 continue;
             }
@@ -152,8 +181,9 @@ void Reorganize::Run()
                     std::cout << " Timeout waiting for next step. If this is "
                                  "a live stream through file, use a different "
                                  "reading engine, like FileStream or BP4. "
-                                 "If it is an unclosed BP file, you may manually "
-                                 "close it with using adios_deactive_bp.sh."
+                                 "If it is an unclosed BP file, rerun with "
+                                 "--ignore-active-flag, or mark it complete with "
+                                 "adios2_deactivate_bp."
                               << std::endl;
                 }
                 break;
@@ -165,6 +195,8 @@ void Reorganize::Run()
         }
 
         steps++; // start counting from 1
+        lastStepTime = std::chrono::steady_clock::now();
+        nextWarningSecs = 60.0;
 
         if (rStream.CurrentStep() != static_cast<size_t>(curr_step + 1))
         {
@@ -241,6 +273,18 @@ void Reorganize::ParseArguments()
 {
     rmethodparams = parseParams(rmethodparam_str);
     wmethodparams = parseParams(wmethodparam_str);
+
+    // reorganize may follow an input that is still being written, so wait for
+    // more steps while it is marked active, unless told otherwise
+    bool userSetActiveFlag = false;
+    for (const auto &param : rmethodparams)
+    {
+        userSetActiveFlag |= helper::LowerCase(param.first) == "ignoreactiveflag";
+    }
+    if (!userSetActiveFlag)
+    {
+        rmethodparams["IgnoreActiveFlag"] = ignoreActiveFlag ? "true" : "false";
+    }
 }
 
 void Reorganize::ProcessParameters()
@@ -264,9 +308,12 @@ void Reorganize::ProcessParameters()
 
 void Reorganize::PrintUsage() const noexcept
 {
-    std::cout << "Usage: adios_reorganize input output rmethod \"params\" wmethod "
-                 "\"params\" "
+    std::cout << "Usage: adios_reorganize [--ignore-active-flag] input output rmethod "
+                 "\"params\" wmethod \"params\" "
                  "<decomposition>\n"
+                 "    --ignore-active-flag  Read a BP4/BP5 input to its last step even if it\n"
+                 "            is still marked as being written (e.g. its writer was killed).\n"
+                 "            By default reorganize waits for more steps.\n"
                  "    input   Input stream path\n"
                  "    output  Output file path\n"
                  "    rmethod ADIOS method to read with\n"

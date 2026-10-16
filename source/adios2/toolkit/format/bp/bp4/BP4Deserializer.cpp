@@ -122,7 +122,7 @@ void BP4Deserializer::ParseMetadataIndex(BufferSTL &bufferSTL, const size_t abso
         position = m_ActiveFlagPosition;
         const char activeChar =
             helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
-        m_WriterIsActive = (activeChar == '\1' ? true : false);
+        m_WriterIsActive = (activeChar == '\1') && !m_Parameters.IgnoreActiveFlag;
 
         // move position to first row
         position = 64;
@@ -640,7 +640,7 @@ bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
     size_t position = m_ActiveFlagPosition;
     const char activeChar =
         helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
-    m_WriterIsActive = (activeChar == '\1' ? true : false);
+    m_WriterIsActive = (activeChar == '\1') && !m_Parameters.IgnoreActiveFlag;
     return m_WriterIsActive;
 }
 

@@ -728,6 +728,13 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
 
 bool BP4Reader::CheckWriterActive()
 {
+    // with IgnoreActiveFlag the writer is never waited for, even if the index
+    // has no header yet (writer killed before its first step)
+    if (m_BP4Deserializer.m_Parameters.IgnoreActiveFlag)
+    {
+        m_WriterIsActive = false;
+        return m_WriterIsActive;
+    }
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {

@@ -94,6 +94,10 @@ private:
     // for stream termination
     bool handleAsStream = true;
 
+    // --ignore-active-flag: read a BP4/BP5 input to its last step even if it is still
+    // marked as being written (e.g. its writer was killed)
+    bool ignoreActiveFlag = false;
+
     int decomp_values[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
     template <typename Arg, typename... Args>
