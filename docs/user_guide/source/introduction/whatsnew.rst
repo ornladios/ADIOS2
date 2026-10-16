@@ -2,6 +2,25 @@
 What's new in Development
 ==============================
 
+BP4/BP5 readers no longer wait on files left open by a killed writer
+--------------------------------------------------------------------
+
+A BP4 or BP5 writer marks its file as being written until it closes it. A writer that
+is killed (for example at the end of a batch job's time limit) leaves that mark
+behind, and readers used to wait forever in ``BeginStep()`` for steps that would
+never come. BP4 and BP5 readers now ignore the mark by default (new parameter
+``IgnoreActiveFlag``, default ``true``): they read the steps that are present and
+then get ``EndOfStream``. BP5's ``OpenTimeoutSecs`` now also defaults to 0 in
+``Read`` mode (as BP4's already did), so opening a file that does not exist
+fails right away instead of waiting for up to an hour.
+
+This changes how a file that is still being written can be followed. Use the
+``FileStream`` engine, which sets ``IgnoreActiveFlag=false`` and waits up to an
+hour for the file to appear, or set ``IgnoreActiveFlag=false`` (and an
+``OpenTimeoutSecs``) on a ``BP4`` or ``BP5`` reader. ``adios_reorganize`` keeps following
+files that are being written; it now warns when such a file stops producing
+steps, and ``--ignore-active-flag`` makes it process the steps that are present.
+
 Campaign HDF5 reads over HTTPS and S3
 -------------------------------------
 

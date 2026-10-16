@@ -449,6 +449,7 @@ bp4_bp5_gtest_add_tests_helper(OpenWithMetadata MPI_NONE)
 if(NOT WIN32)
   bp5_gtest_add_tests_helper(MetadataFDClose MPI_NONE)
 endif()
+bp4_bp5_gtest_add_tests_helper(ActiveFlag MPI_NONE)
 
 # BP4 only for now
 # gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4

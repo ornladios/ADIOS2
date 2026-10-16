@@ -201,6 +201,11 @@ void BPBase::Init(const Params &parameters, const std::string hint, const std::s
             parsedParameters.StreamReader =
                 helper::StringTo<bool>(value, " in Parameter key=StreamReader " + hint);
         }
+        else if (key == "ignoreactiveflag")
+        {
+            parsedParameters.IgnoreActiveFlag =
+                helper::StringTo<bool>(value, " in Parameter key=IgnoreActiveFlag " + hint);
+        }
     }
     if (!engineType.empty())
     {

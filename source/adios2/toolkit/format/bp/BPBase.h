@@ -218,6 +218,11 @@ public:
          */
         bool StreamReader = false;
 
+        /** Reader treats the file as complete even if the writer never cleared
+         * its active flag (e.g. it was killed); FileStream sets this false
+         */
+        bool IgnoreActiveFlag = true;
+
         /** Number of aggregators.
          * Must be a value between 1 and number of MPI ranks
          * 0 as default means that the engine must define the number of

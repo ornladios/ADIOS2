@@ -143,6 +143,7 @@ public:
     MACRO(EOFWaitSecs, Float, float, 30.0f)                                                        \
     MACRO(BeginStepPollingFrequencySecs, Float, float, 1.0f)                                       \
     MACRO(StreamReader, Bool, bool, false)                                                         \
+    MACRO(IgnoreActiveFlag, Bool, bool, true)                                                      \
     MACRO(BurstBufferDrain, Bool, bool, true)                                                      \
     MACRO(BurstBufferPath, String, std::string, "")                                                \
     MACRO(NodeLocal, Bool, bool, false)                                                            \

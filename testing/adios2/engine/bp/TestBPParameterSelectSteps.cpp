@@ -216,6 +216,8 @@ TEST_P(BPParameterSelectStepsP, Stream)
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("SelectSteps", selection);
     ioRead.SetParameter("OpenTimeoutSecs", "30.0");
+    // reading while the writer is still active
+    ioRead.SetParameter("IgnoreActiveFlag", "false");
     adios2::Engine reader = ioRead.Open(filename, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 

@@ -137,3 +137,18 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
                 block 1: [ 7:14,  0:15]
 
 
+
+* Reading a file that is still being written, or whose writer was killed
+
+    ``adios_reorganize`` can follow a BP file that its producer is still writing: it processes each step as it appears and
+    finishes when the producer closes the file. A producer that is killed (e.g. at the end of a batch job's time limit)
+    leaves the file marked as being written, so ``adios_reorganize`` would keep waiting for more steps. In that case it prints a
+    warning after 60 seconds without a new step, and again with increasing intervals.
+
+    To process the steps that are present and finish, give ``--ignore-active-flag`` as the first argument:
+
+    .. code-block:: bash
+
+        $ adios_reorganize --ignore-active-flag sim.bp reorg.bp BP5 "" BP5 ""
+
+    Alternatively, mark the file complete once with ``adios2_deactivate_bp sim.bp``.
