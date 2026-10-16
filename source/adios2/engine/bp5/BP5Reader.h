@@ -253,6 +253,11 @@ private:
 
     void FlushProfiler();
 
+    /** The deserializer, which exists once the header of the metadata index
+     * was read. Throws if it does not exist yet, e.g. for the output of a
+     * writer that did not complete a step. */
+    format::BP5Deserializer &Deserializer(const std::string &activity) const;
+
     void GetSyncCommon(VariableBase &variable, void *data);
 
     void GetDeferredCommon(VariableBase &variable, void *data);

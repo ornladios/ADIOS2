@@ -1562,6 +1562,15 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
             VarRec = it->second;
     }
 #endif
+    if (!VarRec)
+    {
+        // e.g. a variable that the reader defined itself, or a Get() before
+        // the metadata of any step was installed
+        helper::Throw<std::runtime_error>("Toolkit", "format::BP5Deserializer", "QueueGetSingle",
+                                          "variable " + variable.m_Name +
+                                              " is not in the metadata read by the BP5 reader "
+                                              "engine");
+    }
     if (variable.m_Type == adios2::DataType::Struct)
     {
         StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
