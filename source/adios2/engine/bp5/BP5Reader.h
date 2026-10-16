@@ -253,6 +253,9 @@ private:
 
     void FlushProfiler();
 
+    /** In Mode::Read, Get() is only valid between BeginStep() and EndStep() */
+    void CheckGetInStep(const VariableBase &variable) const;
+
     void GetSyncCommon(VariableBase &variable, void *data);
 
     void GetDeferredCommon(VariableBase &variable, void *data);
