@@ -321,6 +321,9 @@ private:
 
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
     bool IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offsets, uint64_t *count);
+    bool ContiguousDestination(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                               const uint64_t *blkCount, const size_t *interStartInBlock,
+                               const size_t *interCount, size_t elemSize, size_t *destOffset);
     char *FillBlock(std::map<BP5VarRec *, MinVarInfo *> &map);
 
     size_t CurTimestep = 0;
