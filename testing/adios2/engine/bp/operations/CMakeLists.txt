@@ -54,6 +54,16 @@ if(ADIOS2_HAVE_ZFP)
   endif()
 endif()
 
+if(ADIOS2_HAVE_CAESAR AND ADIOS2_HAVE_MPI)
+  gtest_add_tests_helper(WriteReadCAESAR MPI_ONLY BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
+
+  set_tests_properties(${Test.Engine.BP.WriteReadCAESAR-TESTS}
+    PROPERTIES TIMEOUT 600
+  )
+endif()
+
 if(ADIOS2_HAVE_MGARD)
   bp_gtest_add_tests_helper(WriteReadMGARD MPI_ALLOW)
   bp_gtest_add_tests_helper(WriteReadMGARDPlus MPI_ALLOW)
