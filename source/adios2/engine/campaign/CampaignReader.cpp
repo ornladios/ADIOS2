@@ -10,13 +10,11 @@
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
-#include "adios2/toolkit/remote/EVPathRemote.h"
-#include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/OpenFile.h"
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 
 #include <algorithm> // std:find in vector
+#include <filesystem>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -31,6 +29,17 @@ namespace core
 {
 namespace engine
 {
+
+namespace
+{
+// Returns 0 if the file does not exist or its size cannot be determined.
+size_t FileLength(const std::string &path)
+{
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(path, ec);
+    return ec ? 0 : static_cast<size_t>(size);
+}
+} // end anonymous namespace
 
 CampaignReader::CampaignReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("CampaignReader", io, name, mode, std::move(comm))
@@ -462,7 +471,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
         {
             CampaignFile &cf = m_CampaignData.files[fileid];
             std::string path =
-                localPath + PathSeparator + adios2sys::SystemTools::GetFilenameName(cf.name);
+                localPath + PathSeparator + std::filesystem::path(cf.name).filename().string();
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable, will read from DB directly, no local path
@@ -577,8 +586,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                 if (ho.protocol == HostAccessProtocol::S3)
                 {
                     const std::string endpointURL = ho.endpoint;
-                    const std::string objPath =
-                        m_CampaignData.directory[rep.dirIdx].path + "/" + rep.name;
+                    const std::string objPath = remotePath;
                     Params p;
                     p.emplace("library", "awssdk");
                     p.emplace("endpoint", endpointURL);
@@ -594,43 +602,89 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
                     {
                         io.AddTransport("File", p);
                         io.SetParameter("UUID", ds.uuid);
-                        io.SetEngine("BP5");
+                        if (ds.format == FileFormat::HDF5)
+                        {
+                            io.SetParameter("RemoteObjectPath", objPath);
+                            io.SetEngine("HDF5");
+                        }
+                        else
+                        {
+                            io.SetEngine("BP5");
+                        }
                     }
-                    newLocalPath = remotePath;
+                    if (ds.format != FileFormat::HDF5)
+                    {
+                        newLocalPath = remotePath;
+                    }
 
                     if (ho.isAWS_EC2)
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
+                        helper::PutEnv("AWS_EC2_METADATA_DISABLED=false");
                     }
                     else
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
+                        helper::PutEnv("AWS_EC2_METADATA_DISABLED=true");
                     }
 
                     if (ho.awsProfile.empty())
                     {
-                        adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
+                        helper::PutEnv("AWS_PROFILE=default");
                     }
                     else
                     {
                         std::string es = "AWS_PROFILE=" + ho.awsProfile;
-                        adios2sys::SystemTools::PutEnv(es);
+                        helper::PutEnv(es);
                     }
                 }
             }
         }
         else if (m_CampaignData.hosts[rep.hostIdx].defaultProtocol == "https")
         {
-            std::string url =
-                "https://" + m_CampaignData.hosts[rep.hostIdx].longhostname + "/" + remotePath;
+            const CampaignHost &campaignHost = m_CampaignData.hosts[rep.hostIdx];
+            const HostConfig *httpsConfig = nullptr;
+            auto hostOptions = ADIOS::GetHostOptions().find(campaignHost.hostname);
+            if (hostOptions != ADIOS::GetHostOptions().end())
+            {
+                for (const HostConfig &hostConfig : hostOptions->second)
+                {
+                    if (hostConfig.protocol == HostAccessProtocol::HTTPS)
+                    {
+                        httpsConfig = &hostConfig;
+                        break;
+                    }
+                }
+            }
+
+            std::string endpoint = "https://" + campaignHost.longhostname;
+            if (httpsConfig)
+            {
+                endpoint = httpsConfig->endpoint;
+            }
+
+            std::string url = endpoint;
+            if (!url.empty() && url.back() != '/')
+            {
+                url += '/';
+            }
+            if (!remotePath.empty() && remotePath.front() == '/')
+            {
+                url += remotePath.substr(1);
+            }
+            else
+            {
+                url += remotePath;
+            }
+
             Params p;
             p.emplace("library", "https");
-            // p.emplace("hostname", m_CampaignData.hosts[rep.hostIdx].longhostname);
-            // p.emplace("path", m_CampaignData.directory[rep.dirIdx].path + "/" + tarpath +
-            // rep.name);
             p.emplace("cache", cachePath);
-            p.emplace("verbose", std::to_string(m_Options.verbose));
+            p.emplace("verbose",
+                      std::to_string(httpsConfig ? httpsConfig->verbose : m_Options.verbose));
             p.emplace("recheck_metadata", "false");
+            if (httpsConfig && !httpsConfig->caFile.empty())
+            {
+                p.emplace("ca_file", httpsConfig->caFile);
+            }
             if (cvii)
             {
                 cvii->params = p;
@@ -643,6 +697,7 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 
                 if (ds.format == FileFormat::HDF5)
                 {
+                    io.SetParameter("RemoteObjectPath", url);
                     io.SetEngine("HDF5");
                 }
                 else
@@ -654,7 +709,10 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
             {
                 std::cout << "Open remote URL " << url << " \n";
             }
-            newLocalPath = url;
+            if (ds.format != FileFormat::HDF5)
+            {
+                newLocalPath = url;
+            }
         }
     }
     else
@@ -688,11 +746,11 @@ std::string CampaignReader::SaveRemoteMD(size_t dsIdx, size_t repIdx, adios2::co
 void CampaignReader::InitTransports()
 {
     std::string path = m_Name;
-    if (!adios2sys::SystemTools::FileExists(path) && path[0] != '/' && path[0] != '\\' &&
+    if (!std::filesystem::exists(path) && path[0] != '/' && path[0] != '\\' &&
         !m_Options.campaignstorepath.empty())
     {
         std::string path2 = m_Options.campaignstorepath + PathSeparator + m_Name;
-        if (adios2sys::SystemTools::FileExists(path2))
+        if (std::filesystem::exists(path2))
         {
             path = path2;
         }
@@ -827,7 +885,7 @@ void CampaignReader::InitTransports()
         std::string localCachePath =
             m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) + PathSeparator + ds.uuid;
         std::string atsFilePath = localCachePath + PathSeparator + ts.name + ".ats";
-        auto atsDir = adios2sys::SystemTools::GetFilenamePath(atsFilePath);
+        auto atsDir = std::filesystem::path(atsFilePath).parent_path().string();
         helper::CreateDirectory(atsDir);
         if (m_Options.verbose > 0)
         {
@@ -998,8 +1056,8 @@ void CampaignReader::InitTransports()
             if (ds.format == FileFormat::TEXT)
             {
                 // TEXT -> create a variable
-                CreateTextVariable(ds.name, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                   repIdx, true, localPath, taropt);
+                CreateTextVariable(ds.name, FileLength(localPath), dsIdx, repIdx, true, localPath,
+                                   taropt);
             }
         }
 
@@ -1122,8 +1180,8 @@ void CampaignReader::InitTransports()
                         }
                     }
                 }
-                CreateImageVariable(imgName, adios2sys::SystemTools::FileLength(localPath), dsIdx,
-                                    repIdx, true, localPath, taropt);
+                CreateImageVariable(imgName, FileLength(localPath), dsIdx, repIdx, true, localPath,
+                                    taropt);
             }
             else
             {
@@ -1529,34 +1587,50 @@ void CampaignReader::GetVariableFromDB(std::string name, size_t dsIdx, size_t re
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,
                                     const size_t offset, const size_t size, void *data)
 {
-    std::unique_ptr<Remote> remote = nullptr;
-#ifdef ADIOS2_HAVE_XROOTD
-    if (getenv("DoXRootD"))
+    const RemoteSetup rs = GetRemoteSetup(remoteHost);
+    if (rs.protocol != HostAccessProtocol::XRootD && rs.protocol != HostAccessProtocol::SSH)
     {
-        const RemoteSetup rs = GetRemoteSetup("localhost");
-        remote = std::make_unique<XrootdRemote>(rs);
-        remote->Open("localhost", 1094, m_Name, m_OpenMode, true);
+        helper::Throw<std::invalid_argument>(
+            "Engine", "CampaignReader", "ReadRemoteFile",
+            "No SSH or XRootD access configuration found for host " + remoteHost +
+                ". Add a valid entry in ~/.config/hpc-campaign/hosts.yaml");
     }
-    else
-#endif
-#ifdef ADIOS2_HAVE_SST
-    {
-        const RemoteSetup rs = GetRemoteSetup(remoteHost);
-        remote = std::make_unique<EVPathRemote>(rs);
-        int localPort = remote->LaunchRemoteServerViaConnectionManager(remoteHost);
-        remote->OpenSimpleFile("localhost", localPort, remotePath);
-    }
-#endif
+
+    // Both SSH/EVPath and XRootD open the replica as an unstructured byte
+    // stream.  Transport selection and connection setup are handled by the
+    // common remote factory.
+    std::shared_ptr<Remote> remote = GetRemoteSimpleFile(rs, remotePath);
+
     // evaluate validity of object, not just that the pointer is non-NULL
     if (remote == nullptr || !(*remote))
     {
-        helper::Throw<std::ios_base::failure>(
-            "Engine", "CampaignReader", "ReadRemoteFile",
-            "Cannot get remote connection to read file " + remoteHost + ":" + remotePath +
-                ". Make sure connection manager is running, and the server specification for the "
-                "host is valid.");
+        const std::string advice =
+            (rs.protocol == HostAccessProtocol::XRootD)
+                ? ". Make sure the configured XRootD transport is enabled in this ADIOS2 build "
+                  "and the host entry is valid."
+                : ". Make sure connection manager is running, and the server specification for "
+                  "the host is valid.";
+        helper::Throw<std::ios_base::failure>("Engine", "CampaignReader", "ReadRemoteFile",
+                                              "Cannot get remote connection to read file " +
+                                                  remoteHost + ":" + remotePath + advice);
     }
-    remote->Read(offset, size, data);
+
+    // The SSH/EVPath lane completes the read inside Read(); the XRootD lanes
+    // issue it asynchronously and WaitForGet() throws with detail on failure.
+    Remote::GetHandle handle = remote->Read(offset, size, data);
+    if (rs.protocol == HostAccessProtocol::XRootD)
+    {
+        if (handle == nullptr)
+        {
+            helper::Throw<std::ios_base::failure>("Engine", "CampaignReader", "ReadRemoteFile",
+                                                  "Could not issue the XRootD raw file read for " +
+                                                      remoteHost + ":" + remotePath);
+        }
+        remote->WaitForGet(handle);
+    }
+    // Release the server-side file handle (the SSH lane keeps one open per
+    // OpenSimpleFile until told otherwise).
+    remote->Close();
 }
 
 void CampaignReader::ReadRemoteFile(const std::string &remoteHost, const std::string &remotePath,

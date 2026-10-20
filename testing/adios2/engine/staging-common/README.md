@@ -61,8 +61,6 @@ This test suite consists of a core set of tests defined in TestSupp.cmake, where
 * FtoC.1x1 - Simple Fortran to C++ test
 * CtoF.1x1 - Simple C++ to Fortran test
 * FtoF.1x1 - Simple Fortran to Fortran test
-* ZFPCompression.1x1 - Simple test using engine-level compression
-* ZFPCompression.3x5 - 3x5 test using engine-level compression
 * KillReadersSerialized.3x2 - Test to see if readers can be killed mid-stream without disrupting the writer, here at most one reader at a time, killing or starting a reader randomly every 5 seconds.
 * KillReadersSerialized.3x6 - Test to see if readers can be killed mid-stream without disrupting the writer, here at most one reader at a time.
 * KillReadersSerialized3Max.3x6 - Test to see if readers can be killed mid-stream without disrupting the writer, here at most three readers at a time.

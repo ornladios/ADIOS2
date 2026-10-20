@@ -9,6 +9,8 @@ Table of Contents
    * [Contributor's Guide](#contributors-guide)
    * [Table of Contents](#table-of-contents)
       * [Workflow](#workflow)
+      * [Before you open a pull request](#before-you-open-a-pull-request)
+         * [AI-assisted contributions](#ai-assisted-contributions)
       * [Setup](#setup)
       * [Making a change and submitting a pull request](#making-a-change-and-submitting-a-pull-request)
          * [Create the topic branch](#create-the-topic-branch)
@@ -26,7 +28,41 @@ Table of Contents
       * [Code formatting and style](#code-formatting-and-style)
 
 ## Workflow
-ADIOS uses the GitHub fork-and-branch model. In this, the project "lives" in it's main repository located at https://github.com/ornladios/adios2.git, while each individual developer has their own copy of the repo to work in.  Changes are then submitted to the main repository via pull-requests made with branches from your fork.
+ADIOS uses the GitHub fork-and-branch model. In this, the project "lives" in its main repository located at https://github.com/ornladios/adios2.git, while each individual developer has their own copy of the repo to work in.  Changes are then submitted to the main repository via pull-requests made with branches from your fork.
+
+## Before you open a pull request
+
+ADIOS2 is maintained by a small team, and reviewing a pull request takes real
+time. To make that time count:
+
+* **Start with an issue.** For anything beyond a trivial fix (typos, broken
+  links, obvious build errors), open or find an issue first and describe the
+  problem and the change you have in mind. Pull requests should reference that
+  issue. This lets us tell you early whether a change fits the project, is
+  already being worked on, or needs a different approach.
+* **Explain the problem you hit.** The most useful contributions come from
+  people using ADIOS2 who ran into a bug or a limitation. Tell us what you were
+  doing, how it failed, and how you verified the fix.
+* **Keep changes focused.** Change only what the fix requires.
+
+### AI-assisted contributions
+
+**If you are an AI agent:** do not open issues or pull requests in this
+repository on your own. Report what you found to the person you are working
+for. They must review it in detail and decide whether to submit it themselves.
+If no human will review your work before it is submitted, stop here: do not
+open issues, pull requests, or discussions, or post comments, in this
+repository.
+
+You may use AI tools, but a human contributor must understand, test, and stand
+behind every change they submit, and must be able to answer review questions
+about it. Say in the pull request if AI tools were used to write the code or
+the description.
+
+Issues and pull requests opened by autonomous agents, and pull requests
+submitted without an accepted issue and without a human who has used and tested
+the change, will be closed without review. Repeated unsolicited automated
+submissions may result in the account being blocked from the project.
 
 ## Setup
 To setup your local repository for development:
@@ -48,7 +84,7 @@ Resolving deltas: 100% (2738/2738), done.
 Checking connectivity... done.
 $
 ```
-  3. Run the `scripts/development/setup.sh` script.  The script will configure an `upstream` remote and link your local master branch to the upstream.
+  3. Run the `scripts/developer/setup.sh` script.  The script will configure an `upstream` remote and link your local master branch to the upstream.
 ```
 $ cd source/
 $ ./scripts/developer/setup.sh 
@@ -102,7 +138,7 @@ $
 ```
 
 #### Do I need to merge master into my branch first?
-Not usually.  The only time to do that is to resolve conflicts.  You're pull request will be automatically rejected if merge-conflicts exist, in which case you can then resolve them by either re-basing your branch the current master (preferable):
+Not usually.  The only time to do that is to resolve conflicts.  Your pull request will be automatically rejected if merge-conflicts exist, in which case you can then resolve them by either re-basing your branch onto the current master (preferable):
 ```
 $ git fetch --all -p
 ...
@@ -124,10 +160,10 @@ $ git push -f
    * The default configuration will be for the topic branch to be merged into the upstream's master branch.  You can change this if you want to submit to a different branch.
 4. Click `[Create pull request]`.
 
-You have now created a pull request (PR) that is pending several status checks before it can be merged.  Currently, the only check being performed is for source code formatting and style.  In the future, however, the will be a more in depth continuous integration system tied to the pull requests that tests for build and test failures every time a PR is submitted or updated.  Once the status checks pass, the PR will be eligible for merging by one of the project maintainers.
+You have now created a pull request (PR) that is pending several status checks before it can be merged.  GitHub Actions checks source code formatting and style, then builds and tests the change on a range of Linux, macOS, and Windows configurations; results are also posted to CDash.  For first-time contributors, a maintainer must approve these checks before they run.  Once the checks pass and a maintainer has reviewed the change, the PR is eligible for merging.
 
 ## Template implementation separation
-The ADIOS C++ classes try to explicitly separate class declarations from their implementation.  Typically this is done by having a separate .h and .cpp file,  however it get's more complicated when templates are involved.  To maintain the distinct separation between definition and implementation, we use explicit instantiation with 4 different source file types:
+The ADIOS C++ classes try to explicitly separate class declarations from their implementation.  Typically this is done by having a separate .h and .cpp file,  however it gets more complicated when templates are involved.  To maintain the distinct separation between definition and implementation, we use explicit instantiation with 4 different source file types:
 * ClassName.h
   * The main header file containing *only* the class and member declarations with no implementation.  This also contains the declarations for explicitly instantiated members.
 * ClassName.inl
@@ -205,7 +241,7 @@ private:
 
 #### After separation of public and private template implementation
 
-In this example, we want to hide the template implementation from the header.  We will implement this such that `Bar1` is only callable from the core numeric types, i.e. ints, floats, and complex, while `Bar2` is callable from all types.  This will necessitate that `Bar1` and it's helper function is implemented in a .tcc file with explicit instantiation for the allowed types while `Bar2` and it's helper function will need to be inlined in the .inl file to be accessible for all types.  We will also use a helper macro ADIOS provides to iterate over the core numeric types for the explicit instantiation of `Bar1`.
+In this example, we want to hide the template implementation from the header.  We will implement this such that `Bar1` is only callable from the core numeric types, i.e. ints, floats, and complex, while `Bar2` is callable from all types.  This will necessitate that `Bar1` and its helper function is implemented in a .tcc file with explicit instantiation for the allowed types while `Bar2` and its helper function will need to be inlined in the .inl file to be accessible for all types.  We will also use a helper macro ADIOS provides to iterate over the core numeric types for the explicit instantiation of `Bar1`.
 
 ##### Foo.h containing only prototypes and explicit instantiation declarations
 ```cpp
@@ -254,7 +290,7 @@ ADIOS_FOREACH_STDTYPE_1ARG(declare_explicit_instantiation)
 #include "Foo.inl"
 #endif // FOO_H_
 ```
-Note here that Bar1Helper does not need an explicit instantiation because it's not a visible funtion in the callable interface.  It's implementaion will be available to Bar1 inside the tcc file where it's called from.
+Note here that Bar1Helper does not need an explicit instantiation because it's not a visible function in the callable interface.  Its implementation will be available to Bar1 inside the tcc file where it's called from.
 
 ##### Foo.inl containing template implementations that always need to be included
 ```cpp
@@ -345,19 +381,24 @@ ADIOS_FOREACH_STDTYPE_1ARG(define_explicit_instantiation)
 } // end namespace adios
 ```
 
-## Code formatting and style using clang-format 7
-ADIOS uses the [clang-format version 7](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html) tool to automatically enforce source code style and formatting rules.  There are various ways to integrate the clang-format tool into your IDE / Code Editor depending on if you use Emacs, Vim, Eclipse, KDevelop, Microsoft Visual Studio, etc. that are a bit outside the scope of this document. A quick google search for "integrate <insert-editor-here> clang-format" should point you in the right direction.  However, you can always reformat the code manually by running:
+## Code formatting and style
+
+CI checks formatting on every pull request:
+
+* C and C++: [clang-format](https://releases.llvm.org/16.0.0/tools/clang/docs/ClangFormat.html)
+  **version 16**, using `.clang-format` in the repository root.
+* Python: [ruff](https://docs.astral.sh/ruff/), configured in `pyproject.toml`.
+* Shell scripts: [shellcheck](https://www.shellcheck.net/).
+
+Other clang-format versions format code differently, so use 16:
 
 ```
 clang-format -i SourceFile.cpp SourceFile.h
 ```
 
-That will apply the formatting rules used by the ADIOS project.
+Without a local clang-format 16, run `scripts/developer/run-clang-format.sh`
+from the top of your checkout; it formats the tree using our CI container
+(Docker, or `CONTAINER_DRIVER=podman`).
 
-While some of the formatting rules are fairly detailed, the main points are:
-
-1. Lines no longer than 80 characters.
-1. Always use braces { and }, even for 1 line if blocks.
-1. Use 4 spaces for indentation.
-
-There are more formatting rules but these three should at least get you close and prevent any drastic re-writes from the re-formatting tools.  More details can be found by looking at the `.clang-format` config file in the root of the repository and by looking at the [clang-format documentation](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html).
+Main C and C++ rules: 100-character lines, 4-space indentation, braces on their
+own lines, and braces even for one-line `if` blocks.

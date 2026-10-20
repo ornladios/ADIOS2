@@ -44,16 +44,17 @@
 
 # (I.E. things with _CMD strings defined like above) and creates a new
 # set of tests where a specified engine parameter gets added to the in
-# the location of the WENGINE_PARAMS string.  MutateTestSet takes 4 parameters:
-# output_test_list, param_name, param_spec, and input test list.  For example
-# MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
+# the location of the WENGINE_PARAMS string.  MutateTestSet takes 5 parameters:
+# output_test_list, param_name, participant, param_spec, and input test list.
+# For example
+# MutateTestSet( SST_TESTS "QL" writer "QueueLimit=1" "${BASIC_SST_TESTS}" )
 # If BASIC_SST_TESTS contains "1x1" as defined above, MutateTestSet
-# will add the test "1x1.CommMin", by defining the variable
-# 1x1.CommMin_CMD, using the original value of 1x1_CMD buth with
-# "CPCommPattern=Min: added to the WENGINE_PARAMS location (if
+# will add the test "1x1.QL", by defining the variable
+# 1x1.QL_CMD, using the original value of 1x1_CMD but with
+# "QueueLimit=1" added to the WENGINE_PARAMS location (if
 # present).  Any 1x1_TIMEOUT and 1x1_PROPERTIES values will also be
-# propogated to 1x1.CommMin_TIMEOUT and 1x1.CommMin_PROPERTIES.
-# "1x1.CommMin" will also be added to the output test list.
+# propogated to 1x1.QL_TIMEOUT and 1x1.QL_PROPERTIES.
+# "1x1.QL" will also be added to the output test list.
 # 
 # Note that MutateTestSet() can be used multiple times to add multiple
 # engine params.  The WENGINE_PARAMS string is retained in the
@@ -77,7 +78,6 @@ set (1x1VarDestruction_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--var_destr
 set (1x1DataWrite_CMD "TestDefSyncWrite --flush --data_size 200 --engine_params ChunkSize=500,MinDeferredSize=150")
 set (1x1DataWrite_TIMEOUT 360)
 set (1x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
-set (1x1.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x1.NoData_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--no_data --rarg=--no_data")
 set (2x2.NoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --rarg=--no_data")
 set (2x2.HalfNoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --warg=--no_data_node --warg=1 --rarg=--no_data --rarg=--no_data_node --rarg=1" )
@@ -89,7 +89,6 @@ set (2x1ZeroDataVar_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --warg=--zero_data_va
 set (2x1ZeroDataR64_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -r $<TARGET_FILE:TestCommonReadR64> --warg=--zero_data_var")
 set (2x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
 set (2x3.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
-set (2x3.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x2_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2")
 set (3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5")
 set (3x5BiDir_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 -w $<TARGET_FILE:TestBiDir> -r $<TARGET_FILE:TestBiDir> --warg=--writer_first")
@@ -154,24 +153,20 @@ set (FtoC.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommo
 set (CtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -r $<TARGET_FILE:TestCommonRead_f>")
 set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
 
-# Tests for ZFP compression (where supported by an engine param)
-set (ZFPCompression.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
-set (ZFPCompression.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
-
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (KillReadersSerialized.3x2_TIMEOUT "300")
-set (KillReaders3Max.3x6_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReaders3Max.3x6_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (KillReaders3Max.3x6_TIMEOUT "300")
 
 set (KillWriter_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer   -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
 set (KillWriterTimeout_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
-set (PreciousTimestep.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
+set (PreciousTimestep.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --warg=--advancing_attributes --rarg=--advancing_attributes")
 
 set (PreciousTimestep.3x2_TIMEOUT "300")
 
-set (PreciousTimestepDiscard.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
+set (PreciousTimestepDiscard.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500 --warg=--advancing_attributes --rarg=--advancing_attributes")
 set (PreciousTimestepDiscard.3x2_TIMEOUT "300")
 
 # Writer StepDistributionModes.  Here we run the writer and three clients

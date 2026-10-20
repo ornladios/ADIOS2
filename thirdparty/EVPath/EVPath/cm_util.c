@@ -319,6 +319,7 @@ void win_mutex_unlock(SRWLOCK *m)
 }
 void win_mutex_free(SRWLOCK *m)
 {
+    (void)m;
   // nothing necessary
 }
 extern void win_condition_init(CONDITION_VARIABLE *c)
@@ -336,6 +337,7 @@ extern void win_condition_signal(CONDITION_VARIABLE *c)
 }
 extern void win_condition_free(CONDITION_VARIABLE *c)
 {
+    (void)c;
   // nothing necessary
 }
 extern void win_condition_broadcast(CONDITION_VARIABLE *c)

@@ -12,7 +12,7 @@ It is an engine, that uses other engine (BP5, HDF5, Timeseries) to open ADIOS/HD
 
 #. **cachepath**: Local disk path where extracted pieces from the campaign file are stored, as well as data downloaded by ADIOS when reading remote data. The default value is read from *~/.config/hpc-campaign/config.yaml*.
 
-#. **include-dataset**: As a campaign file contains more and more datasets the open time will increase linearly since ADIOS has to create a reading engine for each BP/HDF5 file, to open that dataset and process it's metadata. If one is only interested in specific datasets in the campaign, a semicolon-separated (;) list of regular expressions can be provided to only open datasets that match one of those expressions.
+#. **include-dataset**: As a campaign file contains more and more datasets the open time will increase linearly since ADIOS has to create a reading engine for each BP/HDF5 file, to open that dataset and process it's metadata. If one is only interested in specific datasets in the campaign, a semicolon-separated (;) list of regular expressions can be provided to only open datasets that match one of those expressions. Note that these are NOT paths with wildcards but regular expressions, so ``?`` and ``*`` is not going to work as you expect but ``.`` and ``.*`` will.
 
 #. **exclude-dataset**: Similar to the previous option, datasets can be excluded from processing by providing a semicolon-separated list of regular expressions. 
 

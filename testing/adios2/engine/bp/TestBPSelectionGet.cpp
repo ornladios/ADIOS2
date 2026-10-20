@@ -454,6 +454,180 @@ TEST_F(BPSelectionGetTest, SelectionSize)
     }
 }
 
+// Step 1 of a 2-element box out of a 6-element array used to land at offset 6,
+// outside a SelectionSize() allocation.
+TEST_F(BPSelectionGetTest, MultiStepPlacementStaysWithinSelectionSize)
+{
+    const std::string fname("BPSelectionGet_MultiStepPlacement.bp");
+    const int32_t sentinel = -999;
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteStrideIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("x", {6}, {0}, {6});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> step0 = {1, 2, 3, 4, 5, 6};
+        const std::vector<int32_t> step1 = {11, 12, 13, 14, 15, 16};
+        writer.BeginStep();
+        writer.Put(var, step0.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.BeginStep();
+        writer.Put(var, step1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadStrideIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        auto var = io.InquireVariable<int32_t>("x");
+        ASSERT_TRUE(var);
+
+        const auto selection = adios2::Selection::BoundingBox({1}, {2}).WithSteps(0, 2);
+        ASSERT_EQ(var.SelectionSize(selection), 4u);
+
+        // Oversized so a misplaced write is observable rather than fatal.
+        std::vector<int32_t> got(12, sentinel);
+        reader.Get(var, got.data(), selection, adios2::Mode::Sync);
+
+        const std::vector<int32_t> expected = {2, 3, 12, 13};
+        for (size_t i = 0; i < expected.size(); ++i)
+        {
+            EXPECT_EQ(got[i], expected[i]) << "at destination element " << i;
+        }
+        for (size_t i = expected.size(); i < got.size(); ++i)
+        {
+            EXPECT_EQ(got[i], sentinel)
+                << "element " << i << " is past SelectionSize() and must not be written";
+        }
+        reader.Close();
+    }
+}
+
+// Block(n) keeps the All spatial type; SelectionSize used to report the whole
+// global array.
+TEST_F(BPSelectionGetTest, BlockSelectionSizeMatchesSelectedBlock)
+{
+    const std::string fname("BPSelectionGet_BlockSize.bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteBlockSizeIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        // Two differently sized blocks over a 6-element global array.
+        auto var = io.DefineVariable<int32_t>("x", {6}, {0}, {2});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> block0 = {1, 2};
+        const std::vector<int32_t> block1 = {3, 4, 5, 6};
+        writer.BeginStep();
+        writer.Put(var, block0.data(), adios2::Mode::Sync);
+        var.SetSelection({{2}, {4}});
+        writer.Put(var, block1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadBlockSizeIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        auto var = io.InquireVariable<int32_t>("x");
+        ASSERT_TRUE(var);
+
+        EXPECT_EQ(var.SelectionSize(adios2::Selection::Block(0)), 2u);
+        EXPECT_EQ(var.SelectionSize(adios2::Selection::Block(1)), 4u);
+
+        // The vector overload sizes its destination from SelectionSize.
+        std::vector<int32_t> got;
+        reader.Get(var, got, adios2::Selection::Block(1), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({3, 4, 5, 6}));
+        reader.Close();
+    }
+}
+
+// All must use the shape at the selected step, not the inquired shape.
+TEST_F(BPSelectionGetTest, AllUsesPerStepShape)
+{
+    const std::string fname("BPSelectionGet_AllPerStepShape.bp");
+    const int32_t sentinel = -999;
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteGrowIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("x", {2}, {0}, {2});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> step0 = {1, 2};
+        const std::vector<int32_t> step1 = {11, 12, 13, 14};
+        writer.BeginStep();
+        writer.Put(var, step0.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        var.SetShape({4});
+        var.SetSelection({{0}, {4}});
+        writer.BeginStep();
+        writer.Put(var, step1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadGrowIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        auto var = io.InquireVariable<int32_t>("x");
+        ASSERT_TRUE(var);
+
+        const auto selection = adios2::Selection::All().WithSteps(1, 1);
+        ASSERT_EQ(var.SelectionSize(selection), 4u);
+
+        std::vector<int32_t> got(8, sentinel);
+        reader.Get(var, got.data(), selection, adios2::Mode::Sync);
+
+        const std::vector<int32_t> expected = {11, 12, 13, 14};
+        for (size_t i = 0; i < expected.size(); ++i)
+        {
+            EXPECT_EQ(got[i], expected[i]) << "at destination element " << i;
+        }
+        for (size_t i = expected.size(); i < got.size(); ++i)
+        {
+            EXPECT_EQ(got[i], sentinel) << "element " << i << " is past SelectionSize()";
+        }
+        reader.Close();
+    }
+}
+
 // Test ToString() method
 TEST_F(BPSelectionGetTest, SelectionToString)
 {

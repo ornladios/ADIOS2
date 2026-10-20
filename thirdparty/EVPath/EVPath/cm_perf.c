@@ -400,6 +400,7 @@ INT_CMprobe_latency(CMConnection conn, int size, attr_list attrs)
 extern double
 INT_CMprobe_bandwidth(CMConnection conn, long size, attr_list attrs)
 {
+    (void)attrs;
     int i;
     int cond;
     int repeat_count = 100000/size;  /* send about 100K */

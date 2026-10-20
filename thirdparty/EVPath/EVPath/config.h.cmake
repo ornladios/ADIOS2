@@ -1,6 +1,8 @@
 #ifndef _CM_CONFIG_H
 #define _CM_CONFIG_H
 
+#define EVPATH_VERSION "@EVPath_VERSION@"
+
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <enet/enet.h> header file. */

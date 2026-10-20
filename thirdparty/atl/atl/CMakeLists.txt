@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 # The directory label is used for CDash to treat ATL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS ATL)
 
-project(ATL VERSION 2.3.2 LANGUAGES C)
+project(ATL VERSION 2.4.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -91,10 +91,13 @@ set(ATL_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(ATL_LIBRARY_PREFIX)
 
-add_library(atl atom.c attr.c lookup3.c tclHash.c http_atom_client.c)
+add_library(atl atom.cpp attr.c lookup3.c http_atom_client.c)
 if(WIN32)
   target_link_libraries(atl wsock32 ws2_32)
 endif()
+# atom.cpp registers atoms with an HTTP atom server from a background thread
+find_package(Threads REQUIRED)
+target_link_libraries(atl Threads::Threads)
 add_library(atl::atl ALIAS atl)
 
 # MSVC warning suppressions
@@ -158,7 +161,7 @@ option(ATL_LIBRARIES_ONLY "Don't built the ATL utility executables" OFF)
 if(NOT ATL_LIBRARIES_ONLY)
   if(NOT WIN32)
     # Atom server not ported to windows
-    add_executable(atom_server atom_server.c)
+    add_executable(atom_server atom_server.cpp)
     target_link_libraries(atom_server atl)
     install(TARGETS atom_server
       RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${ATL_RUNTIME_COMPONENT})

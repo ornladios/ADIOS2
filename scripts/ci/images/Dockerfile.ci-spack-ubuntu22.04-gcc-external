@@ -7,10 +7,12 @@ FROM $BASE_IMAGE
 
 COPY 0003-spack-gtkorvo-new-versions-no-cercs-env.patch /spack/
 ENV DEPENDENCIES \
+    cli11 \
     libevpath \
     nlohmann-json \
     perfstubs \
     pugixml \
+    googletest@1.14 \
     py-nanobind
 
 RUN . /spack/share/spack/setup-env.sh && \

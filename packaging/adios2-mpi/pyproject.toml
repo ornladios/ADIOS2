@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# MPI flavor of the adios2 wheel. It ships the same `adios2` import package as
+# the serial wheel, so the two distributions are mutually exclusive.
+[build-system]
+requires = ["scikit-build-core", "numpy", "setuptools_scm>=8", "mpi4py", "mpich"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "adios2-mpi"
+dynamic = ["version"]
+description = "The Adaptable Input Output System version 2 (MPI build)"
+readme = "../../ReadMe.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+dependencies = [
+  "numpy>=1.22",
+  "mpi4py",
+  "pynacl; sys_platform == 'linux'",
+]
+
+[project.urls]
+Homepage = "https://github.com/ornladios/adios2"
+
+[tool.scikit-build]
+cmake.source-dir = "../.."
+# The adios2 python package is installed by the CMake install rules
+wheel.packages = []
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "../../VERSION.TXT"
+regex = "^(?P<value>.+?)$"
+
+[tool.scikit-build.cmake.define]
+ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"
+ADIOS2_USE_Blosc2 = "OFF"
+ADIOS2_USE_BZip2 = "OFF"
+ADIOS2_USE_CURL = "ON"
+ADIOS2_USE_DataMan = "OFF"
+ADIOS2_USE_Fortran = "OFF"
+ADIOS2_USE_HDF5 = "OFF"
+ADIOS2_USE_HDF5_VOL = "OFF"
+ADIOS2_USE_MPI = "ON"
+ADIOS2_USE_OpenSSL = "ON"
+ADIOS2_USE_PIP = "ON"
+ADIOS2_USE_Python = "ON"
+ADIOS2_USE_SealKeygen = "ON"
+ADIOS2_USE_Sodium = "ON"
+ADIOS2_USE_SZ = "OFF"
+ADIOS2_USE_ZeroMQ = "OFF"
+ADIOS2_USE_ZFP = "OFF"
+BUILD_TESTING = "OFF"
+EVPATH_TRANSPORT_MODULES = "OFF"
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y libcurl-devel openssl-devel libsodium-devel"
+# libmpi is provided by the system MPICH at runtime, so it must not be bundled
+# into the wheel.
+before-test = "yum install -y mpich"
+test-command = "LD_LIBRARY_PATH=/usr/lib64/mpich/lib /usr/lib64/mpich/bin/mpiexec -n 2 python -c 'import adios2; assert adios2.is_built_with_mpi'"
+repair-wheel-command = "auditwheel repair --exclude libmpi.so.12 -w {dest_dir} {wheel}"
+
+[[tool.cibuildwheel.overrides]]
+select = "cp312-*"
+config-settings."wheel.py-api" = "cp312"
+config-settings."cmake.define.ADIOS2_USE_PythonStableABI" = "ON"
+
+[[tool.cibuildwheel.overrides]]
+select = "cp314t-*"
+config-settings."cmake.define.ADIOS2_USE_PythonFreeThreaded" = "ON"

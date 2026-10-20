@@ -608,6 +608,7 @@ extern void INT_CMTrace_file_id(int ID);
 #define CLOCK_MONOTONIC 1
 inline int clock_gettime(int cl, struct timespec* spec)
 {
+    (void)cl;
     __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
     wintime -= 116444736000000000i64;  //1jan1601 to 1jan1970
     spec->tv_sec = (long)(wintime / 10000000i64);           //seconds

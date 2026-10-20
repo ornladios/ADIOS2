@@ -62,6 +62,7 @@ static void dump_output(int length_estimate, char *format, ...);
 static int
 get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *iface)
 {
+    (void)iface;
     struct hostent *host = NULL;
     char hostname_buf[256];
     char **p;
@@ -597,7 +598,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	    if (isalpha(port_range[0])) {
 		char *t = strdup(port_range);
 		char *lower = t;
-		for ( ; *lower; ++lower) *lower = tolower(*lower);
+		for ( ; *lower; ++lower) *lower = (char)tolower(*lower);
 		if (strcmp(t, "any") == 0) {
 		    port_range_high = -1;
 		    port_range_low = -1;

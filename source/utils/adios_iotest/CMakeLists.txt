@@ -8,10 +8,7 @@
 #------------------------------------------------------------------------------#
 
 add_executable(adios_iotest settings.cpp decomp.cpp processConfig.cpp ioGroup.cpp stream.cpp adiosStream.cpp adios_iotest.cpp)
-target_link_libraries(adios_iotest adios2::cxx_mpi MPI::MPI_CXX adios2_core_mpi)
-if(WIN32)
-  target_link_libraries(adios_iotest getopt)
-endif()
+target_link_libraries(adios_iotest adios2::cxx_mpi MPI::MPI_CXX adios2_core_mpi adios2::thirdparty::CLI11)
 set_property(TARGET adios_iotest PROPERTY OUTPUT_NAME adios2_iotest${ADIOS2_EXECUTABLE_SUFFIX})
 
 if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)

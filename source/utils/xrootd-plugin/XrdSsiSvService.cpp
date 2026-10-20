@@ -83,9 +83,10 @@ void *SvAdiosGet(void *svP)
     return 0;
 }
 
-// Highest request wire-format version we accept (clients emit none yet, absent ==
-// 0). Policing it gives a future newer client a clear error, not a parse failure.
-constexpr uint32_t kMaxWireVersion = 0;
+// Highest request wire-format version we accept: 0 = the original prefix and
+// query-string forms (no version field), 1 = the `_adios` marker form. Policing
+// it gives a future newer client a clear error, not a parse failure.
+constexpr uint32_t kMaxWireVersion = 1;
 
 // Record a rejected request in the access log (the normal entry is logged only
 // after a successful read, which a rejection never reaches).

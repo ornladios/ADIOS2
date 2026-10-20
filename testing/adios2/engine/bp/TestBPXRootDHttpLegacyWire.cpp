@@ -4,19 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// REGRESSION TEST FOR THE LEGACY XROOTD-HTTP WIRE FORMAT.
+// REGRESSION TEST FOR THE LEGACY XROOTD-HTTP WIRE FORMATS.
 //
-// Released clients up through v2.12.x encode remote-read requests as a URL
-// query string:
+// Released clients up through v2.12.0 encode remote-read requests as a URL
+// query string under the /adios prefix:
 //     /adios/<filename>?get&Varname=<v>&Count=...&Start=...
 //     /adios/<filename>?batchget&NVars=<n>&Varname=...&Varname=...
-// The current client speaks the path-encoded form instead, but the server
-// must keep answering the legacy form until those clients age out.  This
-// test hand-builds requests exactly as the v2.12.0 client did and verifies
-// the bytes that come back.
+// Later 2.12.x clients used the path-encoded form under the same prefix:
+//     /adios/<filename>/<file-config>/<request>
+// The current client puts a reserved /_adios/ segment after the dataset path
+// instead, but the server must keep answering both older forms until those
+// clients age out.  This test hand-builds the old requests and verifies the
+// bytes that come back.
 //
-// REMOVE this test (and its registration in CMakeLists.txt) when legacy
-// query-string support is retired from the server.
+// REMOVE this test (and its registration in CMakeLists.txt) when support for
+// the prefix forms is retired from the server.
 
 #include <array>
 #include <climits>
@@ -136,6 +138,16 @@ TEST_F(XRootDHttpLegacyWire, BatchGet)
     const char *chunk1 = chunk0 + chunkBytes;
     EXPECT_EQ(memcmp(chunk0, &s_Expected[0], chunkBytes), 0);
     EXPECT_EQ(memcmp(chunk1, &s_Expected[12], chunkBytes), 0);
+}
+
+// Path-encoded form under the /adios prefix (2.12.x clients after the
+// query-string form): same variable, same bytes.
+TEST_F(XRootDHttpLegacyWire, PrefixPathForm)
+{
+    std::vector<char> body;
+    ASSERT_TRUE(LegacyFetch(s_BaseUrl + "/r1/g~dA~c16o0", body));
+    ASSERT_EQ(body.size(), s_Expected.size() * sizeof(double));
+    EXPECT_EQ(memcmp(body.data(), s_Expected.data(), body.size()), 0);
 }
 
 int main(int argc, char **argv)

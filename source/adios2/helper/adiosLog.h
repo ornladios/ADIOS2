@@ -7,6 +7,7 @@
 #ifndef ADIOS2_HELPER_ADIOSLOG_H_
 #define ADIOS2_HELPER_ADIOSLOG_H_
 
+#include <exception> // std::throw_with_nested
 #include <string>
 
 namespace adios2
@@ -79,7 +80,7 @@ void ThrowNested(const std::string &component, const std::string &source,
                  const std::string &activity, const std::string &message, const int commRank = -1)
 {
     auto m = MakeMessage(component, source, activity, message, commRank, LogMode::EXCEPTION);
-    throw_with_nested(T(m));
+    std::throw_with_nested(T(m));
 }
 
 } // end namespace helper

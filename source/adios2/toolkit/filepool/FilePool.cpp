@@ -5,7 +5,7 @@
  */
 
 #include "adios2/toolkit/filepool/FilePool.h"
-#include "adios2sys/SystemTools.hxx"
+#include <filesystem>
 
 PoolableFile::~PoolableFile() { m_OwningPool->Release(m_Entry); }
 
@@ -57,7 +57,7 @@ void FilePool::Evict(const std::string &filename)
     auto finalFileName = filename;
     if (m_TarInfoMap && m_TarInfoMap->size())
     {
-        auto FilenameInTar = adios2sys::SystemTools::GetFilenameName(filename);
+        auto FilenameInTar = std::filesystem::path(filename).filename().string();
         auto it = m_TarInfoMap->find(FilenameInTar);
         if (it != m_TarInfoMap->end())
         {
@@ -99,7 +99,7 @@ std::unique_ptr<PoolableFile> FilePool::Acquire(const std::string &filename, con
     size_t size = (size_t)-1;
     if (!skipTarInfo && m_TarInfoMap && m_TarInfoMap->size())
     {
-        auto FilenameInTar = adios2sys::SystemTools::GetFilenameName(filename);
+        auto FilenameInTar = std::filesystem::path(filename).filename().string();
         auto it = m_TarInfoMap->find(FilenameInTar);
         if (it != m_TarInfoMap->end())
         {

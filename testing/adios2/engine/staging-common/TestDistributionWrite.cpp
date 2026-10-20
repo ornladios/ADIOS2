@@ -121,6 +121,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             engine1.Put(var2, data_forward.data(), sync);
         }
         engine1.Put(step_var, step);
+        // defined in one step only, readers that don't get it must still see it
+        if (step == 1)
+            io1.DefineAttribute<std::string>("Step1Attr", "step1");
         engine1.EndStep();
     }
     // Close the file

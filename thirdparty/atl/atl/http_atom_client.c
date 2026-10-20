@@ -7,7 +7,12 @@
  *
  * Optimizations:
  *   - Persistent connection with HTTP/1.1 keep-alive
- *   - Fire-and-forget POSTs for atom registration (no response wait)
+ *   - Fire-and-forget POSTs for atom registration (no response wait).
+ *     atom.cpp issues these from a background thread, since even a
+ *     fire-and-forget POST must first connect.
+ *   - After one failed connect the server is treated as unreachable for
+ *     the life of the process, so a dead server costs one timeout, not one
+ *     per request.
  *   - Non-blocking drain of pending responses before synchronous GETs
  *
  * Talks to the korvo_server CGI endpoint:
@@ -61,6 +66,43 @@ static int url_parsed = 0;
 /* Persistent connection */
 static SOCKET persistent_sock = INVALID_SOCKET;
 static int pending_responses = 0;  /* number of POST responses not yet read */
+static int server_unreachable = 0;
+
+/*
+ * The server address is resolved once per process and inherited by forked
+ * children, so a child never needs DNS.  Lookups run on atom.cpp's
+ * background thread; a fork that lands mid-lookup leaves the child's copy
+ * of libc's resolver lock held forever, so resolving records that state
+ * for http_atom_client_after_fork() to see.
+ */
+static struct in_addr server_addr;
+static int server_addr_valid = 0;
+static int resolving = 0;
+
+#ifdef HAVE_WINDOWS_H
+#define set_resolving(v) (resolving = (v))	/* no fork on Windows */
+#else
+#define set_resolving(v) __atomic_store_n(&resolving, (v), __ATOMIC_SEQ_CST)
+#endif
+
+static int
+resolve_server(void)
+{
+    struct hostent *he;
+
+    if (server_addr_valid) return 1;
+    set_resolving(1);
+    he = gethostbyname(http_host);
+    if (he) memcpy(&server_addr, he->h_addr, sizeof(server_addr));
+    set_resolving(0);
+    if (!he) {
+        unsigned long ip = inet_addr(http_host);
+        if (ip == (unsigned long)-1) return 0;
+        server_addr.s_addr = ip;
+    }
+    server_addr_valid = 1;
+    return 1;
+}
 
 static int
 parse_url(const char *url)
@@ -116,7 +158,6 @@ static SOCKET
 http_connect_new(void)
 {
     struct sockaddr_in addr;
-    struct hostent *he;
     SOCKET sock;
     int delay_value = 1;
     int timeout_ms = DEFAULT_CONNECT_TIMEOUT_MS;
@@ -142,17 +183,11 @@ http_connect_new(void)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(http_port);
 
-    he = gethostbyname(http_host);
-    if (he) {
-        memcpy(&addr.sin_addr, he->h_addr, he->h_length);
-    } else {
-        unsigned long ip = inet_addr(http_host);
-        if (ip == (unsigned long)-1) {
-            closesocket(sock);
-            return INVALID_SOCKET;
-        }
-        addr.sin_addr.s_addr = ip;
+    if (!resolve_server()) {
+        closesocket(sock);
+        return INVALID_SOCKET;
     }
+    addr.sin_addr = server_addr;
 
     /* Set non-blocking for connect with timeout */
 #ifndef HAVE_WINDOWS_H
@@ -223,10 +258,26 @@ ensure_connection(void)
         }
     }
     if (persistent_sock == INVALID_SOCKET) {
+        if (server_unreachable) return INVALID_SOCKET;
         persistent_sock = http_connect_new();
         pending_responses = 0;
+        if (persistent_sock == INVALID_SOCKET) server_unreachable = 1;
     }
     return persistent_sock;
+}
+
+/*
+ * Called in a forked child.  The persistent connection is shared with the
+ * parent, so drop the child's copy and let it open its own.  If the fork
+ * interrupted the parent's DNS lookup, the child can't safely do one.
+ */
+void
+http_atom_client_after_fork(void)
+{
+    if (persistent_sock != INVALID_SOCKET) closesocket(persistent_sock);
+    persistent_sock = INVALID_SOCKET;
+    pending_responses = 0;
+    if (resolving) server_unreachable = 1;
 }
 
 static int

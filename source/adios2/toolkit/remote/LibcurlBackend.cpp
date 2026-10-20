@@ -133,7 +133,10 @@ private:
                         long httpCode = 0;
                         curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &httpCode);
 
-                        if (httpCode == 200 || httpCode == 201)
+                        // 206 is the ranged-read success; a server that ignored
+                        // the Range and sent 200 with the whole file fails the
+                        // size check below.
+                        if (httpCode == 200 || httpCode == 201 || httpCode == 206)
                         {
                             // Reject a response that would overrun dest; 0 = caller
                             // gave no expected size.
@@ -280,6 +283,13 @@ CURL *CreateEasyHandle(const RemoteHttpBackend::Config &config, AsyncGet *asyncO
 
     curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
     curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
+    if (asyncOp->rangeRead)
+    {
+        // Byte range of a plain file: "first-last", inclusive.
+        const std::string range = std::to_string(asyncOp->rangeOffset) + "-" +
+                                  std::to_string(asyncOp->rangeOffset + asyncOp->expectedSize - 1);
+        curl_easy_setopt(easy, CURLOPT_RANGE, range.c_str());
+    }
     curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(easy, CURLOPT_WRITEDATA, &asyncOp->responseData);
     curl_easy_setopt(easy, CURLOPT_CONNECTTIMEOUT, config.connectTimeout);

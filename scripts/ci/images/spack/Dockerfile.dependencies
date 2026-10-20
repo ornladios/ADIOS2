@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Pre-installs the ADIOS2 dependencies on top of the e4s image so CI does not
+# depend on the availability of the e4s binary cache. Built offline and pushed
+# to GHCR (--squash-all is needed for the rm below to shrink the image):
+#
+#   podman build --squash-all -f Dockerfile.dependencies \
+#       -t ghcr.io/ornladios/adios2:spack-dependencies-26.06 .
+#   podman push ghcr.io/ornladios/adios2:spack-dependencies-26.06
+FROM docker.io/ecpe4s/e4s-spack-cpu:26.06
+
+RUN . /spack/share/spack/setup-env.sh && \
+    spack install --only dependencies -j$(grep -c '^processor' /proc/cpuinfo) \
+        adios2@2~python && \
+    spack clean -a
+
+# Remove unused tools from the base image (not needed to build or test ADIOS2)
+RUN rm -rf /usr/local/julia /usr/local/aws-cli /usr/local/bin/aws* \
+           /usr/share/emacs /usr/share/vim /root/.spack /tmp/*

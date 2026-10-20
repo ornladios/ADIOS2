@@ -294,7 +294,7 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
 
     if (Stream->Status == Established)
     {
-        if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) && (Stream->Rank != 0))
+        if (Stream->Rank != 0)
         {
             CP_verbose(Stream, PerRankVerbose,
                        "Reader-side Rank received a "
@@ -307,14 +307,16 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
         else
         {
             /*
-             * tag our reader instance as failed, IFF this came from someone we
-             * should have gotten a CLOSE from. I.E. a reverse peer
+             * Only the loss of our connection to writer rank 0 means the
+             * stream is gone.  Connections to other writer ranks are made on
+             * demand by the data plane, and their loss is reported to the DP
+             * below without failing the stream.
              */
             CP_verbose(Stream, PerRankVerbose,
                        "Reader-side Rank received a "
                        "connection-close event during normal "
                        "operations, peer likely failed\n");
-            if (FailedPeerRank == Stream->FailureContactRank)
+            if (FailedPeerRank == 0)
             {
                 Stream->Status = PeerFailed;
                 STREAM_CONDITION_SIGNAL(Stream);
@@ -366,7 +368,7 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
 extern size_t SstCurrentStep(SstStream Stream) { return (size_t)Stream->ReaderTimestep; }
 
 static void releasePriorTimesteps(SstStream Stream, ssize_t Latest);
-static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
+static void sendToWriterRankZero(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
 
 static void **ParticipateInReaderInitDataExchange(SstStream Stream, void *dpInfo,
                                                   void **ret_data_block)
@@ -387,38 +389,6 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream, void *dpInfo
         Stream, &combined_init, Stream->CPInfo->PerRankReaderInfoFormat, ret_data_block);
     free(cpInfo.ContactInfo);
     return (void **)pointers;
-}
-
-static int HasAllPeers(SstStream Stream)
-{
-    int i, StillWaiting = 0;
-    if (!Stream->ConnectionsToWriter)
-    {
-        CP_verbose(Stream, PerRankVerbose,
-                   "(PID %lx, TID %lx) Waiting for first Peer notification\n",
-                   (unsigned long)getpid(), (unsigned long)gettid());
-        return 0;
-    }
-    i = 0;
-    while (Stream->Peers[i] != -1)
-    {
-        int peer = Stream->Peers[i];
-        if (Stream->ConnectionsToWriter[peer].CMconn == NULL)
-            StillWaiting++;
-        i++;
-    }
-    if (StillWaiting == 0)
-    {
-        CP_verbose(Stream, PerRankVerbose, "Rank %d has all forward peer connections\n",
-                   Stream->Rank);
-        return 1;
-    }
-    else
-    {
-        CP_verbose(Stream, PerRankVerbose, "Rank %d waiting for %d forward peer connections\n",
-                   Stream->Rank, StillWaiting);
-        return 0;
-    }
 }
 
 attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params, SMPI_Comm comm,
@@ -712,49 +682,13 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
     Stream->WriterConfigParams = ReturnData->WriterConfigParams;
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing FFS-based marshalling\n");
-    }
-    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose, "Writer is doing BP-based marshalling\n");
-    }
-    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose,
-                   "Writer is using Minimum Connection Communication pattern (min)\n");
-    }
-    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) && (Stream->Rank == 0))
-    {
-        CP_verbose(Stream, SummaryVerbose,
-                   "Writer is using Peer-based Communication pattern (peer)\n");
-    }
     STREAM_MUTEX_LOCK(Stream);
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
 
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    if (!Stream->ConnectionsToWriter)
     {
-        /*
-         *  Wait for connections and messages from writer side peers
-         */
-        getPeerArrays(Stream->CohortSize, Stream->Rank, Stream->WriterCohortSize, &Stream->Peers,
-                      NULL);
-
-        while (!HasAllPeers(Stream))
-        {
-            /* wait until we get the timestep metadata or something else changes
-             */
-            STREAM_CONDITION_WAIT(Stream);
-        }
-    }
-    else
-    {
-        if (!Stream->ConnectionsToWriter)
-        {
-            Stream->ConnectionsToWriter =
-                calloc(sizeof(CP_PeerConnection), ReturnData->WriterCohortSize);
-        }
+        Stream->ConnectionsToWriter =
+            calloc(sizeof(CP_PeerConnection), ReturnData->WriterCohortSize);
     }
 
     for (int i = 0; i < ReturnData->WriterCohortSize; i++)
@@ -764,25 +698,14 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         Stream->ConnectionsToWriter[i].RemoteStreamID = ReturnData->CP_WriterInfo[i]->WriterID;
     }
 
-    // Deref the original connection to writer rank 0 (might still be open as a
-    // peer)
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    // Deref the original connection to writer rank 0
+    /* only rely on the rank 0 to rank 0 that we already have (if we're rank
+     * 0) */
+    if (rank0_to_rank0_conn)
     {
-        if (rank0_to_rank0_conn)
-        {
-            CMConnection_dereference(rank0_to_rank0_conn);
-        }
-    }
-    else
-    {
-        /* only rely on the rank 0 to rank 0 that we already have (if we're rank
-         * 0) */
-        if (rank0_to_rank0_conn)
-        {
-            CMConnection conn = rank0_to_rank0_conn;
-            Stream->ConnectionsToWriter[0].CMconn = conn;
-            CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
-        }
+        CMConnection conn = rank0_to_rank0_conn;
+        Stream->ConnectionsToWriter[0].CMconn = conn;
+        CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
     }
     Stream->Status = Established;
     gettimeofday(&Stop, NULL);
@@ -798,8 +721,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         ReturnData->DP_WriterInfo);
     CP_verbose(Stream, PerRankVerbose, "Sending Reader Activate messages to writer\n");
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
+                         &Msg.WSR_Stream);
     CP_verbose(Stream, PerStepVerbose,
                "Finish opening Stream \"%s\", starting with Step number %ld\n", Filename,
                ReturnData->StartingStepNumber);
@@ -811,45 +734,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 //  program thread.  It can only be called after initialization and
 //  only accesses data installed durinig initialization, it needs no
 //  locking.
-extern void SstReaderGetParams(SstStream Stream, SstMarshalMethod *WriterMarshalMethod,
-                               int *WriterIsRowMajor)
+extern void SstReaderGetParams(SstStream Stream, int *WriterIsRowMajor)
 {
-    *WriterMarshalMethod = (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
     *WriterIsRowMajor = Stream->WriterConfigParams->IsRowMajor;
-}
-
-/*
- * CP_PeerSetupHandler is called by the network handler thread in
- * response to incoming PeerSetup messages to setup the reader-side
- * Peer list
- */
-extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v, void *client_data,
-                                attr_list attrs)
-{
-    PERFSTUBS_TIMER_START_FUNC(timer);
-    SstStream Stream;
-    struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
-    Stream = (SstStream)Msg->RS_Stream;
-    STREAM_MUTEX_LOCK(Stream);
-    CP_verbose(Stream, TraceVerbose, "Received peer setup from rank %d, conn %p\n", Msg->WriterRank,
-               conn);
-    if (!Stream->ConnectionsToWriter)
-    {
-        CP_verbose(Stream, TraceVerbose, "Allocating connections to writer\n");
-        Stream->ConnectionsToWriter = calloc(sizeof(CP_PeerConnection), Msg->WriterCohortSize);
-    }
-    CP_verbose(Stream, TraceVerbose, "Received peer setup from rank %d, conn %p\n", Msg->WriterRank,
-               conn);
-    if (Msg->WriterRank != -1)
-    {
-        Stream->ConnectionsToWriter[Msg->WriterRank].CMconn = conn;
-        CMConnection_add_reference(conn);
-        Stream->FailureContactRank = Msg->WriterRank;
-    }
-    CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
-    STREAM_CONDITION_SIGNAL(Stream);
-    STREAM_MUTEX_UNLOCK(Stream);
-    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadataMsg *tsm,
@@ -872,8 +759,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
                        "Sending ReleaseTimestep message for PRIOR DISCARD "
                        "timestep %ld, one to each writer\n",
                        tsm->Timestep);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
         }
         else
         {
@@ -903,8 +790,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
     Stream->Stats.TimestepMetadataReceived++;
     if (tsm->Metadata)
     {
-        Stream->Stats.MetadataBytesReceived +=
-            (tsm->Metadata->DataSize + tsm->AttributeData->DataSize);
+        Stream->Stats.MetadataBytesReceived += tsm->Metadata->DataSize;
+        for (int i = 0; i < tsm->AttributeBlockCount; i++)
+            Stream->Stats.MetadataBytesReceived += tsm->AttributeData[i].DataSize;
     }
     CP_verbose(Stream, PerRankVerbose,
                "Received a Timestep metadata message for timestep %ld, "
@@ -912,14 +800,12 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
                tsm->Timestep);
 
     STREAM_CONDITION_SIGNAL(Stream);
-    if ((Stream->Rank == 0) && (Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
-        (Stream->ConfigParams->AlwaysProvideLatestTimestep))
+    if ((Stream->Rank == 0) && (Stream->ConfigParams->AlwaysProvideLatestTimestep))
     {
         /*
-         * IFF we are in CommMin mode, AND we are to always provide
-         * the newest timestep, then when a new timestep arrives then
-         * we want to release timesteps that are older than it, NOT
-         * INCLUDING ANY TIMESTEP IN CURRENT USE.
+         * IFF we are to always provide the newest timestep, then when a
+         * new timestep arrives we want to release timesteps that are
+         * older than it, NOT INCLUDING ANY TIMESTEP IN CURRENT USE.
          */
         CP_verbose(Stream, TraceVerbose,
                    "Got a new timestep in AlwaysProvideLatestTimestep mode, "
@@ -976,19 +862,22 @@ void AddAttributesToAttrDataList(SstStream Stream, struct _TimestepMetadataMsg *
         Stream->InternalAttrDataCount = 0;
         Stream->AttrsRetrieved = 0;
     }
-    if (Msg->AttributeData->DataSize == 0)
-        return;
-
-    Stream->InternalAttrDataInfo =
-        realloc(Stream->InternalAttrDataInfo,
-                (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
-    struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
-    Stream->InternalAttrDataCount++;
-    NewInfo->BlockData = malloc(Msg->AttributeData->DataSize);
-    NewInfo->BlockSize = Msg->AttributeData->DataSize;
-    memcpy(NewInfo->BlockData, Msg->AttributeData->block, Msg->AttributeData->DataSize);
-    memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
-           sizeof(struct _SstData));
+    for (int i = 0; i < Msg->AttributeBlockCount; i++)
+    {
+        SstData Attrs = &Msg->AttributeData[i];
+        if (Attrs->DataSize == 0)
+            continue;
+        Stream->InternalAttrDataInfo =
+            realloc(Stream->InternalAttrDataInfo,
+                    (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
+        struct _SstBlock *NewInfo = &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
+        Stream->InternalAttrDataCount++;
+        NewInfo->BlockData = malloc(Attrs->DataSize);
+        NewInfo->BlockSize = Attrs->DataSize;
+        memcpy(NewInfo->BlockData, Attrs->block, Attrs->DataSize);
+        memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
+               sizeof(struct _SstData));
+    }
 }
 
 // CP_TimestepMetadataHandler is called by the network handler thread
@@ -1001,50 +890,12 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v, voi
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
     STREAM_MUTEX_LOCK(Stream);
-    if ((Stream->Rank != 0) || (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer))
-    {
-        /* All ranks are getting this */
-        if (Msg->Metadata == NULL)
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "Received a message that timestep %ld has been discarded\n", Msg->Timestep);
+    /* Writers only send this to reader rank 0, which distributes it to the
+     * other ranks */
+    /* arrange for this message data to stay around */
+    CMtake_buffer(cm, Msg);
 
-            /*
-             * before discarding, install any precious metadata from this
-             * message
-             */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, Msg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, Msg);
-                AddAttributesToAttrDataList(Stream, Msg);
-            }
-            STREAM_MUTEX_UNLOCK(Stream);
-
-            return;
-        }
-        else
-        {
-            CP_verbose(Stream, PerStepVerbose,
-                       "Received an incoming metadata message for timestep %ld\n", Msg->Timestep);
-        }
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
-    else
-    {
-        /* I must be rank 0 and only I got this, I'll need to distribute it to
-         * everyone */
-        /* arrange for this message data to stay around */
-        CMtake_buffer(cm, Msg);
-
-        queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
-    }
+    queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
     STREAM_MUTEX_UNLOCK(Stream);
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
@@ -1316,15 +1167,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
              * before discarding, install any precious metadata from this
              * message
              */
-            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-            {
-                FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
-            }
-            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-            {
-                AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
-                AddAttributesToAttrDataList(Stream, This->MetadataMsg);
-            }
+            AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
+            AddAttributesToAttrDataList(Stream, This->MetadataMsg);
 
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
@@ -1348,8 +1192,8 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
                 Last->Next = Next;
             }
             STREAM_MUTEX_UNLOCK(Stream);
-            sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
+            sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                                 &Msg.WSR_Stream);
             if (This->MetadataMsg == NULL)
                 printf("READER RETURN_BUFFER, metadatamsg == %p, line %d\n", This->MetadataMsg,
                        __LINE__);
@@ -1436,15 +1280,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
                            "SstAdvanceStep installing precious "
                            "metadata for discarded TS %ld\n",
                            Next->MetadataMsg->Timestep);
-                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-                {
-                    FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
-                }
-                else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-                {
-                    AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
-                    AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
-                }
+                AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
+                AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
@@ -1617,67 +1454,30 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, size_t UTimestep, s
                                                   Length, Buffer, DP_TimestepInfo);
 }
 
-static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
+static void sendToWriterRankZero(SstStream Stream, CMFormat f, void *Msg, void **WS_StreamPtr)
 {
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    if (Stream->Rank == 0)
     {
-        int i = 0;
-        while (Stream->Peers[i] != -1)
+        /* the control plane only talks to writer rank 0 */
+        CMConnection conn = Stream->ConnectionsToWriter[0].CMconn;
+        /* add the writer Stream identifier to each outgoing message */
+        *WS_StreamPtr = Stream->ConnectionsToWriter[0].RemoteStreamID;
+        if (CMwrite(conn, f, Msg) != 1)
         {
-            int peer = Stream->Peers[i];
-            CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
-            /* add the writer Stream identifier to each outgoing
-             * message */
-            *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
-            if (CMwrite(conn, f, Msg) != 1)
+            switch (Stream->Status)
             {
-                switch (Stream->Status)
-                {
-                case NotOpen:
-                case Opening:
-                case Established:
-                    CP_verbose(Stream, CriticalVerbose,
-                               "Message failed to send to writer %d (%p)\n", peer,
-                               (void *)*WS_StreamPtr);
-                    break;
-                case PeerClosed:
-                case PeerFailed:
-                case Closed:
-                case Destroyed:
-                    // Don't warn on send failures for closing/closed clients
-                    break;
-                }
-            }
-            i++;
-        }
-    }
-    else
-    {
-        if (Stream->Rank == 0)
-        {
-            int peer = 0;
-            CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
-            /* add the writer Stream identifier to each outgoing
-             * message */
-            *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
-            if (CMwrite(conn, f, Msg) != 1)
-            {
-                switch (Stream->Status)
-                {
-                case NotOpen:
-                case Opening:
-                case Established:
-                    CP_verbose(Stream, CriticalVerbose,
-                               "Message failed to send to writer %d (%p)\n", peer,
-                               (void *)*WS_StreamPtr);
-                    break;
-                case PeerClosed:
-                case PeerFailed:
-                case Closed:
-                case Destroyed:
-                    // Don't warn on send failures for closing/closed clients
-                    break;
-                }
+            case NotOpen:
+            case Opening:
+            case Established:
+                CP_verbose(Stream, CriticalVerbose,
+                           "Message failed to send to writer rank 0 (%p)\n", (void *)*WS_StreamPtr);
+                break;
+            case PeerClosed:
+            case PeerFailed:
+            case Closed:
+            case Destroyed:
+                // Don't warn on send failures for closing/closed clients
+                break;
             }
         }
     }
@@ -1693,8 +1493,8 @@ extern void SstReaderDefinitionLock(SstStream Stream, size_t UEffectiveTimestep)
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = EffectiveTimestep;
 
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->LockReaderDefinitionsFormat, &Msg,
+                         &Msg.WSR_Stream);
 }
 
 //  SstReleaseStep is only called by the main program thread.  It
@@ -1714,7 +1514,7 @@ extern void SstReleaseStep(SstStream Stream)
     ReleaseTSReadStats(Stream, Timestep);
     STREAM_MUTEX_UNLOCK(Stream);
 
-    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) || (Stream->Rank == 0))
+    if (Stream->Rank == 0)
     {
         STREAM_MUTEX_LOCK(Stream);
         FreeTimestep(Stream, Timestep);
@@ -1732,13 +1532,9 @@ extern void SstReleaseStep(SstStream Stream)
      */
     CP_verbose(Stream, PerRankVerbose,
                "Sending ReleaseTimestep message for timestep %ld, one to each writer\n", Timestep);
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
+                         &Msg.WSR_Stream);
 
-    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-    {
-        FFSClearTimestepData(Stream);
-    }
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
@@ -1759,235 +1555,8 @@ static void NotifyDPArrivedMetadata(SstStream Stream, struct _TimestepMetadataMs
  * wait for metadata for Timestep indicated to arrive, or fail with EndOfStream
  * or Error
  */
-static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
-                                         const float timeout_sec)
-{
-
-    TSMetadataList Entry;
-
-    PERFSTUBS_TIMER_START(timer, "Waiting on metadata per rank per timestep");
-
-    if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
-    {
-        struct _GlobalOpInfo
-        {
-            float timeout_sec;
-            int mode;
-            ssize_t LatestTimestep;
-        };
-        struct _GlobalOpInfo my_info;
-        struct _GlobalOpInfo *global_info = NULL;
-        ssize_t NextTimestep;
-
-        if (Stream->Rank == 0)
-        {
-            global_info = malloc(sizeof(my_info) * Stream->CohortSize);
-            CP_verbose(Stream, PerRankVerbose,
-                       "In special case of advancestep, mode is %d, "
-                       "Timeout Sec is %g, flt_max is %g\n",
-                       mode, timeout_sec, FLT_MAX);
-        }
-        my_info.LatestTimestep = MaxQueuedMetadata(Stream);
-        my_info.timeout_sec = timeout_sec;
-        my_info.mode = mode;
-        SMPI_Gather(&my_info, sizeof(my_info), SMPI_CHAR, global_info, sizeof(my_info), SMPI_CHAR,
-                    0, Stream->mpiComm);
-        if (Stream->Rank == 0)
-        {
-            ssize_t Biggest = -1;
-            ssize_t Smallest = SSIZE_T_MAX;
-            for (int i = 0; i < Stream->CohortSize; i++)
-            {
-                if (global_info[i].LatestTimestep > Biggest)
-                {
-                    Biggest = global_info[i].LatestTimestep;
-                }
-                if (global_info[i].LatestTimestep < Smallest)
-                {
-                    Smallest = global_info[i].LatestTimestep;
-                }
-            }
-
-            free(global_info);
-
-            /*
-             * Several situations are possible here, depending upon
-             * whether or not a timeout is specified and/or
-             * LatestAvailable is specified, and whether or not we
-             * have timesteps queued anywhere.  If they want
-             * LatestAvailable and we have any Timesteps queued
-             * anywhere, we decide upon a timestep to return and
-             * assume that all ranks will get it soon (or else we're
-             * in failure mode).  If there are no timesteps queued
-             * anywhere, then we're going to wait for timeout seconds
-             * ON RANK 0.  RANK 0 AND ONLY RANK 0 WILL DECIDE IF WE
-             * TIMEOUT OR RETURN WITH DATA.  It is possible that other
-             * ranks get timestep metadata before the timeout expires,
-             * but we don't care.  Whatever would happen on rank 0 is
-             * what happens everywhere.
-             */
-
-            if (Biggest == -1)
-            {
-                // AllQueuesEmpty
-                if (timeout_sec >= 0.0)
-                {
-                    waitForMetadataWithTimeout(Stream, timeout_sec);
-                }
-                else
-                {
-                    waitForMetadataWithTimeout(Stream, FLT_MAX);
-                }
-                NextTimestep = MaxQueuedMetadata(Stream); /* might be -1 if we timed out */
-            }
-            else
-            {
-                /*
-                 * we've actually got a choice here.  "Smallest" is
-                 * the LatestTimestep that everyone has.  "Biggest" is
-                 * the Latest that someone has seen, and presumably
-                 * others will see shortly.  I'm going to go with Biggest
-                 * until I have a reason to prefer one or the other.
-                 */
-                if (mode == SstLatestAvailable)
-                {
-                    // latest available
-                    CP_verbose(Stream, PerRankVerbose,
-                               "Returning Biggest timestep available "
-                               "%ld because LatestAvailable "
-                               "specified\n",
-                               Biggest);
-                    NextTimestep = Biggest;
-                }
-                else
-                {
-                    // next available (take the oldest that everyone has)
-                    CP_verbose(Stream, PerRankVerbose,
-                               "Returning Smallest timestep available "
-                               "%ld because NextAvailable specified\n",
-                               Smallest);
-                    NextTimestep = Smallest;
-                }
-            }
-            if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
-            {
-                /* force everyone to close */
-                NextTimestep = -2;
-            }
-            if ((NextTimestep == -1) && (Stream->Status == PeerFailed))
-            {
-                /* force everyone to return failed */
-                NextTimestep = -3;
-            }
-            SMPI_Bcast(&NextTimestep, 1, SMPI_LONG, 0, Stream->mpiComm);
-        }
-        else
-        {
-            STREAM_MUTEX_UNLOCK(Stream);
-            SMPI_Bcast(&NextTimestep, 1, SMPI_LONG, 0, Stream->mpiComm);
-            STREAM_MUTEX_LOCK(Stream);
-        }
-        if (NextTimestep == -2)
-        {
-            /* there was a peerClosed setting on rank0, we'll close */
-            Stream->Status = PeerClosed;
-            CP_verbose(Stream, PerStepVerbose,
-                       "SstAdvanceStep returning EndOfStream at timestep %ld\n",
-                       Stream->ReaderTimestep);
-            return SstEndOfStream;
-        }
-        if (NextTimestep == -3)
-        {
-            /* there was a peerFailed setting on rank0, we'll fail */
-            Stream->Status = PeerFailed;
-            CP_verbose(Stream, PerStepVerbose,
-                       "SstAdvanceStep returning EndOfStream at timestep %ld\n",
-                       Stream->ReaderTimestep);
-            STREAM_MUTEX_UNLOCK(Stream);
-            Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream, 0);
-            STREAM_MUTEX_LOCK(Stream);
-            return SstFatalError;
-        }
-        if (NextTimestep == -1)
-        {
-            CP_verbose(Stream, PerStepVerbose, "AdvancestepPeer timing out on no data\n");
-            return SstTimeout;
-        }
-        if (mode == SstLatestAvailable)
-        {
-            // latest available
-            /* release all timesteps from before NextTimestep, then fall
-             * through below */
-            /* Side note: It is possible that someone could get a "prior"
-             * timestep after this point.  It has to be released upon
-             * arrival */
-            CP_verbose(Stream, PerStepVerbose,
-                       "timed or Latest timestep, determined Nexttimestep %ld\n", NextTimestep);
-            Stream->DiscardPriorTimestep = NextTimestep;
-            releasePriorTimesteps(Stream, NextTimestep);
-        }
-    }
-
-    Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
-
-    PERFSTUBS_TIMER_STOP(timer);
-
-    if (Entry)
-    {
-        NotifyDPArrivedMetadata(Stream, Entry->MetadataMsg);
-
-        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-        {
-            PERFSTUBS_TIMER_START(timerFFS, "FFS marshaling case");
-            FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
-            PERFSTUBS_TIMER_STOP(timerFFS);
-        }
-        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-        {
-            AddFormatsToMetaMetaInfo(Stream, Entry->MetadataMsg);
-            AddAttributesToAttrDataList(Stream, Entry->MetadataMsg);
-        }
-        Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
-        SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
-        memset(Mdata, 0, sizeof(struct _SstFullMetadata));
-        Mdata->WriterCohortSize = Entry->MetadataMsg->CohortSize;
-        Mdata->WriterMetadata = malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
-        for (int i = 0; i < Mdata->WriterCohortSize; i++)
-        {
-            Mdata->WriterMetadata[i] = &Entry->MetadataMsg->Metadata[i];
-        }
-        if (Stream->DP_Interface->TimestepInfoFormats == NULL)
-        {
-            // DP didn't provide struct info, no valid data
-            Mdata->DP_TimestepInfo = NULL;
-        }
-        else
-        {
-            Mdata->DP_TimestepInfo = Entry->MetadataMsg->DP_TimestepInfo;
-        }
-        Stream->CurrentWorkingTimestep = Entry->MetadataMsg->Timestep;
-        Stream->CurrentMetadata = Mdata;
-
-        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning Success on timestep %ld\n",
-                   Entry->MetadataMsg->Timestep);
-        return SstSuccess;
-    }
-    if (Stream->Status == PeerClosed)
-    {
-        CP_verbose(Stream, PerStepVerbose,
-                   "SstAdvanceStepPeer returning EndOfStream at timestep %ld\n",
-                   Stream->ReaderTimestep);
-        return SstEndOfStream;
-    }
-    else
-    {
-        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning FatalError at timestep %ld\n",
-                   Stream->ReaderTimestep);
-        return SstFatalError;
-    }
-}
-
-static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, const float timeout_sec)
+static SstStatusValue AdvanceStepInternal(SstStream Stream, SstStepMode mode,
+                                          const float timeout_sec)
 {
     TSMetadataDistributionMsg ReturnData;
     struct _TimestepMetadataMsg *MetadataMsg;
@@ -2067,7 +1636,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
             if (Stream->Status == PeerFailed)
             {
                 CP_verbose(Stream, PerStepVerbose,
-                           "SstAdvanceStepMin returning FatalError because of "
+                           "AdvanceStepInternal returning FatalError because of "
                            "connection failure at timestep %ld\n",
                            Stream->ReaderTimestep);
                 return_value = SstFatalError;
@@ -2075,7 +1644,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
             else if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
             {
                 CP_verbose(Stream, PerStepVerbose,
-                           "SstAdvanceStepMin returning EndOfStream at timestep %ld\n",
+                           "AdvanceStepInternal returning EndOfStream at timestep %ld\n",
                            Stream->ReaderTimestep);
                 return_value = SstEndOfStream;
             }
@@ -2101,7 +1670,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
         if (Stream->Status == PeerFailed)
         {
             CP_verbose(Stream, PerStepVerbose,
-                       "SstAdvanceStepMin returning FatalError because of "
+                       "AdvanceStepInternal returning FatalError because of "
                        "conn failure at timestep %ld\n",
                        Stream->ReaderTimestep);
             return_value = SstFatalError;
@@ -2123,7 +1692,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
                 if (Stream->Status == PeerClosed)
                 {
                     CP_verbose(Stream, PerStepVerbose,
-                               "SstAdvanceStepMin rank 0 returning "
+                               "AdvanceStepInternal rank 0 returning "
                                "EndOfStream at timestep %ld\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstEndOfStream;
@@ -2131,7 +1700,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
                 else
                 {
                     CP_verbose(Stream, PerStepVerbose,
-                               "SstAdvanceStepMin rank 0 returning "
+                               "AdvanceStepInternal rank 0 returning "
                                "FatalError at timestep %ld\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstFatalError;
@@ -2160,14 +1729,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
 
     if (ReturnData->ReturnValue != SstSuccess)
     {
-        if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) && (ReturnData->TSmsg))
-        {
-            CP_verbose(Stream, PerRankVerbose,
-                       "SstAdvanceStep installing precious metadata before exiting\n");
-            FFSMarshalInstallPreciousMetadata(Stream, ReturnData->TSmsg);
-        }
-        else if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5) &&
-                 (ReturnData->TSmsg))
+        if (ReturnData->TSmsg)
         {
             AddFormatsToMetaMetaInfo(Stream, ReturnData->TSmsg);
             AddAttributesToAttrDataList(Stream, ReturnData->TSmsg);
@@ -2196,17 +1758,8 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
         NotifyDPArrivedMetadata(Stream, MetadataMsg);
 
         Stream->ReaderTimestep = MetadataMsg->Timestep;
-        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-        {
-            CP_verbose(Stream, TraceVerbose, "Calling install  metadata from metadata block %p\n",
-                       MetadataMsg);
-            FFSMarshalInstallMetadata(Stream, MetadataMsg);
-        }
-        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
-        {
-            AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
-            AddAttributesToAttrDataList(Stream, MetadataMsg);
-        }
+        AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
+        AddAttributesToAttrDataList(Stream, MetadataMsg);
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
@@ -2261,8 +1814,8 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
         struct _ReaderRequestStepMsg Msg;
         CP_verbose(Stream, PerRankVerbose, "Sending Reader Request Step messages to writer\n");
         memset(&Msg, 0, sizeof(Msg));
-        sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
-                                &Msg.WSR_Stream);
+        sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
+                             &Msg.WSR_Stream);
     }
 
     SstStepMode mode = SstNextAvailable;
@@ -2270,14 +1823,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
     {
         mode = SstLatestAvailable;
     }
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
-    {
-        result = SstAdvanceStepPeer(Stream, mode, timeout_sec);
-    }
-    else
-    {
-        result = SstAdvanceStepMin(Stream, mode, timeout_sec);
-    }
+    result = AdvanceStepInternal(Stream, mode, timeout_sec);
     if (result == SstSuccess)
     {
         Stream->Stats.TimestepsConsumed++;
@@ -2300,8 +1846,8 @@ extern void SstReaderClose(SstStream Stream)
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));
-    sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
-                            &Msg.WSR_Stream);
+    sendToWriterRankZero(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat, &Msg,
+                         &Msg.WSR_Stream);
     Stream->Stats.StreamValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)

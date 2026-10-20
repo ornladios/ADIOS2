@@ -186,7 +186,7 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
 }
 
 void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
-                                  const std::string filename)
+                                  const std::string filename, const Params & /*params*/)
 {
 
     EVPathRemoteCommon::_OpenSimpleFileMsg open_msg;
@@ -367,12 +367,13 @@ void EVPathRemote::ProcessReadResponse(GetHandle handle)
     }
 
     case adios2::core::Operator::OperatorType::COMPRESS_NULL:
-        // Reject a response that would overrun dest. Compressed cases bound
-        // their output in the operator, not here.
-        if (expectedSize != 0 && read_response_msg->Size > expectedSize)
-            helper::Throw<std::runtime_error>("Remote", "EVPathRemote", "ProcessReadResponse",
-                                              "remote response larger than the expected buffer "
-                                              "size");
+        // Reject a response that doesn't match dest exactly. Compressed cases
+        // bound their output in the operator, not here.
+        if (expectedSize != 0 && read_response_msg->Size != expectedSize)
+            helper::Throw<std::runtime_error>(
+                "Remote", "EVPathRemote", "ProcessReadResponse",
+                "remote response size " + std::to_string(read_response_msg->Size) +
+                    " does not match the expected " + std::to_string(expectedSize) + " bytes");
         memcpy(read_response_msg->Dest, read_response_msg->ReadData, read_response_msg->Size);
         break;
     default:
@@ -449,7 +450,7 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
                         const Mode mode, bool RowMajorOrdering){};
 
 void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port,
-                                  const std::string filename){};
+                                  const std::string filename, const Params &params){};
 
 EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
                                           Dims &Start, void *dest)

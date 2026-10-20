@@ -67,12 +67,6 @@ SPDX-FileCopyrightText = "2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = "thirdparty/enet/**"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2002-2020 Lee Salzman"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
 path = "thirdparty/nlohmann_json/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2013-2022 Niels Lohmann <http://nlohmann.me>"
@@ -97,19 +91,13 @@ SPDX-FileCopyrightText = "2008-2015 Jesse Beder"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = "thirdparty/mingw-w64/**"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "mingw-w64 contributors"
-SPDX-License-Identifier = "LicenseRef-public-domain"
-
-[[annotations]]
 path = "source/adios2/toolkit/derived/parser/pregen-source/*"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/enet/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/KWSys/CMakeLists.txt", "thirdparty/mingw-w64/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt"]
+path = ["thirdparty/CMakeLists.txt", "thirdparty/atl/CMakeLists.txt", "thirdparty/dill/CMakeLists.txt", "thirdparty/EVPath/CMakeLists.txt", "thirdparty/ffs/CMakeLists.txt", "thirdparty/GTest/CMakeLists.txt", "thirdparty/KWSys/CMakeLists.txt", "thirdparty/nanobind/CMakeLists.txt", "thirdparty/nlohmann_json/CMakeLists.txt", "thirdparty/perfstubs/CMakeLists.txt", "thirdparty/pugixml/CMakeLists.txt", "thirdparty/yaml-cpp/CMakeLists.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -233,3 +221,9 @@ path = ["testing/contract/lammps/in.test", "testing/contract/scorpio/**.dump"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["thirdparty/CLI11/CLI11_wrapper/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "CLI11 2.7.2 Copyright (c) 2017-2026 University of Cincinnati, developed by Henry Schreiner under NSF AWARD 1414736. All rights reserved."
+SPDX-License-Identifier = "BSD-3-Clause"

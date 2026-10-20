@@ -24,10 +24,6 @@ if(NOT @BUILD_SHARED_LIBS@)
   if(NOT "@ADIOS2_USE_EXTERNAL_FFS@")
     set(ffs_DIR ${CMAKE_CURRENT_LIST_DIR}/thirdparty)
   endif()
-
-  if(NOT "@ADIOS2_USE_EXTERNAL_ENET@")
-    set(enet_DIR ${CMAKE_CURRENT_LIST_DIR}/thirdparty)
-  endif()
 endif()
 
 set(${CMAKE_FIND_PACKAGE_NAME}_CONFIG "${CMAKE_CURRENT_LIST_FILE}")

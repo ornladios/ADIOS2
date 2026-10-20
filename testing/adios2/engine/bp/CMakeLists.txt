@@ -136,7 +136,6 @@ gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. .BP5 WORKING_DIRE
 if(UNIX AND CMAKE_SIZEOF_VOID_P GREATER_EQUAL 8)
   gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
   set_tests_properties(Engine.BP.LargeBlocks.MultiBlock.BP5.Serial PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" RUN_SERIAL TRUE)
-  target_link_libraries(Test.Engine.BP.LargeBlocks.Serial adios2sys)
 endif()
 
 # Interleaved reads from two files open at once (also run remotely below)
@@ -234,9 +233,16 @@ if (ADIOS2_HAVE_XRootD)
    add_test(NAME remoteXRServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd.sh )
    set_tests_properties(remoteXRServerCleanup         PROPERTIES FIXTURES_CLEANUP    XRServer)
 
+   # Raw byte-range reads (campaign image/text replicas) through
+   # GetRemoteSimpleFile(); registered once per XRootD lane below.
+   add_executable(Test.Engine.BP.XRootDSimpleFile.Serial TestBPXRootDSimpleFile.cpp)
+   target_link_libraries(Test.Engine.BP.XRootDSimpleFile.Serial
+      adios2::cxx adios2_core adios2::thirdparty::gtest)
+
    ##### add remote tests below this line
    add_get_xrremote_tests_helper(WriteReadADIOS2Transport)
    add_get_xrremote_tests_helper(WriteMemorySelectionRead)
+   add_get_xrremote_tests_helper(XRootDSimpleFile)
 endif()
 
 # HTTPS-based remote tests (requires both XRootD for server and CURL for client)
@@ -338,14 +344,16 @@ if (ADIOS2_HAVE_XRootD AND ADIOS2_HAVE_CURL)
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES FIXTURES_SETUP XRHttpsServer WORKING_DIRECTORY ${XROOTD_HTTPS_DIR} TIMEOUT 60)
    set_tests_properties(remoteXRHttpsServerSetup PROPERTIES DEPENDS "generateXRootDHttpConfig")
 
-   add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh)
+   add_test(NAME remoteXRHttpsServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd_http.sh /tmp/xrootd-http-${XROOTD_HTTP_PORT}.pid)
    set_tests_properties(remoteXRHttpsServerCleanup PROPERTIES FIXTURES_CLEANUP XRHttpsServer)
 
    ##### add HTTPS remote tests below this line
    add_get_xrhttps_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_tests_helper(WriteMemorySelectionRead)
+   add_get_xrhttps_tests_helper(XRootDSimpleFile)
    add_get_xrhttps_xrdcl_tests_helper(WriteReadADIOS2Transport)
    add_get_xrhttps_xrdcl_tests_helper(WriteMemorySelectionRead)
+   add_get_xrhttps_xrdcl_tests_helper(XRootDSimpleFile)
 endif()
 
 if(ADIOS2_HAVE_MPI)
@@ -371,6 +379,7 @@ bp_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 
 bp_gtest_add_tests_helper(SelectionsOnRowMajorData MPI_NONE)
 bp_gtest_add_tests_helper(SelectionsOnColumnMajorData MPI_NONE)
+bp_gtest_add_tests_helper(NdSelections MPI_NONE)
 
 # Fortran writer C++ reader test
 if(ADIOS2_HAVE_Fortran)
@@ -440,6 +449,7 @@ bp4_bp5_gtest_add_tests_helper(OpenWithMetadata MPI_NONE)
 if(NOT WIN32)
   bp5_gtest_add_tests_helper(MetadataFDClose MPI_NONE)
 endif()
+bp4_bp5_gtest_add_tests_helper(ActiveFlag MPI_NONE)
 
 # BP4 only for now
 # gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4

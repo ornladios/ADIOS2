@@ -58,6 +58,10 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    1. **OpenTimeoutSecs**: (Streaming mode) Reader may want to wait for the creation of the file in ``io.Open()``. By default the Open() function returns with an error if file is not found.
 
+   #. **IgnoreActiveFlag**: A writer marks the file as being written (active) until it closes it, and a writer that is killed or crashes leaves that mark behind. By default (``true``) the reader ignores the mark and reads the steps that are present, so ``BeginStep()`` returns ``EndOfStream`` after the last one instead of waiting for more. Set it to ``false`` to follow a file that is still being written; ``BeginStep()`` then waits for new steps (up to its timeout) as long as the file is marked active. The ``FileStream`` engine sets it to ``false``. A file left active by a killed writer can also be marked complete with ``adios2_deactivate_bp``.
+
+   1. **EOFWaitSecs**: How long a read of data the metadata refers to may wait on an end-of-file before failing, once the writer is known to be gone. The wait absorbs shared-filesystem consistency lag; on a file truncated by an interrupted writer, reads of the missing bytes fail cleanly after roughly 1.5x this many seconds. Recovery tools can set it low to fail fast.
+
    #. **BeginStepPollingFrequencySecs**: (Streaming mode) Reader can set how frequently to check the file (and file system) for new steps. Default is 1 seconds which may be stressful for the file system and unnecessary for the application.
 
 #. Aggregation
@@ -168,8 +172,10 @@ This engine allows the user to fine tune the buffering operations through the fo
 ================================ ===================== ===========================================================
  **Key**                         **Value Format**      **Default** and Examples
 ================================ ===================== ===========================================================
- OpenTimeoutSecs                 float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
+ OpenTimeoutSecs                 float                 **0**, ``10.0``, ``3600``
+ IgnoreActiveFlag                boolean               **true**, false
  BeginStepPollingFrequencySecs   float                 **1**, 10.0 
+ EOFWaitSecs                     float                 **30**, ``1.0``
  AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, DataSizeBased, EveryoneWrites
  NumAggregators                  integer >= 1          **0 (one file per compute node)**
  AggregatorRatio                 integer >= 1          not used unless set

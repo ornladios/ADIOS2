@@ -18,6 +18,11 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(bpcmp)
 endif()
 
+if(ADIOS2_HAVE_SST AND TARGET sst_conn_tool)
+  add_subdirectory(sst_conn_tool)
+endif()
+
 add_subdirectory(cwriter)
 add_subdirectory(changingshape)
+add_subdirectory(reorganize)
 

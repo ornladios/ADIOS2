@@ -19,6 +19,6 @@ cd "${test_dir}"
 cp -v /opt/adios2/source/testing/contract/lammps/{adios2_config.xml,check_results.sh,in.test} .
 
 
-mpiexec -np 4 --oversubscribe "${install_dir}/bin/lmp" -in in.test
+mpiexec -np 4 "${install_dir}/bin/lmp" -in in.test
 
 ./check_results.sh

@@ -300,6 +300,7 @@ CMControlList_set_blocking_func(CMControlList cl, CManager cm,
 				CMPollFunc bfunc, CMPollFunc pfunc,
 				void *client_data)
 {
+    (void)cl; (void)cm; (void)bfunc; (void)pfunc; (void)client_data;
 }
 
 extern void
@@ -345,6 +346,7 @@ INT_CMget_contact_list(CManager cm)
 extern attr_list
 INT_CMderef_and_copy_list(CManager cm, attr_list attrs)
 {
+    (void)cm;
   // done inside the CM lock, so a safe way to convert a shared list to an owned list
   attr_list ret = attr_copy_list(attrs);
   free_attr_list(attrs);
@@ -725,6 +727,38 @@ static thr_mutex_t atl_mutex;
 static int atl_mutex_initialized = 0;
 static void process_pending_queue(CManager cm, void *junk);
 
+static uint64_t
+mix64(uint64_t x)
+{
+    /* splitmix64 finalizer */
+    x ^= x >> 30;
+    x *= 0xbf58476d1ce4e5b9ULL;
+    x ^= x >> 27;
+    x *= 0x94d049bb133111ebULL;
+    x ^= x >> 31;
+    return x;
+}
+
+/*
+ * CMinternal_get_conn() reuses any connection whose remote CManager ID
+ * matches, so IDs must differ between processes.  Seeding lrand48() with
+ * getpid() + time() gave equal IDs whenever pid N started one second after
+ * pid N+1, and messages went to the wrong process.
+ */
+static int
+generate_CManager_ID(CManager cm)
+{
+    int stack_var;
+    uint64_t x = mix64((uint64_t)getpid());
+    x = mix64(x ^ (uint64_t)time(NULL));
+    x = mix64(x ^ (uint64_t)clock());
+    x = mix64(x ^ (uint64_t)(uintptr_t)cm);
+    x = mix64(x ^ (uint64_t)(uintptr_t)&stack_var);
+    /* high bit is a flag in the handshake, and 0 means "unknown" */
+    int id = (int)(x & 0x7fffffff);
+    return id ? id : 1;
+}
+
 extern
 CManager
 INT_CManager_create()
@@ -782,9 +816,7 @@ INT_CManager_create_control(char *control_module)
     cm->transports = NULL;
     cm->initialized = 0;
     cm->reference_count = 1;
-    uint64_t seed = getpid() + time(NULL);
-    srand48(seed);
-    cm->CManager_ID = (int)lrand48();
+    cm->CManager_ID = generate_CManager_ID(cm);
 
     char *tmp;
     if ((tmp = getenv("CMControlModule"))) {
@@ -792,22 +824,22 @@ INT_CManager_create_control(char *control_module)
     }
 
     if (control_module != NULL) {
-	char *tmp = strdup(control_module);
+	char *module = strdup(control_module);
 	char *c;
-	for (c = tmp; *c; ++c) *c = tolower(*c);
+	for (c = module; *c; ++c) *c = (char)tolower(*c);
 #ifdef HAVE_SYS_EPOLL_H
-	if (strcmp(tmp, "epoll") == 0) {
+	if (strcmp(module, "epoll") == 0) {
 	    cm->control_module_choice = "epoll";
 	} else
 #endif
-	if (strcmp(tmp, "select") == 0) {
+	if (strcmp(module, "select") == 0) {
 	    cm->control_module_choice = "select";
 	} else {
 	    fprintf(stderr, "Warning:  Specified CM/EVPath control module \"%s\" unknown or not built.\n", control_module);
 	    /* force to default */
 	    control_module = NULL;
 	}
-	free(tmp);
+	free(module);
     }	
     if (control_module == NULL) {
 #ifdef HAVE_SYS_EPOLL_H
@@ -1972,9 +2004,11 @@ timeout_conn(CManager cm, void *client_data)
  void (*cm_postread_hook)(size_t,char*) = (void (*)(size_t, char*)) NULL;
  void (*cm_last_postread_hook)() = (void (*)()) NULL;
  static size_t CMact_on_data(CMConnection conn, CMbuffer cm_buffer, char *buffer, size_t length);
+extern int CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length);
 
  static void process_pending_queue(CManager cm, void *junk)
  {
+    (void)junk;
      /* shortcircuit if no data, no lock */
      if (!cm->pending_data_queue) return;
 
@@ -2110,6 +2144,7 @@ timeout_conn(CManager cm, void *client_data)
 	 do_read = cm_preread_hook(buffer_full_point - buffer_data_end, tmp_message_buffer);
      }
      CMtrace_out(cm, CMLowLevelVerbose, "P5\n");
+     data_length = buffer_data_end;
      if (do_read) {
 	 if (trans->read_to_buffer_func) {
 	 /* 
@@ -2237,6 +2272,7 @@ timeout_conn(CManager cm, void *client_data)
  static void
  CMdo_handshake(CMConnection conn, int handshake_version, int byte_swap, char *base)
  {
+    (void)handshake_version;
      int do_send = 1;
      int remote_format_server_ID;
      int remote_CManager_ID;
@@ -2370,12 +2406,9 @@ timeout_conn(CManager cm, void *client_data)
 	   case 0x5042494f:
 	   case 0x4f494250:  /* incoming FFS format protocol message */
 	     {
-	       extern int CM_pbio_query(CMConnection conn, CMTransport trans,
-					char *buffer, size_t length);
-	       
-	       size_t ret = CM_pbio_query(conn, conn->trans, buffer, length);
+	       size_t pbio_ret = CM_pbio_query(conn, conn->trans, buffer, length);
 	       CManager_lock(cm);
-	       return ret;
+	       return pbio_ret;
 	     }
 	   }
 	   ret = CMdo_non_CM_handler(conn, *(int*)buffer, buffer, length);
@@ -2950,6 +2983,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 		       attr_list attrs, size_t actual_bytes_written,
 		       int attrs_present)
  {
+    (void)attrs;
      int i = 0, j = 0;
      size_t total_bytes = 0;
      size_t remaining_bytes = 0;
@@ -3172,6 +3206,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 			long vec_count, size_t byte_count, attr_list attrs, int data_vec_stack,
 			CMcompletion_notify_func notify_func, void *notify_client_data)
  {
+    (void)byte_count;
      size_t actual = 0;
      unsigned char checksum = 0;
      int i, start;
@@ -3793,7 +3828,7 @@ CM_init_select(CMControlList cl, CManager cm)
     SelectInitFunc shutdown_function;
     SelectInitFunc select_free_function;
     void *dlhandle = NULL;
-    struct _select_item sel_item;
+    struct _select_item sel_item = {0};
     char *select_module = cm->control_module_choice;
      
     CMtrace_out(cm, CMControlVerbose, "Loading CMselect module %s\n", select_module);
@@ -3894,7 +3929,7 @@ CM_init_select(CMControlList cl, CManager cm)
      internal_add_shutdown_task(cm, select_shutdown, (void*)shutdown_function, SHUTDOWN_TASK);
      {
 	 void ** data = malloc(3 * sizeof(void*));
-	 data[0] = select_free_function;
+	 data[0] = (void*)select_free_function;
 	 data[1] = cm->control_list->select_data;
 	 data[2] = dlhandle;
 	 internal_add_shutdown_task(cm, select_free, (void*)data, FREE_TASK);

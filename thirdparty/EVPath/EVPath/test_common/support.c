@@ -103,6 +103,10 @@ run_subprocess(char **args)
     if (quiet <= 0) {
         printf("Subproc arguments are: %s\n", comm_line);
     }
+    if (no_fork) {
+	/* caller will start the child by hand, as in the Unix path below */
+	return (pid_t) -1;
+    }
     if (!CreateProcess(module,
 		       comm_line,
         NULL,           // Process handle not inheritable

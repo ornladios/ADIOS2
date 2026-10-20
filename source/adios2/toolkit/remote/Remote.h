@@ -51,7 +51,7 @@ public:
                       const Mode mode, bool RowMajorOrdering, const Params &params = Params());
 
     virtual void OpenSimpleFile(const std::string hostname, const int32_t port,
-                                const std::string filename);
+                                const std::string filename, const Params &params = Params());
 
     virtual void OpenReadSimpleFile(const std::string hostname, const int32_t port,
                                     const std::string filename, std::vector<char> &contents);
@@ -111,6 +111,12 @@ std::shared_ptr<adios2::Remote> GetRemote(const RemoteSetup &remoteSetup,
                                           const std::string &RemoteFileName,
                                           const adios2::Mode openMode, const bool rowMajorOrdering,
                                           const Params &remoteParams);
+
+/* Create/Get a Remote object and open a read-only, unstructured byte stream.
+   Unlike GetRemote(), this does not open an ADIOS dataset on the remote side. */
+std::shared_ptr<adios2::Remote> GetRemoteSimpleFile(const RemoteSetup &remoteSetup,
+                                                    const std::string &remoteFileName,
+                                                    const Params &remoteParams = Params());
 
 } // end namespace adios2
 

@@ -103,13 +103,17 @@ def ReadHeader(f, fileSize, fileType, verbose):
         print("ERROR: Invalid " + fileType + ". File is smaller than the header (64 bytes)")
         return False
     header = f.read(64)
-    hStr = header.decode("ascii")
+    hStr = header.decode("latin-1")  # bytes 41+ may be binary (BP5 file identity)
 
     versionStr = hStr[0:32].replace("\0", " ")
     major = hStr[32]
     minor = hStr[33]
     micro = hStr[34]
     #    unused = hStr[35]
+
+    if header[37] != 5:
+        print("ERROR: {0} is not a BP5 file (BP version byte is {1})".format(fileType, header[37]))
+        return False
 
     endianValue = header[36]
     if endianValue == 0:

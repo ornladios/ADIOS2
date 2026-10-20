@@ -16,7 +16,7 @@
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 #include "adios2/helper/adiosYAML.h"
 #include "adios2/operator/OperatorFactory.h"
-#include <adios2sys/SystemTools.hxx>
+#include <filesystem>
 
 #include <adios2-perfstubs-interface.h>
 
@@ -90,7 +90,7 @@ adios2::HostOptions ADIOS::LoadHostConfig()
 #endif
     const std::string cfgFile = homePath + PathSeparator + ".config" + PathSeparator +
                                 "hpc-campaign" + PathSeparator + "hosts.yaml";
-    if (adios2sys::SystemTools::FileExists(cfgFile))
+    if (std::filesystem::exists(cfgFile))
     {
         helper::Comm comm = helper::CommDummy();
         helper::ParseHostOptionsFile(comm, cfgFile, hostOptions, homePath);
@@ -109,7 +109,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
     ProcessUserConfig();
     if (!configFile.empty())
     {
-        if (!adios2sys::SystemTools::FileExists(configFile))
+        if (!std::filesystem::exists(configFile))
         {
             helper::Throw<std::logic_error>("Core", "ADIOS", "ADIOS",
                                             "config file " + configFile + " not found");
@@ -176,13 +176,13 @@ void ADIOS::ProcessUserConfig()
     SetUserOptionDefaults();
     const std::string cfgFile = homePath + PathSeparator + ".config" + PathSeparator + "adios2" +
                                 PathSeparator + "adios2.yaml";
-    if (adios2sys::SystemTools::FileExists(cfgFile))
+    if (std::filesystem::exists(cfgFile))
     {
         helper::ParseUserOptionsFile(m_Comm, cfgFile, m_UserOptions, homePath);
     }
     const std::string cfgFile2 = homePath + PathSeparator + ".config" + PathSeparator +
                                  "hpc-campaign" + PathSeparator + "config.yaml";
-    if (adios2sys::SystemTools::FileExists(cfgFile2))
+    if (std::filesystem::exists(cfgFile2))
     {
         helper::ParseUserOptionsFile(m_Comm, cfgFile2, m_UserOptions, homePath);
     }

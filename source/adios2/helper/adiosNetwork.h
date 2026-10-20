@@ -89,6 +89,7 @@ public:
 
     bool valid() const;
 
+    void SetCAFile(const std::string &caFile);
     void Connect(const std::string &hostname, uint16_t port, std::string protocol = "tcp");
     int Write(const char *buffer, int size);
     int Read(char *buffer, int size);

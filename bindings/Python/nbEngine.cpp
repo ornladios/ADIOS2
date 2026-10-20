@@ -175,6 +175,24 @@ void Engine::PerformDataWrite()
     m_Engine->PerformDataWrite();
 }
 
+namespace
+{
+// numpy has no char dtype. char is signed on x86 and unsigned on aarch64 Linux, so
+// nb::dtype<char>() is int8 on one and uint8 on the other. Accept either 8-bit integer
+// buffer for char variables so the Python-side int8 mapping works on both.
+template <class T>
+bool DtypeMatches(const nb::dlpack::dtype &dtype)
+{
+    return dtype == nb::dtype<T>();
+}
+
+template <>
+bool DtypeMatches<char>(const nb::dlpack::dtype &dtype)
+{
+    return dtype == nb::dtype<int8_t>() || dtype == nb::dtype<uint8_t>();
+}
+}
+
 void Engine::Get(Variable variable, nb::ndarray<nb::numpy> &array, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Get a numpy array");
@@ -190,7 +208,7 @@ void Engine::Get(Variable variable, nb::ndarray<nb::numpy> &array, const Mode la
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        if (array.dtype() != nb::dtype<T>())                                                       \
+        if (!DtypeMatches<T>(array.dtype()))                                                       \
         {                                                                                          \
             throw std::invalid_argument("In ADIOS2 Get - Type mismatch between Python buffer and " \
                                         "incoming data.");                                         \

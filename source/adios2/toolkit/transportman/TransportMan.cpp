@@ -12,7 +12,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 #include "adios2/toolkit/transport/OpenFile.h"
-#include <adios2sys/SystemTools.hxx>
+#include <filesystem>
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // length of std::function inside std::async
@@ -149,7 +149,7 @@ std::vector<std::string> TransportMan::GetTransportsNames() noexcept
     for (const auto &transportPair : m_Transports)
     {
         const std::shared_ptr<Transport> &transport = transportPair.second;
-        names.push_back(adios2sys::SystemTools::GetFilenameName(transport->m_Name));
+        names.push_back(std::filesystem::path(transport->m_Name).filename().string());
     }
     return names;
 }

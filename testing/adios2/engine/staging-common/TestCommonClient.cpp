@@ -286,6 +286,17 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             write_times.push_back(write_time);
             if (AdvancingAttrs)
             {
+                // ASSERT so a failing reader exits, the driver ignores killed ones
+                auto fixed = io.InquireAttribute<std::string>("FixedAttr");
+                ASSERT_TRUE(fixed);
+                ASSERT_EQ(fixed.Data().front(), "fixed");
+                auto lastRank = io.InquireAttribute<int32_t>("LastRankAttr");
+                ASSERT_TRUE(lastRank);
+                ASSERT_EQ(lastRank.Data().front(), (int32_t)writerSize - 1);
+                auto stepAttr = io.InquireAttribute<int32_t>("StepAttr");
+                ASSERT_TRUE(stepAttr);
+                ASSERT_EQ(stepAttr.Data().front(), (int32_t)currentStep);
+
                 /* we only succeed if every attribute from every prior step is
                  * there, but not the next few */
                 for (size_t step = 0; step <= currentStep + 2; step++)

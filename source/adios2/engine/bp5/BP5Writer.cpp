@@ -19,9 +19,9 @@
 #include "adios2/toolkit/transport/OpenFile.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
-#include <adios2sys/SystemTools.hxx>
 
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip> // setw
 #include <iostream>
@@ -2552,7 +2552,7 @@ void BP5Writer::FlushProfiler()
     if (m_RankMPI == 0)
     {
         transportTypes.push_back(m_MetadataFile->m_Type + "_" + m_MetadataFile->m_Library);
-        transportNames.push_back(adios2sys::SystemTools::GetFilenameName(m_MetadataFile->m_Name));
+        transportNames.push_back(std::filesystem::path(m_MetadataFile->m_Name).filename().string());
         transportProfilers.push_back(&m_MetadataFile->m_Profiler);
     }
 
@@ -2666,7 +2666,7 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
 
     if (!variable.m_MemoryCount.empty())
     {
-        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        const bool sourceRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
         helper::DimsArray MemoryStart(variable.m_MemoryStart);
         helper::DimsArray MemoryCount(variable.m_MemoryCount);
         helper::DimsArray varCount(variable.m_Count);

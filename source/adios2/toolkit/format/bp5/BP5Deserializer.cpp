@@ -823,6 +823,11 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
     InstallMetadataBuffer(BaseData, WriterRank, Step, FFSformat);
 }
 
+bool BP5Deserializer::MetadataFormatKnown(void *MetadataBlock)
+{
+    return FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock) != nullptr;
+}
+
 FFSTypeHandle BP5Deserializer::BufferMetaMetaPrep(void *MetadataBlock)
 {
     FFSTypeHandle FFSformat = FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
@@ -1046,6 +1051,14 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                             VarRec->LastJoinedShape = VarRec->GlobalDims;
                             // overwrite the JoinedDimen value in that entry
                             VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
+                            if (m_RandomAccessMode)
+                            {
+                                if (VarRec->JoinedShapeByStep.size() < Step + 1)
+                                {
+                                    VarRec->JoinedShapeByStep.resize(Step + 1, NULL);
+                                }
+                                VarRec->JoinedShapeByStep[Step] = VarRec->LastJoinedShape;
+                            }
                         }
                         VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
                             meta_base->Count[(b * meta_base->Dims) + VarRec->JoinedDimen];
@@ -1528,10 +1541,60 @@ bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable, B
     return true;
 }
 
+Dims BP5Deserializer::StepShape(BP5VarRec *VarRec, size_t AbsStep) const
+{
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
+    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    {
+        const MetaArrayRec *meta =
+            (const MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        if (meta && meta->Shape)
+        {
+            return Dims(meta->Shape, meta->Shape + meta->Dims);
+        }
+    }
+    return Dims();
+}
+
+size_t BP5Deserializer::BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const
+{
+    size_t NodeFirstBlock = 0;
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
+    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    {
+        const MetaArrayRec *meta =
+            (const MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        if (!meta || !meta->BlockCount)
+        {
+            continue; // not written on this step by this rank
+        }
+        const size_t NodeLastBlock = NodeFirstBlock + meta->BlockCount - 1;
+        if ((NodeFirstBlock <= BlockID) && (NodeLastBlock >= BlockID))
+        {
+            const size_t NeededBlock = BlockID - NodeFirstBlock;
+            const size_t StartDim = NeededBlock * VarRec->DimCount;
+            size_t total = 1;
+            for (size_t d = 0; d < VarRec->DimCount; d++)
+            {
+                total *= (size_t)meta->Count[StartDim + d];
+            }
+            return total;
+        }
+        NodeFirstBlock += meta->BlockCount;
+    }
+    return 0;
+}
+
 bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable,
                                      void *DestData, size_t AbsStep, size_t RelStep,
-                                     const core::Selection &selection)
+                                     const core::Selection &selection, size_t *DestElements)
 {
+    // Elements this step contributes; QueueGet advances by it, so every path
+    // that writes or queues must set it.  Must agree with SelectionSize().
+    if (DestElements)
+    {
+        *DestElements = 0;
+    }
     // Use find, not operator[]: a reader-derived placeholder is not in VarByKey,
     // and inserting a NULL entry would crash the teardown loop that dereferences
     // it. Fall back to the reader-derived routing map on a miss.
@@ -1560,6 +1623,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
 
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
+        if (DestElements)
+        {
+            *DestElements = 1;
+        }
         const size_t writerCohortSize = WriterCohortSize(AbsStep);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
@@ -1576,6 +1643,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             const Dims &start = selection.GetStart();
             const Dims &count = selection.GetCount();
+            if (DestElements)
+            {
+                *DestElements = count[0];
+            }
             for (size_t WriterRank = start[0]; WriterRank < count[0] + start[0]; WriterRank++)
             {
                 (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
@@ -1585,6 +1656,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         }
         else if (hasBlock)
         {
+            if (DestElements)
+            {
+                *DestElements = 1;
+            }
             size_t WriterRank = blockID;
             (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
                                              hasBlock, blockID);
@@ -1593,6 +1668,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             // Read all writer ranks
             const size_t writerCohortSize = WriterCohortSize(AbsStep);
+            if (DestElements)
+            {
+                *DestElements = writerCohortSize;
+            }
             for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
             {
                 (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank,
@@ -1617,10 +1696,17 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         }
         else
         {
-            // GlobalArray or JoinedArray — read the whole thing
+            // GlobalArray or JoinedArray — read the whole thing.  Use the shape
+            // at this step; m_Shape is the inquired shape and is wrong once the
+            // global dimensions change between steps.
             effectiveSelType = adios2::SelectionType::BoundingBox;
-            effectiveStart = Dims(variable.m_Shape.size(), 0);
-            effectiveCount = variable.m_Shape;
+            Dims stepShape = StepShape(VarRec, AbsStep);
+            if (stepShape.empty())
+            {
+                stepShape = variable.m_Shape;
+            }
+            effectiveStart = Dims(stepShape.size(), 0);
+            effectiveCount = stepShape;
         }
     }
     else
@@ -1649,6 +1735,10 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         Req.MemoryCount = memoryCount;
         Req.AccuracyRequested = accuracy;
         Req.Step = AbsStep;
+        if (DestElements)
+        {
+            *DestElements = helper::GetTotalSize(effectiveCount);
+        }
         Req.RelStep = RelStep;
         Req.StepCount = 1;
         Req.MemSpace = MemSpace;
@@ -1667,6 +1757,14 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         {
             Req.Start = effectiveStart;
             Req.Count = effectiveCount;
+            if (DestElements)
+            {
+                *DestElements = helper::GetTotalSize(effectiveCount);
+            }
+        }
+        else if (DestElements)
+        {
+            *DestElements = BlockElementCount(VarRec, AbsStep, Req.BlockID);
         }
         Req.MemoryStart = memoryStart;
         Req.MemoryCount = memoryCount;
@@ -1831,10 +1929,14 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
                 {
                     if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                     {
-                        // This writer wrote on this timestep
-                        ret = QueueGetSingle(ctx, variable, DestData, AbsStep, RelStep, selection);
-                        size_t increment = variable.TotalSize() * variable.m_ElementSize;
-                        DestData = (void *)((char *)DestData + increment);
+                        // This writer wrote on this timestep.  Advance by the
+                        // selection's per-step size, not variable.TotalSize(),
+                        // which strides past a SelectionSize() allocation.
+                        size_t DestElements = 0;
+                        ret = QueueGetSingle(ctx, variable, DestData, AbsStep, RelStep, selection,
+                                             &DestElements);
+                        DestData =
+                            (void *)((char *)DestData + DestElements * variable.m_ElementSize);
                         break;
                     }
                 }
@@ -1939,6 +2041,60 @@ bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, uint64_t *offse
      * requests are assumed to be non-contiguous.
      */
     return (((struct BP5VarRec *)Req->VarRec)->DimCount == 1);
+}
+
+/*
+ * A block's intersection with a global-array selection can be read straight
+ * into application memory when it is one contiguous run in both the writer's
+ * block and the selection's buffer: full extent in every dimension faster than
+ * some dimension k, any extent in k, and extent 1 in every slower dimension.
+ * An exact match of block and selection is the common case.  On success
+ * *destOffset is the byte offset of the intersection in the application
+ * buffer.  Memory selections lay the buffer out differently, so they never
+ * qualify.
+ */
+bool BP5Deserializer::ContiguousDestination(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                                            const uint64_t *blkCount,
+                                            const size_t *interStartInBlock,
+                                            const size_t *interCount, size_t elemSize,
+                                            size_t *destOffset)
+{
+    const size_t n = ((struct BP5VarRec *)Req->VarRec)->DimCount;
+    if (!blkOffsets || n == 0 || n > helper::MAX_DIMS || Req->Start.size() != n ||
+        Req->Count.size() != n || !Req->MemoryStart.empty() || !Req->MemoryCount.empty())
+    {
+        return false;
+    }
+    std::array<uint64_t, helper::MAX_DIMS> selCount;
+    for (size_t d = 0; d < n; ++d)
+    {
+        selCount[d] = Req->Count[d];
+    }
+    auto lf_OneRun = [&](const uint64_t *full) {
+        size_t i = 0;
+        // fastest-varying first
+        auto dim = [&](size_t k) { return m_ReaderIsRowMajor ? n - 1 - k : k; };
+        while (i < n && interCount[dim(i)] == full[dim(i)])
+            ++i;
+        ++i; // the one dimension that may be partial
+        for (; i < n; ++i)
+        {
+            if (interCount[dim(i)] != 1)
+                return false;
+        }
+        return true;
+    };
+    if (!lf_OneRun(blkCount) || !lf_OneRun(selCount.data()))
+    {
+        return false;
+    }
+    std::array<size_t, helper::MAX_DIMS> pos;
+    for (size_t d = 0; d < n; ++d)
+    {
+        pos[d] = blkOffsets[d] + interStartInBlock[d] - Req->Start[d];
+    }
+    *destOffset = elemSize * LinearIndex(n, selCount.data(), pos.data(), m_ReaderIsRowMajor);
+    return true;
 }
 
 std::vector<BP5Deserializer::ReadRequest>
@@ -2453,31 +2609,18 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                    size_t DestOffset = 0;
                                     if (Req->MemSpace != MemorySpace::Host)
                                         RR.DirectToAppMemory = false;
                                     else if (m_SourceIsLittleEndian != m_ReaderIsLittleEndian)
                                         RR.DirectToAppMemory = false;
                                     else
-                                        RR.DirectToAppMemory = IsContiguousTransfer(
-                                            Req, &writer_meta_base->Offsets[StartDim],
-                                            &writer_meta_base->Count[StartDim]);
+                                        RR.DirectToAppMemory = ContiguousDestination(
+                                            Req, blkOffsets, blkCount, &intersectionstart[0],
+                                            &intersectioncount[0], VB->m_ElementSize, &DestOffset);
                                     if (RR.DirectToAppMemory)
                                     {
-                                        /*
-                                         * DirectToAppMemory handles only 1D, so offset
-                                         * calc is 1D only for the moment ContigOffset
-                                         * handles the case where our destination is not
-                                         * the start of the destination memory (because
-                                         * some other block filled in that start)
-                                         */
-
-                                        ssize_t ContigOffset =
-                                            (writer_meta_base->Offsets[StartDim + 0] -
-                                             Req->Start[0]) *
-                                            VB->m_ElementSize;
-                                        if (ContigOffset < 0)
-                                            ContigOffset = 0;
-                                        RR.DestinationAddr = (char *)Req->Data + ContigOffset;
+                                        RR.DestinationAddr = (char *)Req->Data + DestOffset;
                                     }
                                     else
                                     {
@@ -3198,7 +3341,12 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     }
     if (VarRec->OrigShapeID == ShapeID::JoinedArray)
     {
-        MV->Shape = BP5MVIOwnDims(MV, VarRec->LastJoinedShape, (size_t)MV->Dims);
+        uint64_t *JoinedShape = VarRec->LastJoinedShape;
+        if (m_RandomAccessMode && (AbsStep < VarRec->JoinedShapeByStep.size()))
+        {
+            JoinedShape = VarRec->JoinedShapeByStep[AbsStep];
+        }
+        MV->Shape = BP5MVIOwnDims(MV, JoinedShape, (size_t)MV->Dims);
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -3527,12 +3675,17 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
     else
     {
         // Joined array case.  This was calculated during metadata installation
-        if (VarRec->LastJoinedShape)
+        uint64_t *JoinedShape = VarRec->LastJoinedShape;
+        if (m_RandomAccessMode && (AbsStep < VarRec->JoinedShapeByStep.size()))
+        {
+            JoinedShape = VarRec->JoinedShapeByStep[AbsStep];
+        }
+        if (JoinedShape)
         {
             Shape.resize(VarRec->DimCount);
             for (size_t i = 0; i < VarRec->DimCount; i++)
             {
-                Shape[i] = VarRec->LastJoinedShape[i];
+                Shape[i] = JoinedShape[i];
             }
             return true;
         }

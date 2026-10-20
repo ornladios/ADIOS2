@@ -392,7 +392,8 @@ enum class HostAccessProtocol
     SSH,
     XRootD,
     S3,
-    LocalHost
+    LocalHost,
+    HTTPS
 };
 
 /** Host authentication protocols */
@@ -428,8 +429,13 @@ struct HostConfig
     /* xrootd only parameters */
     XRootDTransferProtocol transfer_protocol = XRootDTransferProtocol::XRootD;
 
-    /* s3 parameters */
+    /* s3 and https parameters */
     std::string endpoint = "";
+
+    /* https parameters */
+    std::string caFile = "";
+
+    /* s3 parameters */
     std::string awsProfile = "default"; // profile name in ~/.aws/credentials
     bool isAWS_EC2 = false;
     bool recheckMetadata = true;

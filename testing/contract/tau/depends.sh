@@ -7,4 +7,4 @@
 set -x
 set -e
 
-sudo /opt/spack/bin/spack install -v tau ~fortran ~papi ~pdt ~otf2
+spack install --add -v tau ~fortran ~papi ~pdt ~otf2 ~elf

@@ -11,9 +11,8 @@
 #include "adios2/helper/adiosDynamicBinder.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosSystem.h"
 #include "adios2/plugin/PluginEngineInterface.h"
-
-#include <adios2sys/SystemTools.hxx>
 
 #include <memory>
 #include <stdexcept>
@@ -102,7 +101,7 @@ bool PluginManager::LoadPlugin(const std::string &pluginName, const std::string 
     }
 
     std::string allPluginPaths;
-    adios2sys::SystemTools::GetEnv(pluginEnvVarName, allPluginPaths);
+    helper::GetEnv(pluginEnvVarName, allPluginPaths);
     if (allPluginPaths.empty())
     {
         return OpenPlugin(pluginName, pluginLibrary, "");
@@ -114,8 +113,7 @@ bool PluginManager::LoadPlugin(const std::string &pluginName, const std::string 
     char platform_separator = ':';
 #endif
 
-    auto pathsSplit =
-        adios2sys::SystemTools::SplitString(allPluginPaths, platform_separator, false);
+    auto pathsSplit = helper::SplitString(allPluginPaths, platform_separator, false);
 
     bool loaded = false;
     auto pathIt = pathsSplit.begin();

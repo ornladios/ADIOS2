@@ -25,12 +25,12 @@ echo "Installing Miniconda"
 
 if [ "${RUNNER_ARCH}" = "X64" ]
 then
-  readonly checksum="6d7c1cc138adfc4bb2ccbb8a22eb8e9eb13a366b6af0d63245b643e6c3a3c708"
-  readonly pkg="Miniconda3-py310_24.5.0-0-MacOSX-x86_64.sh"
+  readonly checksum="9c88674b1a839eeb4cff006df397a05ea7d896472318fd84b7070278f9653dc6"
+  readonly pkg="Miniconda3-py313_25.7.0-2-MacOSX-x86_64.sh"
 elif [ "${RUNNER_ARCH}" = "ARM64" ]
 then
-  readonly checksum="e422602aa19140c600b5889e5b41a0d7187640107ea82fcb5da857dd25330148"
-  readonly pkg="Miniconda3-py310_24.5.0-0-MacOSX-arm64.sh"
+  readonly checksum="5c0137ef38c153649da28ca31a420b9c12c94cf636319beb8c925396d797fe62"
+  readonly pkg="Miniconda3-py313_25.7.0-2-MacOSX-arm64.sh"
 else
   echo "Error: unknown platform: ${RUNNER_ARCH} "
   exit 3
@@ -49,6 +49,7 @@ conda init --all
 conda config --remove channels defaults
 conda config --add channels conda-forge
 conda config --set channel_priority strict
+conda update -n base -c conda-forge conda -y
 conda update --all -y
 
 conda env create --verbose -f "gha/scripts/ci/gh-actions/conda-env-macos.yml"

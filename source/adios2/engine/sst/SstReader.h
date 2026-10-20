@@ -12,7 +12,6 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/toolkit/format/bp/bp3/BP3Deserializer.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 
 namespace adios2
@@ -50,28 +49,14 @@ public:
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
-    template <class T>
-    void ReadVariableBlocksRequests(Variable<T> &variable, std::vector<void *> &sstReadHandlers,
-                                    std::vector<std::vector<char>> &buffers);
-
-    template <class T>
-    void ReadVariableBlocksFill(Variable<T> &variable, std::vector<std::vector<char>> &buffers,
-                                size_t &iter);
-
-    template <class T>
-    void SstBPPerformGets();
     void BP5PerformGets();
     void Init();
     SstStream m_Input;
-    SstMarshalMethod m_WriterMarshalMethod;
     int m_WriterIsRowMajor;
     bool m_DefinitionsNotified = false;
 
-    /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
-    format::BP3Deserializer *m_BP3Deserializer;
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
-    /* --- Used only with BP marshaling --- */
 
     struct _SstParams Params;
 

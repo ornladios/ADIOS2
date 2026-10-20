@@ -33,11 +33,16 @@ option(ADIOS2_USE_EXTERNAL_YAMLCPP
   "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PERFSTUBS
   "Use an externally supplied perfstubs library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_CLI11
+  "Use an externally supplied CLI11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
 add_subdirectory(KWSys)
 
 add_subdirectory(perfstubs)
 adios2_add_thirdparty_target(perfstubs-interface perfstubs-interface)
+
+add_subdirectory(CLI11)
+adios2_add_thirdparty_target(CLI11 CLI11_wrapper)
 
 if(BUILD_TESTING)
   if(ADIOS2_USE_EXTERNAL_GTEST)
@@ -88,10 +93,6 @@ if(yaml-cpp_VERSION VERSION_GREATER_EQUAL 0.8)
   target_link_directories(adios2::thirdparty::yaml-cpp INTERFACE ${YAML_CPP_LIBRARY_DIR})
 endif()
 
-if(WIN32)
-  add_subdirectory(mingw-w64)
-endif()
-
 #------------------------------------------------------------------------------#
 # SST / EVPath stuff
 #------------------------------------------------------------------------------#
@@ -110,10 +111,6 @@ cmake_dependent_option(ADIOS2_USE_EXTERNAL_FFS
 cmake_dependent_option(ADIOS2_USE_EXTERNAL_DILL
   "Use an externally supplied DILL library" OFF
   "NOT ADIOS2_USE_EXTERNAL_FFS" ON
-)
-cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
-  "Use an externally supplied ENET library" OFF
-  "NOT ADIOS2_USE_EXTERNAL_EVPATH" ON
 )
 
 if(NOT ADIOS2_USE_EXTERNAL_FFS)
@@ -141,11 +138,6 @@ adios2_add_thirdparty_target(atl atl::atl)
 adios2_add_thirdparty_target(ffs ffs::ffs)
 
 if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
-  if(NOT ADIOS2_USE_EXTERNAL_ENET)
-    add_subdirectory(enet)
-  endif()
-  find_package(enet REQUIRED)
-
   add_subdirectory(EVPath)
 endif()
 find_package(EVPath REQUIRED)

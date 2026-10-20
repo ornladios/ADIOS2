@@ -80,6 +80,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 18. **StreamReader**: By default the BP4 engine parses all available metadata in Open(). An application may turn this flag on to parse a limited number of steps at once, and update metadata when those steps have been processed. If the flag is ON, reading only works in streaming mode (using BeginStep/EndStep); file reading mode will not work as there will be zero steps processed in Open().
 
+19. **IgnoreActiveFlag**: A writer marks the file as being written (active) until it closes it, and a writer that is killed or crashes leaves that mark behind. By default (``true``) the reader ignores the mark and reads the steps that are present, so ``BeginStep()`` returns ``EndOfStream`` after the last one instead of waiting for more. Set it to ``false`` to follow a file that is still being written. The ``FileStream`` engine sets it to ``false``.
+
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
 ============================== ===================== ===========================================================
@@ -102,6 +104,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  BurstBufferDrain               string On/Off         **On**, Off
  BurstBufferVerbose             integer, 0-2          **0**, ``1``, ``2`` 
  StreamReader                   string On/Off         On, **Off**
+ IgnoreActiveFlag               boolean               **true**, false
 ============================== ===================== ===========================================================
 
 

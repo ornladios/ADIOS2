@@ -50,8 +50,10 @@ if [ ! -f xroot-http/certs/server.crt ]; then
 fi
 
 {
-    # Enable SSI filesystem
-    echo "xrootd.fslib libXrdSsi.so"
+    # SSI stacked over the default file system: SSI requests go to the ADIOS
+    # service; paths under ssi.fspath are ordinary files served by XRootD
+    # (byte-range reads of campaign image/text replicas use them).
+    echo "xrootd.fslib libXrdSsi.so default"
     echo ""
     echo "all.export /etc nolock r/w"
     echo ""
@@ -59,6 +61,9 @@ fi
     echo ""
     # Load SSI service plugin
     echo "ssi.svclib $1"
+    echo ""
+    echo "ssi.fspath ${BASEDIR}"
+    echo "all.export ${BASEDIR} r/o"
     echo ""
     # Disable native xrootd protocol (use port 0 to disable or a different port)
     echo "xrd.port ${XRD_PORT}"

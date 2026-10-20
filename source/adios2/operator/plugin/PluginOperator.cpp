@@ -17,8 +17,6 @@
 #include "adios2/helper/adiosPluginManager.h"
 #include "adios2/helper/adiosString.h"
 
-#include <adios2sys/SystemTools.hxx>
-
 namespace adios2
 {
 namespace plugin

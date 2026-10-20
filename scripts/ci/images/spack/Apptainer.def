@@ -3,31 +3,36 @@
 # SPDX-License-Identifier: Apache-2.0
 
 Bootstrap: docker
-From: docker.io/ornladios/adios2:spack-dependencies-{{ baseos }}
+From: ghcr.io/ornladios/adios2:spack-dependencies-26.06
 
 %files
     ci-source /opt/adios2/source
 
-%post
-    set -e
-    . /opt/spack/share/spack/setup-env.sh
+%post -c /bin/bash
+    . /spack/share/spack/setup-env.sh
     spack dev-build \
         -j$(grep -c '^processor' /proc/cpuinfo) \
         -d /opt/adios2/source \
         --skip-patch \
-        adios2@develop ~python
+        adios2@2~python && \
     spack clean -a
 
-    spack env create --without-view adios2
-    spack -e adios2 add $(spack find --format "/{hash}")
+    spack env create adios2
+    spack -e adios2 config add "concretizer:unify:false"
+    spack -e adios2 config add "modules:prefix_inspections:lib:[LD_LIBRARY_PATH]"
+    spack -e adios2 config add "modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]"
+    spack -e adios2 add $(spack find --format "{name}/{hash}" adios2)
     spack -e adios2 install -v
-    adios2_prefix="$(spack -e adios2 location -i adios2)"
-    echo "export PATH=\"${adios2_prefix}/bin:\$PATH\"" > /opt/adios2/spack-env.sh
-    echo "export LD_LIBRARY_PATH=\"${adios2_prefix}/lib:${adios2_prefix}/lib64:\$LD_LIBRARY_PATH\"" >> /opt/adios2/spack-env.sh
     rm -rf /root/.spack
+    spack env activate adios2
+    spack env deactivate
+
+    echo "source /spack/share/spack/setup-env.sh" >> ~/.bash_profile
+    echo "spack env activate adios2" >> ~/.bash_profile
 
 %environment
-    . /opt/adios2/spack-env.sh
+    export PATH=/spack/var/spack/environments/adios2/.spack-env/view/bin:$PATH
+    export LD_LIBRARY_PATH=/spack/var/spack/environments/adios2/.spack-env/view/lib:/spack/var/spack/environments/adios2/.spack-env/view/lib64:$LD_LIBRARY_PATH
 
 %runscript
-    exec bash --login "$@"
+    exec bash --login -c "$@"

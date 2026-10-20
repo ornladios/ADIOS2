@@ -13,9 +13,6 @@ endif()
 
 if(@ADIOS2_HAVE_SST@)
   set(EVPath_DIR @EVPath_DIR@)
-  if(NOT @BUILD_SHARED_LIBS@)
-    set(enet_DIR @enet_DIR@)
-  endif()
 endif()
 
 set(${CMAKE_FIND_PACKAGE_NAME}_CONFIG "${CMAKE_CURRENT_LIST_FILE}")

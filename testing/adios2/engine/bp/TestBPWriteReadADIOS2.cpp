@@ -1805,11 +1805,11 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("OpenTwice.bp");
-
 #if ADIOS2_USE_MPI
+    const std::string fname("OpenTwice_MPI.bp");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
+    const std::string fname("OpenTwice.bp");
     adios2::ADIOS adios;
 #endif
     {

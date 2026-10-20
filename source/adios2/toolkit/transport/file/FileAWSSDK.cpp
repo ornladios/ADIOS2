@@ -710,27 +710,34 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
 {
     WaitForOpen();
 
+    const size_t logicalSize = m_BaseSize > 0 ? m_BaseSize : m_Size;
+
     if (start != MaxSizeT)
     {
-        if (start >= m_Size)
+        if (start > logicalSize || (size > 0 && start == logicalSize))
         {
             helper::Throw<std::ios_base::failure>(
                 "Toolkit", "transport::file::FileAWSSDK", "Read",
                 "couldn't move to start position " + std::to_string(start) +
-                    " beyond the size of " + m_Name + " which is " + std::to_string(m_Size));
+                    " beyond the size of " + m_Name + " which is " + std::to_string(logicalSize));
         }
         m_SeekPos = start;
         errno = 0;
         m_Errno = errno;
     }
 
-    if (m_SeekPos + size > m_Size)
+    if (m_SeekPos > logicalSize || size > logicalSize - m_SeekPos)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Read",
                                               "can't read " + std::to_string(size) +
                                                   " bytes from position " +
                                                   std::to_string(m_SeekPos) + " from " + m_Name +
-                                                  " whose size is " + std::to_string(m_Size));
+                                                  " whose size is " + std::to_string(logicalSize));
+    }
+
+    if (size == 0)
+    {
+        return;
     }
 
     if (m_IsCached)
@@ -744,10 +751,20 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         return;
     }
 
+    if (m_BaseOffset > m_Size || size > m_Size - m_BaseOffset ||
+        m_SeekPos > m_Size - m_BaseOffset - size)
+    {
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Read",
+                                              "logical byte range is outside the physical object " +
+                                                  m_Name);
+    }
+
+    const size_t physicalStart = m_BaseOffset + m_SeekPos;
+
     if (m_IsMultiObjectLayout)
     {
         // Multi-object read: find the sub-object(s) that contain the requested range
-        size_t readPos = m_SeekPos;
+        size_t readPos = physicalStart;
         size_t bytesRemaining = size;
         size_t bufferOffset = 0;
 
@@ -792,7 +809,16 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
             }
 
             auto *body = outcome.GetResult().GetBody().rdbuf();
-            body->sgetn(buffer + bufferOffset, static_cast<std::streamsize>(toRead));
+            const std::streamsize bytesRead =
+                body->sgetn(buffer + bufferOffset, static_cast<std::streamsize>(toRead));
+            if (bytesRead < 0 || static_cast<size_t>(bytesRead) != toRead)
+            {
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FileAWSSDK", "Read",
+                    "short multi-object read for '" + sub.key + "': expected " +
+                        std::to_string(toRead) + " bytes, received " +
+                        std::to_string(bytesRead < 0 ? 0 : static_cast<size_t>(bytesRead)));
+            }
 
             readPos += toRead;
             bufferOffset += toRead;
@@ -806,7 +832,7 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         request.SetBucket(m_BucketName);
         request.SetKey(m_ObjectName);
         std::stringstream range;
-        range << "bytes=" << m_SeekPos << "-" << m_SeekPos + size - 1;
+        range << "bytes=" << physicalStart << "-" << physicalStart + size - 1;
         request.SetRange(range.str());
 
         Aws::S3::Model::GetObjectOutcome outcome = s3Client->GetObject(request);
@@ -829,7 +855,16 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
                           << "\nRange requested = " << range.str() << std::endl;
             }
             auto *body = outcome.GetResult().GetBody().rdbuf();
-            body->sgetn(buffer, size);
+            const std::streamsize bytesRead =
+                body->sgetn(buffer, static_cast<std::streamsize>(size));
+            if (bytesRead < 0 || static_cast<size_t>(bytesRead) != size)
+            {
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FileAWSSDK", "Read",
+                    "short read for '" + m_ObjectName + "': expected " + std::to_string(size) +
+                        " bytes, received " +
+                        std::to_string(bytesRead < 0 ? 0 : static_cast<size_t>(bytesRead)));
+            }
 
             /* Save to cache */
             if (m_CachingThisFile)
@@ -856,7 +891,17 @@ size_t FileAWSSDK::GetSize()
     case Mode::Append:
         return m_TotalBytesWritten;
     case Mode::Read:
-        return m_Size;
+        if (m_IsCached)
+        {
+            return m_BaseSize > 0 ? m_BaseSize : m_Size;
+        }
+        if (m_BaseOffset > m_Size || (m_BaseSize > 0 && m_BaseSize > m_Size - m_BaseOffset))
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileAWSSDK", "GetSize",
+                "logical byte range is outside the physical object " + m_Name);
+        }
+        return m_BaseSize > 0 ? m_BaseSize : m_Size;
     default:
         return 0;
     }
