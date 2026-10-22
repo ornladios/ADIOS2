@@ -555,18 +555,16 @@ std::vector<char> DaosWriter::BuildMetadataBlob(format::BP5Serializer::TimestepI
 
 void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
 {
-    /* Allgather metadata sizes from all processes; absorbs cross-rank
-       skew left by the no-Barrier-after-SelAgg decision in EndStep. */
     std::vector<char> blob = BuildMetadataBlob(TSInfo);
     const uint64_t myMetaTotal = static_cast<uint64_t>(blob.size());
-    std::vector<uint64_t> list_metadata_size(m_Comm.Size());
-    m_Comm.Allgather(&myMetaTotal, 1, list_metadata_size.data(), 1);
 
     size_t offset = 0;
     if (metadataLayout == MetadataLayout::ARRAY)
     {
+        // Packed layout: a rank's offset is the sum of the lower ranks' sizes.
+        const std::vector<uint64_t> sizes = m_Comm.AllGatherValues(myMetaTotal);
         for (int i = 0; i < m_Comm.Rank(); i++)
-            offset += list_metadata_size[i];
+            offset += sizes[i];
     }
     else if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
     {
@@ -601,7 +599,9 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
 
     m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
 
-    // Writer Rank 0 -Store the list of metadata size in a KV entry
+    // Gathered after the write, so rank 0 holds the sizes only once every
+    // rank's blob is in place; EndStep publishes the step after this.
+    const std::vector<uint64_t> list_metadata_size = m_Comm.GatherValues(myMetaTotal, 0);
     if (m_Comm.Rank() == 0)
     {
         char key[1000];
@@ -639,6 +639,10 @@ void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo
                                           "daos_kv_put failed rc=" + std::to_string(rc));
     }
     CALI_MARK_END("DaosWriter::daos_kv_put");
+
+    // Completes on rank 0 only once every rank's put has; EndStep publishes
+    // the step after this.
+    m_Comm.GatherValues(static_cast<uint64_t>(blob.size()), 0);
 }
 
 void DaosWriter::WriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
@@ -690,8 +694,7 @@ void DaosWriter::EndStep()
      * bitmap is empty almost every step and rank 0 has no writes —
      * eliminating the per-step coordination cost.  Per-variable
      * metadata is unaffected (it goes per-rank to DAOS via WriteMetadata
-     * below, outside this block).  No trailing m_Comm.Barrier — the
-     * Allgather inside DaosArrayWriteMetadata absorbs skew.
+     * below, outside this block).
      *
      * Rank 0 also emits a step record to md.idx every step (even when
      * the gate says no new content) — the reader's attribute path
@@ -708,7 +711,7 @@ void DaosWriter::EndStep()
     std::vector<core::iovec> AttributeBlocks;
     if (!m_PerRankMetadata)
     {
-        // ---- aggregated mode (Phase 1 / default) ----
+        // ---- aggregated mode (DAOS_PER_RANK_METADATA=0) ----
         unsigned char localHasContent =
             (!TSInfo.NewMetaMetaBlocks.empty() ||
              (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0))
@@ -751,8 +754,6 @@ void DaosWriter::EndStep()
                     free((void *)mm.MetaMetaID);
                 }
             }
-            // No trailing Barrier — the next collective is the Allgather
-            // inside DaosArrayWriteMetadata, which absorbs cross-rank skew.
         }
 
         // Rank 0 always emits an attribute record to md.0 (even when empty —
@@ -761,27 +762,37 @@ void DaosWriter::EndStep()
         {
             m_LatestMetaDataPos = m_MetaDataPos;
             m_LatestMetaDataSize = WriteAttributes(AttributeBlocks);
-            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
         }
     }
     else
     {
-        // ---- per-rank mode (Phase 2) ----
+        // ---- per-rank mode (default) ----
         // No ES_Gate, no ES_SelAgg.  Each rank's NewMetaMetaBlocks and
         // AttributeEncodeBuffer are serialized into its own metadata
         // blob inside WriteMetadata below.  Rank 0 still emits a step
         // record to md.idx (degenerate: MetaDataPos/Size = 0) so the
         // reader's step-count machinery still works.  mmd.0 / md.0
         // stay empty in this mode.
-        if (m_Comm.Rank() == 0)
-        {
-            WriteMetadataFileIndex(0, 0);
-        }
     }
 
     CALI_MARK_BEGIN("DaosWriter::metadata-stabilization");
     WriteMetadata(TSInfo);
     CALI_MARK_END("DaosWriter::metadata-stabilization");
+
+    // The md.idx step record is what a polling reader takes as the step
+    // existing, so rank 0 writes it only after WriteMetadata's gather shows
+    // every rank's metadata is in place.
+    if (m_Comm.Rank() == 0)
+    {
+        if (m_PerRankMetadata)
+        {
+            WriteMetadataFileIndex(0, 0);
+        }
+        else
+        {
+            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+        }
+    }
 
     m_WriterStep++;
     // Open the BetweenSteps timer; the next BeginStep closes it.  This
@@ -997,15 +1008,16 @@ void DaosWriter::SetMetadataLayout()
 }
 
 /// Pick the per-rank-metadata mode from DAOS_PER_RANK_METADATA.  When
-/// unset or 0, the Phase-1 default (aggregated mmd / attrs via ES_Gate
-/// + ES_SelAgg) runs.  When 1, each rank serializes its own
-/// NewMetaMetaBlocks + AttributeEncodeBuffer into its metadata blob.
+/// unset or 1, each rank serializes its own NewMetaMetaBlocks +
+/// AttributeEncodeBuffer into its metadata blob, avoiding the per-step
+/// ES_Gate collective.  When 0, the aggregated path (mmd / attrs via
+/// ES_Gate + ES_SelAgg) runs.
 void DaosWriter::SetPerRankMetadata()
 {
     const char *env = std::getenv("DAOS_PER_RANK_METADATA");
     if (!env)
     {
-        m_PerRankMetadata = false;
+        m_PerRankMetadata = true;
         return;
     }
     std::string v(env);
@@ -1093,7 +1105,7 @@ void DaosWriter::InitDAOS()
     /** share pool handle with peer tasks */
     CALI_MARK_BEGIN("DaosWriter::daos_handle_share_pool");
     {
-        DAOS_OPEN_PHASE("  pool_handle_share(l2g+bcast+g2l+barrier)");
+        DAOS_OPEN_PHASE("  pool_handle_share(l2g+bcast+g2l)");
         daos_handle_share(&poh, DaosWriter::HANDLE_POOL);
     }
     CALI_MARK_END("DaosWriter::daos_handle_share_pool");
@@ -1117,7 +1129,7 @@ void DaosWriter::InitDAOS()
     /** share container handle with peer tasks */
     CALI_MARK_BEGIN("DaosWriter::daos_handle_share_cont");
     {
-        DAOS_OPEN_PHASE("  cont_handle_share(l2g+bcast+g2l+barrier)");
+        DAOS_OPEN_PHASE("  cont_handle_share(l2g+bcast+g2l)");
         daos_handle_share(&coh, HANDLE_CO);
     }
     CALI_MARK_END("DaosWriter::daos_handle_share_cont");
@@ -1257,8 +1269,6 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     }
 
     free(ghdl.iov_buf);
-
-    m_Comm.Barrier();
 }
 
 /*generate the header for the metadata index file*/
@@ -1865,7 +1875,7 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
     m_Comm.Bcast((char *)ghdl.iov_buf, ghdl.iov_len, 0);
     CALI_MARK_END("DaosWriter::local2global+broadcast_handle");
 
-    CALI_MARK_BEGIN("DaosWriter::global2local+barrier");
+    CALI_MARK_BEGIN("DaosWriter::global2local");
     if (m_Comm.Rank() != 0)
     {
         /** unpack global handle */
@@ -1886,9 +1896,7 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
     }
 
     free(ghdl.iov_buf);
-
-    m_Comm.Barrier();
-    CALI_MARK_END("DaosWriter::global2local+barrier");
+    CALI_MARK_END("DaosWriter::global2local");
 }
 
 void DaosWriter::CreateDaosArrayObject()

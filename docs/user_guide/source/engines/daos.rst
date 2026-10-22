@@ -160,6 +160,10 @@ variable ``DAOS_METADATA_LAYOUT`` rather than an IO parameter.  Its
 default (``array-1mb-aligned``) is appropriate for typical use; the
 other values (``array``, ``kv``) exist for benchmarking alternative
 DAOS metadata storage strategies and are not normally needed.
+Likewise ``DAOS_PER_RANK_METADATA`` defaults to ``1``: each rank writes
+its own metadata, including type descriptions and attributes, with no
+per-step collective among writers.  ``0`` aggregates those through
+rank 0 instead and is likewise only for benchmarking.
 
 Performance notes
 =================
