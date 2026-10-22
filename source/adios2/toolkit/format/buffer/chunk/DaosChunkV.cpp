@@ -57,7 +57,7 @@ size_t DaosChunkV::AddToVec(size_t size, const void *buf, size_t align, bool Cop
     {
         // Cheap, non-blocking reap so m_Pending doesn't grow unbounded.
         profiling::ProfilerGuard g(m_Profiler, "atvReap");
-        ReapCompleted();
+        Reap(false, "AddToVec");
     }
 
     if (size == 0)
@@ -78,8 +78,7 @@ size_t DaosChunkV::AddToVec(size_t size, const void *buf, size_t align, bool Cop
     if (pending >= m_ChunkSize)
     {
         profiling::ProfilerGuard g(m_Profiler, "atvSubmit");
-        SubmitRange(m_LastSubmittedDataVIdx, DataV.size() - 1);
-        m_LastSubmittedDataVIdx = DataV.size();
+        SubmitPending();
         m_LastSubmittedOffset = CurOffset;
     }
     return off;
@@ -99,43 +98,44 @@ BufferV::BufferPos DaosChunkV::Allocate(size_t size, size_t align)
 
 std::vector<core::iovec> DaosChunkV::DataVec() noexcept { return ChunkV::DataVec(); }
 
-std::vector<core::iovec> DaosChunkV::UnflushedTail() noexcept
+std::vector<d_iov_t> DaosChunkV::PendingIovs() const
 {
-    std::vector<core::iovec> out;
-    out.reserve(DataV.size() - m_LastSubmittedDataVIdx);
-    for (size_t i = m_LastSubmittedDataVIdx; i < DataV.size(); ++i)
+    std::vector<d_iov_t> out;
+    if (m_SubmitIdx < DataV.size())
+        out.reserve(DataV.size() - m_SubmitIdx);
+    for (size_t i = m_SubmitIdx; i < DataV.size(); ++i)
     {
         const VecEntry &v = DataV[i];
-        const void *base = v.External ? v.Base : (const char *)v.Base + v.Offset;
-        out.push_back(core::iovec{const_cast<void *>(base), v.Size});
+        const size_t skip = (i == m_SubmitIdx) ? m_SubmitInEntry : 0;
+        if (v.Size <= skip)
+            continue;
+        const char *base = v.External ? (const char *)v.Base : (const char *)v.Base + v.Offset;
+        d_iov_t iov;
+        iov.iov_buf = const_cast<char *>(base + skip);
+        iov.iov_buf_len = v.Size - skip;
+        iov.iov_len = v.Size - skip;
+        out.push_back(iov);
     }
     return out;
 }
 
-void DaosChunkV::SubmitRange(size_t firstIdx, size_t lastIdx)
+std::vector<core::iovec> DaosChunkV::UnflushedTail() noexcept
 {
-    if (firstIdx > lastIdx || lastIdx >= DataV.size())
-        return;
+    std::vector<core::iovec> out;
+    for (const d_iov_t &v : PendingIovs())
+        out.push_back(core::iovec{v.iov_buf, v.iov_len});
+    return out;
+}
 
-    // Assemble the contiguous iov set for this range.
+void DaosChunkV::SubmitPending()
+{
     std::vector<d_iov_t> allIovs;
     daos_size_t total = 0;
     {
         profiling::ProfilerGuard g(m_Profiler, "subSetup");
-        allIovs.reserve(lastIdx - firstIdx + 1);
-        for (size_t i = firstIdx; i <= lastIdx; ++i)
-        {
-            const VecEntry &v = DataV[i];
-            if (v.Size == 0)
-                continue;
-            const void *base = v.External ? v.Base : (const char *)v.Base + v.Offset;
-            d_iov_t iov;
-            iov.iov_buf = const_cast<void *>(base);
-            iov.iov_buf_len = v.Size;
-            iov.iov_len = v.Size;
-            allIovs.push_back(iov);
-            total += v.Size;
-        }
+        allIovs = PendingIovs();
+        for (const d_iov_t &v : allIovs)
+            total += v.iov_len;
     }
     if (total == 0)
         return;
@@ -209,7 +209,7 @@ void DaosChunkV::SubmitRange(size_t firstIdx, size_t lastIdx)
         }
         if (rc)
         {
-            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
+            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitPending",
                                               "daos_event_init failed rc=" + std::to_string(rc));
         }
 
@@ -222,62 +222,49 @@ void DaosChunkV::SubmitRange(size_t firstIdx, size_t lastIdx)
             // The event was initialized but the call failed before queuing;
             // tear down the event so we don't leak.
             daos_event_fini(&p->event);
-            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitRange",
+            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "SubmitPending",
                                               "daos_array_write failed rc=" + std::to_string(rc));
         }
 
         m_Pending.push_back(std::move(p));
     }
     m_SubmittedHigh += total;
+    // The tail entry's chunk stays open: copied Puts that still fit append to
+    // this same entry, so resume inside it rather than past it.
+    m_SubmitIdx = DataV.size() - 1;
+    m_SubmitInEntry = DataV.back().Size;
 }
 
-void DaosChunkV::ReapCompleted()
+void DaosChunkV::Reap(bool wait, const char *caller)
 {
-    if (m_Pending.empty())
-        return;
-    daos_event_t *done[16];
-    for (;;)
-    {
-        // Non-blocking: timeout=0 means poll-and-return-immediately.
-        int nd = daos_eq_poll(m_EventQueue, /*wait_running=*/0,
-                              /*timeout_us=*/0, 16, done);
-        if (nd <= 0)
-            break;
-        for (int i = 0; i < nd; ++i)
-        {
-            // ev_error is the per-call rc.  Surface non-zero as a throw
-            // so we don't silently lose data.
-            int ev_err = done[i]->ev_error;
-            auto it = std::find_if(
-                m_Pending.begin(), m_Pending.end(),
-                [&](const std::unique_ptr<PendingSubmit> &p) { return &p->event == done[i]; });
-            if (it != m_Pending.end())
-            {
-                daos_event_fini(&(*it)->event);
-                m_Pending.erase(it);
-            }
-            if (ev_err)
-            {
-                helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "ReapCompleted",
-                                                  "completed event reports error rc=" +
-                                                      std::to_string(ev_err));
-            }
-        }
-    }
-}
-
-void DaosChunkV::Drain()
-{
+    int firstErr = 0;
     daos_event_t *done[16];
     while (!m_Pending.empty())
     {
-        int nd = daos_eq_poll(m_EventQueue, /*wait_running=*/1,
-                              /*timeout_us=*/-1 /* DAOS_EQ_WAIT */, 16, done);
-        if (nd <= 0)
+        int nd = daos_eq_poll(m_EventQueue, /*wait_running=*/wait ? 1 : 0,
+                              wait ? DAOS_EQ_WAIT : DAOS_EQ_NOWAIT, 16, done);
+        if (nd < 0)
+        {
+            // The EQ is unusable, so in-flight writes can never be waited for.
+            // Leak their descriptors rather than free memory DAOS may still touch.
+            for (auto &p : m_Pending)
+                p.release();
+            m_Pending.clear();
+            helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", caller,
+                                              "daos_eq_poll failed rc=" + std::to_string(nd));
+        }
+        if (nd == 0)
+        {
+            if (!wait)
+                break;
             continue;
+        }
+        // Finalize every returned event before raising anything: an event left
+        // in m_Pending after the EQ handed it back would make Drain wait forever.
         for (int i = 0; i < nd; ++i)
         {
-            int ev_err = done[i]->ev_error;
+            if (done[i]->ev_error && !firstErr)
+                firstErr = done[i]->ev_error;
             auto it = std::find_if(
                 m_Pending.begin(), m_Pending.end(),
                 [&](const std::unique_ptr<PendingSubmit> &p) { return &p->event == done[i]; });
@@ -286,22 +273,27 @@ void DaosChunkV::Drain()
                 daos_event_fini(&(*it)->event);
                 m_Pending.erase(it);
             }
-            if (ev_err)
-            {
-                helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", "Drain",
-                                                  "completed event reports error rc=" +
-                                                      std::to_string(ev_err));
-            }
         }
     }
+    if (firstErr)
+    {
+        helper::Throw<std::runtime_error>("Toolkit", "format::DaosChunkV", caller,
+                                          "completed event reports error rc=" +
+                                              std::to_string(firstErr));
+    }
 }
+
+// Waits out every in-flight write, even after one fails, so no PendingSubmit is
+// freed while DAOS still references it.
+void DaosChunkV::Drain() { Reap(true, "Drain"); }
 
 void DaosChunkV::Reset()
 {
     Drain();
     ChunkV::Reset();
     m_SubmittedHigh = 0;
-    m_LastSubmittedDataVIdx = 0;
+    m_SubmitIdx = 0;
+    m_SubmitInEntry = 0;
     m_LastSubmittedOffset = 0;
 }
 

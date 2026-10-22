@@ -2035,6 +2035,96 @@ static size_t CalcBlockLength(const size_t dimensionsSize, const T *count)
 }
 
 /*
+ * Enumerate the contiguous runs of an intersection box within a writer block as
+ * (offset relative to the span start, length) pairs, ascending.
+ *
+ * A multidimensional selection is read as the bounding span between its first
+ * and last elements in the block's linear order.  When the selection cuts
+ * across the fast dimension that span approaches the whole block while the
+ * wanted bytes are a small fraction of it, so the span is read and mostly
+ * thrown away.  The runs below are the bytes actually wanted: one run per
+ * position of the slow dimensions, each interCount[contigDim] elements long.
+ *
+ * Offsets are relative to startOffsetInBlock, so a caller that places each run
+ * at its own offset in the destination reproduces exactly the layout reading
+ * the whole span would have produced -- only the gaps go unwritten.
+ *
+ * Returns nothing (leaves `out` empty) when the span is already the right
+ * answer, which the caller must treat as "read the span".
+ */
+static void ComputeSubRanges(const size_t nDims, const uint64_t *blockCount,
+                             const size_t *interStart, const size_t *interCount,
+                             const size_t elemSize, const bool isRowMajor,
+                             const size_t startOffsetInBlock, const size_t span,
+                             std::vector<std::pair<size_t, size_t>> &out)
+{
+    /*
+     * Worth it only if the bytes saved outweigh what the extra descriptors
+     * cost.  One rule covers both ends: a run list pays for itself when the
+     * avoided bytes exceed roughly a page per range.  That admits very short
+     * runs when the over-read is lopsided enough to justify them (a thin stripe
+     * of a wide block can over-read by four orders of magnitude), and rejects
+     * finely-sliced selections whose runs save little.  MaxRuns is a separate
+     * backstop against enumerating a pathological number of descriptors.
+     */
+    constexpr size_t MaxRuns = 8192;
+    constexpr size_t CostPerRunBytes = 4096;
+
+    if (nDims == 0)
+    {
+        return;
+    }
+    // row-major varies the last dimension fastest, column-major the first
+    const size_t contigDim = isRowMajor ? nDims - 1 : 0;
+    const size_t runLen = elemSize * interCount[contigDim];
+    size_t nRuns = 1;
+    for (size_t d = 0; d < nDims; ++d)
+    {
+        if (d != contigDim)
+        {
+            nRuns *= interCount[d];
+            if (nRuns > MaxRuns)
+            {
+                return;
+            }
+        }
+    }
+    if (nRuns <= 1)
+    {
+        return; // selection is already contiguous; the span IS the data
+    }
+    const size_t wanted = nRuns * runLen;
+    if (span <= wanted || (span - wanted) < nRuns * CostPerRunBytes)
+    {
+        return; // not enough over-read avoided to pay for the descriptors
+    }
+
+    std::vector<size_t> pos(interStart, interStart + nDims);
+    out.reserve(nRuns);
+    for (size_t r = 0; r < nRuns; ++r)
+    {
+        const size_t off = elemSize * LinearIndex(nDims, blockCount, pos.data(), isRowMajor);
+        out.emplace_back(off - startOffsetInBlock, runLen);
+        // odometer over every dimension except the contiguous one, stepping the
+        // dimension adjacent to it first so runs come out in ascending order
+        for (size_t d = 0; d < nDims; ++d)
+        {
+            const size_t dim = isRowMajor ? (nDims - 1 - d) : d;
+            if (dim == contigDim)
+            {
+                continue;
+            }
+            if (++pos[dim] < interStart[dim] + interCount[dim])
+            {
+                break;
+            }
+            pos[dim] = interStart[dim];
+        }
+    }
+    std::sort(out.begin(), out.end());
+}
+
+/*
  * Return true if for Req and data source info given by offsets and count,
  * this a transfer of a contiguous block of memory into another
  * contiguous block of memory.  In its current usage, its OK if this
@@ -2105,6 +2195,50 @@ bool BP5Deserializer::ContiguousDestination(const BP5ArrayRequest *Req, const ui
     }
     *destOffset = elemSize * LinearIndex(n, selCount.data(), pos.data(), m_ReaderIsRowMajor);
     return true;
+}
+
+/*
+ * Fills RR.SubRangeDest with each run's address in the selection's buffer.  A
+ * run spans the fastest dimension of the intersection, which the selection
+ * holds contiguously as well, so a run maps to one contiguous destination.
+ * Leaves it empty under the same exclusions as ContiguousDestination.
+ */
+void BP5Deserializer::SubRangeDestinations(const BP5ArrayRequest *Req, const uint64_t *blkOffsets,
+                                           const uint64_t *blkCount, size_t elemSize,
+                                           size_t startOffsetInBlock, ReadRequest &RR)
+{
+    RR.SubRangeDest.clear();
+    const size_t n = ((struct BP5VarRec *)Req->VarRec)->DimCount;
+    if (RR.SubRanges.empty() || !blkOffsets || n == 0 || n > helper::MAX_DIMS ||
+        Req->Start.size() != n || Req->Count.size() != n || !Req->MemoryStart.empty() ||
+        !Req->MemoryCount.empty() || !Req->Data)
+    {
+        return;
+    }
+    std::array<uint64_t, helper::MAX_DIMS> selCount;
+    for (size_t d = 0; d < n; ++d)
+    {
+        selCount[d] = Req->Count[d];
+    }
+    std::array<size_t, helper::MAX_DIMS> pos;
+    RR.SubRangeDest.reserve(RR.SubRanges.size());
+    for (const auto &run : RR.SubRanges)
+    {
+        // block coordinates of the run's first element, fastest dimension first
+        size_t lin = (startOffsetInBlock + run.first) / elemSize;
+        for (size_t k = 0; k < n; ++k)
+        {
+            const size_t d = m_ReaderIsRowMajor ? n - 1 - k : k;
+            pos[d] = lin % blkCount[d];
+            lin /= blkCount[d];
+        }
+        for (size_t d = 0; d < n; ++d)
+        {
+            pos[d] = blkOffsets[d] + pos[d] - Req->Start[d];
+        }
+        const size_t dest = LinearIndex(n, selCount.data(), pos.data(), m_ReaderIsRowMajor);
+        RR.SubRangeDest.push_back((char *)Req->Data + elemSize * dest);
+    }
 }
 
 std::vector<BP5Deserializer::ReadRequest>
@@ -2619,6 +2753,11 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                         throw std::runtime_error(
                                             "No data exists for this variable");
                                     RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                    ComputeSubRanges(
+                                        VarRec->DimCount, &writer_meta_base->Count[StartDim],
+                                        &intersectionstart[0], &intersectioncount[0],
+                                        VB->m_ElementSize, m_ReaderIsRowMajor, StartOffsetInBlock,
+                                        RR.ReadLength, RR.SubRanges);
                                     size_t DestOffset = 0;
                                     if (Req->MemSpace != MemorySpace::Host)
                                         RR.DirectToAppMemory = false;
@@ -2630,10 +2769,20 @@ BP5Deserializer::GenerateReadRequests(BP5GetContext &ctx, const bool doAllocTemp
                                             &intersectioncount[0], VB->m_ElementSize, &DestOffset);
                                     if (RR.DirectToAppMemory)
                                     {
+                                        // The span is exactly the wanted data, so there are no
+                                        // gaps to skip; runs would index the block, not app memory.
+                                        RR.SubRanges.clear();
                                         RR.DestinationAddr = (char *)Req->Data + DestOffset;
                                     }
                                     else
                                     {
+                                        if (Req->MemSpace == MemorySpace::Host &&
+                                            m_SourceIsLittleEndian == m_ReaderIsLittleEndian)
+                                        {
+                                            SubRangeDestinations(Req, blkOffsets, blkCount,
+                                                                 VB->m_ElementSize,
+                                                                 StartOffsetInBlock, RR);
+                                        }
                                         RR.DestinationAddr = nullptr;
                                         if (doAllocTempBuffers)
                                         {

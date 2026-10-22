@@ -243,7 +243,7 @@ void DaosWriter::WriteData(format::BufferV *Data)
         // iov per VecEntry in the SGL.  Same shape as DaosChunkV's async
         // submits, just synchronous and last.  Chunked into bounded
         // sub-writes to keep each Mercury bulk transfer small (mirrors
-        // DaosChunkV::SubmitRange); DAOS_WRITE_CHUNK_BYTES=0 (default)
+        // DaosChunkV::SubmitPending); DAOS_WRITE_CHUNK_BYTES=0 (default)
         // restores the single-write behavior for A/B testing.
         std::vector<d_iov_t> sgiovs;
         daos_size_t total = 0;
@@ -444,6 +444,13 @@ void DaosWriter::MarshalAttributes()
             else
             {
                 const char **tmp = (const char **)malloc(sizeof(char *) * element_count);
+                if (tmp == NULL)
+                {
+                    helper::Throw<std::runtime_error>("Engine", "DaosWriter", "MarshalAttributes",
+                                                      "out of memory for a " +
+                                                          std::to_string(element_count) +
+                                                          " element string attribute");
+                }
                 for (int i = 0; i < element_count; i++)
                 {
                     auto str = &attribute.m_DataArray[i];
@@ -1211,7 +1218,15 @@ void DaosWriter::array_oh_share(daos_handle_t *oh)
     m_Comm.Bcast((uint64_t *)&ghdl.iov_buf_len, 1, 0);
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>("Engine", "DaosWriter", "array_oh_share",
+                                          "out of memory for a " +
+                                              std::to_string(ghdl.iov_buf_len) +
+                                              " byte global array handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     if (m_Comm.Rank() == 0)
@@ -1716,13 +1731,22 @@ void DaosWriter::PutCommon(VariableBase &variable, const void *values, bool sync
         }
         void *ptr = m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
-        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        const bool sourceRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+        helper::DimsArray MemoryStart(variable.m_MemoryStart);
+        helper::DimsArray MemoryCount(variable.m_MemoryCount);
+        helper::DimsArray varCount(variable.m_Count);
+        // NdCopy's column-major mode takes dimensions slowest-first
+        if (!sourceRowMajor)
+        {
+            std::reverse(MemoryStart.begin(), MemoryStart.end());
+            std::reverse(MemoryCount.begin(), MemoryCount.end());
+            std::reverse(varCount.begin(), varCount.end());
+        }
 
-        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), variable.m_MemoryCount,
-                       sourceRowMajor, false, (char *)ptr, variable.m_MemoryStart, variable.m_Count,
-                       sourceRowMajor, false, ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */,
-                       variable.m_MemSpace);
+        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
+                       sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
+                       false, ObjSize, helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+                       helper::CoreDims(), false /* safemode */, variable.m_MemSpace);
     }
     else if (variable.m_Type == DataType::String)
     {
@@ -1812,7 +1836,14 @@ void DaosWriter::daos_handle_share(daos_handle_t *hdl, int type)
     CALI_MARK_END("DaosWriter::local2global+broadcast_sizeofhandle");
 
     /** allocate buffer for global pool handle */
+    // Unchecked, this hands DAOS an iov claiming iov_len bytes at a NULL buffer.
     ghdl.iov_buf = malloc(ghdl.iov_buf_len);
+    if (ghdl.iov_buf == NULL)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "DaosWriter", "daos_handle_share",
+            "out of memory for a " + std::to_string(ghdl.iov_buf_len) + " byte global handle");
+    }
     ghdl.iov_len = ghdl.iov_buf_len;
 
     CALI_MARK_BEGIN("DaosWriter::local2global+broadcast_handle");
