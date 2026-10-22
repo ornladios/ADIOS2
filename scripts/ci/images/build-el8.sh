@@ -6,14 +6,16 @@
 
 set -ex
 DOCKER=${DOCKER:-podman}
+DATE_TAG="${IMAGE_DATE:-$(date +%Y%m%d)}"
+TAG_PREFIX="${IMAGE_TAG_PREFIX:-ghcr.io/ornladios/adios2}"
 
 # Built the single el8 image
 ${DOCKER} build --rm -f Dockerfile.ci-el8-intel -t adios2:ci-el8-intel .
 
-# Tag images
-${DOCKER} tag adios2:ci-el8-intel ghcr.io/ornladios/adios2:ci-el8-oneapi
-${DOCKER} tag adios2:ci-el8-intel ghcr.io/ornladios/adios2:ci-el8-icc
+# Tag image
+${DOCKER} tag adios2:ci-el8-intel "${TAG_PREFIX}/ci-el8-oneapi:${DATE_TAG}"
+${DOCKER} tag adios2:ci-el8-intel "${TAG_PREFIX}/ci-el8-oneapi:latest"
 
-# Push them
-${DOCKER} push ghcr.io/ornladios/adios2:ci-el8-oneapi
-${DOCKER} push ghcr.io/ornladios/adios2:ci-el8-icc
+# Push it
+${DOCKER} push "${TAG_PREFIX}/ci-el8-oneapi:${DATE_TAG}"
+${DOCKER} push "${TAG_PREFIX}/ci-el8-oneapi:latest"
