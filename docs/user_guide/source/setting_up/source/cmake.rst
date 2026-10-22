@@ -140,6 +140,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_SZ``              **ON**/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental - SZ2 only!).
 ``ADIOS2_USE_SZ3``             **ON**/OFF      `SZ3 <https://github.com/szcompressor/SZ3>`_ compression.
 ``ADIOS2_USE_MGARD``           **ON**/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
+``ADIOS2_USE_MGARD_MDR``       **ON**/OFF      `MGARD Multi-precision Data Refactoring <https://github.com/CODARcode/MGARD/blob/master/doc/MDR-X.md>`_ support (experimental).
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Blosc2``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
 ``ADIOS2_USE_IME``             ON/**OFF**      DDN IME transport.
