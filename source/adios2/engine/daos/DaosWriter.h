@@ -144,12 +144,12 @@ private:
     void SetMetadataLayout();
     void SetPoolAndContName();
 
-    /// Phase-2 gating: when true, ES_Gate Allreduce and ES_SelAgg
+    /// When true, ES_Gate Allreduce and ES_SelAgg
     /// BP5AggregateInformation are skipped, and each rank serializes
     /// its own NewMetaMetaBlocks + AttributeEncodeBuffer into its
     /// per-rank metadata blob.  Selected by DAOS_PER_RANK_METADATA env
-    /// var (default 0 = aggregated, today's Phase-1 behavior).
-    bool m_PerRankMetadata = false;
+    /// var (default 1; 0 = aggregated through rank 0).
+    bool m_PerRankMetadata = true;
     void SetPerRankMetadata();
 
     size_t m_step_offset = 0;
@@ -159,7 +159,7 @@ private:
     void DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &);
     void DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &);
     /// Compose this rank's per-step metadata blob.  In aggregated mode
-    /// (Phase 1 default): [MetaEncodeBuffer][step_start u64], 8-byte
+    /// (Phase 1): [MetaEncodeBuffer][step_start u64], 8-byte
     /// trailer.  In per-rank mode (Phase 2): [MetaEncode][MetaMetaBlocks
     /// serialized][AttributeEncodeBuffer][footer], where footer is
     /// (mmb_size, attr_size, step_start) = 24 bytes.  Returns a single

@@ -99,8 +99,6 @@ void DaosReader::ReadMetadata(size_t Step)
         }
     }
 
-    m_Comm.Barrier();
-
     // broadcast buffer to all ranks from zero
     CALI_MARK_BEGIN("DaosReader::broadcast_metadata");
     m_Comm.BroadcastVector(m_Metadata.m_Buffer);
@@ -1689,8 +1687,6 @@ void DaosReader::array_oh_share(daos_handle_t *oh)
     }
 
     free(ghdl.iov_buf);
-
-    m_Comm.Barrier();
 }
 
 void DaosReader::SetDataFlag()
@@ -2558,7 +2554,7 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     m_Comm.Bcast((char *)ghdl.iov_buf, ghdl.iov_len, 0);
     CALI_MARK_END("DaosReader::local2global+broadcast_handle");
 
-    CALI_MARK_BEGIN("DaosReader::global2local+barrier");
+    CALI_MARK_BEGIN("DaosReader::global2local");
     if (m_Comm.Rank() != 0)
     {
         /** unpack global handle */
@@ -2579,9 +2575,7 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
     }
 
     free(ghdl.iov_buf);
-
-    m_Comm.Barrier();
-    CALI_MARK_END("DaosReader::global2local+barrier");
+    CALI_MARK_END("DaosReader::global2local");
 }
 
 void DaosReader::LoadDataOidsIndex()
