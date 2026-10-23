@@ -235,20 +235,103 @@ format " "version 3 and above, found " + std::to_string(m_Minifooter.Version) +
         helper::ReadValue<uint64_t>(buffer, position);
 } */
 
+namespace
+{
+
+/* The BP4 index gives this reader byte offsets taken verbatim from md.idx, so
+ * every read derived from one is bounds-checked here, in the caller:
+ * helper::ReadValue and the index-header readers in BPBase/BP4Base are noexcept
+ * and shared with BP3 and BP5, so they cannot do it on the reader's behalf.
+ * Phrased as a subtraction so that a 64-bit offset out of the file cannot wrap
+ * past the check. */
+void RequireBytes(const std::vector<char> &buffer, const uint64_t position, const uint64_t bytes,
+                  const char *activity)
+{
+    const uint64_t size = buffer.size();
+    if (position > size || bytes > size - position)
+    {
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Deserializer", activity,
+            "BP4 index entry needs " + std::to_string(bytes) + " bytes at metadata offset " +
+                std::to_string(position) + " but the metadata buffer holds only " +
+                std::to_string(size) + " bytes, metadata is corrupt or truncated");
+    }
+}
+
+/* Advances position past a string, as BPBase::ReadBPString reads one. */
+void SkipBPString(const std::vector<char> &buffer, size_t &position, const bool isLittleEndian,
+                  const char *activity)
+{
+    RequireBytes(buffer, position, 2, activity);
+    const uint64_t size = helper::ReadValue<uint16_t>(buffer, position, isLittleEndian);
+    RequireBytes(buffer, position, size, activity);
+    position += static_cast<size_t>(size);
+}
+
+/* Checks every field BPBase::ReadProcessGroupIndexHeader would read at
+ * position, including the lengths of the two strings it carries. */
+void CheckProcessGroupIndexHeader(const std::vector<char> &buffer, size_t position,
+                                  const bool isLittleEndian, const char *activity)
+{
+    RequireBytes(buffer, position, 2, activity); // Length
+    position += 2;
+    SkipBPString(buffer, position, isLittleEndian, activity); // Name
+    RequireBytes(buffer, position, 5, activity);              // IsColumnMajor, ProcessID
+    position += 5;
+    SkipBPString(buffer, position, isLittleEndian, activity); // StepName
+    RequireBytes(buffer, position, 12, activity);             // Step, Offset
+}
+
+/* Checks every field BP4Base::ReadElementIndexHeader would read at position.
+ * The declared size of the enclosing element index does not cover this: the
+ * string lengths inside the header come straight from the file too. */
+void CheckElementIndexHeader(const std::vector<char> &buffer, size_t position,
+                             const bool isLittleEndian, const char *activity)
+{
+    RequireBytes(buffer, position, 8, activity); // Length, MemberID
+    position += 8;
+    SkipBPString(buffer, position, isLittleEndian, activity); // GroupName
+    SkipBPString(buffer, position, isLittleEndian, activity); // Name
+    // Order, unused, DataType, CharacteristicsSetsCount
+    RequireBytes(buffer, position, 11, activity);
+}
+
+} // end anonymous namespace
+
+uint64_t BP4Deserializer::StepIndexOffset(const size_t submetadatafileId, const size_t step,
+                                          const size_t i, const char *activity)
+{
+    const std::vector<uint64_t> &offsets = m_MetadataIndexTable[submetadatafileId][step];
+    if (offsets.size() <= i)
+    {
+        helper::Throw<std::runtime_error>("Toolkit", "format::bp::BP4Deserializer", activity,
+                                          "BP4 index has no record for step " +
+                                              std::to_string(step) +
+                                              ", metadata index is corrupt or truncated");
+    }
+    return offsets[i];
+}
+
 void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
                                           const std::string hostLanguage, size_t submetadatafileId,
                                           size_t step)
 {
+    const char *activity = "ParsePGIndexPerStep";
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_MetadataIndexTable[submetadatafileId][step][0];
+    const uint64_t indexStart = StepIndexOffset(submetadatafileId, step, 0, activity);
+    RequireBytes(buffer, indexStart, 16, activity); // count, length
+    size_t position = static_cast<size_t>(indexStart);
     // std::cout << step << ", " << position << std::endl;
     m_MetadataSet.DataPGCount =
         m_MetadataSet.DataPGCount +
         helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
-    // read length of pg index which is not used, only for moving the pointer
-    helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    // length of the pg index, used only to bound the entries that follow
+    const uint64_t length =
+        helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    RequireBytes(buffer, position, length, activity);
 
+    CheckProcessGroupIndexHeader(buffer, position, m_Minifooter.IsLittleEndian, activity);
     ProcessGroupIndex index =
         ReadProcessGroupIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
     if (index.IsColumnMajor == 'y')
@@ -322,12 +405,16 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, cor
         } // end switch
     };
 
+    const char *activity = "ParseVariablesIndexPerStep";
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_MetadataIndexTable[submetadatafileId][step][1];
+    const uint64_t indexStart = StepIndexOffset(submetadatafileId, step, 1, activity);
+    RequireBytes(buffer, indexStart, 12, activity); // count, length
+    size_t position = static_cast<size_t>(indexStart);
 
     helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
     const uint64_t length =
         helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    RequireBytes(buffer, position, length, activity);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -339,11 +426,17 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, cor
     {
         while (localPosition < length)
         {
+            /* an element index is a 4-byte size followed by that many bytes */
+            RequireBytes(buffer, position, 4, activity);
+            size_t sizePosition = position;
+            const size_t elementIndexSize = static_cast<size_t>(
+                helper::ReadValue<uint32_t>(buffer, sizePosition, m_Minifooter.IsLittleEndian));
+            RequireBytes(buffer, sizePosition, elementIndexSize, activity);
+            CheckElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian, activity);
+
             lf_ReadElementIndexPerStep(engine, buffer, position, step);
 
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
-            position += elementIndexSize;
+            position = sizePosition + elementIndexSize;
             localPosition = position - startPosition;
         }
         return;
@@ -507,12 +600,16 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, co
         } // end switch
     };
 
+    const char *activity = "ParseAttributesIndexPerStep";
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_MetadataIndexTable[submetadatafileId][step][2];
+    const uint64_t indexStart = StepIndexOffset(submetadatafileId, step, 2, activity);
+    RequireBytes(buffer, indexStart, 12, activity); // count, length
+    size_t position = static_cast<size_t>(indexStart);
 
     helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
     const uint64_t length =
         helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    RequireBytes(buffer, position, length, activity);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -520,10 +617,17 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, co
     // Read sequentially
     while (localPosition < length)
     {
-        lf_ReadElementIndex(engine, buffer, position);
+        /* an element index is a 4-byte size followed by that many bytes */
+        RequireBytes(buffer, position, 4, activity);
+        size_t sizePosition = position;
         const size_t elementIndexSize = static_cast<size_t>(
-            helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
-        position += elementIndexSize;
+            helper::ReadValue<uint32_t>(buffer, sizePosition, m_Minifooter.IsLittleEndian));
+        RequireBytes(buffer, sizePosition, elementIndexSize, activity);
+        CheckElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian, activity);
+
+        lf_ReadElementIndex(engine, buffer, position);
+
+        position = sizePosition + elementIndexSize;
         localPosition = position - startPosition;
     }
 }

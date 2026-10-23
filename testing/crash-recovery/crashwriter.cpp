@@ -26,17 +26,19 @@ int main(int argc, char **argv)
 {
     if (argc < 4)
     {
-        fprintf(stderr, "usage: crashwriter <file.bp> <steps> <elems> [sleep_ms_per_step]\n");
+        fprintf(stderr,
+                "usage: crashwriter <file.bp> <steps> <elems> [sleep_ms_per_step] [engine]\n");
         return 1;
     }
     const char *fname = argv[1];
     size_t steps = strtoul(argv[2], nullptr, 10);
     size_t n = strtoul(argv[3], nullptr, 10);
     int sleep_ms = argc > 4 ? atoi(argv[4]) : 0;
+    const char *engine = argc > 5 ? argv[5] : "BP5";
 
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("w");
-    io.SetEngine("BP5");
+    io.SetEngine(engine);
     auto va = io.DefineVariable<float>("a", {n}, {0}, {n});
     auto vstep = io.DefineVariable<uint64_t>("stepnum");
     io.DefineAttribute<int>("meaning", 42);

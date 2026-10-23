@@ -176,6 +176,13 @@ private:
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
 
+    /**
+     * Offset i of the metadata index record for step, throwing if the index
+     * never described that step and so left no offsets behind.
+     */
+    uint64_t StepIndexOffset(const size_t submetadatafileId, const size_t step, const size_t i,
+                             const char *activity);
+
     // void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
     void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const std::string hostLanguage,
                              size_t submetadatafileId, size_t step);

@@ -5,9 +5,9 @@
  */
 
 /*
- * Verifier for crash-recovery testing. Opens a (possibly truncated) BP5 file
- * and reads every step it can, verifying content against the writer's
- * deterministic pattern.
+ * Verifier for crash-recovery testing. Opens a (possibly truncated or
+ * corrupt) BP5 or BP4 file and reads every step it can, verifying content
+ * against the writer's deterministic pattern.
  *
  * Exit codes: 0 = recovered cleanly (prints RECOVERED <n>), 2 = data
  * mismatch (silent corruption!), 3 = clean ADIOS exception (acceptable),
@@ -28,25 +28,26 @@ int main(int argc, char **argv)
 {
     if (argc < 3)
     {
-        fprintf(stderr, "usage: crashreader <file.bp> ra|stream\n");
+        fprintf(stderr, "usage: crashreader <file.bp> ra|stream [engine]\n");
         return 1;
     }
     const char *fname = argv[1];
     bool ra = (strcmp(argv[2], "ra") == 0);
+    const char *engine = argc > 3 ? argv[3] : "BP5";
     size_t recovered = 0;
     try
     {
         adios2::ADIOS adios;
         adios2::IO io = adios.DeclareIO("r");
-        io.SetEngine("BP5");
-        if (const char *w = getenv("CR_EOF_WAIT"))
-            io.SetParameter("EOFWaitSecs", w);
-        if (!ra)
-        {
-            // bound the streaming Open: a writer killed before producing a
-            // usable header would otherwise block Open indefinitely
-            io.SetParameter("OpenTimeoutSecs", "2");
-        }
+        io.SetEngine(engine);
+        // EOFWaitSecs is BP5-only; BP4 bounds its waiting with OpenTimeoutSecs
+        const char *eofWait = getenv("CR_EOF_WAIT");
+        if (eofWait && strcmp(engine, "BP5") == 0)
+            io.SetParameter("EOFWaitSecs", eofWait);
+        // bound Open: a writer killed before producing a usable header would
+        // otherwise block indefinitely. BP4 waits on its index in both modes,
+        // so this is not limited to the streaming one.
+        io.SetParameter("OpenTimeoutSecs", "2");
         adios2::Engine r = io.Open(fname, ra ? adios2::Mode::ReadRandomAccess : adios2::Mode::Read);
         if (ra)
         {
