@@ -1557,7 +1557,7 @@ Dims BP5Deserializer::StepShape(BP5VarRec *VarRec, size_t AbsStep) const
     return Dims();
 }
 
-size_t BP5Deserializer::BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const
+Dims BP5Deserializer::BlockCountDims(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const
 {
     size_t NodeFirstBlock = 0;
     const size_t writerCohortSize = WriterCohortSize(AbsStep);
@@ -1574,16 +1574,31 @@ size_t BP5Deserializer::BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, siz
         {
             const size_t NeededBlock = BlockID - NodeFirstBlock;
             const size_t StartDim = NeededBlock * VarRec->DimCount;
-            size_t total = 1;
+            Dims count(VarRec->DimCount);
             for (size_t d = 0; d < VarRec->DimCount; d++)
             {
-                total *= (size_t)meta->Count[StartDim + d];
+                count[d] = (size_t)meta->Count[StartDim + d];
             }
-            return total;
+            return count;
         }
         NodeFirstBlock += meta->BlockCount;
     }
-    return 0;
+    return Dims();
+}
+
+size_t BP5Deserializer::BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const
+{
+    const Dims count = BlockCountDims(VarRec, AbsStep, BlockID);
+    if (count.empty())
+    {
+        return 0;
+    }
+    size_t total = 1;
+    for (size_t d = 0; d < count.size(); d++)
+    {
+        total *= count[d];
+    }
+    return total;
 }
 
 bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &variable,
@@ -1765,6 +1780,32 @@ bool BP5Deserializer::QueueGetSingle(BP5GetContext &ctx, core::VariableBase &var
         Req.BlockID = hasBlock ? blockID : 0;
         if (effectiveSelType == adios2::SelectionType::BoundingBox)
         {
+            // A box on top of a block is block-relative, so bound it by that
+            // block.  BP3/BP4 reject an out-of-bounds box here; without this
+            // BP5 would read past the block and return garbage.
+            const Dims blockCount = BlockCountDims(VarRec, AbsStep, Req.BlockID);
+            if (!blockCount.empty())
+            {
+                const Dims boxStart =
+                    effectiveStart.empty() ? Dims(effectiveCount.size(), 0) : effectiveStart;
+                bool oob = (boxStart.size() != blockCount.size()) ||
+                           (effectiveCount.size() != blockCount.size());
+                for (size_t d = 0; !oob && d < blockCount.size(); d++)
+                {
+                    oob = (boxStart[d] + effectiveCount[d] > blockCount[d]);
+                }
+                if (oob)
+                {
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::BP5Deserializer", "QueueGetSingle",
+                        "selection Start " + helper::DimsToString(boxStart) + " and Count " +
+                            helper::DimsToString(effectiveCount) +
+                            " (requested) is out of bounds of (available) local Count " +
+                            helper::DimsToString(blockCount) +
+                            " , when reading local array variable " + variable.m_Name +
+                            ", in call to Get");
+                }
+            }
             Req.Start = effectiveStart;
             Req.Count = effectiveCount;
             if (DestElements)
@@ -1924,6 +1965,42 @@ bool BP5Deserializer::QueueGet(BP5GetContext &ctx, core::VariableBase &variable,
                     "(random access), or "
                     "number of BeginStep calls (streaming)");
         }
+        /* A multi-step Get returns one rectangle: stepCount copies of the same
+         * per-step geometry, strided by it.  That only has an answer when the
+         * geometry is the same at every step of the range, so refuse a ragged
+         * range rather than write past a destination sized for the rectangle.
+         * Only an All selection can be ragged; an explicit box is fixed and so
+         * contributes the same amount at every step.  BP3/BP4 refuse the same
+         * thing in InitVariableBlockInfo. */
+        if ((stepsCount > 1) && (selection.GetSelectionType() == adios2::SelectionType::All) &&
+            (VarRec->OrigShapeID != ShapeID::GlobalValue) &&
+            (VarRec->OrigShapeID != ShapeID::LocalValue))
+        {
+            const bool hasBlock = selection.HasBlockSelection();
+            const bool blockRead = hasBlock || (variable.m_ShapeID == ShapeID::LocalArray);
+            const size_t blockID = hasBlock ? selection.GetBlockID() : 0;
+            const size_t FirstStep = VarRec->AbsStepFromRel[stepsStart];
+            for (size_t RelStep = stepsStart + 1; RelStep < stepsStart + stepsCount; RelStep++)
+            {
+                const size_t ThisStep = VarRec->AbsStepFromRel[RelStep];
+                const bool same =
+                    blockRead ? (BlockElementCount(VarRec, FirstStep, blockID) ==
+                                 BlockElementCount(VarRec, ThisStep, blockID))
+                              : (StepShape(VarRec, FirstStep) == StepShape(VarRec, ThisStep));
+                if (!same)
+                {
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::BP5Deserializer", "QueueGet",
+                        (blockRead ? "block " + std::to_string(blockID) + " of variable "
+                                   : "variable ") +
+                            variable.m_Name +
+                            " is not the same shape at every step of the requested range; a "
+                            "multi-step Get returns one rectangle, so read the steps one at a "
+                            "time");
+                }
+            }
+        }
+
         if (dataIsRemote && VarRec->OrigShapeID != ShapeID::LocalValue &&
             VarRec->OrigShapeID != ShapeID::GlobalValue)
         {

@@ -341,6 +341,8 @@ private:
                         size_t *DestElements = nullptr);
     // Global shape at AbsStep, empty if none.
     Dims StepShape(BP5VarRec *VarRec, size_t AbsStep) const;
+    // Per-dimension Count of global block BlockID at AbsStep, empty if no such block.
+    Dims BlockCountDims(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const;
     // Elements in global block BlockID at AbsStep, 0 if no such block.
     size_t BlockElementCount(BP5VarRec *VarRec, size_t AbsStep, size_t BlockID) const;
     bool QueueGetSingleRemote(BP5GetContext &ctx, core::VariableBase &variable, void *DestData,

@@ -155,6 +155,7 @@ bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
+bp_gtest_add_tests_helper(BlockStepsVarying MPI_ALLOW)
 bp5_gtest_add_tests_helper(GetContextIsolation MPI_NONE)
 bp5_gtest_add_tests_helper(FileUUID MPI_NONE)
 

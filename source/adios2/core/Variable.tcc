@@ -194,7 +194,9 @@ size_t Variable<T>::SelectionSize(const Selection &selection) const
 
     if (selType == SelectionType::All)
     {
-        // Try MinBlocksInfo to get the actual shape for this step
+        // A multi-step Get returns one rectangle of stepCount x the per-step
+        // geometry, so resolve the geometry at stepStart and scale it.  A range
+        // whose geometry varies is refused at Get; see BP5Deserializer::QueueGet.
         if (m_Engine != nullptr)
         {
             auto MVI = m_Engine->MinBlocksInfo(*this, stepStart);
@@ -255,18 +257,20 @@ size_t Variable<T>::SelectionSize(const Selection &selection) const
 
         const size_t blockID = selection.GetBlockID();
 
-        // Try MinBlocksInfo first (works on BP5)
+        // As above: one rectangle of stepCount x the block's extent at stepStart.
+        // A range whose block extent varies is refused at Get.
         auto MVI = m_Engine->MinBlocksInfo(*this, stepStart);
         if (MVI)
         {
             if (blockID >= MVI->BlocksInfo.size())
             {
+                const size_t available = MVI->BlocksInfo.size();
                 delete MVI;
                 helper::Throw<std::invalid_argument>(
                     "Core", "Variable", "SelectionSize",
                     "blockID " + std::to_string(blockID) +
-                        " is out of bounds for available blocks size " +
-                        std::to_string(MVI->BlocksInfo.size()) + " for variable " + m_Name);
+                        " is out of bounds for available blocks size " + std::to_string(available) +
+                        " for variable " + m_Name);
             }
             if (MVI->WasLocalValue)
             {

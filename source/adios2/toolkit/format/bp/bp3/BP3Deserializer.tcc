@@ -102,6 +102,36 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data) con
                     "to Get");
         }
 
+        // The block is resolved once here and its geometry reused for every
+        // step of the range.  If the block is shaped differently at a later
+        // step that silently truncates a global array and reads past the
+        // destination for a local one, so refuse the read instead.
+        if (stepsCount > 1)
+        {
+            auto itCheck = std::next(indices.begin(), stepsStart);
+            for (size_t i = 0; i < stepsCount && itCheck != indices.end(); ++i, ++itCheck)
+            {
+                const std::vector<typename core::Variable<T>::BPInfo> stepBlocks =
+                    BlocksInfo(variable, itCheck->first - 1);
+                const bool same = (variable.m_BlockID < stepBlocks.size()) &&
+                                  (stepBlocks[variable.m_BlockID].Count ==
+                                   blocksInfo[variable.m_BlockID].Count) &&
+                                  ((variable.m_ShapeID != ShapeID::GlobalArray) ||
+                                   (stepBlocks[variable.m_BlockID].Start ==
+                                    blocksInfo[variable.m_BlockID].Start));
+                if (!same)
+                {
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::bp::BP3Deserializer", "InitVariableBlockInfo",
+                        "block " + std::to_string(variable.m_BlockID) + " of variable " +
+                            variable.m_Name +
+                            " is not the same shape at every step of the requested "
+                            "range, which this engine cannot read in a single Get; "
+                            "read the steps one at a time");
+                }
+            }
+        }
+
         // switch to bounding box for global array
         if (variable.m_ShapeID == ShapeID::GlobalArray)
         {

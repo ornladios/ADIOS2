@@ -284,7 +284,7 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 
             helper::Throw<std::invalid_argument>(
                 "Core", "VariableBase", "SetMemorySelection",
-                "memoyCount[" + indexStr + "]= " + memoryCountStr +
+                "memoryCount[" + indexStr + "]= " + memoryCountStr +
                     " can not be smaller than variable count[" + indexStr + "]= " + countStr +
                     " for variable " + m_Name + ", in call to SetMemorySelection");
         }
