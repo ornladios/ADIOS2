@@ -209,6 +209,15 @@ public:
     void SetSelection(const adios2::Box<adios2::Dims> &selection);
 
     /**
+     * Restores the default selection, as if neither SetSelection nor
+     * SetBlockSelection had been called: the whole variable on a global array,
+     * the first block on a local array. Removes the bounding box and the block
+     * together, so a reader can switch between them without a leftover from
+     * the other. Does not affect the step or memory selections.
+     */
+    void RemoveSelection();
+
+    /**
      * Set the local start (offset) point to the memory pointer passed at Put
      * and the memory local dimensions (count). Used for non-contiguous memory
      * writes and reads (e.g. multidimensional ghost-cells).

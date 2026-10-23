@@ -33,6 +33,27 @@ class TestVariable(unittest.TestCase):
                 self.assertEqual(temps.steps(), 1)
                 self.assertEqual(temps.steps_start(), 0)
 
+    def test_02b_remove_selection(self):
+        # remove_selection puts the variable back to the whole-variable default,
+        # dropping a bounding box and a block together
+        with Stream(self.FILENAME, "r") as f:
+            for _ in f.steps():
+                temps = f.inquire_variable("temps")
+                self.assertEqual(temps.selection_size(), 4)
+
+                temps.set_selection([[1], [2]])
+                self.assertEqual(temps.selection_size(), 2)
+                temps.remove_selection()
+                self.assertEqual(temps.selection_size(), 4)
+
+                # a box set after a block must also be dropped by remove_selection
+                temps.set_block_selection(0)
+                temps.set_selection([[1], [2]])
+                self.assertEqual(temps.selection_size(), 2)
+                temps.remove_selection()
+                self.assertEqual(temps.selection_size(), 4)
+                self.assertEqual(temps.block_id(), 0)
+
     def test_03_operators(self):
         adios = Adios()
         op1 = adios.define_operator("noop", "null")

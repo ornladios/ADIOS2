@@ -226,6 +226,16 @@ public:
     void RemoveOperations() noexcept;
 
     /**
+     * Restores the default selection, as if neither SetSelection nor
+     * SetBlockSelection had been called: the whole variable on a global array,
+     * the first block on a local array, which has no whole-variable read.
+     * Removes the bounding box and the block together, so a reader can switch
+     * between them without a leftover from the other.  Does not affect the
+     * step or memory selections.
+     */
+    void RemoveSelection();
+
+    /**
      * Sets a parameter by key/value in an existing operation from AddOperation
      * @param operationID returned handler form AddOperation
      * @param key input parameter key

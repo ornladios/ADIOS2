@@ -163,6 +163,7 @@ void Engine::Get(Variable<T> &variable, T *data, const Selection &selection, con
 {
     CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get with Selection");
+    CheckSelection(variable, selection, "in call to Get with Selection");
 
     switch (launch)
     {
@@ -184,6 +185,7 @@ void Engine::Get(GetContext &ctx, Variable<T> &variable, T *data, const Selectio
 {
     CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get(GetContext &, Variable, T*, Selection)");
+    CheckSelection(variable, selection, "in call to Get(GetContext &, Variable, T*, Selection)");
     DoGetContextDeferred(ctx, variable, data, selection);
 }
 

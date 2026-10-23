@@ -375,6 +375,313 @@ TEST_F(BPBlockStepsVaryingTest, BlockAbsentAtSomeSteps)
     reader.Close();
 }
 
+// A local array has no whole-variable read, so an unselected one reads its
+// first block.  That block has to be resolved at the step being read: m_Count
+// is seeded when the reader-side variable is built and holds the extent of
+// whichever step the variable first appeared in.
+TEST_F(BPBlockStepsVaryingTest, DefaultBlockOnLocalArrayFollowsStep)
+{
+    if (MpiSize() > 1)
+    {
+        GTEST_SKIP() << "serial case";
+    }
+    const std::string fname("BPLocalDefaultBlock_" + engineName + ".bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteLocalDefaultIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("l", {}, {}, {3});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        for (int32_t step = 0; step < 2; ++step)
+        {
+            // block 0 is 3 long at step 0 and 7 long at step 1
+            const size_t n = (step == 0) ? 3 : 7;
+            std::vector<int32_t> block0(n);
+            for (size_t i = 0; i < n; ++i)
+            {
+                block0[i] = step * 100 + static_cast<int32_t>(i);
+            }
+            const std::vector<int32_t> block1 = {step * 100 + 50, step * 100 + 51};
+            writer.BeginStep();
+            var.SetSelection({{}, {n}});
+            writer.Put(var, block0.data(), adios2::Mode::Sync);
+            var.SetSelection({{}, {2}});
+            writer.Put(var, block1.data(), adios2::Mode::Sync);
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadLocalDefaultIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    auto var = io.InquireVariable<int32_t>("l");
+    ASSERT_TRUE(var);
+    EXPECT_EQ(var.BlockID(), 0u);
+
+    var.SetStepSelection({1, 1});
+    ASSERT_EQ(var.SelectionSize(), 7u);
+    EXPECT_EQ(var.Count(), adios2::Dims({7}));
+    std::vector<int32_t> got(7, -999);
+    reader.Get(var, got.data(), adios2::Mode::Sync);
+    EXPECT_EQ(got, std::vector<int32_t>({100, 101, 102, 103, 104, 105, 106}));
+
+    var.SetStepSelection({0, 1});
+    ASSERT_EQ(var.SelectionSize(), 3u);
+    std::vector<int32_t> got0(3, -999);
+    reader.Get(var, got0.data(), adios2::Mode::Sync);
+    EXPECT_EQ(got0, std::vector<int32_t>({0, 1, 2}));
+    reader.Close();
+}
+
+// A bounding box on a local array is block-relative and its start may be left
+// empty.  The engines decided whether a box had been asked for by testing the
+// start, so an empty one dropped the count and read the whole block, past the
+// end of a buffer the caller sized from SelectionSize().
+TEST_F(BPBlockStepsVaryingTest, EmptyStartBoxOnLocalArray)
+{
+    if (MpiSize() > 1)
+    {
+        GTEST_SKIP() << "serial case";
+    }
+    const std::string fname("BPLocalEmptyStartBox_" + engineName + ".bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteEmptyStartIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("l", {}, {}, {4});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> block0 = {1, 2, 3, 4};
+        const std::vector<int32_t> block1 = {5, 6, 7, 8};
+        writer.BeginStep();
+        writer.Put(var, block0.data(), adios2::Mode::Sync);
+        writer.Put(var, block1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadEmptyStartIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+    // Room past the selection, so a read of the whole block is caught here
+    // rather than as heap corruption.
+    const int32_t guard = -999;
+
+    {
+        auto var = io.InquireVariable<int32_t>("l");
+        ASSERT_TRUE(var);
+        var.SetSelection({{}, {2}});
+        ASSERT_EQ(var.SelectionSize(), 2u);
+        std::vector<int32_t> got(8, guard);
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got[0], 1);
+        EXPECT_EQ(got[1], 2);
+        for (size_t i = 2; i < got.size(); ++i)
+        {
+            EXPECT_EQ(got[i], guard) << "wrote past SelectionSize() at " << i;
+        }
+    }
+
+    // The same box on top of a block stays relative to that block.
+    {
+        auto var = io.InquireVariable<int32_t>("l");
+        var.SetBlockSelection(1);
+        var.SetSelection({{}, {2}});
+        ASSERT_EQ(var.SelectionSize(), 2u);
+        std::vector<int32_t> got(8, guard);
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got[0], 5);
+        EXPECT_EQ(got[1], 6);
+        for (size_t i = 2; i < got.size(); ++i)
+        {
+            EXPECT_EQ(got[i], guard) << "wrote past SelectionSize() at " << i;
+        }
+    }
+    reader.Close();
+}
+
+// On a global array the legacy setters are alternatives, not a composition:
+// whichever was called last decides.  The Selection class refuses the pair
+// because it has no ordering; these sequential calls stay well defined.
+TEST_F(BPBlockStepsVaryingTest, BlockAndBoxOnGlobalArrayLastWins)
+{
+    if (MpiSize() > 1)
+    {
+        GTEST_SKIP() << "serial case";
+    }
+    const std::string fname("BPGlobalBlockBox_" + engineName + ".bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteGlobalBlockBoxIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("g", {8}, {0}, {4});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> b0 = {0, 1, 2, 3};
+        const std::vector<int32_t> b1 = {10, 11, 12, 13};
+        writer.BeginStep();
+        var.SetSelection({{0}, {4}});
+        writer.Put(var, b0.data(), adios2::Mode::Sync);
+        var.SetSelection({{4}, {4}});
+        writer.Put(var, b1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadGlobalBlockBoxIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+    {
+        auto var = io.InquireVariable<int32_t>("g");
+        ASSERT_TRUE(var);
+        var.SetBlockSelection(1);
+        var.SetSelection({{0}, {2}}); // box last: a global box wins
+        ASSERT_EQ(var.SelectionSize(), 2u);
+        std::vector<int32_t> got(2, -999);
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({0, 1}));
+    }
+    {
+        auto var = io.InquireVariable<int32_t>("g");
+        var.SetSelection({{0}, {2}});
+        var.SetBlockSelection(1); // block last: the whole block wins
+        ASSERT_EQ(var.SelectionSize(), 4u);
+        std::vector<int32_t> got(4, -999);
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({10, 11, 12, 13}));
+    }
+    reader.Close();
+}
+
+// The legacy setters have no inverse, so once a box was set there was no way
+// back to the default.  RemoveSelection drops the box and the block together,
+// so a reader can alternate between them.
+TEST_F(BPBlockStepsVaryingTest, RemoveSelectionRestoresDefault)
+{
+    if (MpiSize() > 1)
+    {
+        GTEST_SKIP() << "serial case";
+    }
+    const std::string fname("BPRemoveSelection_" + engineName + ".bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteRemoveSelIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto varG = io.DefineVariable<int32_t>("g", {8}, {0}, {4});
+        auto varL = io.DefineVariable<int32_t>("l", {}, {}, {4});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> b0 = {1, 2, 3, 4};
+        const std::vector<int32_t> b1 = {5, 6, 7, 8};
+        writer.BeginStep();
+        varG.SetSelection({{0}, {4}});
+        writer.Put(varG, b0.data(), adios2::Mode::Sync);
+        varG.SetSelection({{4}, {4}});
+        writer.Put(varG, b1.data(), adios2::Mode::Sync);
+        writer.Put(varL, b0.data(), adios2::Mode::Sync);
+        writer.Put(varL, b1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadRemoveSelIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    const std::vector<int32_t> whole = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    auto varG = io.InquireVariable<int32_t>("g");
+    ASSERT_TRUE(varG);
+    {
+        varG.SetSelection({{0}, {2}});
+        ASSERT_EQ(varG.SelectionSize(), 2u);
+        std::vector<int32_t> got(2, -999);
+        reader.Get(varG, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({1, 2}));
+    }
+    {
+        varG.RemoveSelection();
+        ASSERT_EQ(varG.SelectionSize(), 8u);
+        EXPECT_EQ(varG.Count(), adios2::Dims({8}));
+        std::vector<int32_t> got(8, -999);
+        reader.Get(varG, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, whole);
+    }
+    {
+        // and back out of a block selection, not just a box
+        varG.SetBlockSelection(1);
+        ASSERT_EQ(varG.SelectionSize(), 4u);
+        varG.RemoveSelection();
+        ASSERT_EQ(varG.SelectionSize(), 8u);
+        std::vector<int32_t> got(8, -999);
+        reader.Get(varG, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, whole);
+    }
+
+    // On a local array the default is the first block, not the whole variable
+    auto varL = io.InquireVariable<int32_t>("l");
+    ASSERT_TRUE(varL);
+    {
+        varL.SetBlockSelection(1);
+        varL.SetSelection({{}, {2}});
+        ASSERT_EQ(varL.SelectionSize(), 2u);
+        std::vector<int32_t> got(2, -999);
+        reader.Get(varL, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({5, 6}));
+    }
+    {
+        varL.RemoveSelection();
+        ASSERT_EQ(varL.SelectionSize(), 4u);
+        std::vector<int32_t> got(4, -999);
+        reader.Get(varL, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got, std::vector<int32_t>({1, 2, 3, 4}));
+    }
+    reader.Close();
+}
+
 // The same rule with no block selection at all: the whole variable is one
 // rectangle per step, so a range whose global shape varies has no answer.  BP5
 // refused this; BP3/BP4 refused it only for a block selection and silently

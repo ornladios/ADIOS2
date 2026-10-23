@@ -179,9 +179,10 @@ state and makes the intent of each ``Get()`` call clear at the call site.
 A selection has two independent aspects: a spatial selection —
 ``Selection::All()`` (the default — reads the entire variable) or
 ``Selection::BoundingBox(start, count)`` (hyperslab) — and an optional block
-selection via ``Selection::Block(blockID)`` or ``.WithBlock(blockID)``. These
-are orthogonal: a block ID can be combined with a bounding box to read a
-sub-region of a specific write block. Additional parameters (steps, memory
+selection via ``Selection::Block(blockID)`` or ``.WithBlock(blockID)``. A block
+ID combines with a bounding box on a local array, where the box is taken
+relative to the selected block; on a global array the two select alternative
+regions and the pair is refused. Additional parameters (steps, memory
 layout, accuracy) can be added via fluent ``With*()`` methods or mutable
 ``Set*()`` methods. A ``ToString()`` method is provided for debugging.
 

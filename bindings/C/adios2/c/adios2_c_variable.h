@@ -73,6 +73,17 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count);
 
 /**
+ * Restores the default selection, as if neither adios2_set_selection nor
+ * adios2_set_block_selection had been called: the whole variable for a global
+ * array, the first block for a local array. Removes the bounding box and the
+ * block together, so a reader can switch between them without a leftover from
+ * the other. Does not affect the step or memory selections.
+ * @param variable handler for which the selection will be removed
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_remove_selection(adios2_variable *variable);
+
+/**
  * Set the local start (offset) point to the memory pointer passed at Put
  * and the memory local dimensions (count). Used for non-contiguous memory
  * writes and reads (e.g. multidimensional ghost-cells).

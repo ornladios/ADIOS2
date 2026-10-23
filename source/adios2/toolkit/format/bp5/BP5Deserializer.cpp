@@ -1107,8 +1107,14 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                     }
                     if (!meta_base->Shape)
                     {
-                        static_cast<VariableBase *>(VarRec->Variable)->m_ShapeID =
-                            ShapeID::LocalArray;
+                        auto VB = static_cast<VariableBase *>(VarRec->Variable);
+                        VB->m_ShapeID = ShapeID::LocalArray;
+                        /* A local array has no whole-variable read: there is no
+                         * global shape to select, only blocks.  Default to the
+                         * first block, which is what every engine already
+                         * returned for an unselected local array. */
+                        VB->m_SelectionType = SelectionType::WriteBlock;
+                        VB->m_BlockID = 0;
                     }
                 }
 

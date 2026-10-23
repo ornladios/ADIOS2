@@ -1068,6 +1068,12 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(const ElementIndexHeader &
                                                           characteristics.Count.rend())
                                                    : characteristics.Count;
             variable = &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
+            /* A local array has no whole-variable read: there is no global
+             * shape to select, only blocks.  Default to the first block, which
+             * is what every engine already returned for an unselected local
+             * array. */
+            variable->m_SelectionType = SelectionType::WriteBlock;
+            variable->m_BlockID = 0;
             break;
         }
         default:

@@ -39,7 +39,10 @@ independent aspects:
   (a hyperslab with start offsets and counts).
 - **Block selection** — optionally targets an individual write block by ID.
 
-These are orthogonal: a block ID can be combined with either spatial type.
+A block ID combines with a bounding box only on a **local array**, where the
+box is taken relative to the selected block. On a global array the two select
+alternative regions and the pair is refused; use a global bounding box, which
+can already address any part of any block.
 
 .. code-block:: c++
 
@@ -53,7 +56,8 @@ These are orthogonal: a block ID can be combined with either spatial type.
    // (equivalent to All().WithBlock(3))
    auto sel = adios2::Selection::Block(3);
 
-   // Block + bounding box — read a sub-region within a specific block
+   // Block + bounding box — a sub-region within a block, local arrays only
+   // (on a global array this throws; select the region globally instead)
    auto sel = adios2::Selection::BoundingBox({0}, {10}).WithBlock(3);
 
    // Using Box<Dims> convenience type
@@ -149,7 +153,8 @@ Available Selection Parameters
    * - Block
      - ``Block(blockID)`` / ``SetBlock()``
      - ``WithBlock()``
-     - Select an individual write block by ID (can combine with any spatial type)
+     - Select an individual write block by ID (combines with a bounding box on
+       a local array only, where the box is block-relative)
    * - Steps
      - ``SetSteps(start, count)``
      - ``WithSteps()``

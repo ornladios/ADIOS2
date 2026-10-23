@@ -801,6 +801,53 @@ TEST_F(BPSelectionGetTest, SelectionToString)
     EXPECT_NE(ws.find("7"), std::string::npos);
 }
 
+// A block and a bounding box compose only on a local array, where the box is
+// relative to the block.  On a global array they select alternative regions,
+// so the pair is refused rather than quietly dropping the block.
+TEST_F(BPSelectionGetTest, BlockWithBoxOnGlobalArrayThrows)
+{
+    const std::string fname("BPSelBlockBoxGlobal.bp");
+    const size_t Nx = 8;
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteBlockBoxIO");
+        auto varG = io.DefineVariable<int32_t>("g", {Nx}, {0}, {4});
+        auto varL = io.DefineVariable<int32_t>("l", {}, {}, {4});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> b0 = {0, 1, 2, 3};
+        const std::vector<int32_t> b1 = {10, 11, 12, 13};
+        writer.BeginStep();
+        varG.SetSelection({{0}, {4}});
+        writer.Put(varG, b0.data(), adios2::Mode::Sync);
+        varG.SetSelection({{4}, {4}});
+        writer.Put(varG, b1.data(), adios2::Mode::Sync);
+        writer.Put(varL, b0.data(), adios2::Mode::Sync);
+        writer.Put(varL, b1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadBlockBoxIO");
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    const auto sel = adios2::Selection::BoundingBox({0}, {2}).WithBlock(1).WithSteps(0, 1);
+
+    auto varG = io.InquireVariable<int32_t>("g");
+    ASSERT_TRUE(varG);
+    std::vector<int32_t> data(2, -999);
+    EXPECT_THROW(reader.Get(varG, data.data(), sel, adios2::Mode::Sync), std::invalid_argument);
+    // SelectionSize must agree with Get about what is legal
+    EXPECT_THROW(varG.SelectionSize(sel), std::invalid_argument);
+
+    // The same pair on a local array is the supported ghost-cell case
+    auto varL = io.InquireVariable<int32_t>("l");
+    ASSERT_TRUE(varL);
+    EXPECT_EQ(varL.SelectionSize(sel), 2u);
+    reader.Get(varL, data.data(), sel, adios2::Mode::Sync);
+    EXPECT_EQ(data, std::vector<int32_t>({10, 11}));
+    reader.Close();
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI

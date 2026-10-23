@@ -195,6 +195,7 @@ size_t Variable<T>::DoSelectionSize() const
 template <class T>
 size_t Variable<T>::SelectionSize(const Selection &selection) const
 {
+    CheckSelection(*this, selection, "in call to SelectionSize");
     const size_t stepCount = selection.GetStepCount();
     const size_t stepStart = selection.GetStepStart();
     SelectionType selType = selection.GetSelectionType();

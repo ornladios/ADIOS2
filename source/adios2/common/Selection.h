@@ -21,10 +21,13 @@ class VariableBase;
 /**
  * Selection specification for Get() operations.
  *
- * Spatial selection (All or BoundingBox) and block selection are orthogonal.
- * A block ID can be combined with either spatial type:
- *   - Block(3)                         = All + block 3
- *   - BoundingBox({0},{10}).WithBlock(3) = sub-region of block 3
+ * A block ID combines with a bounding box only on a local array, where the box
+ * is taken relative to the selected block:
+ *   - Block(3)                           = All + block 3
+ *   - BoundingBox({0},{10}).WithBlock(3) = sub-region of block 3, local arrays
+ *                                          only; refused on a global array,
+ *                                          where the two select alternative
+ *                                          regions (see CheckSelection)
  *
  * Supports two usage patterns:
  * 1. Immutable/fluent: Use factory methods + With*() to create new instances
@@ -143,6 +146,15 @@ private:
  * m_StepsCount, m_MemoryStart, m_MemoryCount, and GetAccuracyRequested().
  */
 Selection InferSelection(const VariableBase &variable);
+
+/**
+ * Refuse a Selection that asks for something the variable cannot express.
+ * A block and a bounding box compose only on a local array, where the box is
+ * relative to the block; on a global array the legacy setters are alternatives
+ * and the block would be silently dropped.
+ */
+void CheckSelection(const VariableBase &variable, const Selection &selection,
+                    const std::string &hint);
 
 } // end namespace core
 } // end namespace adios2

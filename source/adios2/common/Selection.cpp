@@ -286,10 +286,14 @@ Selection InferSelection(const VariableBase &variable)
         sel.SetBoundingBox(variable.m_Start, variable.m_Count);
     }
 
-    // Block ID is orthogonal to spatial selection.
-    // Capture it when explicitly set (WriteBlock) or when it was set independently
-    // and then the spatial type was changed (e.g., SetBlockSelection + SetSelection).
-    if (variable.m_SelectionType == SelectionType::WriteBlock || variable.m_BlockID != 0)
+    // A block composes with a box only on a local array, where the box is
+    // block-relative (SetBlockSelection + SetSelection).  On a global array the
+    // two are alternatives, so a block left over from an earlier
+    // SetBlockSelection must not travel with a box; CheckSelection refuses the
+    // pair when a caller builds it directly.
+    if (variable.m_SelectionType == SelectionType::WriteBlock ||
+        (variable.m_BlockID != 0 && variable.m_ShapeID != ShapeID::GlobalArray &&
+         variable.m_ShapeID != ShapeID::JoinedArray))
     {
         sel.SetBlock(variable.m_BlockID);
     }
@@ -304,6 +308,22 @@ Selection InferSelection(const VariableBase &variable)
     sel.SetAccuracy(variable.GetAccuracyRequested());
 
     return sel;
+}
+
+void CheckSelection(const VariableBase &variable, const Selection &selection,
+                    const std::string &hint)
+{
+    if (selection.HasBlockSelection() &&
+        selection.GetSelectionType() == SelectionType::BoundingBox &&
+        (variable.m_ShapeID == ShapeID::GlobalArray || variable.m_ShapeID == ShapeID::JoinedArray))
+    {
+        helper::Throw<std::invalid_argument>(
+            "Core", "Selection", "CheckSelection",
+            "a block and a bounding box cannot be combined on global array " + variable.m_Name +
+                ", where they select alternative regions; they compose only on a local array, "
+                "where the box is relative to the block, " +
+                hint);
+    }
 }
 
 } // end namespace core

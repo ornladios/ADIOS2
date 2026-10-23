@@ -41,6 +41,12 @@ void Variable::SetSelection(const Box<Dims> &selection)
     m_VariableBase->SetSelection(selection);
 }
 
+void Variable::RemoveSelection()
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::RemoveSelection");
+    m_VariableBase->RemoveSelection();
+}
+
 void Variable::SetStepSelection(const Box<size_t> &stepSelection)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetStepSelection");

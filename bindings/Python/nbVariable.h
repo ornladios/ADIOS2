@@ -43,6 +43,7 @@ public:
     void SetBlockSelection(const size_t blockID);
 
     void SetSelection(const Box<Dims> &selection);
+    void RemoveSelection();
 
     void SetStepSelection(const Box<size_t> &stepSelection);
 

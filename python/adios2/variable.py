@@ -73,6 +73,16 @@ class Variable:
         """
         self.impl.SetSelection(selection)
 
+    def remove_selection(self):
+        """
+        Restore the default selection, as if neither set_selection nor
+        set_block_selection had been called: the whole variable for a global
+        array, the first block for a local array. Removes the bounding box and
+        the block together, so a reader can switch between them without a
+        leftover from the other. Step and memory selections are untouched.
+        """
+        self.impl.RemoveSelection()
+
     def set_shape(self, shape):
         """
         Set Shape (dimensions) for this variable
