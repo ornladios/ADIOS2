@@ -319,6 +319,8 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
 
     sprintf(key, "step%zu", Step);
     sizeof_list_writer_mdsize = sizeof(uint64_t) * WriterCount;
+    // The writer gives every step its own MAX_AGGREGATE_METADATA_SIZE region.
+    const size_t stepOffset = Step * MAX_AGGREGATE_METADATA_SIZE;
 
     CALI_MARK_BEGIN("DaosReader::daos_kv_get_list_of_mdsize");
     int rc = daos_kv_get(mdsize_oh, DAOS_TX_NONE, 0, key, &sizeof_list_writer_mdsize,
@@ -362,7 +364,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
         {
             list_rg[WriterRank].rg_len = list_writer_mdsize[WriterRank];
-            list_rg[WriterRank].rg_idx = m_step_offset + WriterRank * chunk_size_1mb;
+            list_rg[WriterRank].rg_idx = stepOffset + WriterRank * chunk_size_1mb;
         }
         index++;
     }
@@ -388,7 +390,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
     {
         iod.arr_nr = 1;
         rg.rg_len = total_mdsize;
-        rg.rg_idx = m_step_offset;
+        rg.rg_idx = stepOffset;
         iod.arr_rgs = &rg;
     }
 
@@ -413,9 +415,9 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         const unsigned char *mb = (const unsigned char *)meta_buff;
         fprintf(stderr,
                 "[DAOS_MD_DEBUG] ArrayReadMD step=%zu layout=%d WriterCount=%zu "
-                "total_mdsize=%zu total_attr_size=%zu buffer_size=%zu m_step_offset=%zu\n",
+                "total_mdsize=%zu total_attr_size=%zu buffer_size=%zu stepOffset=%zu\n",
                 Step, (int)metadataLayout, (size_t)WriterCount, total_mdsize, total_attr_size,
-                buffer_size, m_step_offset);
+                buffer_size, stepOffset);
         // Print a spread of blobs so the *shape* of any buffer corruption is
         // visible right after the array read: which ranks carry a valid FFS
         // id (first bytes 02 00 00 92 for EFFIS-XG) and which are garbage.
@@ -444,7 +446,6 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
                 lp[3]);
     }
 
-    m_step_offset += MAX_AGGREGATE_METADATA_SIZE;
     if (metadataLayout == MetadataLayout::ARRAY_1MB_ALIGNED)
         free(list_rg);
 
@@ -461,10 +462,10 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
 
 void DaosReader::InstallMetadataForTimestep(size_t Step)
 {
-    // size_t pgstart = m_MetadataIndexTable[Step][0];
-    size_t pgstart = m_MetadataIndexTable[0][0];
+    // m_Metadata holds only this step, as built by ReadMetadata(Step).
+    size_t pgstart = 0;
     size_t Position = pgstart + sizeof(uint64_t); // skip total data size
-    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[0]].WriterCount;
+    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
     auto &stepStarts = m_RankStartDataPos[Step];
     stepStarts.resize(WriterCount);
 
@@ -1003,9 +1004,15 @@ void DaosReader::PerformGets()
     auto lf_Start = [&](size_t r) -> bool {
         auto &Req = ReadRequests[r];
         auto &s = st[r];
-        if (Req.WriterRank >= m_DataArrayHandles.size())
+        // The step's writer-map record names each rank's data_oids.txt slot,
+        // which differs from the rank in runs appended to a dataset.
+        const auto &wmap = m_WriterMap.at(m_WriterMapIndex[Req.Timestep]);
+        const size_t slot = Req.WriterRank < wmap.RankToSubfile.size()
+                                ? wmap.RankToSubfile[Req.WriterRank]
+                                : Req.WriterRank;
+        if (slot >= m_DataArrayHandles.size())
         {
-            err = "WriterRank " + std::to_string(Req.WriterRank) +
+            err = "WriterRank " + std::to_string(Req.WriterRank) + " slot " + std::to_string(slot) +
                   " has no entry in OID index (size=" + std::to_string(m_DataArrayHandles.size()) +
                   ")";
             return false;
@@ -1039,9 +1046,9 @@ void DaosReader::PerformGets()
             freeScratch.pop_back();
             Req.DestinationAddr = m_ReadScratch[s.scratch].get();
         }
-        s.aoh = m_DataArrayHandles[Req.WriterRank];
+        s.aoh = m_DataArrayHandles[slot];
         s.arrayOffset = it->second[Req.WriterRank] + Req.StartOffset;
-        s.arrayChunk = m_DataArrayChunk[Req.WriterRank] ? m_DataArrayChunk[Req.WriterRank] : 1;
+        s.arrayChunk = m_DataArrayChunk[slot] ? m_DataArrayChunk[slot] : 1;
         s.started = true;
         s.outstanding = 1;
         s.issued = Req.SubRanges.empty() ? Req.ReadLength == 0 : false;
@@ -1330,6 +1337,10 @@ void DaosReader::PerformGets()
 
     ++m_ReadGetsCalls;
 
+    // Only SetupForStep clears the queue otherwise, so in random access every
+    // later PerformGets would reissue these Gets into the same buffers.
+    m_BP5Deserializer->ClearGetState();
+
     if (!err.empty())
     {
         helper::Throw<std::runtime_error>("Engine", "DaosReader", "PerformGets", err);
@@ -1339,12 +1350,6 @@ void DaosReader::PerformGets()
         helper::Throw<std::runtime_error>("Engine", "DaosReader", "PerformGets",
                                           "finalized " + std::to_string(finalized) + " of " +
                                               std::to_string(nRequest) + " read requests");
-    }
-
-    // clear pending requests inside deserializer
-    {
-        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-        m_BP5Deserializer->FinalizeGets(empty);
     }
 }
 
@@ -2086,6 +2091,7 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
             {
                 m_BP5Deserializer->SetupForStep(Step,
                                                 m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
+                ReadMetadata(Step);
                 InstallMetadataForTimestep(Step);
             }
         }
@@ -2582,7 +2588,7 @@ void DaosReader::LoadDataOidsIndex()
 {
     // Parse <m_Name>/data_oids.txt written by DaosWriter::PersistDataOidsIndex.
     // Format: comment lines starting with '#', then one record per line:
-    //   "<rank> <oid_lo> <oid_hi>"
+    //   "<slot> <oid_lo> <oid_hi>"; a single-run dataset's slots are its ranks.
     const std::string indexPath = m_Name + "/data_oids.txt";
     std::ifstream f(indexPath);
     if (!f)

@@ -166,8 +166,6 @@ private:
     void SetDataFlag();
     DataFlag m_DataFlag = DataFlag::ON;
 
-    size_t m_step_offset = 0;
-
     char node[128] = "unknown";
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */

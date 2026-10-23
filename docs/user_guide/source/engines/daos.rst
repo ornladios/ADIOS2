@@ -185,7 +185,10 @@ Limitations
   may send the span's bytes to DAOS before they are filled.  A span
   filled later in the step, for example just before ``EndStep``,
   can be written unfilled.
-* Append mode is not supported (``Mode::Append`` is rejected at
-  open).
+* ``Mode::Append`` adds steps to an existing dataset, with any number
+  of ranks; it does not support ``AppendAfterSteps``.  Append with the
+  ``DAOS_METADATA_LAYOUT`` the dataset was written with.  The dataset's
+  per-rank metadata setting is kept whatever ``DAOS_PER_RANK_METADATA``
+  says.
 * Both ``Mode::Read`` (step-by-step) and ``Mode::ReadRandomAccess``
   are supported on the read side.
