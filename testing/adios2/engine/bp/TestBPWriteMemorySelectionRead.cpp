@@ -900,6 +900,107 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 #endif
 }
 
+// A memory selection on the READ side: the box is placed at MemoryStart inside
+// a buffer laid out as MemoryCount, leaving the caller's ghost cells alone.
+// The remote path returns the box contiguously and has to place it the same
+// way the local one does, or the data lands at the front of the buffer.
+TEST(BPWriteMemSelReadGhost, ReadSideMemorySelection2D)
+{
+    if (!DoWrite || !DoRead)
+    {
+        // The staging lanes run this binary twice, once -do_write and once
+        // -do_read, and pair the two processes.  This case writes and reads in
+        // one process, so it has nothing to pair with.
+        GTEST_SKIP() << "writes and reads in one process";
+    }
+    const std::string fname("BPReadSideMemSel2D.bp");
+    const size_t Ny = 4, Nx = 6;
+    const size_t ghost = 1;
+    // Rank 0 writes and reads the whole array by itself.  The communicator has
+    // to hold rank 0 alone: ADIOS operations on it are collective, so splitting
+    // every rank into it and then skipping all but one deadlocks the survivor.
+#if ADIOS2_USE_MPI
+    int worldRank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+    MPI_Comm testComm;
+    MPI_Comm_split(MPI_COMM_WORLD, worldRank == 0 ? 0 : MPI_UNDEFINED, 0, &testComm);
+    if (worldRank != 0)
+    {
+        GTEST_SKIP() << "rank 0 writes and reads the whole array";
+    }
+    adios2::ADIOS adios(testComm);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("ReadSideMemSelWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        auto var = io.DefineVariable<int32_t>("g", {Ny, Nx}, {0, 0}, {Ny, Nx});
+        adios2::Engine w = io.Open(fname, adios2::Mode::Write);
+        std::vector<int32_t> data(Ny * Nx);
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            data[i] = static_cast<int32_t>(i);
+        }
+        w.BeginStep();
+        w.Put(var, data.data(), adios2::Mode::Sync);
+        w.EndStep();
+        w.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadSideMemSelRead");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine r = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    auto var = io.InquireVariable<int32_t>("g");
+    ASSERT_TRUE(var);
+
+    // a 2x3 box out of the middle, into a 4x5 buffer with a one-cell border
+    const adios2::Dims boxStart = {1, 2}, boxCount = {2, 3};
+    const adios2::Dims memStart = {ghost, ghost};
+    const adios2::Dims memCount = {boxCount[0] + 2 * ghost, boxCount[1] + 2 * ghost};
+    var.SetSelection({boxStart, boxCount});
+    var.SetMemorySelection({memStart, memCount});
+
+    const int32_t sentinel = -999;
+    std::vector<int32_t> buf(memCount[0] * memCount[1], sentinel);
+    r.Get(var, buf.data(), adios2::Mode::Sync);
+    r.Close();
+
+    for (size_t row = 0; row < memCount[0]; ++row)
+    {
+        for (size_t col = 0; col < memCount[1]; ++col)
+        {
+            const int32_t got = buf[row * memCount[1] + col];
+            const bool inBox = (row >= memStart[0] && row < memStart[0] + boxCount[0] &&
+                                col >= memStart[1] && col < memStart[1] + boxCount[1]);
+            if (inBox)
+            {
+                const size_t srcRow = boxStart[0] + (row - memStart[0]);
+                const size_t srcCol = boxStart[1] + (col - memStart[1]);
+                EXPECT_EQ(got, static_cast<int32_t>(srcRow * Nx + srcCol))
+                    << "at [" << row << "][" << col << "]";
+            }
+            else
+            {
+                EXPECT_EQ(got, sentinel)
+                    << "ghost cell at [" << row << "][" << col << "] was overwritten";
+            }
+        }
+    }
+
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, testComm);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
 class BPWriteMemSelReadVector : public ::testing::TestWithParam<size_t>
 {
 public:
