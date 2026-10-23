@@ -308,6 +308,18 @@ private:
     /// sentinel; in per-rank mode every call has MetaDataPos==0 so
     /// we need an explicit flag.
     bool m_FirstIndexCall = true;
+
+    /// Append to an existing dataset: md.idx already has its header, steps
+    /// continue from m_RunFirstStep, and this run's data arrays take the
+    /// data_oids.txt slots from m_DataSlotBase on.  The file's per-rank
+    /// metadata mode wins over DAOS_PER_RANK_METADATA, since the reader takes
+    /// it from the header for the whole file.
+    bool m_Appending = false;
+    bool m_AppendPerRank = false;
+    int64_t m_RunFirstStep = 0;
+    uint64_t m_DataSlotBase = 0;
+    void InitAppend();
+    void OpenExistingMetadataObjects();
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
 
