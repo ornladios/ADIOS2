@@ -516,7 +516,7 @@ namespace caesar
 namespace key
 {
 constexpr char tolerance[] = "accuracy";
-constexpr char mode[] = "model";
+constexpr char method[] = "method";
 }
 }
 #endif
