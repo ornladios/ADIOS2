@@ -216,15 +216,13 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                 EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
-            if ((engineName != "BP3") && (engineName != "BP4") && (mpiSize > 1))
+            if (mpiSize > 1)
             {
-                // This test exposes a difference in behaviour between
-                // BP3/4 and BP5.  BP5 resets the variables to their
-                // default state at each BeginStep where prior engines
-                // do not.  Therefore setting the block selection in
-                // this portion causes failures in future timesteps in
-                // prior engines, but not in BP5.  So we'll just test
-                // BP5 for the moment.
+                // Read the local values one block at a time, then take the
+                // block selection back off: it would otherwise carry into the
+                // next step and size the whole-variable read below as one
+                // block.  BP5 used to drop it by rebuilding the variable at
+                // every BeginStep, which is why this was once BP5 only.
                 for (size_t r = 0; r < rankLocalValueData.size(); ++r)
                 {
                     int32_t val;
@@ -232,6 +230,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                     bpReader.Get(var_RanksLocalValue, &val);
                     EXPECT_EQ(val, static_cast<int32_t>(r));
                 }
+                var_RanksLocalValue.RemoveSelection();
             }
 
             bpReader.Get(var_RanksLocalValue, rankLocalValueData);

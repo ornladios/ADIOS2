@@ -287,6 +287,155 @@ TEST_F(BPChangingShape, BPReadDefaultSelectionPerStep)
 #endif
 }
 
+// A step selection has no meaning while stepping, and must be refused rather
+// than silently honoured or ignored.
+TEST_F(BPChangingShape, BPStepSelectionWhileStreamingThrows)
+{
+    int rank = 0;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const std::string fname("BPStepSelWhileStreaming_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string fname("BPStepSelWhileStreaming.bp");
+    adios2::ADIOS adios;
+#endif
+    (void)rank;
+    {
+        adios2::IO io = adios.DeclareIO("StepSelWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        auto var = io.DefineVariable<int32_t>("x", {4}, {0}, {4});
+        for (int32_t i = 0; i < 3; ++i)
+        {
+            const std::vector<int32_t> data = {i, i + 1, i + 2, i + 3};
+            writer.BeginStep();
+            writer.Put(var, data.data(), adios2::Mode::Sync);
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("StepSelRead");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+    ASSERT_EQ(reader.BeginStep(), adios2::StepStatus::OK);
+    auto var = io.InquireVariable<int32_t>("x");
+    ASSERT_TRUE(var);
+    var.SetStepSelection({0, 2});
+    std::vector<int32_t> got(16, -999);
+    EXPECT_THROW(reader.Get(var, got.data(), adios2::Mode::Sync), std::invalid_argument);
+    reader.EndStep();
+    reader.Close();
+
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
+// A Variable handle the application holds must stay usable across a step
+// boundary.  BP5 used to destroy its reader-side variables on every BeginStep so
+// that InquireVariable would fail for a variable the new step does not contain,
+// which left any handle already held pointing at freed memory: ShapeID came back
+// Unknown, the name came back empty and the Get silently wrote nothing.
+TEST_F(BPChangingShape, BPHeldVariableSurvivesStepBoundary)
+{
+    const int nsteps = 3;
+    int rank = 0, nproc = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    const std::string fname("BPHeldVariable_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string fname("BPHeldVariable.bp");
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("HeldWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        auto always = io.DefineVariable<int32_t>("always", {static_cast<size_t>(nproc)},
+                                                 {static_cast<size_t>(rank)}, {1});
+        auto once = io.DefineVariable<int32_t>("once", {static_cast<size_t>(nproc)},
+                                               {static_cast<size_t>(rank)}, {1});
+        for (int i = 0; i < nsteps; ++i)
+        {
+            const int32_t v = i * 10 + rank;
+            writer.BeginStep();
+            writer.Put(always, &v, adios2::Mode::Sync);
+            if (i == 0)
+            {
+                writer.Put(once, &v, adios2::Mode::Sync); // only at step 0
+            }
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("HeldRead");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+
+    adios2::Variable<int32_t> held; // inquired once, reused every step
+    for (int i = 0; i < nsteps; ++i)
+    {
+        ASSERT_EQ(reader.BeginStep(), adios2::StepStatus::OK) << "step " << i;
+        if (i == 0)
+        {
+            held = io.InquireVariable<int32_t>("always");
+            ASSERT_TRUE(held);
+        }
+
+        // the handle from step 0 still describes the variable
+        EXPECT_EQ(held.Name(), "always") << "step " << i;
+        EXPECT_EQ(held.ShapeID(), adios2::ShapeID::GlobalArray) << "step " << i;
+
+        const int32_t sentinel = -999;
+        std::vector<int32_t> got(static_cast<size_t>(nproc), sentinel);
+        held.SetSelection({{0}, {static_cast<size_t>(nproc)}});
+        reader.Get(held, got.data(), adios2::Mode::Sync);
+        for (int r = 0; r < nproc; ++r)
+        {
+            EXPECT_EQ(got[static_cast<size_t>(r)], i * 10 + r) << "step " << i << " rank " << r;
+        }
+
+        // and a variable the step does not contain is still hidden, which is
+        // what the per-step teardown used to provide
+        auto absent = io.InquireVariable<int32_t>("once");
+        if (i == 0)
+        {
+            EXPECT_TRUE(absent) << "step " << i;
+        }
+        else
+        {
+            EXPECT_FALSE(absent) << "step " << i << ": variable absent at this step is visible";
+        }
+        reader.EndStep();
+    }
+    reader.Close();
+
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI

@@ -443,12 +443,23 @@ void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; }
 
 bool VariableBase::IsValidStep(const size_t step) const noexcept
 {
-    if (m_AvailableStepBlockIndexOffsets.count(step) == 1)
+    if (!m_AvailableStepBlockIndexOffsets.empty())
     {
-        return true;
+        return m_AvailableStepBlockIndexOffsets.count(step) == 1;
     }
 
-    return false;
+    // No per-step index: an engine that keeps its variables across steps says
+    // which step this one belongs to instead.  The index is keyed one past the
+    // engine step, so match that here.
+    if (m_StepPresent != MaxSizeT)
+    {
+        return m_StepPresent + 1 == step;
+    }
+
+    // Neither: nothing is tracking this variable per step, so it is not ours to
+    // hide.  Reaches here for variables the application defined itself on a
+    // reading IO, and for reader-defined derived placeholders.
+    return true;
 }
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const

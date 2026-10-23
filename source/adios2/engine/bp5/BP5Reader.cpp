@@ -449,6 +449,9 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             "BP5Reader, in call to BeginStep");
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_ReadStreaming = true;
+
     StepStatus status = StepStatus::OK;
     if (m_FirstStep)
     {

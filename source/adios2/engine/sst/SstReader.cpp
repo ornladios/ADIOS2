@@ -98,7 +98,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     case adios2::StepMode::Read:
         break;
     }
-    RemoveCreatedVars();
+    // used to inquire for variables in streaming mode
+    m_IO.m_ReadStreaming = true;
     result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
@@ -147,7 +148,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         i++;
     }
 
-    RemoveCreatedVars();
+    // IsValidStep() is asked about m_EngineStep, so it has to track the stream
+    m_IO.m_EngineStep = SstCurrentStep(m_Input);
     m_BP5Deserializer->SetupForStep(SstCurrentStep(m_Input),
                                     static_cast<size_t>(m_CurrentStepMetaData->WriterCohortSize));
 

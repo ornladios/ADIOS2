@@ -645,6 +645,9 @@ StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
             "DaosReader, in call to BeginStep");
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_ReadStreaming = true;
+
     StepStatus status = StepStatus::OK;
     if (m_FirstStep)
     {

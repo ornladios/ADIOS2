@@ -773,16 +773,13 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
     }
     else
     {
+        // The reader-side variables are kept across steps.  They used to be
+        // destroyed here so that InquireVariable would fail for a variable the
+        // new step does not contain, but that also invalidated every handle the
+        // application still held, and refreshed Shape and Count as a side
+        // effect.  IO::InquireVariable filters on VariableBase::IsValidStep
+        // instead, which InstallMetadataBuffer feeds.
         m_DefaultGetContext.Clear();
-
-        for (auto RecPair : VarByKey)
-        {
-            m_Engine->m_IO.RemoveVariable(RecPair.second->VarName);
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-            m_Engine->m_IO.RemoveDerivedVariable(RecPair.second->VarName);
-#endif
-            RecPair.second->Variable = NULL;
-        }
     }
     for (auto RecPair : VarByKey)
     {
@@ -1151,6 +1148,13 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
             if (VarRec->FirstTSSeen == SIZE_MAX)
             {
                 VarRec->FirstTSSeen = Step;
+            }
+            if (!m_RandomAccessMode)
+            {
+                // Streaming keeps the variable across steps, so record that
+                // this step contains it; InquireVariable hides one that the
+                // current step does not.
+                static_cast<VariableBase *>(VarRec->Variable)->m_StepPresent = CurTimestep;
             }
             if (m_FlattenSteps)
             {

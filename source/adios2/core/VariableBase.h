@@ -110,6 +110,12 @@ public:
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
 
+    /** Engines that keep reader-side variables across steps rather than
+     *  rebuilding them record the step the variable appears at here, for
+     *  IsValidStep() to use when there is no per-step index to consult.
+     *  Engine step numbering, so one less than the IsValidStep() argument. */
+    size_t m_StepPresent = MaxSizeT;
+
     std::map<size_t, Dims> m_AvailableShapes;
 
     std::set<std::string> m_PrefixedVariables;
