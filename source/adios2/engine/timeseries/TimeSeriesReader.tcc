@@ -235,13 +235,24 @@ inline void TimeSeriesReader::GetCommon(Variable<T> &variable, T *data, adios2::
         }
         if (!v->m_SingleValue)
         {
-            if (v->m_SelectionType == SelectionType::BoundingBox)
+            // The selection to forward is the one set on this engine's variable,
+            // not whatever a previous Get left on the inner engine's.  With no
+            // spatial selection there is no box to forward: m_Start and m_Count
+            // were copied from the inner variable when this one was duplicated
+            // and are not refreshed, so forwarding them would pin a
+            // changing-shape series to the first file's extent.  Clearing lets
+            // the inner engine resolve the whole variable at its own step.
+            if (variable.m_SelectionType == SelectionType::WriteBlock)
+            {
+                v->SetBlockSelection(variable.m_BlockID);
+            }
+            else if (variable.m_SelectionType == SelectionType::BoundingBox)
             {
                 v->SetSelection(Box<Dims>(variable.m_Start, variable.m_Count));
             }
-            else if (v->m_SelectionType == SelectionType::WriteBlock)
+            else
             {
-                v->SetBlockSelection(variable.m_BlockID);
+                v->RemoveSelection();
             }
         }
         e->Get(*v, engineData, mode);

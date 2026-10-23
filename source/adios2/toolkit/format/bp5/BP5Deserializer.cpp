@@ -1862,9 +1862,19 @@ bool BP5Deserializer::QueueGetSingleRemote(BP5GetContext &ctx, core::VariableBas
         }
         else
         {
+            // GlobalArray or JoinedArray — read the whole thing.  Use the shape
+            // at this step, as the local path does; m_Shape is the inquired
+            // shape and is wrong once the global dimensions change between
+            // steps, and SelectionSize() resolves per step, so sizing the
+            // request from m_Shape disagrees with what the caller allocated.
+            Dims stepShape = StepShape(VarRec, VarRec->AbsStepFromRel[RelStep]);
+            if (stepShape.empty())
+            {
+                stepShape = variable.m_Shape;
+            }
             effectiveSelType = adios2::SelectionType::BoundingBox;
-            effectiveStart = Dims(variable.m_Shape.size(), 0);
-            effectiveCount = variable.m_Shape;
+            effectiveStart = Dims(stepShape.size(), 0);
+            effectiveCount = stepShape;
         }
     }
     else

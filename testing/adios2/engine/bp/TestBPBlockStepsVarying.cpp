@@ -216,7 +216,13 @@ TEST_F(BPBlockStepsVaryingTest, BlockOverStepsAcrossWriterRanks)
     const int size = MpiSize();
     const int rank = MpiRank();
     const int nsteps = 3;
+#if ADIOS2_USE_MPI
+    // the one case that runs in both the serial and MPI lanes, which share a
+    // working directory, so the file name has to differ between them
+    const std::string fname("BPBlockStepsRanks_" + engineName + "_MPI.bp");
+#else
     const std::string fname("BPBlockStepsRanks_" + engineName + ".bp");
+#endif
 
     MAKE_ADIOS;
     {
@@ -275,7 +281,17 @@ TEST_F(BPBlockStepsVaryingTest, BlockOverStepsAcrossWriterRanks)
     }
     adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
     auto var = io.InquireVariable<int32_t>("g");
-    ASSERT_TRUE(var);
+    // EXPECT, not ASSERT: an early return here would strand the other ranks in
+    // the barrier below and turn a failure into a hang
+    EXPECT_TRUE(var);
+    if (!var)
+    {
+        reader.Close();
+#if ADIOS2_USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        return;
+    }
     var.SetBlockSelection(blockID);
     var.SetStepSelection({0, (size_t)nsteps});
 
@@ -356,6 +372,80 @@ TEST_F(BPBlockStepsVaryingTest, BlockAbsentAtSomeSteps)
     var.SetStepSelection({0, 3});
     std::vector<int32_t> got(16, -999);
     EXPECT_THROW(reader.Get(var, got.data(), adios2::Mode::Sync), std::invalid_argument);
+    reader.Close();
+}
+
+// The same rule with no block selection at all: the whole variable is one
+// rectangle per step, so a range whose global shape varies has no answer.  BP5
+// refused this; BP3/BP4 refused it only for a block selection and silently
+// truncated here to the extent of the first step in the range.
+TEST_F(BPBlockStepsVaryingTest, AllOverStepsWithVaryingShape)
+{
+    if (MpiSize() > 1)
+    {
+        GTEST_SKIP() << "serial case";
+    }
+    const std::string fname("BPAllStepsVaryingShape_" + engineName + ".bp");
+    const int nsteps = 3;
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteAllVaryingIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("x", {2}, {0}, {2});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        for (int32_t step = 0; step < nsteps; ++step)
+        {
+            const size_t n = 2 + 2 * static_cast<size_t>(step); // 2, 4, 6
+            std::vector<int32_t> data(n);
+            for (size_t i = 0; i < n; ++i)
+            {
+                data[i] = step * 100 + static_cast<int32_t>(i);
+            }
+            writer.BeginStep();
+            var.SetShape({n});
+            var.SetSelection({{0}, {n}});
+            writer.Put(var, data.data(), adios2::Mode::Sync);
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadAllVaryingIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    auto var = io.InquireVariable<int32_t>("x");
+    ASSERT_TRUE(var);
+
+    // the whole range at once, no spatial selection: refused rather than
+    // truncated to 2 elements per step
+    var.SetStepSelection({0, static_cast<size_t>(nsteps)});
+    std::vector<int32_t> got(32, -999);
+    EXPECT_THROW(reader.Get(var, got.data(), adios2::Mode::Sync), std::invalid_argument);
+
+    // one step at a time is how it is read, and each step gives its own extent
+    for (int32_t step = 0; step < nsteps; ++step)
+    {
+        const size_t n = 2 + 2 * static_cast<size_t>(step);
+        var.SetStepSelection({static_cast<size_t>(step), 1});
+        ASSERT_EQ(var.SelectionSize(), n) << "step " << step;
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        for (size_t i = 0; i < n; ++i)
+        {
+            EXPECT_EQ(got[i], step * 100 + static_cast<int32_t>(i))
+                << "step " << step << " element " << i;
+        }
+    }
     reader.Close();
 }
 

@@ -148,7 +148,46 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data) con
     }
 
     // create block info
-    return variable.SetBlockInfo(data, stepsStart, stepsCount);
+    auto &blockInfo = variable.SetBlockInfo(data, stepsStart, stepsCount);
+
+    /* With no spatial selection the whole variable is selected, and that has to
+     * be resolved at the selected step: m_Count is seeded when the reader-side
+     * variable is created, so it holds the extent of whichever step the variable
+     * first appeared in.  Resolve it onto the block info rather than onto the
+     * variable, so a later Get at a different step is not left with a box that
+     * was sized for this one. */
+    if (variable.m_SelectionType == SelectionType::All &&
+        variable.m_ShapeID == ShapeID::GlobalArray)
+    {
+        const auto itShape = variable.m_AvailableShapes.find(absStep);
+        if (itShape != variable.m_AvailableShapes.end())
+        {
+            /* The whole variable is one rectangle per step, so a range whose
+             * shape varies has no answer; without this it is silently truncated
+             * to the extent resolved here.  BP5 refuses it in QueueGet. */
+            if (stepsCount > 1)
+            {
+                auto itCheck = std::next(indices.begin(), stepsStart);
+                for (size_t i = 0; i < stepsCount && itCheck != indices.end(); ++i, ++itCheck)
+                {
+                    const auto itOther = variable.m_AvailableShapes.find(itCheck->first);
+                    if (itOther != variable.m_AvailableShapes.end() &&
+                        itOther->second != itShape->second)
+                    {
+                        helper::Throw<std::invalid_argument>(
+                            "Toolkit", "format::bp::BP3Deserializer", "InitVariableBlockInfo",
+                            "variable " + variable.m_Name +
+                                " is not the same shape at every step of the requested range, "
+                                "which this engine cannot read in a single Get; read the steps "
+                                "one at a time");
+                    }
+                }
+            }
+            blockInfo.Start = Dims(itShape->second.size(), 0);
+            blockInfo.Count = itShape->second;
+        }
+    }
+    return blockInfo;
 }
 
 template <class T>

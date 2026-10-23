@@ -164,12 +164,31 @@ Dims Variable<T>::DoCount() const
 
         return blocksInfo[m_BlockID].Count;
     }
+
+    /* With no spatial selection the whole variable is selected, and that has to
+     * be resolved at the selected step: m_Count is seeded when the reader-side
+     * variable is created, so it holds the extent of whichever step the variable
+     * first appeared in.  Shape() with no argument is documented as independent
+     * of any selection, so ask for the selected step explicitly; in streaming
+     * the step argument is not accepted and the no-argument form resolves the
+     * current step there. */
+    if (m_Engine != nullptr && m_SelectionType == SelectionType::All && !m_SingleValue &&
+        m_ShapeID == ShapeID::GlobalArray)
+    {
+        const Dims shape = m_FirstStreamingStep ? Shape(m_StepsStart) : Shape();
+        if (!shape.empty())
+        {
+            return shape;
+        }
+    }
     return m_Count;
 }
 
 template <class T>
 size_t Variable<T>::DoSelectionSize() const
 {
+    /* DoCount() resolves the no-selection case at the selected step; going
+     * through it is what keeps the reported size and the read in step. */
     return helper::GetTotalSize(DoCount()) * m_StepsCount;
 }
 
@@ -354,7 +373,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
                     "Core", "Variable", "DoMinMax",
                     "BlockID " + std::to_string(m_BlockID) +
                         " does not exist for LocalArray variable " + m_Name +
-                        ", in call to MinMax, Min or Maxn");
+                        ", in call to MinMax, Min or Max");
             }
             minMax.first = blocksInfo[m_BlockID].Min;
             minMax.second = blocksInfo[m_BlockID].Max;
