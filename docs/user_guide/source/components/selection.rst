@@ -158,7 +158,9 @@ Available Selection Parameters
    * - Steps
      - ``SetSteps(start, count)``
      - ``WithSteps()``
-     - Step range to read (default: current step, count 1)
+     - Step range to read (default: current step, count 1). A multi-step read
+       returns one rectangle, so the geometry must be the same at every step of
+       the range; see below
    * - Memory
      - ``SetMemory(start, count)``
      - ``WithMemory()``
@@ -180,6 +182,32 @@ Other methods:
    auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20}).WithSteps(0, 5);
    std::cout << sel.ToString() << std::endl;
    // Output: Selection(BoundingBox start={0, 0} count={10, 20}, steps=[0, 5])
+
+Reading more than one step at a time
+------------------------------------
+
+A multi-step read returns ``stepCount`` copies of one geometry, laid out back to
+back and strided by the per-step size. That only has an answer when the geometry
+is the same at every step of the range, so a range over which the global
+dimensions change, or over which the selected block changes size, is refused on
+every engine.
+Read those a step at a time, asking for each step's shape as you go. A step
+selection belongs to ``Mode::ReadRandomAccess``; in ``Mode::Read`` the engine
+hands you one step at a time already, so you read inside the
+``BeginStep``/``EndStep`` pair and do not set one:
+
+.. code-block:: c++
+
+   // Mode::ReadRandomAccess
+   for (size_t step = 0; step < var.Steps(); ++step)
+   {
+       var.SetStepSelection({step, 1});
+       data.resize(var.SelectionSize());   // this step's extent
+       engine.Get(var, data.data(), adios2::Mode::Sync);
+   }
+
+``var.Shape(step)`` gives that step's dimensions if you need them rather than
+just the element count.
 
 Engine Support
 --------------
