@@ -337,6 +337,25 @@ void Engine::CommonChecks(VariableBase &variable, const void *data, const std::s
     variable.CheckDimensions(hint);
     CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
 
+    /* A reader that holds on to a Variable across steps can end up asking for
+     * one the current step does not contain.  InquireVariable returns null for
+     * it, which is the signal to stop, but a handle from an earlier step still
+     * works and used to answer from whichever step the variable last appeared
+     * at -- the wrong step's data, with no indication.  IsValidStep is the same
+     * predicate InquireVariable filters on, so a variable the step does contain
+     * has been refreshed and does not trip this.  Inert outside a read stream:
+     * m_ReadStreaming is only ever set while stepping through a read. */
+    if (m_IO.m_ReadStreaming && !variable.IsValidStep(m_IO.m_EngineStep + 1))
+    {
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "CommonChecks",
+            "variable " + variable.m_Name + " is not present at step " +
+                std::to_string(m_IO.m_EngineStep) +
+                "; re-inquire it after BeginStep, which reports an absent variable by "
+                "returning null, " +
+                hint);
+    }
+
     // If no dimension has a zero count then there must be data to write.
     if (std::find(variable.m_Count.begin(), variable.m_Count.end(), 0) == variable.m_Count.end())
     {

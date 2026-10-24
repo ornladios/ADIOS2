@@ -436,6 +436,87 @@ TEST_F(BPChangingShape, BPHeldVariableSurvivesStepBoundary)
 #endif
 }
 
+// A handle kept past the step its variable was written at used to answer from
+// whichever step the variable last appeared in -- BP3/BP4 returned that step's
+// data, BP5 wrote nothing -- with no indication either way.  InquireVariable
+// returns null for an absent variable; a Get through a stale handle says so.
+TEST_F(BPChangingShape, BPGetThroughHandleAbsentAtStepThrows)
+{
+    const int nsteps = 3;
+    int rank = 0, nproc = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    const std::string fname("BPStaleHandle_MPI.bp");
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    const std::string fname("BPStaleHandle.bp");
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("StaleHandleWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        auto always = io.DefineVariable<int32_t>("always", {static_cast<size_t>(nproc)},
+                                                 {static_cast<size_t>(rank)}, {1});
+        auto once = io.DefineVariable<int32_t>("once", {static_cast<size_t>(nproc)},
+                                               {static_cast<size_t>(rank)}, {1});
+        for (int i = 0; i < nsteps; ++i)
+        {
+            const int32_t v = i * 10 + rank;
+            writer.BeginStep();
+            writer.Put(always, &v, adios2::Mode::Sync);
+            if (i == 0)
+            {
+                writer.Put(once, &v, adios2::Mode::Sync); // step 0 only
+            }
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("StaleHandleRead");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+
+    adios2::Variable<int32_t> stale;
+    for (int i = 0; i < nsteps; ++i)
+    {
+        ASSERT_EQ(reader.BeginStep(), adios2::StepStatus::OK) << "step " << i;
+        std::vector<int32_t> got(static_cast<size_t>(nproc), -999);
+        if (i == 0)
+        {
+            stale = io.InquireVariable<int32_t>("once");
+            ASSERT_TRUE(stale);
+            stale.SetSelection({{0}, {static_cast<size_t>(nproc)}});
+            reader.Get(stale, got.data(), adios2::Mode::Sync);
+            EXPECT_EQ(got[0], 0) << "step 0 reads normally";
+        }
+        else
+        {
+            // "once" is not in this step: InquireVariable says so, and a Get
+            // through the step-0 handle is refused rather than answered stale
+            EXPECT_FALSE(io.InquireVariable<int32_t>("once")) << "step " << i;
+            EXPECT_THROW(reader.Get(stale, got.data(), adios2::Mode::Sync), std::invalid_argument)
+                << "step " << i;
+        }
+        reader.EndStep();
+    }
+    reader.Close();
+
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
