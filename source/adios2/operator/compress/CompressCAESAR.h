@@ -33,8 +33,6 @@ public:
 
     size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) final;
     bool IsDataTypeValid(const DataType type) const final;
-    size_t GetEstimatedSize(const size_t ElemCount, const size_t ElemSize, const size_t ndims,
-                            const size_t *dims) const override;
 
 private:
     /**

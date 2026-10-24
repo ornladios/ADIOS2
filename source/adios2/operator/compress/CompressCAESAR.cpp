@@ -3,14 +3,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #include "CompressCAESAR.h"
+
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <stdexcept>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 #include "adios2/helper/adiosFunctions.h"
-#include "data_utils.h"
-#include "dataset/dataset.h"
 #include "models/caesar_compress.h"
 #include "models/caesar_decompress.h"
-#include <cstring>
+#include "models/serialization.h"
 
 namespace adios2
 {
@@ -18,287 +27,213 @@ namespace core
 {
 namespace compress
 {
-
+namespace
+{
+void Require(const size_t size, const size_t pos, const size_t count)
+{
+    if (pos > size || count > size - pos)
+        throw std::runtime_error("Truncated CAESAR operator buffer");
+}
 template <typename T>
 void WriteParameter(char *buffer, size_t &pos, const T &value)
 {
     std::memcpy(buffer + pos, &value, sizeof(T));
     pos += sizeof(T);
 }
-
 template <typename T>
-T ReadParameter(const char *buffer, size_t &pos)
+T ReadParameter(const char *buffer, size_t size, size_t &pos)
 {
+    Require(size, pos, sizeof(T));
     T value;
     std::memcpy(&value, buffer + pos, sizeof(T));
     pos += sizeof(T);
     return value;
 }
-
-void WriteString(char *buffer, size_t &pos, const std::string &str)
+bool ReadFlag(const char *buffer, size_t size, size_t &pos)
 {
-    uint64_t len = str.size();
-    WriteParameter(buffer, pos, len);
-    std::memcpy(buffer + pos, str.data(), len);
-    pos += len;
+    const auto value = ReadParameter<uint8_t>(buffer, size, pos);
+    if (value > 1)
+        throw std::runtime_error("Invalid CAESAR operator flag");
+    return value != 0;
 }
-
-std::string ReadString(const char *buffer, size_t &pos)
+size_t CheckedAdd(size_t a, size_t b)
 {
-    uint64_t len = ReadParameter<uint64_t>(buffer, pos);
-    std::string str(len, '\0');
-    std::memcpy(&str[0], buffer + pos, len);
-    pos += len;
-    return str;
+    if (b > std::numeric_limits<size_t>::max() - a)
+        throw std::overflow_error("CAESAR operator size overflow");
+    return a + b;
 }
-
-template <typename T>
-void WriteVector(char *buffer, size_t &pos, const std::vector<T> &vec)
+size_t CheckedMultiply(size_t a, size_t b)
 {
-    uint64_t size = vec.size();
-    WriteParameter(buffer, pos, size);
-    if (size > 0)
+    if (a && b > std::numeric_limits<size_t>::max() / a)
+        throw std::overflow_error("CAESAR operator size overflow");
+    return a * b;
+}
+size_t DataSize(const Dims &dims, DataType type)
+{
+    if (type != DataType::Float && type != DataType::Double)
+        throw std::invalid_argument("CAESAR supports only float and double");
+    size_t size = helper::GetDataTypeSize(type);
+    for (auto d : dims)
     {
-        std::memcpy(buffer + pos, vec.data(), size * sizeof(T));
-        pos += size * sizeof(T);
+        if (!d || d > size_t(std::numeric_limits<int64_t>::max()))
+            throw std::invalid_argument("Invalid CAESAR input dimension");
+        size = CheckedMultiply(size, d);
     }
+    return size;
+}
+void ReadHeader(const char *buffer, size_t size, size_t &pos, Dims &dims, DataType &type,
+                bool &compressed)
+{
+    const auto ndims = ReadParameter<size_t>(buffer, size, pos);
+    if (!ndims || ndims > (size - pos) / sizeof(size_t))
+        throw std::runtime_error("Invalid CAESAR operator dimension count");
+    dims.resize(ndims);
+    for (auto &d : dims)
+        d = ReadParameter<size_t>(buffer, size, pos);
+    type = ReadParameter<DataType>(buffer, size, pos);
+    compressed = ReadFlag(buffer, size, pos);
+}
+std::vector<uint8_t> CompressSlice(const torch::Tensor &slice, float accuracy,
+                                   caesar::CorrectionMethod method)
+{
+    CompressionConfig config;
+    config.memory_data = slice;
+    config.n_frame = 8;
+    config.correction_method = method;
+    Compressor compressor;
+    return caesar::serialize(compressor.compress(config, accuracy));
+}
+torch::Tensor DecompressSlice(const char *buffer, size_t size, size_t &pos,
+                              const std::vector<int64_t> &expectedShape)
+{
+    const auto length = ReadParameter<uint64_t>(buffer, size, pos);
+    if (length > size - pos)
+        throw std::runtime_error("Truncated CAESAR slice");
+    auto comp = caesar::deserialize(buffer + pos, size_t(length));
+    pos += size_t(length);
+    if (comp.original_shape != expectedShape)
+        throw std::runtime_error("CAESAR slice shape does not match ADIOS header");
+    Decompressor decompressor;
+    auto restored = decompressor.decompress(comp);
+    if (restored.sizes().vec() != expectedShape)
+        throw std::runtime_error("Unexpected CAESAR reconstructed shape");
+    return restored;
 }
 
-template <typename T>
-std::vector<T> ReadVector(const char *buffer, size_t &pos)
+struct LegacyReader
 {
-    uint64_t size = ReadParameter<uint64_t>(buffer, pos);
-    std::vector<T> vec(size);
-    if (size > 0)
+    const char *data;
+    size_t size;
+    size_t &pos;
+    template <class... T>
+    void operator()(T &...values)
     {
-        std::memcpy(vec.data(), buffer + pos, size * sizeof(T));
-        pos += size * sizeof(T);
+        (get(values), ...);
     }
-    return vec;
-}
-
-void WriteVectorOfStrings(char *buffer, size_t &pos, const std::vector<std::string> &vec)
-{
-    uint64_t count = vec.size();
-    WriteParameter(buffer, pos, count);
-    for (const auto &str : vec)
-        WriteString(buffer, pos, str);
-}
-
-std::vector<std::string> ReadVectorOfStrings(const char *buffer, size_t &pos)
-{
-    uint64_t count = ReadParameter<uint64_t>(buffer, pos);
-    std::vector<std::string> vec;
-    vec.reserve(count);
-    for (uint64_t i = 0; i < count; ++i)
-        vec.push_back(ReadString(buffer, pos));
-    return vec;
-}
-
-template <typename T>
-void WriteVector2D(char *buffer, size_t &pos, const std::vector<std::vector<T>> &vec2d)
-{
-    uint64_t outer = vec2d.size();
-    WriteParameter(buffer, pos, outer);
-    for (const auto &v : vec2d)
-        WriteVector(buffer, pos, v);
-}
-
-template <typename T>
-std::vector<std::vector<T>> ReadVector2D(const char *buffer, size_t &pos)
-{
-    uint64_t outer = ReadParameter<uint64_t>(buffer, pos);
-    std::vector<std::vector<T>> vec2d;
-    vec2d.reserve(outer);
-    for (uint64_t i = 0; i < outer; ++i)
-        vec2d.push_back(ReadVector<T>(buffer, pos));
-    return vec2d;
-}
-
-template <typename T1, typename T2>
-void WritePair(char *buffer, size_t &pos, const std::pair<T1, T2> &p)
-{
-    WriteParameter(buffer, pos, p.first);
-    WriteParameter(buffer, pos, p.second);
-}
-
-template <typename T1, typename T2>
-std::pair<T1, T2> ReadPair(const char *buffer, size_t &pos)
-{
-    T1 first = ReadParameter<T1>(buffer, pos);
-    T2 second = ReadParameter<T2>(buffer, pos);
-    return {first, second};
-}
-
-template <typename T1, typename T2>
-void WriteVectorOfPairs(char *buffer, size_t &pos, const std::vector<std::pair<T1, T2>> &vec)
-{
-    uint64_t size = vec.size();
-    WriteParameter(buffer, pos, size);
-    for (const auto &p : vec)
-        WritePair(buffer, pos, p);
-}
-
-template <typename T1, typename T2>
-std::vector<std::pair<T1, T2>> ReadVectorOfPairs(const char *buffer, size_t &pos)
-{
-    uint64_t size = ReadParameter<uint64_t>(buffer, pos);
-    std::vector<std::pair<T1, T2>> vec;
-    vec.reserve(size);
-    for (uint64_t i = 0; i < size; ++i)
-        vec.push_back(ReadPair<T1, T2>(buffer, pos));
-    return vec;
-}
-
-void WriteTuple(char *buffer, size_t &pos,
-                const std::tuple<int32_t, int32_t, std::vector<int32_t>> &tup)
-{
-    WriteParameter(buffer, pos, std::get<0>(tup));
-    WriteParameter(buffer, pos, std::get<1>(tup));
-    WriteVector(buffer, pos, std::get<2>(tup));
-}
-
-std::tuple<int32_t, int32_t, std::vector<int32_t>> ReadTuple(const char *buffer, size_t &pos)
-{
-    int32_t first = ReadParameter<int32_t>(buffer, pos);
-    int32_t second = ReadParameter<int32_t>(buffer, pos);
-    auto third = ReadVector<int32_t>(buffer, pos);
-    return {first, second, third};
-}
-
-void WritePaddingInfo(char *buffer, size_t &pos, const PaddingInfo &info)
-{
-    WriteVector(buffer, pos, info.original_shape);
-    WriteParameter(buffer, pos, info.original_length);
-    WriteVector(buffer, pos, info.padded_shape);
-    WriteParameter(buffer, pos, info.H);
-    WriteParameter(buffer, pos, info.W);
-}
-
-PaddingInfo ReadPaddingInfo(const char *buffer, size_t &pos)
-{
-    PaddingInfo info;
-    info.original_shape = ReadVector<int64_t>(buffer, pos);
-    info.original_length = ReadParameter<int64_t>(buffer, pos);
-    info.padded_shape = ReadVector<int64_t>(buffer, pos);
-    info.H = ReadParameter<int64_t>(buffer, pos);
-    info.W = ReadParameter<int64_t>(buffer, pos);
-    return info;
-}
-
-void WriteCompressionMetaData(char *buffer, size_t &pos, const CompressionMetaData &meta)
-{
-    WriteVector(buffer, pos, meta.offsets);
-    WriteVector(buffer, pos, meta.scales);
-    WriteVector2D(buffer, pos, meta.indexes);
-    WriteTuple(buffer, pos, meta.block_info);
-    WriteVector(buffer, pos, meta.data_input_shape);
-    WriteVectorOfPairs(buffer, pos, meta.filtered_blocks);
-    WriteParameter(buffer, pos, meta.global_scale);
-    WriteParameter(buffer, pos, meta.global_offset);
-    WriteParameter(buffer, pos, meta.pad_T);
-    WriteParameter(buffer, pos, meta.all_filtered);
-}
-
-CompressionMetaData ReadCompressionMetaData(const char *buffer, size_t &pos)
-{
-    CompressionMetaData meta;
-    meta.offsets = ReadVector<float>(buffer, pos);
-    meta.scales = ReadVector<float>(buffer, pos);
-    meta.indexes = ReadVector2D<int32_t>(buffer, pos);
-    meta.block_info = ReadTuple(buffer, pos);
-    meta.data_input_shape = ReadVector<int32_t>(buffer, pos);
-    meta.filtered_blocks = ReadVectorOfPairs<int32_t, float>(buffer, pos);
-    meta.global_scale = ReadParameter<float>(buffer, pos);
-    meta.global_offset = ReadParameter<float>(buffer, pos);
-    meta.pad_T = ReadParameter<int64_t>(buffer, pos);
-    meta.all_filtered = ReadParameter<bool>(buffer, pos);
-    return meta;
-}
-
-void WriteGAEMetaData(char *buffer, size_t &pos, const GAEMetaData &meta)
-{
-    WriteParameter(buffer, pos, meta.GAE_correction_occur);
-    WriteVector(buffer, pos, meta.padding_recon_info);
-    WriteVector2D(buffer, pos, meta.pcaBasis);
-    WriteVector(buffer, pos, meta.uniqueVals);
-    WriteParameter(buffer, pos, meta.quanBin);
-    WriteParameter(buffer, pos, meta.nVec);
-    WriteParameter(buffer, pos, meta.prefixLength);
-    WriteParameter(buffer, pos, meta.dataBytes);
-    WriteParameter(buffer, pos, meta.coeffIntBytes);
-}
-
-GAEMetaData ReadGAEMetaData(const char *buffer, size_t &pos)
-{
-    GAEMetaData meta;
-    meta.GAE_correction_occur = ReadParameter<bool>(buffer, pos);
-    meta.padding_recon_info = ReadVector<int>(buffer, pos);
-    meta.pcaBasis = ReadVector2D<float>(buffer, pos);
-    meta.uniqueVals = ReadVector<float>(buffer, pos);
-    meta.quanBin = ReadParameter<double>(buffer, pos);
-    meta.nVec = ReadParameter<int64_t>(buffer, pos);
-    meta.prefixLength = ReadParameter<int64_t>(buffer, pos);
-    meta.dataBytes = ReadParameter<int64_t>(buffer, pos);
-    meta.coeffIntBytes = ReadParameter<size_t>(buffer, pos);
-    return meta;
-}
-
-void WriteLBRCMetaData(char *buffer, size_t &pos, const LBRCMetaData &meta)
-{
-    WriteParameter(buffer, pos, meta.lbrc_correction_occur);
-    WriteParameter(buffer, pos, meta.x_mean);
-    WriteParameter(buffer, pos, meta.scale);
-    WriteParameter(buffer, pos, meta.block_size);
-}
-
-LBRCMetaData ReadLBRCMetaData(const char *buffer, size_t &pos)
-{
-    LBRCMetaData meta;
-    meta.lbrc_correction_occur = ReadParameter<bool>(buffer, pos);
-    meta.x_mean = ReadParameter<float>(buffer, pos);
-    meta.scale = ReadParameter<float>(buffer, pos);
-    meta.block_size = ReadParameter<decltype(meta.block_size)>(buffer, pos);
-    return meta;
-}
-
-void WriteLBRCBlocks(char *buffer, size_t &pos, const std::vector<LBRCBlock> &blocks)
-{
-    uint64_t n = blocks.size();
-    WriteParameter(buffer, pos, n);
-    for (const auto &blk : blocks)
+    template <class T>
+    void get(T &value)
     {
-        WriteParameter(buffer, pos, blk.step);
-        WriteParameter(buffer, pos, blk.bit_count);
-        WriteVector2D(buffer, pos, blk.streams);
+        static_assert(std::is_arithmetic_v<T>);
+        if constexpr (std::is_same_v<T, bool>)
+            value = ReadFlag(data, size, pos);
+        else
+            value = ReadParameter<T>(data, size, pos);
     }
-}
-
-std::vector<LBRCBlock> ReadLBRCBlocks(const char *buffer, size_t &pos)
-{
-    uint64_t n = ReadParameter<uint64_t>(buffer, pos);
-    std::vector<LBRCBlock> blocks;
-    blocks.reserve(n);
-    for (uint64_t i = 0; i < n; ++i)
+    size_t count()
     {
-        LBRCBlock blk;
-        blk.step = ReadParameter<double>(buffer, pos);
-        blk.bit_count = ReadParameter<uint32_t>(buffer, pos);
-        blk.streams = ReadVector2D<uint8_t>(buffer, pos);
-        blocks.push_back(std::move(blk));
+        auto n = ReadParameter<uint64_t>(data, size, pos);
+        if (n > size - pos)
+            throw std::runtime_error("Invalid CAESAR V1 length");
+        return size_t(n);
     }
-    return blocks;
-}
-
-size_t CompressCAESAR::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
-                                        const size_t ndims, const size_t *dims) const
+    void get(std::string &value)
+    {
+        const auto n = count();
+        Require(size, pos, n);
+        value.assign(data + pos, n);
+        pos += n;
+    }
+    template <class T>
+    void get(std::vector<T> &value)
+    {
+        const auto n = count();
+        if constexpr (std::is_arithmetic_v<T>)
+            Require(size, pos, CheckedMultiply(n, sizeof(T)));
+        for (size_t i = 0; i < n; ++i)
+        {
+            T item{};
+            get(item);
+            value.push_back(std::move(item));
+        }
+    }
+    template <class T, size_t N>
+    void get(std::array<T, N> &value)
+    {
+        for (auto &item : value)
+            get(item);
+    }
+    template <class X, class Y>
+    void get(std::pair<X, Y> &value)
+    {
+        (*this)(value.first, value.second);
+    }
+    template <class... T>
+    void get(std::tuple<T...> &value)
+    {
+        std::apply([this](auto &...items) { (*this)(items...); }, value);
+    }
+};
+torch::Tensor DecompressLegacySlice(const char *buffer, size_t size, size_t &pos,
+                                    const std::vector<int64_t> &expectedShape)
 {
-    const size_t inputSize = ElemCount * ElemSize;
-    // Base class returns inputSize + 128, which is far too small.
-    // CAESAR output is unbounded: encoded latents, GAE PCA basis,
-    // and LBRC streams are all variable-length and can exceed raw input.
-    return inputSize * 4 + 32ULL * 1024 * 1024;
+    CompressionResult comp{};
+    LegacyReader read{buffer, size, pos};
+    read(comp.model_id);
+    comp.correction_method =
+        caesar::correction_method_from_byte(ReadParameter<uint8_t>(buffer, size, pos));
+    read(comp.encoded_latents, comp.encoded_hyper_latents, comp.gae_comp_data);
+    auto &m = comp.compressionMetaData;
+    read(m.offsets, m.scales, m.indexes, m.block_info, m.data_input_shape, m.filtered_blocks,
+         m.global_scale, m.global_offset, m.pad_T, m.all_filtered);
+    auto &g = comp.gaeMetaData;
+    read(g.GAE_correction_occur, g.padding_recon_info, g.pcaBasis, g.uniqueVals, g.quanBin, g.nVec,
+         g.prefixLength, g.dataBytes, g.coeffIntBytes, comp.n_frame);
+    auto &l = comp.lbrcMetaData;
+    read(l.lbrc_correction_occur, l.x_mean, l.scale, l.block_size);
+    const auto blocks = read.count();
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        LBRCBlock block{};
+        read(block.step, block.bit_count, block.streams);
+        comp.lbrc_blocks.push_back(std::move(block));
+    }
+    if (comp.correction_method == caesar::CorrectionMethod::NGLR)
+    {
+        auto &n = comp.nglrMetaData;
+        auto &q = n.quantization;
+        read(n.schema_version, n.correction_occurred, n.constant_input, q.x_mean, q.scale, q.step,
+             q.q_context_scale, q.delta_scale, q.block_t, q.block_h, q.block_w, n.hidden,
+             n.q_hidden, n.model_blocks, n.shape);
+        const auto weights = read.count();
+        for (size_t i = 0; i < weights; ++i)
+        {
+            nglr::NGLRWeight weight{};
+            read(weight.name, weight.shape, weight.values);
+            n.weights.push_back(std::move(weight));
+        }
+        read(comp.nglr_comp_data);
+    }
+    auto &p = comp.shape_info;
+    read(comp.original_shape, p.original_shape, p.original_length, p.padded_shape, p.H, p.W);
+    if (comp.original_shape != expectedShape)
+        throw std::runtime_error("CAESAR V1 slice shape does not match ADIOS header");
+    Decompressor decompressor;
+    auto restored = decompressor.decompress(comp);
+    if (restored.sizes().vec() != expectedShape)
+        throw std::runtime_error("Unexpected CAESAR V1 reconstructed shape");
+    return restored;
 }
+} // namespace
 
 CompressCAESAR::CompressCAESAR(const Params &parameters)
 : Operator("caesar", COMPRESS_CAESAR, "compress", parameters)
@@ -306,222 +241,192 @@ CompressCAESAR::CompressCAESAR(const Params &parameters)
 }
 
 size_t CompressCAESAR::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
-                               const DataType type, char *bufferOut)
+                               DataType type, char *bufferOut)
 {
-    const uint8_t bufferVersion = 1;
-    size_t bufferOutOffset = 0;
-
-    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
-
-    const size_t ndims = blockCount.size();
-    WriteParameter(bufferOut, bufferOutOffset, ndims);
-    for (const auto &d : blockCount)
-        WriteParameter(bufferOut, bufferOutOffset, d);
-    WriteParameter(bufferOut, bufferOutOffset, type);
-
-    size_t sizeOut = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
-
-    size_t thresholdSize = 1000000;
-    auto itThreshold = m_Parameters.find("threshold");
-    if (itThreshold != m_Parameters.end())
-        thresholdSize = std::stod(itThreshold->second);
-
-    if (sizeOut < thresholdSize)
+    const auto rawSize = DataSize(blockCount, type);
+    CheckedAdd(rawSize, 128);
+    const auto capacity =
+        GetEstimatedSize(rawSize / helper::GetDataTypeSize(type), helper::GetDataTypeSize(type),
+                         blockCount.size(), blockCount.data());
+    const auto headerSize = CheckedAdd(4 + sizeof(size_t) + sizeof(DataType) + 1,
+                                       CheckedMultiply(blockCount.size(), sizeof(size_t)));
+    if (CheckedAdd(headerSize, rawSize) > capacity)
+        throw std::runtime_error("CAESAR outer header exceeds ADIOS output allocation");
+    size_t threshold = 1000000;
+    auto parameter = m_Parameters.find("threshold");
+    if (parameter != m_Parameters.end())
     {
-        WriteParameter(bufferOut, bufferOutOffset, false);
-        std::memcpy(bufferOut + bufferOutOffset, dataIn, sizeOut);
-        bufferOutOffset += sizeOut;
-        return bufferOutOffset;
+        const double value = std::stod(parameter->second);
+        if (!std::isfinite(value) || value < 0 ||
+            value >= double(std::numeric_limits<size_t>::max()))
+            throw std::invalid_argument("Invalid CAESAR threshold");
+        threshold = size_t(value);
     }
-
-    torch::Tensor data_tensor;
-    std::vector<int64_t> sizes(blockCount.begin(), blockCount.end());
-
-    if (type == DataType::Float)
-    {
-        data_tensor = torch::from_blob(const_cast<char *>(dataIn), sizes, torch::kFloat32).clone();
-    }
-    else if (type == DataType::Double)
-    {
-        data_tensor = torch::from_blob(const_cast<char *>(dataIn), sizes, torch::kFloat64)
-                          .to(torch::kFloat32);
-    }
-    else
-    {
-        helper::Throw<std::invalid_argument>("Operator", "CompressCAESAR", "Operate",
-                                             "Unsupported data type");
-    }
-
-    auto model_type = m_Parameters.find("model");
-    if (model_type != m_Parameters.end())
-    {
-        std::string model_name = helper::LowerCase(model_type->second);
-        if (model_name != "caesar_v")
-        {
-            helper::Throw<std::invalid_argument>("Operator", "CompressCAESAR", "Operate",
-                                                 "Unknown model type: " + model_name);
-        }
-    }
-    else
-    {
-        helper::Throw<std::invalid_argument>("Operator", "CompressCAESAR", "Operate",
-                                             "Model type not specified");
-    }
-
-    std::vector<int64_t> original_shape_vec;
-    for (int64_t i = 0; i < data_tensor.dim(); ++i)
-        original_shape_vec.push_back(data_tensor.size(i));
-
-    int64_t H, W;
-    bool force_padding = false;
-
-    //  a DIM of 1 is not a real dim needs to pad
-    if (original_shape_vec.size() >= 5 && original_shape_vec[original_shape_vec.size() - 2] >= 2 &&
-        original_shape_vec[original_shape_vec.size() - 1] >= 2)
-    {
-        H = static_cast<int64_t>(original_shape_vec[original_shape_vec.size() - 2]);
-        W = static_cast<int64_t>(original_shape_vec[original_shape_vec.size() - 1]);
-    }
-    else
-    {
-        H = 256;
-        W = 256;
-    }
-
-    PaddingInfo padding_info;
-    torch::Tensor padded_5d;
-    std::tie(padded_5d, padding_info) = to_5d_and_pad(data_tensor, H, W, force_padding);
-    if (!padding_info.was_padded)
-        padded_5d = padded_5d.contiguous();
-    data_tensor = torch::Tensor();
-
-    DatasetConfig config;
-    config.memory_data = padded_5d;
-    config.n_frame = 8;
-    config.dataset_name = "ADIOS2_Block";
-    config.variable_idx = 0;
-    config.train_mode = false;
-    config.inst_norm = true;
-    config.norm_type = "mean_range";
-    config.n_overlap = 0;
-
-    int batch_size = 128;
+    size_t pos = 0;
+    MakeCommonHeader(bufferOut, pos, 2);
+    WriteParameter(bufferOut, pos, blockCount.size());
+    for (auto d : blockCount)
+        WriteParameter(bufferOut, pos, d);
+    WriteParameter(bufferOut, pos, type);
+    const auto flagPos = pos;
+    WriteParameter(bufferOut, pos, uint8_t(1));
+    const auto payloadStart = pos;
+    auto writeRaw = [&]() {
+        bufferOut[flagPos] = 0;
+        std::memcpy(bufferOut + payloadStart, dataIn, rawSize);
+        return payloadStart + rawSize;
+    };
+    if (rawSize < threshold)
+        return writeRaw();
+    if (blockCount.size() < 3 || blockCount.size() > 5)
+        throw std::invalid_argument("CAESAR compression requires 3 to 5 dimensions");
 
     float accuracy = 0.001f;
-    auto itRelEB = m_Parameters.find("accuracy");
-    if (itRelEB != m_Parameters.end())
-        accuracy = std::stof(itRelEB->second);
-
-    torch::Device device = select_model_device();
-
-    Compressor compressor(device);
-    CompressionResult comp = compressor.compress(config, batch_size, accuracy);
-    padded_5d = torch::Tensor();
-
-    WriteParameter(bufferOut, bufferOutOffset, true);
-    WriteString(bufferOut, bufferOutOffset, get_model_name());
-    WriteParameter(bufferOut, bufferOutOffset, comp.use_lbrc);
-    WriteVectorOfStrings(bufferOut, bufferOutOffset, comp.encoded_latents);
-    WriteVectorOfStrings(bufferOut, bufferOutOffset, comp.encoded_hyper_latents);
-    WriteVector(bufferOut, bufferOutOffset, comp.gae_comp_data);
-    WriteCompressionMetaData(bufferOut, bufferOutOffset, comp.compressionMetaData);
-    WriteGAEMetaData(bufferOut, bufferOutOffset, comp.gaeMetaData);
-    WriteParameter(bufferOut, bufferOutOffset, batch_size);
-    WriteParameter(bufferOut, bufferOutOffset, config.n_frame);
-    WriteLBRCMetaData(bufferOut, bufferOutOffset, comp.lbrcMetaData);
-    WriteLBRCBlocks(bufferOut, bufferOutOffset, comp.lbrc_blocks);
-    WritePaddingInfo(bufferOut, bufferOutOffset, padding_info);
-
-    return bufferOutOffset;
+    parameter = m_Parameters.find("accuracy");
+    if (parameter != m_Parameters.end())
+        accuracy = std::stof(parameter->second);
+    if (!std::isfinite(accuracy) || accuracy <= 0)
+        throw std::invalid_argument("CAESAR accuracy must be positive and finite");
+    auto method = caesar::CorrectionMethod::GAE;
+    parameter = m_Parameters.find("method");
+    if (parameter != m_Parameters.end())
+        method = caesar::correction_method_from_string(helper::LowerCase(parameter->second));
+    const bool fiveD = blockCount.size() == 5;
+    const size_t count = fiveD ? blockCount[0] : 1;
+    if (1 + (fiveD ? sizeof(uint64_t) : 0) > capacity - pos)
+        return writeRaw();
+    WriteParameter(bufferOut, pos, uint8_t(fiveD));
+    if (fiveD)
+        WriteParameter(bufferOut, pos, uint64_t(count));
+    const std::vector<int64_t> shape(blockCount.begin(), blockCount.end());
+    // Borrow the ADIOS input. CAESAR performs float conversion on each selected
+    // slice, avoiding a float32 copy of the entire 5D double-precision field.
+    auto data = torch::from_blob(const_cast<char *>(dataIn), shape,
+                                 type == DataType::Float ? torch::kFloat32 : torch::kFloat64);
+    for (size_t i = 0; i < count; ++i)
+    {
+        auto slice = fiveD ? data.select(0, i).unsqueeze(0) : data;
+        auto bytes = CompressSlice(slice, accuracy, method);
+        const auto required = CheckedAdd(sizeof(uint64_t), bytes.size());
+        if (required > capacity - pos)
+            return writeRaw();
+        WriteParameter(bufferOut, pos, uint64_t(bytes.size()));
+        std::memcpy(bufferOut + pos, bytes.data(), bytes.size());
+        pos += bytes.size();
+        // bytes is destroyed here; serialized slices do not accumulate.
+    }
+    return pos;
 }
 
-size_t CompressCAESAR::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
+namespace
 {
-    size_t bufferInOffset = 0;
-
-    const uint8_t operatorType = GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    const uint16_t pad = GetParameter<uint16_t>(bufferIn, bufferInOffset);
-
-    if (bufferVersion == 1)
-    {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
-    }
-    else
-    {
-        helper::Throw<std::runtime_error>("Operator", "CompressCAESAR", "InverseOperate",
-                                          "Unknown buffer version: " +
-                                              std::to_string(bufferVersion));
-    }
-    return 0;
-}
-
-size_t CompressCAESAR::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
+size_t DecompressSerialized(const char *buffer, size_t size, char *output)
 {
-    size_t bufferInOffset = 0;
-
-    const size_t ndims = ReadParameter<size_t>(bufferIn, bufferInOffset);
-    Dims blockCount(ndims);
-    for (size_t i = 0; i < ndims; ++i)
-        blockCount[i] = ReadParameter<size_t>(bufferIn, bufferInOffset);
-
-    const DataType type = ReadParameter<DataType>(bufferIn, bufferInOffset);
-    const bool isCompressed = ReadParameter<bool>(bufferIn, bufferInOffset);
-    size_t sizeOut = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
-
-    if (!isCompressed)
+    size_t pos = 0;
+    Dims dims;
+    DataType type;
+    bool compressed;
+    ReadHeader(buffer, size, pos, dims, type, compressed);
+    const auto rawSize = DataSize(dims, type);
+    if (!compressed)
     {
-        std::memcpy(dataOut, bufferIn + bufferInOffset, sizeOut);
-        return sizeOut;
+        Require(size, pos, rawSize);
+        if (rawSize != size - pos)
+            throw std::runtime_error("Trailing CAESAR raw bytes");
+        std::memcpy(output, buffer + pos, rawSize);
+        return rawSize;
     }
-
-    std::string compressed_model = ReadString(bufferIn, bufferInOffset);
-    std::string installed_model = get_model_name();
-    if (compressed_model != installed_model)
+    if (dims.size() < 3 || dims.size() > 5)
+        throw std::runtime_error("Invalid CAESAR compressed rank");
+    const bool fiveD = ReadFlag(buffer, size, pos);
+    if (fiveD != (dims.size() == 5))
+        throw std::runtime_error("Invalid CAESAR slice mode");
+    const auto count = fiveD ? ReadParameter<uint64_t>(buffer, size, pos) : 1;
+    if (fiveD && count != dims[0])
+        throw std::runtime_error("Invalid CAESAR slice count");
+    std::vector<int64_t> expected(dims.begin(), dims.end());
+    if (fiveD)
+        expected[0] = 1;
+    const size_t sliceBytes = fiveD ? rawSize / dims[0] : rawSize;
+    for (uint64_t i = 0; i < count; ++i)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressCAESAR", "DecompressV1",
-                                          "Model mismatch: data compressed with '" +
-                                              compressed_model + "' but installed model is '" +
-                                              installed_model + "'");
+        auto restored =
+            DecompressSlice(buffer, size, pos, expected); // Convert/copy directly into the
+                                                          // caller's allocation. No full float64
+        // temporary or intermediate CPU output buffer is needed.
+        auto destination =
+            torch::from_blob(output + size_t(i) * sliceBytes, expected,
+                             type == DataType::Double ? torch::kFloat64 : torch::kFloat32);
+        destination.copy_(restored);
     }
-
-    CompressionResult comp;
-    comp.use_lbrc = ReadParameter<bool>(bufferIn, bufferInOffset);
-    comp.encoded_latents = ReadVectorOfStrings(bufferIn, bufferInOffset);
-    comp.encoded_hyper_latents = ReadVectorOfStrings(bufferIn, bufferInOffset);
-    comp.gae_comp_data = ReadVector<uint8_t>(bufferIn, bufferInOffset);
-    comp.compressionMetaData = ReadCompressionMetaData(bufferIn, bufferInOffset);
-    comp.gaeMetaData = ReadGAEMetaData(bufferIn, bufferInOffset);
-    int batch_size = ReadParameter<int>(bufferIn, bufferInOffset);
-    int n_frame = ReadParameter<int>(bufferIn, bufferInOffset);
-    comp.lbrcMetaData = ReadLBRCMetaData(bufferIn, bufferInOffset);
-    comp.lbrc_blocks = ReadLBRCBlocks(bufferIn, bufferInOffset);
-    PaddingInfo padding_info = ReadPaddingInfo(bufferIn, bufferInOffset);
-
-    torch::Device device = select_model_device();
-
-    Decompressor decompressor(device);
-    torch::Tensor reconstructed = decompressor.decompress(batch_size, n_frame, comp);
-
-    torch::Tensor restored = restore_from_5d(reconstructed, padding_info);
-    restored = restored.to(torch::kCPU).contiguous();
-
-    if (type == DataType::Float)
-        std::memcpy(dataOut, restored.data_ptr<float>(), sizeOut);
-    else if (type == DataType::Double)
-    {
-        torch::Tensor double_tensor = restored.to(torch::kFloat64);
-        std::memcpy(dataOut, double_tensor.data_ptr<double>(), sizeOut);
-    }
-
-    return sizeOut;
+    if (pos != size)
+        throw std::runtime_error("Trailing CAESAR operator bytes");
+    return rawSize;
 }
 
-bool CompressCAESAR::IsDataTypeValid(const DataType type) const
+} // namespace
+
+size_t CompressCAESAR::DecompressV1(const char *buffer, size_t size, char *output)
 {
-    return (type == DataType::Float || type == DataType::Double);
+    size_t pos = 0;
+    Dims dims;
+    DataType type;
+    bool compressed;
+    ReadHeader(buffer, size, pos, dims, type, compressed);
+    const auto rawSize = DataSize(dims, type);
+    if (!compressed)
+    {
+        Require(size, pos, rawSize);
+        if (rawSize != size - pos)
+            throw std::runtime_error("Trailing CAESAR raw bytes");
+        std::memcpy(output, buffer + pos, rawSize);
+        return rawSize;
+    }
+    if (dims.size() < 3 || dims.size() > 5)
+        throw std::runtime_error("Invalid CAESAR compressed rank");
+    const bool fiveD = ReadFlag(buffer, size, pos);
+    if (fiveD != (dims.size() == 5))
+        throw std::runtime_error("Invalid CAESAR slice mode");
+    const auto count = fiveD ? ReadParameter<uint64_t>(buffer, size, pos) : 1;
+    if (fiveD && count != dims[0])
+        throw std::runtime_error("Invalid CAESAR slice count");
+    std::vector<int64_t> expected(dims.begin(), dims.end());
+    if (fiveD)
+        expected[0] = 1;
+    const size_t sliceBytes = fiveD ? rawSize / dims[0] : rawSize;
+    for (uint64_t i = 0; i < count; ++i)
+    {
+        auto restored = DecompressLegacySlice(buffer, size, pos,
+                                              expected); // Convert/copy directly into the
+                                                         // caller's allocation. No full float64
+        // temporary or intermediate CPU output buffer is needed.
+        auto destination =
+            torch::from_blob(output + size_t(i) * sliceBytes, expected,
+                             type == DataType::Double ? torch::kFloat64 : torch::kFloat32);
+        destination.copy_(restored);
+    }
+    if (pos != size)
+        throw std::runtime_error("Trailing CAESAR operator bytes");
+    return rawSize;
 }
 
-} // end namespace compress
-} // end namespace core
-} // end namespace adios2
+size_t CompressCAESAR::InverseOperate(const char *buffer, size_t size, char *output)
+{
+    Require(size, 0, 4);
+    size_t pos = 0;
+    GetParameter<uint8_t>(buffer, pos);
+    const auto version = GetParameter<uint8_t>(buffer, pos);
+    GetParameter<uint16_t>(buffer, pos);
+    if (version == 2)
+        return DecompressSerialized(buffer + pos, size - pos, output);
+    if (version == 1)
+        return DecompressV1(buffer + pos, size - pos, output);
+    throw std::runtime_error("Unknown CAESAR operator buffer version: " + std::to_string(version));
+}
+bool CompressCAESAR::IsDataTypeValid(DataType type) const
+{
+    return type == DataType::Float || type == DataType::Double;
+}
+} // namespace compress
+} // namespace core
+} // namespace adios2
