@@ -38,6 +38,30 @@ struct MPI4PY_Comm
 
 #define ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(MACRO) ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
+/**
+ * The list to walk when choosing a C++ type from a numpy dtype, as opposed to
+ * the lists above, which choose a branch from an ADIOS DataType. numpy has no
+ * "char" dtype; an array is always explicitly signed or unsigned. Since char
+ * is signed on x86 and unsigned on aarch64 Linux, nb::dtype<char>() equals the
+ * int8 dtype on one and the uint8 dtype on the other, so a char entry would
+ * claim arrays of the wrong signedness. int8_t and uint8_t cover both byte
+ * dtypes exactly, so char is left out here.
+ */
+#define ADIOS2_FOREACH_NUMPY_DTYPE_1ARG(MACRO)                                                     \
+    MACRO(int8_t)                                                                                  \
+    MACRO(int16_t)                                                                                 \
+    MACRO(int32_t)                                                                                 \
+    MACRO(int64_t)                                                                                 \
+    MACRO(uint8_t)                                                                                 \
+    MACRO(uint16_t)                                                                                \
+    MACRO(uint32_t)                                                                                \
+    MACRO(uint64_t)                                                                                \
+    MACRO(float)                                                                                   \
+    MACRO(double)                                                                                  \
+    MACRO(long double)                                                                             \
+    MACRO(std::complex<float>)                                                                     \
+    MACRO(std::complex<double>)
+
 } // end namespace py11
 } // end namespace adios2
 
