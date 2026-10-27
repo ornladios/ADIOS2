@@ -152,7 +152,7 @@ Questions about whether a given feature is worth packaging are welcome on
 ## Resources
 
 * Documentation: [adios2.readthedocs.io](https://adios2.readthedocs.io)
-* Latest release: [v2.12.1](https://github.com/ornladios/ADIOS2/releases/tag/v2.12.1)
+* Latest release: [v2.13.0-rc1](https://github.com/ornladios/ADIOS2/releases/tag/v2.13.0-rc1)
 * All releases: [github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 * Citing: if you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.1016/j.softx.2020.100561)
 
