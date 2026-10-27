@@ -89,7 +89,7 @@ Variable IO::DefineVariable(const std::string &name, const nb::ndarray<nb::numpy
     {                                                                                              \
         variable = &m_IO->DefineVariable<T>(name, shape, start, count, isConstantDims);            \
     }
-    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_NUMPY_DTYPE_1ARG(declare_type)
 #undef declare_type
     else
     {
@@ -218,7 +218,7 @@ Attribute IO::DefineAttribute(const std::string &name, const nb::ndarray<nb::num
             attribute = &m_IO->DefineAttribute<T>(name, data[0], variableName, separator);         \
         }                                                                                          \
     }
-    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_NUMPY_DTYPE_1ARG(declare_type)
 #undef declare_type
     else
     {
