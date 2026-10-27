@@ -1,10 +1,13 @@
 # SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+include(ProcessorCount)
+ProcessorCount(NCPUS)
+math(EXPR N2CPUS "${NCPUS}*2")
 
-set(ENV{CC}  clang-11)
-set(ENV{CXX} clang++-11)
-set(ENV{FC}  gfortran-11)
+set(ENV{CC}  gcc)
+set(ENV{CXX} g++)
+set(ENV{FC}  gfortran)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -15,13 +18,12 @@ set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
-ADIOS2_USE_Blosc2:BOOL=ON
 ADIOS2_USE_BZip2:BOOL=ON
+ADIOS2_USE_Blosc2:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
-ADIOS2_USE_MGARD:BOOL=OFF
-ADIOS2_USE_MPI:BOOL=OFF
+ADIOS2_USE_MPI:BOOL=ON
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
@@ -36,7 +38,14 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
+
+OpenMP_gomp_LIBRARY:FILEPATH=/spack/var/spack/environments/adios2-ci-ompi/.spack-env/view/lib/libgomp.so.1
+
+MPIEXEC_EXTRA_FLAGS:STRING=--oversubscribe
+MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
+
+set(CTEST_TEST_ARGS EXCLUDE ".Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
