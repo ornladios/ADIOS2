@@ -226,6 +226,17 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     m_Start = start;
     m_Count = count;
+    // A box on a local array is block-relative and its start may be left empty.
+    // Engines test the start to decide whether a box was asked for at all, so an
+    // empty one drops the count and reads the whole block.  Read side only: on
+    // write an empty start is what marks a local array, and
+    // BPSerializer::PutDimensionsRecord keys the record layout off it.
+    if (m_ShapeID == ShapeID::LocalArray && m_Start.empty() && !m_Count.empty() &&
+        m_Engine != nullptr &&
+        (m_Engine->OpenMode() == Mode::Read || m_Engine->OpenMode() == Mode::ReadRandomAccess))
+    {
+        m_Start = Dims(m_Count.size(), 0);
+    }
     m_SelectionType = SelectionType::BoundingBox;
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_Count);
@@ -284,7 +295,7 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 
             helper::Throw<std::invalid_argument>(
                 "Core", "VariableBase", "SetMemorySelection",
-                "memoyCount[" + indexStr + "]= " + memoryCountStr +
+                "memoryCount[" + indexStr + "]= " + memoryCountStr +
                     " can not be smaller than variable count[" + indexStr + "]= " + countStr +
                     " for variable " + m_Name + ", in call to SetMemorySelection");
         }
@@ -364,6 +375,36 @@ size_t VariableBase::AddOperation(std::shared_ptr<core::Operator> op) noexcept
 
 void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
 
+void VariableBase::RemoveSelection()
+{
+    m_BlockID = 0;
+
+    if (m_ShapeID == ShapeID::LocalArray)
+    {
+        // A local array has no whole-variable read, so its default is the first
+        // block; Start and Count are resolved from the block by the engine.
+        m_SelectionType = SelectionType::WriteBlock;
+        m_Start.clear();
+        m_Count.clear();
+        return;
+    }
+
+    m_SelectionType = SelectionType::All;
+
+    // Leaving the discarded box in Start/Count would have Count() keep
+    // reporting a selection that no longer applies, so restore the extent of
+    // the step being read.
+    if (m_Engine != nullptr && !m_SingleValue)
+    {
+        const Dims shape = m_FirstStreamingStep ? Shape(m_StepsStart) : Shape();
+        if (!shape.empty())
+        {
+            m_Start = Dims(shape.size(), 0);
+            m_Count = shape;
+        }
+    }
+}
+
 void VariableBase::SetOperationParameter(const size_t operationID, const std::string key,
                                          const std::string value)
 {
@@ -402,12 +443,23 @@ void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; }
 
 bool VariableBase::IsValidStep(const size_t step) const noexcept
 {
-    if (m_AvailableStepBlockIndexOffsets.count(step) == 1)
+    if (!m_AvailableStepBlockIndexOffsets.empty())
     {
-        return true;
+        return m_AvailableStepBlockIndexOffsets.count(step) == 1;
     }
 
-    return false;
+    // No per-step index: an engine that keeps its variables across steps says
+    // which step this one belongs to instead.  The index is keyed one past the
+    // engine step, so match that here.
+    if (m_StepPresent != MaxSizeT)
+    {
+        return m_StepPresent + 1 == step;
+    }
+
+    // Neither: nothing is tracking this variable per step, so it is not ours to
+    // hide.  Reaches here for variables the application defined itself on a
+    // reading IO, and for reader-defined derived placeholders.
+    return true;
 }
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const

@@ -39,7 +39,10 @@ independent aspects:
   (a hyperslab with start offsets and counts).
 - **Block selection** — optionally targets an individual write block by ID.
 
-These are orthogonal: a block ID can be combined with either spatial type.
+A block ID combines with a bounding box only on a **local array**, where the
+box is taken relative to the selected block. On a global array the two select
+alternative regions and the pair is refused; use a global bounding box, which
+can already address any part of any block.
 
 .. code-block:: c++
 
@@ -53,7 +56,8 @@ These are orthogonal: a block ID can be combined with either spatial type.
    // (equivalent to All().WithBlock(3))
    auto sel = adios2::Selection::Block(3);
 
-   // Block + bounding box — read a sub-region within a specific block
+   // Block + bounding box — a sub-region within a block, local arrays only
+   // (on a global array this throws; select the region globally instead)
    auto sel = adios2::Selection::BoundingBox({0}, {10}).WithBlock(3);
 
    // Using Box<Dims> convenience type
@@ -149,11 +153,14 @@ Available Selection Parameters
    * - Block
      - ``Block(blockID)`` / ``SetBlock()``
      - ``WithBlock()``
-     - Select an individual write block by ID (can combine with any spatial type)
+     - Select an individual write block by ID (combines with a bounding box on
+       a local array only, where the box is block-relative)
    * - Steps
      - ``SetSteps(start, count)``
      - ``WithSteps()``
-     - Step range to read (default: current step, count 1)
+     - Step range to read (default: current step, count 1). A multi-step read
+       returns one rectangle, so the geometry must be the same at every step of
+       the range; see below
    * - Memory
      - ``SetMemory(start, count)``
      - ``WithMemory()``
@@ -175,6 +182,32 @@ Other methods:
    auto sel = adios2::Selection::BoundingBox({0, 0}, {10, 20}).WithSteps(0, 5);
    std::cout << sel.ToString() << std::endl;
    // Output: Selection(BoundingBox start={0, 0} count={10, 20}, steps=[0, 5])
+
+Reading more than one step at a time
+------------------------------------
+
+A multi-step read returns ``stepCount`` copies of one geometry, laid out back to
+back and strided by the per-step size. That only has an answer when the geometry
+is the same at every step of the range, so a range over which the global
+dimensions change, or over which the selected block changes size, is refused on
+every engine.
+Read those a step at a time, asking for each step's shape as you go. A step
+selection belongs to ``Mode::ReadRandomAccess``; in ``Mode::Read`` the engine
+hands you one step at a time already, so you read inside the
+``BeginStep``/``EndStep`` pair and do not set one:
+
+.. code-block:: c++
+
+   // Mode::ReadRandomAccess
+   for (size_t step = 0; step < var.Steps(); ++step)
+   {
+       var.SetStepSelection({step, 1});
+       data.resize(var.SelectionSize());   // this step's extent
+       engine.Get(var, data.data(), adios2::Mode::Sync);
+   }
+
+``var.Shape(step)`` gives that step's dimensions if you need them rather than
+just the element count.
 
 Engine Support
 --------------

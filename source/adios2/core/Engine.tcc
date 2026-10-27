@@ -86,6 +86,27 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
     CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess}, "in call to Get");
 
+    /* A step selection is a random-access facility and means nothing while
+     * stepping: between BeginStep and EndStep the engine is positioned on one
+     * step.  Checked here rather than in SetStepSelection because this is where
+     * the two are actually in conflict -- a reader may legitimately set a step
+     * selection in Mode::Read as long as it never calls BeginStep, which is how
+     * BP3/BP4 were used before ReadRandomAccess existed.  BeginStep clears
+     * m_RandomAccess for the variables the IO holds at the time, so inside a
+     * step pair it is set only if the caller asked for a step selection during
+     * this step -- or if the variable has not been through a BeginStep at all,
+     * which m_FirstStreamingStep distinguishes (a variable the application
+     * defined itself after BeginStep still carries the default). */
+    if (BetweenStepPairs() && variable.m_RandomAccess && !variable.m_FirstStreamingStep)
+    {
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "can't mix streaming and random-access (a step "
+                                             "selection is set on variable " +
+                                                 variable.m_Name +
+                                                 " inside a BeginStep/EndStep pair), in call to "
+                                                 "Get");
+    }
+
     switch (launch)
     {
     case Mode::Deferred:
@@ -163,6 +184,7 @@ void Engine::Get(Variable<T> &variable, T *data, const Selection &selection, con
 {
     CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get with Selection");
+    CheckSelection(variable, selection, "in call to Get with Selection");
 
     switch (launch)
     {
@@ -184,6 +206,7 @@ void Engine::Get(GetContext &ctx, Variable<T> &variable, T *data, const Selectio
 {
     CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get(GetContext &, Variable, T*, Selection)");
+    CheckSelection(variable, selection, "in call to Get(GetContext &, Variable, T*, Selection)");
     DoGetContextDeferred(ctx, variable, data, selection);
 }
 

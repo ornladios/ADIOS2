@@ -155,6 +155,7 @@ bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 bp5_gtest_add_tests_helper(SelectionGet MPI_NONE)
+bp_gtest_add_tests_helper(BlockStepsVarying MPI_ALLOW)
 bp5_gtest_add_tests_helper(GetContextIsolation MPI_NONE)
 bp5_gtest_add_tests_helper(FileUUID MPI_NONE)
 
@@ -216,6 +217,9 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_get_remote_tests_helper(WriteMemorySelectionRead)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
    add_get_remote_tests_helper(RemoteMultiFileRead)
+   # the default-selection cases resolve the shape per step, which the remote
+   # path has to do the same way the local one does
+   add_get_remote_tests_helper(ChangingShape)
 endif()
 
 if (ADIOS2_HAVE_XRootD)

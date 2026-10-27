@@ -523,7 +523,7 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
                 var->Count(), // function, not m_Count is correct for block selections
                 var->m_Start,
                 var->m_BlockID,
-                (var->m_SelectionType == SelectionType::BoundingBox)}
+                (var->m_SelectionType != SelectionType::WriteBlock)}
         .detach();
     return;
 }

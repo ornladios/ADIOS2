@@ -449,6 +449,9 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             "BP5Reader, in call to BeginStep");
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_ReadStreaming = true;
+
     StepStatus status = StepStatus::OK;
     if (m_FirstStep)
     {
@@ -947,6 +950,86 @@ void BP5Reader::PerformRemoteGets()
 {
     auto GetRequests = m_BP5Deserializer->DefaultGetContext().PendingGetRequests;
 
+    /* A memory selection describes the layout of the caller's buffer, not what
+     * to fetch, so it is applied on this side: the remote returns the box
+     * contiguously and it is placed here, as FinalizeGet does for a local read.
+     * Without this the box lands at the front of the buffer and the ghost
+     * cells the caller left room for are overwritten. */
+    struct MemSelScatter
+    {
+        void *Dest;
+        std::unique_ptr<char[]> Box;
+        Dims Start;
+        Dims Count;
+        Dims MemoryStart;
+        Dims MemoryCount;
+        int ElementSize;
+    };
+    std::vector<MemSelScatter> memSelScatters;
+
+    /* Refuse what cannot be placed before allocating anything, so a throw here
+     * does not leak a staging buffer. */
+    for (auto &Req : GetRequests)
+    {
+        if (Req.MemoryStart.empty())
+        {
+            continue;
+        }
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+        if (Req.StepCount > 1)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Engine", "BP5Reader", "PerformRemoteGets",
+                "a memory selection on a multi-step Get is not supported for remote data, "
+                "for variable " +
+                    VB->m_Name + "; read the steps one at a time");
+        }
+        /* Only a bounding-box request carries Start and Count; a block request
+         * leaves them empty, and there is no geometry to place the box into. */
+        if (Req.Count.size() != Req.MemoryStart.size() ||
+            Req.Start.size() != Req.MemoryStart.size())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Engine", "BP5Reader", "PerformRemoteGets",
+                "a memory selection needs a bounding box of the same number of dimensions "
+                "to place, for variable " +
+                    VB->m_Name);
+        }
+    }
+
+    for (auto &Req : GetRequests)
+    {
+        if (Req.MemoryStart.empty())
+        {
+            continue;
+        }
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+        const size_t boxBytes = helper::GetTotalSize(Req.Count) * VB->m_ElementSize;
+        auto box = std::make_unique<char[]>(boxBytes);
+        memSelScatters.push_back({Req.Data, std::move(box), Req.Start, Req.Count, Req.MemoryStart,
+                                  Req.MemoryCount, (int)VB->m_ElementSize});
+        Req.Data = memSelScatters.back().Box.get();
+    }
+
+    /* Every coordinate below is in one frame: the box occupies
+     * [Start, Start+Count).  The staging buffer covers exactly that, and the
+     * caller's buffer covers MemoryCount with the box at MemoryStart inside it,
+     * so its origin in this frame is Start - MemoryStart. */
+    auto lf_PlaceMemorySelections = [&]() {
+        for (auto &s : memSelScatters)
+        {
+            Dims destMemStart(s.Start.size());
+            for (size_t d = 0; d < s.Start.size(); ++d)
+            {
+                destMemStart[d] = s.Start[d] - s.MemoryStart[d];
+            }
+            helper::NdCopy(s.Box.get(), s.Start, s.Count, true, false, (char *)s.Dest, s.Start,
+                           s.Count, true, false, s.ElementSize, s.Start, s.Count, destMemStart,
+                           s.MemoryCount);
+        }
+        memSelScatters.clear();
+    };
+
     // Try batch get first — single HTTP round-trip for all variables
     {
         std::vector<Remote::BatchGetRequest> batchReqs;
@@ -960,6 +1043,7 @@ void BP5Reader::PerformRemoteGets()
         }
         if (m_Remote->BatchGet(batchReqs))
         {
+            lf_PlaceMemorySelections();
             return;
         }
     }
@@ -1028,6 +1112,8 @@ void BP5Reader::PerformRemoteGets()
             m_Remote->WaitForGet(handle);
         }
     }
+
+    lf_PlaceMemorySelections();
 }
 
 void BP5Reader::PerformLocalGets(format::BP5Deserializer::BP5GetContext &ctx)

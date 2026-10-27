@@ -64,6 +64,13 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    void Variable<T>::RemoveSelection()                                                            \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::RemoveSelection");            \
+        m_Variable->RemoveSelection();                                                             \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     void Variable<T>::SetMemorySelection(const Box<Dims> &memorySelection)                         \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::SetMemorySelection");         \

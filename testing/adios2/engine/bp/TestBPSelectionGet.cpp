@@ -628,6 +628,155 @@ TEST_F(BPSelectionGetTest, AllUsesPerStepShape)
     }
 }
 
+// A multi-step Get returns one rectangle, so a range spanning a shape change
+// has no answer and must be refused.  Reading the steps one at a time is the
+// documented way to handle a changing shape, and must give each step's shape.
+TEST_F(BPSelectionGetTest, MultiStepAllAcrossChangingShapeThrows)
+{
+    const std::string fname("BPSelectionGet_AllChangingShape.bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteRaggedIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("x", {2}, {0}, {2});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        for (int32_t step = 0; step < 3; ++step)
+        {
+            // shape grows 2, 4, 6
+            const size_t n = 2 + 2 * static_cast<size_t>(step);
+            std::vector<int32_t> data(n);
+            for (size_t i = 0; i < n; ++i)
+            {
+                data[i] = step * 100 + static_cast<int32_t>(i);
+            }
+            writer.BeginStep();
+            var.SetShape({n});
+            var.SetSelection({{0}, {n}});
+            writer.Put(var, data.data(), adios2::Mode::Sync);
+            writer.EndStep();
+        }
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadRaggedIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    auto var = io.InquireVariable<int32_t>("x");
+    ASSERT_TRUE(var);
+
+    // the ragged range is refused
+    std::vector<int32_t> got(32, -999);
+    EXPECT_THROW(
+        reader.Get(var, got.data(), adios2::Selection::All().WithSteps(0, 3), adios2::Mode::Sync),
+        std::invalid_argument);
+
+    // one step at a time resolves that step's shape
+    for (size_t step = 0; step < 3; ++step)
+    {
+        const auto sel = adios2::Selection::All().WithSteps(step, 1);
+        const size_t n = 2 + 2 * step;
+        EXPECT_EQ(var.SelectionSize(sel), n) << "step " << step;
+        std::vector<int32_t> d(n + 4, -999);
+        reader.Get(var, d.data(), sel, adios2::Mode::Sync);
+        for (size_t i = 0; i < n; ++i)
+        {
+            EXPECT_EQ(d[i], static_cast<int32_t>(step * 100 + i)) << "step " << step << " el " << i;
+        }
+        for (size_t i = n; i < d.size(); ++i)
+        {
+            EXPECT_EQ(d[i], -999) << "step " << step << " wrote past SelectionSize()";
+        }
+    }
+
+    // a fixed box across the same range is uniform, so it still reads
+    const auto boxSel = adios2::Selection::BoundingBox({0}, {2}).WithSteps(0, 3);
+    ASSERT_EQ(var.SelectionSize(boxSel), 6u);
+    std::vector<int32_t> box(6, -999);
+    reader.Get(var, box.data(), boxSel, adios2::Mode::Sync);
+    EXPECT_EQ(box, std::vector<int32_t>({0, 1, 100, 101, 200, 201}));
+    reader.Close();
+}
+
+// A box on top of a block is block-relative and must be bounded by that block.
+// BP3/BP4 reject an out-of-bounds box; BP5 used to read past the block and
+// return garbage.
+TEST_F(BPSelectionGetTest, BlockRelativeBoxOutOfBoundsThrows)
+{
+    const std::string fname("BPSelectionGet_BlockBoxBounds.bp");
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteBoundsIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+        auto var = io.DefineVariable<int32_t>("larr", {}, {}, {2});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> block0 = {0, 1};
+        const std::vector<int32_t> block1 = {10, 11};
+        writer.BeginStep();
+        var.SetSelection({{}, {2}});
+        writer.Put(var, block0.data(), adios2::Mode::Sync);
+        var.SetSelection({{}, {2}});
+        writer.Put(var, block1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadBoundsIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        auto var = io.InquireVariable<int32_t>("larr");
+        ASSERT_TRUE(var);
+
+        // block 1 holds 2 elements, so [1,3) runs off the end of it
+        std::vector<int32_t> got(4, -999);
+        var.SetBlockSelection(1);
+        var.SetSelection({{1}, {2}});
+        EXPECT_THROW(reader.Get(var, got.data(), adios2::Mode::Sync), std::invalid_argument);
+        reader.Close();
+    }
+
+    {
+        // the in-bounds box still reads
+        adios2::IO io = adios.DeclareIO("ReadBoundsOkIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        auto var = io.InquireVariable<int32_t>("larr");
+        ASSERT_TRUE(var);
+        std::vector<int32_t> got(4, -999);
+        var.SetBlockSelection(1);
+        var.SetSelection({{1}, {1}});
+        reader.Get(var, got.data(), adios2::Mode::Sync);
+        EXPECT_EQ(got[0], 11);
+        EXPECT_EQ(got[1], -999);
+        reader.Close();
+    }
+}
+
 // Test ToString() method
 TEST_F(BPSelectionGetTest, SelectionToString)
 {
@@ -650,6 +799,53 @@ TEST_F(BPSelectionGetTest, SelectionToString)
     EXPECT_NE(ws.find("All"), std::string::npos);
     EXPECT_NE(ws.find("3"), std::string::npos);
     EXPECT_NE(ws.find("7"), std::string::npos);
+}
+
+// A block and a bounding box compose only on a local array, where the box is
+// relative to the block.  On a global array they select alternative regions,
+// so the pair is refused rather than quietly dropping the block.
+TEST_F(BPSelectionGetTest, BlockWithBoxOnGlobalArrayThrows)
+{
+    const std::string fname("BPSelBlockBoxGlobal.bp");
+    const size_t Nx = 8;
+
+    adios2::ADIOS adios;
+    {
+        adios2::IO io = adios.DeclareIO("WriteBlockBoxIO");
+        auto varG = io.DefineVariable<int32_t>("g", {Nx}, {0}, {4});
+        auto varL = io.DefineVariable<int32_t>("l", {}, {}, {4});
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        const std::vector<int32_t> b0 = {0, 1, 2, 3};
+        const std::vector<int32_t> b1 = {10, 11, 12, 13};
+        writer.BeginStep();
+        varG.SetSelection({{0}, {4}});
+        writer.Put(varG, b0.data(), adios2::Mode::Sync);
+        varG.SetSelection({{4}, {4}});
+        writer.Put(varG, b1.data(), adios2::Mode::Sync);
+        writer.Put(varL, b0.data(), adios2::Mode::Sync);
+        writer.Put(varL, b1.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::IO io = adios.DeclareIO("ReadBlockBoxIO");
+    adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+    const auto sel = adios2::Selection::BoundingBox({0}, {2}).WithBlock(1).WithSteps(0, 1);
+
+    auto varG = io.InquireVariable<int32_t>("g");
+    ASSERT_TRUE(varG);
+    std::vector<int32_t> data(2, -999);
+    EXPECT_THROW(reader.Get(varG, data.data(), sel, adios2::Mode::Sync), std::invalid_argument);
+    // SelectionSize must agree with Get about what is legal
+    EXPECT_THROW(varG.SelectionSize(sel), std::invalid_argument);
+
+    // The same pair on a local array is the supported ghost-cell case
+    auto varL = io.InquireVariable<int32_t>("l");
+    ASSERT_TRUE(varL);
+    EXPECT_EQ(varL.SelectionSize(sel), 2u);
+    reader.Get(varL, data.data(), sel, adios2::Mode::Sync);
+    EXPECT_EQ(data, std::vector<int32_t>({10, 11}));
+    reader.Close();
 }
 
 int main(int argc, char **argv)

@@ -12,6 +12,7 @@ module adios2_variable_mod
     external adios2_set_memory_selection_f2c
     external adios2_set_operation_parameter_f2c
     external adios2_set_selection_f2c
+    external adios2_remove_selection_f2c
     external adios2_set_shape_f2c
     external adios2_set_step_selection_f2c
     external adios2_store_stats_only_f2c
@@ -207,6 +208,17 @@ contains
                                                 TRIM(ADJUSTL(key))//char(0), &
                                                 TRIM(ADJUSTL(value))//char(0), &
                                                 ierr)
+    end subroutine
+
+    !> Restores the default selection, as if neither adios2_set_selection nor
+    !! adios2_set_block_selection had been called: the whole variable for a
+    !! global array, the first block for a local array.  Removes the bounding
+    !! box and the block together.  Step and memory selections are untouched.
+    subroutine adios2_remove_selection(variable, ierr)
+        type(adios2_variable), intent(in):: variable
+        integer, intent(out):: ierr
+
+        call adios2_remove_selection_f2c(variable%f2c, ierr)
     end subroutine
 
     subroutine adios2_remove_operations(variable, ierr)

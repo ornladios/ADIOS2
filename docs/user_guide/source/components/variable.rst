@@ -210,6 +210,7 @@ Over multiple output steps
 
 1. the processes CAN change the size (and number) of blocks in the array
 
+  * but then you cannot read a single block over multiple steps at once, if that block's own size changes
   * E.g. atom table: global size is fixed but atoms wander around processes, so their block size is changing
 
     .. image:: images/global_array_changing_blocks.png

@@ -58,7 +58,7 @@ public:
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0;                 ///< current block ID for local variables, global = 0
-    SelectionType m_SelectionType = SelectionType::BoundingBox;
+    SelectionType m_SelectionType = SelectionType::All;
 
     bool m_SingleValue = false; ///< true: single value, false: array
     Dims m_Shape;               ///< total dimensions across MPI
@@ -109,6 +109,12 @@ public:
      * </pre>
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
+
+    /** Engines that keep reader-side variables across steps rather than
+     *  rebuilding them record the step the variable appears at here, for
+     *  IsValidStep() to use when there is no per-step index to consult.
+     *  Engine step numbering, so one less than the IsValidStep() argument. */
+    size_t m_StepPresent = MaxSizeT;
 
     std::map<size_t, Dims> m_AvailableShapes;
 
@@ -224,6 +230,16 @@ public:
      * Provides the posibility to apply or not operators on a step basis.
      */
     void RemoveOperations() noexcept;
+
+    /**
+     * Restores the default selection, as if neither SetSelection nor
+     * SetBlockSelection had been called: the whole variable on a global array,
+     * the first block on a local array, which has no whole-variable read.
+     * Removes the bounding box and the block together, so a reader can switch
+     * between them without a leftover from the other.  Does not affect the
+     * step or memory selections.
+     */
+    void RemoveSelection();
 
     /**
      * Sets a parameter by key/value in an existing operation from AddOperation
