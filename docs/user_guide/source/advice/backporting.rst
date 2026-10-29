@@ -29,7 +29,7 @@ label-driven workflow, it only ever pushes to a new branch and opens a PR
 for review; it never pushes or merges directly into the target branch.
 
 When cutting a new release branch, create its ``backport release_X.Y`` label.
-See the release checklist in ``.github/ISSUE_TEMPLATE/new_release.md``.
+See the release checklist in ``docs/NewRelease.md.tmpl``.
 
 While a release line is active, its branch only receives forward
 cherry-picks via ``backport release_X.Y`` labels; patch releases do not
