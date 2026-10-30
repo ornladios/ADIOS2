@@ -94,6 +94,7 @@ typedef struct _Evpath_RS_Stream
     long ReadRequestsFromPreload;
     SstStats Stats;
     size_t LastPreloadTimestep;
+    size_t LastRequestedTimestep;
 } *Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
@@ -263,6 +264,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream, void **R
     Stream->CP_Stream = CP_Stream;
     Stream->Stats = Stats;
     Stream->LastPreloadTimestep = -1;
+    Stream->LastRequestedTimestep = (size_t)-1;
 
     pthread_mutex_init(&Stream->DataLock, NULL);
 
@@ -460,6 +462,7 @@ typedef struct _EvpathCompletionHandle
     void *Buffer;
     int Failed;
     int Rank;
+    size_t Timestep;
     size_t Offset;
     size_t Length;
     struct _EvpathCompletionHandle *Next;
@@ -647,8 +650,10 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v, vo
     {
         int HadPreload;
         EvpathCompletionHandle Next = Requests->Next;
+        // Must match the timestep this request asked for, not the arriving
+        // message's.
         HadPreload =
-            HandleRequestWithPreloaded(Svcs, RS_Stream, Requests->Rank, PreloadMsg->Timestep,
+            HandleRequestWithPreloaded(Svcs, RS_Stream, Requests->Rank, Requests->Timestep,
                                        Requests->Offset, Requests->Length, Requests->Buffer);
         if (HadPreload)
         {
@@ -935,14 +940,14 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int
     struct _EvpathReadRequestMsg ReadRequestMsg;
 
     int HadPreload;
-    static size_t LastRequestedTimestep = -1;
 
     pthread_mutex_lock(&Stream->DataLock);
-    if ((LastRequestedTimestep != -1) && (LastRequestedTimestep != Timestep))
+    if ((Stream->LastRequestedTimestep != (size_t)-1) &&
+        (Stream->LastRequestedTimestep != Timestep))
     {
         DiscardPriorPreloaded(Svcs, Stream, Timestep);
     }
-    LastRequestedTimestep = Timestep;
+    Stream->LastRequestedTimestep = Timestep;
     HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep, Offset, Length, Buffer);
     ret->CPStream = Stream->CP_Stream;
     ret->DPStream = Stream;
@@ -950,6 +955,7 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int
     ret->cm = cm;
     ret->Buffer = Buffer;
     ret->Rank = Rank;
+    ret->Timestep = Timestep;
     ret->Offset = Offset;
     ret->Length = Length;
 
