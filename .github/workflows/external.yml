@@ -18,6 +18,6 @@ jobs:
       statuses: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: Kitware/cdash-status@697751fc655b300a9e16e285f2e2ee981f59e45a # release
+      - uses: Kitware/cdash-status@581310760cedd7b6feffdbf1fd9f3d24fecb74dc # release
         with:
           project: ADIOS
