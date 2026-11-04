@@ -35,3 +35,7 @@ if(ADIOS2_HAVE_MPI)
   #endif()
 endif()
 
+
+if(ADIOS2_HAVE_Campaign)
+  python_add_test(NAME Bindings.Python.CampaignRead.Serial SCRIPT TestCampaignRead.py)
+endif()
