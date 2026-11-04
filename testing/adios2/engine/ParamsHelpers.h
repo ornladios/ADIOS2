@@ -29,7 +29,7 @@ static std::string Trim(std::string &str)
  * by commas.  White space is trimmed off front and back.
  *
  * Values containing special characters can be quoted with single or double quotes:
- *   DataTransport=awssdk,S3Endpoint="http://127.0.0.1:9000",S3Bucket=mybucket
+ *   DataFileTransport=awssdk,S3Endpoint="http://127.0.0.1:9000",S3Bucket=mybucket
  */
 static adios2::Params ParseEngineParams(std::string Input)
 {
