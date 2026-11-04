@@ -9,6 +9,8 @@
 
 #include <limits>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <adios2.h>
 #include <adios2/common/ADIOSTypes.h>
@@ -135,6 +137,35 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
 #else
     CleanupTestFiles(filename);
 #endif
+}
+
+// DataFileTransport selects the transport for the data subfiles.  A library
+// name that matches no transport must fail the write: if it doesn't, the
+// parameter never reached the data substream open.
+TEST_F(ADIOSReadDirectIOTest, InvalidDataFileTransportIsRejected)
+{
+    const std::string filename = "BPDirectIOInvalidDataTransport.bp";
+
+    // Throws from Open, or from EndStep under DataSizeBased aggregation,
+    // which defers the data file open; don't assume which call fails.
+    auto write = [&]() {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("InvalidDataFileTransport");
+        io.SetEngine(engineName);
+        io.SetParameters(engineParams);
+        io.SetParameter("DataFileTransport", "notatransport");
+
+        const std::size_t Nx = 8;
+        auto var = io.DefineVariable<double>("r64", {Nx}, {0}, {Nx});
+        std::vector<double> data(Nx, 1.0);
+
+        adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
+        engine.BeginStep();
+        engine.Put(var, data.data());
+        engine.EndStep();
+        engine.Close();
+    };
+    EXPECT_THROW(write(), std::invalid_argument);
 }
 
 int main(int argc, char **argv)
