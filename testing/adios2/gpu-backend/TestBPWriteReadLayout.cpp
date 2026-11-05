@@ -14,7 +14,7 @@
 
 // A Kokkos::View passed to Put/Get reports its own array_layout, which sets the
 // variable's layout whatever memory space the view lives in, as long as the view
-// has the variable's rank.
+// has more than one dimension.
 
 namespace
 {
@@ -130,9 +130,8 @@ TEST_F(BPWRLayout, HostViewLayoutLeft)
                                                                  reversedShape);
 }
 
-// A view whose rank differs from the variable's is just a flat buffer: its layout
-// says nothing about the variable's dimensions, so the variable keeps its declared
-// layout.
+// A rank-1 view is just a flat buffer: its layout says nothing about the variable's
+// dimensions, so the variable keeps its declared layout.
 TEST_F(BPWRLayout, FlatViewKeepsDeclaredLayout)
 {
     const std::string fname("BPWRLayoutFlat.bp");
