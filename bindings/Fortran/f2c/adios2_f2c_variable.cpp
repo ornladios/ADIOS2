@@ -107,6 +107,14 @@ void FC_GLOBAL(adios2_set_memory_space_f2c, ADIOS2_SET_MEMORY_SPACE_F2C)(adios2_
         adios2_set_memory_space(*variable, static_cast<adios2_memory_space>(*mem)));
 }
 
+void FC_GLOBAL(adios2_set_array_layout_f2c, ADIOS2_SET_ARRAY_LAYOUT_F2C)(adios2_variable **variable,
+                                                                         const int *layout,
+                                                                         int *ierr)
+{
+    *ierr = static_cast<int>(
+        adios2_set_array_layout(*variable, static_cast<adios2_arrayordering>(*layout)));
+}
+
 void FC_GLOBAL(adios2_get_memory_space_f2c,
                ADIOS2_GET_MEMORY_SPACE_F2C)(int *mem, adios2_variable **variable, int *ierr)
 {

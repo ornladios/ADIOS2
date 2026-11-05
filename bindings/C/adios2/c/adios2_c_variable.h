@@ -50,6 +50,18 @@ adios2_error adios2_set_memory_space(adios2_variable *variable, const adios2_mem
 adios2_error adios2_get_memory_space(adios2_memory_space *mem, adios2_variable *variable);
 
 /**
+ * Sets the layout of the buffers in all following Puts/Gets. Required for a
+ * multidimensional GPU buffer. If the layout differs from the IO's order, the variable's
+ * dimensions are reversed to the IO's order. Fixed by the first call or the first
+ * Put/Get. Without Kokkos or GPU support only adios2_arrayordering_auto is accepted
+ * @param variable handler
+ * @param layout adios2_arrayordering_rowmajor, adios2_arrayordering_columnmajor, or
+ * adios2_arrayordering_auto for the IO's order
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_array_layout(adios2_variable *variable, const adios2_arrayordering layout);
+
+/**
  * Read mode only. Required for reading local variables. For Global Arrays it
  * will Set
  * the appropriate Start and Count Selection for the global array

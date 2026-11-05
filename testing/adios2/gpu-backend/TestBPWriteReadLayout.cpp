@@ -12,9 +12,10 @@
 #include <string>
 #include <vector>
 
-// A Kokkos::View passed to Put/Get reports its own array_layout, which sets the
-// variable's layout whatever memory space the view lives in, as long as the view
-// has more than one dimension.
+// The layout of a Put buffer comes from the buffer itself, never from the memory
+// space it lives in: a Kokkos::View reports its own array_layout, and a raw pointer
+// carries no layout at all, so the variable keeps the layout it was declared with.
+// Regression tests for https://github.com/ornladios/ADIOS2/issues/5241
 
 namespace
 {
@@ -70,6 +71,72 @@ void ReadBack(const std::string &fname, const std::string &varName, adios2::Dims
 class BPWRLayout : public ::testing::Test
 {
 };
+
+// A raw pointer has no layout, in either memory space, so the declared row-major
+// shape must survive the Put and the bytes must come back in row-major order.
+TEST_F(BPWRLayout, RawPointerKeepsDeclaredLayout)
+{
+    const std::string fname("BPWRLayoutRawPointer.bp");
+    auto device = MakeView<Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace::memory_space>("raw");
+
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("WriteLayout");
+        SetEngine(io);
+        auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        // the raw pointer, not the view, so no layout information reaches ADIOS2
+        writer.Put(var, device.data(), adios2::Mode::Sync);
+        EXPECT_EQ(var.Shape(), declaredShape);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::Dims shape;
+    std::vector<float> data;
+    ReadBack(fname, "r32", shape, data);
+    EXPECT_EQ(shape, declaredShape);
+    for (size_t i = 0; i < Nx * Ny; ++i)
+        EXPECT_EQ(data[i], static_cast<float>(i));
+}
+
+// An explicit SetArrayLayout wins over the declared layout, whatever the buffer is.
+TEST_F(BPWRLayout, ExplicitLayoutOverridesDeclaredLayout)
+{
+    const std::string fname("BPWRLayoutExplicit.bp");
+    auto device =
+        MakeView<Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace::memory_space>("explicit");
+
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("WriteLayout");
+        SetEngine(io);
+        auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
+        var.SetArrayLayout(adios2::ArrayOrdering::ColumnMajor);
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        writer.Put(var, device.data(), adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::Dims shape;
+    std::vector<float> data;
+    ReadBack(fname, "r32", shape, data);
+    EXPECT_EQ(shape, reversedShape);
+}
+
+// Auto means the IO's order, so it leaves the declared shape alone.
+TEST_F(BPWRLayout, AutoLayoutIsDeclaredLayout)
+{
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("WriteLayout");
+    auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
+    var.SetArrayLayout(adios2::ArrayOrdering::Auto);
+    EXPECT_EQ(var.Shape(), declaredShape);
+    EXPECT_THROW(var.SetArrayLayout(adios2::ArrayOrdering::ColumnMajor), std::invalid_argument);
+}
 
 // A view reports its own layout, in either memory space: LayoutRight is row-major, so
 // the shape is unchanged, while LayoutLeft is column-major, so a row-major reader sees
@@ -131,13 +198,16 @@ TEST_F(BPWRLayout, HostViewLayoutLeft)
 }
 
 // A rank-1 view is just a flat buffer: its layout says nothing about the variable's
-// dimensions, so the variable keeps its declared layout.
-TEST_F(BPWRLayout, FlatViewKeepsDeclaredLayout)
+// dimensions, so the variable keeps its declared layout. LayoutLeft is the Kokkos
+// default on GPUs, so this is the common case.
+template <class Space>
+void FlatViewKeepsDeclaredLayout(const std::string &fname)
 {
-    const std::string fname("BPWRLayoutFlat.bp");
-    Kokkos::View<float *, Kokkos::LayoutLeft, Kokkos::HostSpace> view("flat", Nx * Ny);
+    Kokkos::View<float *, Kokkos::LayoutLeft, Space> view("flat", Nx * Ny);
+    auto host = Kokkos::create_mirror_view(view);
     for (size_t i = 0; i < Nx * Ny; ++i)
-        view(i) = static_cast<float>(i);
+        host(i) = static_cast<float>(i);
+    Kokkos::deep_copy(view, host);
 
     {
         adios2::ADIOS adios;
@@ -168,14 +238,26 @@ TEST_F(BPWRLayout, FlatViewKeepsDeclaredLayout)
         auto var = io.InquireVariable<float>("r32");
         ASSERT_TRUE(var);
         var.SetSelection({{0, 1}, {Nx, Ny - 1}});
-        Kokkos::View<float *, Kokkos::LayoutLeft, Kokkos::HostSpace> in("in", Nx * (Ny - 1));
+        Kokkos::View<float *, Kokkos::LayoutLeft, Space> in("in", Nx * (Ny - 1));
         reader.Get(var, in, adios2::Mode::Sync);
         reader.EndStep();
         reader.Close();
+        auto hostIn = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), in);
         for (size_t i = 0; i < Nx; ++i)
             for (size_t j = 1; j < Ny; ++j)
-                EXPECT_EQ(in(i * (Ny - 1) + j - 1), static_cast<float>(i * Ny + j));
+                EXPECT_EQ(hostIn(i * (Ny - 1) + j - 1), static_cast<float>(i * Ny + j));
     }
+}
+
+TEST_F(BPWRLayout, DeviceFlatViewKeepsDeclaredLayout)
+{
+    FlatViewKeepsDeclaredLayout<Kokkos::DefaultExecutionSpace::memory_space>(
+        "BPWRLayoutDeviceFlat.bp");
+}
+
+TEST_F(BPWRLayout, HostFlatViewKeepsDeclaredLayout)
+{
+    FlatViewKeepsDeclaredLayout<Kokkos::HostSpace>("BPWRLayoutHostFlat.bp");
 }
 
 // Two buffers with conflicting layouts remain an error.

@@ -52,8 +52,9 @@ public:
     /* User requested memory space */
     MemorySpace m_MemSpace = MemorySpace::Detect;
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
-    ArrayOrdering m_BaseLayout;
-    ArrayOrdering m_ArrayLayout = ArrayOrdering::Auto;
+    ArrayOrdering m_BaseLayout = ArrayOrdering::RowMajor;
+    ArrayOrdering m_ArrayLayout = ArrayOrdering::RowMajor;
+    bool m_ArrayLayoutLocked = false;
 #endif
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
@@ -146,7 +147,9 @@ public:
     ArrayOrdering GetArrayLayout();
 
     /**
-     * Set the layout used by the user buffers
+     * Set the layout used by the user buffers. If it differs from the IO's order, the
+     * variable's dimensions are reversed to the IO's order. Fixed by the first call or
+     * the first put/get
      * @param the layout that will be used by future put/gets
      */
     void SetArrayLayout(const ArrayOrdering layout);
