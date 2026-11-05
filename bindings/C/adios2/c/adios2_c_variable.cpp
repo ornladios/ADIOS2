@@ -90,6 +90,28 @@ adios2_error adios2_store_stats_only(adios2_variable *variable, const adios2_boo
     }
 }
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+adios2::ArrayOrdering adios2_ToArrayLayout(const adios2_arrayordering Clayout)
+{
+    adios2::ArrayOrdering layout = adios2::ArrayOrdering::Auto;
+    switch (Clayout)
+    {
+
+    case adios2_arrayordering_rowmajor:
+        layout = adios2::ArrayOrdering::RowMajor;
+        break;
+
+    case adios2_arrayordering_columnmajor:
+        layout = adios2::ArrayOrdering::ColumnMajor;
+        break;
+
+    default:
+        break;
+    }
+    return layout;
+}
+#endif
+
 adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
 {
     adios2::MemorySpace mem = adios2::MemorySpace::Detect;
@@ -146,6 +168,31 @@ adios2_error adios2_set_memory_space(adios2_variable *variable, const adios2_mem
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_set_memory_space"));
+    }
+}
+
+adios2_error adios2_set_array_layout(adios2_variable *variable, const adios2_arrayordering layout)
+{
+    try
+    {
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+        variableBase->SetArrayLayout(adios2_ToArrayLayout(layout));
+#else
+        if (layout != adios2_arrayordering_auto)
+            adios2::helper::Throw<std::invalid_argument>(
+                "Bindings::C", "adios2_c_variable", "adios2_set_array_layout",
+                "variable " + variableBase->m_Name +
+                    ": array layouts other than auto need ADIOS2 built with Kokkos or "
+                    "GPU support");
+#endif
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_array_layout"));
     }
 }
 

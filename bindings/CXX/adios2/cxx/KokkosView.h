@@ -60,6 +60,7 @@ class AdiosView<Kokkos::View<T, Parameters...>>
     data_type *pointer;
     adios2::MemorySpace mem_space;
     adios2::ArrayOrdering m_layout;
+    size_t m_rank;
 
 public:
     template <class... P>
@@ -70,12 +71,14 @@ public:
             detail::memspace_kokkos_to_adios2<typename Kokkos::View<T, P...>::memory_space>::value;
         m_layout =
             detail::layout_kokkos_to_adios2<typename Kokkos::View<T, P...>::array_layout>::value;
+        m_rank = static_cast<size_t>(Kokkos::View<T, P...>::rank);
     }
 
     data_type const *data() const { return pointer; }
     data_type *data() { return pointer; }
     adios2::MemorySpace memory_space() const { return mem_space; }
     adios2::ArrayOrdering layout() const { return m_layout; }
+    size_t rank() const { return m_rank; }
 };
 
 }
