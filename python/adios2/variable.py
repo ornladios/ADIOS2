@@ -92,6 +92,17 @@ class Variable:
         """
         self.impl.SetShape(shape)
 
+    def set_array_layout(self, layout):
+        """
+        Set the layout of the buffers in following puts/gets. Required for a
+        multidimensional GPU buffer. Only available with GPU support
+
+        Args:
+            layout (adios2.bindings.ArrayOrdering): RowMajor, ColumnMajor, or Auto
+            for the IO's order.
+        """
+        self.impl.SetArrayLayout(layout)
+
     def set_step_selection(self, step_selection):
         """
         Set current step selection (For RRA or ReadRandomAccess)
