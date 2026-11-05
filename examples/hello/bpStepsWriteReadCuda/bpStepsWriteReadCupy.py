@@ -5,10 +5,20 @@
 import numpy as np
 import cupy as cp
 from adios2 import Stream
+from adios2.bindings import ArrayOrdering
 
 
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     with Stream(fileName, "w") as wStream:
+        # a GPU buffer must declare its layout, and CuPy arrays are row-major
+        gpuVar = wStream.io.define_variable(
+            "gpuArray",
+            np.array([0], dtype=np.float32),
+            gpuArray.shape,
+            [0] * len(gpuArray.shape),
+            gpuArray.shape,
+        )
+        gpuVar.set_array_layout(ArrayOrdering.RowMajor)
         for _ in wStream.steps(nSteps):
             wStream.write(
                 "cpuArray", cpuArray, cpuArray.shape, [0] * len(cpuArray.shape), cpuArray.shape
@@ -30,10 +40,12 @@ def read_array(fileName, readGpuShape, readCpuShape):
         for _ in rStream.steps():
             step = rStream.current_step()
             cpuBuffer = np.zeros(readCpuShape, dtype=np.float32)
-            rStream.read("cpuArray", cpuBuffer)
+            rStream.read_in_buffer("cpuArray", cpuBuffer)
 
             gpuBuffer = cp.zeros(readGpuShape, dtype=np.float32)
-            rStream.read("gpuArray", buffer=gpuBuffer)
+            gpuVar = rStream.inquire_variable("gpuArray")
+            gpuVar.set_array_layout(ArrayOrdering.RowMajor)
+            rStream.read_in_buffer(gpuVar, gpuBuffer)
 
             print("Step %d: read GPU data\n %s" % (step, gpuBuffer))
             print("Step %d: read CPU data\n %s" % (step, cpuBuffer))

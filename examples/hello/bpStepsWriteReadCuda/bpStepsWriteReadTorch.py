@@ -5,10 +5,20 @@
 import numpy as np
 import torch
 from adios2 import Stream, FileReader
+from adios2.bindings import ArrayOrdering
 
 
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     with Stream(fileName, "w") as wStream:
+        # a GPU buffer must declare its layout, and torch tensors are row-major
+        gpuVar = wStream.io.define_variable(
+            "gpuArray",
+            np.array([0], dtype=np.float32),
+            gpuArray.shape,
+            [0] * len(gpuArray.shape),
+            gpuArray.shape,
+        )
+        gpuVar.set_array_layout(ArrayOrdering.RowMajor)
         for _ in wStream.steps(nSteps):
             wStream.write(
                 "cpuArray", cpuArray, cpuArray.shape, [0] * len(cpuArray.shape), cpuArray.shape
@@ -34,7 +44,9 @@ def read_array(fileName, readGpuShape, readCpuShape):
 
             cuda0 = torch.device("cuda:0")
             gpuBuffer = torch.zeros(readGpuShape, dtype=torch.float32, device=cuda0)
-            rStream.read_in_buffer("gpuArray", gpuBuffer)
+            gpuVar = rStream.inquire_variable("gpuArray")
+            gpuVar.set_array_layout(ArrayOrdering.RowMajor)
+            rStream.read_in_buffer(gpuVar, gpuBuffer)
 
             print("Step %d: read GPU data\n %s" % (step, gpuBuffer))
             print("Step %d: read CPU data\n %s" % (step, cpuBuffer))
