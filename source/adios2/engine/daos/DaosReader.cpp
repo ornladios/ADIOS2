@@ -24,12 +24,12 @@
 #include <exception> // std::exception (DAOS_MD_DEBUG)
 #include <fstream>
 #include <iomanip>
-#include <limits> // numeric_limits (DAOS_SUBRANGE_BATCH=0)
-#include <memory> // unique_ptr (uninitialized read scratch)
+#include <iterator> // istreambuf_iterator
+#include <limits>   // numeric_limits (DAOS_SUBRANGE_BATCH=0)
+#include <memory>   // unique_ptr (uninitialized read scratch)
 #include <mutex>
 #include <sstream>
 #include <stdbool.h>
-#include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
 
@@ -1017,6 +1017,15 @@ void DaosReader::PerformGets()
                   ")";
             return false;
         }
+        // Opened on first use, so a rank pays only for the writers it reads.
+        if (m_DataArrayHandles[slot].cookie == 0)
+        {
+            err = OpenDataArray(slot);
+            if (!err.empty())
+            {
+                return false;
+            }
+        }
         auto it = m_RankStartDataPos.find(Req.Timestep);
         if (it == m_RankStartDataPos.end() || Req.WriterRank >= it->second.size())
         {
@@ -1386,17 +1395,7 @@ void DaosReader::Init()
     // DaosWriter::PersistDataOidsIndex).  Older datasets that pre-date
     // the per-rank-array writer are no longer supported.
     {
-        std::string indexPath = m_Name + "/data_oids.txt";
-        struct stat st;
-        if (::stat(indexPath.c_str(), &st) != 0)
-        {
-            helper::Throw<std::runtime_error>(
-                "Engine", "DaosReader", "InitDAOS",
-                "missing required OID index " + indexPath +
-                    " (dataset must be produced by current DaosWriter)");
-        }
         LoadDataOidsIndex();
-        OpenDataArrays();
     }
 
     if (!m_Parameters.SelectSteps.empty())
@@ -2587,15 +2586,24 @@ void DaosReader::daos_handle_share(daos_handle_t *hdl, int type)
 void DaosReader::LoadDataOidsIndex()
 {
     // Parse <m_Name>/data_oids.txt written by DaosWriter::PersistDataOidsIndex.
+    // Rank 0 reads it for everyone, so a missing index fails on every rank.
     // Format: comment lines starting with '#', then one record per line:
     //   "<slot> <oid_lo> <oid_hi>"; a single-run dataset's slots are its ranks.
     const std::string indexPath = m_Name + "/data_oids.txt";
-    std::ifstream f(indexPath);
-    if (!f)
+    std::vector<char> index;
+    if (m_Comm.Rank() == 0)
+    {
+        std::ifstream file(indexPath, std::ios::binary);
+        index.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    }
+    m_Comm.BroadcastVector(index);
+    if (index.empty())
     {
         helper::Throw<std::runtime_error>("Engine", "DaosReader", "LoadDataOidsIndex",
-                                          "failed to open " + indexPath);
+                                          "missing required OID index " + indexPath +
+                                              " (dataset must be produced by current DaosWriter)");
     }
+    std::istringstream f(std::string(index.begin(), index.end()));
 
     // Two-pass: find max rank to size the vector, then populate.
     std::vector<std::tuple<int, uint64_t, uint64_t>> records;
@@ -2621,6 +2629,8 @@ void DaosReader::LoadDataOidsIndex()
     }
 
     m_DataOids.assign(static_cast<size_t>(maxRank + 1), daos_obj_id_t{});
+    m_DataArrayChunk.assign(m_DataOids.size(), 0);
+    m_DataArrayHandles.assign(m_DataOids.size(), daos_handle_t{});
     for (auto &rec : records)
     {
         int r = std::get<0>(rec);
@@ -2629,22 +2639,17 @@ void DaosReader::LoadDataOidsIndex()
     }
 }
 
-void DaosReader::OpenDataArrays()
+std::string DaosReader::OpenDataArray(size_t slot)
 {
-    m_DataArrayHandles.assign(m_DataOids.size(), daos_handle_t{});
-    m_DataArrayChunk.assign(m_DataOids.size(), 0);
     daos_size_t cell_size_out = 0;
-    for (size_t r = 0; r < m_DataOids.size(); ++r)
+    int rc = daos_array_open(coh, m_DataOids[slot], DAOS_TX_NONE, DAOS_OO_RO, &cell_size_out,
+                             &m_DataArrayChunk[slot], &m_DataArrayHandles[slot], NULL);
+    if (rc)
     {
-        int rc = daos_array_open(coh, m_DataOids[r], DAOS_TX_NONE, DAOS_OO_RO, &cell_size_out,
-                                 &m_DataArrayChunk[r], &m_DataArrayHandles[r], NULL);
-        if (rc)
-        {
-            helper::Throw<std::runtime_error>("Engine", "DaosReader", "OpenDataArrays",
-                                              "daos_array_open failed for rank " +
-                                                  std::to_string(r) + " rc=" + std::to_string(rc));
-        }
+        return "opening the array of slot " + std::to_string(slot) +
+               " failed rc=" + std::to_string(rc);
     }
+    return "";
 }
 
 void DaosReader::CloseDataArrays()
