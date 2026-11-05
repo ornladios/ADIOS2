@@ -88,7 +88,18 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
             m_MemSpace = MemorySpace::Host;
     }
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
-    // a raw pointer carries no layout, so the buffer uses the variable's current layout
+    // a raw pointer carries no layout. On the host it uses the variable's current
+    // layout, but GPU code commonly uses either one, so a multidimensional GPU buffer
+    // must have its layout set explicitly
+    if (!m_ArrayLayoutLocked && m_MemSpace == MemorySpace::GPU &&
+        std::max(m_Shape.size(), m_Count.size()) > 1)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Core", "VariableBase", "GetMemorySpace",
+            "Variable " + m_Name +
+                " has a GPU buffer but no array layout. Call SetArrayLayout with "
+                "RowMajor or ColumnMajor, or pass a multidimensional Kokkos::View");
+    }
     m_ArrayLayoutLocked = true;
 #endif
     return m_MemSpace;
