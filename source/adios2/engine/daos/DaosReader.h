@@ -134,12 +134,13 @@ private:
      * rank's array. */
     /// Per-writer-rank array OIDs read from the index file.
     std::vector<daos_obj_id_t> m_DataOids;
-    /// Per-writer-rank open array handles (parallel to m_DataOids).
+    /// Per-writer-rank array handles (parallel to m_DataOids), opened on first read.
     std::vector<daos_handle_t> m_DataArrayHandles;
     /// Per-writer-rank DAOS array chunk size (the dkey granularity), from open.
     std::vector<daos_size_t> m_DataArrayChunk;
     void LoadDataOidsIndex();
-    void OpenDataArrays();
+    /// Opens one array; returns an error message, empty on success.
+    std::string OpenDataArray(size_t slot);
     void CloseDataArrays();
 
     /// How per-rank metadata is laid out in DAOS.  Selectable via the
