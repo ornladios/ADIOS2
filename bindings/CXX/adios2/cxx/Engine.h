@@ -213,8 +213,12 @@ public:
     {
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
-        auto bufferMem = bufferView.memory_space();
-        variable.SetMemorySpace(bufferMem);
+        // the view knows its own layout, so set it before setting the memory space,
+        // which would otherwise choose a layout. A rank-1 view has no meaningful
+        // layout, so the variable keeps its own.
+        if (bufferView.rank() > 1)
+            variable.SetArrayLayout(bufferView.layout());
+        variable.SetMemorySpace(bufferView.memory_space());
 #endif
         Put(variable, bufferView.data(), launch);
     }
@@ -417,8 +421,12 @@ public:
     {
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
-        auto bufferMem = bufferView.memory_space();
-        variable.SetMemorySpace(bufferMem);
+        // the view knows its own layout, so set it before setting the memory space,
+        // which would otherwise choose a layout. A rank-1 view has no meaningful
+        // layout, so the variable keeps its own.
+        if (bufferView.rank() > 1)
+            variable.SetArrayLayout(bufferView.layout());
+        variable.SetMemorySpace(bufferView.memory_space());
 #endif
         Get(variable, bufferView.data(), launch);
     }
