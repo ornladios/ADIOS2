@@ -46,6 +46,10 @@ void WriteCkpt(MPI_Comm comm, const int step, const Settings &settings, const Gr
             var_step = io.InquireVariable<int>("step");
         }
 
+        // a checkpoint only has to round-trip its own buffers
+        var_u.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
+        var_v.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
+
         writer.Put<int>(var_step, &step);
         writer.Put<double>(var_u, sim.u_ghost().data());
         writer.Put<double>(var_v, sim.v_ghost().data());
@@ -76,6 +80,8 @@ int ReadRestart(MPI_Comm comm, const Settings &settings, GrayScott &sim, adios2:
         size_t R = static_cast<size_t>(rank);
         Kokkos::View<double ***, Kokkos::LayoutLeft> u("u", X, Y, Z), v("v", X, Y, Z);
 
+        var_u.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
+        var_v.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
         var_u.SetSelection({{R, 0, 0, 0}, {1, X, Y, Z}});
         var_v.SetSelection({{R, 0, 0, 0}, {1, X, Y, Z}});
         reader.Get<int>(var_step, step);

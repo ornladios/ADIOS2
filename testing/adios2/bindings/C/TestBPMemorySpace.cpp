@@ -49,6 +49,39 @@ TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceGPU)
 }
 #endif
 
+TEST_F(ADIOS2_C_API, ADIOS2BPArrayLayout)
+{
+    adios2_io *ioH = adios2_declare_io(adiosH, "CArrayLayout");
+
+    size_t shape[2] = {5, 2};
+    size_t start[2] = {0, 0};
+    size_t count[2] = {5, 2};
+    adios2_variable *varAuto = adios2_define_variable(ioH, "varAuto", adios2_type_int32_t, 2, shape,
+                                                      start, count, adios2_constant_dims_true);
+    adios2_variable *varCol = adios2_define_variable(ioH, "varCol", adios2_type_int32_t, 2, shape,
+                                                     start, count, adios2_constant_dims_true);
+
+    // Auto is the IO's order, so it is accepted everywhere and leaves the shape alone
+    EXPECT_EQ(adios2_set_array_layout(varAuto, adios2_arrayordering_auto), adios2_error_none);
+    size_t autoShape[2];
+    adios2_variable_shape(autoShape, varAuto);
+    EXPECT_EQ(autoShape[0], 5);
+    EXPECT_EQ(autoShape[1], 2);
+
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    // a column-major buffer for a row-major IO reverses the dimensions to the IO's order
+    EXPECT_EQ(adios2_set_array_layout(varCol, adios2_arrayordering_columnmajor), adios2_error_none);
+    size_t colShape[2];
+    adios2_variable_shape(colShape, varCol);
+    EXPECT_EQ(colShape[0], 2);
+    EXPECT_EQ(colShape[1], 5);
+    // and the layout is fixed once set
+    EXPECT_NE(adios2_set_array_layout(varCol, adios2_arrayordering_rowmajor), adios2_error_none);
+#else
+    EXPECT_NE(adios2_set_array_layout(varCol, adios2_arrayordering_columnmajor), adios2_error_none);
+#endif
+}
+
 TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceShape)
 {
 #if ADIOS2_USE_MPI
@@ -114,8 +147,8 @@ TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceShape)
         size_t gpu_shape[2];
         e = adios2_variable_shape_with_memory_space(gpu_shape, varI32, adios2_memory_space_gpu);
         EXPECT_EQ(e, adios2_error_none);
-        EXPECT_EQ(gpu_shape[0], 2);
-        EXPECT_EQ(gpu_shape[1], 5);
+        EXPECT_EQ(gpu_shape[0], 5);
+        EXPECT_EQ(gpu_shape[1], 2);
 #endif
         adios2_close(engineH);
     }

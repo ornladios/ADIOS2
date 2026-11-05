@@ -536,6 +536,13 @@ void KokkosWriteReadStruct()
         double a;
         int b[2];
     };
+    // the raw pointers below come from views with the memory space's default layout
+    using ViewLayout =
+        typename Kokkos::View<particle **,
+                              Kokkos::DefaultExecutionSpace::memory_space>::array_layout;
+    const adios2::ArrayOrdering layout = std::is_same<ViewLayout, Kokkos::LayoutLeft>::value
+                                             ? adios2::ArrayOrdering::ColumnMajor
+                                             : adios2::ArrayOrdering::RowMajor;
 
     { // write
         Kokkos::View<particle **, Kokkos::DefaultExecutionSpace::memory_space> inputData(
@@ -565,6 +572,7 @@ void KokkosWriteReadStruct()
 
         engine.BeginStep();
         varStruct.SetMemorySpace(adiosMemSpace);
+        varStruct.SetArrayLayout(layout);
         engine.Put(varStruct, inputData.data());
         engine.EndStep();
         engine.Close();
@@ -627,6 +635,7 @@ void KokkosWriteReadStruct()
         const adios2::Dims start = {0, 0};
         varStruct.SetSelection({start, count});
         ASSERT_TRUE(varStruct);
+        varStruct.SetArrayLayout(layout);
         engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
         engine.EndStep();
         // move the data to the CPU

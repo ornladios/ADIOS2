@@ -82,6 +82,10 @@ Writer::Writer(const Settings &settings, const GrayScott &sim, adios2::IO io)
                                       {sim.offset_z, sim.offset_y, sim.offset_x},
                                       {sim.size_z, sim.size_y, sim.size_x});
 
+    // the dimensions above are listed slowest first, which is row-major
+    var_u.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
+    var_v.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
+
     if (settings.adios_memory_selection)
     {
         var_u.SetMemorySelection({{1, 1, 1}, {sim.size_z + 2, sim.size_y + 2, sim.size_x + 2}});
