@@ -32,7 +32,9 @@
 #include <unordered_set>
 #include <vector>
 
-#define MAX_AGGREGATE_METADATA_SIZE (5'368'709'120ULL)
+// Per-step stride in the metadata array.  Offsets are sparse, so size costs
+// nothing; at 1 MiB per rank this holds 2^20 writers.
+#define MAX_AGGREGATE_METADATA_SIZE (1ULL << 40)
 #define chunk_size_1mb 1'048'576
 
 namespace adios2
@@ -316,6 +318,7 @@ private:
     /// it from the header for the whole file.
     bool m_Appending = false;
     bool m_AppendPerRank = false;
+    uint8_t m_AppendLayout = 0;
     int64_t m_RunFirstStep = 0;
     uint64_t m_DataSlotBase = 0;
     void InitAppend();
