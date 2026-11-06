@@ -495,14 +495,18 @@ void DaosWriter::MarshalAttributes()
 
 std::vector<char> DaosWriter::BuildMetadataBlob(format::BP5Serializer::TimestepInfo &TSInfo)
 {
-    const size_t metaSize = TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0;
+    // FFS decodes these blocks in place and needs them 8-byte aligned, so every
+    // section, and so every blob in the reader's concatenated buffer, is padded.
+    auto pad8 = [](uint64_t n) { return (n + 7) & ~uint64_t(7); };
+    const size_t metaBytes = TSInfo.MetaEncodeBuffer ? TSInfo.MetaEncodeBuffer->m_FixedSize : 0;
+    const size_t metaSize = pad8(metaBytes);
 
     if (!m_PerRankMetadata)
     {
         // Aggregated mode (Phase 1): [MetaEncode][step_start u64].
         std::vector<char> buf(metaSize + sizeof(uint64_t));
-        if (metaSize > 0)
-            std::memcpy(buf.data(), TSInfo.MetaEncodeBuffer->Data(), metaSize);
+        if (metaBytes > 0)
+            std::memcpy(buf.data(), TSInfo.MetaEncodeBuffer->Data(), metaBytes);
         std::memcpy(buf.data() + metaSize, &m_StepStartDataPos, sizeof(uint64_t));
         return buf;
     }
@@ -515,20 +519,21 @@ std::vector<char> DaosWriter::BuildMetadataBlob(format::BP5Serializer::TimestepI
     uint64_t mmbBodySize = sizeof(uint64_t); // count prefix
     for (const auto &m : mmbs)
         mmbBodySize += 2 * sizeof(uint64_t) + m.MetaMetaIDLen + m.MetaMetaInfoLen;
+    mmbBodySize = pad8(mmbBodySize);
 
-    const uint64_t attrSize =
+    const uint64_t attrBytes =
         (TSInfo.AttributeEncodeBuffer && TSInfo.AttributeEncodeBuffer->m_FixedSize > 0)
             ? static_cast<uint64_t>(TSInfo.AttributeEncodeBuffer->m_FixedSize)
             : 0;
+    const uint64_t attrSize = pad8(attrBytes);
     const size_t footerSize = 3 * sizeof(uint64_t);
     const size_t total = metaSize + mmbBodySize + attrSize + footerSize;
 
     std::vector<char> buf(total);
-    size_t pos = 0;
-    if (metaSize > 0)
+    size_t pos = metaSize;
+    if (metaBytes > 0)
     {
-        std::memcpy(buf.data() + pos, TSInfo.MetaEncodeBuffer->Data(), metaSize);
-        pos += metaSize;
+        std::memcpy(buf.data(), TSInfo.MetaEncodeBuffer->Data(), metaBytes);
     }
     // MetaMetaBlocks body: count + (idLen, infoLen, id, info)+
     const uint64_t mmbCount = static_cast<uint64_t>(mmbs.size());
@@ -548,11 +553,12 @@ std::vector<char> DaosWriter::BuildMetadataBlob(format::BP5Serializer::TimestepI
         pos += infoLen;
     }
     // AttributeEncodeBuffer
-    if (attrSize > 0)
+    pos = metaSize + mmbBodySize;
+    if (attrBytes > 0)
     {
-        std::memcpy(buf.data() + pos, TSInfo.AttributeEncodeBuffer->Data(), attrSize);
-        pos += attrSize;
+        std::memcpy(buf.data() + pos, TSInfo.AttributeEncodeBuffer->Data(), attrBytes);
     }
+    pos += attrSize;
     // Footer
     std::memcpy(buf.data() + pos, &mmbBodySize, sizeof(uint64_t));
     pos += sizeof(uint64_t);
@@ -1643,7 +1649,7 @@ void DaosWriter::FlushData(const bool isFinal)
         m_Parameters.BufferChunkSize, m_DataArrayOH, m_DataEQ, m_DataArrayCursor, m_Profiler));
     m_BP5Serializer.ReinitStepData(m_DataBuf.get(), m_Parameters.AsyncWrite);
 
-    auto databufsize = flushed->Size();
+    auto databufsize = static_cast<format::BufferV *>(flushed.get())->Size();
     WriteData(flushed.get());
     m_DataBuf->SetBaseArrayOffset(m_DataArrayCursor);
 

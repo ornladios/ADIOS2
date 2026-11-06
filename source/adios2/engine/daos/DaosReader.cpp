@@ -579,11 +579,8 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
         // Install per-rank attribute block (if any).
         if (attrSize > 0)
         {
-            // FFS decodes in place and needs the 8-byte alignment the blob's
-            // variable-length sections don't keep.
-            std::vector<uint64_t> attrBlock((attrSize + sizeof(uint64_t) - 1) / sizeof(uint64_t));
-            std::memcpy(attrBlock.data(), blob + metaSize + mmbSize, attrSize);
-            m_BP5Deserializer->InstallAttributeData(attrBlock.data(), attrSize);
+            char *attrStart = blob + metaSize + mmbSize;
+            m_BP5Deserializer->InstallAttributeData(attrStart, attrSize);
         }
 
         // Install variable metadata.
