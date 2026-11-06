@@ -1635,15 +1635,17 @@ void DaosWriter::InitBPBuffer()
 
 void DaosWriter::FlushData(const bool isFinal)
 {
-    BufferV *DataBuf = m_BP5Serializer.ReinitStepData(
-        new ChunkV("DaosWriter", false, m_BP5Serializer.m_BufferAlign,
-                   m_BP5Serializer.m_BufferBlockSize, m_Parameters.BufferChunkSize),
-        m_Parameters.AsyncWrite);
+    // WriteData needs a DaosChunkV, and the step's remaining Puts land in the
+    // new one, so it takes over as m_DataBuf; its offset is known after the write.
+    std::unique_ptr<format::DaosChunkV> flushed = std::move(m_DataBuf);
+    m_DataBuf.reset(new format::DaosChunkV(
+        "DaosWriter", false, m_BP5Serializer.m_BufferAlign, m_BP5Serializer.m_BufferBlockSize,
+        m_Parameters.BufferChunkSize, m_DataArrayOH, m_DataEQ, m_DataArrayCursor, m_Profiler));
+    m_BP5Serializer.ReinitStepData(m_DataBuf.get(), m_Parameters.AsyncWrite);
 
-    auto databufsize = DataBuf->Size();
-    WriteData(DataBuf);
-    /* DataBuf is deleted in WriteData() */
-    DataBuf = nullptr;
+    auto databufsize = flushed->Size();
+    WriteData(flushed.get());
+    m_DataBuf->SetBaseArrayOffset(m_DataArrayCursor);
 
     m_ThisTimestepDataSize += databufsize;
     // Phase-1: no per-flush (pos, size) gather.  BP5's flush-list
