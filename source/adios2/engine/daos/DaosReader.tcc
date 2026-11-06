@@ -21,6 +21,7 @@ namespace engine
 
 inline void DaosReader::GetSyncCommon(VariableBase &variable, void *data)
 {
+    CheckGetInStep(variable);
     auto sel = InferSelection(variable);
     bool need_sync = m_BP5Deserializer->QueueGet(variable, data, sel);
     if (need_sync)
@@ -29,6 +30,7 @@ inline void DaosReader::GetSyncCommon(VariableBase &variable, void *data)
 
 void DaosReader::GetDeferredCommon(VariableBase &variable, void *data)
 {
+    CheckGetInStep(variable);
     auto sel = InferSelection(variable);
     (void)m_BP5Deserializer->QueueGet(variable, data, sel);
 }

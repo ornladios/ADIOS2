@@ -579,8 +579,11 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
         // Install per-rank attribute block (if any).
         if (attrSize > 0)
         {
-            char *attrStart = blob + metaSize + mmbSize;
-            m_BP5Deserializer->InstallAttributeData(attrStart, attrSize);
+            // FFS decodes in place and needs the 8-byte alignment the blob's
+            // variable-length sections don't keep.
+            std::vector<uint64_t> attrBlock((attrSize + sizeof(uint64_t) - 1) / sizeof(uint64_t));
+            std::memcpy(attrBlock.data(), blob + metaSize + mmbSize, attrSize);
+            m_BP5Deserializer->InstallAttributeData(attrBlock.data(), attrSize);
         }
 
         // Install variable metadata.
@@ -749,6 +752,18 @@ StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
 }
 
 size_t DaosReader::CurrentStep() const { return m_CurrentStep; }
+
+void DaosReader::CheckGetInStep(const VariableBase &variable) const
+{
+    if (m_OpenMode == Mode::Read && !m_BetweenStepPairs)
+    {
+        helper::Throw<std::logic_error>("Engine", "DaosReader", "Get",
+                                        "Get() of variable " + variable.m_Name +
+                                            " outside a BeginStep()/EndStep() pair. In Mode::Read "
+                                            "data is read step by step; to read without steps, "
+                                            "open the file in Mode::ReadRandomAccess");
+    }
+}
 
 void DaosReader::EndStep()
 {
