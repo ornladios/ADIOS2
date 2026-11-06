@@ -239,8 +239,10 @@ private:
                               const bool hasHeader);
 
     void ReadMetadata(size_t);
-    void DaosArrayReadMetadata(size_t Step, uint64_t WriterCount);
-    void DaosKVReadMetadata(size_t Step, uint64_t WriterCount);
+    /// Step indexes m_MetadataIndexTable; absStep is the writer's step.
+    void ReadStepMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
+    void DaosArrayReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
+    void DaosKVReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
     void ReadObjectIDsFromFile();
     void OpenDAOSObjects();
 
@@ -290,6 +292,17 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
+    void InstallRankMetaMeta(char *mmbStart);
+    /// Per-rank metadata carries a format only in the step that introduced
+    /// it, so steps SelectSteps skipped are still read for their formats.
+    void InstallSkippedMetaMeta();
+    struct SkippedStep
+    {
+        size_t AbsStep;
+        uint64_t WriterCount;
+    };
+    std::vector<SkippedStep> m_SkippedSteps;
+    bool m_FlattenSteps = false; // the writer asked for all steps to read as one
 
     /// Per-rank step-start array offsets, extracted from each rank's
     /// metadata-blob trailer.  Indexed by [Step][WriterRank].  Populated
