@@ -148,6 +148,10 @@ This engine accepts the following optional parameters via
    every step.  Lowers per-step metadata cost when attributes are
    static.
 
+5. **FlattenSteps**: If true, readers see all steps as one, as in the
+   BP5 engine.  Readers can set **IgnoreFlattenSteps** to see the
+   original steps.
+
 The reader needs no performance tuning, and the ``Threads``
 parameter does not affect DAOS reads.  Each step's reads are issued
 from one thread, with a bounded number in flight per rank sized from
@@ -160,6 +164,10 @@ variable ``DAOS_METADATA_LAYOUT`` rather than an IO parameter.  Its
 default (``array-1mb-aligned``) is appropriate for typical use; the
 other values (``array``, ``kv``) exist for benchmarking alternative
 DAOS metadata storage strategies and are not normally needed.
+Likewise ``DAOS_PER_RANK_METADATA`` defaults to ``1``: each rank writes
+its own metadata, including type descriptions and attributes, with no
+per-step collective among writers.  ``0`` aggregates those through
+rank 0 instead and is likewise only for benchmarking.
 
 Performance notes
 =================
@@ -181,7 +189,10 @@ Limitations
   may send the span's bytes to DAOS before they are filled.  A span
   filled later in the step, for example just before ``EndStep``,
   can be written unfilled.
-* Append mode is not supported (``Mode::Append`` is rejected at
-  open).
+* ``Mode::Append`` adds steps to an existing dataset, with any number
+  of ranks; it does not support ``AppendAfterSteps``.  Append with the
+  ``DAOS_METADATA_LAYOUT`` the dataset was written with.  The dataset's
+  per-rank metadata setting is kept whatever ``DAOS_PER_RANK_METADATA``
+  says.
 * Both ``Mode::Read`` (step-by-step) and ``Mode::ReadRandomAccess``
   are supported on the read side.
