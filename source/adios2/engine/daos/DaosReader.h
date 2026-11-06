@@ -37,7 +37,8 @@
 
 #define MAX_KV_GET_REQS 100
 
-#define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
+// Must match DaosWriter.h.
+#define MAX_AGGREGATE_METADATA_SIZE (1ULL << 40)
 #define chunk_size_1mb 1048576
 
 namespace adios2

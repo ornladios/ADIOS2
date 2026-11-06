@@ -112,6 +112,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     int rc;
     size_t total_mdsize = 0;
     size_t buffer_size = 0;
+    const size_t absStep = m_MetadataIndexTable[Step][3];
 
     CALI_MARK_BEGIN("DaosReader::loop-getsize");
 
@@ -125,7 +126,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         // Start batch
         while (WriterRank < WriterCount && batchLimit < MAX_KV_GET_REQS)
         {
-            sprintf(attrkey[batchLimit], "step%zu-rank%zu", Step, WriterRank);
+            sprintf(attrkey[batchLimit], "step%zu-rank%zu", absStep, WriterRank);
             CALI_MARK_BEGIN("DaosReader::daos_kv_get_size");
             rc = daos_kv_get(oh, DAOS_TX_NONE, 0, attrkey[batchLimit],
                              &list_writer_mdsize[WriterRank], NULL, &ev[batchLimit]);
@@ -222,7 +223,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
         {
             ThisMDSize = list_writer_mdsize[WriterRank];
 
-            sprintf(attrkey[batchLimit], "step%zu-rank%zu", Step, WriterRank);
+            sprintf(attrkey[batchLimit], "step%zu-rank%zu", absStep, WriterRank);
             CALI_MARK_BEGIN("DaosReader::daos_kv_get");
             rc = daos_kv_get(oh, DAOS_TX_NONE, 0, attrkey[batchLimit],
                              &list_writer_mdsize[WriterRank], &meta_buff[index], &ev[batchLimit]);
@@ -317,10 +318,11 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         }
     }
 
-    sprintf(key, "step%zu", Step);
+    const size_t absStep = m_MetadataIndexTable[Step][3];
+    sprintf(key, "step%zu", absStep);
     sizeof_list_writer_mdsize = sizeof(uint64_t) * WriterCount;
     // The writer gives every step its own MAX_AGGREGATE_METADATA_SIZE region.
-    const size_t stepOffset = Step * MAX_AGGREGATE_METADATA_SIZE;
+    const size_t stepOffset = absStep * MAX_AGGREGATE_METADATA_SIZE;
 
     CALI_MARK_BEGIN("DaosReader::daos_kv_get_list_of_mdsize");
     int rc = daos_kv_get(mdsize_oh, DAOS_TX_NONE, 0, key, &sizeof_list_writer_mdsize,
@@ -2194,8 +2196,9 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
         switch (recordID)
         {
         case IndexRecord::WriterMapRecord: {
-            auto p = m_WriterMap.emplace(m_StepsCount, WriterMapStruct());
-            auto &s = p.first->second;
+            // A record for a run whose steps were all deselected shares this key.
+            auto &s = m_WriterMap[m_StepsCount];
+            s = WriterMapStruct();
             s.WriterCount =
                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
             s.AggregatorCount =
@@ -2239,6 +2242,8 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
                 ptrs.push_back(MetadataSize);
                 // absolute pos in file before read
                 ptrs.push_back(MetadataPos);
+                // the writer's step, which keys metadata in DAOS
+                ptrs.push_back(m_AbsStepsInFile);
                 m_MetadataIndexTable[m_StepsCount] = ptrs;
                 minfo_size += MetadataSize;
                 metadataSizeToRead += MetadataSize;
@@ -2408,7 +2413,10 @@ void DaosReader::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER("DaosReader::Close");
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
-        PerformGets();
+        if (m_BP5Deserializer)
+        {
+            PerformGets();
+        }
     }
     else if (m_BetweenStepPairs)
     {
