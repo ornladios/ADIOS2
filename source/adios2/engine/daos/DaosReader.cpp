@@ -1304,9 +1304,11 @@ void DaosReader::PerformGets()
             {
                 break;
             }
-            const size_t f = finalized, nf = freeScratch.size();
+            // Test state, not change: the last worker may have freed a slot
+            // after lf_Start failed, and nothing would wake us again.
             doneCv.wait(lk, [&] {
-                return finalized != f || freeScratch.size() != nf || !workerErr.empty();
+                return finalized == nRequest || !workerErr.empty() ||
+                       (cur < nRequest && !freeScratch.empty());
             });
             continue;
         }
