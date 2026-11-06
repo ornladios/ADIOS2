@@ -1592,8 +1592,12 @@ void DaosWriter::MakeHeader(std::vector<char> &buffer, size_t &position, const s
     const uint8_t layout = static_cast<uint8_t>(metadataLayout);
     helper::CopyToBuffer(buffer, position, &layout);
 
-    // byte 43-63: unused
-    position += 21;
+    // byte 43: readers present all steps as one
+    const uint8_t flatten = m_Parameters.FlattenSteps ? 1 : 0;
+    helper::CopyToBuffer(buffer, position, &flatten);
+
+    // byte 44-63: unused
+    position += 20;
     // absolutePosition = position;
 }
 

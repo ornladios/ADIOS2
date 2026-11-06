@@ -74,10 +74,12 @@ void DaosReader::DestructorClose(bool Verbose) noexcept
 
 void DaosReader::ReadMetadata(size_t Step)
 {
-    size_t pgstart = m_MetadataIndexTable[Step][0];
-    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
-    int rc;
+    ReadStepMetadata(Step, m_MetadataIndexTable[Step][3],
+                     m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
+}
 
+void DaosReader::ReadStepMetadata(size_t Step, size_t absStep, uint64_t WriterCount)
+{
     m_Metadata.Reset(true, false);
 
     // Reader rank 0 - reads all metadata
@@ -87,10 +89,10 @@ void DaosReader::ReadMetadata(size_t Step)
         {
         case MetadataLayout::ARRAY:
         case MetadataLayout::ARRAY_1MB_ALIGNED:
-            DaosArrayReadMetadata(Step, WriterCount);
+            DaosArrayReadMetadata(Step, absStep, WriterCount);
             break;
         case MetadataLayout::KV:
-            DaosKVReadMetadata(Step, WriterCount);
+            DaosKVReadMetadata(Step, absStep, WriterCount);
             break;
         // Add other cases here if needed
         default:
@@ -105,14 +107,13 @@ void DaosReader::ReadMetadata(size_t Step)
     CALI_MARK_END("DaosReader::broadcast_metadata");
 }
 
-void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
+void DaosReader::DaosKVReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount)
 {
     std::vector<size_t> list_writer_mdsize;
     list_writer_mdsize.reserve(WriterCount);
     int rc;
     size_t total_mdsize = 0;
     size_t buffer_size = 0;
-    const size_t absStep = m_MetadataIndexTable[Step][3];
 
     CALI_MARK_BEGIN("DaosReader::loop-getsize");
 
@@ -276,7 +277,7 @@ void DaosReader::DaosKVReadMetadata(size_t Step, uint64_t WriterCount)
     }
 }
 
-void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
+void DaosReader::DaosArrayReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount)
 {
     size_t total_mdsize = 0;
     size_t buffer_size = 0;
@@ -318,7 +319,6 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount)
         }
     }
 
-    const size_t absStep = m_MetadataIndexTable[Step][3];
     sprintf(key, "step%zu", absStep);
     sizeof_list_writer_mdsize = sizeof(uint64_t) * WriterCount;
     // The writer gives every step its own MAX_AGGREGATE_METADATA_SIZE region.
@@ -501,7 +501,7 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
                         (unsigned char)ThisMD[2], (unsigned char)ThisMD[3]);
             try
             {
-                if (m_OpenMode == Mode::ReadRandomAccess)
+                if (m_OpenMode == Mode::ReadRandomAccess || m_FlattenSteps)
                 {
                     m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
                 }
@@ -571,32 +571,9 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
                     (unsigned long long)attrSize, (unsigned char)blob[0], (unsigned char)blob[1],
                     (unsigned char)blob[2], (unsigned char)blob[3]);
 
-        // Install MetaMetaBlocks for this rank (count + (idLen,infoLen,id,info)+).
         if (mmbSize > 0)
         {
-            char *mmbStart = blob + metaSize;
-            size_t mp = 0;
-            uint64_t mmbCount = 0;
-            std::memcpy(&mmbCount, mmbStart + mp, sizeof(uint64_t));
-            mp += sizeof(uint64_t);
-            for (uint64_t k = 0; k < mmbCount; ++k)
-            {
-                format::BP5Base::MetaMetaInfoBlock MMI;
-                std::memcpy(&MMI.MetaMetaIDLen, mmbStart + mp, sizeof(uint64_t));
-                mp += sizeof(uint64_t);
-                std::memcpy(&MMI.MetaMetaInfoLen, mmbStart + mp, sizeof(uint64_t));
-                mp += sizeof(uint64_t);
-                MMI.MetaMetaID = mmbStart + mp;
-                mp += MMI.MetaMetaIDLen;
-                MMI.MetaMetaInfo = mmbStart + mp;
-                mp += MMI.MetaMetaInfoLen;
-                // Each rank carries its own copy of the MMBs; with N ranks
-                // defining the same variables that is N duplicates of each
-                // format ID.  Install each unique ID exactly once.
-                std::string idKey(MMI.MetaMetaID, MMI.MetaMetaIDLen);
-                if (m_InstalledMetaMetaIDs.insert(std::move(idKey)).second)
-                    m_BP5Deserializer->InstallMetaMetaData(MMI);
-            }
+            InstallRankMetaMeta(blob + metaSize);
         }
 
         // Install per-rank attribute block (if any).
@@ -607,7 +584,7 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
         }
 
         // Install variable metadata.
-        if (m_OpenMode == Mode::ReadRandomAccess)
+        if (m_OpenMode == Mode::ReadRandomAccess || m_FlattenSteps)
         {
             m_BP5Deserializer->InstallMetaData(blob, metaSize, WriterRank, Step);
         }
@@ -620,6 +597,60 @@ void DaosReader::InstallMetadataForTimestep(size_t Step)
 
         MDPosition += ThisBlobSize;
     }
+}
+
+/// mmbStart holds count + (idLen, infoLen, id, info)+.
+void DaosReader::InstallRankMetaMeta(char *mmbStart)
+{
+    size_t mp = 0;
+    uint64_t mmbCount = 0;
+    std::memcpy(&mmbCount, mmbStart + mp, sizeof(uint64_t));
+    mp += sizeof(uint64_t);
+    for (uint64_t k = 0; k < mmbCount; ++k)
+    {
+        format::BP5Base::MetaMetaInfoBlock MMI;
+        std::memcpy(&MMI.MetaMetaIDLen, mmbStart + mp, sizeof(uint64_t));
+        mp += sizeof(uint64_t);
+        std::memcpy(&MMI.MetaMetaInfoLen, mmbStart + mp, sizeof(uint64_t));
+        mp += sizeof(uint64_t);
+        MMI.MetaMetaID = mmbStart + mp;
+        mp += MMI.MetaMetaIDLen;
+        MMI.MetaMetaInfo = mmbStart + mp;
+        mp += MMI.MetaMetaInfoLen;
+        // Each rank carries its own copy of the MMBs; with N ranks
+        // defining the same variables that is N duplicates of each
+        // format ID.  Install each unique ID exactly once.
+        std::string idKey(MMI.MetaMetaID, MMI.MetaMetaIDLen);
+        if (m_InstalledMetaMetaIDs.insert(std::move(idKey)).second)
+            m_BP5Deserializer->InstallMetaMetaData(MMI);
+    }
+}
+
+void DaosReader::InstallSkippedMetaMeta()
+{
+    constexpr size_t footerSize = 3 * sizeof(uint64_t);
+    for (const SkippedStep &skipped : m_SkippedSteps)
+    {
+        ReadStepMetadata(0, skipped.AbsStep, skipped.WriterCount);
+        size_t Position = sizeof(uint64_t);
+        size_t MDPosition = Position + sizeof(uint64_t) * skipped.WriterCount;
+        for (uint64_t WriterRank = 0; WriterRank < skipped.WriterCount; WriterRank++)
+        {
+            const size_t ThisBlobSize = helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position,
+                                                                    m_Minifooter.IsLittleEndian);
+            char *blob = m_Metadata.m_Buffer.data() + MDPosition;
+            uint64_t mmbSize = 0, attrSize = 0;
+            std::memcpy(&mmbSize, blob + ThisBlobSize - footerSize, sizeof(uint64_t));
+            std::memcpy(&attrSize, blob + ThisBlobSize - footerSize + sizeof(uint64_t),
+                        sizeof(uint64_t));
+            if (mmbSize > 0)
+            {
+                InstallRankMetaMeta(blob + ThisBlobSize - footerSize - attrSize - mmbSize);
+            }
+            MDPosition += ThisBlobSize;
+        }
+    }
+    m_SkippedSteps.clear();
 }
 
 StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -699,6 +730,7 @@ StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
            It seems easier than trying to update them */
         // m_IO.RemoveAllVariables();
         CALI_MARK_BEGIN("DaosReader::metadata-acquisition");
+        InstallSkippedMetaMeta();
         ReadMetadata(m_CurrentStep);
         CALI_MARK_END("DaosReader::metadata-acquisition");
 
@@ -2004,8 +2036,9 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
         // create the serializer object
         if (!m_BP5Deserializer)
         {
-            m_BP5Deserializer = new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
-                                                            (m_OpenMode == Mode::ReadRandomAccess));
+            m_BP5Deserializer =
+                new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
+                                            (m_OpenMode == Mode::ReadRandomAccess), m_FlattenSteps);
             m_BP5Deserializer->m_Engine = this;
         }
     }
@@ -2086,8 +2119,9 @@ void DaosReader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &po
 
         InstallMetaMetaData(m_MetaMetadata);
 
-        if (m_OpenMode == Mode::ReadRandomAccess)
+        if (m_OpenMode == Mode::ReadRandomAccess || m_FlattenSteps)
         {
+            InstallSkippedMetaMeta();
             for (size_t Step = 0; Step < m_MetadataIndexTable.size(); Step++)
             {
                 m_BP5Deserializer->SetupForStep(Step,
@@ -2162,6 +2196,11 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
         const uint8_t perRankFlag =
             helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian);
         m_PerRankMetadata = (perRankFlag == 1);
+
+        position = m_FlattenStepsPosition;
+        m_FlattenSteps =
+            helper::ReadValue<uint8_t>(buffer, position, m_Minifooter.IsLittleEndian) != 0 &&
+            !m_Parameters.IgnoreFlattenSteps;
 
         // move position to first row
         position = m_IndexHeaderSize;
@@ -2252,6 +2291,10 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t
             else
             {
                 MetadataPosTotalSkip += MetadataSize;
+                if (m_PerRankMetadata)
+                {
+                    m_SkippedSteps.push_back({m_AbsStepsInFile, m_LastWriterCount});
+                }
                 if (minfo_size > 0)
                 {
                     m_FilteredMetadataInfo.push_back(std::make_pair(minfo_pos, minfo_size));
@@ -2489,7 +2532,7 @@ void DaosReader::DoClose(const int transportIndex)
     // Don't daos_fini() — see matching comment in DaosWriter::DoClose.
 }
 
-size_t DaosReader::DoSteps() const { return m_StepsCount; }
+size_t DaosReader::DoSteps() const { return m_FlattenSteps ? 1 : m_StepsCount; }
 
 void DaosReader::NotifyEngineNoVarsQuery()
 {

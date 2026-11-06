@@ -148,6 +148,10 @@ This engine accepts the following optional parameters via
    every step.  Lowers per-step metadata cost when attributes are
    static.
 
+5. **FlattenSteps**: If true, readers see all steps as one, as in the
+   BP5 engine.  Readers can set **IgnoreFlattenSteps** to see the
+   original steps.
+
 The reader needs no performance tuning, and the ``Threads``
 parameter does not affect DAOS reads.  Each step's reads are issued
 from one thread, with a bounded number in flight per rank sized from
