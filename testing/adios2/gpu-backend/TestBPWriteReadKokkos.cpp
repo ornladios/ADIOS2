@@ -521,6 +521,12 @@ void KokkosWriteReadSelection2D()
     }
 }
 
+struct particle
+{
+    double a;
+    int b[2];
+};
+
 void KokkosWriteReadStruct()
 {
     constexpr size_t DIM1 = 2;
@@ -531,12 +537,6 @@ void KokkosWriteReadStruct()
         adiosMemSpace = adios2::MemorySpace::GPU;
 #endif
     const std::string filename = RankFileName("BPWRKokkosStruct");
-    struct particle
-    {
-        double a;
-        int b[2];
-    };
-
     { // write
         Kokkos::View<particle **, Kokkos::DefaultExecutionSpace::memory_space> inputData(
             "inBuffer", DIM1, DIM2);
