@@ -5,6 +5,7 @@
  */
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #include <iostream>
@@ -61,6 +62,33 @@ TEST_F(SstParamFailTest, QueueFullPolicyUnknown)
     // Close the file
     EXPECT_FALSE(engine);
 }
+
+#ifndef _WIN32
+// A required dataplane is used, or the open fails rather than falling back
+TEST_F(SstParamFailTest, RequiredDataPlane)
+{
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+
+    adios2::IO io = adios.DeclareIO("TestIO");
+    io.SetEngine("Sst");
+    io.SetParameters(ParseEngineParams("RendezvousReaderCount=0"));
+
+    setenv("SST_REQUIRE_DATAPLANE", "nosuchdataplane", 1);
+    adios2::Engine engine;
+    EXPECT_THROW(engine = io.Open(fname + "Required", adios2::Mode::Write), std::runtime_error);
+    EXPECT_FALSE(engine);
+
+    setenv("SST_REQUIRE_DATAPLANE", "evpath", 1);
+    engine = io.Open(fname + "Required", adios2::Mode::Write);
+    EXPECT_TRUE(engine);
+    engine.Close();
+    unsetenv("SST_REQUIRE_DATAPLANE");
+}
+#endif
 
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, RendezvousReaderCountBad)
