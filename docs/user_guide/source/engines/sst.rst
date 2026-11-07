@@ -306,6 +306,8 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   SpecAutoNodeThreshold         integer               **1**
  ============================= ===================== ====================================================
 
+The ``SST_REQUIRE_DATAPLANE`` environment variable names a data plane that must be used, overriding ``DataTransport``.  If that data plane is not available the stream fails to open instead of falling back to another one.  It is intended for validating a system or a build, and it must reach every rank, which some launchers do not do by default.
+
 Additionally to the above controls, finetuning for technical parameters of the data planes may become necessary under some circumstances. The following environment variables are read and interpreted by the data planes:
 
 * By the **RDMA/libfabric data plane**:
