@@ -5,6 +5,7 @@
 # Client maintainer: vicente.bolea@kitware.com
 set(ENV{CC}  /usr/bin/clang)
 set(ENV{CXX} /usr/bin/clang++)
+set(ENV{FC}  gfortran-15)
 
 set(dashboard_cache "
 BUILD_SHARED_LIBS=OFF
@@ -42,9 +43,10 @@ CMAKE_C_COMPILER_LAUNCHER=ccache
 CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
+CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
-set(ENV{MACOSX_DEPLOYMENT_TARGET} "14.5")
+set(ENV{MACOSX_DEPLOYMENT_TARGET} "15.0")
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 set(CTEST_TEST_ARGS
