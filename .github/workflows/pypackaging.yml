@@ -131,7 +131,7 @@ jobs:
         include:
           - os: macos-15
             arch: arm64
-            target: '14.0'
+            target: '15.0'
           - os: macos-15-intel
             arch: x86_64
             target: '15.0'
