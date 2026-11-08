@@ -761,7 +761,11 @@ static void UcxDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     {
         if (RS_Stream->WriterEP && RS_Stream->WriterEP[i])
         {
+            /* No reads are outstanding, and the writer may already be gone, so there is
+             * nothing to flush. */
             ucp_request_param_t param = {0};
+            param.op_attr_mask = UCP_OP_ATTR_FIELD_FLAGS;
+            param.flags = UCP_EP_CLOSE_FLAG_FORCE;
             ucs_status_ptr_t req = ucp_ep_close_nbx(RS_Stream->WriterEP[i], &param);
             ucs_status_t status = UCS_PTR_STATUS(req);
             if (UCS_PTR_IS_PTR(req))
