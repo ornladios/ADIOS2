@@ -16,6 +16,11 @@ gtest_add_tests_helper(WriteReadKokkos MPI_ALLOW BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
 )
 
-foreach(tgt ${Test.Engine.BP.WriteReadKokkos-TARGETS})
+gtest_add_tests_helper(WriteReadLayout MPI_NONE BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+
+foreach(tgt ${Test.Engine.BP.WriteReadKokkos-TARGETS}
+            ${Test.Engine.BP.WriteReadLayout-TARGETS})
   target_link_libraries(${tgt} Kokkos::kokkos)
 endforeach()
