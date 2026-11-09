@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: external
+name: cdash-status
 on:
   push:
   pull_request_target:
@@ -11,13 +11,11 @@ permissions:
   contents: read
 
 jobs:
-  generate_statuses:
+  create_cdash_status:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       statuses: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: Kitware/cdash-status@697751fc655b300a9e16e285f2e2ee981f59e45a # release
+      - uses: Kitware/cdash-status@ce4d2626d91a2688403b80f123061074314e9b82 # v3.0.0
         with:
           project: ADIOS
