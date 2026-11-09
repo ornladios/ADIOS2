@@ -54,7 +54,7 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
           name: artifact_sdist
           path: dist/*.tar.gz
@@ -77,7 +77,7 @@ jobs:
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - name: Build wheels (abi3 only on pull requests)
-        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
           CIBW_BEFORE_ALL: yum install -y libcurl-devel openssl-devel libsodium-devel
           # cp312 is the abi3 wheel (valid for all CPython >= 3.12), cp314t is
@@ -86,7 +86,7 @@ jobs:
             ${{ github.event_name == 'pull_request'
               && format('cp312-manylinux_{0}', matrix.arch)
               || format('cp39-manylinux_{0} cp310-manylinux_{0} cp311-manylinux_{0} cp312-manylinux_{0} cp314t-manylinux_{0}', matrix.arch) }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
           name: artifact_wheels_linux_${{ matrix.arch }}
           path: wheelhouse/*.whl
@@ -109,7 +109,7 @@ jobs:
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - name: Build adios2-mpi wheels (abi3 only on pull requests)
-        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         with:
           package-dir: packaging/adios2-mpi
         env:
@@ -117,7 +117,7 @@ jobs:
             ${{ github.event_name == 'pull_request'
               && format('cp312-manylinux_{0}', matrix.arch)
               || format('cp39-manylinux_{0} cp310-manylinux_{0} cp311-manylinux_{0} cp312-manylinux_{0} cp314t-manylinux_{0}', matrix.arch) }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
           name: artifact_wheels_linux_mpi_${{ matrix.arch }}
           path: wheelhouse/*.whl
@@ -142,7 +142,7 @@ jobs:
       - name: Generate common version file
         run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
       - name: Build wheels (abi3 only on pull requests)
-        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
           CIBW_BEFORE_ALL: brew install openssl libsodium
           CIBW_BUILD: >-
@@ -150,7 +150,7 @@ jobs:
               && format('cp312-macosx_{0}', matrix.arch)
               || format('cp39-macosx_{0} cp310-macosx_{0} cp311-macosx_{0} cp312-macosx_{0} cp314t-macosx_{0}', matrix.arch) }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.target }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
           name: artifact_wheels_macos_${{ matrix.arch }}
           path: wheelhouse/*.whl
@@ -160,7 +160,7 @@ jobs:
     needs: [build_wheels_linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           pattern: artifact_wheels_linux_x86_64
           path: dist
@@ -173,7 +173,7 @@ jobs:
     needs: [build_wheels_linux_mpi]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           pattern: artifact_wheels_linux_mpi_*
           path: dist
@@ -195,10 +195,10 @@ jobs:
           - os: macos-15-intel
             arch: x86_64
     steps:
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           name: artifact_wheels_macos_${{ matrix.arch }}
           path: dist
@@ -214,10 +214,10 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           name: artifact_sdist
           path: dist
@@ -241,13 +241,13 @@ jobs:
         github.event.action == 'published'
       )
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           path: dist
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1
 
   upload_test_pypi:
     needs: [build_wheels_linux, build_wheels_linux_mpi, build_wheels_macos, make_sdist]
@@ -259,12 +259,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
           path: dist
           merge-multiple: true
       - run: ls -R dist
       - name: Publish package distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1
         with:
           repository-url: https://test.pypi.org/legacy/
