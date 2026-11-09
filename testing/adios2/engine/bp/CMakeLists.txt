@@ -45,10 +45,28 @@ file(MAKE_DIRECTORY ${TLS_DIR})
 file(MAKE_DIRECTORY ${DSB_DIR})
 file(MAKE_DIRECTORY ${RR_DIR})
 
+set(DAOS_DISABLED_TESTS
+  # Following a file while its writer runs is not a DAOS use case.
+  "BPActiveFlag\\."
+  "BPWriteFlushRead\\.ADIOS2BPWrite1D2D(stdio|fstream)\\."
+  # The engine refuses AppendAfterSteps.
+  "BPAppendAfterStepsP\\."
+  # Checks BP5's own file descriptors.
+  "BPMetadataFDClose\\."
+  # Not implemented: file UUID, GetMetadata, GetContext, Get with a Selection.
+  "BPFileUUID\\."
+  "BPOpenWithMetadata\\."
+  "BPGetContextIsolation\\.(TwoIndependentContexts|ConcurrentGetsOnSameEngine)\\."
+  "BPSelectionGetTest\\.(GlobalArray2D|LocalArrayBlock|DeferredGet|StreamingAll)\\."
+  "BPSelectionGetTest\\.(MultiStepPlacementStaysWithinSelectionSize|BlockSelectionSizeMatchesSelectedBlock)\\."
+  "BPSelectionGetTest\\.(AllUsesPerStepShape|MultiStepAllAcrossChangingShapeThrows)\\."
+)
+
 macro(bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
+  daos_gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 endmacro()
 
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
@@ -67,6 +85,7 @@ macro(bp4_bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
+  daos_gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 endmacro()
 
 macro(bp_gtest_add_tests_helper testname mpi)
@@ -79,6 +98,7 @@ macro(bp_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
+  daos_gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 endmacro()
 
 macro(async_gtest_add_tests_helper testname mpi)
@@ -114,6 +134,7 @@ if(ADIOS2_HAVE_Fortran)
     gtest_add_tests_helper_Fortran(${testname} ${mpi} BP Engine.BP. .BP5
       ${BP5_DIR} "BP5"
     )
+    daos_gtest_add_tests_helper_Fortran(${testname} BP Engine.BP. ${DAOS_DIR})
   endmacro()
 else()
   macro(bp_gtest_add_tests_helper_Fortran testname mpi)
@@ -130,12 +151,17 @@ bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
 gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
+daos_gtest_add_tests_helper(WriteReadFlatten MPI_ONLY BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 
 # LargeBlocks exercises ~4GB blocks, which cannot exist in a 32-bit address space
 # (and its RequiredDiskSpace constexpr overflows a 32-bit size_t), so build it 64-bit only.
 if(UNIX AND CMAKE_SIZEOF_VOID_P GREATER_EQUAL 8)
   gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. .BP5 WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" )
   set_tests_properties(Engine.BP.LargeBlocks.MultiBlock.BP5.Serial PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" RUN_SERIAL TRUE)
+  daos_gtest_add_tests_helper(LargeBlocks MPI_NONE BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
+  if(TEST Engine.BP.LargeBlocks.MultiBlock.DAOS.Serial)
+    set_tests_properties(Engine.BP.LargeBlocks.MultiBlock.DAOS.Serial PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" RUN_SERIAL TRUE)
+  endif()
 endif()
 
 # Interleaved reads from two files open at once (also run remotely below)
@@ -398,6 +424,10 @@ if(ADIOS2_HAVE_Fortran)
       DEPENDS Engine.BP.BPFortranToCppWriter.BP4.MPI)
     set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.BP5.MPI PROPERTIES
       DEPENDS Engine.BP.BPFortranToCppWriter.BP5.MPI)
+    if(TEST Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.DAOS.MPI)
+      set_tests_properties(Engine.BP.BPFortranToCppRead.ADIOS2BPFortranToCppRead.DAOS.MPI PROPERTIES
+        DEPENDS Engine.BP.BPFortranToCppWriter.DAOS.MPI)
+    endif()
   endif()
 
 endif(ADIOS2_HAVE_Fortran)
@@ -426,6 +456,7 @@ macro(bp5agg_gtest_add_tests testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. .BP5.DSB.RR
     WORKING_DIRECTORY ${RR_DIR}
     EXTRA_ARGS "BP5" "AggregationType=DataSizeBased,EnableWriterRerouting=true")
+  daos_gtest_add_tests_helper(${testname} ${mpi} BP Engine.BPAGG. WORKING_DIRECTORY ${DAOS_DIR})
 endmacro()
 
 # BP5 only for now, so test all the aggregators while we're at it
@@ -440,6 +471,7 @@ bp5agg_gtest_add_tests(StepsFileGlobalArray MPI_ALLOW)
 gtest_add_tests_helper(AccuracyDefaults MPI_NONE BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
 )
+daos_gtest_add_tests_helper(AccuracyDefaults MPI_NONE BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 
 # BP3 only for now
 gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
@@ -485,6 +517,7 @@ gtest_add_tests_helper(InquireVariableException MPI_ALLOW BP Engine.BP. .BP4
 gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
 )
+daos_gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. WORKING_DIRECTORY ${DAOS_DIR})
 
 gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"

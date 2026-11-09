@@ -46,6 +46,7 @@ endif()
 
 gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP5
   EXTRA_ARGS "BP5" "1")
+daos_gtest_add_tests_helper(Common MPI_ONLY "" Engine. "1")
 
 gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP3
   EXTRA_ARGS "BP3" "1")
