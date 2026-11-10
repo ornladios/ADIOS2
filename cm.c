@@ -740,10 +740,9 @@ mix64(uint64_t x)
 }
 
 /*
- * CMinternal_get_conn() reuses any connection whose remote CManager ID
- * matches, so IDs must differ between processes.  Seeding lrand48() with
- * getpid() + time() gave equal IDs whenever pid N started one second after
- * pid N+1, and messages went to the wrong process.
+ * CMinternal_get_conn() refuses to reuse a connection whose remote CManager
+ * ID is known and differs from the requested one, so IDs should differ
+ * between processes.
  */
 static int
 generate_CManager_ID(CManager cm)
@@ -1746,8 +1745,11 @@ timeout_conn(CManager cm, void *client_data)
 	 CMConnection tmp = cm->connections[i];
 	 if (tmp->closed || tmp->failed) continue;
 
-	 if ((tmp->remote_CManager_ID == target_cm_id) ||
-	     tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
+	 /* IDs can only veto reuse, and only when both are known */
+	 if ((target_cm_id != -1) && (tmp->remote_CManager_ID != 0) &&
+	     (tmp->remote_CManager_ID != target_cm_id)) continue;
+
+	 if (tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
 				       tmp->trans, attrs,
 				       tmp->transport_data)) {
 
