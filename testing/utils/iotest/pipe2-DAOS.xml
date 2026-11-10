@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<adios-config>
+
+    <!--===========================================
+           Configuration for io_T1 group
+        ==========================================-->
+
+    <io name="io_T1">
+        <engine type="DAOS">
+        </engine>
+    </io>
+
+    <!--=========================================
+           Configuration for io_T2_in group
+           It should match the io_T1 output group
+        =========================================-->
+
+    <io name="io_T2_in">
+        <engine type="DAOS">
+        </engine>
+    </io>
+
+    <!--=========================================
+           Configuration for io_T2_out group
+        =========================================-->
+
+    <io name="io_T2_out">
+        <engine type="DAOS">
+        </engine>
+    </io>
+
+</adios-config>
