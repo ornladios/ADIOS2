@@ -72,6 +72,41 @@ SetupTestPipeline(
   FALSE
 )
 
+#------------------------------------------
+#  Pipe2 DAOS: the BP pipeline and expected output
+#------------------------------------------
+if(ADIOS2_HAVE_DAOS AND ADIOS2_RUN_DAOS_TESTS)
+  set(app 1)
+  foreach(phase Write Read)
+    set(tst Utils.IOTest.Pipe2.DAOS.${phase})
+    string(TOLOWER ${phase} lc_phase)
+    add_test(NAME ${tst}
+      COMMAND ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 2
+        $<TARGET_FILE:adios_iotest>
+          -a ${app} -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-DAOS.xml -d 2 1 --strong-scaling
+    )
+    add_test(NAME ${tst}.Dump
+      COMMAND ${CMAKE_COMMAND}
+        -DARG1=-laD
+        -DINPUT_FILE=pipe2_${lc_phase}.bp
+        -DOUTPUT_FILE=${tst}.bpls.txt
+        -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+    )
+    add_test(NAME ${tst}.Validate
+      COMMAND ${DIFF_COMMAND} -u -w
+        ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.${phase}.bpls.txt
+        ${tst}.bpls.txt
+    )
+    daos_set_test_properties(${tst} ${tst}.Dump ${tst}.Validate)
+    set_tests_properties(${tst} PROPERTIES PROCESSORS 2)
+    math(EXPR app "${app} + 1")
+  endforeach()
+  SetupTestPipeline(Utils.IOTest.Pipe2.DAOS "Write;Write.Dump;Write.Validate" TRUE)
+  SetupTestPipeline(Utils.IOTest.Pipe2.DAOS "Write;Read;Read.Dump;Read.Validate" FALSE)
+  daos_set_test_properties(Utils.IOTest.Pipe2.DAOS.Setup)
+endif()
+
 if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   #------------------------------------------
   #  Pipe2 HDF5 Write

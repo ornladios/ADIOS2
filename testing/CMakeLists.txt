@@ -113,6 +113,42 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
   set("Test.${tst_pfx}${testname}-TARGETS" "${test_targets}" PARENT_SCOPE)
 endfunction()
 
+# DAOS variants need a live pool, so they are opt-in and run with DAOS_POOL and
+# DAOS_CONT in the environment (ctest -L DAOS).  DAOS_DISABLED_TESTS holds regexes
+# of tests the engine does not support; those stay listed and report Not Run.
+option(ADIOS2_RUN_DAOS_TESTS "Add tests that need a DAOS pool" OFF)
+set(ADIOS2_DAOS_TEST_NPROCS 4 CACHE STRING "Number of MPI ranks for DAOS tests")
+mark_as_advanced(ADIOS2_RUN_DAOS_TESTS ADIOS2_DAOS_TEST_NPROCS)
+
+function(daos_set_test_properties)
+  if(NOT ARGN)
+    return()
+  endif()
+  set_tests_properties(${ARGN} PROPERTIES LABELS DAOS TIMEOUT 600)
+  foreach(test IN LISTS ARGN)
+    foreach(regex IN LISTS DAOS_DISABLED_TESTS)
+      if(test MATCHES "${regex}")
+        set_tests_properties(${test} PROPERTIES DISABLED TRUE)
+      endif()
+    endforeach()
+  endforeach()
+endfunction()
+
+# Same as gtest_add_tests_helper with the suffix and engine argument fixed.
+# Remaining arguments follow the engine in EXTRA_ARGS, then gtest_add_tests keywords.
+function(daos_gtest_add_tests_helper testname mpi src_pfx tst_pfx)
+  if(NOT ADIOS2_HAVE_DAOS OR NOT ADIOS2_RUN_DAOS_TESTS)
+    return()
+  endif()
+  set(MPIEXEC_MAX_NUMPROCS ${ADIOS2_DAOS_TEST_NPROCS})
+  set(MPIEXEC_COMMAND
+    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
+    ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
+  )
+  gtest_add_tests_helper(${testname} ${mpi} "${src_pfx}" ${tst_pfx} .DAOS EXTRA_ARGS "DAOS" ${ARGN})
+  daos_set_test_properties(${Test.${tst_pfx}${testname}-TESTS})
+endfunction()
+
 if(ADIOS2_HAVE_Fortran)
   function(gtest_add_tests_helper_Fortran testname mpi src_pfx tst_pfx tst_sfx wrk_dir extra_args)
     set(test_targets "")
@@ -168,6 +204,20 @@ if(ADIOS2_HAVE_Fortran)
     # message(STATUS "Creating Fortran tests ${all_tests}")
     set("Test.${tst_pfx}${testname}-TESTS" "${all_tests}" PARENT_SCOPE)
     set("Test.${tst_pfx}${testname}-TARGETS" "${test_targets}" PARENT_SCOPE)
+  endfunction()
+
+  # MPI_ONLY: the Fortran helper does not report its test names.
+  function(daos_gtest_add_tests_helper_Fortran testname src_pfx tst_pfx wrk_dir)
+    if(NOT ADIOS2_HAVE_DAOS OR NOT ADIOS2_RUN_DAOS_TESTS OR NOT ADIOS2_HAVE_MPI)
+      return()
+    endif()
+    set(MPIEXEC_MAX_NUMPROCS ${ADIOS2_DAOS_TEST_NPROCS})
+    set(MPIEXEC_COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
+      ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
+    )
+    gtest_add_tests_helper_Fortran(${testname} MPI_ONLY "${src_pfx}" ${tst_pfx} .DAOS ${wrk_dir} "DAOS")
+    daos_set_test_properties(${tst_pfx}${src_pfx}${testname}.DAOS.MPI)
   endfunction()
 endif(ADIOS2_HAVE_Fortran)
 
