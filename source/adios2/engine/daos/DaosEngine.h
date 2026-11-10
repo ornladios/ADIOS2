@@ -55,6 +55,9 @@ public:
     /// metadata (each rank carries its own MetaMetaBlocks + Attribute
     /// content in its metadata blob; rank 0 does no aggregation).
     static constexpr size_t m_PerRankMetadataFlagPosition = 41;
+    /// The writer's MetadataLayout, checked on Append.
+    static constexpr size_t m_MetadataLayoutPosition = 42;
+    static constexpr size_t m_FlattenStepsPosition = 43;
     static constexpr size_t m_VersionTagPosition = 0;
     static constexpr size_t m_VersionTagLength = 32;
 
@@ -110,7 +113,8 @@ public:
     MACRO(StatsLevel, UInt, unsigned int, 1)                                                       \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
-    MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
+    MACRO(FlattenSteps, Bool, bool, false)                                                         \
+    MACRO(IgnoreFlattenSteps, Bool, bool, false)
 
     struct DAOSParams
     {

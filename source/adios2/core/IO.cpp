@@ -159,7 +159,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
 
 const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
     {"bp3", false},     {"bp4", false},        {"bp5", true},      {"dataman", false},
-    {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", false},
+    {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", true},
     {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", true},
     {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
     {"campaign", true}, {"timeseries", true},
