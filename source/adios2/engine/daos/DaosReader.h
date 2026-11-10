@@ -37,7 +37,8 @@
 
 #define MAX_KV_GET_REQS 100
 
-#define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
+// Must match DaosWriter.h.
+#define MAX_AGGREGATE_METADATA_SIZE (1ULL << 40)
 #define chunk_size_1mb 1048576
 
 namespace adios2
@@ -134,12 +135,13 @@ private:
      * rank's array. */
     /// Per-writer-rank array OIDs read from the index file.
     std::vector<daos_obj_id_t> m_DataOids;
-    /// Per-writer-rank open array handles (parallel to m_DataOids).
+    /// Per-writer-rank array handles (parallel to m_DataOids), opened on first read.
     std::vector<daos_handle_t> m_DataArrayHandles;
     /// Per-writer-rank DAOS array chunk size (the dkey granularity), from open.
     std::vector<daos_size_t> m_DataArrayChunk;
     void LoadDataOidsIndex();
-    void OpenDataArrays();
+    /// Opens one array; returns an error message, empty on success.
+    std::string OpenDataArray(size_t slot);
     void CloseDataArrays();
 
     /// How per-rank metadata is laid out in DAOS.  Selectable via the
@@ -165,8 +167,6 @@ private:
 
     void SetDataFlag();
     DataFlag m_DataFlag = DataFlag::ON;
-
-    size_t m_step_offset = 0;
 
     char node[128] = "unknown";
 
@@ -239,8 +239,10 @@ private:
                               const bool hasHeader);
 
     void ReadMetadata(size_t);
-    void DaosArrayReadMetadata(size_t Step, uint64_t WriterCount);
-    void DaosKVReadMetadata(size_t Step, uint64_t WriterCount);
+    /// Step indexes m_MetadataIndexTable; absStep is the writer's step.
+    void ReadStepMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
+    void DaosArrayReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
+    void DaosKVReadMetadata(size_t Step, size_t absStep, uint64_t WriterCount);
     void ReadObjectIDsFromFile();
     void OpenDAOSObjects();
 
@@ -270,6 +272,7 @@ private:
 
     void DoClose(const int transportIndex = -1) final;
 
+    void CheckGetInStep(const VariableBase &variable) const;
     void GetSyncCommon(VariableBase &variable, void *data);
 
     void GetDeferredCommon(VariableBase &variable, void *data);
@@ -290,6 +293,17 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
+    void InstallRankMetaMeta(char *mmbStart);
+    /// Per-rank metadata carries a format only in the step that introduced
+    /// it, so steps SelectSteps skipped are still read for their formats.
+    void InstallSkippedMetaMeta();
+    struct SkippedStep
+    {
+        size_t AbsStep;
+        uint64_t WriterCount;
+    };
+    std::vector<SkippedStep> m_SkippedSteps;
+    bool m_FlattenSteps = false; // the writer asked for all steps to read as one
 
     /// Per-rank step-start array offsets, extracted from each rank's
     /// metadata-blob trailer.  Indexed by [Step][WriterRank].  Populated

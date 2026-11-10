@@ -32,7 +32,9 @@
 #include <unordered_set>
 #include <vector>
 
-#define MAX_AGGREGATE_METADATA_SIZE (5'368'709'120ULL)
+// Per-step stride in the metadata array.  Offsets are sparse, so size costs
+// nothing; at 1 MiB per rank this holds 2^20 writers.
+#define MAX_AGGREGATE_METADATA_SIZE (1ULL << 40)
 #define chunk_size_1mb 1'048'576
 
 namespace adios2
@@ -144,12 +146,12 @@ private:
     void SetMetadataLayout();
     void SetPoolAndContName();
 
-    /// Phase-2 gating: when true, ES_Gate Allreduce and ES_SelAgg
+    /// When true, ES_Gate Allreduce and ES_SelAgg
     /// BP5AggregateInformation are skipped, and each rank serializes
     /// its own NewMetaMetaBlocks + AttributeEncodeBuffer into its
     /// per-rank metadata blob.  Selected by DAOS_PER_RANK_METADATA env
-    /// var (default 0 = aggregated, today's Phase-1 behavior).
-    bool m_PerRankMetadata = false;
+    /// var (default 1; 0 = aggregated through rank 0).
+    bool m_PerRankMetadata = true;
     void SetPerRankMetadata();
 
     size_t m_step_offset = 0;
@@ -159,7 +161,7 @@ private:
     void DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &);
     void DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &);
     /// Compose this rank's per-step metadata blob.  In aggregated mode
-    /// (Phase 1 default): [MetaEncodeBuffer][step_start u64], 8-byte
+    /// (Phase 1): [MetaEncodeBuffer][step_start u64], 8-byte
     /// trailer.  In per-rank mode (Phase 2): [MetaEncode][MetaMetaBlocks
     /// serialized][AttributeEncodeBuffer][footer], where footer is
     /// (mmb_size, attr_size, step_start) = 24 bytes.  Returns a single
@@ -200,7 +202,8 @@ private:
 
 #define declare_type(T)                                                                            \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span, const bool initialize,     \
-               const T &value) final;
+               const T &value) final;                                                              \
+    size_t PutCount(Variable<T> &variable);
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -308,6 +311,19 @@ private:
     /// sentinel; in per-rank mode every call has MetaDataPos==0 so
     /// we need an explicit flag.
     bool m_FirstIndexCall = true;
+
+    /// Append to an existing dataset: md.idx already has its header, steps
+    /// continue from m_RunFirstStep, and this run's data arrays take the
+    /// data_oids.txt slots from m_DataSlotBase on.  The file's per-rank
+    /// metadata mode wins over DAOS_PER_RANK_METADATA, since the reader takes
+    /// it from the header for the whole file.
+    bool m_Appending = false;
+    bool m_AppendPerRank = false;
+    uint8_t m_AppendLayout = 0;
+    int64_t m_RunFirstStep = 0;
+    uint64_t m_DataSlotBase = 0;
+    void InitAppend();
+    void OpenExistingMetadataObjects();
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
 
