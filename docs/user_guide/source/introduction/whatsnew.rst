@@ -1,6 +1,6 @@
-==============================
-What's new in Development
-==============================
+======================
+What's new in v2.13?
+======================
 
 BP4/BP5 readers no longer wait on files left open by a killed writer
 --------------------------------------------------------------------
@@ -146,6 +146,95 @@ Missing min/max reported as N/A
 Variables stored without statistics (``StatsLevel=0``) now report an unset
 range (``Min() > Max()``) instead of a misleading ``0/0``; ``bpls`` prints
 ``N/A``.
+
+BP5 recovery from truncated files
+---------------------------------
+
+BP5 readers can now recover the steps that are intact in a file truncated by a
+crash or a full filesystem. Steps backed by the actual ``md.0``/``mmd.0``
+content are served, and attributes whose format information was lost are
+skipped. The reader no longer crashes on malformed metadata framing or index
+headers. The new ``EOFWaitSecs`` parameter controls how long a reader waits
+before concluding that a writer-inactive file has reached its end. Each BP5
+file now also carries a unique id in its index header.
+
+BP5 32-bit and 64-bit portability
+---------------------------------
+
+BP5 metadata now uses fixed-width fields, so files written on a 32-bit platform
+can be read on a 64-bit one and vice versa.
+
+FileStream writes BP5
+---------------------
+
+The ``FileStream`` engine now writes BP5 and detects the BP version of an
+existing file from the ``md.idx`` header without a race. Append is mode-aware,
+and ``Variable::Start()`` is block-aware for local arrays.
+
+BP5 direct reads of N-dimensional selections
+--------------------------------------------
+
+The BP5 reader can read N-dimensional selections directly into the application
+buffer, and a memory selection is now also honored on the remote read path.
+A default selection is resolved at the step actually being read.
+
+XRootD remote backend
+---------------------
+
+The remote server can be reached through an XrdCl HTTP backend. The client
+supports a configurable URL path prefix (``serverpath`` in ``hosts.yaml``),
+the server answers ``HEAD`` requests with the exact size, and the Campaign
+Reader can read simple files, images, and HDF5 members of TAR objects through
+XRootD.
+
+HDF5 files inside TAR archives
+------------------------------
+
+HDF5 files stored as members of a TAR file can now be read.
+
+New CAESAR compression operator
+-------------------------------
+
+A new ``CAESAR`` operator (enable with ``ADIOS2_USE_CAESAR``) compresses 3D to
+5D data, with optional correction methods. The MGARD operator releases its
+retained GPU memory (MGARD-X cache) after use, and the new
+``ADIOS2_USE_MGARD_MDR`` option builds MGARD with MDR support. The MGARD
+operator also accepts a lossless type parameter.
+
+Encryption operator keys from the environment
+---------------------------------------------
+
+The ``EncryptionOperator`` can now load its key from environment variables on
+the reader side.
+
+SST improvements
+----------------
+
+SST now delivers attributes reliably, including string array attributes, and
+the legacy marshaling code was removed. Several UCX data plane fixes were made
+(endpoint creation by lazy writers and rkey lifetime).
+
+Python wheels
+-------------
+
+Wheels are now built for macOS and for free-threaded Python 3.14 (``cp314t``),
+and a new ``adios2-mpi`` package provides MPI-enabled Linux wheels. The wheels
+now include libsodium, curl, and SSL support. An Apptainer image of ADIOS2 is
+also published.
+
+Build and packaging changes
+---------------------------
+
+- Blosc2 3.x is accepted, and ``ADIOS2_USE_Blosc2=ON`` now fails if Blosc2 is
+  not found instead of silently disabling it.
+- The bundled KWSys now uses ``std::filesystem`` and CLI11 (C++17), and the
+  MinGW-64 specific ``getopt`` code was removed.
+- ``FindZeroMQ.cmake`` was modernized.
+- ``bpls`` and the Python ``AvailableVariables()`` now print minimum and
+  maximum values of double variables with enough precision (for example
+  ``1.302553e+05`` instead of ``130255``).
+- ZFP now handles complex data, and Python 8-bit arrays map to NumPy dtypes
+  by their own signedness.
 
 
 ======================
