@@ -20,6 +20,8 @@ def write_array(fileName, nSteps, gpuArray, cpuArray):
     )
     # optionally the memory space can be set to GPU
     gpuVar.SetMemorySpace(adios2.MemorySpace.GPU)
+    # a GPU buffer must declare its layout, and CuPy arrays are row-major
+    gpuVar.SetArrayLayout(adios2.ArrayOrdering.RowMajor)
     cpuVar = ioWriter.DefineVariable(
         "cpuArray", cpuArray, cpuArray.shape, [0] * len(cpuArray.shape), cpuArray.shape
     )
@@ -50,6 +52,7 @@ def read_array(fileName, nSteps):
         rStream.BeginStep()
         # prepare input buffers
         gpuVar = ioReader.InquireVariable("gpuArray")
+        gpuVar.SetArrayLayout(adios2.ArrayOrdering.RowMajor)
         cpuVar = ioReader.InquireVariable("cpuArray")
         cpuBuffer = np.zeros(cpuVar.Shape(), dtype=np.float32)
         gpuShape = gpuVar.Shape(adios2.MemorySpace.GPU)

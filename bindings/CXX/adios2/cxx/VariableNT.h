@@ -62,6 +62,15 @@ public:
      */
     void SetMemorySpace(const MemorySpace mem);
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    /**
+     * Sets the layout of the buffers in all following Puts/Gets. Required for a
+     * multidimensional GPU buffer
+     * @param layout RowMajor, ColumnMajor, or Auto for the IO's order
+     */
+    void SetArrayLayout(const adios2::ArrayOrdering layout);
+#endif
+
     /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
