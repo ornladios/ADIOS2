@@ -53,6 +53,8 @@ set(DAOS_DISABLED_TESTS
   "BPAppendAfterStepsP\\."
   # Checks BP5's own file descriptors.
   "BPMetadataFDClose\\."
+  # The engine writes no data files, so it has no DataFileTransport.
+  "ADIOSReadDirectIOTest\\.InvalidDataFileTransportIsRejected\\."
   # Not implemented: file UUID, GetMetadata, GetContext, Get with a Selection.
   "BPFileUUID\\."
   "BPOpenWithMetadata\\."
