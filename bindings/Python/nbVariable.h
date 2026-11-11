@@ -78,6 +78,8 @@ public:
     Dims Shape(const MemorySpace memSpace, const size_t step = adios2::EngineCurrentStep) const;
 
     void SetMemorySpace(const MemorySpace memSpace);
+
+    void SetArrayLayout(const ArrayOrdering layout);
 #endif
 
     /**

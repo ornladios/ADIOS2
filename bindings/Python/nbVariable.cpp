@@ -181,6 +181,12 @@ void Variable::SetMemorySpace(const MemorySpace memSpace)
     m_VariableBase->SetMemorySpace(memSpace);
 }
 
+void Variable::SetArrayLayout(const ArrayOrdering layout)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetArrayLayout");
+    m_VariableBase->SetArrayLayout(layout);
+}
+
 Dims Variable::Shape(const MemorySpace memSpace, const size_t step) const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");

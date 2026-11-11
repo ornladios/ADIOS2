@@ -59,6 +59,11 @@ module adios2_parameters_mod
    integer, parameter :: adios2_memory_space_host = 1
    integer, parameter :: adios2_memory_space_gpu = 2
 
+   ! Array layouts, for adios2_set_array_layout
+   integer, parameter :: adios2_arrayordering_rowmajor = 0
+   integer, parameter :: adios2_arrayordering_columnmajor = 1
+   integer, parameter :: adios2_arrayordering_auto = 2
+
    ! Step Mode
    integer, parameter :: adios2_step_mode_append = 0
    integer, parameter :: adios2_step_mode_update = 1
