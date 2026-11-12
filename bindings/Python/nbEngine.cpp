@@ -415,11 +415,13 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
             info_map["BlockID"] = std::to_string(info.BlockID);
             info_map["IsValue"] = minBlocksInfo->IsValue ? "True" : "False";
             std::ostringstream osMax, osMin;
+            // int8 and uint8 are character types for streams: print them as
+            // numbers, not as (possibly invalid UTF-8) characters.
             switch (var_type)
             {
             case DataType::Int8:
-                osMax << info.MinMax.MaxUnion.field_int8;
-                osMin << info.MinMax.MinUnion.field_int8;
+                osMax << static_cast<int>(info.MinMax.MaxUnion.field_int8);
+                osMin << static_cast<int>(info.MinMax.MinUnion.field_int8);
                 break;
             case DataType::Int16:
                 osMax << info.MinMax.MaxUnion.field_int16;
@@ -434,8 +436,8 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
                 osMin << info.MinMax.MinUnion.field_int64;
                 break;
             case DataType::UInt8:
-                osMax << info.MinMax.MaxUnion.field_uint8;
-                osMin << info.MinMax.MinUnion.field_uint8;
+                osMax << static_cast<int>(info.MinMax.MaxUnion.field_uint8);
+                osMin << static_cast<int>(info.MinMax.MinUnion.field_uint8);
                 break;
             case DataType::UInt16:
                 osMax << info.MinMax.MaxUnion.field_uint16;
