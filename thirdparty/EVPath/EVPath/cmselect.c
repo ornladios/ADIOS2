@@ -564,6 +564,13 @@ libcmselect_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, s
 	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
+#ifndef HAVE_WINDOWS_H
+    if (fd >= FD_SETSIZE) {
+	fprintf(stderr, "EVPath select control module: file descriptor %d is beyond the select() limit (FD_SETSIZE = %d).\n", fd, FD_SETSIZE);
+	fprintf(stderr, "Use the epoll control module instead (set CMControlModule=epoll in the environment, or ControlModule=epoll for ADIOS2 SST).\n");
+	abort();
+    }
+#endif
     sd->select_consistency_number++;
     if (fd > sd->sel_item_max) {
 	int i;
@@ -588,15 +595,6 @@ libcmselect_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, s
 	sd->sel_item_max = fd;
     }
     FD_SET(fd, (fd_set *) sd->fdset);
-    if (fd > FD_SETSIZE) {
-	fprintf(stderr, "The file descriptor number (%d) has exceeded the capability of select() on this system\n", fd);
-#ifndef HAVE_WINDOWS_H
-	fprintf(stderr, "Increase FD_SETSIZE if possible.\n");
-#else
-        fprintf(stderr, "Try running with a different control module if possible\n");
-#endif
-        fprintf(stderr, "Item not added to fdset.\n");
-    }
     svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select read list", fd);
     sd->select_items[fd].func = func;
     sd->select_items[fd].arg1 = arg1;
@@ -616,6 +614,13 @@ libcmselect_LTX_write_select(CMtrans_services svc, select_data_ptr *sdp, int fd,
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
+#ifndef HAVE_WINDOWS_H
+    if (fd >= FD_SETSIZE) {
+	fprintf(stderr, "EVPath select control module: file descriptor %d is beyond the select() limit (FD_SETSIZE = %d).\n", fd, FD_SETSIZE);
+	fprintf(stderr, "Use the epoll control module instead (set CMControlModule=epoll in the environment, or ControlModule=epoll for ADIOS2 SST).\n");
+	abort();
+    }
+#endif
     sd->select_consistency_number++;
     if (fd > sd->sel_item_max) {
 	int i;
@@ -645,15 +650,6 @@ libcmselect_LTX_write_select(CMtrans_services svc, select_data_ptr *sdp, int fd,
     } else {
 	svc->verbose(sd->cm, CMSelectVerbose, "Removing fd %d to select write list", fd);
 	FD_CLR(fd, (fd_set *) sd->write_set);
-    }
-    if (fd > FD_SETSIZE) {
-	fprintf(stderr, "The file descriptor number (%d) has exceeded the capability of select() on this system\n", fd);
-#ifndef HAVE_WINDOWS_H
-	fprintf(stderr, "Increase FD_SETSIZE if possible.\n");
-#else
-        fprintf(stderr, "Try running with a different control module if possible\n");
-#endif
-        fprintf(stderr, "Item not added to fdset.\n");
     }
     sd->write_items[fd].func = func;
     sd->write_items[fd].arg1 = arg1;
