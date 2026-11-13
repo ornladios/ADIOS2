@@ -234,7 +234,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg, const 
                          "first EndStep"
                       << std::endl;
         }
-        engine.LockWriterDefinitions();
+        engine.LockReaderSelections();
     }
 
     engine.EndStep();
