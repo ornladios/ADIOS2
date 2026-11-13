@@ -1469,15 +1469,14 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
     if (PreloadEnv && (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 ||
                        strcmp(PreloadEnv, "Yes") == 0 || strcmp(PreloadEnv, "YES") == 0))
     {
-        Svcs->verbose(CP_Stream, DPTraceVerbose,
-                      "making preload available in RDMA DP based on "
-                      "environment variable value.\n");
-        Stream->PreloadAvail = 1;
+        if (Stream->Rank == 0)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "SST_DP_PRELOAD is ignored: learned preload in the RDMA data "
+                          "plane is disabled.\n");
+        }
     }
-    else
-    {
-        Stream->PreloadAvail = 0;
-    }
+    Stream->PreloadAvail = 0;
 
     char *required_device = NULL;
 #ifdef SST_HAVE_CRAY_CXI
@@ -1627,8 +1626,7 @@ static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
     {
         Svcs->verbose(WS_Stream->CP_Stream, DPSummaryVerbose,
                       "RDMA dataplane is ignoring a read pattern lock notification "
-                      "because preloading is disabled. Enable by setting the environment "
-                      "variable SST_DP_PRELOAD to 'yes'\n");
+                      "because preloading is disabled.\n");
     }
 }
 
@@ -1648,8 +1646,7 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long
     {
         Svcs->verbose(Stream->CP_Stream, DPSummaryVerbose,
                       "RDMA dataplane is ignoring a write pattern lock notification "
-                      "because preloading is disabled. Enable by setting the environment "
-                      "variable SST_DP_PRELOAD to 'yes'\n");
+                      "because preloading is disabled.\n");
     }
 }
 
@@ -1671,16 +1668,12 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     {
         if (Stream->Rank == 0)
         {
-            Svcs->verbose(CP_Stream, DPSummaryVerbose,
-                          "making preload available in RDMA DP based on "
-                          "environment variable value.\n");
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                          "SST_DP_PRELOAD is ignored: learned preload in the RDMA data "
+                          "plane is disabled.\n");
         }
-        Stream->PreloadAvail = 1;
     }
-    else
-    {
-        Stream->PreloadAvail = 0;
-    }
+    Stream->PreloadAvail = 0;
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
@@ -3035,9 +3028,7 @@ static void RdmaTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v, long Ti
         {
             Svcs->verbose(Stream->CP_Stream, DPSummaryVerbose,
                           "RDMA dataplane is ignoring a write pattern lock notification "
-                          "because preloading is disabled. Enable by setting the "
-                          "environment "
-                          "variable SST_DP_PRELOAD to 'yes'\n");
+                          "because preloading is disabled.\n");
         }
     }
 }
