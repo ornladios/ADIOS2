@@ -104,6 +104,27 @@ class TestEngine(unittest.TestCase):
                 self.assertEqual(info[0]["WriterID"], "0")
                 self.assertEqual(info, all_blocks[0])
 
+    def test_blockinfo_minmax_8bit(self):
+        adios = Adios()
+        with adios.declare_io("BPWriter") as io:
+            u8 = io.define_variable("u8", np.empty([3], dtype=np.uint8), [3], [0], [3])
+            i8 = io.define_variable("i8", np.empty([3], dtype=np.int8), [3], [0], [3])
+            with io.open("pythontestengine8bit.bp", bindings.Mode.Write) as engine:
+                engine.put(u8, np.array([65, 200, 255], dtype=np.uint8))
+                engine.put(i8, np.array([-100, 5, 120], dtype=np.int8))
+
+        with adios.declare_io("BPReader") as reader:
+            with reader.open("pythontestengine8bit.bp", bindings.Mode.Read) as engine:
+                engine.begin_step()
+                u8_info = engine.blocks_info("u8", 0)
+                i8_info = engine.blocks_info("i8", 0)
+                engine.end_step()
+
+                self.assertEqual(u8_info[0]["Min"], "65")
+                self.assertEqual(u8_info[0]["Max"], "255")
+                self.assertEqual(i8_info[0]["Min"], "-100")
+                self.assertEqual(i8_info[0]["Max"], "120")
+
 
 if __name__ == "__main__":
     unittest.main()
