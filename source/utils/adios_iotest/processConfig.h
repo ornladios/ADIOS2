@@ -40,6 +40,7 @@ enum Operation
 {
     Sleep,
     Busy,
+    Work,
     Write,
     Read
 };
@@ -68,6 +69,15 @@ public:
     const size_t busyTime_us = 0; // in microseconds per cycle
     CommandBusy(size_t cycles, size_t time);
     ~CommandBusy();
+};
+
+class CommandWork : public Command
+{
+public:
+    const size_t iterations = 1; // passes over the work buffer
+    const size_t bufferMB = 8;   // size of the work buffer
+    CommandWork(size_t iterations, size_t bufferMB);
+    ~CommandWork();
 };
 
 class CommandWrite : public Command
