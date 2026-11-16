@@ -9,6 +9,7 @@
 #include "adios2/operator/compress/CompressNull.h"
 #include <assert.h>
 #include <cstring>
+#include <type_traits>
 
 #include <stdio.h>
 
@@ -28,16 +29,37 @@ inline size_t MyGetTotalSize(const std::vector<mgard_x::SIZE> &dimensions,
                            std::multiplies<size_t>());
 }
 
+// This detects the configuration member and derives its enum type,
+// avoiding direct references to a potentially missing enum.
+
+// Preferred overload: available if the new member exists.
+template <class Config>
+auto set_domain_decomposition(Config &config, int)
+    -> decltype((void)config.domain_decomposition_mode)
+{
+    using Mode = std::decay_t<decltype(config.domain_decomposition_mode)>;
+
+    config.domain_decomposition_mode = Mode::Auto;
+}
+
+// Fallback overload: uses the old member.
+template <class Config>
+void set_domain_decomposition(Config &config, long)
+{
+    using Mode = std::decay_t<decltype(config.domain_decomposition)>;
+
+    config.domain_decomposition = Mode::MaxDim;
+}
+
 RefactorMDR::RefactorMDR(const Params &parameters)
 : Operator("mdr", REFACTOR_MDR, "refactor", parameters)
 {
     config.normalize_coordinates = false;
     config.log_level = 1;
     config.decomposition = mgard_x::decomposition_type::MultiDim;
-    config.domain_decomposition = mgard_x::domain_decomposition_type::MaxDim;
-    // config.domain_decomposition = mgard_x::domain_decomposition_type::Block;
-    // config.block_size = 64;
-
+    // The int overload is preferred because 0 is an int. If the new member does not exist,
+    // substitution removes that overload, and the long overload is selected instead.
+    set_domain_decomposition(config, 0);
     config.dev_type = mgard_x::device_type::AUTO;
     // config.prefetch = false;
     // config.max_memory_footprint = max_memory_footprint;
