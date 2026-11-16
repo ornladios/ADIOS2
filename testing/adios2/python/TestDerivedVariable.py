@@ -99,6 +99,28 @@ class TestDerivedVariable(unittest.TestCase):
                         f"Data does not match expected values. data = {ts}"
                     )
 
+    def test_03_add_operation(self):
+        filename = "pythontestderivedoperation.bp"
+        with Stream(filename, "w") as f:
+            f.io.define_variable("temps", self.TEMP, self.TEMP.shape, [0], self.TEMP.shape)
+            ds = f.io.define_derived_variable(
+                "derived/storedata", self.EXPR, DerivedVarType.StoreData
+            )
+            dmo = f.io.define_derived_variable("derived/metadataonly", self.EXPR)
+            with self.assertRaises(ValueError):
+                dmo.add_operation_string("null")
+            self.assertEqual(len(dmo.operations()), 0)
+            ds.add_operation_string("null")
+            ops = ds.operations()
+            self.assertEqual(len(ops), 1)
+            self.assertEqual(ops[0].Type(), "null")
+            f.write("temps", self.TEMP)
+
+        with Stream(filename, "r") as f:
+            for _ in f.steps():
+                ts = f.read("derived/storedata")
+                self.assertTrue((ts == 2 * self.TEMP).all())
+
 
 if __name__ == "__main__":
     unittest.main()

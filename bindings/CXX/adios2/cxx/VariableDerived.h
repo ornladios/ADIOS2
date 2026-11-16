@@ -10,6 +10,9 @@
 #include "Operator.h"
 #include "adios2/common/ADIOSTypes.h"
 
+#include <string>
+#include <vector>
+
 namespace adios2
 {
 
@@ -37,6 +40,46 @@ public:
 
     /** Default, using RAII STL containers */
     ~VariableDerived() = default;
+
+    /** true: valid object, false: invalid object */
+    explicit operator bool() const noexcept;
+
+    /**
+     * Inspect derived variable name
+     * @return unique name identifier
+     */
+    std::string Name() const;
+
+    /**
+     * Inspect derived variable type
+     * @return DerivedVarType set in IO::DefineDerivedVariable
+     */
+    DerivedVarType Type() const;
+
+    /**
+     * Adds operation and parameters to current derived variable object.
+     * Only derived variables of type DerivedVarType::StoreData can have
+     * operations.
+     * @param op operator to be added
+     * @param parameters key/value settings particular to the derived variable,
+     * not to be confused by op own parameters
+     * @return operation index handler in Operations()
+     */
+    size_t AddOperation(const Operator op, const adios2::Params &parameters = adios2::Params());
+
+    size_t AddOperation(const std::string &type,
+                        const adios2::Params &parameters = adios2::Params());
+
+    /**
+     * Inspects current operators added with AddOperation
+     * @return vector of Operator
+     */
+    std::vector<Operator> Operations() const;
+
+    /**
+     * Removes all current Operations associated with AddOperation.
+     */
+    void RemoveOperations();
 
 private:
     core::VariableDerived *m_VariableDerived = nullptr;
