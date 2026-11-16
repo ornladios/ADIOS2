@@ -406,7 +406,15 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  return opBool;
              })
         .def("Name", &adios2::py11::VariableDerived::Name)
-        .def("Type", &adios2::py11::VariableDerived::Type);
+        .def("Type", &adios2::py11::VariableDerived::Type)
+        .def("AddOperation", (size_t(adios2::py11::VariableDerived::*)(const adios2::py11::Operator,
+                                                                       const adios2::Params &)) &
+                                 adios2::py11::VariableDerived::AddOperation)
+        .def("AddOperation", (size_t(adios2::py11::VariableDerived::*)(const std::string &,
+                                                                       const adios2::Params &)) &
+                                 adios2::py11::VariableDerived::AddOperation)
+        .def("Operations", &adios2::py11::VariableDerived::Operations)
+        .def("RemoveOperations", &adios2::py11::VariableDerived::RemoveOperations);
 
     nb::class_<adios2::py11::Attribute>(m, "Attribute")
         .def("__bool__",
