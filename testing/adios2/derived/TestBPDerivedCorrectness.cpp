@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -1083,6 +1084,78 @@ TEST_P(DerivedCorrectnessP, CurlSubSelectionTest)
     EXPECT_LT(sum_x / (selNx * selNy * selNz), error_limit);
     EXPECT_LT(sum_y / (selNx * selNy * selNz), error_limit);
     EXPECT_LT(sum_z / (selNx * selNy * selNz), error_limit);
+}
+
+TEST_P(DerivedCorrectnessP, AddOperationTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPDerivedOperation");
+    bpOut.SetEngine("BP5");
+
+    const size_t N = 10000;
+    std::vector<double> simArray1(N), simArray2(N);
+    for (size_t i = 0; i < N; ++i)
+    {
+        simArray1[i] = static_cast<double>(i % 100);
+        simArray2[i] = 1.0;
+    }
+    auto U = bpOut.DefineVariable<double>("var1", {N}, {0}, {N});
+    auto V = bpOut.DefineVariable<double>("var2", {N}, {0}, {N});
+    auto derived = bpOut.DefineDerivedVariable("derived", "x = var1 \n y = var2 \n x + y", mode);
+    EXPECT_TRUE(derived);
+    EXPECT_EQ(derived.Name(), "derived");
+    EXPECT_EQ(derived.Type(), mode);
+
+#ifdef ADIOS2_HAVE_BZIP2
+    const std::string opType = "bzip2";
+#else
+    const std::string opType = "null";
+#endif
+    if (mode != adios2::DerivedVarType::StoreData)
+    {
+        EXPECT_THROW(derived.AddOperation(opType), std::invalid_argument);
+        EXPECT_EQ(derived.Operations().size(), 0);
+        return;
+    }
+    derived.AddOperation(opType);
+    auto ops = derived.Operations();
+    ASSERT_EQ(ops.size(), 1);
+    EXPECT_EQ(ops[0].Type(), opType);
+
+    adios2::Engine bpFileWriter = bpOut.Open("BPDerivedOperation.bp", adios2::Mode::Write);
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(U, simArray1.data());
+    bpFileWriter.Put(V, simArray2.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+#ifdef ADIOS2_HAVE_BZIP2
+    // var1 and var2 are stored raw, the compressed derived data adds little
+    std::ifstream dataFile("BPDerivedOperation.bp/data.0", std::ios::binary | std::ios::ate);
+    ASSERT_TRUE(dataFile.good());
+    const size_t rawInputs = 2 * N * sizeof(double);
+    EXPECT_LT(static_cast<size_t>(dataFile.tellg()), rawInputs + N * sizeof(double) / 2);
+#endif
+
+    adios2::IO bpIn = adios.DeclareIO("BPDerivedOperationRead");
+    adios2::Engine bpFileReader = bpIn.Open("BPDerivedOperation.bp", adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<double>("derived");
+    ASSERT_TRUE(derVar);
+    std::vector<double> readDerived;
+    bpFileReader.Get(derVar, readDerived, adios2::Mode::Sync);
+    bpFileReader.EndStep();
+    bpFileReader.Close();
+
+    ASSERT_EQ(readDerived.size(), N);
+    for (size_t i = 0; i < N; ++i)
+    {
+        EXPECT_EQ(readDerived[i], simArray1[i] + simArray2[i]);
+    }
+
+    derived.RemoveOperations();
+    EXPECT_EQ(derived.Operations().size(), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,

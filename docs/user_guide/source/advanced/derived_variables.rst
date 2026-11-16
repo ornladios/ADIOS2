@@ -65,6 +65,18 @@ must have at least one array input to define the output's shape.
 
 Derived variables can be defined at any time and are computed (and potentially stored) during the ``EndStep`` operation.
 
+Derived variables of type ``StoreData`` can have an operator (for example a compressor), added
+through the handle returned by ``DefineDerivedVariable`` or through the XML configuration, the
+same way as for primary variables::
+
+   auto derived = bpIO.DefineDerivedVariable("sum", "x = var1 \n y = var2 \n x + y",
+                                             adios2::DerivedVarType::StoreData);
+   derived.AddOperation("bzip2");
+
+In Python, use ``add_operation`` or ``add_operation_string`` on the object returned by
+``define_derived_variable``.  Adding an operator to a ``StatsOnly`` or ``ExpressionString``
+derived variable throws, since no data is stored for them.
+
 The ``bpls`` utility can identify derived variables and show the math expression when the ``--show-derived`` option.
 Derived variables that store data become primary data once the write operation is done, so they are not identified as derive variables by bpls.
 

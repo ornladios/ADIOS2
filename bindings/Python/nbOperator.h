@@ -19,12 +19,14 @@ namespace py11
 class ADIOS;
 class IO;
 class Variable;
+class VariableDerived;
 
 class Operator
 {
     friend class ADIOS;
     friend class IO;
     friend class Variable;
+    friend class VariableDerived;
 
 public:
     Operator() = default;

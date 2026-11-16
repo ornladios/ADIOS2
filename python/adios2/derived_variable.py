@@ -42,3 +42,40 @@ class DerivedVariable:
             str: Name of the DerivedVariable.
         """
         return self.impl.Name()
+
+    def add_operation_string(self, name, params={}):
+        """
+        Add an operation (operator) as a string.
+        Only DerivedVarType.StoreData derived variables can have operations.
+
+        Args:
+            name (str): name of the operation.
+            params (dict): parameters as a form of a dict for the operation.
+        """
+        return self.impl.AddOperation(name, params)
+
+    def add_operation(self, operation, params={}):
+        """
+        Add an operation (operator).
+        Only DerivedVarType.StoreData derived variables can have operations.
+
+        Args:
+            operation (Operator): the operation.
+            params (dict): parameters as a form of a dict for the operation.
+        """
+        return self.impl.AddOperation(operation.impl, params)
+
+    def operations(self):
+        """
+        Current operations (operators) assigned to this DerivedVariable.
+
+        Returns:
+            list(Operators): operators assigned.
+        """
+        return self.impl.Operations()
+
+    def remove_operations(self):
+        """
+        Remove operations (operators) assigned to this DerivedVariable.
+        """
+        self.impl.RemoveOperations()
