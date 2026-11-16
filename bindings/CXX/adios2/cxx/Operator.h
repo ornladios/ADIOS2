@@ -19,7 +19,8 @@ class ADIOS; // friend class
 class IO;    // friend class
 
 template <class T>
-class Variable; // friend class
+class Variable;        // friend class
+class VariableDerived; // friend class
 
 namespace core
 {
@@ -70,6 +71,7 @@ private:
     friend class VariableNT;
     template <class T>
     friend class Variable;
+    friend class VariableDerived;
 
     Params *m_Parameters;
     std::string m_Type;
