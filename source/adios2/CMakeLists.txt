@@ -314,6 +314,7 @@ endif()
 
 if(ADIOS2_HAVE_Campaign)
   target_sources(adios2_core PRIVATE
+    engine/campaign/CampaignIndexReader.cpp
     engine/campaign/CampaignReader.cpp
     engine/campaign/CampaignReader.tcc
     engine/campaign/CampaignData.cpp

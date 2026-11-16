@@ -28,3 +28,32 @@ It is an engine, that uses other engine (BP5, HDF5, Timeseries) to open ADIOS/HD
  exclude-dataset                 string               "exclude-dataset=logs/.*"
  verbose                         integer              **0**, 0..5
 =============================== ===================== ===========================================================
+
+Campaign Index Reader
+=====================
+
+The ``CampaignIndex`` engine opens SQLite campaign indexes (``.acx``) created
+by hpc-campaign. The file extension selects this engine automatically, or an
+application can select it with ``IO::SetEngine("CampaignIndex")``. It requires
+the same Campaign build option as the Campaign Reader.
+
+Open creates all indexed variables and attributes directly from the index,
+without opening any campaign archive or dataset. Names have the form
+``archive/dataset/entry``, including the archive's stored path and extension.
+Attribute names retain their stored spelling, including leading slashes.
+The SQLite connection is read-only and is released when Open finishes.
+
+This initial implementation supports metadata inquiries and Close. Shapes and
+min/max are index summaries; the index does not contain block decomposition,
+per-step shapes, or per-step extrema. Block inquiries return no blocks.
+Step numbers are interpreted as contiguous, starting at zero. Only scalar
+values cached in the index for single-step variables can be returned by Get,
+to support scalar display in ``bpls -l``. Other variable data reads are not
+implemented.
+
+For example, to measure the complete listing while excluding terminal rendering::
+
+    time bpls -l /path/to/kstar.acx > /dev/null
+
+All metadata is materialized in memory, so very large indexes require memory
+proportional to the number of variables and attributes.
