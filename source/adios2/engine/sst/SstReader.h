@@ -14,6 +14,8 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 
+#include <memory>
+
 namespace adios2
 {
 namespace core
@@ -57,6 +59,11 @@ private:
 
     SstFullMetadata m_CurrentStepMetaData = NULL;
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
+
+    // Destination for reads that can't go directly to application memory.
+    // Kept across steps so the same addresses are reused each step.
+    std::unique_ptr<char[]> m_ReadArena;
+    size_t m_ReadArenaSize = 0;
 
     struct _SstParams Params;
 

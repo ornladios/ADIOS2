@@ -294,7 +294,34 @@ bool SstReader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMa
 void SstReader::BP5PerformGets()
 {
     size_t maxReadSize;
-    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(true, &maxReadSize);
+    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(false, &maxReadSize);
+
+    // Every read is outstanding at once, so each one that needs a temporary
+    // gets its own aligned slice of m_ReadArena.
+    const size_t Align = 64;
+    size_t ArenaNeeded = 0;
+    for (const auto &Req : ReadRequests)
+    {
+        if (!Req.DestinationAddr)
+            ArenaNeeded += (Req.ReadLength + Align - 1) & ~(Align - 1);
+    }
+    if (ArenaNeeded > m_ReadArenaSize)
+    {
+        // Grow with headroom so small step-to-step variation doesn't move it.
+        m_ReadArena.reset();
+        m_ReadArenaSize = ArenaNeeded + ArenaNeeded / 4;
+        m_ReadArena.reset(new char[m_ReadArenaSize]);
+    }
+    size_t ArenaOffset = 0;
+    for (auto &Req : ReadRequests)
+    {
+        if (!Req.DestinationAddr)
+        {
+            Req.DestinationAddr = m_ReadArena.get() + ArenaOffset;
+            ArenaOffset += (Req.ReadLength + Align - 1) & ~(Align - 1);
+        }
+    }
+
     std::vector<void *> sstReadHandlers;
     for (const auto &Req : ReadRequests)
     {
@@ -316,7 +343,10 @@ void SstReader::BP5PerformGets()
         }
     }
 
-    m_BP5Deserializer->FinalizeGets(ReadRequests);
+    for (const auto &Req : ReadRequests)
+    {
+        m_BP5Deserializer->FinalizeGet(Req, false);
+    }
     m_BP5Deserializer->ClearGetState();
 }
 
