@@ -97,6 +97,10 @@ int main(int argc, char *argv[])
     timeStart = MPI_Wtime();
 
     uint64_t actualBusyTime_usec = 0;
+    double totalWorkTime = 0.0;
+    std::vector<double> workBuffer;
+    volatile double workSink = 0.0;
+    FILE *workLogFP = nullptr;
 
     try
     {
@@ -295,6 +299,54 @@ int main(int argc, char *argv[])
                     }
                     break;
                 }
+                case Operation::Work: {
+                    auto cmdK = dynamic_cast<const CommandWork *>(cmd.get());
+                    const size_t N = cmdK->bufferMB * 131072;
+                    if (workBuffer.size() != N)
+                    {
+                        workBuffer.assign(N, 1.0);
+                    }
+                    double *f = workBuffer.data();
+                    adios.EnterComputationBlock();
+                    double workStart = MPI_Wtime();
+                    for (size_t c = 0; c < cmdK->iterations; ++c)
+                    {
+                        for (size_t i = 0; i < N; ++i)
+                        {
+                            f[i] = f[i] * 0.5 + 1.0;
+                        }
+                    }
+                    double workTime = MPI_Wtime() - workStart;
+                    adios.ExitComputationBlock();
+                    workSink = workSink + f[step % N];
+                    totalWorkTime += workTime;
+                    if (settings.ioTimer)
+                    {
+                        std::vector<double> allWorkTimes(settings.myRank ? 0 : settings.nProc);
+                        MPI_Gather(&workTime, 1, MPI_DOUBLE, allWorkTimes.data(), 1, MPI_DOUBLE, 0,
+                                   settings.appComm);
+                        if (!settings.myRank)
+                        {
+                            if (!workLogFP)
+                            {
+                                std::string logName =
+                                    "app" + std::to_string(settings.appId) + "_work.csv";
+                                workLogFP = fopen(logName.c_str(), "w");
+                                fputs("step,rank,operation,time\n", workLogFP);
+                            }
+                            for (size_t r = 0; r < allWorkTimes.size(); ++r)
+                            {
+                                fprintf(workLogFP, "%zu,%zu,work,%f\n", step, r, allWorkTimes[r]);
+                            }
+                        }
+                    }
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        std::cout << "    Work for " << cmdK->iterations << " iterations took "
+                                  << workTime << " seconds" << std::endl;
+                    }
+                    break;
+                }
                 case Operation::Write: {
                     auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
                     auto stream = writeStreamMap[cmdW->streamName];
@@ -396,6 +448,11 @@ int main(int argc, char *argv[])
     timeEnd = MPI_Wtime();
     if (!settings.myRank)
     {
+        if (totalWorkTime > 0.0)
+        {
+            std::cout << "  Total Work time on Rank 0 was " << totalWorkTime << " seconds "
+                      << std::endl;
+        }
         if (actualBusyTime_usec > 0)
         {
             std::cout << "  Total Busy time on Rank 0 was "
@@ -405,6 +462,10 @@ int main(int argc, char *argv[])
                   << " seconds " << std::endl;
     }
 
+    if (workLogFP)
+    {
+        fclose(workLogFP);
+    }
     MPI_Finalize();
     return 0;
 }
