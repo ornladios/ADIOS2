@@ -205,6 +205,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg, const 
     {
         return status;
     }
+    const double timeBegun = MPI_Wtime();
 
     if (!settings.myRank && settings.verbose && step == 1)
     {
@@ -234,7 +235,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg, const 
                          "first EndStep"
                       << std::endl;
         }
-        engine.LockWriterDefinitions();
+        engine.LockReaderSelections();
     }
 
     engine.EndStep();
@@ -273,6 +274,18 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg, const 
                                       std::to_string(readtime_all_ranks[i]) + "\n";
                 // std::cout << content;
                 fputs(content.c_str(), perfLogFP);
+            }
+        }
+        // time spent waiting in BeginStep, which is included in the read time above
+        double beginTime = timeBegun - timeStart;
+        std::vector<double> begintime_all_ranks(myRank == 0 ? totalRanks : 0);
+        MPI_Gather(&beginTime, 1, MPI_DOUBLE, begintime_all_ranks.data(), 1, MPI_DOUBLE, 0, comm);
+        if (myRank == 0)
+        {
+            for (int i = 0; i < totalRanks; i++)
+            {
+                fprintf(perfLogFP, "%zu,%d,beginstep,%f\n", engine.CurrentStep(), i,
+                        begintime_all_ranks[i]);
             }
         }
     }
@@ -373,6 +386,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg, const Settings &se
         engine.LockWriterDefinitions();
     }
 
+    const double timePut = MPI_Wtime();
     engine.EndStep();
     timeEnd = MPI_Wtime();
     int myRank, totalRanks;
@@ -409,6 +423,18 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg, const Settings &se
                                       std::to_string(writetime_all_ranks[i]) + "\n";
                 // std::cout << content;
                 fputs(content.c_str(), perfLogFP);
+            }
+        }
+        // time spent in EndStep, which is included in the write time above
+        double endTime = timeEnd - timePut;
+        std::vector<double> endtime_all_ranks(myRank == 0 ? totalRanks : 0);
+        MPI_Gather(&endTime, 1, MPI_DOUBLE, endtime_all_ranks.data(), 1, MPI_DOUBLE, 0, comm);
+        if (myRank == 0)
+        {
+            for (int i = 0; i < totalRanks; i++)
+            {
+                fprintf(perfLogFP, "%zu,%d,endstep,%f\n", engine.CurrentStep(), i,
+                        endtime_all_ranks[i]);
             }
         }
         // std::cout << "rank " << myRank << ": before

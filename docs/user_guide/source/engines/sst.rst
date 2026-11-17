@@ -327,6 +327,8 @@ Additionally to the above controls, finetuning for technical parameters of the d
 
         This behavior can be overridden by defining ``FABRIC_PROGRESS_THREAD``: A value of ``1``, ``yes`` or ``on`` will force the use of a progress thread, no matter any other conditions. Any other value will force disable progress threads.
 
+    * ``SST_DP_PRELOAD``: Formerly enabled learned preload in the RDMA data plane.  That feature is disabled because it was unreliable and cannot work with the CXI provider (Slingshot), so the variable is ignored and the data plane always pulls data on request.
+
     * ``SLINGSHOT_DEVICES``, ``SLINGSHOT_VNIS``, ``SLINGSHOT_SVC_IDS``: Variables defined by the Slingshot network for exchanging authentication keys. The CXI provider will only be activated if those variables are defined. These variables should not be defined manually, but by the Batch system.
 
 * By the **UCX data plane**:
