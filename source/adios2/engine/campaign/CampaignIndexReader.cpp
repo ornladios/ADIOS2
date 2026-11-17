@@ -5,11 +5,15 @@
  */
 
 #include "CampaignIndexReader.h"
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/remote/Remote.h"
+#include "adios2/toolkit/transport/OpenFile.h"
+#include <filesystem>
+#include <fstream>
 
 #include <nlohmann_json.hpp>
-#include <sqlite3.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -18,7 +22,6 @@
 #include <numeric>
 #include <sstream>
 #include <type_traits>
-#include <unordered_map>
 
 namespace adios2
 {
@@ -28,60 +31,6 @@ namespace engine
 {
 namespace
 {
-using Database = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;
-
-// Own statements even if conversion or variable definition throws. SQLite is
-// opened read-only and held only while loading the catalog.
-class Query
-{
-public:
-    Query(sqlite3 *db, const char *sql) : m_DB(db)
-    {
-        if (sqlite3_prepare_v2(db, sql, -1, &m_Statement, nullptr) != SQLITE_OK)
-        {
-            sqlite3_finalize(m_Statement);
-            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(db));
-        }
-    }
-    ~Query() { sqlite3_finalize(m_Statement); }
-    Query(const Query &) = delete;
-    Query &operator=(const Query &) = delete;
-    bool Next()
-    {
-        const int rc = sqlite3_step(m_Statement);
-        if (rc == SQLITE_ROW)
-            return true;
-        if (rc != SQLITE_DONE)
-            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(m_DB));
-        return false;
-    }
-    std::string Text(int column) const
-    {
-        const auto p = sqlite3_column_text(m_Statement, column);
-        return p ? std::string(reinterpret_cast<const char *>(p),
-                               sqlite3_column_bytes(m_Statement, column))
-                 : std::string();
-    }
-    int64_t Integer(int column) const { return sqlite3_column_int64(m_Statement, column); }
-
-private:
-    sqlite3 *m_DB;
-    sqlite3_stmt *m_Statement = nullptr;
-};
-
-// ACX uses the VariableType enumeration in hpc_campaign/types.py. Resolve it
-// through variabletypes instead of depending on ADIOS's enum numeric values.
-DataType IndexType(std::string name)
-{
-    if (name == "long_double")
-        name = "long double";
-    if (name == "float_complex")
-        name = "float complex";
-    if (name == "double_complex")
-        name = "double complex";
-    return helper::GetDataTypeFromString(name);
-}
-
 template <class T>
 T Number(const std::string &text)
 {
@@ -186,78 +135,39 @@ CampaignIndexReader::CampaignIndexReader(IO &io, const std::string &name, Mode m
 void CampaignIndexReader::Init()
 {
     m_IO.m_ReadStreaming = false;
-    sqlite3 *raw = nullptr;
-    const int rc = sqlite3_open_v2(m_Name.c_str(), &raw, SQLITE_OPEN_READONLY, nullptr);
-    Database db(raw, sqlite3_close);
-    if (rc != SQLITE_OK)
-        throw std::runtime_error("CampaignIndex: cannot open " + m_Name + ": " +
-                                 (raw ? sqlite3_errmsg(raw) : "SQLite allocation failed"));
-    Query info(db.get(), "SELECT id FROM info");
-    if (!info.Next() || info.Text(0) != "ACX")
-        throw std::runtime_error("CampaignIndex: not an hpc-campaign index: " + m_Name);
-
-    std::unordered_map<int64_t, DataType> types;
-    Query type(db.get(), "SELECT typeid, name FROM variabletypes");
-    while (type.Next())
-        types.emplace(type.Integer(0), IndexType(type.Text(1)));
-
-    std::unordered_map<int64_t, std::string> prefixes;
-    Query datasets(db.get(), "SELECT d.datasetid, a.name, d.name FROM datasets d "
-                             "JOIN archives a ON a.archiveid = d.archiveid");
-    while (datasets.Next())
-        prefixes.emplace(datasets.Integer(0), datasets.Text(1) + "/" + datasets.Text(2) + "/");
-
-    Query vars(db.get(), "SELECT datasetid, name, type, steps, min, max, ndim, shape, value "
-                         "FROM variables");
-    while (vars.Next())
+    const auto index = CampaignData::ReadIndex(m_Name);
+    for (const auto &variable : index.variables)
     {
-        const std::string name = prefixes.at(vars.Integer(0)) + vars.Text(1);
-        const auto type = types.at(vars.Integer(2));
-        const auto stepCount = vars.Integer(3);
-        if (stepCount < 1)
-            throw std::runtime_error("CampaignIndex: invalid steps for " + name);
-        const size_t steps = static_cast<size_t>(stepCount);
-        Dims shape;
-        std::istringstream dimensions(vars.Text(7));
-        size_t extent;
-        while (dimensions >> extent)
-        {
-            shape.push_back(extent);
-            dimensions >> std::ws;
-            if (dimensions.peek() == ',')
-                dimensions.get();
-        }
-        if (vars.Integer(6) != static_cast<int64_t>(shape.size()))
-            throw std::runtime_error("CampaignIndex: unsupported shape for " + name);
+        const auto &name = variable.name;
+        m_Entries.emplace(name, variable.source);
         bool supported = false;
 #define declare_type(T)                                                                            \
-    if (type == helper::GetDataType<T>())                                                          \
+    if (variable.type == helper::GetDataType<T>())                                                 \
     {                                                                                              \
-        DefineEntry<T>(m_IO, this, name, shape, steps, vars.Text(4), vars.Text(5), vars.Text(8));  \
+        DefineEntry<T>(m_IO, this, name, variable.shape, variable.steps, variable.minimum,         \
+                       variable.maximum, variable.value);                                          \
         supported = true;                                                                          \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         if (!supported)
             throw std::runtime_error("CampaignIndex: unsupported type for " + name);
-        m_Steps = std::max(m_Steps, steps);
+        m_Steps = std::max(m_Steps, variable.steps);
     }
-    Query attrs(db.get(), "SELECT datasetid, name, type, value FROM attributes");
-    while (attrs.Next())
+    for (const auto &attribute : index.attributes)
     {
-        const std::string name = prefixes.at(attrs.Integer(0)) + attrs.Text(1);
-        const auto type = types.at(attrs.Integer(2));
         bool supported = false;
 #define declare_type(T)                                                                            \
-    if (type == helper::GetDataType<T>())                                                          \
+    if (attribute.type == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        DefineIndexAttribute<T>(m_IO, name, attrs.Text(3));                                        \
+        DefineIndexAttribute<T>(m_IO, attribute.name, attribute.value);                            \
         supported = true;                                                                          \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         if (!supported)
-            throw std::runtime_error("CampaignIndex: unsupported attribute type for " + name);
+            throw std::runtime_error("CampaignIndex: unsupported attribute type for " +
+                                     attribute.name);
     }
 }
 
@@ -283,12 +193,23 @@ void CampaignIndexReader::EndStep()
 {
     if (!m_InStep)
         throw std::logic_error("CampaignIndex: EndStep without BeginStep");
+    PerformGets();
     m_InStep = false;
     ++m_CurrentStep;
 }
-void CampaignIndexReader::PerformGets() {}
+void CampaignIndexReader::PerformGets()
+{
+    // Remove a request only after it succeeds, so a failed read remains visible.
+    while (!m_PendingGets.empty())
+    {
+        m_PendingGets.front()();
+        m_PendingGets.pop_front();
+    }
+}
 void CampaignIndexReader::DoClose(int)
 {
+    PerformGets();
+    m_Archives.clear();
     m_InStep = false;
     m_IO.m_ReadStreaming = false;
 }
@@ -338,15 +259,266 @@ bool CampaignIndexReader::VariableMinMax(const VariableBase &v, size_t step, Min
     return true;
 }
 
+CampaignIndexReader::Archive &CampaignIndexReader::OpenArchive(const std::string &name)
+{
+    auto it = m_Archives.find(name);
+    if (it != m_Archives.end())
+        return *it->second;
+
+    std::string store = m_UserOptions.campaign.campaignstorepath;
+    for (const auto &p : m_IO.m_Parameters)
+        if (helper::LowerCase(p.first) == "campaignstorepath")
+            store = p.second;
+    const std::filesystem::path archive(name);
+    std::vector<std::filesystem::path> paths;
+    if (archive.is_absolute())
+        paths.push_back(archive);
+    else
+    {
+        if (!store.empty())
+            paths.push_back(std::filesystem::path(store) / archive);
+        // Indexes can be moved together with their sibling archives. An index
+        // within a store may name archives relative to that store's parent.
+        auto parent = std::filesystem::path(m_Name).parent_path();
+        paths.push_back(parent / archive);
+        paths.push_back(parent.parent_path() / archive);
+        paths.push_back(parent / archive.filename());
+        paths.push_back(archive);
+    }
+    for (const auto &path : paths)
+    {
+        if (!std::filesystem::exists(path))
+            continue;
+        auto db = std::make_unique<Archive>();
+        db->Open(path.string());
+        db->ReadDatabase();
+        auto &result = *db;
+        m_Archives.emplace(name, std::move(db));
+        return result;
+    }
+    throw std::runtime_error("CampaignIndex: cannot locate archive " + name);
+}
+
+void CampaignIndexReader::ReadBytes(const Entry &entry, size_t start, size_t count, char *data)
+{
+    auto &archive = OpenArchive(entry.archive);
+    auto dsIt = archive.datasets.find(entry.dataset);
+    if (dsIt == archive.datasets.end() || dsIt->second.name != entry.datasetName)
+        throw std::runtime_error("CampaignIndex: dataset no longer matches archive: " +
+                                 entry.datasetName);
+    auto &ds = dsIt->second;
+    const bool image = entry.format == "IMAGE";
+    if ((image && ds.format != FileFormat::IMAGE) || (!image && ds.format != FileFormat::TEXT))
+        throw std::runtime_error("CampaignIndex: dataset format no longer matches index");
+    auto matches = [&](const CampaignReplica &rep) {
+        return !rep.deleted &&
+               (!image || entry.name == std::to_string(rep.x) + "x" + std::to_string(rep.y));
+    };
+    auto check = [&](size_t length) {
+        if (start > length || count > length - start)
+            throw std::invalid_argument("CampaignIndex: byte selection exceeds replica size");
+    };
+    // Embedded data takes priority even when a local or remote replica exists.
+    for (auto &item : ds.replicas)
+    {
+        auto &rep = item.second;
+        if (!matches(rep) || rep.files.empty())
+            continue;
+        const auto file = rep.files.front();
+        const auto length = archive.files.at(file).lengthOriginal;
+        check(length);
+        std::string key;
+        if (rep.hasKey)
+        {
+            auto &k = archive.keys.at(rep.keyIdx);
+            if (k.keyHex.empty())
+            {
+                Remote connection;
+                k.keyHex = connection.GetKeyFromConnectionManager(k.id);
+            }
+            if (k.keyHex == "0")
+                throw std::runtime_error("CampaignIndex: no key for embedded file");
+            key = k.keyHex;
+        }
+        // Decompression/decryption require the whole embedded object. Copy only
+        // the requested bytes into the caller's (possibly smaller) buffer.
+        std::vector<char> bytes(length);
+        archive.ReadToMemory(bytes.data(), file, key);
+        if (count)
+            std::memcpy(data, bytes.data() + start, count);
+        return;
+    }
+
+    std::string hostname = m_UserOptions.campaign.hostname;
+    for (const auto &p : m_IO.m_Parameters)
+        if (helper::LowerCase(p.first) == "hostname")
+            hostname = p.second;
+    if (hostname.empty())
+        hostname = helper::GetClusterName();
+    std::vector<std::string> localHosts{hostname};
+    for (const auto &host : ADIOS::GetHostOptions())
+        for (const auto &config : host.second)
+            if (config.protocol == HostAccessProtocol::LocalHost)
+                localHosts.push_back(host.first);
+    auto replicas = archive.FindRemoteReplicas(entry.dataset, ADIOS::GetHostOptions());
+    for (const auto &item : ds.replicas)
+        if (std::find(localHosts.begin(), localHosts.end(),
+                      archive.hosts.at(item.second.hostIdx).hostname) != localHosts.end())
+            replicas.insert(replicas.begin(), item.first);
+
+    for (const auto id : replicas)
+    {
+        auto &rep = ds.replicas.at(id);
+        if (!matches(rep))
+            continue;
+        const auto &host = archive.hosts.at(rep.hostIdx);
+        const bool local =
+            std::find(localHosts.begin(), localHosts.end(), host.hostname) != localHosts.end();
+        std::string filename = rep.name;
+        size_t offset = 0, length = rep.size;
+        auto tar = archive.tarnames.find(rep.archiveIdx);
+        if (rep.archiveIdx && tar != archive.tarnames.end())
+        {
+            filename = tar->second;
+            const auto info =
+                helper::StringToTarInfo(archive.GetTarIdx(entry.dataset, id, ds.format));
+            if (info.size() != 1)
+                throw std::runtime_error("CampaignIndex: missing or ambiguous TAR byte offsets");
+            offset = std::get<0>(info.begin()->second);
+            length = std::get<1>(info.begin()->second);
+        }
+        std::string path = archive.directory.at(rep.dirIdx).path + PathSeparator + filename;
+        if (local)
+        {
+            std::ifstream input(path, std::ios::binary);
+            if (!input)
+                continue;
+            if (!rep.archiveIdx)
+            {
+                input.seekg(0, std::ios::end);
+                length = static_cast<size_t>(input.tellg());
+            }
+            check(length);
+            input.seekg(offset + start);
+            input.read(data, count);
+            if (!input)
+                throw std::runtime_error("CampaignIndex: incomplete read of " + path);
+            return;
+        }
+        check(length);
+        if (host.defaultProtocol == "https" || host.defaultProtocol == "s3")
+        {
+            const HostConfig *config = nullptr;
+            auto options = ADIOS::GetHostOptions().find(host.hostname);
+            if (options != ADIOS::GetHostOptions().end())
+                for (const auto &c : options->second)
+                    if ((host.defaultProtocol == "https" &&
+                         c.protocol == HostAccessProtocol::HTTPS) ||
+                        (host.defaultProtocol == "s3" && c.protocol == HostAccessProtocol::S3))
+                    {
+                        config = &c;
+                        break;
+                    }
+            Params params{{"cache", m_UserOptions.campaign.cachepath},
+                          {"recheck_metadata", "false"}};
+            if (host.defaultProtocol == "https")
+            {
+                std::string endpoint = config ? config->endpoint : "https://" + host.longhostname;
+                if (!endpoint.empty() && endpoint.back() != '/')
+                    endpoint += '/';
+                path = endpoint + (path.front() == '/' ? path.substr(1) : path);
+                params["library"] = "https";
+                if (config && !config->caFile.empty())
+                    params["ca_file"] = config->caFile;
+            }
+            else
+            {
+                if (!config)
+                    throw std::runtime_error("CampaignIndex: no S3 host configuration for " +
+                                             host.hostname);
+                params["library"] = "awssdk";
+                params["endpoint"] = config->endpoint;
+                helper::PutEnv(std::string("AWS_PROFILE=") +
+                               (config->awsProfile.empty() ? "default" : config->awsProfile));
+                helper::PutEnv(std::string("AWS_EC2_METADATA_DISABLED=") +
+                               (config->isAWS_EC2 ? "false" : "true"));
+            }
+            helper::Comm comm;
+            auto file = transport::OpenFile(comm, path, Mode::Read, params, false);
+            file->Read(data, count, offset + start);
+            file->Close();
+        }
+        else
+        {
+            const auto setup = GetRemoteSetup(host.hostname);
+            if (setup.protocol != HostAccessProtocol::SSH &&
+                setup.protocol != HostAccessProtocol::XRootD)
+                throw std::runtime_error("CampaignIndex: no SSH/XRootD configuration for " +
+                                         host.hostname);
+            auto remote = GetRemoteSimpleFile(setup, path);
+            if (!remote || !*remote)
+                throw std::runtime_error("CampaignIndex: cannot open remote file " + path);
+            try
+            {
+                auto handle = remote->Read(offset + start, count, data);
+                if (setup.protocol == HostAccessProtocol::XRootD)
+                {
+                    if (!handle || !remote->WaitForGet(handle))
+                        throw std::runtime_error("CampaignIndex: incomplete remote read of " +
+                                                 path);
+                }
+            }
+            catch (...)
+            {
+                remote->Close();
+                throw;
+            }
+            remote->Close();
+        }
+        return;
+    }
+    throw std::runtime_error("CampaignIndex: no readable replica for " + entry.datasetName);
+}
+
+template <class T>
+void CampaignIndexReader::GetSync(Variable<T> &v, T *data)
+{
+    // Parsed text fields and other scalar summaries are cached in the index.
+    // Serve them before dispatching raw image/text bytes to the archive.
+    if (v.m_SingleValue && v.m_AvailableStepsCount == 1)
+    {
+        *data = v.m_Value;
+        return;
+    }
+    const auto &entry = m_Entries.at(v.m_Name);
+    if (entry.format == "IMAGE" || entry.format == "TEXT")
+    {
+        if (v.m_Type != DataType::Char && v.m_Type != DataType::UInt8)
+            throw std::runtime_error("CampaignIndex: expected byte variable for image/text");
+        if (v.m_Shape.size() != 1 || v.m_Start.size() != 1 || v.m_Count.size() != 1 ||
+            !v.m_MemoryCount.empty() ||
+            (v.m_SelectionType != SelectionType::BoundingBox &&
+             v.m_SelectionType != SelectionType::All) ||
+            v.m_StepsStart != 0 || v.m_StepsCount != 1)
+            throw std::invalid_argument(
+                "CampaignIndex: image/text requires a one-dimensional byte selection at step zero");
+        if (v.m_Start[0] > v.m_Shape[0] || v.m_Count[0] > v.m_Shape[0] - v.m_Start[0])
+            throw std::invalid_argument("CampaignIndex: byte selection exceeds indexed shape");
+        if (v.GetMemorySpace(data) != MemorySpace::Host)
+            throw std::invalid_argument("CampaignIndex: image/text requires host memory");
+        ReadBytes(entry, v.m_Start[0], v.m_Count[0], reinterpret_cast<char *>(data));
+        return;
+    }
+    throw std::runtime_error("CampaignIndex: data reads for " + entry.format +
+                             " are not implemented");
+}
+
 #define declare_type(T)                                                                            \
-    void CampaignIndexReader::DoGetSync(Variable<T> &v, T *data)                                   \
+    void CampaignIndexReader::DoGetSync(Variable<T> &v, T *data) { GetSync(v, data); }             \
+    void CampaignIndexReader::DoGetDeferred(Variable<T> &v, T *data)                               \
     {                                                                                              \
-        /* bpls -l requests scalar values. These are cached index metadata. */                     \
-        if (!v.m_SingleValue || v.m_AvailableStepsCount != 1)                                      \
-            throw std::runtime_error("CampaignIndex: variable data reads are not implemented");    \
-        *data = v.m_Value;                                                                         \
+        m_PendingGets.emplace_back([this, v, data]() mutable { GetSync(v, data); });               \
     }                                                                                              \
-    void CampaignIndexReader::DoGetDeferred(Variable<T> &v, T *data) { DoGetSync(v, data); }       \
     std::vector<typename Variable<T>::BPInfo> CampaignIndexReader::DoBlocksInfo(                   \
         const Variable<T> &, size_t) const                                                         \
     {                                                                                              \

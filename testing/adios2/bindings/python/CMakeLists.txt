@@ -34,3 +34,8 @@ if(ADIOS2_HAVE_MPI)
   #  add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)
   #endif()
 endif()
+
+if(ADIOS2_HAVE_Campaign)
+  python_add_test(NAME Bindings.Python.CampaignRead.Serial SCRIPT TestCampaignRead.py)
+  python_add_test(NAME Bindings.Python.CampaignIndexRead.Serial SCRIPT TestCampaignIndexRead.py)
+endif()
