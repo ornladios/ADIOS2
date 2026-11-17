@@ -52,6 +52,10 @@ TEST_F(BPWriteStatsOnly, BPReadException)
 #endif
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -70,6 +74,10 @@ TEST_F(BPWriteStatsOnly, BPReadException)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 

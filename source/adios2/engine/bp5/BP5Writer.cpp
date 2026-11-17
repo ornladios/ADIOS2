@@ -1921,6 +1921,10 @@ void BP5Writer::InitTransports()
         {
             filesToKeep.push_back(GetBPSubStreamName(m_Name, i, true, false));
         }
+        if (!m_Parameters.DataFileTransport.empty())
+        {
+            filesToKeep.push_back(m_Name + PathSeparator + "s3.json");
+        }
         helper::CleanupBPDirectory(m_Name, filesToKeep, m_Comm);
     }
 
@@ -2032,7 +2036,7 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                               << std::endl;
                 }
                 aggData.m_DataSubstream = transport::OpenFileChained(
-                    m_Comm, aggData.m_SubStreamName, mode, m_IO.m_TransportsParameters[0], true,
+                    m_Comm, aggData.m_SubStreamName, mode, m_DataTransportsParameters[0], true,
                     *DataWritingComm);
             }
             else
@@ -2043,7 +2047,7 @@ void BP5Writer::OpenSubfile(bool useComm, bool forceAppend)
                               << std::endl;
                 }
                 aggData.m_DataSubstream = transport::OpenFile(m_Comm, aggData.m_SubStreamName, mode,
-                                                              m_IO.m_TransportsParameters[0], true);
+                                                              m_DataTransportsParameters[0], true);
             }
         }
     }

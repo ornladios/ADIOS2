@@ -26,6 +26,11 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode, helper::C
     Init();
 
     m_Output = SstWriterOpen(name.c_str(), &Params, &m_Comm);
+    if (!m_Output)
+    {
+        helper::Throw<std::runtime_error>("Engine", "SstWriter", "SstWriter",
+                                          "SstWriter did not open stream " + name);
+    }
     m_IsOpen = true;
 }
 

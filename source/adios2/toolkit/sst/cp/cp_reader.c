@@ -551,17 +551,17 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         char *RequestedDP = Stream->ConfigParams->DataTransport;
         Stream->ConfigParams->DataTransport = strdup(&NeededDataPlane[0]);
         Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
-        if (Stream->DP_Interface)
-            if (strcmp(Stream->DP_Interface->DPName, &NeededDataPlane[0]) != 0)
-            {
-                fprintf(stderr,
-                        "The writer is using the %s DataPlane for SST data "
-                        "transport, but the reader has failed to load this "
-                        "transport.  Communication cannot occur.  See the SST "
-                        "DataTransport engine parameter to force a match.",
-                        NeededDataPlane);
-                return NULL;
-            }
+        if (!Stream->DP_Interface ||
+            (strcmp(Stream->DP_Interface->DPName, &NeededDataPlane[0]) != 0))
+        {
+            fprintf(stderr,
+                    "The writer is using the %s DataPlane for SST data "
+                    "transport, but the reader has failed to load this "
+                    "transport.  Communication cannot occur.  See the SST "
+                    "DataTransport engine parameter to force a match.",
+                    NeededDataPlane);
+            return NULL;
+        }
         if (RequestedDP)
             free(RequestedDP);
     }

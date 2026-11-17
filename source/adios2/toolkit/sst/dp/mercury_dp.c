@@ -257,11 +257,28 @@ static margo_instance_id MercuryCreateMargoInstance(const char *protocol)
      * Plain margo_init skips this and RDMA fails with EXDEV. */
     if (strstr(protocol, "cxi") && getenv("SLINGSHOT_VNIS"))
     {
+        /* Mercury tokenizes these in place, so put them back for the next instance. */
+        const char *EnvNames[] = {"SLINGSHOT_DEVICES", "SLINGSHOT_SVC_IDS", "SLINGSHOT_VNIS"};
+        char *Saved[3];
+        for (int i = 0; i < 3; i++)
+        {
+            const char *Value = getenv(EnvNames[i]);
+            Saved[i] = Value ? strdup(Value) : NULL;
+        }
         struct margo_init_info info = {0};
         info.json_config = "{ \"mercury\": { \"auth_key\": \"0:0:1\" },"
                            "  \"use_progress_thread\": true,"
                            "  \"rpc_thread_count\": 1 }";
-        return margo_init_ext(protocol, MARGO_SERVER_MODE, &info);
+        margo_instance_id mid = margo_init_ext(protocol, MARGO_SERVER_MODE, &info);
+        for (int i = 0; i < 3; i++)
+        {
+            if (Saved[i])
+            {
+                setenv(EnvNames[i], Saved[i], 1);
+                free(Saved[i]);
+            }
+        }
+        return mid;
     }
     return margo_init(protocol, MARGO_SERVER_MODE, 1, 1);
 }

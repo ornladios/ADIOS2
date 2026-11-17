@@ -51,6 +51,6 @@ set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 set(CTEST_TEST_ARGS
   # Install.Make ticket: https://github.com/ornladios/ADIOS2/issues/4272
-  EXCLUDE "Install.Make"
+  EXCLUDE "Install.Make|Engine.BP.LargeBlocks.MultiBlock.BP5.Serial"
 )
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

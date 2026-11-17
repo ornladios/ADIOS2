@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 
 #include <iostream>
 #include <numeric> //std::iota
 #include <stdexcept>
+#include <vector>
 
 #include <adios2.h>
 
@@ -287,7 +289,9 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         io.SetParameter("AggregationRatio", "1");
 
         adios2::Engine bpAppender = io.Open(fname, adios2::Mode::Append);
-        EXPECT_EQ(bpAppender.Type(), engineName == "BP4" ? "BP4Writer" : "BP5Writer");
+        EXPECT_EQ(bpAppender.Type(), engineName == "BP4"    ? "BP4Writer"
+                                     : engineName == "DAOS" ? "DaosWriter"
+                                                            : "BP5Writer");
 
         for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {
@@ -871,6 +875,169 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
             }
         }
         bpReader.Close();
+    }
+
+#if ADIOS2_USE_MPI
+    CleanupTestFilesMPI(fname, MPI_COMM_WORLD);
+#else
+    CleanupTestFiles(fname);
+#endif
+}
+
+namespace
+{
+// Global size is uneven over the writer counts and a one-rank block spans
+// several 16 MiB array chunks.
+constexpr size_t VR_Elems = (size_t(3) << 20) + 7;
+constexpr size_t VR_StepsPerRun = 2;
+
+double VRValue(size_t step, size_t i) { return double(step) * 1e7 + double(i); }
+
+void VRBox(size_t part, size_t nparts, size_t &start, size_t &count)
+{
+    const size_t base = VR_Elems / nparts, rem = VR_Elems % nparts;
+    start = part * base + std::min(part, rem);
+    count = base + (part < rem ? 1 : 0);
+}
+}
+
+// Each append runs on fewer ranks than the last, and readers use a
+// decomposition that matches none of the writers.
+TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingRanks)
+{
+    int mpiRank = 0, mpiSize = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteAppendReadVaryingRanks_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteAppendReadVaryingRanks.bp");
+#endif
+    const int writers[] = {mpiSize, std::max(1, mpiSize / 2), 1};
+    const size_t nRuns = sizeof(writers) / sizeof(writers[0]);
+    const size_t totalSteps = nRuns * VR_StepsPerRun;
+
+    for (size_t run = 0; run < nRuns; ++run)
+    {
+        const int nw = writers[run];
+#if ADIOS2_USE_MPI
+        MPI_Comm comm;
+        MPI_Comm_split(MPI_COMM_WORLD, mpiRank < nw ? 0 : MPI_UNDEFINED, mpiRank, &comm);
+        if (mpiRank < nw)
+        {
+            adios2::ADIOS adios(comm);
+#else
+        {
+            adios2::ADIOS adios;
+#endif
+            adios2::IO io = adios.DeclareIO("WriteIO");
+            io.SetEngine(engineName);
+            size_t start, count;
+            VRBox(mpiRank, nw, start, count);
+            auto var = io.DefineVariable<double>("data", {VR_Elems}, {start}, {count});
+            auto varStep = io.DefineVariable<uint64_t>("stepno");
+            std::vector<double> buf(count);
+            adios2::Engine writer =
+                io.Open(fname, run == 0 ? adios2::Mode::Write : adios2::Mode::Append);
+            for (size_t k = 0; k < VR_StepsPerRun; ++k)
+            {
+                const size_t step = run * VR_StepsPerRun + k;
+                writer.BeginStep();
+                EXPECT_EQ(writer.CurrentStep(), step) << "run=" << run;
+                for (size_t i = 0; i < count; ++i)
+                {
+                    buf[i] = VRValue(step, start + i);
+                }
+                writer.Put(var, buf.data());
+                if (mpiRank == 0)
+                {
+                    writer.Put(varStep, static_cast<uint64_t>(step));
+                }
+                writer.EndStep();
+            }
+            writer.Close();
+#if ADIOS2_USE_MPI
+            MPI_Comm_free(&comm);
+#endif
+        }
+#if ADIOS2_USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    auto check = [&](const std::vector<double> &buf, size_t start, size_t step, uint64_t gotStep) {
+        EXPECT_EQ(gotStep, step);
+        size_t bad = 0, first = 0;
+        for (size_t i = 0; i < buf.size(); ++i)
+        {
+            if (buf[i] != VRValue(step, start + i) && !bad++)
+            {
+                first = i;
+            }
+        }
+        EXPECT_EQ(bad, 0u) << "rank=" << mpiRank << " step=" << step << " first bad index "
+                           << start + first << " holds " << (bad ? buf[first] : 0.0);
+    };
+
+    // Random access, last step first, each rank's box offset by half a block.
+    {
+        adios2::IO io = adios.DeclareIO("ReadRandomIO");
+        io.SetEngine(engineName);
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_EQ(reader.Steps(), totalSteps);
+        auto var = io.InquireVariable<double>("data");
+        auto varStep = io.InquireVariable<uint64_t>("stepno");
+        ASSERT_TRUE(var);
+        ASSERT_TRUE(varStep);
+        ASSERT_EQ(var.Steps(), totalSteps);
+        ASSERT_EQ(var.Shape()[0], VR_Elems);
+        size_t start, count;
+        VRBox(mpiRank, mpiSize, start, count);
+        start += count / 2;
+        count = std::min(count, VR_Elems - start);
+        var.SetSelection({{start}, {count}});
+        std::vector<double> buf(count);
+        for (size_t s = totalSteps; s-- > 0;)
+        {
+            uint64_t gotStep = ~0ULL;
+            var.SetStepSelection({s, 1});
+            varStep.SetStepSelection({s, 1});
+            reader.Get(var, buf.data());
+            reader.Get(varStep, gotStep);
+            reader.PerformGets();
+            check(buf, start, s, gotStep);
+        }
+        reader.Close();
+    }
+
+    // Step by step, every rank reads the whole array.
+    {
+        adios2::IO io = adios.DeclareIO("ReadStepsIO");
+        io.SetEngine(engineName);
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        std::vector<double> buf(VR_Elems);
+        size_t steps = 0;
+        while (reader.BeginStep() == adios2::StepStatus::OK)
+        {
+            auto var = io.InquireVariable<double>("data");
+            auto varStep = io.InquireVariable<uint64_t>("stepno");
+            ASSERT_TRUE(var);
+            ASSERT_TRUE(varStep);
+            const size_t step = reader.CurrentStep();
+            uint64_t gotStep = ~0ULL;
+            reader.Get(var, buf.data());
+            reader.Get(varStep, gotStep);
+            reader.EndStep();
+            check(buf, 0, step, gotStep);
+            ++steps;
+        }
+        EXPECT_EQ(steps, totalSteps);
+        reader.Close();
     }
 
 #if ADIOS2_USE_MPI

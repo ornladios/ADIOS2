@@ -37,6 +37,12 @@ CommandBusy::CommandBusy(size_t cycles, size_t time)
 }
 CommandBusy::~CommandBusy() {}
 
+CommandWork::CommandWork(size_t iterations, size_t bufferMB)
+: Command(Operation::Work), iterations(iterations), bufferMB(bufferMB)
+{
+}
+CommandWork::~CommandWork() {}
+
 CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group)
 {
@@ -326,6 +332,12 @@ void printConfig(const Config &cfg)
                       << cmdS->busyTime_us << " microseconds of computation each " << std::endl;
             break;
         }
+        case Operation::Work: {
+            auto cmdK = dynamic_cast<const CommandWork *>(cmd.get());
+            std::cout << "          Work for " << cmdK->iterations << " iterations over "
+                      << cmdK->bufferMB << " MB" << std::endl;
+            break;
+        }
         case Operation::Write: {
             auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
             std::cout << "        Write to output " << cmdW->streamName << " the group "
@@ -560,6 +572,26 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
                     auto cmd = std::make_shared<CommandBusy>(cycles, t_us);
+                    cmd->conditionalStream = conditionalStream;
+                    cfg.commands.push_back(cmd);
+                }
+            }
+            else if (key == "work")
+            {
+                if (currentAppId == static_cast<int>(settings.appId))
+                {
+                    size_t iterations = stringToSizet(words, 1, "work");
+                    size_t bufferMB = 8;
+                    if (words.size() > 2 && !isComment(words[2]))
+                    {
+                        bufferMB = stringToSizet(words, 2, "work");
+                    }
+                    if (verbose0)
+                    {
+                        std::cout << "--> Command Work for: " << iterations << " iterations over "
+                                  << bufferMB << " MB" << std::endl;
+                    }
+                    auto cmd = std::make_shared<CommandWork>(iterations, bufferMB);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }

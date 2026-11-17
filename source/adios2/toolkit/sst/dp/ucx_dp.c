@@ -35,6 +35,7 @@
 #include <SSTConfig.h>
 
 #include <ucp/api/ucp.h>
+#include <uct/api/uct.h>
 
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
@@ -760,7 +761,11 @@ static void UcxDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     {
         if (RS_Stream->WriterEP && RS_Stream->WriterEP[i])
         {
+            /* No reads are outstanding, and the writer may already be gone, so there is
+             * nothing to flush. */
             ucp_request_param_t param = {0};
+            param.op_attr_mask = UCP_OP_ATTR_FIELD_FLAGS;
+            param.flags = UCP_EP_CLOSE_FLAG_FORCE;
             ucs_status_ptr_t req = ucp_ep_close_nbx(RS_Stream->WriterEP[i], &param);
             ucs_status_t status = UCS_PTR_STATUS(req);
             if (UCS_PTR_IS_PTR(req))
@@ -897,12 +902,75 @@ static FMStructDescRec UcxWriterContactStructs[] = {
 
 static struct _CP_DP_Interface UcxDPInterface = {0};
 
+/* Returns the name of a UCX network transport other than tcp, or NULL if there is none. */
+static const char *find_network_transport(char *Name, size_t Len)
+{
+    uct_component_h *Components;
+    unsigned NumComponents;
+    const char *Found = NULL;
+
+    if (uct_query_components(&Components, &NumComponents) != UCS_OK)
+        return NULL;
+    for (unsigned c = 0; c < NumComponents && !Found; c++)
+    {
+        uct_component_attr_t Attr;
+        Attr.field_mask = UCT_COMPONENT_ATTR_FIELD_MD_RESOURCE_COUNT;
+        if (uct_component_query(Components[c], &Attr) != UCS_OK || Attr.md_resource_count == 0)
+            continue;
+        Attr.field_mask = UCT_COMPONENT_ATTR_FIELD_MD_RESOURCES;
+        Attr.md_resources = calloc(Attr.md_resource_count, sizeof(*Attr.md_resources));
+        if (uct_component_query(Components[c], &Attr) != UCS_OK)
+        {
+            free(Attr.md_resources);
+            continue;
+        }
+        for (unsigned m = 0; m < Attr.md_resource_count && !Found; m++)
+        {
+            uct_md_config_t *MdConfig;
+            uct_md_h Md;
+            uct_tl_resource_desc_t *Tls;
+            unsigned NumTls;
+
+            if (uct_md_config_read(Components[c], NULL, NULL, &MdConfig) != UCS_OK)
+                continue;
+            ucs_status_t Status =
+                uct_md_open(Components[c], Attr.md_resources[m].md_name, MdConfig, &Md);
+            uct_config_release(MdConfig);
+            if (Status != UCS_OK)
+                continue;
+            if (uct_md_query_tl_resources(Md, &Tls, &NumTls) == UCS_OK)
+            {
+                for (unsigned t = 0; t < NumTls && !Found; t++)
+                {
+                    if (Tls[t].dev_type == UCT_DEVICE_TYPE_NET && strcmp(Tls[t].tl_name, "tcp"))
+                    {
+                        snprintf(Name, Len, "%s/%s", Tls[t].tl_name, Tls[t].dev_name);
+                        Found = Name;
+                    }
+                }
+                uct_release_tl_resource_list(Tls);
+            }
+            uct_md_close(Md);
+        }
+        free(Attr.md_resources);
+    }
+    uct_release_component_list(Components);
+    return Found;
+}
+
 static int UcxGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
-    /* TODO: Improve priority algorithm */
-    int ux_dp_priority = 10;
+    char Name[UCT_TL_NAME_MAX + UCT_DEVICE_NAME_MAX + 1];
 
-    return ux_dp_priority;
+    if (!find_network_transport(Name, sizeof(Name)))
+    {
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "UCX Dataplane found no network transport other than tcp, declining\n");
+        return -1;
+    }
+    Svcs->verbose(CP_Stream, DPTraceVerbose,
+                  "UCX Dataplane found network transport %s, returning priority 10\n", Name);
+    return 10;
 }
 
 /* If UcxGetPriority has allocated resources or initialized something

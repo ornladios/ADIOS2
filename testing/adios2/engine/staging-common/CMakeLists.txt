@@ -264,6 +264,16 @@ foreach(test ${BP5_TESTS})
     add_common_test(${test} BP5)
 endforeach()
 
+#  DAOS tests: the BP5 file tests, without the SST preload options both ignore
+if(ADIOS2_HAVE_DAOS AND ADIOS2_RUN_DAOS_TESTS)
+    set (DAOS_TESTS ${BP5_TESTS})
+    list (FILTER DAOS_TESTS EXCLUDE REGEX ".*Preload")
+    foreach(test ${DAOS_TESTS})
+        add_common_test(${test} DAOS)
+        daos_set_test_properties(Staging.${test}.DAOS)
+    endforeach()
+endif()
+
 #
 #   Setup streaming tests for BP5 engine
 #

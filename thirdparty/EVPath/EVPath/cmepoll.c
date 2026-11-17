@@ -277,7 +277,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 	    timeout.tv_sec = 0;
 	}
 	DROP_CM_LOCK(svc, sd->cm);
-	ep_timeout = (1000 * timeout.tv_sec) + (timeout.tv_usec / 1000);
+	ep_timeout = (1000 * timeout.tv_sec) + ((timeout.tv_usec + 999) / 1000);
         res = epoll_wait(sd->epfd, events, MAX_EVENTS, ep_timeout);
 
 	ACQUIRE_CM_LOCK(svc, sd->cm);
@@ -314,16 +314,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 	if (errno == EBADF) {
 	    fprintf(stderr, "The epoll fd is invalid. This is catastrophic.\n");
 	} else if (errno != EAGAIN) {
-#ifdef HAVE_FDS_BITS
-	    fprintf(stderr, "select failed, errno %d, rd_set was %lx, %lx,%lx, %lx\n\n", errno,
-		    (long) ((fd_set *) sd->fdset)->fds_bits[0],
-		    (long) ((fd_set *) sd->fdset)->fds_bits[1],
-		    (long) ((fd_set *) sd->fdset)->fds_bits[2],
-		    (long) ((fd_set *) sd->fdset)->fds_bits[3]);
-	    fprintf(stderr, "timeout was %d and %d\n", timeout_sec, timeout_usec);
-#else
 	    fprintf(stderr, "select failed, errno %d\n", errno);
-#endif
 	    exit(1);
 	    return;
 	}
@@ -347,26 +338,6 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
     }
 #endif
 
-#ifdef HAVE_FDS_BITS
-    svc->verbose(sd->cm, CMSelectVerbose, "select returned, rd_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
-	    (long) ((fd_set *) sd->fdset)->fds_bits[0],
-	    (long) ((fd_set *) sd->fdset)->fds_bits[1],
-	    (long) ((fd_set *) sd->fdset)->fds_bits[2],
-	    (long) ((fd_set *) sd->fdset)->fds_bits[3],
-	    (long) ((fd_set *) &rd_set)->fds_bits[0],
-	    (long) ((fd_set *) &rd_set)->fds_bits[1],
-	    (long) ((fd_set *) &rd_set)->fds_bits[2],
-	    (long) ((fd_set *) &rd_set)->fds_bits[3]);
-    svc->verbose(sd->cm, CMSelectVerbose, "       write_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
-	    (long) ((fd_set *) sd->write_set)->fds_bits[0],
-	    (long) ((fd_set *) sd->write_set)->fds_bits[1],
-	    (long) ((fd_set *) sd->write_set)->fds_bits[2],
-	    (long) ((fd_set *) sd->write_set)->fds_bits[3],
-	    (long) ((fd_set *) &wr_set)->fds_bits[0],
-	    (long) ((fd_set *) &wr_set)->fds_bits[1],
-	    (long) ((fd_set *) &wr_set)->fds_bits[2],
-	    (long) ((fd_set *) &wr_set)->fds_bits[3]);
-#endif
     /* 
      * if upon returning from select the consistency number
      * has changed, the only safe thing to do is return so 
@@ -505,13 +476,17 @@ libcmepoll_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, se
 	}
 	sd->sel_item_max = fd;
     }
+    svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select read list", fd);
+    sd->select_items[fd].func = func;
+    sd->select_items[fd].arg1 = arg1;
+    sd->select_items[fd].arg2 = arg2;
+
     memset(&ep_event, 0, sizeof(ep_event));
     ep_event.events = EPOLLIN;
+    if (sd->write_items[fd].func != NULL) ep_event.events |= EPOLLOUT;
     ep_event.data.fd = fd;
     if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
     	if(errno == EEXIST) {
-    		/* This is fd is already armed for read */
-    		ep_event.events = EPOLLIN | EPOLLOUT;
     		if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
     			fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
     		}
@@ -519,11 +494,6 @@ libcmepoll_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, se
     		fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
     	}
     }
-
-    svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select read list", fd);
-    sd->select_items[fd].func = func;
-    sd->select_items[fd].arg1 = arg1;
-    sd->select_items[fd].arg2 = arg2;
     wake_server_thread(sd);
 }
 
@@ -565,35 +535,27 @@ libcmepoll_LTX_write_select(CMtrans_services svc, select_data_ptr *sdp, int fd, 
 	}
 	sd->sel_item_max = fd;
     }
-    ep_event.data.fd = fd;
-    if(func != NULL) {
-    	ep_event.events = EPOLLOUT;
-    	if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
-    		if(errno == EEXIST) {
-    		    /* This is fd is already armed for read */
-    		    ep_event.events = EPOLLIN | EPOLLOUT;
-    		    if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
-    		    	fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
-    		    }
-    		} else {
-    		    fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
-    		}
-    	}
-    } else if(sd->select_items[fd].func) {
-    	/* This fd should stay armed for read */
-    	ep_event.events = EPOLLIN;
-    	if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
-    	    fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
-    	}
-	} else {
-    	if(epoll_ctl(sd->epfd, EPOLL_CTL_DEL, fd, &ep_event) < 0) {
-    	    fprintf(stderr, "Something bad happened in %s. %d\n", __func__, errno);
-    	}
-    }
-
     sd->write_items[fd].func = func;
     sd->write_items[fd].arg1 = arg1;
     sd->write_items[fd].arg2 = arg2;
+
+    ep_event.data.fd = fd;
+    ep_event.events = 0;
+    if (sd->select_items[fd].func != NULL) ep_event.events |= EPOLLIN;
+    if (func != NULL) ep_event.events |= EPOLLOUT;
+    if (ep_event.events == 0) {
+    	if(epoll_ctl(sd->epfd, EPOLL_CTL_DEL, fd, &ep_event) < 0) {
+    	    fprintf(stderr, "Something bad happened in %s. %d\n", __func__, errno);
+    	}
+    } else if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
+    	if(errno == EEXIST) {
+    	    if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
+    	    	fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    	    }
+    	} else {
+    	    fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    	}
+    }
     wake_server_thread(sd);
 }
 
@@ -1035,7 +997,6 @@ libcmepoll_LTX_select_shutdown(CMtrans_services svc, CManager cm, void *client_d
     svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Shutdown task called");
     if (sd->server_thread != thr_thread_self()) {
 	sd->closed = 1;
-	close(sd->epfd);
 	wake_server_thread(sd);
     }
 }
@@ -1049,6 +1010,8 @@ libcmepoll_LTX_select_free(CMtrans_services svc, CManager cm, void *client_data)
     svc->verbose(sd->cm, CMFreeVerbose, "CMSelect free task called");
 
     if (*((select_data_ptr *)client_data) != NULL) {
+	shutdown_wake_mechanism(sd);
+	close(sd->epfd);
 	free_epoll_data(svc, sdp);
     }
 }

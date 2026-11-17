@@ -11,11 +11,13 @@ include(ADIOSFunctions)
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)
+set(DAOS_DIR ${CMAKE_CURRENT_BINARY_DIR}/daos)
 
 # set(HDF5_DIR ${CMAKE_CURRENT_BINARY_DIR}/hdf5)
 file(MAKE_DIRECTORY ${BP3_DIR})
 file(MAKE_DIRECTORY ${BP4_DIR})
 file(MAKE_DIRECTORY ${BP5_DIR})
+file(MAKE_DIRECTORY ${DAOS_DIR})
 
 # file(MAKE_DIRECTORY ${HDF5_DIR})
 macro(ts_gtest_add_tests_helper testname mpi)
@@ -28,6 +30,7 @@ macro(ts_gtest_add_tests_helper testname mpi)
     gtest_add_tests_helper(${testname} ${mpi} "" Engine.TimeSeries. .BP5
         WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
     )
+    daos_gtest_add_tests_helper(${testname} ${mpi} "" Engine.TimeSeries. WORKING_DIRECTORY ${DAOS_DIR})
 
     # # HDF5 does not work properly with Changing Shapes, so this test would fail too
     # if(ADIOS2_HAVE_HDF5)

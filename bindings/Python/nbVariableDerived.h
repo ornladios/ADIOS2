@@ -15,6 +15,11 @@
 #include "adios2/common/ADIOSTypes.h"
 #endif
 
+#include "nbOperator.h"
+
+#include <string>
+#include <vector>
+
 namespace adios2
 {
 namespace py11
@@ -38,6 +43,14 @@ public:
     std::string Name() const;
 
     DerivedVarType Type() const;
+
+    size_t AddOperation(const Operator op, const Params &parameters = Params());
+
+    size_t AddOperation(const std::string &op, const Params &parameters = Params());
+
+    std::vector<Operator> Operations() const;
+
+    void RemoveOperations();
 
 private:
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE

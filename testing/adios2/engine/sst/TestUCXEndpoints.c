@@ -11,6 +11,15 @@
 
 #include "adios2/toolkit/sst/dp/ucx_dp.c"
 
+/* The writer entry points call this.  They are never run here, but --gc-sections can keep them
+ * when they share a constant section with the code under test. */
+int SMPI_Comm_rank(SMPI_Comm comm, int *rank)
+{
+    (void)comm;
+    *rank = 0;
+    return 0;
+}
+
 #define CHECK(condition)                                                                           \
     do                                                                                             \
     {                                                                                              \
@@ -67,7 +76,8 @@ ucs_status_t __wrap_ucp_ep_rkey_unpack(ucp_ep_h endpoint, const void *packed, uc
 ucs_status_ptr_t __wrap_ucp_ep_close_nbx(ucp_ep_h endpoint, const ucp_request_param_t *params)
 {
     CHECK(endpoint == (ucp_ep_h)&created_endpoint);
-    CHECK(params->op_attr_mask == 0);
+    CHECK(params->op_attr_mask == UCP_OP_ATTR_FIELD_FLAGS);
+    CHECK(params->flags == UCP_EP_CLOSE_FLAG_FORCE);
     close_attempts++;
     return NULL;
 }

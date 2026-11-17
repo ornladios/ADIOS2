@@ -4,9 +4,12 @@
 
 name: SBOM
 
+# Immutable releases lock their assets on publish, so the SBOM is attached to
+# a draft release when the tag is pushed. A maintainer then publishes the draft.
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
 
 permissions:
   contents: read
@@ -22,7 +25,16 @@ jobs:
       - name: Generate SPDX SBOM
         run: pipx run reuse spdx -o adios2-sbom.spdx
 
-      - name: Upload SBOM to release
+      - name: Upload SBOM to draft release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.event.release.tag_name }} adios2-sbom.spdx
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            # Tags with a suffix (e.g. v2.9.0-rc1) are release candidates
+            PRERELEASE=()
+            [[ "$TAG" == *-* ]] && PRERELEASE=(--prerelease)
+            gh release create "$TAG" --draft --verify-tag --title "$TAG" \
+              --generate-notes "${PRERELEASE[@]}"
+          fi
+          gh release upload "$TAG" adios2-sbom.spdx --clobber

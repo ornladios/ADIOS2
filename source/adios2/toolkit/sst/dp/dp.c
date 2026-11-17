@@ -75,6 +75,16 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
 {
     CP_DP_Interface Ret;
     DPlist List = NULL;
+    const char *Required = getenv("SST_REQUIRE_DATAPLANE");
+    if (Required && (Required[0] != 0))
+    {
+        free(Params->DataTransport);
+        Params->DataTransport = strdup(Required);
+    }
+    else
+    {
+        Required = NULL;
+    }
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath", Params);
 #ifdef SST_HAVE_LIBFABRIC
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
@@ -154,6 +164,14 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
                           "Selecting DataPlane \"%s\" (preferred) for use\n",
                           List[SelectedDP].Name);
     }
+    else if (Required)
+    {
+        if (Rank == 0)
+            fprintf(stderr,
+                    "Error:  SST_REQUIRE_DATAPLANE is \"%s\" and that DataPlane is "
+                    "not available.\n",
+                    Required);
+    }
     else
     {
         if (Rank == 0)
@@ -173,6 +191,12 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
             }
         }
         i++;
+    }
+
+    if (SelectedDP == -1)
+    {
+        free(List);
+        return NULL;
     }
 
     if (Params->DataTransport)
