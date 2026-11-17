@@ -6,7 +6,12 @@
 
 #include "CampaignData.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosType.h"
+
 #include "adios2/helper/adiosString.h"
+#include <memory>
+#include <sstream>
+#include <unordered_map>
 
 #include <assert.h>
 #include <cstring>
@@ -30,6 +35,133 @@ namespace core
 {
 namespace engine
 {
+
+// Own statements even if metadata conversion throws. SQLite is opened
+// read-only and held only while loading the index.
+class CampaignData::Query
+{
+public:
+    Query(sqlite3 *db, const char *sql) : m_DB(db)
+    {
+        if (sqlite3_prepare_v2(db, sql, -1, &m_Statement, nullptr) != SQLITE_OK)
+        {
+            sqlite3_finalize(m_Statement);
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(db));
+        }
+    }
+    ~Query() { sqlite3_finalize(m_Statement); }
+    Query(const Query &) = delete;
+    Query &operator=(const Query &) = delete;
+    bool Next()
+    {
+        const int rc = sqlite3_step(m_Statement);
+        if (rc == SQLITE_ROW)
+            return true;
+        if (rc != SQLITE_DONE)
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(m_DB));
+        return false;
+    }
+    std::string Text(int column) const
+    {
+        const auto p = sqlite3_column_text(m_Statement, column);
+        return p ? std::string(reinterpret_cast<const char *>(p),
+                               sqlite3_column_bytes(m_Statement, column))
+                 : std::string();
+    }
+    int64_t Integer(int column) const { return sqlite3_column_int64(m_Statement, column); }
+
+private:
+    sqlite3 *m_DB;
+    sqlite3_stmt *m_Statement = nullptr;
+};
+
+namespace
+{
+// ACX uses the VariableType enumeration in hpc_campaign/types.py. Resolve it
+// through variabletypes instead of depending on ADIOS's enum numeric values.
+DataType IndexType(std::string name)
+{
+    if (name == "long_double")
+        name = "long double";
+    if (name == "float_complex")
+        name = "float complex";
+    if (name == "double_complex")
+        name = "double complex";
+    return helper::GetDataTypeFromString(name);
+}
+
+} // namespace
+
+CampaignIndex CampaignData::ReadIndex(const std::string &path)
+{
+    using Database = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;
+    CampaignIndex index;
+    sqlite3 *raw = nullptr;
+    const int rc = sqlite3_open_v2(path.c_str(), &raw, SQLITE_OPEN_READONLY, nullptr);
+    Database db(raw, sqlite3_close);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("CampaignIndex: cannot open " + path + ": " +
+                                 (raw ? sqlite3_errmsg(raw) : "SQLite allocation failed"));
+    Query info(db.get(), "SELECT id FROM info");
+    if (!info.Next() || info.Text(0) != "ACX")
+        throw std::runtime_error("CampaignIndex: not an hpc-campaign index: " + path);
+
+    std::unordered_map<int64_t, DataType> types;
+    Query type(db.get(), "SELECT typeid, name FROM variabletypes");
+    while (type.Next())
+        types.emplace(type.Integer(0), IndexType(type.Text(1)));
+
+    std::unordered_map<int64_t, CampaignIndexEntry> entries;
+    std::unordered_map<int64_t, std::string> prefixes;
+    Query datasets(db.get(), "SELECT d.datasetid, a.name, d.name, d.dsid, t.name FROM datasets d "
+                             "JOIN archives a ON a.archiveid = d.archiveid "
+                             "JOIN datasettypes t ON t.typeid = d.type");
+    while (datasets.Next())
+    {
+        prefixes.emplace(datasets.Integer(0), datasets.Text(1) + "/" + datasets.Text(2) + "/");
+        entries.emplace(datasets.Integer(0),
+                        CampaignIndexEntry{datasets.Text(1),
+                                           static_cast<size_t>(datasets.Integer(3)),
+                                           datasets.Text(2), "", datasets.Text(4)});
+    }
+
+    Query vars(db.get(), "SELECT datasetid, name, type, steps, min, max, ndim, shape, value "
+                         "FROM variables");
+    while (vars.Next())
+    {
+        const auto &prefix = prefixes.at(vars.Integer(0));
+        const std::string name =
+            vars.Text(1).empty() ? prefix.substr(0, prefix.size() - 1) : prefix + vars.Text(1);
+        auto entry = entries.at(vars.Integer(0));
+        entry.name = vars.Text(1);
+        const auto type = types.at(vars.Integer(2));
+        const auto stepCount = vars.Integer(3);
+        if (stepCount < 1)
+            throw std::runtime_error("CampaignIndex: invalid steps for " + name);
+        const size_t steps = static_cast<size_t>(stepCount);
+        Dims shape;
+        std::istringstream dimensions(vars.Text(7));
+        size_t extent;
+        while (dimensions >> extent)
+        {
+            shape.push_back(extent);
+            dimensions >> std::ws;
+            if (dimensions.peek() == ',')
+                dimensions.get();
+        }
+        if (vars.Integer(6) != static_cast<int64_t>(shape.size()))
+            throw std::runtime_error("CampaignIndex: unsupported shape for " + name);
+        index.variables.push_back({name, std::move(entry), type, steps, std::move(shape),
+                                   vars.Text(4), vars.Text(5), vars.Text(8)});
+    }
+    Query attrs(db.get(), "SELECT datasetid, name, type, value FROM attributes");
+    while (attrs.Next())
+    {
+        index.attributes.push_back({prefixes.at(attrs.Integer(0)) + attrs.Text(1),
+                                    types.at(attrs.Integer(2)), attrs.Text(3)});
+    }
+    return index;
+}
 
 static inline sqlite3 *get_impl(void *v) { return reinterpret_cast<sqlite3 *>(v); }
 

@@ -138,6 +138,42 @@ struct CampaignVersion
     double version;
 };
 
+// Metadata loaded from an ACX index. SQLite handles and row decoding stay in
+// CampaignData; readers consume these records to define variables/attributes.
+struct CampaignIndexEntry
+{
+    std::string archive;
+    size_t dataset; // dataset rowid in the corresponding ACA archive
+    std::string datasetName;
+    std::string name; // variable name within the dataset (image resolution, or empty for text)
+    std::string format;
+};
+
+struct CampaignIndexVariable
+{
+    std::string name;
+    CampaignIndexEntry source;
+    DataType type;
+    size_t steps;
+    Dims shape;
+    std::string minimum;
+    std::string maximum;
+    std::string value; // JSON scalar metadata
+};
+
+struct CampaignIndexAttribute
+{
+    std::string name;
+    DataType type;
+    std::string value; // JSON scalar or array
+};
+
+struct CampaignIndex
+{
+    std::vector<CampaignIndexVariable> variables;
+    std::vector<CampaignIndexAttribute> attributes;
+};
+
 class CampaignData
 {
 public:
@@ -168,6 +204,9 @@ public:
     CampaignData() = default;
     ~CampaignData() = default;
 
+    // Load an index read-only, closing its database before returning.
+    static CampaignIndex ReadIndex(const std::string &path);
+
     void Open(const std::string path);
     void ReadDatabase();
     void Close();
@@ -192,6 +231,8 @@ public:
     std::string GetTarIdx(const size_t dsIdx, const size_t repIdx, const FileFormat format);
 
 private:
+    class Query;
+
     void DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex, const std::string &path,
                             char *data);
     void *m_DB = nullptr;
