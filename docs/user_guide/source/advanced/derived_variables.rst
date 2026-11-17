@@ -94,7 +94,7 @@ Derived variables that store data become primary data once the write operation i
 Build ADIOS2 with support for derived variables
 -----------------------------------------------
 
-By default the derived variables are ``OFF``. Building ADIOS2 with derived variables turned on requires ``-DADIOS2_USE_Derived_Variables=ON``.
+Derived variables are ``ON`` by default since v2.13 (earlier releases had them ``OFF``). Building ADIOS2 without derived variables requires ``-DADIOS2_USE_Derived_Variable=OFF``.
 
 
 Supported derived operations
