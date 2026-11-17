@@ -52,7 +52,7 @@ endif()
 # flcl package needed for the Kokkos Fortran example
 find_package(flcl QUIET)
 
-# C++ Kokkos example using default layouts and different memory spaces
+# C++ Kokkos example using different memory spaces
 add_executable(adios2_hello_bpStepsWriteReadKokkos bpStepsWriteReadKokkos.cpp)
 kokkos_compilation(SOURCE bpStepsWriteReadKokkos.cpp)
 if(ADIOS2_HAVE_MPI)
