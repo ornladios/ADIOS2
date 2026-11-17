@@ -106,6 +106,17 @@ environment-variable fallback. On Slingshot, the required OFI auth key is
 supplied automatically from ``SLINGSHOT_VNIS``. See the SST engine
 documentation for details.
 
+Derived variables on by default
+-------------------------------
+
+Derived variables are now built by default (``ADIOS2_USE_Derived_Variable``
+defaults to ``ON``; it was ``OFF`` in earlier releases). A ``StoreData`` derived
+variable can also have an operator (for example a compressor) added through the
+handle returned by ``DefineDerivedVariable``, with ``AddOperation`` in C++ and
+``add_operation`` in Python, the same way as a primary variable. Previously an
+operator could be attached only through the XML configuration. Derived
+variables are still supported only by the BP5 engine.
+
 Reader-defined derived variables
 --------------------------------
 
