@@ -738,11 +738,6 @@ StepStatus DaosReader::BeginStep(StepMode mode, const float timeoutSeconds)
         InstallMetadataForTimestep(m_CurrentStep);
         CALI_MARK_END("DaosReader::InstallMetadataForTimestep");
         m_IO.ResetVariablesStepSelection(false, "in call to BP5 Reader BeginStep");
-
-        // caches attributes for each step
-        // if a variable name is a prefix
-        // e.g. var  prefix = {var/v1, var/v2, var/v3}
-        m_IO.SetPrefixedNames(true);
     }
 
     return status;

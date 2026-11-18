@@ -918,36 +918,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart, const std::string hin
     }
 }
 
-void IO::SetPrefixedNames(const bool isStep) noexcept
-{
-    const std::set<std::string> attributes = helper::KeysToSet(m_Attributes);
-    const std::set<std::string> variables = helper::KeysToSet(m_Variables);
-
-    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end(); ++itVariable)
-    {
-        // if for each step (BP4), check if variable type is not empty
-        // (means variable exist in that step)
-        const DataType type = isStep ? InquireVariableType(itVariable) : itVariable->second->m_Type;
-
-        if (type == DataType::None)
-        {
-            continue;
-        }
-
-        if (type == DataType::Struct)
-        {
-        }
-        else
-        {
-            VariableBase &variable = *itVariable->second;
-            variable.m_PrefixedVariables = helper::PrefixMatches(variable.m_Name, variables);
-            variable.m_PrefixedAttributes = helper::PrefixMatches(variable.m_Name, attributes);
-        }
-    }
-
-    m_IsPrefixedNames = true;
-}
-
 // PRIVATE
 void IO::CheckAttributeCommon(const std::string &name) const
 {

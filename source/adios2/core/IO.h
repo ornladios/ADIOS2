@@ -83,10 +83,6 @@ public:
     std::unordered_map<std::string, std::vector<std::pair<std::string, Params>>>
         m_VarOpsPlaceholder;
 
-    /** true: prefix variables/attributes are cached per variable
-     *   when function m_IsPrefixedNames called */
-    bool m_IsPrefixedNames = false;
-
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
      * Not to be used direclty in applications.
@@ -525,8 +521,6 @@ public:
      * @param alwaysZero true: always m_StepsStart = 0, false: capture
      */
     void ResetVariablesStepSelection(const bool zeroStart = false, const std::string hint = "");
-
-    void SetPrefixedNames(const bool isStep) noexcept;
 
     using MakeEngineFunc =
         std::function<std::shared_ptr<Engine>(IO &, const std::string &, const Mode, helper::Comm)>;
