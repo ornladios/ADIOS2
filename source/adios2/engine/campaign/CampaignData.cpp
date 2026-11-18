@@ -92,10 +92,18 @@ DataType IndexType(std::string name)
 
 } // namespace
 
-CampaignIndex CampaignData::ReadIndex(const std::string &path)
+void CampaignData::StreamIndex(const std::string &path, size_t batchSize,
+                               const std::function<void(CampaignIndex &)> &consume)
 {
+    if (batchSize == 0)
+        throw std::invalid_argument("CampaignIndex: batch size must be positive");
     using Database = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;
     CampaignIndex index;
+    auto flush = [&] {
+        consume(index);
+        index.variables.clear();
+        index.attributes.clear();
+    };
     sqlite3 *raw = nullptr;
     const int rc = sqlite3_open_v2(path.c_str(), &raw, SQLITE_OPEN_READONLY, nullptr);
     Database db(raw, sqlite3_close);
@@ -139,28 +147,21 @@ CampaignIndex CampaignData::ReadIndex(const std::string &path)
         if (stepCount < 1)
             throw std::runtime_error("CampaignIndex: invalid steps for " + name);
         const size_t steps = static_cast<size_t>(stepCount);
-        Dims shape;
-        std::istringstream dimensions(vars.Text(7));
-        size_t extent;
-        while (dimensions >> extent)
-        {
-            shape.push_back(extent);
-            dimensions >> std::ws;
-            if (dimensions.peek() == ',')
-                dimensions.get();
-        }
-        if (vars.Integer(6) != static_cast<int64_t>(shape.size()))
-            throw std::runtime_error("CampaignIndex: unsupported shape for " + name);
-        index.variables.push_back({name, std::move(entry), type, steps, std::move(shape),
-                                   vars.Text(4), vars.Text(5), vars.Text(8)});
+        index.variables.push_back({name, std::move(entry), type, steps, vars.Integer(6),
+                                   vars.Text(7), vars.Text(4), vars.Text(5), vars.Text(8)});
+        if (index.variables.size() == batchSize)
+            flush();
     }
     Query attrs(db.get(), "SELECT datasetid, name, type, value FROM attributes");
     while (attrs.Next())
     {
         index.attributes.push_back({prefixes.at(attrs.Integer(0)) + attrs.Text(1),
                                     types.at(attrs.Integer(2)), attrs.Text(3)});
+        if (index.variables.size() + index.attributes.size() == batchSize)
+            flush();
     }
-    return index;
+    if (!index.variables.empty() || !index.attributes.empty())
+        flush();
 }
 
 static inline sqlite3 *get_impl(void *v) { return reinterpret_cast<sqlite3 *>(v); }

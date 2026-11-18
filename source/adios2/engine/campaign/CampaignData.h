@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <string>
@@ -155,7 +156,8 @@ struct CampaignIndexVariable
     CampaignIndexEntry source;
     DataType type;
     size_t steps;
-    Dims shape;
+    int64_t dimensions;
+    std::string shape; // decoded by definition workers, not the SQLite streamer
     std::string minimum;
     std::string maximum;
     std::string value; // JSON scalar metadata
@@ -204,8 +206,11 @@ public:
     CampaignData() = default;
     ~CampaignData() = default;
 
-    // Load an index read-only, closing its database before returning.
-    static CampaignIndex ReadIndex(const std::string &path);
+    // One read-only SQLite connection, used only by the calling thread. Each
+    // callback receives at most batchSize owned rows, variables then attributes.
+    // The consumer may swap out the batch; no SQLite column pointers escape.
+    static void StreamIndex(const std::string &path, size_t batchSize,
+                            const std::function<void(CampaignIndex &)> &consume);
 
     void Open(const std::string path);
     void ReadDatabase();
