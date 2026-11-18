@@ -43,6 +43,29 @@ without opening any campaign archive or dataset. Names have the form
 Attribute names retain their stored spelling, including leading slashes.
 The SQLite connection is read-only and is released when Open finishes.
 
+Metadata loading uses one SQLite streamer and a fixed pool of workers. Workers
+decode shapes, scalar summaries, and attribute JSON and construct private ADIOS
+definition batches. The calling thread merges completed batches in stream order;
+workers never access the SQLite connection or modify the destination IO maps.
+Work is split by entry count, so even one archive containing one large BP file
+can use all workers. At most one batch per worker plus the streamer's current
+batch is in flight, avoiding a second complete decoded copy of the index.
+
+The following engine parameters control metadata loading (case insensitive):
+
+* ``MetadataThreads``: number of definition workers, defaulting to the smaller
+  of 4 and the detected hardware concurrency (at least 1). Setting it to ``1``
+  processes batches on the calling thread without starting worker threads.
+* ``MetadataBatchSize``: maximum number of variables and attributes in one
+  batch, default ``4096``. Both parameters must be positive integers.
+
+Batches amortize scheduling and merge overhead across many entries. Smaller
+batches balance uneven metadata costs more closely; larger batches reduce
+handoffs but retain more temporary metadata. Dataset/archive boundaries do not
+limit parallelism. Duplicate indexed definition names are rejected. A failed
+Open joins all workers before propagating the error; definitions already merged
+into the IO remain installed, so use a fresh IO when retrying a failed load.
+
 Shapes and min/max are index summaries; the index does not contain block
 decomposition, per-step shapes, or per-step extrema. Block inquiries for ADIOS
 and HDF5 variables open the source dataset lazily and return its block metadata.

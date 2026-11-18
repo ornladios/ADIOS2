@@ -6,6 +6,7 @@
 
 #include "CampaignIndexReader.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/core/DefinitionBatch.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/remote/Remote.h"
@@ -16,11 +17,16 @@
 #include <nlohmann_json.hpp>
 
 #include <algorithm>
+#include <condition_variable>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
+#include <limits>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <sstream>
+#include <thread>
 #include <type_traits>
 
 namespace adios2
@@ -74,8 +80,9 @@ T JSONValue(const nlohmann::json &value)
 }
 
 template <class T>
-void DefineEntry(IO &io, Engine *engine, const std::string &name, const Dims &shape, size_t steps,
-                 const std::string &minimum, const std::string &maximum, const std::string &value)
+void DefineEntry(DefinitionBatch &io, Engine *engine, const std::string &name, const Dims &shape,
+                 size_t steps, const std::string &minimum, const std::string &maximum,
+                 const std::string &value)
 {
     auto &v = io.DefineVariable<T>(name, shape, Dims(shape.size(), 0), shape);
     v.m_Engine = engine;
@@ -106,8 +113,10 @@ void DefineEntry(IO &io, Engine *engine, const std::string &name, const Dims &sh
 }
 
 template <class T>
-void DefineIndexAttribute(IO &io, const std::string &name, const std::string &text)
+void DefineIndexAttribute(DefinitionBatch &io, const std::string &name, const std::string &text)
 {
+    if (io.InquireAttribute<T>(name))
+        throw std::invalid_argument("CampaignIndex: duplicate attribute: " + name);
     const auto j = nlohmann::json::parse(text);
     if (j.is_array())
     {
@@ -119,6 +128,213 @@ void DefineIndexAttribute(IO &io, const std::string &name, const std::string &te
     }
     else
         io.DefineAttribute<T>(name, JSONValue<T>(j));
+}
+
+// A slot is reused only after its previous definitions have been merged. The
+// caller alone streams SQLite and mutates the destination IO and source map.
+// Fixed worker threads own private batches; round-robin draining preserves row
+// order, bounds temporary storage, and applies backpressure to the streamer.
+class IndexDefinitionLoader
+{
+public:
+    using Entries = std::unordered_map<std::string, CampaignIndexEntry>;
+    IndexDefinitionLoader(IO &io, Engine *engine, Entries &entries, size_t &steps, size_t threads,
+                          size_t batchSize)
+    : m_IO(io), m_Engine(engine), m_Entries(entries), m_Steps(steps), m_Parallel(threads > 1)
+    {
+        for (size_t i = 0; i < threads; ++i)
+        {
+            auto worker = std::make_unique<Worker>();
+            worker->definitions = io.CreateDefinitionBatch(batchSize);
+            m_Workers.push_back(std::move(worker));
+        }
+        try
+        {
+            if (m_Parallel)
+                for (auto &worker : m_Workers)
+                    worker->thread = std::thread([this, w = worker.get()] { Run(*w); });
+        }
+        catch (...)
+        {
+            Stop();
+            throw;
+        }
+    }
+    ~IndexDefinitionLoader() { Stop(); }
+
+    void Submit(CampaignIndex &rows)
+    {
+        auto &worker = *m_Workers[m_Next];
+        Merge(worker);
+        std::swap(rows, worker.rows);
+        if (m_Parallel)
+        {
+            {
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                worker.state = State::Working;
+            }
+            m_Condition.notify_all();
+        }
+        else
+        {
+            Build(worker);
+            worker.state = State::Done;
+            Merge(worker);
+        }
+        m_Next = (m_Next + 1) % m_Workers.size();
+    }
+
+    void Finish()
+    {
+        for (size_t i = 0; i < m_Workers.size(); ++i)
+            Merge(*m_Workers[(m_Next + i) % m_Workers.size()]);
+        m_IO.FinalizeDefinitions();
+    }
+
+private:
+    enum class State
+    {
+        Idle,
+        Working,
+        Done
+    };
+    struct Worker
+    {
+        CampaignIndex rows;
+        std::unique_ptr<DefinitionBatch> definitions;
+        Entries entries;
+        size_t steps = 0;
+        State state = State::Idle;
+        std::exception_ptr error;
+        std::thread thread;
+    };
+
+    void Build(Worker &worker)
+    {
+        for (auto &variable : worker.rows.variables)
+        {
+            Dims shape;
+            std::istringstream dimensions(variable.shape);
+            size_t extent;
+            while (dimensions >> extent)
+            {
+                shape.push_back(extent);
+                dimensions >> std::ws;
+                if (dimensions.peek() == ',')
+                    dimensions.get();
+            }
+            if (variable.dimensions != static_cast<int64_t>(shape.size()))
+                throw std::runtime_error("CampaignIndex: unsupported shape for " + variable.name);
+            bool supported = false;
+#define declare_type(T)                                                                            \
+    if (variable.type == helper::GetDataType<T>())                                                 \
+    {                                                                                              \
+        DefineEntry<T>(*worker.definitions, m_Engine, variable.name, shape, variable.steps,        \
+                       variable.minimum, variable.maximum, variable.value);                        \
+        supported = true;                                                                          \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            if (!supported)
+                throw std::runtime_error("CampaignIndex: unsupported type for " + variable.name);
+            worker.steps = std::max(worker.steps, variable.steps);
+            worker.entries.emplace(std::move(variable.name), std::move(variable.source));
+        }
+        for (const auto &attribute : worker.rows.attributes)
+        {
+            bool supported = false;
+#define declare_type(T)                                                                            \
+    if (attribute.type == helper::GetDataType<T>())                                                \
+    {                                                                                              \
+        DefineIndexAttribute<T>(*worker.definitions, attribute.name, attribute.value);             \
+        supported = true;                                                                          \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            if (!supported)
+                throw std::runtime_error("CampaignIndex: unsupported attribute type for " +
+                                         attribute.name);
+        }
+        worker.rows.variables.clear();
+        worker.rows.attributes.clear();
+    }
+
+    void Run(Worker &worker)
+    {
+        std::unique_lock<std::mutex> lock(m_Mutex);
+        for (;;)
+        {
+            m_Condition.wait(lock, [&] { return m_Stop || worker.state == State::Working; });
+            if (m_Stop)
+                return;
+            lock.unlock();
+            try
+            {
+                Build(worker);
+            }
+            catch (...)
+            {
+                worker.error = std::current_exception();
+            }
+            lock.lock();
+            worker.state = State::Done;
+            m_Condition.notify_all();
+        }
+    }
+
+    void Merge(Worker &worker)
+    {
+        {
+            std::unique_lock<std::mutex> lock(m_Mutex);
+            m_Condition.wait(lock, [&] { return worker.state != State::Working; });
+            if (worker.state == State::Idle)
+                return;
+        }
+        if (worker.error)
+            std::rethrow_exception(worker.error);
+        m_IO.MergeDefinitions(*worker.definitions);
+        m_Entries.merge(worker.entries);
+        m_Steps = std::max(m_Steps, worker.steps);
+        worker.steps = 0;
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            worker.state = State::Idle;
+        }
+    }
+
+    void Stop()
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            m_Stop = true;
+        }
+        m_Condition.notify_all();
+        for (auto &worker : m_Workers)
+            if (worker->thread.joinable())
+                worker->thread.join();
+    }
+
+    IO &m_IO;
+    Engine *m_Engine;
+    Entries &m_Entries;
+    size_t &m_Steps;
+    const bool m_Parallel;
+    std::vector<std::unique_ptr<Worker>> m_Workers;
+    size_t m_Next = 0;
+    std::mutex m_Mutex;
+    std::condition_variable m_Condition;
+    bool m_Stop = false;
+};
+
+size_t PositiveParameter(const std::string &name, const std::string &value)
+{
+    if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos)
+        throw std::invalid_argument("CampaignIndex: " + name + " must be a positive integer");
+    size_t used = 0;
+    const auto result = std::stoull(value, &used);
+    if (!result || result > std::numeric_limits<size_t>::max() || used != value.size())
+        throw std::invalid_argument("CampaignIndex: " + name + " must be a positive integer");
+    return static_cast<size_t>(result);
 }
 } // namespace
 
@@ -148,40 +364,19 @@ CampaignIndexReader::~CampaignIndexReader()
 void CampaignIndexReader::Init()
 {
     m_IO.m_ReadStreaming = false;
-    const auto index = CampaignData::ReadIndex(m_Name);
-    for (const auto &variable : index.variables)
+    size_t threads = std::min(4u, std::max(1u, std::thread::hardware_concurrency()));
+    size_t batchSize = 4096;
+    for (const auto &parameter : m_IO.m_Parameters)
     {
-        const auto &name = variable.name;
-        m_Entries.emplace(name, variable.source);
-        bool supported = false;
-#define declare_type(T)                                                                            \
-    if (variable.type == helper::GetDataType<T>())                                                 \
-    {                                                                                              \
-        DefineEntry<T>(m_IO, this, name, variable.shape, variable.steps, variable.minimum,         \
-                       variable.maximum, variable.value);                                          \
-        supported = true;                                                                          \
+        const auto key = helper::LowerCase(parameter.first);
+        if (key == "metadatathreads")
+            threads = PositiveParameter(parameter.first, parameter.second);
+        else if (key == "metadatabatchsize")
+            batchSize = PositiveParameter(parameter.first, parameter.second);
     }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        if (!supported)
-            throw std::runtime_error("CampaignIndex: unsupported type for " + name);
-        m_Steps = std::max(m_Steps, variable.steps);
-    }
-    for (const auto &attribute : index.attributes)
-    {
-        bool supported = false;
-#define declare_type(T)                                                                            \
-    if (attribute.type == helper::GetDataType<T>())                                                \
-    {                                                                                              \
-        DefineIndexAttribute<T>(m_IO, attribute.name, attribute.value);                            \
-        supported = true;                                                                          \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        if (!supported)
-            throw std::runtime_error("CampaignIndex: unsupported attribute type for " +
-                                     attribute.name);
-    }
+    IndexDefinitionLoader loader(m_IO, this, m_Entries, m_Steps, threads, batchSize);
+    CampaignData::StreamIndex(m_Name, batchSize, [&](CampaignIndex &rows) { loader.Submit(rows); });
+    loader.Finish();
 }
 
 StepStatus CampaignIndexReader::BeginStep(StepMode mode, float)

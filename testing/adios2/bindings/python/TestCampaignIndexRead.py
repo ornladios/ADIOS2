@@ -86,12 +86,144 @@ class TestCampaignIndexRead(unittest.TestCase):
             else:
                 (self.root / dataset).write_bytes(payload)
 
-    def open(self, mode=adios2.Mode.ReadRandomAccess):
+    def open(self, mode=adios2.Mode.ReadRandomAccess, parameters=None):
         adios = adios2.Adios()
         io = adios.declare_io("index")
         io.set_parameter("hostname", "fixture-local")
+        if parameters:
+            io.set_parameters(parameters)
         engine = io.open(str(self.index), mode)
         return adios, io, engine
+
+    def metadata_fixture(self):
+        # All entries share one archive and dataset. No archive exists: Open
+        # must use only the index, splitting work within this single dataset.
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.executescript(INDEX_SCHEMA)
+            db.execute("INSERT INTO variabletypes VALUES (3,'int32_t'),(4,'string')")
+            db.execute("INSERT INTO datasets VALUES (1,1,13,'one.bp',4)")
+            for i in range(37):
+                db.execute(
+                    "INSERT INTO variables VALUES (1,1,?,3,1,?,?,0,'',?)",
+                    (f"v{i:03}", str(i), str(i), str(i)),
+                )
+                db.execute(
+                    "INSERT INTO attributes VALUES (1,?,?,?)",
+                    (
+                        f"/a{i:03}",
+                        3 if i % 2 == 0 else 4,
+                        json.dumps([i, i + 1] if i % 2 == 0 else f"text {i}"),
+                    ),
+                )
+            db.execute("INSERT INTO variables VALUES (1,1,'array',3,3,'3','8',2,'2,3',NULL)")
+
+    def test_metadata_batches(self):
+        self.metadata_fixture()
+        before = self.index.read_bytes()
+        prefix = "store/data.aca/one.bp/"
+        for threads, batch in [(1, 1), (4, 1), (3, 7), (4, 32), (4, 4096)]:
+            with self.subTest(threads=threads, batch=batch):
+                adios, io, engine = self.open(
+                    parameters={"MetadataThreads": str(threads), "metadatabatchsize": str(batch)}
+                )
+                try:
+                    self.assertEqual(len(io.available_variables()), 38)
+                    self.assertEqual(len(io.available_attributes()), 37)
+                    self.assertEqual(engine.steps(), 3)
+                    for i in range(37):
+                        var = io.inquire_variable(prefix + f"v{i:03}")
+                        data = np.zeros(1, np.int32)
+                        engine.get(var, data, adios2.Mode.Sync)
+                        self.assertEqual(data[0], i)
+                        attr = io.inquire_attribute(prefix + f"/a{i:03}")
+                        if i % 2 == 0:
+                            np.testing.assert_array_equal(attr.data(), [i, i + 1])
+                        else:
+                            self.assertEqual(attr.data_string(), f"text {i}")
+                    array = io.inquire_variable(prefix + "array")
+                    self.assertEqual(array.shape(), [2, 3])
+                    self.assertEqual(array.steps(), 3)
+                    summary = io.available_variables()[prefix + "array"]
+                    self.assertEqual(float(summary["Min"]), 3)
+                    self.assertEqual(float(summary["Max"]), 8)
+                finally:
+                    engine.close()
+        self.assertEqual(self.index.read_bytes(), before)
+
+    def test_metadata_multiple_sources(self):
+        self.metadata_fixture()
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.execute("INSERT INTO archives VALUES (7,'store/second.aca')")
+            db.execute("INSERT INTO datasets VALUES (91,7,100,'other.json',4)")
+            db.execute("INSERT INTO variables VALUES (7,91,'v000',3,1,'99','99',0,'','99')")
+            db.execute("INSERT INTO attributes VALUES (91,'/a000',3,'[17]')")
+        adios, io, engine = self.open(parameters={"MetadataThreads": "4", "MetadataBatchSize": "7"})
+        try:
+            self.assertEqual(len(io.available_variables()), 39)
+            self.assertEqual(len(io.available_attributes()), 38)
+            prefix = "store/second.aca/other.json/"
+            data = np.zeros(1, np.int32)
+            engine.get(io.inquire_variable(prefix + "v000"), data, adios2.Mode.Sync)
+            self.assertEqual(data[0], 99)
+            np.testing.assert_array_equal(io.inquire_attribute(prefix + "/a000").data(), [17])
+        finally:
+            engine.close()
+
+    def test_empty_and_attribute_only_batches(self):
+        self.metadata_fixture()
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.execute("DELETE FROM variables")
+        for empty in (False, True):
+            if empty:
+                with closing(sqlite3.connect(self.index)) as db, db:
+                    db.execute("DELETE FROM attributes")
+            adios, io, engine = self.open(
+                parameters={"MetadataThreads": "4", "MetadataBatchSize": "3"}
+            )
+            self.assertEqual(len(io.available_variables()), 0)
+            self.assertEqual(len(io.available_attributes()), 0 if empty else 37)
+            self.assertEqual(engine.steps(), 0)
+            engine.close()
+
+    def test_metadata_loading_errors(self):
+        # Fail in a worker, in the producer with batches in flight, and during
+        # a serial merge. Every path must join the pool and release SQLite.
+        cases = [
+            ("UPDATE variables SET ndim=2 WHERE rowid=37", "unsupported shape"),
+            ("UPDATE variables SET min='bad' WHERE rowid=37", None),
+            ("UPDATE attributes SET value='invalid json' WHERE rowid=37", None),
+            ("UPDATE variables SET name='v000' WHERE rowid=37", "already defined"),
+            (
+                "UPDATE attributes SET name='/a000' WHERE rowid=37",
+                "already defined|duplicate attribute",
+            ),
+            ("UPDATE variables SET datasetid=999 WHERE rowid=37", None),
+            ("DROP TABLE attributes", "no such table"),
+        ]
+        for sql, message in cases:
+            for threads, batch in [(1, 3), (4, 3), (4, 4096)]:
+                with self.subTest(sql=sql, threads=threads, batch=batch):
+                    self.index.unlink(missing_ok=True)
+                    self.metadata_fixture()
+                    with closing(sqlite3.connect(self.index)) as db, db:
+                        db.execute(sql)
+                    with self.assertRaisesRegex(Exception, message or "."):
+                        self.open(
+                            parameters={
+                                "MetadataThreads": str(threads),
+                                "MetadataBatchSize": str(batch),
+                            }
+                        )
+                    # A failed Open must not leave a database handle or worker.
+                    with closing(sqlite3.connect(self.index)) as db, db:
+                        db.execute("CREATE TABLE after_failure(x)")
+
+    def test_invalid_metadata_parameters(self):
+        self.metadata_fixture()
+        for key in ("MetadataThreads", "MetadataBatchSize"):
+            for value in ("0", "-1", "2x", "", "999999999999999999999999999999"):
+                with self.subTest(key=key, value=value), self.assertRaises(Exception):
+                    self.open(parameters={key: value})
 
     def dataset_fixture(self, hdf5=False, series=False, leading_slash=False, multiblock=False):
         prefix = "bbb/" if leading_slash else ""
@@ -132,10 +264,14 @@ class TestCampaignIndexRead(unittest.TestCase):
             db.execute("INSERT INTO variabletypes VALUES (3,'double'),(4,'int32_t')")
             db.execute("INSERT INTO datasettypes VALUES (5,?)", (fmt,))
             db.execute("INSERT INTO datasets VALUES (1,1,13,?,5)", (logical,))
-            db.execute("INSERT INTO variables VALUES (1,1,?,3,?,NULL,NULL,1,'6',NULL)",
-                       (prefix + "values", 2 * len(files)))
-            db.execute("INSERT INTO variables VALUES (1,1,?,4,?,NULL,NULL,0,'',NULL)",
-                       (prefix + "scalar", 2 * len(files)))
+            db.execute(
+                "INSERT INTO variables VALUES (1,1,?,3,?,NULL,NULL,1,'6',NULL)",
+                (prefix + "values", 2 * len(files)),
+            )
+            db.execute(
+                "INSERT INTO variables VALUES (1,1,?,4,?,NULL,NULL,0,'',NULL)",
+                (prefix + "scalar", 2 * len(files)),
+            )
         with closing(sqlite3.connect(self.archive)) as db, db:
             db.executescript(SCHEMA)
             db.execute("INSERT INTO info VALUES ('ACA','test','0.8',0)")
@@ -144,9 +280,11 @@ class TestCampaignIndexRead(unittest.TestCase):
             if series:
                 db.execute("INSERT INTO timeseries VALUES (7,'series')")
             for i, filename in enumerate(files):
-                db.execute("INSERT INTO dataset(rowid,name,uuid,modtime,deltime,fileformat,tsid,tsorder) "
-                           "VALUES (?,?,?,0,0,?,?,?)",
-                           (13 + i, filename, "uuid-" + str(i), fmt, 7 if series else 0, i * 3))
+                db.execute(
+                    "INSERT INTO dataset(rowid,name,uuid,modtime,deltime,fileformat,tsid,tsorder) "
+                    "VALUES (?,?,?,0,0,?,?,?)",
+                    (13 + i, filename, "uuid-" + str(i), fmt, 7 if series else 0, i * 3),
+                )
                 db.execute("INSERT INTO replica VALUES (?,1,1,0,?,0,0,0,0)", (13 + i, filename))
 
     def test_multiblock_metadata_and_selection(self):
@@ -225,7 +363,7 @@ class TestCampaignIndexRead(unittest.TestCase):
     def check_dataset(self, hdf5=False, series=False, leading_slash=False):
         self.dataset_fixture(hdf5, series, leading_slash)
         before = self.archive.read_bytes()
-        adios, io, engine = self.open()
+        adios, io, engine = self.open(parameters={"MetadataThreads": "3", "MetadataBatchSize": "1"})
         try:
             var = io.inquire_variable(self.name)
             var.set_selection([[1], [3]])
@@ -245,7 +383,7 @@ class TestCampaignIndexRead(unittest.TestCase):
             engine.perform_gets()
             np.testing.assert_array_equal(a, [0, 1])
             np.testing.assert_array_equal(b, [3, 4, 5])
-            scalar = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/scalar')
+            scalar = io.inquire_variable(self.name.rsplit("/", 1)[0] + "/scalar")
             scalar.set_step_selection([1, 2 if series else 1])
             scalars = np.zeros(2 if series else 1, np.int32)
             engine.get(scalar, scalars, adios2.Mode.Sync)
@@ -262,6 +400,7 @@ class TestCampaignIndexRead(unittest.TestCase):
         # A fresh reader can use the same ADIOS after closing cached engines.
         io = adios.declare_io("streaming-index")
         io.set_parameter("hostname", "fixture-local")
+        io.set_parameters({"MetadataThreads": "3", "MetadataBatchSize": "1"})
         engine = io.open(str(self.index), adios2.Mode.Read)
         try:
             for step in range(4 if series else 2):
@@ -302,7 +441,7 @@ class TestCampaignIndexRead(unittest.TestCase):
             db.execute("UPDATE variables SET steps=1 WHERE name='scalar'")
         adios, io, engine = self.open()
         try:
-            scalar = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/scalar')
+            scalar = io.inquire_variable(self.name.rsplit("/", 1)[0] + "/scalar")
             data = np.zeros(1, np.int32)
             engine.get(scalar, data, adios2.Mode.Sync)
             np.testing.assert_array_equal(data, [100])
@@ -321,7 +460,7 @@ class TestCampaignIndexRead(unittest.TestCase):
             db.execute("UPDATE variables SET name='missing' WHERE name='scalar'")
         adios, io, engine = self.open()
         try:
-            var = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/missing')
+            var = io.inquire_variable(self.name.rsplit("/", 1)[0] + "/missing")
             with self.assertRaisesRegex(RuntimeError, "variable not found with indexed type"):
                 engine.get(var, np.zeros(1, np.int32), adios2.Mode.Sync)
         finally:
