@@ -460,6 +460,10 @@ std::map<std::string, Params> IO::GetAvailableAttributes(const std::string &vari
     if (!variableName.empty())
     {
         auto itVariable = m_Variables.find(variableName);
+        if (itVariable == m_Variables.end())
+        {
+            return attributesInfo;
+        }
         const DataType type = InquireVariableType(itVariable);
 
         if (type == DataType::Struct)
