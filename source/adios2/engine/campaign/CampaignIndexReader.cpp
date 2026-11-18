@@ -132,6 +132,19 @@ CampaignIndexReader::CampaignIndexReader(IO &io, const std::string &name, Mode m
     m_IsOpen = true;
 }
 
+CampaignIndexReader::~CampaignIndexReader()
+{
+    // Pending buffers may no longer exist when an unclosed reader is destroyed.
+    m_PendingGets.clear();
+    try
+    {
+        Close();
+    }
+    catch (...)
+    {
+    }
+}
+
 void CampaignIndexReader::Init()
 {
     m_IO.m_ReadStreaming = false;
@@ -209,6 +222,12 @@ void CampaignIndexReader::PerformGets()
 void CampaignIndexReader::DoClose(int)
 {
     PerformGets();
+    for (auto &item : m_DatasetEngines)
+    {
+        item.second.engine->Close();
+    }
+    m_BlockStorage.clear();
+    m_DatasetEngines.clear();
     m_Archives.clear();
     m_InStep = false;
     m_IO.m_ReadStreaming = false;
@@ -229,9 +248,28 @@ bool CampaignIndexReader::VarShape(const VariableBase &v, size_t step, Dims &sha
 }
 MinVarInfo *CampaignIndexReader::MinBlocksInfo(const VariableBase &v, size_t step) const
 {
+    if (m_InStep)
+        step = m_CurrentStep;
     if (step >= v.m_AvailableStepsCount)
         return nullptr;
-    // Expose the summary shape, but no invented block decomposition.
+    const auto &entry = m_Entries.at(v.m_Name);
+    if (entry.format == "ADIOS" || entry.format == "HDF5")
+    {
+        const auto source = FindSource(v, step);
+        auto *info = source.engine->MinBlocksInfo(*source.variable, source.step);
+        if (info)
+        {
+            info->Step = step; // The index exposes contiguous logical steps.
+            return info;
+        }
+#define declare_type(T)                                                                            \
+    if (v.m_Type == helper::GetDataType<T>())                                                      \
+        return FallbackMinBlocksInfo(static_cast<const Variable<T> &>(v), step);
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        throw std::runtime_error("CampaignIndex: unsupported block metadata type");
+    }
+    // Byte/text entries have no source engine or physical block decomposition.
     auto *info = new MinVarInfo(static_cast<int>(v.m_Shape.size()), v.m_Shape.data());
     info->Step = step;
     info->WasLocalValue = false;
@@ -259,7 +297,7 @@ bool CampaignIndexReader::VariableMinMax(const VariableBase &v, size_t step, Min
     return true;
 }
 
-CampaignIndexReader::Archive &CampaignIndexReader::OpenArchive(const std::string &name)
+CampaignIndexReader::Archive &CampaignIndexReader::OpenArchive(const std::string &name) const
 {
     auto it = m_Archives.find(name);
     if (it != m_Archives.end())
@@ -480,9 +518,414 @@ void CampaignIndexReader::ReadBytes(const Entry &entry, size_t start, size_t cou
     throw std::runtime_error("CampaignIndex: no readable replica for " + entry.datasetName);
 }
 
+std::vector<size_t> CampaignIndexReader::ResolveDatasets(Archive &archive, const Entry &entry) const
+{
+    const auto dataset = archive.datasets.find(entry.dataset);
+    if (dataset != archive.datasets.end() && dataset->second.name == entry.datasetName)
+        return {entry.dataset};
+    // A series is named by its logical dataset name; its ID need not equal a
+    // member dataset's rowid. Resolve membership from the ACA, in tsorder order.
+    for (const auto &item : archive.timeseries)
+    {
+        if (item.second.name != entry.datasetName)
+            continue;
+        std::vector<size_t> result;
+        for (const auto &member : item.second.datasets)
+            result.push_back(member.second);
+        if (!result.empty())
+            return result;
+    }
+    throw std::runtime_error("CampaignIndex: dataset no longer matches archive: " +
+                             entry.datasetName);
+}
+
+CampaignIndexReader::DatasetEngine &CampaignIndexReader::OpenDataset(const Entry &entry,
+                                                                     size_t dataset) const
+{
+    const std::string key = entry.archive + "/" + std::to_string(dataset);
+    auto cached = m_DatasetEngines.find(key);
+    if (cached != m_DatasetEngines.end())
+        return cached->second;
+    auto &archive = OpenArchive(entry.archive);
+    auto &ds = archive.datasets.at(dataset);
+    if (ds.format != FileFormat(entry.format))
+        throw std::runtime_error("CampaignIndex: dataset format no longer matches index");
+
+    std::string hostname = m_UserOptions.campaign.hostname;
+    std::string cache = m_UserOptions.campaign.cachepath;
+    for (const auto &p : m_IO.m_Parameters)
+    {
+        if (helper::LowerCase(p.first) == "hostname")
+            hostname = p.second;
+        if (helper::LowerCase(p.first) == "cachepath")
+            cache = p.second;
+    }
+    if (hostname.empty())
+        hostname = helper::GetClusterName();
+    std::vector<std::string> localHosts{hostname};
+    for (const auto &host : ADIOS::GetHostOptions())
+        for (const auto &config : host.second)
+            if (config.protocol == HostAccessProtocol::LocalHost)
+                localHosts.push_back(host.first);
+    auto replicas = archive.FindRemoteReplicas(dataset, ADIOS::GetHostOptions());
+    for (const auto &item : ds.replicas)
+        if (!item.second.deleted &&
+            std::find(localHosts.begin(), localHosts.end(),
+                      archive.hosts.at(item.second.hostIdx).hostname) != localHosts.end())
+            replicas.insert(replicas.begin(), item.first);
+
+    for (const auto id : replicas)
+    {
+        auto &rep = ds.replicas.at(id);
+        if (rep.deleted)
+            continue;
+        const auto &host = archive.hosts.at(rep.hostIdx);
+        const bool local =
+            std::find(localHosts.begin(), localHosts.end(), host.hostname) != localHosts.end();
+        std::string path = archive.directory.at(rep.dirIdx).path + PathSeparator + rep.name;
+        std::string tar;
+        if (rep.archiveIdx)
+        {
+            tar = archive.GetTarIdx(dataset, id, ds.format);
+            if (tar.empty())
+                continue;
+            path = archive.directory.at(rep.dirIdx).path + PathSeparator +
+                   archive.tarnames.at(rep.archiveIdx);
+        }
+        if (local && !std::filesystem::exists(path))
+            continue;
+        const std::string ioName = "CampaignIndex-" +
+                                   std::to_string(reinterpret_cast<uintptr_t>(this)) + "-" +
+                                   std::to_string(m_DatasetEngines.size());
+        // Own the inner IO so its lifetime does not depend on the order in
+        // which the parent ADIOS destroys its named IOs.
+        auto ownedIO = std::make_unique<IO>(m_IO.m_ADIOS, ioName, false, m_IO.m_HostLanguage);
+        auto &io = *ownedIO;
+        io.m_ArrayOrder = m_IO.m_ArrayOrder;
+        if (ds.format == FileFormat::HDF5)
+            io.SetEngine("HDF5");
+        if (!tar.empty())
+        {
+            io.SetParameter("TarInfo", tar);
+            if (ds.format == FileFormat::ADIOS)
+                io.SetEngine("BP5");
+        }
+        std::vector<char> metadata;
+        std::string openPath = path;
+        if (!local)
+        {
+            const auto cacheDir = std::filesystem::path(cache) / ds.uuid.substr(0, 3) / ds.uuid;
+            std::string keyhex;
+            if (rep.hasKey)
+            {
+                auto &k = archive.keys.at(rep.keyIdx);
+                if (k.keyHex.empty())
+                {
+                    Remote connection;
+                    k.keyHex = connection.GetKeyFromConnectionManager(k.id);
+                }
+                if (k.keyHex == "0")
+                    throw std::runtime_error("CampaignIndex: no key for dataset " + ds.name);
+                keyhex = k.keyHex;
+            }
+            bool first = true;
+            for (auto fileid : rep.files)
+            {
+                const auto &file = archive.files.at(fileid);
+                if (ds.format == FileFormat::ADIOS && file.name == "metadata")
+                {
+                    metadata.resize(file.lengthOriginal);
+                    archive.ReadToMemory(metadata.data(), fileid, keyhex);
+                }
+                else if (file.name != "profiling.json")
+                {
+                    helper::CreateDirectory(cacheDir.string());
+                    const auto target = cacheDir / std::filesystem::path(file.name).filename();
+                    archive.SaveToFile(target.string(), fileid, keyhex);
+                    if (ds.format == FileFormat::HDF5 && first)
+                        openPath = target.string();
+                    first = false;
+                }
+            }
+            if (ds.format == FileFormat::ADIOS && metadata.empty())
+                openPath = cacheDir.string();
+            io.SetParameter("UUID", ds.uuid);
+            if (host.defaultProtocol == "https" || host.defaultProtocol == "s3")
+            {
+                const HostConfig *config = nullptr;
+                auto options = ADIOS::GetHostOptions().find(host.hostname);
+                if (options != ADIOS::GetHostOptions().end())
+                    for (const auto &c : options->second)
+                        if ((host.defaultProtocol == "https" &&
+                             c.protocol == HostAccessProtocol::HTTPS) ||
+                            (host.defaultProtocol == "s3" && c.protocol == HostAccessProtocol::S3))
+                        {
+                            config = &c;
+                            break;
+                        }
+                Params params{{"cache", cacheDir.string()}, {"recheck_metadata", "false"}};
+                if (host.defaultProtocol == "https")
+                {
+                    std::string endpoint =
+                        config ? config->endpoint : "https://" + host.longhostname;
+                    if (!endpoint.empty() && endpoint.back() != '/')
+                        endpoint += '/';
+                    path = endpoint + (path.front() == '/' ? path.substr(1) : path);
+                    params["library"] = "https";
+                    if (config && !config->caFile.empty())
+                        params["ca_file"] = config->caFile;
+                }
+                else
+                {
+                    if (!config)
+                        throw std::runtime_error("CampaignIndex: no S3 host configuration for " +
+                                                 host.hostname);
+                    params["library"] = "awssdk";
+                    params["endpoint"] = config->endpoint;
+                    helper::PutEnv(std::string("AWS_PROFILE=") +
+                                   (config->awsProfile.empty() ? "default" : config->awsProfile));
+                    helper::PutEnv(std::string("AWS_EC2_METADATA_DISABLED=") +
+                                   (config->isAWS_EC2 ? "false" : "true"));
+                }
+                io.AddTransport("File", params);
+                if (ds.format == FileFormat::HDF5)
+                    io.SetParameter("RemoteObjectPath", path);
+                else
+                {
+                    io.SetEngine("BP5");
+                    openPath = path;
+                }
+            }
+            else
+            {
+                io.SetParameter("RemoteDataPath", path);
+                io.SetParameter("RemoteHost", host.hostname);
+            }
+        }
+        Engine *engine;
+        if (!metadata.empty())
+        {
+            if (metadata.size() < 8)
+                throw std::runtime_error("CampaignIndex: invalid embedded ADIOS metadata");
+            std::string type(metadata.data(), 8);
+            helper::RightTrim(type);
+            io.SetEngine(type);
+            engine = &io.Open(openPath, Mode::ReadRandomAccess, m_Comm.Duplicate(), metadata.data(),
+                              metadata.size());
+        }
+        else
+            engine = &io.Open(openPath, Mode::ReadRandomAccess, m_Comm.Duplicate());
+        return m_DatasetEngines.emplace(key, DatasetEngine{std::move(ownedIO), engine})
+            .first->second;
+    }
+    throw std::runtime_error("CampaignIndex: no readable replica for " + ds.name);
+}
+
+CampaignIndexReader::SourceVariable CampaignIndexReader::FindSource(const VariableBase &v,
+                                                                    size_t step) const
+{
+    if (!m_IsOpen)
+        throw std::logic_error("CampaignIndex: block inquiry on a closed engine");
+    if (step >= v.m_AvailableStepsCount)
+        throw std::invalid_argument("CampaignIndex: block inquiry exceeds indexed steps");
+    const auto &entry = m_Entries.at(v.m_Name);
+    auto &archive = OpenArchive(entry.archive);
+    for (const auto dataset : ResolveDatasets(archive, entry))
+    {
+        auto &source = OpenDataset(entry, dataset);
+        const auto &variables = source.io->GetVariables();
+        auto it = variables.find(entry.name);
+        if (it == variables.end() && !entry.name.empty() && entry.name.front() != '/')
+            it = variables.find("/" + entry.name);
+        if (it == variables.end())
+            continue;
+        auto *actual = it->second.get();
+        if (actual->m_Type != v.m_Type)
+            throw std::runtime_error("CampaignIndex: source variable type differs from index: " +
+                                     v.m_Name);
+        if (step < actual->m_AvailableStepsCount)
+            return {source.engine, actual, step};
+        step -= actual->m_AvailableStepsCount;
+    }
+    throw std::runtime_error("CampaignIndex: source variable has fewer steps than index: " +
+                             v.m_Name);
+}
+
+template <class T>
+std::vector<typename Variable<T>::BPInfo> CampaignIndexReader::BlocksInfo(const Variable<T> &v,
+                                                                          size_t step) const
+{
+    if (step >= v.m_AvailableStepsCount)
+        throw std::invalid_argument("CampaignIndex: block inquiry exceeds indexed steps");
+    const auto &entry = m_Entries.at(v.m_Name);
+    if (entry.format != "ADIOS" && entry.format != "HDF5")
+        return {};
+    const auto source = FindSource(v, step);
+    const auto &actual = static_cast<const Variable<T> &>(*source.variable);
+    std::unique_ptr<MinVarInfo> info(source.engine->MinBlocksInfo(actual, source.step));
+    std::vector<typename Variable<T>::BPInfo> blocks;
+    if (!info)
+    {
+        // The older typed interface takes absolute source steps.
+        const auto steps = source.engine->GetAbsoluteSteps(actual);
+        blocks = source.engine->BlocksInfo(actual, steps.at(source.step));
+    }
+    else
+    {
+        for (const auto &block : info->BlocksInfo)
+        {
+            typename Variable<T>::BPInfo result;
+            if (info->WasLocalValue)
+            {
+                result.Shape = {reinterpret_cast<size_t>(info->Shape)};
+                result.Start = {reinterpret_cast<size_t>(block.Start)};
+                result.Count = {reinterpret_cast<size_t>(block.Count)};
+            }
+            else
+            {
+                if (info->Shape && info->Dims)
+                    result.Shape.assign(info->Shape, info->Shape + info->Dims);
+                if (block.Start && info->Dims)
+                    result.Start.assign(block.Start, block.Start + info->Dims);
+                if (block.Count && info->Dims)
+                    result.Count.assign(block.Count, block.Count + info->Dims);
+            }
+            result.BlockID = block.BlockID;
+            result.WriterID = block.WriterID;
+            result.IsValue = info->IsValue;
+            result.IsReverseDims = info->IsReverseDims;
+            if (info->IsValue)
+            {
+                if constexpr (std::is_same<T, std::string>::value)
+                    result.Value = *static_cast<const char *const *>(block.BufferP);
+                else
+                    std::memcpy(&result.Value, block.BufferP, sizeof(T));
+            }
+            else if constexpr (!std::is_same<T, std::string>::value)
+            {
+                std::memcpy(&result.Min, &block.MinMax.MinUnion, sizeof(T));
+                std::memcpy(&result.Max, &block.MinMax.MaxUnion, sizeof(T));
+            }
+            blocks.push_back(std::move(result));
+        }
+    }
+    for (auto &block : blocks)
+        block.Step = step;
+    return blocks;
+}
+
+template <class T>
+MinVarInfo *CampaignIndexReader::FallbackMinBlocksInfo(const Variable<T> &v, size_t step) const
+{
+    auto &storage = m_BlockStorage[{v.m_Name, step}];
+    using Blocks = std::vector<typename Variable<T>::BPInfo>;
+    if (!storage.blocks)
+    {
+        auto blocks = std::make_shared<Blocks>(BlocksInfo(v, step));
+        if constexpr (std::is_same<T, std::string>::value)
+            for (const auto &block : *blocks)
+                storage.strings.push_back(block.Value.c_str());
+        storage.blocks = blocks;
+    }
+    const auto &blocks = *std::static_pointer_cast<Blocks>(storage.blocks);
+    auto info = std::make_unique<MinVarInfo>(0, nullptr);
+    info->Step = step;
+    info->WasLocalValue = false;
+    if (!blocks.empty())
+    {
+        info->IsValue = blocks.front().IsValue;
+        info->IsReverseDims = blocks.front().IsReverseDims;
+        info->Dims = static_cast<int>(blocks.front().Count.size());
+        if (!blocks.front().Shape.empty())
+            info->Shape = blocks.front().Shape.data();
+    }
+    for (size_t i = 0; i < blocks.size(); ++i)
+    {
+        const auto &block = blocks[i];
+        MinBlockInfo result;
+        result.BlockID = block.BlockID;
+        result.WriterID = block.WriterID;
+        result.Start = block.Start.empty() ? nullptr : block.Start.data();
+        result.Count = block.Count.empty() ? nullptr : block.Count.data();
+        result.MinMax.Init(v.m_Type);
+        if constexpr (!std::is_same<T, std::string>::value)
+        {
+            std::memcpy(&result.MinMax.MinUnion, &block.Min, sizeof(T));
+            std::memcpy(&result.MinMax.MaxUnion, &block.Max, sizeof(T));
+            if (block.IsValue)
+                result.BufferP = const_cast<T *>(&block.Value);
+        }
+        else
+            result.BufferP = &storage.strings[i];
+        info->BlocksInfo.push_back(result);
+    }
+    return info.release();
+}
+
+template <class T>
+void CampaignIndexReader::ReadDataset(const Entry &entry, Variable<T> &v, T *data)
+{
+    const size_t start = m_InStep ? m_CurrentStep : v.m_StepsStart;
+    const size_t count = m_InStep ? 1 : v.m_StepsCount;
+    if (start > v.m_AvailableStepsCount || count > v.m_AvailableStepsCount - start)
+        throw std::invalid_argument("CampaignIndex: step selection exceeds indexed steps");
+    auto &archive = OpenArchive(entry.archive);
+    const auto datasets = ResolveDatasets(archive, entry);
+    size_t offset = 0, completed = 0;
+    bool found = false;
+    for (auto dataset : datasets)
+    {
+        auto &source = OpenDataset(entry, dataset);
+        auto *actual = source.io->InquireVariable<T>(entry.name);
+        // Campaign names omit the dataset variable's leading slash for both
+        // BP and HDF5. Preserve exact matches before trying that spelling.
+        if (!actual && !entry.name.empty() && entry.name.front() != '/')
+            actual = source.io->InquireVariable<T>("/" + entry.name);
+        if (!actual)
+            continue;
+        found = true;
+        const size_t steps = actual->m_AvailableStepsCount;
+        if (start + completed >= offset + steps)
+        {
+            offset += steps;
+            continue;
+        }
+        const size_t first = start + completed - offset;
+        const size_t n = std::min(count - completed, steps - first);
+        actual->m_SelectionType = v.m_SelectionType;
+        actual->m_Start = v.m_Start;
+        actual->m_Count = v.m_Count;
+        actual->m_BlockID = v.m_BlockID;
+        actual->m_MemoryStart = v.m_MemoryStart;
+        actual->m_MemoryCount = v.m_MemoryCount;
+        actual->m_MemSpace = v.m_MemSpace;
+        actual->m_AccuracyRequested = v.m_AccuracyRequested;
+        actual->SetStepSelection({first, n});
+        source.engine->Get(*actual, data, Mode::Sync);
+        v.m_AccuracyProvided = actual->m_AccuracyProvided;
+        completed += n;
+        if (completed == count)
+            return;
+        const auto &dims = v.m_MemoryCount.empty() ? actual->Count() : v.m_MemoryCount;
+        data += n * helper::GetTotalSize(dims);
+        offset += steps;
+    }
+    if (!found)
+        throw std::runtime_error(
+            "CampaignIndex: variable not found with indexed type in dataset: " + v.m_Name);
+    throw std::runtime_error("CampaignIndex: dataset has fewer variable steps than the index: " +
+                             v.m_Name);
+}
+
 template <class T>
 void CampaignIndexReader::GetSync(Variable<T> &v, T *data)
 {
+    const auto &entry = m_Entries.at(v.m_Name);
+    if (entry.format == "ADIOS" || entry.format == "HDF5")
+    {
+        ReadDataset(entry, v, data);
+        return;
+    }
     // Parsed text fields and other scalar summaries are cached in the index.
     // Serve them before dispatching raw image/text bytes to the archive.
     if (v.m_SingleValue && v.m_AvailableStepsCount == 1)
@@ -490,7 +933,6 @@ void CampaignIndexReader::GetSync(Variable<T> &v, T *data)
         *data = v.m_Value;
         return;
     }
-    const auto &entry = m_Entries.at(v.m_Name);
     if (entry.format == "IMAGE" || entry.format == "TEXT")
     {
         if (v.m_Type != DataType::Char && v.m_Type != DataType::UInt8)
@@ -520,19 +962,25 @@ void CampaignIndexReader::GetSync(Variable<T> &v, T *data)
         m_PendingGets.emplace_back([this, v, data]() mutable { GetSync(v, data); });               \
     }                                                                                              \
     std::vector<typename Variable<T>::BPInfo> CampaignIndexReader::DoBlocksInfo(                   \
-        const Variable<T> &, size_t) const                                                         \
+        const Variable<T> &v, size_t step) const                                                   \
     {                                                                                              \
-        return {};                                                                                 \
+        return BlocksInfo(v, step);                                                                \
     }                                                                                              \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                                    \
-    CampaignIndexReader::DoAllStepsBlocksInfo(const Variable<T> &) const                           \
+    CampaignIndexReader::DoAllStepsBlocksInfo(const Variable<T> &v) const                          \
     {                                                                                              \
-        return {};                                                                                 \
+        std::map<size_t, std::vector<typename Variable<T>::BPInfo>> result;                        \
+        for (size_t step = 0; step < v.m_AvailableStepsCount; ++step)                              \
+            result.emplace(step, BlocksInfo(v, step));                                             \
+        return result;                                                                             \
     }                                                                                              \
     std::vector<std::vector<typename Variable<T>::BPInfo>>                                         \
-    CampaignIndexReader::DoAllRelativeStepsBlocksInfo(const Variable<T> &) const                   \
+    CampaignIndexReader::DoAllRelativeStepsBlocksInfo(const Variable<T> &v) const                  \
     {                                                                                              \
-        return {};                                                                                 \
+        std::vector<std::vector<typename Variable<T>::BPInfo>> result;                             \
+        for (size_t step = 0; step < v.m_AvailableStepsCount; ++step)                              \
+            result.push_back(BlocksInfo(v, step));                                                 \
+        return result;                                                                             \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
