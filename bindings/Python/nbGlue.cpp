@@ -137,6 +137,11 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
     nb::enum_<adios2::MemorySpace>(m, "MemorySpace")
         .value("Host", adios2::MemorySpace::Host)
         .value("GPU", adios2::MemorySpace::GPU);
+
+    nb::enum_<adios2::ArrayOrdering>(m, "ArrayOrdering")
+        .value("RowMajor", adios2::ArrayOrdering::RowMajor)
+        .value("ColumnMajor", adios2::ArrayOrdering::ColumnMajor)
+        .value("Auto", adios2::ArrayOrdering::Auto);
 #endif
 
     nb::class_<adios2::Accuracy>(m, "Accuracy")
@@ -383,6 +388,7 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              (void(adios2::py11::Variable::*)(const adios2::MemorySpace)) &
                  adios2::py11::Variable::SetMemorySpace,
              nb::arg("memSpace"))
+        .def("SetArrayLayout", &adios2::py11::Variable::SetArrayLayout, nb::arg("layout"))
 #endif
         .def("Start", &adios2::py11::Variable::Start)
         .def("Count", &adios2::py11::Variable::Count)

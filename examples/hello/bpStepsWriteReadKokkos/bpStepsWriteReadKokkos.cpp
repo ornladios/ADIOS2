@@ -20,8 +20,8 @@ template <class MemSpace, class ExecSpace>
 int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const size_t nSteps,
             const std::string engine, int rank, int size)
 {
-    // Initialize the simulation data
-    Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
+    // Initialize the simulation data. The dimensions below are declared row-major
+    Kokkos::View<float **, Kokkos::LayoutRight, MemSpace> gpuSimData("simBuffer", Nx, Ny);
     static_assert(Kokkos::SpaceAccessibility<ExecSpace, MemSpace>::accessible, "");
     Kokkos::parallel_for(
         "initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
@@ -52,7 +52,7 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
         data.SetSelection(sel);
 
         bpWriter.BeginStep();
-        bpWriter.Put(data, gpuSimData.data());
+        bpWriter.Put(data, gpuSimData);
         bpWriter.EndStep();
 
         // Update values in the simulation data
@@ -99,12 +99,7 @@ int BPRead(const std::string fname, const std::string engine, int rank, int size
                       << step << "needs to have two dimensions" << std::endl;
             break;
         }
-        adios2::MemorySpace adiosMemSpace = adios2::MemorySpace::Host;
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-        if (!std::is_same<MemSpace, Kokkos::HostSpace>::value)
-            adiosMemSpace = adios2::MemorySpace::GPU;
-#endif
-        auto dims = data.Shape(adiosMemSpace);
+        auto dims = data.Shape();
         size_t Nx = dims[0];
         size_t Ny = dims[1];
 
@@ -122,7 +117,7 @@ int BPRead(const std::string fname, const std::string engine, int rank, int size
             const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
             data.SetSelection(sel);
         }
-        Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
+        Kokkos::View<float **, Kokkos::LayoutRight, MemSpace> gpuSimData("simBuffer", Nx, Ny);
 
         bpReader.Get(data, gpuSimData);
         bpReader.EndStep();

@@ -91,6 +91,14 @@ contains
         call adios2_set_memory_space_f2c(variable%f2c, mem, ierr)
     end subroutine
 
+    subroutine adios2_set_array_layout(variable, layout, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: layout
+        integer, intent(out) :: ierr
+
+        call adios2_set_array_layout_f2c(variable%f2c, layout, ierr)
+    end subroutine
+
     subroutine adios2_get_memory_space(mem, variable, ierr)
         integer, intent(out) :: mem
         type(adios2_variable), intent(in) :: variable
