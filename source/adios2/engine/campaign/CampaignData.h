@@ -141,10 +141,9 @@ struct CampaignVersion
 class CampaignData
 {
 public:
-    /* hosts, keys and directories are indexed from 0..n-1 in this class,
-       so the database values are converted from 1..n to 0..n-1,
-       for easy addressing in vectors.
-       Hosts, keys and dirs are never deleted from the database.
+    /* hosts, keys and directories use compact vector indices in this class.
+       Map database rowids explicitly: ACA 0.8 merges can leave gaps after
+       deletion or allocate new rowids above retired identities.
 
        Datasets and their replicas are stored in a map, indexed by their
        rowid values (1..n). Deleted items still exists in database but will
@@ -158,6 +157,9 @@ public:
     std::vector<CampaignHost> hosts;
     std::vector<CampaignKey> keys;
     std::vector<CampaignDirectory> directory;
+    std::map<size_t, size_t> hostRows;               // database rowid -> hosts vector index
+    std::map<size_t, size_t> directoryRows;          // database rowid -> directory vector index
+    std::map<size_t, size_t> keyRows;                // database rowid -> keys vector index
     std::map<size_t, CampaignDataset> datasets;      // indexed by datasetID, 1..n, not contiguous
     std::map<size_t, CampaignTimeSeries> timeseries; // indexed by tsid, 1..n, not contiguous
     std::map<size_t, std::string> tarnames;          // indexed by rowid of archive table

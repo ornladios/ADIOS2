@@ -44,8 +44,8 @@ static int sqlcb_info(void *p, int argc, char **argv, char **azColName)
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     cdp->version.versionStr = std::string(argv[0]);
 
-    char rest[32];
-    std::sscanf(cdp->version.versionStr.c_str(), "%d.%d%s", &cdp->version.major,
+    char rest[32] = {};
+    std::sscanf(cdp->version.versionStr.c_str(), "%d.%d%31s", &cdp->version.major,
                 &cdp->version.minor, rest);
     if (rest[0])
     {
@@ -64,7 +64,9 @@ static int sqlcb_key(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignKey ck;
-    ck.id = std::string(argv[0]);
+    size_t rowid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    cdp->keyRows[rowid] = cdp->keys.size();
+    ck.id = std::string(argv[1]);
     cdp->keys.push_back(ck);
     return 0;
 };
@@ -73,6 +75,8 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignHost ch;
+    size_t rowid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    cdp->hostRows[rowid] = cdp->hosts.size();
     ch.hostname = std::string(argv[1]);
     if (argv[2])
         ch.longhostname = std::string(argv[2]);
@@ -87,7 +91,9 @@ static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignDirectory cd;
     size_t hostid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
-    cd.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
+    cd.hostIdx = cdp->hostRows.at(hostid);
+    size_t rowid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
+    cdp->directoryRows[rowid] = cdp->directory.size();
     cd.path = argv[2];
     cd.archive = false;
     cdp->directory.push_back(cd);
@@ -100,7 +106,7 @@ static int sqlcb_archivedirectory(void *p, int argc, char **argv, char **azColNa
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     size_t archiveid = helper::StringToSizeT(std::string(argv[0]), hint_text_to_int);
     size_t dirid = helper::StringToSizeT(std::string(argv[1]), hint_text_to_int);
-    size_t dirIdx = dirid - 1; // SQL rows start from 1, vector idx start from 0
+    size_t dirIdx = cdp->directoryRows.at(dirid);
     cdp->directory[dirIdx].archive = true;
     std::string tarname(argv[2]);
     if (!tarname.empty())
@@ -173,8 +179,8 @@ static int sqlcb_dataset(void *p, int argc, char **argv, char **azColName)
     size_t hostid = helper::StringToSizeT(std::string(argv[9]), hint_text_to_int);
     size_t dirid = helper::StringToSizeT(std::string(argv[10]), hint_text_to_int);
     size_t archiveid = helper::StringToSizeT(std::string(argv[11]), hint_text_to_int);
-    cdr.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
-    cdr.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
+    cdr.hostIdx = cdp->hostRows.at(hostid);
+    cdr.dirIdx = cdp->directoryRows.at(dirid);
     cdr.datasetIdx = dsid;
     cdr.archiveIdx = archiveid;
     cdr.name = argv[12];
@@ -184,7 +190,7 @@ static int sqlcb_dataset(void *p, int argc, char **argv, char **azColName)
     cdr.keyIdx = 0;
     size_t keyid = helper::StringToSizeT(std::string(argv[15]), hint_text_to_int);
     cdr.hasKey = (keyid); // keyid == 0 means there is no key used
-    cdr.keyIdx = size_t(keyid - 1);
+    cdr.keyIdx = keyid ? cdp->keyRows.at(keyid) : 0;
     cdr.size = helper::StringTo<uint64_t>(std::string(argv[16]), hint_text_to_int);
 
     // file
@@ -225,7 +231,7 @@ static int sqlcb_file(void *p, int argc, char **argv, char **azColName)
 void CampaignData::Open(const std::string path)
 {
     sqlite3 *db;
-    int rc = sqlite3_open(path.c_str(), &db);
+    int rc = sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr);
     if (rc)
     {
         std::string dbmsg(sqlite3_errmsg(db));
@@ -266,7 +272,7 @@ LEFT JOIN repfiles AS rf
     ON rf.replicaid = r.rowid
 LEFT JOIN accuracy AS acc
     ON acc.replicaid = r.rowid
-WHERE d.fileformat = 'ADIOS' OR d.fileformat = 'HDF5' AND d.deltime = 0 AND r.deltime = 0
+WHERE (d.fileformat = 'ADIOS' OR d.fileformat = 'HDF5') AND d.deltime = 0 AND r.deltime = 0
 ORDER BY d.rowid, r.rowid;
 )SQL_COMMAND";
 
@@ -357,18 +363,19 @@ void CampaignData::ReadDatabase()
         sqlite3_free(zErrMsg);
     }
 
-    if (version.version != 0.7)
+    // 0.8 adds identity/history tables without changing reader-facing tables.
+    if (version.versionStr != "0.7" && version.versionStr != "0.8")
     {
         helper::Throw<std::invalid_argument>(
             "Engine", "CampaignReader", "ReadCampaignData",
-            "This ADIOS library reads only ACA version 0.7, this file has version " +
+            "This ADIOS library reads ACA versions 0.7 and 0.8, this file has version " +
                 version.versionStr +
-                (version.version > 0.7
+                (version.version > 0.8
                      ? ". Use a newer version of the ADIOS library that supports this ACA version."
-                     : ". Run 'hpc_campaign manager <aca> upgrade'"));
+                     : ". Run 'hpc_campaign <aca> upgrade'"));
     }
 
-    sqlcmd = "SELECT keyid FROM key";
+    sqlcmd = "SELECT rowid, keyid FROM key ORDER BY rowid";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_key, this, &zErrMsg);
     if (rc != SQLITE_OK)
     {

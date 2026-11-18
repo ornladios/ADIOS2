@@ -34,4 +34,3 @@ if(ADIOS2_HAVE_MPI)
   #  add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)
   #endif()
 endif()
-
