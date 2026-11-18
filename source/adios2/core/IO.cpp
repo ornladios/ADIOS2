@@ -214,6 +214,118 @@ IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
 
 IO::~IO() = default;
 
+std::unique_ptr<DefinitionBatch> IO::CreateDefinitionBatch(size_t variableCapacity) const
+{
+    return std::unique_ptr<DefinitionBatch>(
+        new DefinitionBatch(*this, m_ArrayOrder, m_VarOpsPlaceholder, variableCapacity));
+}
+
+bool IO::DefinitionNameExists(const std::string &name) const
+{
+    return m_Variables.count(name)
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+           || m_VariablesDerived.count(name) || m_ReaderDerivedVariables.count(name) ||
+           m_DefinitionDerived.count(name)
+#endif
+        ;
+}
+
+void IO::MergeDefinitions(DefinitionBatch &batch)
+{
+    if (batch.m_Target != this)
+        throw std::invalid_argument("IO::MergeDefinitions: batch belongs to a different IO");
+    if (batch.Empty())
+        return;
+
+    // Preflight both maps and all recipes before transferring any objects.
+    for (const auto &entry : batch.m_Variables)
+        if (DefinitionNameExists(entry.first))
+            throw std::invalid_argument("IO::MergeDefinitions: variable already defined: " +
+                                        entry.first);
+    for (const auto &entry : batch.m_Attributes)
+        if (m_Attributes.count(entry.first))
+            throw std::invalid_argument("IO::MergeDefinitions: attribute already defined: " +
+                                        entry.first);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    for (const auto &entry : batch.m_Derived)
+        if (DefinitionNameExists(entry.first))
+            throw std::invalid_argument("IO::MergeDefinitions: derived name already defined: " +
+                                        entry.first);
+#endif
+
+    if (!batch.m_Variables.empty())
+        m_Variables.reserve(m_Variables.size() + batch.m_Variables.size());
+    if (!m_Engines.empty())
+    {
+        m_DefinitionAttributesToNotify.reserve(m_DefinitionAttributesToNotify.size() +
+                                               batch.m_Attributes.size());
+        for (const auto &entry : batch.m_Attributes)
+            m_DefinitionAttributesToNotify.push_back(entry.second.get());
+    }
+    m_DefinitionsPending = true;
+    m_Variables.merge(batch.m_Variables);
+    m_Attributes.merge(batch.m_Attributes);
+    m_DefinitionAttributeVariables.merge(batch.m_AttributeVariables);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    m_DefinitionDerived.merge(batch.m_Derived);
+#endif
+}
+
+void IO::FinalizeDefinitions()
+{
+    // Associations are checked after every ordinary variable has been installed,
+    // including those that followed the attribute or came from another worker.
+    for (const auto &entry : m_DefinitionAttributeVariables)
+        if (!m_Variables.count(entry.second))
+            throw std::invalid_argument("IO::FinalizeDefinitions: attribute " + entry.first +
+                                        " references undefined variable " + entry.second);
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    while (!m_DefinitionDerived.empty())
+    {
+        const auto it = m_DefinitionDerived.begin();
+        const auto &name = it->first;
+        const auto &recipe = it->second;
+        if (recipe.ReaderSide)
+        {
+            // Preserve reader-side lazy binding: the engine may install inputs
+            // only on Open/BeginStep. Parse here, just as the direct API does.
+            ReaderDerivedVariable record;
+            record.Expression = recipe.Expression;
+            record.ExprTree = detail::ParseToExprNode(recipe.Expression);
+            m_ReaderDerivedVariables.emplace(name, std::move(record));
+        }
+        else
+        {
+            auto variable =
+                BuildDerivedVariable(name, recipe.Expression, recipe.Type, recipe.Operations);
+            m_VariablesDerived.emplace(name, std::move(variable));
+        }
+        m_DefinitionDerived.erase(it);
+    }
+#endif
+
+    // No notifications until all validation succeeds. All variables, attributes,
+    // and derived definitions are now available to engine callbacks.
+    for (auto *attribute : m_DefinitionAttributesToNotify)
+    {
+#define declare_type(T)                                                                            \
+    if (attribute->m_Type == helper::GetDataType<T>())                                             \
+    {                                                                                              \
+        auto &typed = static_cast<Attribute<T> &>(*attribute);                                     \
+        void *data = typed.m_IsSingleValue ? static_cast<void *>(&typed.m_DataSingleValue)         \
+                                           : static_cast<void *>(typed.m_DataArray.data());        \
+        for (auto &engine : m_Engines)                                                             \
+            engine.second->NotifyEngineAttribute(attribute->m_Name, attribute, data);              \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    m_DefinitionAttributesToNotify.clear();
+    m_DefinitionAttributeVariables.clear();
+    m_DefinitionsPending = false;
+}
+
 void IO::SetEngine(const std::string engineType) noexcept
 {
     auto lf_InsertParam = [&](const std::string &key, const std::string &value) {
@@ -546,6 +658,8 @@ void IO::AddOperation(const std::string &variable, const std::string &operatorTy
 Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, const char *md,
                  const size_t mdsize)
 {
+    if (m_DefinitionsPending)
+        throw std::logic_error("IO::Open: call FinalizeDefinitions before opening an engine");
     auto lf_GuessEngineFromTAR = [&](const std::string tarinfo) -> std::string {
         std::string engineType;
         if (tarinfo.find("mmd.0") != std::string::npos)
@@ -1008,34 +1122,25 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineDerivedVariable");
 
-    {
-        auto itVariable = m_VariablesDerived.find(name);
-        if (itVariable != m_VariablesDerived.end())
-        {
-            helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
-                                                 "derived variable " + name +
-                                                     " already defined in IO " + m_Name);
-        }
-        else
-        {
-            auto itVariable = m_Variables.find(name);
-            if (itVariable != m_Variables.end())
-            {
-                helper::Throw<std::invalid_argument>(
-                    "Core", "IO", "DefineDerivedVariable",
-                    "derived variable " + name +
-                        " trying to use an already defined variable name in IO " + m_Name);
-            }
-        }
-    }
+    if (DefinitionNameExists(name))
+        throw std::invalid_argument("IO::DefineDerivedVariable: variable already defined: " + name);
+    const auto it = m_VarOpsPlaceholder.find(name);
+    const std::vector<std::pair<std::string, Params>> empty;
+    auto variable = BuildDerivedVariable(name, exp_string, varType,
+                                         it == m_VarOpsPlaceholder.end() ? empty : it->second);
+    auto *result = variable.get();
+    m_VariablesDerived.emplace(name, std::move(variable));
+    return *result;
+}
 
-    if (m_ReaderDerivedVariables.find(name) != m_ReaderDerivedVariables.end())
-    {
-        helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
-                                             "derived variable " + name +
-                                                 " collides with a reader-derived variable in IO " +
-                                                 m_Name);
-    }
+std::unique_ptr<VariableDerived>
+IO::BuildDerivedVariable(const std::string &name, const std::string &exp_string,
+                         DerivedVarType varType,
+                         const std::vector<std::pair<std::string, Params>> &operations)
+{
+    // Validate operations before installing anything, so failed recipes can be retried.
+    if (!operations.empty() && varType != DerivedVarType::StoreData)
+        throw std::invalid_argument("Operators for derived variables require StoreData: " + name);
 
     // Parse expression string into ExprNode tree
     derived::ExprNode exprTree = detail::ParseToExprNode(exp_string);
@@ -1096,29 +1201,13 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
     // Compute output dims before construction (VariableBase validates in InitShapeType)
     auto outDims = derived::GetDims(codeStream, name_to_dims);
 
-    auto itVariablePair = m_VariablesDerived.emplace(
-        name, std::make_unique<VariableDerived>(name, std::move(exprTree), std::move(codeStream),
-                                                exp_string, expressionType, std::get<2>(outDims),
-                                                std::get<0>(outDims), std::get<1>(outDims), false,
-                                                varType, name_to_type));
-    VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
-
-    // check IO placeholder for variable operations
-    auto itOperations = m_VarOpsPlaceholder.find(name);
-    if (itOperations != m_VarOpsPlaceholder.end())
-    {
-        // allow to apply an operation only for derived variables that save the data
-        if (varType != DerivedVarType::StoreData)
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineDerivedVariable",
-                "Operators for derived variables can only be applied "
-                " for DerivedVarType::StoreData types.");
-        variable.m_Operations.reserve(itOperations->second.size());
-        for (auto &operation : itOperations->second)
-        {
-            variable.AddOperation(operation.first, operation.second);
-        }
-    }
+    auto variable = std::make_unique<VariableDerived>(
+        name, std::move(exprTree), std::move(codeStream), exp_string, expressionType,
+        std::get<2>(outDims), std::get<0>(outDims), std::get<1>(outDims), false, varType,
+        name_to_type);
+    variable->m_Operations.reserve(operations.size());
+    for (const auto &operation : operations)
+        variable->AddOperation(operation.first, operation.second);
     return variable;
 }
 
@@ -1129,9 +1218,7 @@ void IO::DefineReaderDerivedVariable(const std::string &name, const std::string 
     // Name shares the IO namespace with every variable. Reject the collisions we
     // can see now; a clash with a file variable not yet installed is caught at
     // resolve time, when creating the placeholder throws on the duplicate name.
-    if (m_ReaderDerivedVariables.find(name) != m_ReaderDerivedVariables.end() ||
-        m_VariablesDerived.find(name) != m_VariablesDerived.end() ||
-        m_Variables.find(name) != m_Variables.end())
+    if (DefinitionNameExists(name))
     {
         helper::Throw<std::invalid_argument>("Core", "IO", "DefineReaderDerivedVariable",
                                              "variable " + name + " already defined in IO " +
