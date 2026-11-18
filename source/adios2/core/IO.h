@@ -179,7 +179,8 @@ public:
 
     /** Create private worker storage, snapshotting array order and variable
      * operation placeholders. Create batches before starting workers. The IO
-     * must outlive its batches. The normal IO API remains single-threaded. */
+     * must outlive its batches. The normal IO API remains single-threaded.
+     * Configured operators are attached during serial merge, not batch filling. */
     std::unique_ptr<DefinitionBatch> CreateDefinitionBatch(size_t variableCapacity = 0) const;
 
     /** Serially transfer one completed batch's map nodes and pending recipes.
@@ -194,6 +195,8 @@ public:
      * configuration changes, removal, or direct definition/inquiry operations.
      * The caller must provide exclusive access to this IO and the batch. Open
      * rejects unfinalized definitions instead of exposing an incomplete load.
+     * Already-open engines are supported, but must remain idle from the first
+     * merge until finalization succeeds (including BeginStep/EndStep and Close).
      */
     void MergeDefinitions(DefinitionBatch &batch);
 
@@ -208,6 +211,9 @@ public:
      * recipes remain installed; failed/unprocessed recipes stay pending. Missing
      * inputs may be supplied in another batch and finalization retried. This is
      * not a rollback transaction. Do not use the IO until finalization succeeds.
+     * RemoveVariable/RemoveAttribute and their bulk forms do not cancel a load.
+     * With no engines open, a failed load can be abandoned by removing and
+     * recreating the IO through ADIOS.
      */
     void FinalizeDefinitions();
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE

@@ -40,6 +40,9 @@ class IO;
  * refer to inputs in other batches. They are validated by FinalizeDefinitions,
  * after all batches have been merged. Derived expressions are recorded as text;
  * parsing and binding happen serially during finalization, not on worker threads.
+ * Configured variable operators are constructed serially during merge. Until
+ * then, staged variables have no configured operations. Calls that construct
+ * operators directly (including Variable::AddOperation) must also be serial.
  */
 class DefinitionBatch
 {

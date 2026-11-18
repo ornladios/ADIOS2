@@ -45,7 +45,7 @@ Variable<T> &DefinitionBatch::DefineVariable(const std::string &name, const Dims
 {
     CheckVariableName(name);
     auto variable = std::make_unique<Variable<T>>(name, shape, start, count, constantDims);
-    definition::ConfigureVariable(*variable, m_Operations, m_ArrayOrder);
+    definition::ConfigureLayout(*variable, m_ArrayOrder);
     auto *result = variable.get();
     m_Variables.emplace(name, std::move(variable));
     return *result;
