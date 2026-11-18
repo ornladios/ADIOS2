@@ -119,9 +119,6 @@ public:
 
     std::map<size_t, Dims> m_AvailableShapes;
 
-    std::set<std::string> m_PrefixedVariables;
-    std::set<std::string> m_PrefixedAttributes;
-
     VariableBase(const std::string &name, const DataType type, const size_t elementSize,
                  const Dims &shape, const Dims &start, const Dims &count, const bool constantShape);
 

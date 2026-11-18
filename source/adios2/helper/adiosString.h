@@ -189,15 +189,6 @@ Params LowerCaseParams(const Params &params);
 std::string ParamsToString(const Params &params);
 
 /**
- * Extract inputs subset that matches a prefix input
- * @param prefix input prefix
- * @param inputs input names
- * @return  all names with prefix "pre": pre1, pre2, ..., preXYZ,
- */
-std::set<std::string> PrefixMatches(const std::string &prefix,
-                                    const std::set<std::string> &inputs) noexcept;
-
-/**
  * Remove a trailing path separator character at the end of the string.
  * Makes it easier to append file names to it later.
  */

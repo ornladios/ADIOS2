@@ -513,21 +513,10 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
     std::map<std::string, Params> attributesInfo;
     const std::string prefix = m_Name + separator;
 
-    if (io.m_IsPrefixedNames)
+    for (const auto &attributePair : io.GetAttributes())
     {
-        // get prefixed attributes from stored attributes
-        for (const std::string &attributeName : m_PrefixedAttributes)
-        {
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo, fullNameKeys);
-        }
-    }
-    else
-    { // get prefixed attributes on-the-fly (expensive)
-        for (const auto &attributePair : io.GetAttributes())
-        {
-            const std::string &attributeName = attributePair.first;
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo, fullNameKeys);
-        }
+        const std::string &attributeName = attributePair.first;
+        lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo, fullNameKeys);
     }
 
     return attributesInfo;
