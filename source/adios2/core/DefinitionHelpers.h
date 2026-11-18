@@ -19,8 +19,7 @@ namespace definition
 {
 
 // Shared by ordinary IO definitions and private worker batches.
-inline void ConfigureVariable(VariableBase &variable, const VariableOperations &operations,
-                              ArrayOrdering ordering)
+inline void ConfigureOperations(VariableBase &variable, const VariableOperations &operations)
 {
     const auto it = operations.find(variable.m_Name);
     if (it != operations.end())
@@ -29,12 +28,24 @@ inline void ConfigureVariable(VariableBase &variable, const VariableOperations &
         for (const auto &operation : it->second)
             variable.AddOperation(operation.first, operation.second);
     }
+}
+
+inline void ConfigureLayout(VariableBase &variable, ArrayOrdering ordering)
+{
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     variable.m_BaseLayout = ordering;
     variable.m_ArrayLayout = ordering;
 #else
+    (void)variable;
     (void)ordering;
 #endif
+}
+
+inline void ConfigureVariable(VariableBase &variable, const VariableOperations &operations,
+                              ArrayOrdering ordering)
+{
+    ConfigureOperations(variable, operations);
+    ConfigureLayout(variable, ordering);
 }
 
 // The bool tells IO whether engines must be notified. Batch definitions never
@@ -53,8 +64,10 @@ std::pair<Attribute<T> *, bool> DefineAttribute(AttrMap &attributes, const std::
         return {result, true};
     }
     if (existing->second->m_Type != helper::GetDataType<T>())
-        throw std::invalid_argument("attribute " + name + " cannot be redefined with type " +
-                                    ToString(helper::GetDataType<T>()));
+        helper::Throw<std::invalid_argument>(
+            "Core", "Definition", "DefineAttribute",
+            "attribute " + name + " with existing type " + ToString(existing->second->m_Type) +
+                " cannot be redefined with type " + ToString(helper::GetDataType<T>()));
     auto &attribute = static_cast<Attribute<T> &>(*existing->second);
     if (attribute.Equals(values, elements))
         return {&attribute, false};

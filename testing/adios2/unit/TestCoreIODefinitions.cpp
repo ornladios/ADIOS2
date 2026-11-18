@@ -27,6 +27,10 @@ TEST(CoreIODefinitions, ParallelBuildAndMerge)
     auto &io = adios.DeclareIO("definitions");
     constexpr size_t workers = 4;
     constexpr size_t count = 128;
+    for (size_t i = 0; i < workers; ++i)
+        for (size_t j = 0; j < count; ++j)
+            io.m_VarOpsPlaceholder[std::to_string(i) + "/" + std::to_string(j)].push_back(
+                {"null", {}});
     std::vector<std::unique_ptr<core::DefinitionBatch>> batches;
     for (size_t i = 0; i < workers; ++i)
         batches.push_back(io.CreateDefinitionBatch(count));
@@ -61,6 +65,7 @@ TEST(CoreIODefinitions, ParallelBuildAndMerge)
     {
         if (errors[i])
             std::rethrow_exception(errors[i]);
+        EXPECT_TRUE(pointers[i]->m_Operations.empty());
         io.MergeDefinitions(*batches[i]);
         EXPECT_TRUE(batches[i]->Empty());
         EXPECT_EQ(batches[i]->InquireAttribute<int>(std::to_string(i) + "/0/units"), nullptr);
@@ -72,6 +77,7 @@ TEST(CoreIODefinitions, ParallelBuildAndMerge)
     for (size_t i = 0; i < workers; ++i)
     {
         EXPECT_EQ(io.InquireVariable<int>(std::to_string(i) + "/0"), pointers[i]);
+        EXPECT_EQ(pointers[i]->m_Operations.size(), 1);
         for (size_t j = 0; j < count; ++j)
         {
             const auto name = std::to_string(i) + "/" + std::to_string(j);
@@ -87,6 +93,7 @@ TEST(CoreIODefinitions, DuplicateVariableLeavesBatchIntact)
     core::ADIOS adios("C++");
     auto &io = adios.DeclareIO("definitions");
     auto &existing = io.DefineVariable<int>("duplicate");
+    io.m_VarOpsPlaceholder["new"].push_back({"null", {}});
     auto batch = io.CreateDefinitionBatch();
     batch->DefineVariable<int>("duplicate");
     batch->DefineVariable<int>("new");
@@ -97,6 +104,7 @@ TEST(CoreIODefinitions, DuplicateVariableLeavesBatchIntact)
     EXPECT_EQ(io.InquireAttribute<int>("attribute"), nullptr);
     EXPECT_NE(batch->InquireVariable<int>("duplicate"), nullptr);
     EXPECT_NE(batch->InquireVariable<int>("new"), nullptr);
+    EXPECT_TRUE(batch->InquireVariable<int>("new")->m_Operations.empty());
     ASSERT_NE(batch->InquireAttribute<int>("attribute"), nullptr);
 }
 
@@ -123,12 +131,15 @@ TEST(CoreIODefinitions, BatchOwnershipAndConfiguration)
     auto batch = io.CreateDefinitionBatch();
     io.m_VarOpsPlaceholder.clear();
     auto &variable = batch->DefineVariable<double>("data");
-    EXPECT_EQ(variable.m_Operations.size(), 1);
+    EXPECT_TRUE(variable.m_Operations.empty());
     EXPECT_THROW(other.MergeDefinitions(*batch), std::invalid_argument);
+    EXPECT_TRUE(variable.m_Operations.empty());
     io.MergeDefinitions(*batch);
+    EXPECT_EQ(variable.m_Operations.size(), 1);
     io.FinalizeDefinitions();
     EXPECT_EQ(io.InquireVariable<double>("data"), &variable);
     EXPECT_NO_THROW(io.MergeDefinitions(*batch)); // an empty batch is harmless
+    EXPECT_EQ(variable.m_Operations.size(), 1);
 }
 
 namespace

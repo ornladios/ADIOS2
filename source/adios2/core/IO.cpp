@@ -253,13 +253,17 @@ void IO::MergeDefinitions(DefinitionBatch &batch)
                                         entry.first);
 #endif
 
+    // Operator construction can access process-wide plugin state and logging.
+    // Keep it on the serial merge path, after collision checks, rather than on
+    // the worker threads that construct the variables.
+    for (const auto &entry : batch.m_Variables)
+        definition::ConfigureOperations(*entry.second, batch.m_Operations);
+
     // Let unordered_map::merge grow geometrically. Reserving exactly the new
     // size for every streamed batch can rehash the entire accumulated index on
     // every merge, making a bounded metadata load quadratic in its row count.
     if (!m_Engines.empty())
     {
-        m_DefinitionAttributesToNotify.reserve(m_DefinitionAttributesToNotify.size() +
-                                               batch.m_Attributes.size());
         for (const auto &entry : batch.m_Attributes)
             m_DefinitionAttributesToNotify.push_back(entry.second.get());
     }
