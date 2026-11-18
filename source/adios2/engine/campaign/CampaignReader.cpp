@@ -1278,7 +1278,7 @@ void CampaignReader::OpenDatasetWithADIOS(std::string prefixName, FileFormat for
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         Variable<T> *vi = io.InquireVariable<T>(vname);                                            \
-        Variable<T> v = DuplicateVariable(vi, m_IO, newname, internalInfo);                        \
+        DuplicateVariable(vi, m_IO, newname, internalInfo);                                        \
     }
 
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -1300,7 +1300,7 @@ void CampaignReader::OpenDatasetWithADIOS(std::string prefixName, FileFormat for
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         Attribute<T> *ai = io.InquireAttribute<T>(aname);                                          \
-        Attribute<T> v = DuplicateAttribute(ai, m_IO, newname);                                    \
+        DuplicateAttribute(ai, m_IO, newname);                                                     \
     }
 
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
