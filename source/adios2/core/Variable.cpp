@@ -24,7 +24,6 @@ namespace core
                           const Dims &count, const bool constantDims)                              \
     : VariableBase(name, helper::GetDataType<T>(), sizeof(T), shape, start, count, constantDims)   \
     {                                                                                              \
-        m_BlocksInfo.reserve(1);                                                                   \
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
