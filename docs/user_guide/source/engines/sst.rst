@@ -271,8 +271,12 @@ reader cohort is less than or equal to this value *and* the
 eager data sending of all data from each writer to all readers.
 Currently value is interpreted by only by the SST Reader engine.
 
+17. ``MetadataThreads``:  Default **8**.  The maximum number of
+threads a reader process uses to decode the metadata from all
+writers at each step.  It never uses more threads than there are
+writer ranks.  This value is interpreted only by the SST Reader engine.
 
-17. ``StepDistributionMode``: Default **"AllToAll"**.  This value
+18. ``StepDistributionMode``: Default **"AllToAll"**.  This value
 controls how steps are distributed, particularly when there are
 multiple readers.  By default, the value is **"AllToAll"**, which
 means that all timesteps are to be delivered to all readers (subject
@@ -304,6 +308,7 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
   OpenTimeoutSecs               integer               **60**
   SpeculativePreloadMode        string                **AUTO**, ON, OFF
   SpecAutoNodeThreshold         integer               **1**
+  MetadataThreads               integer               **8**
  ============================= ===================== ====================================================
 
 The ``SST_REQUIRE_DATAPLANE`` environment variable names a data plane that must be used, overriding ``DataTransport``.  If that data plane is not available the stream fails to open instead of falling back to another one.  It is intended for validating a system or a build, and it must reach every rank, which some launchers do not do by default.

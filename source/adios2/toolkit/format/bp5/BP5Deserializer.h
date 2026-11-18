@@ -18,6 +18,7 @@
 #include "ffs.h"
 #include "fm.h"
 
+#include <atomic>
 #include <mutex>
 
 #ifdef _WIN32
@@ -78,6 +79,16 @@ public:
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
                          size_t Step = SIZE_MAX);
+    struct MetadataBlockRef
+    {
+        void *Block;
+        size_t Len;
+    };
+    /** Install one metadata block per writer, Blocks[WriterRank].  Format
+     * preparation (which may generate conversion code) and the final install
+     * run serially; decoding runs on up to Threads threads. */
+    void InstallMetaData(const std::vector<MetadataBlockRef> &Blocks, size_t Step = SIZE_MAX,
+                         size_t Threads = 1);
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step = SIZE_MAX);
     /** is the FFS format this metadata block was encoded with already
      * installed? False means the describing mmd.0 record is absent (e.g.
@@ -187,6 +198,9 @@ public:
     core::Engine *m_Engine = NULL;
 
 private:
+    void DecodeMetadataBlocks(const std::vector<MetadataBlockRef> &Blocks,
+                              const std::vector<FFSTypeHandle> &Formats,
+                              std::vector<void *> &Decoded, std::atomic<size_t> &NextRank) const;
     size_t m_VarCount = 0;
     struct BP5VarRec
     {

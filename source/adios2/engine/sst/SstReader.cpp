@@ -7,6 +7,7 @@
 #include "SstReader.h"
 #include "SstParamParser.h"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 
@@ -153,11 +154,15 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     m_BP5Deserializer->SetupForStep(SstCurrentStep(m_Input),
                                     static_cast<size_t>(m_CurrentStepMetaData->WriterCohortSize));
 
+    std::vector<format::BP5Deserializer::MetadataBlockRef> Blocks(
+        m_CurrentStepMetaData->WriterCohortSize);
     for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
     {
         struct _SstData *tmp = m_CurrentStepMetaData->WriterMetadata[i];
-        m_BP5Deserializer->InstallMetaData(tmp->block, tmp->DataSize, i);
+        Blocks[i] = {tmp->block, tmp->DataSize};
     }
+    m_BP5Deserializer->InstallMetaData(Blocks, SIZE_MAX,
+                                       static_cast<size_t>(std::max(Params.MetadataThreads, 1)));
 
     m_IO.ResetVariablesStepSelection(true, "in call to SST Reader BeginStep");
 

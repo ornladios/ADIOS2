@@ -79,6 +79,7 @@ typedef struct _SstStats
     MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)                                               \
     MACRO(SpeculativePreloadMode, SpecPreloadMode, int, SpecPreloadAuto)                           \
     MACRO(SpecAutoNodeThreshold, Int, int, 1)                                                      \
+    MACRO(MetadataThreads, Int, int, 8)                                                            \
     MACRO(ReaderShortCircuitReads, Bool, int, 0)                                                   \
     MACRO(StatsLevel, Int, int, 0)                                                                 \
     MACRO(RemoteGroup, String, char *, NULL)                                                       \
