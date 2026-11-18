@@ -43,13 +43,26 @@ without opening any campaign archive or dataset. Names have the form
 Attribute names retain their stored spelling, including leading slashes.
 The SQLite connection is read-only and is released when Open finishes.
 
-This initial implementation supports metadata inquiries and Close. Shapes and
-min/max are index summaries; the index does not contain block decomposition,
-per-step shapes, or per-step extrema. Block inquiries return no blocks.
-Step numbers are interpreted as contiguous, starting at zero. Only scalar
-values cached in the index for single-step variables can be returned by Get,
-to support scalar display in ``bpls -l``. Other variable data reads are not
-implemented.
+Shapes and min/max are index summaries; the index does not contain block
+decomposition, per-step shapes, or per-step extrema. Block inquiries for ADIOS
+and HDF5 variables open the source dataset lazily and return its block metadata.
+This includes ``Start()``, ``Count()``, and ``SelectionSize()`` after a block
+selection, as well as the block-info APIs. If the source cannot be opened, these
+inquiries report an error. Ordinary global-array listings (``bpls -l``) use the
+index summaries; ``bpls -lD`` retrieves the original blocks. Step numbers are
+interpreted as contiguous, starting at zero, including across timeseries members.
+
+Get supports ADIOS and HDF5 variables, image/text bytes, and parsed scalar
+values cached in the index. Dataset reads resolve replicas from the corresponding
+campaign archive and open the underlying BP or HDF5 dataset lazily. The archive
+is read as SQLite, never opened through an ADIOS engine. Opened dataset engines
+are reused for subsequent reads and released by Close. Spatial, block, memory,
+and step selections are forwarded to the dataset engine. Deferred requests
+retain their selections and complete at PerformGets, EndStep, or Close.
+
+Indexed timeseries names are resolved against the archive's timeseries table.
+Members are read in ``tsorder`` order, and step selections can span multiple
+member datasets. Both random access and step-by-step reading are supported.
 
 For example, to measure the complete listing while excluding terminal rendering::
 

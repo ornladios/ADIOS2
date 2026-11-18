@@ -465,12 +465,19 @@ adios2_error adios2_variable_start(size_t *start, const adios2_variable *variabl
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Start.begin(), variableBase->m_Start.end(), start);
+        adios2::Dims startCpp = variableBase->m_Start;
+        const auto type = variableBase->m_Type;
+#define declare_type(T)                                                                            \
+    if (type == adios2::helper::GetDataType<T>())                                                  \
+        startCpp = static_cast<const adios2::core::Variable<T> *>(variableBase)->Start();
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        std::copy(startCpp.begin(), startCpp.end(), start);
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_shape"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_start"));
     }
 }
 

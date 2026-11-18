@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Image/text data reads through a campaign index, without external fixtures."""
+"""Dataset and image/text reads through a campaign index, without external fixtures."""
 
 import json
 import sqlite3
@@ -92,6 +92,252 @@ class TestCampaignIndexRead(unittest.TestCase):
         io.set_parameter("hostname", "fixture-local")
         engine = io.open(str(self.index), mode)
         return adios, io, engine
+
+    def dataset_fixture(self, hdf5=False, series=False, leading_slash=False, multiblock=False):
+        prefix = "bbb/" if leading_slash else ""
+        source_prefix = "/" + prefix if leading_slash else ""
+        files = ["part0.h5", "part1.h5"] if hdf5 else ["part0.bp", "part1.bp"]
+        if not series:
+            files = files[:1]
+        for i, filename in enumerate(files):
+            adios = adios2.Adios()
+            io = adios.declare_io("writer")
+            io.set_engine("HDF5" if hdf5 else "BP5")
+            values = np.arange(6, dtype=np.float64)
+            var = io.define_variable(source_prefix + "values", values, [6], [0], [6])
+            scalar = io.define_variable(source_prefix + "scalar", np.zeros(1, np.int32))
+            try:
+                writer = io.open(str(self.root / filename), adios2.Mode.Write)
+            except ValueError as error:
+                if hdf5 and "HDF5" in str(error) and "compiled" in str(error):
+                    self.skipTest("HDF5 unavailable")
+                raise
+            for step in range(2):
+                writer.begin_step()
+                if multiblock:
+                    var.set_selection([[0], [2]])
+                    writer.put(var, values[:2] + (2 * i + step) * 10, adios2.Mode.Sync)
+                    var.set_selection([[2], [4]])
+                    writer.put(var, values[2:] + (2 * i + step) * 10, adios2.Mode.Sync)
+                else:
+                    writer.put(var, values + (2 * i + step) * 10, adios2.Mode.Sync)
+                writer.put(scalar, np.array([100 + 2 * i + step], np.int32), adios2.Mode.Sync)
+                writer.end_step()
+            writer.close()
+        logical = "series" if series else files[0]
+        fmt = "HDF5" if hdf5 else "ADIOS"
+        self.name = "store/data.aca/" + logical + "/" + prefix + "values"
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.executescript(INDEX_SCHEMA)
+            db.execute("INSERT INTO variabletypes VALUES (3,'double'),(4,'int32_t')")
+            db.execute("INSERT INTO datasettypes VALUES (5,?)", (fmt,))
+            db.execute("INSERT INTO datasets VALUES (1,1,13,?,5)", (logical,))
+            db.execute("INSERT INTO variables VALUES (1,1,?,3,?,NULL,NULL,1,'6',NULL)",
+                       (prefix + "values", 2 * len(files)))
+            db.execute("INSERT INTO variables VALUES (1,1,?,4,?,NULL,NULL,0,'',NULL)",
+                       (prefix + "scalar", 2 * len(files)))
+        with closing(sqlite3.connect(self.archive)) as db, db:
+            db.executescript(SCHEMA)
+            db.execute("INSERT INTO info VALUES ('ACA','test','0.8',0)")
+            db.execute("INSERT INTO host VALUES ('fixture-local','localhost',0,0,'')")
+            db.execute("INSERT INTO directory VALUES (1,?,0,0)", (str(self.root),))
+            if series:
+                db.execute("INSERT INTO timeseries VALUES (7,'series')")
+            for i, filename in enumerate(files):
+                db.execute("INSERT INTO dataset(rowid,name,uuid,modtime,deltime,fileformat,tsid,tsorder) "
+                           "VALUES (?,?,?,0,0,?,?,?)",
+                           (13 + i, filename, "uuid-" + str(i), fmt, 7 if series else 0, i * 3))
+                db.execute("INSERT INTO replica VALUES (?,1,1,0,?,0,0,0,0)", (13 + i, filename))
+
+    def test_multiblock_metadata_and_selection(self):
+        self.dataset_fixture(series=True, leading_slash=True, multiblock=True)
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            for step in (0, 1, 2, 3, 0):
+                blocks = engine.blocks_info(self.name, step)
+                self.assertEqual(len(blocks), 2)
+                self.assertEqual([b["Start"] for b in blocks], ["0", "2"])
+                self.assertEqual([b["Count"] for b in blocks], ["2", "4"])
+                self.assertEqual(float(blocks[1]["Min"]), step * 10 + 2)
+                self.assertEqual(float(blocks[1]["Max"]), step * 10 + 5)
+                var.set_step_selection([step, 1])
+                var.set_block_selection(1)
+                self.assertEqual(var.start(), [2])
+                self.assertEqual(var.count(), [4])
+                self.assertEqual(var.selection_size(), 4)
+                data = np.zeros(4)
+                engine.get(var, data, adios2.Mode.Sync)
+                np.testing.assert_array_equal(data, np.arange(2, 6) + step * 10)
+            with self.assertRaises(ValueError):
+                engine.blocks_info(self.name, 4)
+        finally:
+            engine.close()
+
+    def test_streaming_block_metadata(self):
+        self.dataset_fixture(series=True, multiblock=True)
+        adios, io, engine = self.open(adios2.Mode.Read)
+        try:
+            for step in range(4):
+                self.assertEqual(engine.begin_step(), adios2.StepStatus.OK)
+                blocks = engine.blocks_info(self.name, 0)
+                self.assertEqual(float(blocks[1]["Min"]), step * 10 + 2)
+                var = io.inquire_variable(self.name)
+                var.set_block_selection(1)
+                self.assertEqual(var.start(), [2])
+                self.assertEqual(var.count(), [4])
+                self.assertEqual(var.selection_size(), 4)
+                engine.end_step()
+        finally:
+            engine.close()
+
+    def test_metadata_is_lazy_and_missing_source_is_an_error(self):
+        self.dataset_fixture()
+        hidden = self.archive.with_suffix(".hidden")
+        self.archive.rename(hidden)
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            self.assertEqual(var.shape(), [6])
+            self.assertEqual(var.count(), [6])
+            self.assertEqual(var.selection_size(), 6)
+            with self.assertRaises(RuntimeError):
+                engine.blocks_info(self.name, 0)
+            hidden.rename(self.archive)
+            self.assertEqual(len(engine.blocks_info(self.name, 0)), 1)
+        finally:
+            engine.close()
+
+    def test_hdf5_block_selection_metadata(self):
+        self.dataset_fixture(hdf5=True)
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_step_selection([1, 1])
+            var.set_block_selection(0)
+            self.assertEqual(var.start(), [0])
+            self.assertEqual(var.count(), [6])
+            self.assertEqual(var.selection_size(), 6)
+            self.assertEqual(len(engine.blocks_info(self.name, 1)), 1)
+        finally:
+            engine.close()
+
+    def check_dataset(self, hdf5=False, series=False, leading_slash=False):
+        self.dataset_fixture(hdf5, series, leading_slash)
+        before = self.archive.read_bytes()
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_selection([[1], [3]])
+            var.set_step_selection([1, 2 if series else 1])
+            data = np.zeros((2 if series else 1, 3), np.float64)
+            engine.get(var, data, adios2.Mode.Sync)
+            np.testing.assert_array_equal(data[0], np.arange(1, 4) + 10)
+            if series:
+                np.testing.assert_array_equal(data[1], np.arange(1, 4) + 20)
+            # Repeated deferred requests must retain their individual selections.
+            a, b = np.zeros(2), np.zeros(3)
+            var.set_step_selection([0, 1])
+            var.set_selection([[0], [2]])
+            engine.get(var, a, adios2.Mode.Deferred)
+            var.set_selection([[3], [3]])
+            engine.get(var, b, adios2.Mode.Deferred)
+            engine.perform_gets()
+            np.testing.assert_array_equal(a, [0, 1])
+            np.testing.assert_array_equal(b, [3, 4, 5])
+            scalar = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/scalar')
+            scalar.set_step_selection([1, 2 if series else 1])
+            scalars = np.zeros(2 if series else 1, np.int32)
+            engine.get(scalar, scalars, adios2.Mode.Sync)
+            np.testing.assert_array_equal(scalars, [101, 102] if series else [101])
+            if not hdf5:
+                var.set_block_selection(0)
+                var.set_step_selection([1, 1])
+                block = np.zeros(6)
+                engine.get(var, block, adios2.Mode.Sync)
+                np.testing.assert_array_equal(block, np.arange(6) + 10)
+        finally:
+            engine.close()
+        self.assertEqual(self.archive.read_bytes(), before)
+        # A fresh reader can use the same ADIOS after closing cached engines.
+        io = adios.declare_io("streaming-index")
+        io.set_parameter("hostname", "fixture-local")
+        engine = io.open(str(self.index), adios2.Mode.Read)
+        try:
+            for step in range(4 if series else 2):
+                self.assertEqual(engine.begin_step(), adios2.StepStatus.OK)
+                var = io.inquire_variable(self.name)
+                var.set_selection([[0], [6]])
+                data = np.zeros(6)
+                engine.get(var, data, adios2.Mode.Deferred)
+                engine.end_step()
+                np.testing.assert_array_equal(data, np.arange(6) + step * 10)
+            self.assertEqual(engine.begin_step(), adios2.StepStatus.EndOfStream)
+        finally:
+            engine.close()
+
+    def test_cached_engine_and_close(self):
+        self.dataset_fixture()
+        adios, io, engine = self.open()
+        var = io.inquire_variable(self.name)
+        data = np.zeros(6)
+        engine.get(var, data, adios2.Mode.Sync)
+        source = self.root / "part0.bp"
+        moved = self.root / "moved.bp"
+        source.rename(moved)
+        try:
+            # A second open by path would fail; the cached engine still reads.
+            var.set_step_selection([1, 1])
+            engine.get(var, data, adios2.Mode.Deferred)
+            engine.close()
+            np.testing.assert_array_equal(data, np.arange(6) + 10)
+        finally:
+            moved.rename(source)
+
+    def test_single_step_scalar_uses_dataset(self):
+        self.dataset_fixture()
+        # No scalar value is cached in the index. Even a single-step indexed
+        # scalar must be read from the underlying file rather than defaulting to zero.
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.execute("UPDATE variables SET steps=1 WHERE name='scalar'")
+        adios, io, engine = self.open()
+        try:
+            scalar = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/scalar')
+            data = np.zeros(1, np.int32)
+            engine.get(scalar, data, adios2.Mode.Sync)
+            np.testing.assert_array_equal(data, [100])
+        finally:
+            engine.close()
+
+    def test_bp_leading_slash(self):
+        self.check_dataset(leading_slash=True)
+
+    def test_bp_timeseries_leading_slash(self):
+        self.check_dataset(series=True, leading_slash=True)
+
+    def test_missing_variable_diagnostic(self):
+        self.dataset_fixture()
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.execute("UPDATE variables SET name='missing' WHERE name='scalar'")
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name.rsplit('/', 1)[0] + '/missing')
+            with self.assertRaisesRegex(RuntimeError, "variable not found with indexed type"):
+                engine.get(var, np.zeros(1, np.int32), adios2.Mode.Sync)
+        finally:
+            engine.close()
+
+    def test_bp_dataset(self):
+        self.check_dataset()
+
+    def test_bp_timeseries(self):
+        self.check_dataset(series=True)
+
+    def test_hdf5_dataset(self):
+        self.check_dataset(hdf5=True)
+
+    def test_hdf5_timeseries(self):
+        self.check_dataset(hdf5=True, series=True)
 
     def test_sources(self):
         for image, embedded, compressed, tar in [
