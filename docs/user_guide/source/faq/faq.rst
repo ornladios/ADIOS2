@@ -223,3 +223,12 @@ users to set the maximum stack size manually when launching POSIX threads.
 One way to do this is through ulimit (*e.g.* ``ulimit -s 1024``). You can
 also set the stack size when submitting the job. Please contact your system
 administrator for details.
+
+
+Why is SST much slower than my network bandwidth benchmark?
+------------------------------------------------------------
+
+First check that SST is using the data plane you expect: if it cannot start, it falls back to
+sockets with only a warning.  Beyond that, a single reader process uses a single NIC, and a test
+with no computation pays for SST's overlap machinery without getting any benefit from it.  See
+:doc:`../advanced/sst_performance` for the settings that matter and per-system launch notes.
