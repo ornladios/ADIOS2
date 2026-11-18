@@ -19,8 +19,8 @@ namespace engine
 {
 
 template <class T>
-inline Variable<T> TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO &io, size_t ioIdx,
-                                                       size_t engineIdx, T min, T max)
+inline Variable<T> &TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO &io, size_t ioIdx,
+                                                        size_t engineIdx, T min, T max)
 {
     auto it = m_VarInternalInfo.find(variable->m_Name);
     if (it != m_VarInternalInfo.end())
@@ -142,7 +142,7 @@ inline Variable<T> TimeSeriesReader::DuplicateVariable(Variable<T> *variable, IO
 }
 
 template <class T>
-inline Attribute<T> TimeSeriesReader::DuplicateAttribute(Attribute<T> *attribute, IO &io)
+inline Attribute<T> &TimeSeriesReader::DuplicateAttribute(Attribute<T> *attribute, IO &io)
 {
     auto att = io.InquireAttribute<T>(attribute->m_Name);
     if (att != nullptr)
