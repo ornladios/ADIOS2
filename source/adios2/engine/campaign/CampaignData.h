@@ -157,9 +157,9 @@ public:
     std::vector<CampaignHost> hosts;
     std::vector<CampaignKey> keys;
     std::vector<CampaignDirectory> directory;
-    std::map<size_t, size_t> hostRows;      // database rowid -> hosts vector index
-    std::map<size_t, size_t> directoryRows; // database rowid -> directory vector index
-    std::map<size_t, size_t> keyRows;       // database rowid -> keys vector index
+    std::map<size_t, size_t> hostRows;               // database rowid -> hosts vector index
+    std::map<size_t, size_t> directoryRows;          // database rowid -> directory vector index
+    std::map<size_t, size_t> keyRows;                // database rowid -> keys vector index
     std::map<size_t, CampaignDataset> datasets;      // indexed by datasetID, 1..n, not contiguous
     std::map<size_t, CampaignTimeSeries> timeseries; // indexed by tsid, 1..n, not contiguous
     std::map<size_t, std::string> tarnames;          // indexed by rowid of archive table
