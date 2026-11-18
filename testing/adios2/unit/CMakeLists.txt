@@ -9,6 +9,8 @@
 
 gtest_add_tests_helper(ChunkV MPI_NONE "" Unit. "")
 gtest_add_tests_helper(CoreDims MPI_NONE "" Unit. "")
+gtest_add_tests_helper(CoreIODefinitions MPI_NONE "" Unit. "")
+target_link_libraries(Test.Unit.CoreIODefinitions.Serial Threads::Threads)
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(Remote MPI_NONE "" Unit. "" WORKING_DIRECTORY ${REMOTE_DIR})
   set_tests_properties(Unit.Remote.OpenRead.Serial PROPERTIES FIXTURES_REQUIRED Server)

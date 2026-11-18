@@ -13,6 +13,7 @@ add_library(adios2_core
   core/Attribute.cpp
   core/AttributeBase.cpp
   core/ADIOS.cpp
+  core/DefinitionBatch.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
   core/Operator.cpp
