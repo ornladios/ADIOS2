@@ -253,8 +253,9 @@ void IO::MergeDefinitions(DefinitionBatch &batch)
                                         entry.first);
 #endif
 
-    if (!batch.m_Variables.empty())
-        m_Variables.reserve(m_Variables.size() + batch.m_Variables.size());
+    // Let unordered_map::merge grow geometrically. Reserving exactly the new
+    // size for every streamed batch can rehash the entire accumulated index on
+    // every merge, making a bounded metadata load quadratic in its row count.
     if (!m_Engines.empty())
     {
         m_DefinitionAttributesToNotify.reserve(m_DefinitionAttributesToNotify.size() +
