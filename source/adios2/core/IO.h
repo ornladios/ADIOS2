@@ -22,6 +22,7 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/CoreTypes.h"
+#include "adios2/core/DefinitionBatch.h"
 #include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
@@ -34,10 +35,6 @@ namespace adios2
 
 namespace core
 {
-
-using VarMap = std::unordered_map<std::string, std::unique_ptr<VariableBase>>;
-// Note: AttrMap should stay an ordered map to preserve output consistency
-using AttrMap = std::map<std::string, std::unique_ptr<AttributeBase>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -179,6 +176,46 @@ public:
     Variable<T> &DefineVariable(const std::string &name, const Dims &shape = Dims(),
                                 const Dims &start = Dims(), const Dims &count = Dims(),
                                 const bool constantDims = false);
+
+    /** Create private worker storage, snapshotting array order and variable
+     * operation placeholders. Create batches before starting workers. The IO
+     * must outlive its batches. The normal IO API remains single-threaded.
+     * Configured operators are attached during serial merge, not batch filling. */
+    std::unique_ptr<DefinitionBatch> CreateDefinitionBatch(size_t variableCapacity = 0) const;
+
+    /** Serially transfer one completed batch's map nodes and pending recipes.
+     * Synchronize with this batch's worker before merging; workers populating
+     * other batches may continue. Object addresses remain stable. Duplicate
+     * names in any variable namespace or the attribute namespace are rejected
+     * before anything is transferred; existing attributes are never modified.
+     * Only batches created by this IO are accepted. Batches may be reused.
+     *
+     * Call FinalizeDefinitions after all batches for a load have been merged.
+     * Until then, use the IO only for further merges/finalization: no engine operations,
+     * configuration changes, removal, or direct definition/inquiry operations.
+     * The caller must provide exclusive access to this IO and the batch. Open
+     * rejects unfinalized definitions instead of exposing an incomplete load.
+     * Already-open engines are supported, but must remain idle from the first
+     * merge until finalization succeeds (including BeginStep/EndStep and Close).
+     */
+    void MergeDefinitions(DefinitionBatch &batch);
+
+    /** Validate attribute associations and resolve staged writer expressions
+     * against the complete set of ordinary variables and attributes. Register
+     * reader expressions for the normal engine-driven lazy resolution path.
+     * Derived-on-derived inputs are unsupported, as with DefineDerivedVariable.
+     * Only after successful validation are destination engines notified of new
+     * attributes, using their owned buffers.
+     *
+     * On failure, ordinary objects already merged remain installed. Completed
+     * recipes remain installed; failed/unprocessed recipes stay pending. Missing
+     * inputs may be supplied in another batch and finalization retried. This is
+     * not a rollback transaction. Do not use the IO until finalization succeeds.
+     * RemoveVariable/RemoveAttribute and their bulk forms do not cancel a load.
+     * With no engines open, a failed load can be abandoned by removing and
+     * recreating the IO through ADIOS.
+     */
+    void FinalizeDefinitions();
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VariableDerived &
     DefineDerivedVariable(const std::string &name, const std::string &expression,
@@ -594,6 +631,18 @@ public:
     void ExitComputationBlock() noexcept;
 
 private:
+    bool DefinitionNameExists(const std::string &name) const;
+    bool m_DefinitionsPending = false;
+    std::map<std::string, std::string> m_DefinitionAttributeVariables;
+    std::vector<AttributeBase *> m_DefinitionAttributesToNotify;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    DefinitionBatch::DerivedDefinitions m_DefinitionDerived;
+    std::unique_ptr<VariableDerived>
+    BuildDerivedVariable(const std::string &name, const std::string &expression,
+                         DerivedVarType type,
+                         const std::vector<std::pair<std::string, Params>> &operations);
+#endif
+
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;
 

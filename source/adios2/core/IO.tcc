@@ -7,6 +7,7 @@
 #ifndef ADIOS2_CORE_IO_TCC_
 #define ADIOS2_CORE_IO_TCC_
 
+#include "DefinitionHelpers.h"
 #include "IO.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -33,7 +34,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, cons
     PERFSTUBS_SCOPED_TIMER("IO::DefineVariable");
 
     {
-        auto itVariable = m_Variables.find(name);
+        const auto itVariable = m_Variables.find(name);
         if (itVariable != m_Variables.end())
         {
             helper::Throw<std::invalid_argument>("Core", "IO", "DefineVariable",
@@ -47,21 +48,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, cons
 
     Variable<T> &variable = static_cast<Variable<T> &>(*itVariablePair.first->second);
 
-    // check IO placeholder for variable operations
-    auto itOperations = m_VarOpsPlaceholder.find(name);
-    if (itOperations != m_VarOpsPlaceholder.end())
-    {
-        variable.m_Operations.reserve(itOperations->second.size());
-        for (auto &operation : itOperations->second)
-        {
-            variable.AddOperation(operation.first, operation.second);
-        }
-    }
-
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
-    variable.m_BaseLayout = m_ArrayOrder;
-    variable.m_ArrayLayout = m_ArrayOrder;
-#endif
+    definition::ConfigureVariable(variable, m_VarOpsPlaceholder, m_ArrayOrder);
     return variable;
 }
 
@@ -115,52 +102,19 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 
     const std::string globalName = helper::GlobalName(name, variableName, separator);
 
-    auto itExistingAttribute = m_Attributes.find(globalName);
-    if (itExistingAttribute != m_Attributes.end())
+    auto result = definition::DefineAttribute<T>(
+        m_Attributes, globalName, &value, 1,
+        [&] { return std::make_unique<Attribute<T>>(globalName, value, allowModification); },
+        [&](Attribute<T> &attribute) { attribute.Modify(value); });
+    auto &attribute = *result.first;
+    if (result.second)
     {
-        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
-        {
-            if (!itExistingAttribute->second->Equals(static_cast<const void *>(&value), 1))
-            {
-                Attribute<T> &a = static_cast<Attribute<T> &>(*itExistingAttribute->second);
-
-                a.Modify(value);
-                void *Data = &a.m_DataSingleValue;
-                if (a.m_DataArray.size() != 0)
-                    Data = a.m_DataArray.data();
-                for (auto &e : m_Engines)
-                {
-                    e.second->NotifyEngineAttribute(globalName, itExistingAttribute->second.get(),
-                                                    Data);
-                }
-            }
-        }
-        else
-        {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName + " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) + ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()));
-        }
-        return static_cast<Attribute<T> &>(*itExistingAttribute->second);
+        void *data = attribute.m_IsSingleValue ? static_cast<void *>(&attribute.m_DataSingleValue)
+                                               : static_cast<void *>(attribute.m_DataArray.data());
+        for (auto &engine : m_Engines)
+            engine.second->NotifyEngineAttribute(globalName, &attribute, data);
     }
-    else
-    {
-        auto itAttributePair = m_Attributes.emplace(
-            globalName,
-            std::unique_ptr<AttributeBase>(new Attribute<T>(globalName, value, allowModification)));
-        for (auto &e : m_Engines)
-        {
-            Attribute<T> &a = static_cast<Attribute<T> &>(*itAttributePair.first->second);
-            void *Data = &a.m_DataSingleValue;
-            if (a.m_DataArray.size() != 0)
-                Data = a.m_DataArray.data();
-
-            e.second->NotifyEngineAttribute(globalName, itAttributePair.first->second.get(), Data);
-        }
-        return static_cast<Attribute<T> &>(*itAttributePair.first->second);
-    }
+    return attribute;
 }
 
 template <class T>
@@ -179,47 +133,21 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array, const
 
     const std::string globalName = helper::GlobalName(name, variableName, separator);
 
-    auto itExistingAttribute = m_Attributes.find(globalName);
-    if (itExistingAttribute != m_Attributes.end())
+    auto result = definition::DefineAttribute<T>(
+        m_Attributes, globalName, array, elements,
+        [&] {
+            return std::make_unique<Attribute<T>>(globalName, array, elements, allowModification);
+        },
+        [&](Attribute<T> &attribute) { attribute.Modify(array, elements); });
+    auto &attribute = *result.first;
+    if (result.second)
     {
-        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
-        {
-            if (!itExistingAttribute->second->Equals(static_cast<const void *>(array), elements))
-            {
-                Attribute<T> &a = static_cast<Attribute<T> &>(*itExistingAttribute->second);
-                a.Modify(array, elements);
-                void *Data = &a.m_DataSingleValue;
-                if (a.m_DataArray.size() != 0)
-                    Data = a.m_DataArray.data();
-                for (auto &e : m_Engines)
-                {
-                    e.second->NotifyEngineAttribute(globalName, &a, Data);
-                }
-            }
-        }
-        else
-        {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName + " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) + ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()));
-        }
-        return static_cast<Attribute<T> &>(*itExistingAttribute->second);
+        void *data = attribute.m_IsSingleValue ? static_cast<void *>(&attribute.m_DataSingleValue)
+                                               : static_cast<void *>(attribute.m_DataArray.data());
+        for (auto &engine : m_Engines)
+            engine.second->NotifyEngineAttribute(globalName, &attribute, data);
     }
-    else
-    {
-        auto itAttributePair =
-            m_Attributes.emplace(globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
-                                                 globalName, array, elements, allowModification)));
-        Attribute<T> &a = static_cast<Attribute<T> &>(*itAttributePair.first->second);
-        void *Data = (void *)array;
-        for (auto &e : m_Engines)
-        {
-            e.second->NotifyEngineAttribute(globalName, &a, Data);
-        }
-        return static_cast<Attribute<T> &>(*itAttributePair.first->second);
-    }
+    return attribute;
 }
 
 template <class T>
