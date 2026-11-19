@@ -40,7 +40,6 @@ size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_
 
 void VariableBase::StoreStatsOnly(const bool mode) { m_WriteData = !(mode); }
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
 
 void VariableBase::SetArrayLayout(ArrayOrdering layout)
@@ -74,7 +73,6 @@ void VariableBase::SetArrayLayout(ArrayOrdering layout)
                                                  " and cannot received a " + NewLayout + " buffer");
     }
 }
-#endif
 
 MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 {
@@ -87,7 +85,7 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 #endif
             m_MemSpace = MemorySpace::Host;
     }
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     // a raw pointer carries no layout. On the host it uses the variable's current
     // layout, but GPU code commonly uses either one, so a multidimensional GPU buffer
     // must have its layout set explicitly
@@ -100,8 +98,8 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
                 " has a GPU buffer but no array layout. Call SetArrayLayout with "
                 "RowMajor or ColumnMajor, or pass a multidimensional Kokkos::View");
     }
-    m_ArrayLayoutLocked = true;
 #endif
+    m_ArrayLayoutLocked = true;
     return m_MemSpace;
 }
 
@@ -164,9 +162,7 @@ void VariableBase::SetShape(const adios2::Dims &shape)
                                                  m_Name + ", in call to SetShape");
     }
     m_Shape = shape;
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_Shape);
-#endif
 }
 
 void VariableBase::SetBlockSelection(const size_t blockID)
@@ -233,10 +229,8 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
         m_Start = Dims(m_Count.size(), 0);
     }
     m_SelectionType = SelectionType::BoundingBox;
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_Count);
     UpdateLayout(m_Start);
-#endif
 }
 
 void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
@@ -298,10 +292,8 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 
     m_MemoryStart = memorySelection.first;
     m_MemoryCount = memorySelection.second;
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_MemoryCount);
     UpdateLayout(m_MemoryStart);
-#endif
 }
 
 void VariableBase::SetAccuracy(const adios2::Accuracy &a) noexcept
@@ -729,14 +721,12 @@ Dims VariableBase::Shape(const size_t step, const MemorySpace memSpace,
                          const ArrayOrdering layout) const
 {
     auto dims = Shape(step);
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     if (layout != m_BaseLayout && layout != ArrayOrdering::Auto)
     {
         Dims flipDims(dims.size());
         std::reverse_copy(dims.begin(), dims.end(), flipDims.begin());
         return flipDims;
     }
-#endif
     return dims;
 }
 
@@ -769,7 +759,6 @@ Dims VariableBase::Shape(const size_t step) const
     return m_Shape;
 }
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 inline void VariableBase::UpdateLayout(Dims &shape)
 {
     // the buffer layout differs from the IO's order, so dimensions are reversed
@@ -778,6 +767,5 @@ inline void VariableBase::UpdateLayout(Dims &shape)
         std::reverse(shape.begin(), shape.end());
     }
 }
-#endif
 } // end namespace core
 } // end namespace adios2

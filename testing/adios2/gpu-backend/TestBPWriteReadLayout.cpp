@@ -114,6 +114,10 @@ TEST_F(BPWRLayout, DeviceRawPointerNeedsLayout)
         adios2::IO io = adios.DeclareIO("WriteLayout");
         SetEngine(io);
         auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
+        // SYCL cannot detect a raw device pointer, so name its memory space
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        var.SetMemorySpace(adios2::MemorySpace::GPU);
+#endif
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
         writer.BeginStep();
         EXPECT_THROW(writer.Put(var, device.data(), adios2::Mode::Sync), std::invalid_argument);
@@ -140,6 +144,9 @@ TEST_F(BPWRLayout, DeviceRawPointerNeedsLayout)
     reader.BeginStep();
     auto var = io.InquireVariable<float>("r32");
     ASSERT_TRUE(var);
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    var.SetMemorySpace(adios2::MemorySpace::GPU);
+#endif
     EXPECT_THROW(reader.Get(var, device.data(), adios2::Mode::Sync), std::invalid_argument);
     reader.EndStep();
     reader.Close();
@@ -159,6 +166,9 @@ void DeviceRawPointerExplicitLayout(const std::string &fname, const adios2::Dims
         SetEngine(io);
         auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
         var.SetArrayLayout(Layout);
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        var.SetMemorySpace(adios2::MemorySpace::GPU);
+#endif
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
         writer.BeginStep();
         writer.Put(var, device.data(), adios2::Mode::Sync);
@@ -254,6 +264,75 @@ TEST_F(BPWRLayout, HostViewLayoutLeft)
 {
     ViewLayoutDrivesShape<Kokkos::LayoutLeft, Kokkos::HostSpace>("BPWRLayoutHostLeft.bp",
                                                                  reversedShape);
+}
+
+// Reading into a view uses the view's layout too: a view written with one layout and
+// read into a view of the same layout, whole or through a selection given in the
+// view's own indices, gets back the same elements.
+template <class Layout, class Space>
+void ViewLayoutRoundTrip(const std::string &fname)
+{
+    auto view = MakeView<Layout, Space>("view");
+    {
+        adios2::ADIOS adios;
+        adios2::IO io = adios.DeclareIO("WriteLayout");
+        SetEngine(io);
+        auto var = io.DefineVariable<float>("r32", declaredShape, {0, 0}, declaredShape);
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        writer.BeginStep();
+        writer.Put(var, view, adios2::Mode::Sync);
+        writer.EndStep();
+        writer.Close();
+    }
+
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("ReadLayout");
+    SetEngine(io);
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+    reader.BeginStep();
+    auto var = io.InquireVariable<float>("r32");
+    ASSERT_TRUE(var);
+
+    Kokkos::View<float **, Layout, Space> whole("whole", Nx, Ny);
+    reader.Get(var, whole, adios2::Mode::Sync);
+    auto hostWhole = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), whole);
+    for (size_t i = 0; i < Nx; ++i)
+        for (size_t j = 0; j < Ny; ++j)
+            EXPECT_EQ(hostWhole(i, j), static_cast<float>(i * Ny + j));
+
+    // columns 1..Ny-1 of every row
+    var.SetSelection({{0, 1}, {Nx, Ny - 1}});
+    Kokkos::View<float **, Layout, Space> part("part", Nx, Ny - 1);
+    reader.Get(var, part, adios2::Mode::Sync);
+    auto hostPart = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), part);
+    for (size_t i = 0; i < Nx; ++i)
+        for (size_t j = 1; j < Ny; ++j)
+            EXPECT_EQ(hostPart(i, j - 1), static_cast<float>(i * Ny + j));
+
+    reader.EndStep();
+    reader.Close();
+}
+
+TEST_F(BPWRLayout, DeviceViewLayoutRightRoundTrip)
+{
+    ViewLayoutRoundTrip<Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace::memory_space>(
+        "BPWRLayoutDeviceRightRT.bp");
+}
+
+TEST_F(BPWRLayout, DeviceViewLayoutLeftRoundTrip)
+{
+    ViewLayoutRoundTrip<Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>(
+        "BPWRLayoutDeviceLeftRT.bp");
+}
+
+TEST_F(BPWRLayout, HostViewLayoutRightRoundTrip)
+{
+    ViewLayoutRoundTrip<Kokkos::LayoutRight, Kokkos::HostSpace>("BPWRLayoutHostRightRT.bp");
+}
+
+TEST_F(BPWRLayout, HostViewLayoutLeftRoundTrip)
+{
+    ViewLayoutRoundTrip<Kokkos::LayoutLeft, Kokkos::HostSpace>("BPWRLayoutHostLeftRT.bp");
 }
 
 // A rank-1 view is just a flat buffer: its layout says nothing about the variable's

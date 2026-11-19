@@ -95,7 +95,7 @@ class Variable:
     def set_array_layout(self, layout):
         """
         Set the layout of the buffers in following puts/gets. Required for a
-        multidimensional GPU buffer. Only available with GPU support
+        multidimensional GPU buffer
 
         Args:
             layout (adios2.bindings.ArrayOrdering): RowMajor, ColumnMajor, or Auto

@@ -72,6 +72,7 @@ void MGARDAccuracy2D(const std::string tolerance)
             bpWriter.BeginStep();
             cudaMemcpy(gpu64s, r64s.data(), Nx * Ny * sizeof(double), cudaMemcpyHostToDevice);
             var_r64.SetMemorySpace(adios2::MemorySpace::GPU);
+            var_r64.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
             bpWriter.Put<double>("r64", gpu64s);
             bpWriter.EndStep();
         }
@@ -105,6 +106,7 @@ void MGARDAccuracy2D(const std::string tolerance)
             const adios2::Dims count{Nx, Ny};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r64.SetSelection(sel);
+            var_r64.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
 
             double *gpu64s = nullptr;
             cudaMalloc(&gpu64s, Nx * Ny * sizeof(double));
