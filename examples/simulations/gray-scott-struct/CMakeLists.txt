@@ -51,7 +51,7 @@ if(ADIOS2_HAVE_MPI)
       "simulation/settings-staging.json"
       "simulation/settings-inline.json"
       "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
-      "ReadMe.md"
+      "README.md"
       DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott-struct)
 
     install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott-struct)

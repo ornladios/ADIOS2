@@ -163,7 +163,7 @@ ADIOS2 is an open source project: questions, discussion, and contributions are w
 - Mailing list: adios-ecp@kitware.com
 - Github Discussions: https://github.com/ornladios/ADIOS2/discussions
 - Bug reports: [open an issue](https://github.com/ornladios/ADIOS2/issues)
-- Contributing: see the [Contributor's Guide](Contributing.md)
+- Contributing: see the [Contributor's Guide](CONTRIBUTING.md)
 
 ## Institutions
 
