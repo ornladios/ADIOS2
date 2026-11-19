@@ -12,7 +12,7 @@ build-backend = "scikit_build_core.build"
 name = "adios2-mpi"
 dynamic = ["version"]
 description = "The Adaptable Input Output System version 2 (MPI build)"
-readme = "../../ReadMe.md"
+readme = "../../README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"
 dependencies = [

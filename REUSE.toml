@@ -5,7 +5,7 @@ SPDX-PackageDownloadLocation = "https://github.com/ornladios/ADIOS2"
 
 [[annotations]]
 path = [
-    "ReadMe.md",
+    "README.md",
     "Contributing.md",
     "Copyright.txt"
 ]
