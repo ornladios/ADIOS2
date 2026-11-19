@@ -133,15 +133,15 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-    nb::enum_<adios2::MemorySpace>(m, "MemorySpace")
-        .value("Host", adios2::MemorySpace::Host)
-        .value("GPU", adios2::MemorySpace::GPU);
-
     nb::enum_<adios2::ArrayOrdering>(m, "ArrayOrdering")
         .value("RowMajor", adios2::ArrayOrdering::RowMajor)
         .value("ColumnMajor", adios2::ArrayOrdering::ColumnMajor)
         .value("Auto", adios2::ArrayOrdering::Auto);
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    nb::enum_<adios2::MemorySpace>(m, "MemorySpace")
+        .value("Host", adios2::MemorySpace::Host)
+        .value("GPU", adios2::MemorySpace::GPU);
 #endif
 
     nb::class_<adios2::Accuracy>(m, "Accuracy")
@@ -388,8 +388,8 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              (void(adios2::py11::Variable::*)(const adios2::MemorySpace)) &
                  adios2::py11::Variable::SetMemorySpace,
              nb::arg("memSpace"))
-        .def("SetArrayLayout", &adios2::py11::Variable::SetArrayLayout, nb::arg("layout"))
 #endif
+        .def("SetArrayLayout", &adios2::py11::Variable::SetArrayLayout, nb::arg("layout"))
         .def("Start", &adios2::py11::Variable::Start)
         .def("Count", &adios2::py11::Variable::Count)
         .def("Steps", &adios2::py11::Variable::Steps)

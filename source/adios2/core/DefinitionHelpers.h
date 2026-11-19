@@ -32,13 +32,8 @@ inline void ConfigureOperations(VariableBase &variable, const VariableOperations
 
 inline void ConfigureLayout(VariableBase &variable, ArrayOrdering ordering)
 {
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     variable.m_BaseLayout = ordering;
     variable.m_ArrayLayout = ordering;
-#else
-    (void)variable;
-    (void)ordering;
-#endif
 }
 
 inline void ConfigureVariable(VariableBase &variable, const VariableOperations &operations,
