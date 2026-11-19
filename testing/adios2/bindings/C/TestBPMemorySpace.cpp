@@ -68,7 +68,6 @@ TEST_F(ADIOS2_C_API, ADIOS2BPArrayLayout)
     EXPECT_EQ(autoShape[0], 5);
     EXPECT_EQ(autoShape[1], 2);
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     // a column-major buffer for a row-major IO reverses the dimensions to the IO's order
     EXPECT_EQ(adios2_set_array_layout(varCol, adios2_arrayordering_columnmajor), adios2_error_none);
     size_t colShape[2];
@@ -77,9 +76,6 @@ TEST_F(ADIOS2_C_API, ADIOS2BPArrayLayout)
     EXPECT_EQ(colShape[1], 5);
     // and the layout is fixed once set
     EXPECT_NE(adios2_set_array_layout(varCol, adios2_arrayordering_rowmajor), adios2_error_none);
-#else
-    EXPECT_NE(adios2_set_array_layout(varCol, adios2_arrayordering_columnmajor), adios2_error_none);
-#endif
 }
 
 TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceShape)

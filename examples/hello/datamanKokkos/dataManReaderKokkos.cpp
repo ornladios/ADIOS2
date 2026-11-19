@@ -58,6 +58,9 @@ int main(int argc, char *argv[])
         if (status == adios2::StepStatus::OK)
         {
             floatArrayVar = dataManIO.InquireVariable<float>("FloatArray");
+            // a flat device buffer carries no layout; the whole array is read, so the bytes
+            // are the same in either order
+            floatArrayVar.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
             auto shape = floatArrayVar.Shape();
             size_t datasize =
                 std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
