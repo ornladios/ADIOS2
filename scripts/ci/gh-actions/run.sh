@@ -36,15 +36,15 @@ fi
 if [[ "${GH_YML_BASE_OS}" =~ "Windows" ]]
 then
   export CI_ROOT_DIR="${GITHUB_WORKSPACE//\\//}"
-  export CI_SOURCE_DIR="${GITHUB_WORKSPACE//\\//}/source"
+  export CI_SOURCE_DIR="${GITHUB_WORKSPACE//\\//}"
 else
   export CI_ROOT_DIR="${GITHUB_WORKSPACE}"
-  export CI_SOURCE_DIR="${GITHUB_WORKSPACE}/source"
+  export CI_SOURCE_DIR="${GITHUB_WORKSPACE}"
 fi
 export CI_BIN_DIR="${CI_ROOT_DIR}/${GH_YML_JOBNAME}"
 
 STEP=$1
-CTEST_SCRIPT=gha/scripts/ci/cmake/ci-${GH_YML_JOBNAME}.cmake
+CTEST_SCRIPT=scripts/ci/cmake/ci-${GH_YML_JOBNAME}.cmake
 
 # Update and Test steps enable an extra step
 CTEST_STEP_ARGS="-Ddashboard_do_${STEP}=ON"
@@ -104,21 +104,21 @@ export ADIOS2_IP=127.0.0.1
 export OMP_NUM_THREADS=1
 
 # Load any additional setup scripts
-if [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh" ]
+if [ -f "scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh" ]
 then
-  SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh
-elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh" ]
+  SETUP_RUN_SCRIPT=scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh
+elif [ -f "scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh" ]
 then
-  SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh
-elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh" ]
+  SETUP_RUN_SCRIPT=scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh
+elif [ -f "scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh" ]
 then
-  SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh
-elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh" ]
+  SETUP_RUN_SCRIPT=scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh
+elif [ -f "scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh" ]
 then
-  SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh
-elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh" ]
+  SETUP_RUN_SCRIPT=scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh
+elif [ -f "scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh" ]
 then
-  SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh
+  SETUP_RUN_SCRIPT=scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh
 fi
 
 echo "::endgroup::"
