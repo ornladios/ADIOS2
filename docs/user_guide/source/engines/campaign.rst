@@ -84,6 +84,8 @@ is read as SQLite, never opened through an ADIOS engine. Opened dataset engines
 are reused for subsequent reads and released by Close. Spatial, block, memory,
 and step selections are forwarded to the dataset engine. Deferred requests
 retain their selections and complete at PerformGets, EndStep, or Close.
+For SSH access, BP4 members use the remote file transport to read payload
+subfiles; embedded metadata alone does not make those payloads local.
 
 Indexes with ``timeseries``, ``timeseries_datasets``, and
 ``timeseries_variable_steps`` tables resolve series membership and per-variable
