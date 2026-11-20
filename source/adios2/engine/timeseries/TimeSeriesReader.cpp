@@ -258,8 +258,8 @@ void TimeSeriesReader::ProcessIO(adios2::core::IO &io, adios2::core::Engine &e)
         else if (type == DataType::String)
         {
             Variable<std::string> *vi = io.InquireVariable<std::string>(vname);
-            Variable<std::string> v = DuplicateVariable<std::string>(
-                vi, m_IO, m_IOs.size() - 1, m_Engines.size() - 1, vi->m_Min, vi->m_Max);
+            DuplicateVariable<std::string>(vi, m_IO, m_IOs.size() - 1, m_Engines.size() - 1,
+                                           vi->m_Min, vi->m_Max);
         }
 
 #define declare_type(T)                                                                            \
@@ -286,8 +286,7 @@ void TimeSeriesReader::ProcessIO(adios2::core::IO &io, adios2::core::Engine &e)
             min = std::numeric_limits<T>::min();                                                   \
             max = std::numeric_limits<T>::max();                                                   \
         }                                                                                          \
-        Variable<T> v =                                                                            \
-            DuplicateVariable(vi, m_IO, m_IOs.size() - 1, m_Engines.size() - 1, min, max);         \
+        DuplicateVariable(vi, m_IO, m_IOs.size() - 1, m_Engines.size() - 1, min, max);             \
     }
 
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -306,7 +305,7 @@ void TimeSeriesReader::ProcessIO(adios2::core::IO &io, adios2::core::Engine &e)
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         Attribute<T> *ai = io.InquireAttribute<T>(aname);                                          \
-        Attribute<T> v = DuplicateAttribute(ai, m_IO);                                             \
+        DuplicateAttribute(ai, m_IO);                                                              \
     }
 
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
