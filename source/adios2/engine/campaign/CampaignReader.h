@@ -170,15 +170,15 @@ private:
      * based on an existing variable.
      */
     template <class T>
-    Variable<T> DuplicateVariable(Variable<T> *variable, IO &io, std::string &name,
-                                  VarInternalInfo &vii);
+    Variable<T> &DuplicateVariable(Variable<T> *variable, IO &io, std::string &name,
+                                   VarInternalInfo &vii);
 
     /**
      * Create a new attribute with name `name` in `io`
      * based on an existing attribute.
      */
     template <class T>
-    Attribute<T> DuplicateAttribute(Attribute<T> *attribute, IO &io, std::string &name);
+    Attribute<T> &DuplicateAttribute(Attribute<T> *attribute, IO &io, std::string &name);
 
     /**
      * Find the actual engine/variable with name `name` in `io`

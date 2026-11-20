@@ -41,7 +41,7 @@ $endif\
 ```
 sed -i 's/^setup_version(.*)/setup_version($(VERSION))/' CMakeLists.txt
 sed -i 's/^release = .*/release = "$(VERSION)$(RC)"/' docs/user_guide/source/conf.py
-sed -i 's/^\* Latest release: .*/* Latest release: [v$(VERSION)$(RC)](https:\/\/github.com\/ornladios\/ADIOS2\/releases\/tag\/v$(VERSION)$(RC))/' ReadMe.md
+sed -i 's/^\* Latest release: .*/* Latest release: [v$(VERSION)$(RC)](https:\/\/github.com\/ornladios\/ADIOS2\/releases\/tag\/v$(VERSION)$(RC))/' README.md
 git commit -am 'Bump version to v$(VERSION)$(RC)'
 ```
 $if(PATCH == 0 and RC == "-rc1")\

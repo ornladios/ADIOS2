@@ -1201,6 +1201,8 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
                 lf_VerifyAttributes(step, "var2", separator, io);
             }
 
+            EXPECT_TRUE(io.AvailableAttributes("no_such_var", separator).empty());
+
             bpReader.EndStep();
         }
     }

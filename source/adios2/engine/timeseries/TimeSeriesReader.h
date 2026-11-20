@@ -96,15 +96,15 @@ private:
      * based on an existing variable.
      */
     template <class T>
-    Variable<T> DuplicateVariable(Variable<T> *variable, IO &io, size_t ioIdx, size_t engineIdx,
-                                  T min, T max);
+    Variable<T> &DuplicateVariable(Variable<T> *variable, IO &io, size_t ioIdx, size_t engineIdx,
+                                   T min, T max);
 
     /**
      * Create a new attribute with name `name` in `io`
      * based on an existing attribute.
      */
     template <class T>
-    Attribute<T> DuplicateAttribute(Attribute<T> *attribute, IO &io);
+    Attribute<T> &DuplicateAttribute(Attribute<T> *attribute, IO &io);
 
     size_t FindStep(const VarInternalInfo &vii, const size_t step) const;
 

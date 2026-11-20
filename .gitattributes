@@ -9,11 +9,40 @@
 *.tcc   text
 *.cu    text
 *.c     text
-*.h     text
 *.py    text
 *.f90   text
 *.F90   text
-*.sh    text
+*.m     text
+*.in    text
+*.json  text
+*.yml   text
+*.yaml  text
+*.cmake text
+
+# Scripts executed by a Unix shell must keep LF even on Windows checkouts.
+*.sh    text eol=lf
+
+# Windows scripts must keep CRLF on checkout.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Denote all files that are truly binary and should not be modified.
+*.bp    binary
+*.h5    binary
+*.png   binary
+*.pdf   binary
+
+# Language aware hunk headers in diffs.
+*.c     diff=cpp
+*.cxx   diff=cpp
+*.h     diff=cpp
+*.hxx   diff=cpp
+*.tcc   diff=cpp
+*.py    diff=python
+*.f90   diff=fortran
+*.F90   diff=fortran
+*.m     diff=matlab
 
 CMakeLists.txt whitespace=tab-in-indent
 *.cmake whitespace=tab-in-indent
@@ -21,3 +50,22 @@ CMakeLists.txt whitespace=tab-in-indent
 *.rst   whitespace=tab-in-indent conflict-marker-size=79
 *.txt   whitespace=tab-in-indent
 *.xml   whitespace=tab-in-indent
+*.cxx   whitespace=tab-in-indent
+*.h     whitespace=tab-in-indent
+*.py    whitespace=tab-in-indent
+
+# Exclude CI and tooling files from `git archive` (GitHub release tarballs).
+.github/               export-ignore
+.gitlab/                export-ignore
+.gitattributes          export-ignore
+.git-remote-files       export-ignore
+.clang-format           export-ignore
+.clang-tidy             export-ignore
+.shellcheck_exclude_paths export-ignore
+readthedocs.yml         export-ignore
+scripts/ci/             export-ignore
+scripts/docker/         export-ignore
+
+# Keep vendored and documentation files out of GitHub language statistics.
+thirdparty/**     linguist-vendored
+docs/**           linguist-documentation
