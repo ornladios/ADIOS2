@@ -5,8 +5,8 @@ SPDX-PackageDownloadLocation = "https://github.com/ornladios/ADIOS2"
 
 [[annotations]]
 path = [
-    "ReadMe.md",
-    "Contributing.md",
+    "README.md",
+    "CONTRIBUTING.md",
     "Copyright.txt"
 ]
 SPDX-FileCopyrightText = "NONE"
@@ -145,7 +145,7 @@ SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["bindings/Matlab/HOWTO-debug.txt", "bindings/Matlab/README.txt"]
+path = ["bindings/Matlab/HOWTO-debug.txt", "bindings/Matlab/README.md"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -169,7 +169,7 @@ SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["source/h5vol/READ.ME", "source/utils/adios_iotest/iotest-config/**", "source/utils/profiler/sample_data/**", "source/utils/profiler/tests/commands", "source/utils/profiler_simplified/data/**", "source/utils/profiler_simplified/python_plots/**"]
+path = ["source/h5vol/README.md", "source/utils/adios_iotest/iotest-config/**", "source/utils/profiler/sample_data/**", "source/utils/profiler/tests/commands", "source/utils/profiler_simplified/data/**", "source/utils/profiler_simplified/python_plots/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -193,7 +193,7 @@ SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["testing/adios2/engine/skeleton/**.txt", "testing/adios2/engine/sst/Testing/Temporary/LastTest.log", "testing/adios2/performance/metadata/README", "testing/examples/heatTransfer/**.txt", "testing/utils/bpcmp/**.txt", "testing/utils/changingshape/**.txt", "testing/utils/cwriter/**.txt", "testing/utils/iotest/**.txt", "testing/adios2/backward_compatibility/**.txt"]
+path = ["testing/adios2/engine/skeleton/**.txt", "testing/adios2/performance/metadata/README.md", "testing/examples/heatTransfer/**.txt", "testing/utils/bpcmp/**.txt", "testing/utils/changingshape/**.txt", "testing/utils/cwriter/**.txt", "testing/utils/iotest/**.txt", "testing/adios2/backward_compatibility/**.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Oak Ridge National Laboratory and Contributors"
 SPDX-License-Identifier = "Apache-2.0"
