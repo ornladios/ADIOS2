@@ -564,8 +564,6 @@ void BP4Reader::ProcessMetadataFromMemory(const char *md)
                 "]  for file " + m_Name);
     }
 
-    std::cout << "BP4 in-memory metadata, header = " << h2 << std::endl;
-
     memcpy(&size_md, p, sizeof(uint64_t));
     p = p + sizeof(uint64_t);
     memcpy(&size_mdidx, p, sizeof(uint64_t));
