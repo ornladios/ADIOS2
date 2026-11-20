@@ -12,6 +12,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -141,13 +142,23 @@ struct CampaignVersion
 
 // Metadata loaded from an ACX index. SQLite handles and row decoding stay in
 // CampaignData; readers consume these records to define variables/attributes.
+struct CampaignIndexStepRange
+{
+    size_t dataset; // physical dataset rowid in the ACA
+    std::string datasetName;
+    size_t start; // first logical step of this variable in the member
+    size_t steps;
+};
+
 struct CampaignIndexEntry
 {
     std::string archive;
-    size_t dataset; // dataset rowid in the corresponding ACA archive
+    int64_t dataset; // ACA dataset rowid, or a negative logical series ID
     std::string datasetName;
     std::string name; // variable name within the dataset (image resolution, or empty for text)
     std::string format;
+    // Present only for explicit ACX time series; null retains legacy resolution.
+    std::shared_ptr<const std::vector<CampaignIndexStepRange>> stepRanges;
 };
 
 struct CampaignIndexVariable
