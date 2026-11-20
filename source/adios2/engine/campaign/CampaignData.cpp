@@ -69,6 +69,14 @@ public:
                  : std::string();
     }
     int64_t Integer(int column) const { return sqlite3_column_int64(m_Statement, column); }
+    void Select(int64_t series, const std::string &name)
+    {
+        if (sqlite3_reset(m_Statement) != SQLITE_OK ||
+            sqlite3_bind_int64(m_Statement, 1, series) != SQLITE_OK ||
+            sqlite3_bind_text(m_Statement, 2, name.data(), static_cast<int>(name.size()),
+                              SQLITE_TRANSIENT) != SQLITE_OK)
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(m_DB));
+    }
 
 private:
     sqlite3 *m_DB;
@@ -128,9 +136,34 @@ void CampaignData::StreamIndex(const std::string &path, size_t batchSize,
     {
         prefixes.emplace(datasets.Integer(0), datasets.Text(1) + "/" + datasets.Text(2) + "/");
         entries.emplace(datasets.Integer(0),
-                        CampaignIndexEntry{datasets.Text(1),
-                                           static_cast<size_t>(datasets.Integer(3)),
-                                           datasets.Text(2), "", datasets.Text(4)});
+                        CampaignIndexEntry{datasets.Text(1), datasets.Integer(3), datasets.Text(2),
+                                           "", datasets.Text(4), nullptr});
+    }
+
+    // Older ACX indexes have no series tables. Explicit indexes keep physical
+    // members in datasets and enumerate each variable's contiguous logical steps.
+    std::unordered_map<int64_t, int64_t> series;
+    std::unique_ptr<Query> ranges;
+    Query tables(db.get(), "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+                           "('timeseries','timeseries_datasets','timeseries_variable_steps')");
+    size_t tableCount = 0;
+    while (tables.Next())
+        ++tableCount;
+    if (tableCount && tableCount != 3)
+        throw std::runtime_error("CampaignIndex: incomplete time-series schema");
+    if (tableCount)
+    {
+        Query ts(db.get(), "SELECT tsid, datasetid FROM timeseries");
+        while (ts.Next())
+        {
+            if (!entries.count(ts.Integer(1)) ||
+                !series.emplace(ts.Integer(1), ts.Integer(0)).second)
+                throw std::runtime_error("CampaignIndex: invalid time-series dataset");
+        }
+        ranges = std::make_unique<Query>(
+            db.get(), "SELECT s.datasetid, s.step_start, s.steps FROM timeseries_variable_steps s "
+                      "JOIN timeseries_datasets m ON m.tsid=s.tsid AND m.datasetid=s.datasetid "
+                      "WHERE s.tsid=? AND s.name=? ORDER BY s.step_start");
     }
 
     Query vars(db.get(), "SELECT datasetid, name, type, steps, min, max, ndim, shape, value "
@@ -147,6 +180,35 @@ void CampaignData::StreamIndex(const std::string &path, size_t batchSize,
         if (stepCount < 1)
             throw std::runtime_error("CampaignIndex: invalid steps for " + name);
         const size_t steps = static_cast<size_t>(stepCount);
+        const auto ts = series.find(vars.Integer(0));
+        if (ts != series.end())
+        {
+            auto mapping = std::make_shared<std::vector<CampaignIndexStepRange>>();
+            ranges->Select(ts->second, entry.name);
+            size_t next = 0;
+            while (ranges->Next())
+            {
+                const auto member = entries.find(ranges->Integer(0));
+                const auto first = ranges->Integer(1);
+                const auto count = ranges->Integer(2);
+                if (member == entries.end() || member->second.dataset <= 0 ||
+                    member->second.archive != entry.archive ||
+                    member->second.format != entry.format || first < 0 ||
+                    static_cast<size_t>(first) != next || count <= 0 ||
+                    static_cast<uint64_t>(count) > steps - next)
+                    throw std::runtime_error(
+                        "CampaignIndex: invalid time-series step mapping for " + name);
+                mapping->push_back({static_cast<size_t>(member->second.dataset),
+                                    member->second.datasetName, next, static_cast<size_t>(count)});
+                next += static_cast<size_t>(count);
+            }
+            if (next != steps)
+                throw std::runtime_error("CampaignIndex: incomplete time-series step mapping for " +
+                                         name);
+            entry.stepRanges = std::move(mapping);
+        }
+        else if (entry.dataset < 0)
+            throw std::runtime_error("CampaignIndex: missing time-series mapping for " + name);
         index.variables.push_back({name, std::move(entry), type, steps, vars.Integer(6),
                                    vars.Text(7), vars.Text(4), vars.Text(5), vars.Text(8)});
         if (index.variables.size() == batchSize)

@@ -70,6 +70,7 @@ private:
         Engine *engine;
         VariableBase *variable;
         size_t step;
+        size_t steps; // remaining steps in this physical member's indexed range
     };
     SourceVariable FindSource(const VariableBase &variable, size_t step) const;
     template <class T>
@@ -77,7 +78,7 @@ private:
                                                          size_t step) const;
     std::vector<size_t> ResolveDatasets(Archive &archive, const Entry &entry) const;
     template <class T>
-    void ReadDataset(const Entry &entry, Variable<T> &variable, T *data);
+    void ReadDataset(Variable<T> &variable, T *data);
     Archive &OpenArchive(const std::string &name) const;
     void ReadBytes(const Entry &entry, size_t start, size_t count, char *data);
     template <class T>

@@ -31,6 +31,18 @@ CREATE TABLE variables(archiveid INT, datasetid INT, name TEXT, type INT, steps 
 CREATE TABLE attributes(datasetid INT, name TEXT, type INT, value TEXT);
 """
 
+SERIES_SCHEMA = """
+CREATE TABLE timeseries(tsid INTEGER PRIMARY KEY, archiveid INT, aca_tsid INT,
+                        datasetid INT UNIQUE, name TEXT);
+CREATE TABLE timeseries_datasets(tsid INT, datasetid INT, tsorder INT,
+                                 PRIMARY KEY(tsid, datasetid), UNIQUE(tsid, tsorder));
+CREATE TABLE timeseries_variable_steps(tsid INT, datasetid INT, name TEXT,
+                                       step_start INT, steps INT,
+                                       PRIMARY KEY(tsid, datasetid, name));
+CREATE INDEX timeseries_variable_step_lookup
+    ON timeseries_variable_steps(tsid, name, step_start);
+"""
+
 
 class TestCampaignIndexRead(unittest.TestCase):
     def setUp(self):
@@ -225,7 +237,9 @@ class TestCampaignIndexRead(unittest.TestCase):
                 with self.subTest(key=key, value=value), self.assertRaises(Exception):
                     self.open(parameters={key: value})
 
-    def dataset_fixture(self, hdf5=False, series=False, leading_slash=False, multiblock=False):
+    def dataset_fixture(
+        self, hdf5=False, series=False, leading_slash=False, multiblock=False, explicit=False
+    ):
         prefix = "bbb/" if leading_slash else ""
         source_prefix = "/" + prefix if leading_slash else ""
         files = ["part0.h5", "part1.h5"] if hdf5 else ["part0.bp", "part1.bp"]
@@ -286,9 +300,28 @@ class TestCampaignIndexRead(unittest.TestCase):
                     (13 + i, filename, "uuid-" + str(i), fmt, 7 if series else 0, i * 3),
                 )
                 db.execute("INSERT INTO replica VALUES (?,1,1,0,?,0,0,0,0)", (13 + i, filename))
+        if explicit:
+            with closing(sqlite3.connect(self.index)) as db, db:
+                db.executescript(SERIES_SCHEMA)
+                db.execute("UPDATE datasets SET dsid=-7 WHERE datasetid=1")
+                db.execute("INSERT INTO timeseries VALUES (9,1,7,1,'series')")
+                for i, filename in enumerate(files):
+                    # ACX dataset IDs, ACA rowids, and series IDs are independent.
+                    member = 22 + i * 22
+                    db.execute("INSERT INTO datasets VALUES (?,1,?,?,5)", (member, 13 + i, filename))
+                    db.execute("INSERT INTO timeseries_datasets VALUES (9,?,?)", (member, i * 3))
+                    for name in (prefix + "values", prefix + "scalar"):
+                        db.execute(
+                            "INSERT INTO timeseries_variable_steps VALUES (9,?,?,?,2)",
+                            (member, name, 2 * i),
+                        )
+            # Explicit membership must not depend on ACA series names or order.
+            with closing(sqlite3.connect(self.archive)) as db, db:
+                db.execute("DELETE FROM timeseries")
+                db.execute("UPDATE dataset SET tsid=0, tsorder=0")
 
     def test_multiblock_metadata_and_selection(self):
-        self.dataset_fixture(series=True, leading_slash=True, multiblock=True)
+        self.dataset_fixture(series=True, leading_slash=True, multiblock=True, explicit=True)
         adios, io, engine = self.open()
         try:
             var = io.inquire_variable(self.name)
@@ -360,8 +393,8 @@ class TestCampaignIndexRead(unittest.TestCase):
         finally:
             engine.close()
 
-    def check_dataset(self, hdf5=False, series=False, leading_slash=False):
-        self.dataset_fixture(hdf5, series, leading_slash)
+    def check_dataset(self, hdf5=False, series=False, leading_slash=False, explicit=False):
+        self.dataset_fixture(hdf5, series, leading_slash, explicit=explicit)
         before = self.archive.read_bytes()
         adios, io, engine = self.open(parameters={"MetadataThreads": "3", "MetadataBatchSize": "1"})
         try:
@@ -478,6 +511,127 @@ class TestCampaignIndexRead(unittest.TestCase):
     def test_hdf5_timeseries(self):
         self.check_dataset(hdf5=True, series=True)
 
+    def test_bp_indexed_timeseries(self):
+        self.check_dataset(series=True, leading_slash=True, explicit=True)
+
+    def test_hdf5_indexed_timeseries(self):
+        self.check_dataset(hdf5=True, series=True, explicit=True)
+
+    def test_indexed_variable_step_ranges(self):
+        self.dataset_fixture(series=True, explicit=True)
+        with closing(sqlite3.connect(self.index)) as db, db:
+            # Indexed ranges, rather than source step counts, define the timeline.
+            db.execute("UPDATE variables SET steps=3 WHERE name='values'")
+            db.execute(
+                "UPDATE timeseries_variable_steps SET steps=1 WHERE datasetid=22 AND name='values'"
+            )
+            db.execute(
+                "UPDATE timeseries_variable_steps SET step_start=1 WHERE datasetid=44 AND name='values'"
+            )
+            # A variable can occur only in a later member of the series.
+            db.execute("UPDATE variables SET steps=2 WHERE name='scalar'")
+            db.execute("DELETE FROM timeseries_variable_steps WHERE datasetid=22 AND name='scalar'")
+            db.execute("UPDATE timeseries_variable_steps SET step_start=0 WHERE name='scalar'")
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_step_selection([0, 3])
+            data = np.zeros((3, 6))
+            engine.get(var, data, adios2.Mode.Sync)
+            np.testing.assert_array_equal(data, np.arange(6) + np.array([0, 20, 30])[:, None])
+            scalar = io.inquire_variable(self.name.rsplit("/", 1)[0] + "/scalar")
+            scalar.set_step_selection([0, 2])
+            values = np.zeros(2, np.int32)
+            engine.get(scalar, values, adios2.Mode.Sync)
+            np.testing.assert_array_equal(values, [102, 103])
+            blocks = engine.blocks_info(self.name, 1)
+            self.assertEqual(float(blocks[0]["Min"]), 20)
+        finally:
+            engine.close()
+
+    def test_indexed_timeseries_direct_lookup(self):
+        self.dataset_fixture(series=True, explicit=True)
+        with closing(sqlite3.connect(self.archive)) as db, db:
+            db.execute("UPDATE replica SET name='unavailable.bp' WHERE datasetid=13")
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_step_selection([2, 1])
+            data = np.zeros(6)
+            engine.get(var, data, adios2.Mode.Sync)
+            np.testing.assert_array_equal(data, np.arange(6) + 20)
+            self.assertEqual(float(engine.blocks_info(self.name, 2)[0]["Min"]), 20)
+        finally:
+            engine.close()
+
+    def test_indexed_timeseries_metadata_only(self):
+        self.dataset_fixture(series=True, explicit=True)
+        self.archive.rename(self.root / "hidden.aca")
+        adios, io, engine = self.open()
+        try:
+            self.assertEqual(len(io.available_variables()), 2)
+            self.assertEqual(io.inquire_variable(self.name).steps(), 4)
+        finally:
+            engine.close()
+
+    def test_indexed_independent_series(self):
+        self.dataset_fixture(series=True, explicit=True)
+        with closing(sqlite3.connect(self.index)) as db, db:
+            db.execute("INSERT INTO datasets VALUES (2,1,-8,'reverse',5)")
+            db.execute("INSERT INTO timeseries VALUES (10,1,8,2,'reverse')")
+            db.execute("INSERT INTO timeseries_datasets VALUES (10,44,0),(10,22,1)")
+            db.execute(
+                "INSERT INTO variables SELECT archiveid,2,name,type,steps,min,max,ndim,shape,value "
+                "FROM variables WHERE datasetid=1"
+            )
+            db.execute(
+                "INSERT INTO timeseries_variable_steps SELECT 10,datasetid,name,2-step_start,steps "
+                "FROM timeseries_variable_steps WHERE tsid=9"
+            )
+        adios, io, engine = self.open()
+        try:
+            for logical, offsets in (("series", [0, 10, 20, 30]), ("reverse", [20, 30, 0, 10])):
+                var = io.inquire_variable("store/data.aca/" + logical + "/values")
+                var.set_step_selection([0, 4])
+                data = np.zeros((4, 6))
+                engine.get(var, data, adios2.Mode.Sync)
+                np.testing.assert_array_equal(data, np.arange(6) + np.array(offsets)[:, None])
+        finally:
+            engine.close()
+
+    def test_stale_indexed_member(self):
+        self.dataset_fixture(series=True, explicit=True)
+        with closing(sqlite3.connect(self.archive)) as db, db:
+            db.execute("UPDATE dataset SET name='different.bp' WHERE rowid=14")
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_step_selection([2, 1])
+            with self.assertRaisesRegex(RuntimeError, "member no longer matches"):
+                engine.get(var, np.zeros(6), adios2.Mode.Sync)
+        finally:
+            engine.close()
+
+    def test_invalid_indexed_step_ranges(self):
+        self.dataset_fixture(series=True, explicit=True)
+        original = self.index.read_bytes()
+        for sql in (
+            "DELETE FROM timeseries_variable_steps WHERE datasetid=22",
+            "UPDATE timeseries_variable_steps SET step_start=1 WHERE datasetid=44",
+            "UPDATE timeseries_variable_steps SET steps=0 WHERE datasetid=22",
+            "UPDATE timeseries_variable_steps SET steps=5 WHERE datasetid=22",
+            "DELETE FROM timeseries_datasets WHERE datasetid=22",
+            "UPDATE datasets SET dsid=-1 WHERE datasetid=22",
+            "DROP TABLE timeseries_variable_steps",
+            "DELETE FROM timeseries",
+        ):
+            with self.subTest(sql=sql):
+                self.index.write_bytes(original)
+                with closing(sqlite3.connect(self.index)) as db, db:
+                    db.execute(sql)
+                with self.assertRaisesRegex(RuntimeError, "CampaignIndex: .*time-series"):
+                    self.open(parameters={"MetadataThreads": "3", "MetadataBatchSize": "1"})
+
     def test_sources(self):
         for image, embedded, compressed, tar in [
             (False, True, False, False),
@@ -522,10 +676,27 @@ class TestCampaignIndexRead(unittest.TestCase):
                     "INSERT INTO variables VALUES (1,1,?,?,1,NULL,NULL,0,?,?)",
                     (name, typeid, "", json.dumps(value)),
                 )
+            for name, value, ndim, shape in (
+                ("Series", {"fields": {"pattern": "fields.*.bp"}}, 1, "1"),
+                ("Artifacts", [{"path": "input"}, {"path": "output"}], 1, "2"),
+                ("Run_Info", {"run": 42}, 0, ""),
+            ):
+                db.execute(
+                    "INSERT INTO variables VALUES (1,1,?,3,1,NULL,NULL,?,?,?)",
+                    (name, ndim, shape, json.dumps(value)),
+                )
         adios, io, engine = self.open()
         try:
             prefix = "store/data.aca/settings.json/"
             self.assertEqual(engine.get(io.inquire_variable(prefix + "Adios_Config")), "adios2.xml")
+            for name, expected in (
+                ("Series", {"fields": {"pattern": "fields.*.bp"}}),
+                ("Artifacts", [{"path": "input"}, {"path": "output"}]),
+                ("Run_Info", {"run": 42}),
+            ):
+                var = io.inquire_variable(prefix + name)
+                self.assertEqual(var.shape(), [])
+                self.assertEqual(json.loads(engine.get(var)), expected)
             for name, dtype, expected in [("F", np.float64, 0.01), ("Checkpoint", np.int8, 1)]:
                 var = io.inquire_variable(prefix + name)
                 for mode in (adios2.Mode.Sync, adios2.Mode.Deferred):

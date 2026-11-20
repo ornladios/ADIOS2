@@ -213,6 +213,19 @@ private:
     {
         for (auto &variable : worker.rows.variables)
         {
+            // Parsed TEXT fields can contain whole JSON objects or arrays.
+            // ADIOS strings are scalar: expose the serialized JSON as one string.
+            if (variable.type == DataType::String && variable.source.format == "TEXT" &&
+                !variable.value.empty())
+            {
+                const auto value = nlohmann::json::parse(variable.value);
+                if (value.is_structured())
+                {
+                    variable.dimensions = 0;
+                    variable.shape.clear();
+                    variable.value = nlohmann::json(variable.value).dump();
+                }
+            }
             Dims shape;
             std::istringstream dimensions(variable.shape);
             size_t extent;
@@ -717,7 +730,7 @@ std::vector<size_t> CampaignIndexReader::ResolveDatasets(Archive &archive, const
 {
     const auto dataset = archive.datasets.find(entry.dataset);
     if (dataset != archive.datasets.end() && dataset->second.name == entry.datasetName)
-        return {entry.dataset};
+        return {dataset->first};
     // A series is named by its logical dataset name; its ID need not equal a
     // member dataset's rowid. Resolve membership from the ACA, in tsorder order.
     for (const auto &item : archive.timeseries)
@@ -920,11 +933,41 @@ CampaignIndexReader::SourceVariable CampaignIndexReader::FindSource(const Variab
                                                                     size_t step) const
 {
     if (!m_IsOpen)
-        throw std::logic_error("CampaignIndex: block inquiry on a closed engine");
+        throw std::logic_error("CampaignIndex: source lookup on a closed engine");
     if (step >= v.m_AvailableStepsCount)
-        throw std::invalid_argument("CampaignIndex: block inquiry exceeds indexed steps");
+        throw std::invalid_argument("CampaignIndex: source lookup exceeds indexed steps");
     const auto &entry = m_Entries.at(v.m_Name);
     auto &archive = OpenArchive(entry.archive);
+    if (entry.stepRanges)
+    {
+        const auto &ranges = *entry.stepRanges;
+        auto range =
+            std::upper_bound(ranges.begin(), ranges.end(), step,
+                             [](size_t s, const CampaignIndexStepRange &r) { return s < r.start; });
+        // StreamIndex validates that ranges cover every indexed step exactly once.
+        --range;
+        const auto member = archive.datasets.find(range->dataset);
+        if (member == archive.datasets.end() || member->second.name != range->datasetName)
+            throw std::runtime_error(
+                "CampaignIndex: time-series member no longer matches archive: " +
+                range->datasetName);
+        auto &source = OpenDataset(entry, range->dataset);
+        const auto &variables = source.io->GetVariables();
+        auto it = variables.find(entry.name);
+        if (it == variables.end() && !entry.name.empty() && entry.name.front() != '/')
+            it = variables.find("/" + entry.name);
+        if (it == variables.end() || it->second->m_Type != v.m_Type)
+            throw std::runtime_error("CampaignIndex: indexed time-series variable missing or type "
+                                     "differs in member: " +
+                                     v.m_Name);
+        auto *actual = it->second.get();
+        if (actual->m_AvailableStepsCount < range->steps)
+            throw std::runtime_error(
+                "CampaignIndex: time-series member has fewer steps than index: " + v.m_Name);
+        const size_t localStep = step - range->start;
+        return {source.engine, actual, localStep, range->steps - localStep};
+    }
+    bool found = false;
     for (const auto dataset : ResolveDatasets(archive, entry))
     {
         auto &source = OpenDataset(entry, dataset);
@@ -934,14 +977,18 @@ CampaignIndexReader::SourceVariable CampaignIndexReader::FindSource(const Variab
             it = variables.find("/" + entry.name);
         if (it == variables.end())
             continue;
+        found = true;
         auto *actual = it->second.get();
         if (actual->m_Type != v.m_Type)
             throw std::runtime_error("CampaignIndex: source variable type differs from index: " +
                                      v.m_Name);
         if (step < actual->m_AvailableStepsCount)
-            return {source.engine, actual, step};
+            return {source.engine, actual, step, actual->m_AvailableStepsCount - step};
         step -= actual->m_AvailableStepsCount;
     }
+    if (!found)
+        throw std::runtime_error(
+            "CampaignIndex: variable not found with indexed type in dataset: " + v.m_Name);
     throw std::runtime_error("CampaignIndex: source variable has fewer steps than index: " +
                              v.m_Name);
 }
@@ -1058,35 +1105,18 @@ MinVarInfo *CampaignIndexReader::FallbackMinBlocksInfo(const Variable<T> &v, siz
 }
 
 template <class T>
-void CampaignIndexReader::ReadDataset(const Entry &entry, Variable<T> &v, T *data)
+void CampaignIndexReader::ReadDataset(Variable<T> &v, T *data)
 {
     const size_t start = m_InStep ? m_CurrentStep : v.m_StepsStart;
     const size_t count = m_InStep ? 1 : v.m_StepsCount;
     if (start > v.m_AvailableStepsCount || count > v.m_AvailableStepsCount - start)
         throw std::invalid_argument("CampaignIndex: step selection exceeds indexed steps");
-    auto &archive = OpenArchive(entry.archive);
-    const auto datasets = ResolveDatasets(archive, entry);
-    size_t offset = 0, completed = 0;
-    bool found = false;
-    for (auto dataset : datasets)
+    size_t completed = 0;
+    while (completed < count)
     {
-        auto &source = OpenDataset(entry, dataset);
-        auto *actual = source.io->InquireVariable<T>(entry.name);
-        // Campaign names omit the dataset variable's leading slash for both
-        // BP and HDF5. Preserve exact matches before trying that spelling.
-        if (!actual && !entry.name.empty() && entry.name.front() != '/')
-            actual = source.io->InquireVariable<T>("/" + entry.name);
-        if (!actual)
-            continue;
-        found = true;
-        const size_t steps = actual->m_AvailableStepsCount;
-        if (start + completed >= offset + steps)
-        {
-            offset += steps;
-            continue;
-        }
-        const size_t first = start + completed - offset;
-        const size_t n = std::min(count - completed, steps - first);
+        const auto source = FindSource(v, start + completed);
+        auto *actual = static_cast<Variable<T> *>(source.variable);
+        const size_t n = std::min(count - completed, source.steps);
         actual->m_SelectionType = v.m_SelectionType;
         actual->m_Start = v.m_Start;
         actual->m_Count = v.m_Count;
@@ -1095,7 +1125,7 @@ void CampaignIndexReader::ReadDataset(const Entry &entry, Variable<T> &v, T *dat
         actual->m_MemoryCount = v.m_MemoryCount;
         actual->m_MemSpace = v.m_MemSpace;
         actual->m_AccuracyRequested = v.m_AccuracyRequested;
-        actual->SetStepSelection({first, n});
+        actual->SetStepSelection({source.step, n});
         source.engine->Get(*actual, data, Mode::Sync);
         v.m_AccuracyProvided = actual->m_AccuracyProvided;
         completed += n;
@@ -1103,13 +1133,7 @@ void CampaignIndexReader::ReadDataset(const Entry &entry, Variable<T> &v, T *dat
             return;
         const auto &dims = v.m_MemoryCount.empty() ? actual->Count() : v.m_MemoryCount;
         data += n * helper::GetTotalSize(dims);
-        offset += steps;
     }
-    if (!found)
-        throw std::runtime_error(
-            "CampaignIndex: variable not found with indexed type in dataset: " + v.m_Name);
-    throw std::runtime_error("CampaignIndex: dataset has fewer variable steps than the index: " +
-                             v.m_Name);
 }
 
 template <class T>
@@ -1118,7 +1142,7 @@ void CampaignIndexReader::GetSync(Variable<T> &v, T *data)
     const auto &entry = m_Entries.at(v.m_Name);
     if (entry.format == "ADIOS" || entry.format == "HDF5")
     {
-        ReadDataset(entry, v, data);
+        ReadDataset(v, data);
         return;
     }
     // Parsed text fields and other scalar summaries are cached in the index.
