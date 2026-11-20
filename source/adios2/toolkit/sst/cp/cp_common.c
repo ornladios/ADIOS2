@@ -237,6 +237,7 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int Reade
     fprintf(stderr, "Param -   SpeculativePreloadMode=%s\n",
             SstPreloadModeStr[Params->SpeculativePreloadMode]);
     fprintf(stderr, "Param -   SpecAutoNodeThreshold=%d\n", Params->SpecAutoNodeThreshold);
+    fprintf(stderr, "Param -   MetadataThreads=%d\n", Params->MetadataThreads);
     fprintf(stderr, "Param -   ControlModule=%s\n",
             Params->ControlModule ? Params->ControlModule : " (default - Advanced param)");
 }

@@ -235,161 +235,18 @@ bool BP5Reader::InstallMetadataForTimestep(size_t Step)
     size_t Position = pgstart + sizeof(uint64_t); // skip total data size
     const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
     size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+    std::vector<format::BP5Deserializer::MetadataBlockRef> Blocks(WriterCount);
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         // variable metadata for timestep
         size_t ThisMDSize =
             helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
-        char *ThisMD = m_Metadata.Data() + MDPosition;
-        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_FlattenSteps))
-        {
-            m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
-        }
-        else
-        {
-            m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank);
-        }
+        Blocks[WriterRank] = {m_Metadata.Data() + MDPosition, ThisMDSize};
         MDPosition += ThisMDSize;
     }
-    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
-    {
-        // attribute metadata for timestep
-        size_t ThisADSize =
-            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
-        char *ThisAD = m_Metadata.Data() + MDPosition;
-        if (ThisADSize > 0)
-        {
-            if (m_BP5Deserializer->MetadataFormatKnown(ThisAD))
-            {
-                m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
-            }
-            else if (!m_AttrFormatWarned)
-            {
-                // format lost to a truncated mmd.0: variables may still be
-                // fully readable, so degrade to serving them without attributes
-                m_AttrFormatWarned = true;
-                if (m_Comm.Rank() == 0)
-                    std::cerr << "ADIOS2 BP5 reader WARNING: " << m_Name
-                              << " attribute metadata references a data format missing from "
-                                 "the meta-metadata file (truncated by an interrupted "
-                                 "writer?); attributes will be unavailable"
-                              << std::endl;
-            }
-        }
-        MDPosition += ThisADSize;
-    }
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    // Reader-derived variables with attribute bindings stay pending until the
-    // attributes (installed above, after variable metadata) are available.
-    m_BP5Deserializer->InstallReaderDerivedVariables();
-#endif
-    return true;
-}
-
-bool BP5Reader::ParallelInstallMetadataForTimestep(size_t Step)
-{
-    if (!StepMetadataFormatsKnown(Step))
-    {
-        if (m_OpenMode != Mode::ReadRandomAccess)
-        {
-            helper::Throw<std::runtime_error>(
-                "Engine", "BP5Reader", "ParallelInstallMetadataForTimestep",
-                "step metadata references data formats missing from a truncated "
-                "meta-metadata (mmd.0) file; the file was likely cut short by an "
-                "interrupted writer");
-        }
-        return false;
-    }
-    const uint64_t WriterCount = m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
-    size_t m_MetadataThreads = m_Parameters.MetadataThreads;
-    size_t nThreads = (m_MetadataThreads < WriterCount ? m_MetadataThreads : WriterCount);
-    size_t nextRank = 0;
-    std::mutex mutexRankMetadata;
-    std::vector<size_t> MDsize_vec(WriterCount);
-    std::vector<size_t> MDpos_vec(WriterCount);
-    std::vector<void *> PreppedBuffer_vec(WriterCount);
-    std::vector<FFSTypeHandle> FFSFormat_vec(WriterCount);
-
-    auto lf_GetNextRank = [&]() -> size_t {
-        std::lock_guard<std::mutex> lockGuard(mutexRankMetadata);
-        size_t idx = MaxSizeT;
-        if (nextRank < WriterCount)
-        {
-            idx = nextRank;
-            ++nextRank;
-        }
-        return idx;
-    };
-
-    auto lf_InstallForRank = [&](const size_t threadID) -> bool {
-        while (true)
-        {
-            const auto rank = lf_GetNextRank();
-            if (rank > WriterCount)
-            {
-                break;
-            }
-            size_t ThisMDSize = MDsize_vec[rank];
-            char *ThisMD = m_Metadata.Data() + MDpos_vec[rank];
-            FFSTypeHandle FFSFormat = FFSFormat_vec[rank];
-            void *PreppedBuffer =
-                m_BP5Deserializer->MetadataBufferPrep(ThisMD, ThisMDSize, rank, FFSFormat);
-            {
-                std::lock_guard<std::mutex> lockGuard(mutexRankMetadata);
-                PreppedBuffer_vec[rank] = PreppedBuffer;
-                FFSFormat_vec[rank] = FFSFormat;
-            }
-        }
-        return true;
-    };
-
-    std::vector<std::future<bool>> futures(nThreads);
-    size_t pgstart = m_MetadataIndexTable[Step][0];
-    size_t Position = pgstart + sizeof(uint64_t); // skip total data size
-    size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
-    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
-    {
-        // variable metadata for timestep
-        size_t ThisMDSize =
-            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
-        MDsize_vec[WriterRank] = ThisMDSize;
-        MDpos_vec[WriterRank] = MDPosition;
-        char *ThisMD = m_Metadata.Data() + MDPosition;
-        FFSFormat_vec[WriterRank] = m_BP5Deserializer->BufferMetaMetaPrep(ThisMD);
-        MDPosition += ThisMDSize;
-    }
-
-    {
-        std::vector<std::future<bool>> futures(nThreads);
-
-        // launch Threads-1 threads to process subsets of handles,
-        // then main thread process the last subset
-        for (size_t tid = 0; tid < nThreads; ++tid)
-        {
-            futures[tid] = std::async(std::launch::async, lf_InstallForRank, tid + 1);
-        }
-
-        // wait for all async threads
-        for (auto &f : futures)
-        {
-            f.get();
-        }
-    }
-    // complete the metadata installation, serial part
-    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
-    {
-        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_FlattenSteps))
-        {
-            m_BP5Deserializer->InstallMetadataBuffer(PreppedBuffer_vec[WriterRank], WriterRank,
-                                                     Step, FFSFormat_vec[WriterRank]);
-        }
-        else
-        {
-            m_BP5Deserializer->InstallMetadataBuffer(PreppedBuffer_vec[WriterRank], WriterRank,
-                                                     SIZE_MAX, FFSFormat_vec[WriterRank]);
-        }
-    }
-
+    const size_t InstallStep =
+        ((m_OpenMode == Mode::ReadRandomAccess) || (m_FlattenSteps)) ? Step : SIZE_MAX;
+    m_BP5Deserializer->InstallMetaData(Blocks, InstallStep, m_Parameters.MetadataThreads);
     for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         // attribute metadata for timestep
@@ -487,14 +344,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         m_BP5Deserializer->SetupForStep(m_CurrentStep,
                                         m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
 
-        if (m_Parameters.MetadataThreads > 1)
-        {
-            ParallelInstallMetadataForTimestep(m_CurrentStep);
-        }
-        else
-        {
-            InstallMetadataForTimestep(m_CurrentStep);
-        }
+        InstallMetadataForTimestep(m_CurrentStep);
         m_IO.ResetVariablesStepSelection(false, "in call to BP5 Reader BeginStep");
     }
 
@@ -2069,15 +1919,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             {
                 m_BP5Deserializer->SetupForStep(Step,
                                                 m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
-                bool ok;
-                if (m_Parameters.MetadataThreads > 1)
-                {
-                    ok = ParallelInstallMetadataForTimestep(Step);
-                }
-                else
-                {
-                    ok = InstallMetadataForTimestep(Step);
-                }
+                bool ok = InstallMetadataForTimestep(Step);
                 if (!ok)
                 {
                     // This step's metadata needs formats beyond what a

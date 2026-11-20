@@ -289,7 +289,6 @@ private:
     /** false = the step references formats a truncated mmd.0 no longer
      * describes (random access only; streaming throws instead) */
     bool InstallMetadataForTimestep(size_t Step);
-    bool ParallelInstallMetadataForTimestep(size_t Step);
     bool StepMetadataFormatsKnown(size_t Step);
     double ReadData(PoolableFile *DataFile, const size_t WriterRank, const size_t Timestep,
                     const uint64_t StartOffset, const size_t Length, char *Destination);

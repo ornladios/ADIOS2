@@ -33,8 +33,10 @@
 #include "adios2/operator/OperatorFactory.h"
 #include "adios2/operator/plugin/PluginOperator.h"
 
+#include <algorithm>
 #include <array>
 #include <float.h>
+#include <future>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
@@ -819,6 +821,57 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
     FFSTypeHandle FFSformat = BufferMetaMetaPrep(MetadataBlock);
     void *BaseData = MetadataBufferPrep(MetadataBlock, BlockLen, WriterRank, FFSformat);
     InstallMetadataBuffer(BaseData, WriterRank, Step, FFSformat);
+}
+
+void BP5Deserializer::InstallMetaData(const std::vector<MetadataBlockRef> &Blocks, size_t Step,
+                                      size_t Threads)
+{
+    const size_t WriterCount = Blocks.size();
+    std::vector<FFSTypeHandle> Formats(WriterCount);
+    std::vector<void *> Decoded(WriterCount);
+
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        Formats[WriterRank] = BufferMetaMetaPrep(Blocks[WriterRank].Block);
+    }
+
+    std::atomic<size_t> NextRank(0);
+    const size_t nThreads = std::min(Threads, WriterCount);
+    if (nThreads <= 1)
+    {
+        DecodeMetadataBlocks(Blocks, Formats, Decoded, NextRank);
+    }
+    else
+    {
+        std::vector<std::future<void>> futures(nThreads);
+        for (auto &f : futures)
+        {
+            f = std::async(std::launch::async, &BP5Deserializer::DecodeMetadataBlocks, this,
+                           std::cref(Blocks), std::cref(Formats), std::ref(Decoded),
+                           std::ref(NextRank));
+        }
+        for (auto &f : futures)
+        {
+            f.get();
+        }
+    }
+
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
+    {
+        InstallMetadataBuffer(Decoded[WriterRank], WriterRank, Step, Formats[WriterRank]);
+    }
+}
+
+void BP5Deserializer::DecodeMetadataBlocks(const std::vector<MetadataBlockRef> &Blocks,
+                                           const std::vector<FFSTypeHandle> &Formats,
+                                           std::vector<void *> &Decoded,
+                                           std::atomic<size_t> &NextRank) const
+{
+    for (size_t WriterRank = NextRank++; WriterRank < Blocks.size(); WriterRank = NextRank++)
+    {
+        Decoded[WriterRank] = MetadataBufferPrep(Blocks[WriterRank].Block, Blocks[WriterRank].Len,
+                                                 WriterRank, Formats[WriterRank]);
+    }
 }
 
 bool BP5Deserializer::MetadataFormatKnown(void *MetadataBlock)
