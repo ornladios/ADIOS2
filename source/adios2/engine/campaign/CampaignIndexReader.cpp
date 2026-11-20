@@ -1049,8 +1049,9 @@ std::vector<typename Variable<T>::BPInfo> CampaignIndexReader::BlocksInfo(const 
                 else
                     std::memcpy(&result.Value, block.BufferP, sizeof(T));
             }
-            else if constexpr (!std::is_same<T, std::string>::value)
+            else if constexpr (std::is_arithmetic<T>::value)
             {
+                // MinMaxStruct only stores real arithmetic types.
                 std::memcpy(&result.Min, &block.MinMax.MinUnion, sizeof(T));
                 std::memcpy(&result.Max, &block.MinMax.MaxUnion, sizeof(T));
             }
@@ -1096,10 +1097,13 @@ MinVarInfo *CampaignIndexReader::FallbackMinBlocksInfo(const Variable<T> &v, siz
         result.Start = block.Start.empty() ? nullptr : block.Start.data();
         result.Count = block.Count.empty() ? nullptr : block.Count.data();
         result.MinMax.Init(v.m_Type);
-        if constexpr (!std::is_same<T, std::string>::value)
+        if constexpr (std::is_arithmetic<T>::value)
         {
             std::memcpy(&result.MinMax.MinUnion, &block.Min, sizeof(T));
             std::memcpy(&result.MinMax.MaxUnion, &block.Max, sizeof(T));
+        }
+        if constexpr (!std::is_same<T, std::string>::value)
+        {
             if (block.IsValue)
                 result.BufferP = const_cast<T *>(&block.Value);
         }

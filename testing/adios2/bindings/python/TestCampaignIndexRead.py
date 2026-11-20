@@ -316,7 +316,9 @@ class TestCampaignIndexRead(unittest.TestCase):
                 for i, filename in enumerate(files):
                     # ACX dataset IDs, ACA rowids, and series IDs are independent.
                     member = 22 + i * 22
-                    db.execute("INSERT INTO datasets VALUES (?,1,?,?,5)", (member, 13 + i, filename))
+                    db.execute(
+                        "INSERT INTO datasets VALUES (?,1,?,?,5)", (member, 13 + i, filename)
+                    )
                     db.execute("INSERT INTO timeseries_datasets VALUES (9,?,?)", (member, i * 3))
                     for name in (prefix + "values", prefix + "scalar"):
                         db.execute(
@@ -459,20 +461,31 @@ class TestCampaignIndexRead(unittest.TestCase):
     def test_cached_engine_and_close(self):
         self.dataset_fixture()
         adios, io, engine = self.open()
-        var = io.inquire_variable(self.name)
         data = np.zeros(6)
-        engine.get(var, data, adios2.Mode.Sync)
         source = self.root / "part0.bp"
         moved = self.root / "moved.bp"
-        source.rename(moved)
+        renamed = False
         try:
-            # A second open by path would fail; the cached engine still reads.
+            var = io.inquire_variable(self.name)
+            engine.get(var, data, adios2.Mode.Sync)
+            if os.name != "nt":
+                # POSIX permits renaming open files. A second open by path
+                # would fail; the cached engine must still read successfully.
+                source.rename(moved)
+                renamed = True
             var.set_step_selection([1, 1])
             engine.get(var, data, adios2.Mode.Deferred)
-            engine.close()
-            np.testing.assert_array_equal(data, np.arange(6) + 10)
         finally:
-            moved.rename(source)
+            try:
+                engine.close()
+            finally:
+                if renamed:
+                    moved.rename(source)
+        np.testing.assert_array_equal(data, np.arange(6) + 10)
+        # Windows requires all underlying file handles to be closed before
+        # renaming the directory, so also check the rename after Close.
+        source.rename(moved)
+        moved.rename(source)
 
     def test_single_step_scalar_uses_dataset(self):
         self.dataset_fixture()
@@ -593,7 +606,8 @@ class TestCampaignIndexRead(unittest.TestCase):
                 "UPDATE timeseries_variable_steps SET steps=1 WHERE datasetid=22 AND name='values'"
             )
             db.execute(
-                "UPDATE timeseries_variable_steps SET step_start=1 WHERE datasetid=44 AND name='values'"
+                "UPDATE timeseries_variable_steps SET step_start=1 WHERE datasetid=44 AND "
+                "name='values'"
             )
             # A variable can occur only in a later member of the series.
             db.execute("UPDATE variables SET steps=2 WHERE name='scalar'")
@@ -789,6 +803,24 @@ class TestCampaignIndexRead(unittest.TestCase):
         self.assertEqual(b.tobytes(), self.payload[10:15])
         engine.perform_gets()
         engine.close()
+
+    def test_close_releases_embedded_archive(self):
+        self.fixture(image=True, embedded=True)
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            data = np.zeros(len(self.payload), np.uint8)
+            for mode in (adios2.Mode.Sync, adios2.Mode.Deferred):
+                engine.get(var, data, mode)
+                engine.perform_gets()
+                self.assertEqual(data.tobytes(), self.payload)
+        finally:
+            engine.close()
+        # An unfinalized blob query retains a read lock even on POSIX, where
+        # unlinking an open archive would otherwise hide the leaked connection.
+        with closing(sqlite3.connect(self.archive, timeout=0)) as db:
+            db.execute("BEGIN EXCLUSIVE")
+            db.rollback()
 
     def test_end_step_and_close(self):
         self.fixture(embedded=True)

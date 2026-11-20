@@ -215,7 +215,10 @@ public:
     std::map<size_t, CampaignFile> files;            // indexed by fileid, 1..n, not contiguous
 
     CampaignData() = default;
-    ~CampaignData() = default;
+    ~CampaignData() { Close(); }
+
+    CampaignData(const CampaignData &) = delete;
+    CampaignData &operator=(const CampaignData &) = delete;
 
     // One read-only SQLite connection, used only by the calling thread. Each
     // callback receives at most batchSize owned rows, variables then attributes.
