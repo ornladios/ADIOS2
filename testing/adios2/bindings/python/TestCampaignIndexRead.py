@@ -4,6 +4,8 @@
 """Dataset and image/text reads through a campaign index, without external fixtures."""
 
 import json
+import os
+import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -238,7 +240,13 @@ class TestCampaignIndexRead(unittest.TestCase):
                     self.open(parameters={key: value})
 
     def dataset_fixture(
-        self, hdf5=False, series=False, leading_slash=False, multiblock=False, explicit=False
+        self,
+        hdf5=False,
+        series=False,
+        leading_slash=False,
+        multiblock=False,
+        explicit=False,
+        bp_engine="BP5",
     ):
         prefix = "bbb/" if leading_slash else ""
         source_prefix = "/" + prefix if leading_slash else ""
@@ -248,7 +256,7 @@ class TestCampaignIndexRead(unittest.TestCase):
         for i, filename in enumerate(files):
             adios = adios2.Adios()
             io = adios.declare_io("writer")
-            io.set_engine("HDF5" if hdf5 else "BP5")
+            io.set_engine("HDF5" if hdf5 else bp_engine)
             values = np.arange(6, dtype=np.float64)
             var = io.define_variable(source_prefix + "values", values, [6], [0], [6])
             scalar = io.define_variable(source_prefix + "scalar", np.zeros(1, np.int32))
@@ -516,6 +524,65 @@ class TestCampaignIndexRead(unittest.TestCase):
 
     def test_hdf5_indexed_timeseries(self):
         self.check_dataset(hdf5=True, series=True, explicit=True)
+
+    @unittest.skipUnless(os.environ.get("ADIOS2_TEST_REMOTE_DIR"), "requires remote server fixture")
+    def test_remote_bp4_timeseries(self):
+        self.dataset_fixture(series=True, explicit=True, bp_engine="BP4")
+        remote_dir = tempfile.TemporaryDirectory(dir=os.environ["ADIOS2_TEST_REMOTE_DIR"])
+        self.addCleanup(remote_dir.cleanup)
+        remote_path = Path(remote_dir.name)
+        # The server and client have different working directories. These
+        # relative replica paths exist only in the server's working directory,
+        # so a reader incorrectly using local POSIX payload reads must fail.
+        self.assertFalse(Path(remote_path.name).exists())
+        for i in range(2):
+            filename = "part" + str(i) + ".bp"
+            adios = adios2.Adios()
+            io = adios.declare_io("metadata")
+            io.set_engine("BP4")
+            reader = io.open(str(self.root / filename), adios2.Mode.ReadRandomAccess)
+            metadata = reader.get_metadata()
+            reader.close()
+            with closing(sqlite3.connect(self.archive)) as db, db:
+                db.execute(
+                    "INSERT INTO file VALUES (?,'metadata',0,?,?,0,'',?)",
+                    (i + 1, len(metadata), len(metadata), metadata),
+                )
+                db.execute("INSERT INTO repfiles VALUES (?,?)", (i + 1, i + 1))
+            shutil.move(str(self.root / filename), str(remote_path / filename))
+        with closing(sqlite3.connect(self.archive)) as db, db:
+            db.execute("UPDATE host SET hostname='localhost'")
+            db.execute("UPDATE directory SET name=?", (remote_path.name,))
+
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_selection([[1], [3]])
+            var.set_step_selection([1, 2])
+            data = np.zeros((2, 3))
+            engine.get(var, data, adios2.Mode.Deferred)
+            engine.perform_gets()
+            np.testing.assert_array_equal(data, np.arange(1, 4) + np.array([10, 20])[:, None])
+            # Revisit both members after opening them and query their metadata.
+            for step in (3, 0):
+                var.set_step_selection([step, 1])
+                engine.get(var, data[0], adios2.Mode.Sync)
+                np.testing.assert_array_equal(data[0], np.arange(1, 4) + step * 10)
+                self.assertTrue(engine.blocks_info(self.name, step))
+        finally:
+            engine.close()
+
+        adios, io, engine = self.open(adios2.Mode.Read)
+        try:
+            for step in range(4):
+                self.assertEqual(engine.begin_step(), adios2.StepStatus.OK)
+                data = np.zeros(6)
+                engine.get(io.inquire_variable(self.name), data, adios2.Mode.Deferred)
+                engine.end_step()
+                np.testing.assert_array_equal(data, np.arange(6) + step * 10)
+            self.assertEqual(engine.begin_step(), adios2.StepStatus.EndOfStream)
+        finally:
+            engine.close()
 
     def test_indexed_variable_step_ranges(self):
         self.dataset_fixture(series=True, explicit=True)

@@ -917,6 +917,12 @@ CampaignIndexReader::DatasetEngine &CampaignIndexReader::OpenDataset(const Entry
                 throw std::runtime_error("CampaignIndex: invalid embedded ADIOS metadata");
             std::string type(metadata.data(), 8);
             helper::RightTrim(type);
+            if (!local && type == "BP4" && io.m_TransportsParameters.empty())
+            {
+                // BP4 reads payload subfiles through its file transport; unlike
+                // BP5, it does not interpret RemoteHost/RemoteDataPath itself.
+                io.AddTransport("File", {{"library", "remote"}, {"host", host.hostname}});
+            }
             io.SetEngine(type);
             engine = &io.Open(openPath, Mode::ReadRandomAccess, m_Comm.Duplicate(), metadata.data(),
                               metadata.size());

@@ -39,4 +39,12 @@ if(ADIOS2_HAVE_Campaign)
   python_add_test(NAME Bindings.Python.CampaignRead.Serial SCRIPT TestCampaignRead.py)
   python_add_test(NAME Bindings.Python.CampaignIndexRead.Serial SCRIPT TestCampaignIndexRead.py)
   set_tests_properties(Bindings.Python.CampaignIndexRead.Serial PROPERTIES TIMEOUT 120)
+  if(NOT WIN32 AND TARGET adios2_remote_server)
+    python_add_test(NAME Bindings.Python.CampaignIndexRead.RemoteBP4
+      SCRIPT TestCampaignIndexRead.py TestCampaignIndexRead.test_remote_bp4_timeseries)
+    set_tests_properties(Bindings.Python.CampaignIndexRead.RemoteBP4 PROPERTIES
+      FIXTURES_REQUIRED Server TIMEOUT 120)
+    set_property(TEST Bindings.Python.CampaignIndexRead.RemoteBP4 APPEND PROPERTY
+      ENVIRONMENT "ADIOS2_TEST_REMOTE_DIR=${REMOTE_DIR}")
+  endif()
 endif()
