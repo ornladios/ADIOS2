@@ -718,7 +718,7 @@ void CampaignData::Close()
     if (db)
     {
         sqlite3_close(db);
-        db = nullptr;
+        m_DB = nullptr;
     }
 }
 
@@ -919,11 +919,15 @@ void CampaignData::DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex,
     sqlite3 *db = get_impl(m_DB);
     int rc;
     std::string sqlcmd;
-    sqlite3_stmt *statement;
+    sqlite3_stmt *statement = nullptr;
     sqlcmd = "SELECT data FROM file WHERE fileid = " + std::to_string(fileIdx) + " AND name = '" +
              file.name + "'";
     // std::cout << "SQL statement: " << sqlcmd << "\n";
     rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), static_cast<int>(sqlcmd.size()), &statement, NULL);
+    // Keep the blob valid until it has been copied or decompressed, and release
+    // the statement on every exit so it cannot prevent the database from closing.
+    const std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> statementOwner(
+        statement, sqlite3_finalize);
     if (rc != SQLITE_OK)
     {
         const char *zErrMsg = sqlite3_errmsg(db);
