@@ -81,28 +81,7 @@ jobs:
   format:
     needs: git_checks
     if: needs.git_checks.outputs.num_code_changes > 0
-
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ornladios/adios2:ci-formatting
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          path: gha
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: source
-      - name: CXX
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-clang-format.sh
-      - name: Python ruff
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-ruff.sh
-      - name: Shell
-        working-directory: source
-        run: ../gha/scripts/ci/scripts/run-shellcheck.sh
+    uses: ./.github/workflows/lints.yml
 
 
 #######################################
