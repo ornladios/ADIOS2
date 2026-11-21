@@ -17,7 +17,7 @@ size = comm.Get_size()
 # #  usage: <exe> [bp4 | bp5=default]  ##
 # #######################################
 numSteps = 5
-queryFile = "query.xml"
+queryFile = "query_local_array.xml"
 targetVarName = "var0"
 
 # User data
@@ -39,7 +39,7 @@ else:
     sys.exit("specified engine does not exist")
 
 
-dataFileName = "test_" + engineType + ".bp"
+dataFileName = "test_local_array_" + engineType + ".bp"
 
 
 def writeDataFile():
