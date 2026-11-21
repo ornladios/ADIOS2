@@ -18,7 +18,7 @@ authors = [
   { name="William F. Godoy", email="godoywf@ornl.gov" },
 ]
 description = "The Adaptable Input Output System version 2"
-readme = "ReadMe.md"
+readme = "README.md"
 requires-python = ">=3.9"
 keywords = [
     "Python",
