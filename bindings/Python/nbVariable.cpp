@@ -215,6 +215,12 @@ Dims Variable::Shape(const MemorySpace memSpace, const size_t step) const
 Dims Variable::Start() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Start");
+    const auto type = m_VariableBase->m_Type;
+#define declare_type(T)                                                                            \
+    if (type == helper::GetDataType<T>())                                                          \
+        return static_cast<const core::Variable<T> *>(m_VariableBase)->Start();
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
     return m_VariableBase->m_Start;
 }
 
