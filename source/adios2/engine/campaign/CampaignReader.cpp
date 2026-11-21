@@ -146,7 +146,7 @@ void CampaignReader::PerformGets()
     // wait for all async threads
     for (auto &f : futures)
     {
-        f.get();
+        static_cast<void>(f.get());
     }
     m_NeedPerformGets = false;
 }
