@@ -57,6 +57,7 @@
 #endif
 
 #ifdef ADIOS2_HAVE_CAMPAIGN // external dependencies
+#include "adios2/engine/campaign/CampaignIndexReader.h"
 #include "adios2/engine/campaign/CampaignReader.h"
 #endif
 
@@ -146,6 +147,14 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::MakeEngine<engine::TimeSeriesReader>,
       IO::NoEngine("ERROR: campaign engine does not support write mode")}},
 
+    {"campaignindex",
+#ifdef ADIOS2_HAVE_CAMPAIGN
+     {IO::MakeEngine<engine::CampaignIndexReader>,
+      IO::NoEngine("ERROR: CampaignIndex engine does not support write mode")}
+#else
+     IO::NoEngineEntry("ERROR: this version was built without campaign support")
+#endif
+    },
     {"campaign",
 #ifdef ADIOS2_HAVE_CAMPAIGN
      {IO::MakeEngine<engine::CampaignReader>,
@@ -158,11 +167,11 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
 };
 
 const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
-    {"bp3", false},     {"bp4", false},        {"bp5", true},      {"dataman", false},
-    {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", true},
-    {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", true},
-    {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
-    {"campaign", true}, {"timeseries", true},
+    {"bp3", false},     {"bp4", false},        {"bp5", true},           {"dataman", false},
+    {"ssc", false},     {"mhs", false},        {"sst", false},          {"daos", true},
+    {"effis", false},   {"dataspaces", false}, {"hdf5", false},         {"skeleton", true},
+    {"inline", false},  {"null", true},        {"nullcore", true},      {"plugin", false},
+    {"campaign", true}, {"timeseries", true},  {"campaignindex", true},
 };
 
 // Synchronize access to the factory in case one thread is
@@ -755,6 +764,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         else if (helper::EndsWith(name, ".h5", false))
         {
             engineTypeLC = "hdf5";
+        }
+        else if (helper::EndsWith(name, ".acx", false))
+        {
+            engineTypeLC = "campaignindex";
         }
         else if (helper::EndsWith(name, ".aca", false))
         {

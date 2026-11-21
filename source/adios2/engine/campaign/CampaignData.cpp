@@ -6,7 +6,12 @@
 
 #include "CampaignData.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosType.h"
+
 #include "adios2/helper/adiosString.h"
+#include <memory>
+#include <sstream>
+#include <unordered_map>
 
 #include <assert.h>
 #include <cstring>
@@ -30,6 +35,196 @@ namespace core
 {
 namespace engine
 {
+
+// Own statements even if metadata conversion throws. SQLite is opened
+// read-only and held only while loading the index.
+class CampaignData::Query
+{
+public:
+    Query(sqlite3 *db, const char *sql) : m_DB(db)
+    {
+        if (sqlite3_prepare_v2(db, sql, -1, &m_Statement, nullptr) != SQLITE_OK)
+        {
+            sqlite3_finalize(m_Statement);
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(db));
+        }
+    }
+    ~Query() { sqlite3_finalize(m_Statement); }
+    Query(const Query &) = delete;
+    Query &operator=(const Query &) = delete;
+    bool Next()
+    {
+        const int rc = sqlite3_step(m_Statement);
+        if (rc == SQLITE_ROW)
+            return true;
+        if (rc != SQLITE_DONE)
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(m_DB));
+        return false;
+    }
+    std::string Text(int column) const
+    {
+        const auto p = sqlite3_column_text(m_Statement, column);
+        return p ? std::string(reinterpret_cast<const char *>(p),
+                               sqlite3_column_bytes(m_Statement, column))
+                 : std::string();
+    }
+    int64_t Integer(int column) const { return sqlite3_column_int64(m_Statement, column); }
+    void Select(int64_t series, const std::string &name)
+    {
+        if (sqlite3_reset(m_Statement) != SQLITE_OK ||
+            sqlite3_bind_int64(m_Statement, 1, series) != SQLITE_OK ||
+            sqlite3_bind_text(m_Statement, 2, name.data(), static_cast<int>(name.size()),
+                              SQLITE_TRANSIENT) != SQLITE_OK)
+            throw std::runtime_error(std::string("CampaignIndex: ") + sqlite3_errmsg(m_DB));
+    }
+
+private:
+    sqlite3 *m_DB;
+    sqlite3_stmt *m_Statement = nullptr;
+};
+
+namespace
+{
+// ACX uses the VariableType enumeration in hpc_campaign/types.py. Resolve it
+// through variabletypes instead of depending on ADIOS's enum numeric values.
+DataType IndexType(std::string name)
+{
+    if (name == "long_double")
+        name = "long double";
+    if (name == "float_complex")
+        name = "float complex";
+    if (name == "double_complex")
+        name = "double complex";
+    return helper::GetDataTypeFromString(name);
+}
+
+} // namespace
+
+void CampaignData::StreamIndex(const std::string &path, size_t batchSize,
+                               const std::function<void(CampaignIndex &)> &consume)
+{
+    if (batchSize == 0)
+        throw std::invalid_argument("CampaignIndex: batch size must be positive");
+    using Database = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;
+    CampaignIndex index;
+    auto flush = [&] {
+        consume(index);
+        index.variables.clear();
+        index.attributes.clear();
+    };
+    sqlite3 *raw = nullptr;
+    const int rc = sqlite3_open_v2(path.c_str(), &raw, SQLITE_OPEN_READONLY, nullptr);
+    Database db(raw, sqlite3_close);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("CampaignIndex: cannot open " + path + ": " +
+                                 (raw ? sqlite3_errmsg(raw) : "SQLite allocation failed"));
+    Query info(db.get(), "SELECT id FROM info");
+    if (!info.Next() || info.Text(0) != "ACX")
+        throw std::runtime_error("CampaignIndex: not an hpc-campaign index: " + path);
+
+    std::unordered_map<int64_t, DataType> types;
+    Query type(db.get(), "SELECT typeid, name FROM variabletypes");
+    while (type.Next())
+        types.emplace(type.Integer(0), IndexType(type.Text(1)));
+
+    std::unordered_map<int64_t, CampaignIndexEntry> entries;
+    std::unordered_map<int64_t, std::string> prefixes;
+    Query datasets(db.get(), "SELECT d.datasetid, a.name, d.name, d.dsid, t.name FROM datasets d "
+                             "JOIN archives a ON a.archiveid = d.archiveid "
+                             "JOIN datasettypes t ON t.typeid = d.type");
+    while (datasets.Next())
+    {
+        prefixes.emplace(datasets.Integer(0), datasets.Text(1) + "/" + datasets.Text(2) + "/");
+        entries.emplace(datasets.Integer(0),
+                        CampaignIndexEntry{datasets.Text(1), datasets.Integer(3), datasets.Text(2),
+                                           "", datasets.Text(4), nullptr});
+    }
+
+    // Older ACX indexes have no series tables. Explicit indexes keep physical
+    // members in datasets and enumerate each variable's contiguous logical steps.
+    std::unordered_map<int64_t, int64_t> series;
+    std::unique_ptr<Query> ranges;
+    Query tables(db.get(), "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+                           "('timeseries','timeseries_datasets','timeseries_variable_steps')");
+    size_t tableCount = 0;
+    while (tables.Next())
+        ++tableCount;
+    if (tableCount && tableCount != 3)
+        throw std::runtime_error("CampaignIndex: incomplete time-series schema");
+    if (tableCount)
+    {
+        Query ts(db.get(), "SELECT tsid, datasetid FROM timeseries");
+        while (ts.Next())
+        {
+            if (!entries.count(ts.Integer(1)) ||
+                !series.emplace(ts.Integer(1), ts.Integer(0)).second)
+                throw std::runtime_error("CampaignIndex: invalid time-series dataset");
+        }
+        ranges = std::make_unique<Query>(
+            db.get(), "SELECT s.datasetid, s.step_start, s.steps FROM timeseries_variable_steps s "
+                      "JOIN timeseries_datasets m ON m.tsid=s.tsid AND m.datasetid=s.datasetid "
+                      "WHERE s.tsid=? AND s.name=? ORDER BY s.step_start");
+    }
+
+    Query vars(db.get(), "SELECT datasetid, name, type, steps, min, max, ndim, shape, value "
+                         "FROM variables");
+    while (vars.Next())
+    {
+        const auto &prefix = prefixes.at(vars.Integer(0));
+        const std::string name =
+            vars.Text(1).empty() ? prefix.substr(0, prefix.size() - 1) : prefix + vars.Text(1);
+        auto entry = entries.at(vars.Integer(0));
+        entry.name = vars.Text(1);
+        const auto type = types.at(vars.Integer(2));
+        const auto stepCount = vars.Integer(3);
+        if (stepCount < 1)
+            throw std::runtime_error("CampaignIndex: invalid steps for " + name);
+        const size_t steps = static_cast<size_t>(stepCount);
+        const auto ts = series.find(vars.Integer(0));
+        if (ts != series.end())
+        {
+            auto mapping = std::make_shared<std::vector<CampaignIndexStepRange>>();
+            ranges->Select(ts->second, entry.name);
+            size_t next = 0;
+            while (ranges->Next())
+            {
+                const auto member = entries.find(ranges->Integer(0));
+                const auto first = ranges->Integer(1);
+                const auto count = ranges->Integer(2);
+                if (member == entries.end() || member->second.dataset <= 0 ||
+                    member->second.archive != entry.archive ||
+                    member->second.format != entry.format || first < 0 ||
+                    static_cast<size_t>(first) != next || count <= 0 ||
+                    static_cast<uint64_t>(count) > steps - next)
+                    throw std::runtime_error(
+                        "CampaignIndex: invalid time-series step mapping for " + name);
+                mapping->push_back({static_cast<size_t>(member->second.dataset),
+                                    member->second.datasetName, next, static_cast<size_t>(count)});
+                next += static_cast<size_t>(count);
+            }
+            if (next != steps)
+                throw std::runtime_error("CampaignIndex: incomplete time-series step mapping for " +
+                                         name);
+            entry.stepRanges = std::move(mapping);
+        }
+        else if (entry.dataset < 0)
+            throw std::runtime_error("CampaignIndex: missing time-series mapping for " + name);
+        index.variables.push_back({name, std::move(entry), type, steps, vars.Integer(6),
+                                   vars.Text(7), vars.Text(4), vars.Text(5), vars.Text(8)});
+        if (index.variables.size() == batchSize)
+            flush();
+    }
+    Query attrs(db.get(), "SELECT datasetid, name, type, value FROM attributes");
+    while (attrs.Next())
+    {
+        index.attributes.push_back({prefixes.at(attrs.Integer(0)) + attrs.Text(1),
+                                    types.at(attrs.Integer(2)), attrs.Text(3)});
+        if (index.variables.size() + index.attributes.size() == batchSize)
+            flush();
+    }
+    if (!index.variables.empty() || !index.attributes.empty())
+        flush();
+}
 
 static inline sqlite3 *get_impl(void *v) { return reinterpret_cast<sqlite3 *>(v); }
 
@@ -523,7 +718,7 @@ void CampaignData::Close()
     if (db)
     {
         sqlite3_close(db);
-        db = nullptr;
+        m_DB = nullptr;
     }
 }
 
@@ -724,11 +919,15 @@ void CampaignData::DumpToFileOrMemory(const size_t fileIdx, std::string &keyHex,
     sqlite3 *db = get_impl(m_DB);
     int rc;
     std::string sqlcmd;
-    sqlite3_stmt *statement;
+    sqlite3_stmt *statement = nullptr;
     sqlcmd = "SELECT data FROM file WHERE fileid = " + std::to_string(fileIdx) + " AND name = '" +
              file.name + "'";
     // std::cout << "SQL statement: " << sqlcmd << "\n";
     rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), static_cast<int>(sqlcmd.size()), &statement, NULL);
+    // Keep the blob valid until it has been copied or decompressed, and release
+    // the statement on every exit so it cannot prevent the database from closing.
+    const std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> statementOwner(
+        statement, sqlite3_finalize);
     if (rc != SQLITE_OK)
     {
         const char *zErrMsg = sqlite3_errmsg(db);

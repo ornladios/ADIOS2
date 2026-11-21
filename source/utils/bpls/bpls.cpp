@@ -3185,6 +3185,29 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io, core::Variable<T
         const size_t nsteps = variable->GetAvailableStepsCount();
         bool firstStep = true;
 
+        // Global-array signatures need shapes, not block decomposition. Engines
+        // such as CampaignIndex can answer this without opening source datasets.
+        bool shapesAvailable = true;
+        for (size_t step = 0; step < nsteps; ++step)
+        {
+            Dims shape;
+            if (!fp->VarShape(*variable, step, shape) || shape.size() != ndim)
+            {
+                shapesAvailable = false;
+                break;
+            }
+            for (size_t k = 0; k < ndim; ++k)
+            {
+                if (step == 0)
+                    dims[k] = shape[k];
+                else if (dims[k] != shape[k])
+                    dims[k] = 0;
+            }
+        }
+        if (shapesAvailable)
+            return dims;
+        dims.assign(ndim, 0);
+
         // looping over the absolute step indexes
         // is not supported by a simple API function
         auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
