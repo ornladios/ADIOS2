@@ -99,6 +99,34 @@ struct ParaViewFidesEngine::EngineImpl
 
         catalyst_execute(conduit_cpp::c_node(&node));
     }
+
+    // Returns the inline IO's copy of variable, defining it if it was
+    // defined in the user's IO after Open, and updating its shape and
+    // selection to match the user's variable.
+    template <class T>
+    adios2::Variable<T> InlineVariable(adios2::Variable<T> variable)
+    {
+        adios2::Variable<T> inlineVar = this->Io.InquireVariable<T>(variable.Name());
+        if (!inlineVar)
+        {
+            return this->Io.DefineVariable<T>(variable.Name(), variable.Shape(), variable.Start(),
+                                              variable.Count());
+        }
+        switch (variable.ShapeID())
+        {
+        case adios2::ShapeID::GlobalArray:
+            inlineVar.SetShape(variable.Shape());
+            inlineVar.SetSelection({variable.Start(), variable.Count()});
+            break;
+        case adios2::ShapeID::LocalArray:
+        case adios2::ShapeID::JoinedArray:
+            inlineVar.SetSelection({variable.Start(), variable.Count()});
+            break;
+        default:
+            break;
+        }
+        return inlineVar;
+    }
 };
 
 ParaViewFidesEngine::ParaViewFidesEngine(adios2::IO io, const std::string &name, adios2::Mode mode)
@@ -164,13 +192,11 @@ void ParaViewFidesEngine::PerformPuts() { this->Impl->Writer.PerformPuts(); }
 #define declare(T)                                                                                 \
     void ParaViewFidesEngine::DoPutSync(adios2::Variable<T> variable, const T *values)             \
     {                                                                                              \
-        adios2::Variable<T> inlineVar = this->Impl->Io.InquireVariable<T>(variable.Name());        \
-        this->Impl->Writer.Put(inlineVar, values, adios2::Mode::Sync);                             \
+        this->Impl->Writer.Put(this->Impl->InlineVariable(variable), values, adios2::Mode::Sync);  \
     }                                                                                              \
     void ParaViewFidesEngine::DoPutDeferred(adios2::Variable<T> variable, const T *values)         \
     {                                                                                              \
-        adios2::Variable<T> inlineVar = this->Impl->Io.InquireVariable<T>(variable.Name());        \
-        this->Impl->Writer.Put(inlineVar, values);                                                 \
+        this->Impl->Writer.Put(this->Impl->InlineVariable(variable), values);                      \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
