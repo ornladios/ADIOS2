@@ -792,7 +792,9 @@ CampaignIndexReader::DatasetEngine &CampaignIndexReader::OpenDataset(const Entry
             std::find(localHosts.begin(), localHosts.end(), host.hostname) != localHosts.end();
         std::string path = archive.directory.at(rep.dirIdx).path + PathSeparator + rep.name;
         std::string tar;
-        if (rep.archiveIdx)
+        // Archive locations can serve individual files without a TAR container.
+        const auto tarName = archive.tarnames.find(rep.archiveIdx);
+        if (rep.archiveIdx && tarName != archive.tarnames.end())
         {
             tar = archive.GetTarIdx(dataset, id, ds.format);
             if (tar.empty())
