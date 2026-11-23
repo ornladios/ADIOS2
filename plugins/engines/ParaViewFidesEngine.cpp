@@ -149,6 +149,30 @@ ParaViewFidesEngine::ParaViewFidesEngine(adios2::IO io, const std::string &name,
 #undef declare_type
     }
 
+    // Copy the Attributes defined at Open into the inline IO
+    auto attributes = io.AvailableAttributes();
+    for (const auto &it : attributes)
+    {
+        const std::string attrType = io.AttributeType(it.first);
+#define declare_type(T)                                                                            \
+    if (attrType == adios2::GetType<T>())                                                          \
+    {                                                                                              \
+        adios2::Attribute<T> srcAttr = io.InquireAttribute<T>(it.first);                           \
+        const std::vector<T> data = srcAttr.Data();                                                \
+        if (srcAttr.IsValue())                                                                     \
+        {                                                                                          \
+            this->Impl->Io.DefineAttribute<T>(it.first, data.front());                             \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            this->Impl->Io.DefineAttribute<T>(it.first, data.data(), data.size());                 \
+        }                                                                                          \
+        continue;                                                                                  \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
     auto params = io.Parameters();
     const auto &scriptIt = params.find("Script");
     if (scriptIt != params.end())
