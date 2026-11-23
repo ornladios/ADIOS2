@@ -520,6 +520,24 @@ class TestCampaignIndexRead(unittest.TestCase):
         finally:
             engine.close()
 
+    def test_bp_archive_location_without_tar(self):
+        self.dataset_fixture()
+        with closing(sqlite3.connect(self.archive)) as db, db:
+            # A storage location may have an archive ID but no TAR filename.
+            # Use local storage to exercise replica selection without a server.
+            db.execute("INSERT INTO archive VALUES (1,?, ?,NULL)", ("", "fs"))
+            db.execute("UPDATE replica SET archiveid=1")
+        adios, io, engine = self.open()
+        try:
+            var = io.inquire_variable(self.name)
+            var.set_step_selection([0, 2])
+            var.set_selection([[0], [6]])
+            data = np.zeros(12)
+            engine.get(var, data, adios2.Mode.Sync)
+            np.testing.assert_array_equal(data, np.concatenate((np.arange(6), np.arange(6) + 10)))
+        finally:
+            engine.close()
+
     def test_bp_dataset(self):
         self.check_dataset()
 
