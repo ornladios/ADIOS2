@@ -180,9 +180,10 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
 
         if (useRemote)
         {
-            // read from remote
-            auto handle = m_Remote->Get(variable.m_Name.c_str(), stepStart, 1, variable.m_BlockID,
-                                        variable.m_Count, variable.m_Start,
+            // HDF5 reads a hyperslab, not a writer block. The default block ID
+            // must not be combined with a global bounding box on the server.
+            auto handle = m_Remote->Get(variable.m_Name.c_str(), stepStart, 1,
+                                        static_cast<size_t>(-1), variable.m_Count, variable.m_Start,
                                         variable.m_AccuracyRequested, values, slabsize * sizeof(T));
             remoteHandles.push_back(handle);
         }
