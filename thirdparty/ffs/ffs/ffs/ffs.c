@@ -353,43 +353,86 @@ fixup_output_vector(FFSBuffer b, estate s)
     return ret;
 }
 
+/*
+ * Addresses already encoded.  The first STACK_ARRAY_SIZE live in a stack
+ * array that is searched linearly.  Beyond that they move to an
+ * open-addressed hash table of malloc_addr_size (a power of two) entries.
+ */
+static size_t
+addr_hash(void *addr, ssize_t table_size)
+{
+    return (size_t)(((uint64_t)(uintptr_t)addr * 0x9E3779B97F4A7C15ULL) >> 32) &
+	(size_t)(table_size - 1);
+}
+
+static void
+insert_addr_hash(addr_list_entry *table, ssize_t table_size, void *addr,
+		 ssize_t offset)
+{
+    size_t i = addr_hash(addr, table_size);
+    while (table[i].addr != NULL)
+	i = (i + 1) & (size_t)(table_size - 1);
+    table[i].addr = addr;
+    table[i].offset = offset;
+}
+
+static void
+grow_addr_hash(estate s, ssize_t new_size)
+{
+    addr_list_entry *table = calloc(new_size, sizeof(addr_list_entry));
+    ssize_t i;
+    if (s->addr_list_is_stack) {
+	for (i = 0; i < s->addr_list_cnt; i++)
+	    insert_addr_hash(table, new_size, s->addr_list[i].addr,
+			     s->addr_list[i].offset);
+	s->addr_list_is_stack = 0;
+    } else {
+	for (i = 0; i < s->malloc_addr_size; i++)
+	    if (s->addr_list[i].addr != NULL)
+		insert_addr_hash(table, new_size, s->addr_list[i].addr,
+				 s->addr_list[i].offset);
+	free(s->addr_list);
+    }
+    s->addr_list = table;
+    s->malloc_addr_size = new_size;
+}
+
 static void
 add_to_addr_list(estate s, void *addr, size_t offset)
 {
     if (s->addr_list_is_stack) {
-	if (s->addr_list_cnt == STACK_ARRAY_SIZE) {
-	    /* reached the max size for stack-based addr list */
-	    addr_list_entry *malloc_list;
-	    s->addr_list_is_stack = 0;
-	    s->malloc_addr_size = 2*STACK_ARRAY_SIZE;
-	    malloc_list = malloc(2*STACK_ARRAY_SIZE * sizeof(addr_list_entry));
-	    memcpy(malloc_list, s->addr_list, STACK_ARRAY_SIZE * sizeof(addr_list_entry));
-	    s->addr_list = malloc_list;
+	if (s->addr_list_cnt < STACK_ARRAY_SIZE) {
+	    s->addr_list[s->addr_list_cnt].addr = addr;
+	    s->addr_list[s->addr_list_cnt].offset = offset;
+	    s->addr_list_cnt++;
+	    return;
 	}
-    } else {
-       /* malloc'd addr_list */
-       if (s->addr_list_cnt == s->malloc_addr_size) {
-	   s->malloc_addr_size *= 2;
-	   s->addr_list = 
-	       realloc(s->addr_list, sizeof(addr_list_entry)*s->malloc_addr_size);
-       }
+	grow_addr_hash(s, 512);
+    } else if (2 * (s->addr_list_cnt + 1) > s->malloc_addr_size) {
+	grow_addr_hash(s, 2 * s->malloc_addr_size);
     }
-    s->addr_list[s->addr_list_cnt].addr = addr;
-    s->addr_list[s->addr_list_cnt].offset = offset;
+    insert_addr_hash(s->addr_list, s->malloc_addr_size, addr, offset);
     s->addr_list_cnt++;
 }
 
 static ssize_t
 search_addr_list(estate s, void *addr)
 {
-    int i;
-    ssize_t previous_offset = (ssize_t) -1;
-    for (i=0; i < s->addr_list_cnt; i++) {
-	if (s->addr_list[i].addr == addr) {
-	    previous_offset = s->addr_list[i].offset;
+    if (s->addr_list_is_stack) {
+	int i;
+	for (i = 0; i < s->addr_list_cnt; i++) {
+	    if (s->addr_list[i].addr == addr)
+		return s->addr_list[i].offset;
+	}
+    } else {
+	size_t i = addr_hash(addr, s->malloc_addr_size);
+	while (s->addr_list[i].addr != NULL) {
+	    if (s->addr_list[i].addr == addr)
+		return s->addr_list[i].offset;
+	    i = (i + 1) & (size_t)(s->malloc_addr_size - 1);
 	}
     }
-    return previous_offset;
+    return (ssize_t)-1;
 }
 
 static void
