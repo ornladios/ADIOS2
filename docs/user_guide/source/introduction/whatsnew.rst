@@ -2,6 +2,34 @@
 What's new in v2.13?
 ======================
 
+GPU buffers must declare their array layout (Breaking Change)
+-------------------------------------------------------------
+
+Since v2.10, ADIOS2 has assumed that any buffer it detected as GPU memory was
+column-major. However, GPU kernels and libraries differ in their conventions:
+CuPy and PyTorch arrays are row-major, while Kokkos defaults to column-major on
+the device. A raw device pointer (from ``cudaMalloc``, ``hipMalloc``, CuPy,
+PyTorch, etc.) carries no layout information, so ADIOS2 cannot tell which one
+it has, and row-major GPU data was recorded with the wrong shape.
+
+This is a **breaking change**. ADIOS2 no longer guesses. A ``Put`` or ``Get``
+of a multidimensional variable whose buffer is a raw GPU pointer now throws
+unless the layout has been set first:
+
+.. code-block:: c++
+
+   var.SetArrayLayout(adios2::ArrayOrdering::RowMajor);  // or ColumnMajor
+
+The equivalents are ``set_array_layout`` in Python and
+``adios2_set_array_layout`` in C and Fortran. ``Kokkos::View`` buffers take
+their layout from the view, and 1-D variables and host buffers are
+unaffected. Code that relied on the old behavior should set ``ColumnMajor``;
+code whose GPU data is row-major should set ``RowMajor``.
+
+The layout calls are now available in every ADIOS2 build, with or without GPU
+support, so they can be added unconditionally. In earlier releases only the
+C++ ``SetArrayLayout`` existed, and only in builds with Kokkos or GPU support.
+
 BP4/BP5 readers no longer wait on files left open by a killed writer
 --------------------------------------------------------------------
 

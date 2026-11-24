@@ -54,7 +54,7 @@ The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos 
 Writing GPU buffers
 *******************
 
-The ADIOS2 API for Device pointers is identical to using Host buffers for both the read and write logic.
+The ADIOS2 API for Device pointers is the same as for Host buffers for both the read and write logic, with one addition: a raw device pointer carries no layout, so a multidimensional variable read or written through one needs its layout set with ``SetArrayLayout`` (``set_array_layout`` in Python, ``adios2_set_array_layout`` in C and Fortran) before the first ``Put`` or ``Get``. Otherwise the call throws. A layout that matches the language's order (``RowMajor`` for C, C++ and Python, ``ColumnMajor`` for Fortran) keeps the shape as declared; the other one reverses the variable's dimensions, since a file keeps a single array order. One-dimensional variables and ``Kokkos::View`` buffers, which carry their layout, need no call.
 Internally each ADIOS2 variable holds a memory space for the data it receives. Once the memory space is set (eithr directly by the user through calls to ``SetMemorySpace`` or after detecting the buffer memory space the first ``Put`` or ``Get`` call) to either Host or Device, it cannot be changed.
 
 The ``examples/hello`` folder contains several codes that use Device buffers:
@@ -74,6 +74,8 @@ The following is a simple example of writing data to storage directly from a GPU
     cudaMalloc(&gpuSimData, N * sizeof(float));
     cudaMemset(gpuSimData, 0, N);
     auto data = io.DefineVariable<float>("data", shape, start, count);
+    // required for GPU buffers if shape has more than one dimension
+    data.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
 
     io.SetEngine("BP5");
     adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -139,13 +141,15 @@ The following example shows a global array of shape (4, 3) when running with 2 r
    1 2 3 4
    1 2 3 4
 
-On the read side, the Shape function can take a memory space or a layout to return the correct dimensions of the variable.
-For the previous example, if a C++ code using two ranks wants to read the data into a GPU buffer, the Shape of the local array should be (3, 2). If the same data will be read on CPU buffers, the shape should be (2, 3). Both of the following code would give acceptable answers:
+On the read side, the Shape function can take a layout and returns the dimensions of the variable in that layout.
+For the previous example, a C++ code using two ranks that reads into column-major buffers (a ``LayoutLeft`` view, or a raw device pointer after ``SetArrayLayout(adios2::ArrayOrdering::ColumnMajor)``) sees the local array as (3, 2); in the declared row-major order it is (2, 3):
 
 .. code-block:: c++
 
-   auto dims_host = data.Shape(adios2::MemorySpace::Host);
-   auto dims_device = data.Shape(adios2::ArrayOrdering::ColumnMajor);
+   auto dims_row = data.Shape();
+   auto dims_col = data.Shape(adios2::ArrayOrdering::ColumnMajor);
+
+As on the write side, a ``Get`` of a multidimensional variable into a raw device pointer throws unless ``SetArrayLayout`` has been called.
 
 ***************
 Build scripts

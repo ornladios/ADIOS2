@@ -175,16 +175,16 @@ Dims Variable::Shape(const size_t step) const
     return shape;
 }
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-void Variable::SetMemorySpace(const MemorySpace memSpace)
-{
-    m_VariableBase->SetMemorySpace(memSpace);
-}
-
 void Variable::SetArrayLayout(const ArrayOrdering layout)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetArrayLayout");
     m_VariableBase->SetArrayLayout(layout);
+}
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+void Variable::SetMemorySpace(const MemorySpace memSpace)
+{
+    m_VariableBase->SetMemorySpace(memSpace);
 }
 
 Dims Variable::Shape(const MemorySpace memSpace, const size_t step) const
