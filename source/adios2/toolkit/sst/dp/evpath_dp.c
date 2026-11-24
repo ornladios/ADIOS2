@@ -534,7 +534,9 @@ static uint64_t writeBlockFingerprint(char *block, size_t psize)
     {
         size_t Index = Start + Stride * i;
         unsigned char Component = 0;
-        while ((block[Index] == 0) && (Index < (psize - 1)))
+        // Bounded: the fingerprint is computed as an argument of verbose messages even when
+        // verbosity is off, and an unbounded scan walks every zero byte of the block.
+        while ((block[Index] == 0) && (Index < (psize - 1)) && (Component < 255))
         {
             Component++;
             Index++;
