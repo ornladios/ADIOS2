@@ -181,12 +181,15 @@ const char *BP5Deserializer::BreakdownVarName(const char *Name, DataType *type_p
     return p;
 }
 
-void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax)
+void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax,
+                                         bool &Reversed)
 {
     if (FieldType[0] != 'M')
     {
         throw std::runtime_error("BP5 unable to parse metadata, likely old version");
     }
+    // a trailing 'R' marks dimensions reversed from the file's order
+    Reversed = (FieldType[strlen(FieldType) - 1] == 'R');
 
     // should start with "MetaArray"
     FieldType += strlen("MetaArray");
@@ -449,6 +452,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             int ElementSize;
             bool Operator = false;
             bool MinMax = false;
+            bool Reversed = false;
             bool V1_fields = true;
             FMFormat StructFormat = NULL;
             if (FieldList[i].field_type[0] == 'M')
@@ -460,7 +464,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             }
             else
             {
-                BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
+                BreakdownFieldType(FieldList[i].field_type, Operator, MinMax, Reversed);
                 BreakdownArrayName(FieldList[i].field_name + HeaderSkip, &ArrayName, &Type,
                                    &ElementSize, &StructFormat);
             }
@@ -471,6 +475,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 VarRec->OrigShapeID = C->OrigShapeID;
+                VarRec->WriterReversed = Reversed;
                 VarRec->Derived = Derived;
                 VarRec->ExprStr = ExprStr;
                 if (StructFormat)
@@ -1094,6 +1099,9 @@ void BP5Deserializer::InstallMetadataBuffer(void *BaseData, size_t WriterRank, s
                                       meta_base->Shape, meta_base->Offsets, meta_base->Count,
                                       VarRec->Def, VarRec->ReaderDef);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine = m_Engine;
+                    static_cast<VariableBase *>(VarRec->Variable)->m_WriterArrayLayout =
+                        (m_WriterIsRowMajor != VarRec->WriterReversed) ? ArrayOrdering::RowMajor
+                                                                       : ArrayOrdering::ColumnMajor;
                     VarByKey[VarRec->Variable] = VarRec;
                     VarRec->LastTSAdded = Step; // starts at 1
                     if (VarRec->Operator)

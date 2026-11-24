@@ -185,6 +185,36 @@ adios2_error adios2_set_array_layout(adios2_variable *variable, const adios2_arr
     }
 }
 
+adios2_error adios2_writer_array_layout(adios2_arrayordering *layout,
+                                        const adios2_variable *variable)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(layout, "for adios2_arrayordering, in call to "
+                                                "adios2_writer_array_layout");
+        const adios2::core::VariableBase *variableBase =
+            reinterpret_cast<const adios2::core::VariableBase *>(variable);
+        switch (variableBase->GetWriterArrayLayout())
+        {
+        case adios2::ArrayOrdering::RowMajor:
+            *layout = adios2_arrayordering_rowmajor;
+            break;
+        case adios2::ArrayOrdering::ColumnMajor:
+            *layout = adios2_arrayordering_columnmajor;
+            break;
+        default:
+            *layout = adios2_arrayordering_auto;
+            break;
+        }
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_writer_array_layout"));
+    }
+}
+
 adios2_error adios2_get_memory_space(adios2_memory_space *mem, adios2_variable *variable)
 {
     try

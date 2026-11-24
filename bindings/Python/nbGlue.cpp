@@ -390,6 +390,7 @@ NB_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              nb::arg("memSpace"))
 #endif
         .def("SetArrayLayout", &adios2::py11::Variable::SetArrayLayout, nb::arg("layout"))
+        .def("GetWriterArrayLayout", &adios2::py11::Variable::GetWriterArrayLayout)
         .def("Start", &adios2::py11::Variable::Start)
         .def("Count", &adios2::py11::Variable::Count)
         .def("Steps", &adios2::py11::Variable::Steps)

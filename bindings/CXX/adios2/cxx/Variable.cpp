@@ -296,7 +296,8 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 
 #define declare_layout_template_instantiation(T)                                                   \
     template void Variable<T>::SetArrayLayout(const ArrayOrdering layout);                         \
-    template ArrayOrdering Variable<T>::GetArrayLayout();
+    template ArrayOrdering Variable<T>::GetArrayLayout();                                          \
+    template ArrayOrdering Variable<T>::GetWriterArrayLayout();
 ADIOS2_FOREACH_TYPE_1ARG(declare_layout_template_instantiation)
 #undef declare_layout_template_instantiation
 

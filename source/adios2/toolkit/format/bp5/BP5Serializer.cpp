@@ -609,6 +609,11 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
             ArrayTypeName = "MetaArrayOp";
             FieldSize = sizeof(MetaArrayRecOperator);
         }
+        // a trailing 'R' marks an array whose dimensions are reversed from the
+        // file's order, i.e. its buffer layout differs from the IO's
+        const bool Reversed = (VB->m_ArrayLayout != VB->m_BaseLayout);
+        char ArrayName[40] = {0};
+        strcat(ArrayName, ArrayTypeName);
         if ((m_StatsLevel > 0) && !NeverMinMax)
         {
             char MMArrayName[40] = {0};
@@ -631,6 +636,8 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
                 strcat(MMArrayName, "MM16");
                 break;
             }
+            if (Reversed)
+                strcat(MMArrayName, "R");
             Rec->MinMaxOffset = FieldSize;
             FieldSize += sizeof(char *);
             AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName, MMArrayName,
@@ -638,8 +645,9 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         }
         else
         {
-            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName, ArrayTypeName,
-                           FieldSize);
+            if (Reversed)
+                strcat(ArrayName, "R");
+            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName, ArrayName, FieldSize);
         }
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
         Rec->OperatorType = OperatorType;
@@ -1339,7 +1347,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forc
     if (!Info.MetaFormat && Info.MetaFieldCount)
     {
         MetaMetaInfoBlock Block;
-        FMStructDescRec struct_list[20] = {
+        FMStructDescRec struct_list[40] = {
             {NULL, NULL, 0, NULL},
             {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
             {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
@@ -1359,6 +1367,23 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forc
              NULL},
             {"MetaArrayMM16", MetaArrayRecMM16ListPtr, sizeof(MetaArrayRecMM), NULL},
             {"MetaArrayOpMM16", MetaArrayRecOperatorMM16ListPtr, sizeof(MetaArrayRecOperatorMM),
+             NULL},
+            {"MetaArrayR", MetaArrayRecListPtr, sizeof(MetaArrayRec), NULL},
+            {"MetaArrayOpR", MetaArrayRecOperatorListPtr, sizeof(MetaArrayRecOperator), NULL},
+            {"MetaArrayMM1R", MetaArrayRecMM1ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM1R", MetaArrayRecOperatorMM1ListPtr, sizeof(MetaArrayRecOperatorMM),
+             NULL},
+            {"MetaArrayMM2R", MetaArrayRecMM2ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM2R", MetaArrayRecOperatorMM2ListPtr, sizeof(MetaArrayRecOperatorMM),
+             NULL},
+            {"MetaArrayMM4R", MetaArrayRecMM4ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM4R", MetaArrayRecOperatorMM4ListPtr, sizeof(MetaArrayRecOperatorMM),
+             NULL},
+            {"MetaArrayMM8R", MetaArrayRecMM8ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM8R", MetaArrayRecOperatorMM8ListPtr, sizeof(MetaArrayRecOperatorMM),
+             NULL},
+            {"MetaArrayMM16R", MetaArrayRecMM16ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM16R", MetaArrayRecOperatorMM16ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = "MetaData";

@@ -81,6 +81,12 @@ void VariableNT::SetArrayLayout(const adios2::ArrayOrdering layout)
     m_Variable->SetArrayLayout(layout);
 }
 
+adios2::ArrayOrdering VariableNT::GetWriterArrayLayout() const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::GetWriterArrayLayout");
+    return m_Variable->GetWriterArrayLayout();
+}
+
 void VariableNT::SetShape(const Dims &shape)
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::SetShape");

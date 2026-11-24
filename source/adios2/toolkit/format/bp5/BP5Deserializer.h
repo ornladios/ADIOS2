@@ -217,6 +217,8 @@ private:
         DataType Type;
         int ElementSize = 0;
         size_t MinMaxOffset = SIZE_MAX;
+        // the writer's buffers had the opposite layout to the file's order
+        bool WriterReversed = false;
         uint64_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
         size_t FirstTSSeen = SIZE_MAX;
@@ -320,7 +322,7 @@ private:
     BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(uint64_t *Dimensions, size_t count, size_t times);
     const char *BreakdownVarName(const char *Name, DataType *type_p, int *element_size_p);
-    void BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax);
+    void BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax, bool &Reversed);
     void BreakdownArrayName(const char *Name, char **base_name_p, DataType *type_p,
                             int *element_size_p, FMFormat *Format);
     void BreakdownV1ArrayName(const char *Name, char **base_name_p, DataType *type_p,

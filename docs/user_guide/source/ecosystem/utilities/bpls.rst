@@ -28,6 +28,14 @@ Both are 2-dimensional ``double`` arrays, their global size is ``15x16`` and the
 
     bpls is written in C++ and therefore sees the order of the dimensions in *row major*. If the data was written from Fortran in column-major order, you will see the dimension order flipped when listing with bpls, just as a code written in C++ or python would see the data. 
 
+    BP5 files also record the layout of the buffers each array was written from, so arrays written column-major (from Fortran, or from C++ with a ``Kokkos::LayoutLeft`` view or ``SetArrayLayout(ColumnMajor)``) are marked when listed with ``-l`` or dumped with ``-d``:
+
+    .. code-block:: bash
+
+      $ bpls -l f.bp
+        double   T     3*{16, 15} = 58.3642 / 191.485
+          (written from column-major buffers: dimensions and data are shown row-major, i.e. transposed)
+
  
 Here is the description of the most used options
 (use ``bpls -h`` to print help on all options for this utility).

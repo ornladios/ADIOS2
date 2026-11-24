@@ -151,6 +151,15 @@ For the previous example, a C++ code using two ranks that reads into column-majo
 
 As on the write side, a ``Get`` of a multidimensional variable into a raw device pointer throws unless ``SetArrayLayout`` has been called.
 
+Reading in a layout other than the writer's is valid: the reader sees the array transposed, with its dimensions reversed. To find out how an array was written, ``GetWriterArrayLayout`` (``writer_array_layout`` in Python, ``adios2_writer_array_layout`` in C and Fortran) returns the layout of the writer's buffers, ``RowMajor`` or ``ColumnMajor``, recorded per variable in BP5 files. Engines that do not record it return ``Auto``.
+
+.. code-block:: c++
+
+   if (data.GetWriterArrayLayout() == adios2::ArrayOrdering::ColumnMajor)
+   {
+       // read into a LayoutLeft view to get the shape as written
+   }
+
 ***************
 Build scripts
 ***************
