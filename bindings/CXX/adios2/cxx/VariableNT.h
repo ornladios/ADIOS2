@@ -70,6 +70,12 @@ public:
     void SetArrayLayout(const adios2::ArrayOrdering layout);
 
     /**
+     * On read, the layout of the buffers the array was written from
+     * @return RowMajor or ColumnMajor, or Auto if the engine does not record it
+     */
+    adios2::ArrayOrdering GetWriterArrayLayout() const;
+
+    /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
      * @param shape new shape dimensions array

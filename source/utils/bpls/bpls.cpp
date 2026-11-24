@@ -1245,6 +1245,15 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
         } // longopt && vi->statistics
         fprintf(outf, "\n");
 
+        if ((longopt || dump) && (variable->m_Shape.size() > 1 || variable->m_Count.size() > 1) &&
+            variable->GetWriterArrayLayout() == ArrayOrdering::ColumnMajor)
+        {
+            fprintf(outf,
+                    "%c   (written from column-major buffers: dimensions and data are shown "
+                    "row-major, i.e. transposed)\n",
+                    commentchar);
+        }
+
         if (show_decomp)
         {
             if (timestep)

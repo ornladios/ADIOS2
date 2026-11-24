@@ -42,6 +42,8 @@ void VariableBase::StoreStatsOnly(const bool mode) { m_WriteData = !(mode); }
 
 ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
 
+ArrayOrdering VariableBase::GetWriterArrayLayout() const { return m_WriterArrayLayout; }
+
 void VariableBase::SetArrayLayout(ArrayOrdering layout)
 {
     // Auto means the IO's order
