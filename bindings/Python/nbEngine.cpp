@@ -23,6 +23,23 @@ namespace adios2
 namespace py11
 {
 
+namespace
+{
+// int8 and uint8 are character types for streams: print them as numbers
+template <class T>
+void StreamMinMax(std::ostream &os, const T &value)
+{
+    if constexpr (std::is_integral_v<T> && sizeof(T) == 1)
+    {
+        os << static_cast<int>(value);
+    }
+    else
+    {
+        os << value;
+    }
+}
+}
+
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 Engine::operator bool() const noexcept
@@ -508,8 +525,8 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
             info_map["BlockID"] = std::to_string(info.BlockID);                                    \
             info_map["IsValue"] = info.IsValue ? "True" : "False";                                 \
             std::ostringstream osMax, osMin;                                                       \
-            osMax << info.Max;                                                                     \
-            osMin << info.Min;                                                                     \
+            StreamMinMax(osMax, info.Max);                                                         \
+            StreamMinMax(osMin, info.Min);                                                         \
             info_map["Max"] = osMax.str();                                                         \
             info_map["Min"] = osMin.str();                                                         \
             info_map["IsReverseDims"] = info.IsReverseDims ? "True" : "False";                     \
