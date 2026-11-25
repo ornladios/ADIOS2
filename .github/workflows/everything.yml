@@ -428,58 +428,8 @@ jobs:
   docker:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
-
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        baseos: [ubuntu-bionic]
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: ci-source
-      - name: Re-configure docker daemon
-        run: |
-            sudo systemctl stop docker
-            echo $'{\n    "experimental": true\n}' | \
-                sudo tee /etc/docker/daemon.json
-            sudo systemctl start docker
-      - name: Build image
-        run: |
-            docker build \
-                --rm --squash \
-                -t ornladios/adios2:ci-tmp \
-                --build-arg baseos=${{ matrix.baseos }} \
-                --build-arg ci_source_dir=ci-source \
-                -f ci-source/scripts/ci/images/spack/Dockerfile \
-                .
-      - name: Save image as a tar file
-        run: |
-            docker save -o ci-docker.tar ornladios/adios2:ci-tmp
-            ls -lah ci-docker.tar
-      - name: Upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
-        with:
-          retention-days: 1
-          name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
-          path: ci-docker.tar
-      - name: Push image to Docker Hub
-        if: github.event_name == 'push'
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-            target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
-            docker tag \
-                ornladios/adios2:ci-tmp \
-                ornladios/adios2:${target_tag}
-            docker login \
-                --username="${DOCKERHUB_USERNAME}" \
-                --password="${DOCKERHUB_PASSWORD}"
-            docker push \
-                ornladios/adios2:${target_tag}
+    uses: ./.github/workflows/docker.yml
+    secrets: inherit
 
 #######################################
 # Apptainer container jobs
@@ -488,120 +438,23 @@ jobs:
   apptainer:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
-
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: write  # for upload-artifact
       packages: write  # for pushing to GHCR
-    strategy:
-      fail-fast: false
-      matrix:
-        baseos: [ubuntu-bionic]
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: ci-source
-      - uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3.0.0
-        with:
-          apptainer-version: 1.3.6
-      - name: Build image
-        run: |
-            target_arch="$(echo '${{ runner.arch }}' | tr '[:upper:]' '[:lower:]')"
-            target_branch="${GITHUB_REF##refs/heads/}"
-            echo "image_name=ghcr.io/ornladios/adios2-apptainer-sif-${target_branch}-${target_arch}" >> "$GITHUB_ENV"
-            echo "timestamp=$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
-            apptainer build --fakeroot \
-                adios2-ci.sif \
-                ci-source/scripts/ci/images/spack/Apptainer.def
-            ls -lah adios2-ci.sif
-      - name: Smoke test
-        run: apptainer exec adios2-ci.sif bpls --help
-      - name: Upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
-        with:
-          retention-days: 1
-          name: ci-apptainer ${{ matrix.baseos }} ${{ github.sha }}
-          path: adios2-ci.sif
-      - name: Push image to GHCR
-        if: github.event_name == 'push'
-        run: |
-            apptainer remote login \
-                --username="${{ github.actor }}" \
-                --password="${{ secrets.GITHUB_TOKEN }}" \
-                oras://ghcr.io
-            apptainer push \
-                adios2-ci.sif \
-                "oras://${image_name}:${timestamp}"
-            apptainer push \
-                adios2-ci.sif \
-                "oras://${image_name}:latest"
+    uses: ./.github/workflows/apptainer.yml
 
 #######################################
 # Contract testing jobs
 #######################################
 
-  # These contract testing jobs use the container built in the previous
-  # docker job and runs it in a way similar to how a typical GitHub
-  # Actions container job does.  Using the "messy" default shell for
-  # run steps lets the steps be written as though they too were using a
-  # standard container job.
   contract:
     needs: [format, git_checks, docker]
     if: needs.git_checks.outputs.num_code_changes > 0
-
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read  # for download-artifact
-    strategy:
-      fail-fast: false
-      matrix:
-        code: [examples, lammps, tau]
-        include:
-          - code: examples
-          - code: lammps
-            repo: pnorbert/lammps
-            ref: fix-deprecated-adios-init
-          - code: tau
-    defaults:
-      run:
-        shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        if: ${{ matrix.repo != '' }}
-        with:
-          repository: ${{ matrix.repo }}
-          ref: ${{ matrix.ref }}
-          path: source
-      - name: Download CI docker image
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
-        with:
-          name: ci-docker ubuntu-bionic ${{ github.sha }}
-      - name: Initialize containers
-        shell: bash -e {0}
-        run: |
-            sudo chown 1000:1000 .
-            docker load -i ci-docker.tar
-            docker create \
-                --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
-                -v "/home/runner/work":"/__w" \
-                --entrypoint "tail" ornladios/adios2:ci-tmp \
-                "-f" "/dev/null"
-            docker start adios2-ci
-      - name: Dependencies
-        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/depends.sh
-      - name: Configure
-        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/config.sh
-      - name: Build
-        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/build.sh
-      - name: Install
-        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
-      - name: Test
-        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
+    uses: ./.github/workflows/contract.yml
 
 #######################################
 # Code analysis builds

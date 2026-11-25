@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Docker
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        baseos: [ubuntu-bionic]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: ci-source
+      - name: Re-configure docker daemon
+        run: |
+            sudo systemctl stop docker
+            echo $'{\n    "experimental": true\n}' | \
+                sudo tee /etc/docker/daemon.json
+            sudo systemctl start docker
+      - name: Build image
+        run: |
+            docker build \
+                --rm --squash \
+                -t ornladios/adios2:ci-tmp \
+                --build-arg baseos=${{ matrix.baseos }} \
+                --build-arg ci_source_dir=ci-source \
+                -f ci-source/scripts/ci/images/spack/Dockerfile \
+                .
+      - name: Save image as a tar file
+        run: |
+            docker save -o ci-docker.tar ornladios/adios2:ci-tmp
+            ls -lah ci-docker.tar
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
+        with:
+          retention-days: 1
+          name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
+          path: ci-docker.tar
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+            target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
+            docker tag \
+                ornladios/adios2:ci-tmp \
+                ornladios/adios2:${target_tag}
+            docker login \
+                --username="${DOCKERHUB_USERNAME}" \
+                --password="${DOCKERHUB_PASSWORD}"
+            docker push \
+                ornladios/adios2:${target_tag}

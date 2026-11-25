@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2026 Oak Ridge National Laboratory and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# These contract testing jobs use the container built in the docker
+# workflow and run it in a way similar to how a typical GitHub Actions
+# container job does.  Using the "messy" default shell for run steps lets
+# the steps be written as though they too were using a standard container
+# job.
+
+name: Contract
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read  # for download-artifact
+    strategy:
+      fail-fast: false
+      matrix:
+        code: [examples, lammps, tau]
+        include:
+          - code: examples
+          - code: lammps
+            repo: pnorbert/lammps
+            ref: fix-deprecated-adios-init
+          - code: tau
+    defaults:
+      run:
+        shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        if: ${{ matrix.repo != '' }}
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.ref }}
+          path: source
+      - name: Download CI docker image
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
+        with:
+          name: ci-docker ubuntu-bionic ${{ github.sha }}
+      - name: Initialize containers
+        shell: bash -e {0}
+        run: |
+            sudo chown 1000:1000 .
+            docker load -i ci-docker.tar
+            docker create \
+                --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
+                -v "/home/runner/work":"/__w" \
+                --entrypoint "tail" ornladios/adios2:ci-tmp \
+                "-f" "/dev/null"
+            docker start adios2-ci
+      - name: Dependencies
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/depends.sh
+      - name: Configure
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/config.sh
+      - name: Build
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/build.sh
+      - name: Install
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
+      - name: Test
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
