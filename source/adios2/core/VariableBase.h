@@ -51,11 +51,9 @@ public:
 
     /* User requested memory space */
     MemorySpace m_MemSpace = MemorySpace::Detect;
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     ArrayOrdering m_BaseLayout = ArrayOrdering::RowMajor;
     ArrayOrdering m_ArrayLayout = ArrayOrdering::RowMajor;
     bool m_ArrayLayoutLocked = false;
-#endif
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0;                 ///< current block ID for local variables, global = 0
@@ -139,7 +137,6 @@ public:
      */
     void StoreStatsOnly(const bool mode);
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     /**
      * Get the layout used by the user buffers
      * @return the layout used by the user buffers (RowMajor or ColumnMajor)
@@ -153,7 +150,6 @@ public:
      * @param the layout that will be used by future put/gets
      */
     void SetArrayLayout(const ArrayOrdering layout);
-#endif
 
     /**
      * Get the memory space where a given buffers was allocated
@@ -303,9 +299,7 @@ protected:
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     inline void UpdateLayout(Dims &shape);
-#endif
 };
 
 } // end namespace core

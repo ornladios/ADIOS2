@@ -75,13 +75,11 @@ void VariableNT::SetMemorySpace(const MemorySpace mem)
     m_Variable->SetMemorySpace(mem);
 }
 
-#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 void VariableNT::SetArrayLayout(const adios2::ArrayOrdering layout)
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::SetArrayLayout");
     m_Variable->SetArrayLayout(layout);
 }
-#endif
 
 void VariableNT::SetShape(const Dims &shape)
 {

@@ -310,17 +310,17 @@ Only use it if absolutely necessary (*e.g.* memory bound application or out of s
          // var4 = { 2, 2, 2};
 
 
-The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host (default mode). In order to use data allocated on the device, the memory space of the variable needs to be set to Cuda.
+The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host (default mode). In order to use data allocated on the device, the memory space of the variable can be set to GPU (in builds with CUDA or HIP support it is also detected automatically). A multidimensional variable written from a raw device pointer must also have its array layout set.
 
      .. code-block:: c++
 
-         variable.SetMemorySpace(adios2::MemorySpace::CUDA);
+         variable.SetMemorySpace(adios2::MemorySpace::GPU);
+         variable.SetArrayLayout(adios2::ArrayOrdering::RowMajor);
          engine.Put(variable, gpuData, mode);
 
 .. note::
 
-   Only CUDA allocated buffers are supported for device data.
-   Only the BP4 and BP5 engines are capable of receiving device allocated buffers.
+   See :ref:`GPU-aware I/O` for the supported GPU backends and engines.
 
 
 PerformPuts
