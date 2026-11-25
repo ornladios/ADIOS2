@@ -76,6 +76,24 @@ TEST_F(ADIOS2_C_API, ADIOS2BPArrayLayout)
     EXPECT_EQ(colShape[1], 5);
     // and the layout is fixed once set
     EXPECT_NE(adios2_set_array_layout(varCol, adios2_arrayordering_rowmajor), adios2_error_none);
+
+    // a reader learns the layout each array was written from
+    int32_t data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    adios2_engine *w = adios2_open(ioH, "CArrayLayout.bp", adios2_mode_write);
+    adios2_put(w, varAuto, data, adios2_mode_sync);
+    adios2_put(w, varCol, data, adios2_mode_sync);
+    adios2_close(w);
+
+    adios2_io *ioR = adios2_declare_io(adiosH, "CArrayLayoutRead");
+    adios2_engine *r = adios2_open(ioR, "CArrayLayout.bp", adios2_mode_readRandomAccess);
+    adios2_arrayordering layout;
+    EXPECT_EQ(adios2_writer_array_layout(&layout, adios2_inquire_variable(ioR, "varAuto")),
+              adios2_error_none);
+    EXPECT_EQ(layout, adios2_arrayordering_rowmajor);
+    EXPECT_EQ(adios2_writer_array_layout(&layout, adios2_inquire_variable(ioR, "varCol")),
+              adios2_error_none);
+    EXPECT_EQ(layout, adios2_arrayordering_columnmajor);
+    adios2_close(r);
 }
 
 TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceShape)

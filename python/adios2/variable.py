@@ -103,6 +103,16 @@ class Variable:
         """
         self.impl.SetArrayLayout(layout)
 
+    def writer_array_layout(self):
+        """
+        On read, the layout of the buffers the array was written from
+
+        Returns:
+            adios2.bindings.ArrayOrdering: RowMajor or ColumnMajor, or Auto if the
+            engine does not record it.
+        """
+        return self.impl.GetWriterArrayLayout()
+
     def set_step_selection(self, step_selection):
         """
         Set current step selection (For RRA or ReadRandomAccess)

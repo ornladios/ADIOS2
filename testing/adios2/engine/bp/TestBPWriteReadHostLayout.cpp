@@ -118,6 +118,61 @@ TEST_F(BPWRHostLayout, ColumnMajorReadBack)
     EXPECT_EQ(in, std::vector<float>({2, 3, 4, 5}));
 }
 
+// the reader learns each array's writer layout, whatever order the writer's IO used
+void WriteTwoLayouts(const std::string &fname, const adios2::ArrayOrdering ioOrder,
+                     const adios2::ArrayOrdering otherLayout)
+{
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("WriteTwoLayouts", ioOrder);
+    SetEngine(io);
+    auto plain = io.DefineVariable<float>("plain", declaredShape, {0, 0}, declaredShape);
+    auto other = io.DefineVariable<float>("other", declaredShape, {0, 0}, declaredShape);
+    other.SetArrayLayout(otherLayout);
+    auto scalar = io.DefineVariable<int>("scalar");
+    adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+    writer.BeginStep();
+    writer.Put(plain, values.data(), adios2::Mode::Sync);
+    writer.Put(other, values.data(), adios2::Mode::Sync);
+    writer.Put(scalar, 1);
+    writer.EndStep();
+    writer.Close();
+}
+
+void CheckWriterLayouts(const std::string &fname, const adios2::ArrayOrdering plainLayout,
+                        const adios2::ArrayOrdering otherLayout)
+{
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("ReadTwoLayouts");
+    SetEngine(io);
+    adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+    reader.BeginStep();
+    auto plain = io.InquireVariable<float>("plain");
+    auto other = io.InquireVariable<float>("other");
+    ASSERT_TRUE(plain);
+    ASSERT_TRUE(other);
+    EXPECT_EQ(plain.GetWriterArrayLayout(), plainLayout);
+    EXPECT_EQ(other.GetWriterArrayLayout(), otherLayout);
+    // single values have no layout
+    EXPECT_EQ(io.InquireVariable<int>("scalar").GetWriterArrayLayout(),
+              adios2::ArrayOrdering::Auto);
+    reader.EndStep();
+    reader.Close();
+}
+
+TEST_F(BPWRHostLayout, WriterLayoutRowMajorIO)
+{
+    const std::string fname("BPWRHostLayoutWriterRow.bp");
+    WriteTwoLayouts(fname, adios2::ArrayOrdering::RowMajor, adios2::ArrayOrdering::ColumnMajor);
+    CheckWriterLayouts(fname, adios2::ArrayOrdering::RowMajor, adios2::ArrayOrdering::ColumnMajor);
+}
+
+TEST_F(BPWRHostLayout, WriterLayoutColumnMajorIO)
+{
+    const std::string fname("BPWRHostLayoutWriterCol.bp");
+    WriteTwoLayouts(fname, adios2::ArrayOrdering::ColumnMajor, adios2::ArrayOrdering::RowMajor);
+    CheckWriterLayouts(fname, adios2::ArrayOrdering::ColumnMajor, adios2::ArrayOrdering::RowMajor);
+}
+
 TEST_F(BPWRHostLayout, LayoutIsFixed)
 {
     adios2::ADIOS adios;

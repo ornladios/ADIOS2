@@ -82,6 +82,8 @@ public:
 
     void SetArrayLayout(const ArrayOrdering layout);
 
+    ArrayOrdering GetWriterArrayLayout() const;
+
     /**
      * Inspects current start point
      * @return start vector
