@@ -54,6 +54,8 @@ public:
     ArrayOrdering m_BaseLayout = ArrayOrdering::RowMajor;
     ArrayOrdering m_ArrayLayout = ArrayOrdering::RowMajor;
     bool m_ArrayLayoutLocked = false;
+    /* set by the reading engine, Auto when unknown */
+    ArrayOrdering m_WriterArrayLayout = ArrayOrdering::Auto;
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0;                 ///< current block ID for local variables, global = 0
@@ -139,6 +141,12 @@ public:
      * @return the layout used by the user buffers (RowMajor or ColumnMajor)
      */
     ArrayOrdering GetArrayLayout();
+
+    /**
+     * On read, the layout of the buffers the array was written from
+     * @return RowMajor or ColumnMajor, or Auto if the engine does not record it
+     */
+    ArrayOrdering GetWriterArrayLayout() const;
 
     /**
      * Set the layout used by the user buffers. If it differs from the IO's order, the

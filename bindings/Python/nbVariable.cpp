@@ -181,6 +181,12 @@ void Variable::SetArrayLayout(const ArrayOrdering layout)
     m_VariableBase->SetArrayLayout(layout);
 }
 
+ArrayOrdering Variable::GetWriterArrayLayout() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::GetWriterArrayLayout");
+    return m_VariableBase->GetWriterArrayLayout();
+}
+
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
 void Variable::SetMemorySpace(const MemorySpace memSpace)
 {

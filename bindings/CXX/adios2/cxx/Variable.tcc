@@ -223,6 +223,13 @@ adios2::ArrayOrdering Variable<T>::GetArrayLayout()
     return m_Variable->GetArrayLayout();
 }
 
+template <class T>
+adios2::ArrayOrdering Variable<T>::GetWriterArrayLayout()
+{
+    helper::CheckForNullptr(m_Variable, "in call to Variable<T>::GetWriterArrayLayout");
+    return m_Variable->GetWriterArrayLayout();
+}
+
 namespace detail
 {
 // Span

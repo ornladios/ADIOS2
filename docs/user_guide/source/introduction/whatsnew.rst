@@ -30,6 +30,22 @@ The layout calls are now available in every ADIOS2 build, with or without GPU
 support, so they can be added unconditionally. In earlier releases only the
 C++ ``SetArrayLayout`` existed, and only in builds with Kokkos or GPU support.
 
+Readers can tell how an array was written
+-----------------------------------------
+
+A BP5 file keeps a single array order, so an array written from buffers in the
+other layout (a Fortran array, a ``Kokkos::LayoutLeft`` view in C++, or a
+buffer declared with ``SetArrayLayout``) is stored with its dimensions
+reversed, and readers see it transposed. BP5 now also records, per variable,
+the layout of the buffers each array was written from. Readers can query it
+with ``GetWriterArrayLayout`` (``writer_array_layout`` in Python,
+``adios2_writer_array_layout`` in C and Fortran), which returns ``RowMajor`` or
+``ColumnMajor``, or ``Auto`` for engines that do not record it. Files written
+this way remain readable by earlier ADIOS2 versions, which ignore the record.
+
+``bpls -l`` and ``bpls -d`` mark arrays written from column-major buffers, since
+it lists and dumps them transposed.
+
 BP4/BP5 readers no longer wait on files left open by a killed writer
 --------------------------------------------------------------------
 

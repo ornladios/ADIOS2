@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from adios2 import Stream, Adios
-from adios2.bindings import DerivedVarType, Linf_norm, L2_norm
+from adios2.bindings import ArrayOrdering, DerivedVarType, Linf_norm, L2_norm
 import unittest
 import numpy as np
 
@@ -93,6 +93,22 @@ class TestVariable(unittest.TestCase):
                 self.assertAlmostEqual(acc.error, L2_norm, 10)
                 self.assertAlmostEqual(acc.norm, 0.0, 10)
                 self.assertEqual(acc.relative, False)
+
+    def test_05_writer_array_layout(self):
+        # a reader learns the layout each array was written from
+        data = np.arange(6, dtype=np.float32)
+        with Stream("pythontestlayout.bp", "w") as f:
+            row = f.io.define_variable("row", data, [2, 3], [0, 0], [2, 3])
+            col = f.io.define_variable("col", data, [2, 3], [0, 0], [2, 3])
+            col.set_array_layout(ArrayOrdering.ColumnMajor)
+            f.write(row, data)
+            f.write(col, data)
+        with Stream("pythontestlayout.bp", "r") as f:
+            for _ in f.steps():
+                row = f.inquire_variable("row")
+                col = f.inquire_variable("col")
+                self.assertEqual(row.writer_array_layout(), ArrayOrdering.RowMajor)
+                self.assertEqual(col.writer_array_layout(), ArrayOrdering.ColumnMajor)
 
 
 if __name__ == "__main__":
