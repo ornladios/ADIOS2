@@ -64,7 +64,7 @@
 #include <atl.h>
 #include "evpath.h"
 #include "cm_transport.h"
-#include "cm_internal.h"
+#include <pthread.h>
 #include "ev_select.h"
 
 #include <stdlib.h>
