@@ -778,12 +778,20 @@ static void MercuryReleaseTimestep(CP_Services Svcs, DP_WS_Stream WS_Stream_v, s
  */
 static int MercuryGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
-    /* Check if Mercury is available and return appropriate priority */
-    /* Higher priority means more preferred */
-    /* Return -1 if Mercury cannot be used */
+    const char *protocol = Params->MercuryProtocol;
+    if (!protocol)
+        protocol = getenv("SST_MERCURY_PROTOCOL");
+    if (!protocol)
+        protocol = "tcp";
 
-    /* For now, return a moderate priority if Mercury is compiled in */
-    return 50; /* Medium priority */
+    /* Over tcp or sockets Mercury only emulates RDMA, and evpath does better. */
+    if (strstr(protocol, "tcp") || strstr(protocol, "sockets"))
+    {
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                      "mercury_dp priority=-1 since protocol '%s' runs over sockets.\n", protocol);
+        return -1;
+    }
+    return 10;
 }
 
 /*
