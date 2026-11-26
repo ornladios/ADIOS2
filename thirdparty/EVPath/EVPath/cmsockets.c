@@ -1075,7 +1075,8 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 		    return ret + cur_iov_base;
 		}
 		iov[cur_iov_cnt + cur_iov_base -1].iov_len = saved_iov_entry.iov_len - new_iov_len;
-		iov[cur_iov_cnt + cur_iov_base -1].iov_base = (char*)iov[cur_iov_cnt + cur_iov_base -1].iov_base + new_iov_len;
+		/* From the saved entry: the writev above advances iov_base in place when a write is partial. */
+		iov[cur_iov_cnt + cur_iov_base -1].iov_base = (char*)saved_iov_entry.iov_base + new_iov_len;
 		write_size += new_iov_len;
 		left -= write_size;
 		cur_iov_base += cur_iov_cnt - 1;
