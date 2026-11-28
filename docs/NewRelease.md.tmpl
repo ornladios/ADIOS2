@@ -21,6 +21,30 @@ $py(OLD_RELEASE=str(old_version))\
 Instructions for performing an ADIOS2 release:
 
 - [ ] Make sure that the milestone for $(VERSION) has no pending issues/PRs.
+$if(RC != "" or PATCH == 0)\
+- [ ] Qualify the platform-only features on the commit being released, using
+  `scripts/qualification/README.md`. CI does not run any of these. Each row is
+  one phase of a site run. Sites joined by "or" are alternatives; otherwise every
+  site listed must pass. Fill in Result from `scripts/qualification/compare.py`
+  against the previous release's runs, and paste each run's `SUMMARY.txt` and
+  `compare.py` output in a comment on this issue, as the baseline for the next
+  release.
+
+| Feature | Phase | Sites | Owner | Commit | Result | Notes |
+|---|---|---|---|---|---|---|
+| SST RDMA (libfabric CXI) | sst-rdma | frontier, aurora | | | | |
+| SST Mercury (CXI) | sst-mercury | aurora | | | | |
+| SST UCX (InfiniBand) | sst-ucx | phoenix | | | | |
+| SST MPI data plane, one MPMD launch | sst-mpi | aurora | | | | |
+| GPU, Kokkos HIP | gpu | frontier | | | | |
+| GPU, Kokkos SYCL | gpu | aurora | | | | |
+| GPU, Kokkos CUDA | gpu | phoenix-gpu or perlmutter | | | | |
+| GPU, Python cupy and torch arrays | gpu | phoenix-gpu | | | | |
+| DAOS engine | daos | aurora-daos | | | | |
+
+- [ ] List every row that did not pass, and every test disabled for a platform,
+  as not validated in the release notes.
+$endif\
 - [ ] Update your remotes
 ```
 git fetch origin
